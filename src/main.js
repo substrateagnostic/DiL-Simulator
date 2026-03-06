@@ -73,6 +73,7 @@ class Game {
           saveData.position.x,
           saveData.position.z
         );
+        this.explorationState.syncFromPlayerState();
       }
     }
   }

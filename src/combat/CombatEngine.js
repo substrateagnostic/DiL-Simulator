@@ -1,27 +1,33 @@
 import { PLAYER_ABILITIES, ENEMY_ABILITIES, ENEMY_STATS, ITEMS } from '../data/stats.js';
 import { COMBAT } from '../utils/constants.js';
-import { clamp, randomRange } from '../utils/math.js';
+import { randomRange } from '../utils/math.js';
 
 export class CombatEngine {
   constructor(playerStats, enemyId) {
-    this.player = { ...playerStats, buffs: [], dots: [], stunned: 0, confused: 0 };
+    this.player = {
+      ...playerStats,
+      buffs: [],
+      dots: [],
+      stunned: 0,
+      confused: 0,
+      stunnedThisTurn: false,
+      confusedThisTurn: false,
+    };
     this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null };
     this.enemyId = enemyId;
     this.turn = 'player';
     this.turnCount = 0;
     this.isOver = false;
-    this.result = null; // 'victory' | 'defeat' | 'flee'
+    this.result = null;
     this.log = [];
-    this.counterActive = false; // For Alex's "Great Catch"
+    this.counterActive = false;
   }
 
-  // Calculate damage
   _calcDamage(attackerAtk, power, defenderDef) {
     const baseDmg = (attackerAtk + power) * COMBAT.BASE_DAMAGE_MULTIPLIER;
     const defense = defenderDef * COMBAT.DEFENSE_FACTOR;
     let damage = Math.max(1, Math.floor(baseDmg - defense + randomRange(-3, 3)));
 
-    // Critical hit check
     let critical = false;
     if (Math.random() < COMBAT.CRITICAL_CHANCE) {
       damage = Math.floor(damage * COMBAT.CRITICAL_MULTIPLIER);
@@ -31,7 +37,6 @@ export class CombatEngine {
     return { damage, critical };
   }
 
-  // Get effective stats (with buffs)
   _getEffective(entity) {
     const stats = { ...entity };
     for (const buff of entity.buffs) {
@@ -42,14 +47,33 @@ export class CombatEngine {
     return stats;
   }
 
-  // Player basic attack
+  _maybeConfusePlayer(actionLabel) {
+    if (!this.player.confusedThisTurn) return null;
+    if (Math.random() >= 0.5) return null;
+
+    const playerStats = this._getEffective(this.player);
+    const selfHit = this._calcDamage(playerStats.atk, 6, playerStats.def);
+    this.player.hp = Math.max(0, this.player.hp - selfHit.damage);
+    this._checkDefeat();
+
+    return {
+      type: 'confused',
+      damage: selfHit.damage,
+      critical: selfHit.critical,
+      message: `Confused by corporate nonsense, your ${actionLabel} backfires!`,
+    };
+  }
+
   playerAttack() {
+    const confusion = this._maybeConfusePlayer('attack');
+    if (confusion) return confusion;
+
     if (this.counterActive) {
-      // Alex's counter
       this.counterActive = false;
       const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def);
       this.player.hp = Math.max(0, this.player.hp - counterDmg.damage);
       this.log.push({ type: 'counter', damage: counterDmg.damage, message: '"Great catch! But actually..." Alex counters!' });
+      this._checkDefeat();
       return { type: 'counter', damage: counterDmg.damage, critical: counterDmg.critical };
     }
 
@@ -63,18 +87,21 @@ export class CombatEngine {
     return result;
   }
 
-  // Player ability
   playerAbility(abilityId) {
     const ability = PLAYER_ABILITIES[abilityId];
     if (!ability || this.player.mp < ability.cost) return null;
 
     this.player.mp -= ability.cost;
 
+    const confusion = this._maybeConfusePlayer(ability.name);
+    if (confusion) return confusion;
+
     if (this.counterActive && ability.type === 'attack') {
       this.counterActive = false;
       const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def);
       this.player.hp = Math.max(0, this.player.hp - counterDmg.damage);
-      return { type: 'counter', damage: counterDmg.damage, abilityName: ability.name };
+      this._checkDefeat();
+      return { type: 'counter', damage: counterDmg.damage, critical: counterDmg.critical, abilityName: ability.name };
     }
 
     const pStats = this._getEffective(this.player);
@@ -110,10 +137,12 @@ export class CombatEngine {
     return result;
   }
 
-  // Player item use
   playerItem(itemId) {
     const item = ITEMS[itemId];
     if (!item) return null;
+
+    const confusion = this._maybeConfusePlayer(item.name);
+    if (confusion) return confusion;
 
     let result = { type: 'item', itemName: item.name };
 
@@ -144,7 +173,6 @@ export class CombatEngine {
     return result;
   }
 
-  // Player flee
   playerFlee() {
     const pSpd = this._getEffective(this.player).spd;
     const eSpd = this._getEffective(this.enemy).spd;
@@ -157,26 +185,32 @@ export class CombatEngine {
     return { success: false };
   }
 
-  // Enemy turn - returns action result
   enemyTurn() {
     if (this.isOver) return null;
 
     const eStats = this._getEffective(this.enemy);
     const pStats = this._getEffective(this.player);
-
-    // Pick ability using simple AI
     const abilityId = this._pickEnemyAbility();
+    const previousAbilityId = this.enemy.lastAbility;
+    const result = this._executeEnemyAbility(abilityId, eStats, pStats, previousAbilityId);
+
+    if (abilityId && ENEMY_ABILITIES[abilityId]?.type !== 'repeat') {
+      this.enemy.lastAbility = abilityId;
+    }
+
+    this._checkDefeat();
+    return result;
+  }
+
+  _executeEnemyAbility(abilityId, eStats, pStats, previousAbilityId = null) {
     const ability = ENEMY_ABILITIES[abilityId];
 
     if (!ability) {
-      // Basic attack fallback
       const dmg = this._calcDamage(eStats.atk, 10, pStats.def);
       this.player.hp = Math.max(0, this.player.hp - dmg.damage);
-      this._checkDefeat();
       return { type: 'attack', damage: dmg.damage, critical: dmg.critical, message: `${this.enemy.name} attacks!` };
     }
 
-    this.enemy.lastAbility = abilityId;
     let result = { type: ability.type, abilityName: ability.name, message: ability.message };
 
     switch (ability.type) {
@@ -210,11 +244,11 @@ export class CombatEngine {
         break;
       }
       case 'confuse': {
-        this.player.confused = ability.duration;
+        this.player.confused = Math.max(this.player.confused, ability.duration);
         break;
       }
       case 'stun': {
-        this.player.stunned = ability.duration;
+        this.player.stunned = Math.max(this.player.stunned, ability.duration);
         break;
       }
       case 'counter': {
@@ -222,18 +256,21 @@ export class CombatEngine {
         break;
       }
       case 'repeat': {
-        // Repeat last ability
-        if (this.enemy.lastAbility && this.enemy.lastAbility !== abilityId) {
-          return this.enemyTurn(); // Recursion with different lastAbility
+        if (previousAbilityId && previousAbilityId !== abilityId) {
+          const repeated = this._executeEnemyAbility(previousAbilityId, eStats, pStats, previousAbilityId);
+          if (repeated) {
+            repeated.message = `${ability.message} ${repeated.message}`.trim();
+            return repeated;
+          }
         }
-        // Fallback to basic attack
+
         const dmg = this._calcDamage(eStats.atk, 15, pStats.def);
         this.player.hp = Math.max(0, this.player.hp - dmg.damage);
         result.damage = dmg.damage;
+        result.message = `${ability.message} It devolves into a louder basic attack.`;
         break;
       }
       case 'summon': {
-        // Flavor only - does minor damage
         const dmg = this._calcDamage(eStats.atk, ability.power || 8, pStats.def);
         this.player.hp = Math.max(0, this.player.hp - dmg.damage);
         result.damage = dmg.damage;
@@ -241,7 +278,6 @@ export class CombatEngine {
       }
     }
 
-    this._checkDefeat();
     return result;
   }
 
@@ -249,25 +285,25 @@ export class CombatEngine {
     const abilities = this.enemy.abilities;
     if (!abilities || abilities.length === 0) return null;
 
-    // Simple AI: weighted random with some intelligence
     const hpPercent = this.enemy.hp / this.enemy.maxHP;
 
-    // If low HP, prefer healing if available
     if (hpPercent < 0.3) {
-      const healAbility = abilities.find(id => ENEMY_ABILITIES[id]?.type === 'heal');
+      const healAbility = abilities.find((id) => ENEMY_ABILITIES[id]?.type === 'heal');
       if (healAbility && Math.random() < 0.6) return healAbility;
     }
 
-    // Otherwise random from available
     return abilities[Math.floor(Math.random() * abilities.length)];
   }
 
-  // Process start of turn (DoTs, buff expiry)
   processTurnStart(who) {
     const entity = who === 'player' ? this.player : this.enemy;
     const results = [];
 
-    // Process DoTs
+    if (who === 'player') {
+      entity.stunnedThisTurn = entity.stunned > 0;
+      entity.confusedThisTurn = entity.confused > 0;
+    }
+
     for (let i = entity.dots.length - 1; i >= 0; i--) {
       const dot = entity.dots[i];
       const dmg = Math.floor(dot.damage * 0.7);
@@ -277,7 +313,6 @@ export class CombatEngine {
       if (dot.duration <= 0) entity.dots.splice(i, 1);
     }
 
-    // Process buff durations
     for (let i = entity.buffs.length - 1; i >= 0; i--) {
       entity.buffs[i].duration--;
       if (entity.buffs[i].duration <= 0) {
@@ -286,14 +321,14 @@ export class CombatEngine {
       }
     }
 
-    // Process stun/confuse
     if (who === 'player') {
-      if (entity.stunned > 0) {
+      if (entity.stunnedThisTurn) {
         entity.stunned--;
         results.push({ type: 'stunned' });
       }
-      if (entity.confused > 0) {
+      if (entity.confusedThisTurn) {
         entity.confused--;
+        results.push({ type: 'confused' });
       }
     }
 
@@ -304,11 +339,11 @@ export class CombatEngine {
   }
 
   isPlayerStunned() {
-    return this.player.stunned > 0;
+    return this.player.stunnedThisTurn;
   }
 
   isPlayerConfused() {
-    return this.player.confused > 0;
+    return this.player.confusedThisTurn;
   }
 
   _checkVictory() {

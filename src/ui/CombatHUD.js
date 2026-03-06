@@ -3,41 +3,43 @@ export class CombatHUD {
   constructor() {
     this.container = document.getElementById('ui-overlay');
     this.root = null;
+    this.enemyInfo = null;
+    this.statsEl = null;
+    this.menuEl = null;
     this.onActionSelect = null;
     this.onAbilitySelect = null;
     this.onItemSelect = null;
     this.selectedIndex = 0;
-    this.currentMenu = 'main'; // main, abilities, items
+    this.currentMenu = 'main';
     this.menuItems = [];
+    this.canFlee = true;
   }
 
-  show(playerStats, enemyName, enemyHP, enemyMaxHP) {
+  show(playerStats, enemyName, enemyHP, enemyMaxHP, options = {}) {
     this.remove();
+    this.canFlee = options.canFlee !== false;
+
     this.root = document.createElement('div');
     this.root.className = 'combat-hud';
 
-    // Enemy info
     this.enemyInfo = document.createElement('div');
     this.enemyInfo.className = 'combat-enemy-info';
     this.enemyInfo.innerHTML = `
       <div class="combat-enemy-name">${enemyName}</div>
       <div class="combat-enemy-hp-bar">
-        <div class="combat-enemy-hp-fill" style="width: ${(enemyHP/enemyMaxHP)*100}%"></div>
+        <div class="combat-enemy-hp-fill" style="width: ${(enemyHP / enemyMaxHP) * 100}%"></div>
       </div>
     `;
     this.container.appendChild(this.enemyInfo);
 
-    // Player panel
     const panel = document.createElement('div');
     panel.className = 'combat-player-panel';
 
-    // Stats
     this.statsEl = document.createElement('div');
     this.statsEl.className = 'combat-stats';
     this._updateStats(playerStats);
     panel.appendChild(this.statsEl);
 
-    // Action menu
     this.menuEl = document.createElement('div');
     this.menuEl.className = 'combat-actions';
     panel.appendChild(this.menuEl);
@@ -55,32 +57,36 @@ export class CombatHUD {
       { label: 'Attack', action: 'attack' },
       { label: 'Special', action: 'special' },
       { label: 'Item', action: 'item' },
-      { label: 'Flee', action: 'flee' },
     ];
+
+    if (this.canFlee) {
+      this.menuItems.push({ label: 'Flee', action: 'flee' });
+    }
+
     this._renderMenu();
   }
 
   showAbilities(abilities, playerMP) {
     this.currentMenu = 'abilities';
     this.selectedIndex = 0;
-    this.menuItems = abilities.map(a => ({
-      label: a.name,
-      cost: a.cost,
-      id: a.id,
-      disabled: playerMP < a.cost,
+    this.menuItems = abilities.map((ability) => ({
+      label: ability.name,
+      cost: ability.cost,
+      id: ability.id,
+      disabled: playerMP < ability.cost,
     }));
-    this.menuItems.push({ label: '← Back', action: 'back' });
+    this.menuItems.push({ label: 'Back', action: 'back' });
     this._renderSubmenu();
   }
 
   showItems(inventory, items) {
     this.currentMenu = 'items';
     this.selectedIndex = 0;
-    this.menuItems = inventory.map(inv => ({
-      label: `${items[inv.id]?.name || inv.id} x${inv.quantity}`,
-      id: inv.id,
+    this.menuItems = inventory.map((entry) => ({
+      label: `${items[entry.id]?.name || entry.id} x${entry.quantity}`,
+      id: entry.id,
     }));
-    this.menuItems.push({ label: '← Back', action: 'back' });
+    this.menuItems.push({ label: 'Back', action: 'back' });
     this._renderSubmenu();
   }
 
@@ -112,7 +118,7 @@ export class CombatHUD {
         const costSpan = document.createElement('span');
         costSpan.style.color = '#53a8b6';
         costSpan.style.fontSize = '16px';
-        costSpan.textContent = `${item.cost} ☕`;
+        costSpan.textContent = `${item.cost} Coffee`;
         el.appendChild(costSpan);
       }
       el.addEventListener('click', () => {
@@ -128,16 +134,15 @@ export class CombatHUD {
   navigate(direction) {
     const prev = this.selectedIndex;
     if (this.currentMenu === 'main') {
-      // 2x2 grid navigation
       if (direction === 'up' && this.selectedIndex >= 2) this.selectedIndex -= 2;
-      if (direction === 'down' && this.selectedIndex < 2) this.selectedIndex += 2;
+      if (direction === 'down' && this.selectedIndex < this.menuItems.length - 2) this.selectedIndex += 2;
       if (direction === 'left' && this.selectedIndex % 2 === 1) this.selectedIndex--;
-      if (direction === 'right' && this.selectedIndex % 2 === 0 && this.selectedIndex < 3) this.selectedIndex++;
+      if (direction === 'right' && this.selectedIndex % 2 === 0 && this.selectedIndex + 1 < this.menuItems.length) this.selectedIndex++;
     } else {
-      // List navigation
       if (direction === 'up') this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       if (direction === 'down') this.selectedIndex = Math.min(this.menuItems.length - 1, this.selectedIndex + 1);
     }
+
     if (prev !== this.selectedIndex) {
       if (this.currentMenu === 'main') this._renderMenu();
       else this._renderSubmenu();
@@ -176,7 +181,7 @@ export class CombatHUD {
   updateEnemyHP(hp, maxHP) {
     if (this.enemyInfo) {
       const fill = this.enemyInfo.querySelector('.combat-enemy-hp-fill');
-      if (fill) fill.style.width = `${Math.max(0, (hp/maxHP)*100)}%`;
+      if (fill) fill.style.width = `${Math.max(0, (hp / maxHP) * 100)}%`;
     }
   }
 
@@ -187,14 +192,14 @@ export class CombatHUD {
       <div class="combat-stat-row">
         <span class="combat-stat-label">HP</span>
         <div class="combat-stat-bar">
-          <div class="combat-stat-bar-fill hp" style="width: ${(stats.hp/stats.maxHP)*100}%"></div>
+          <div class="combat-stat-bar-fill hp" style="width: ${(stats.hp / stats.maxHP) * 100}%"></div>
         </div>
         <span class="combat-stat-value">${stats.hp}/${stats.maxHP}</span>
       </div>
       <div class="combat-stat-row">
         <span class="combat-stat-label">Coffee</span>
         <div class="combat-stat-bar">
-          <div class="combat-stat-bar-fill mp" style="width: ${(stats.mp/stats.maxMP)*100}%"></div>
+          <div class="combat-stat-bar-fill mp" style="width: ${(stats.mp / stats.maxMP) * 100}%"></div>
         </div>
         <span class="combat-stat-value">${stats.mp}/${stats.maxMP}</span>
       </div>

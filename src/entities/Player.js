@@ -5,6 +5,7 @@ import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { PLAYER_BASE_STATS, PLAYER_ABILITIES, XP_TABLE, LEVEL_GROWTH } from '../data/stats.js';
 import { STARTING_INVENTORY } from '../data/items.js';
 import { PLAYER } from '../utils/constants.js';
+import { EventBus } from '../core/EventBus.js';
 
 export class Player {
   constructor() {
@@ -115,7 +116,11 @@ export class Player {
 
   // Set/get story flags
   setFlag(key, value = true) {
+    const previous = this.flags[key];
     this.flags[key] = value;
+    if (previous !== value) {
+      EventBus.emit('flag-set', { key, value, previous });
+    }
   }
 
   getFlag(key) {

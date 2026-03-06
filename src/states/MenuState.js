@@ -10,6 +10,7 @@ export class MenuState {
     this.element = null;
     this.selectedIndex = 0;
     this.menuItems = ['Resume', 'Save Game', 'Controls', 'Quit to Title'];
+    this.controlsOverlay = null;
   }
 
   enter() {
@@ -26,11 +27,10 @@ export class MenuState {
     title.textContent = 'PAUSED';
     panel.appendChild(title);
 
-    // Player stats summary
     const stats = document.createElement('div');
     stats.style.cssText = 'color: #aaa; font-family: "VT323", monospace; font-size: 18px; margin-bottom: 16px; text-align: center;';
     stats.innerHTML = `
-      Lv.${this.player.stats.level} — HP: ${this.player.stats.hp}/${this.player.stats.maxHP} — Coffee: ${this.player.stats.mp}/${this.player.stats.maxMP}
+      Lv.${this.player.stats.level} - HP: ${this.player.stats.hp}/${this.player.stats.maxHP} - Coffee: ${this.player.stats.mp}/${this.player.stats.maxMP}
     `;
     panel.appendChild(stats);
 
@@ -42,6 +42,7 @@ export class MenuState {
       item.className = `menu-item${i === this.selectedIndex ? ' selected' : ''}`;
       item.textContent = label;
       item.addEventListener('click', () => {
+        if (this.controlsOverlay) return;
         this.selectedIndex = i;
         this._select();
       });
@@ -54,6 +55,7 @@ export class MenuState {
   }
 
   exit() {
+    this._closeControls();
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -90,7 +92,6 @@ export class MenuState {
     const data = this.player.serialize();
     const success = SaveManager.save(data);
     const msg = success ? 'Game Saved!' : 'Save Failed!';
-    // Brief flash message
     const flash = document.createElement('div');
     flash.style.cssText = `
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -100,40 +101,50 @@ export class MenuState {
     `;
     flash.textContent = msg;
     document.getElementById('ui-overlay').appendChild(flash);
-    setTimeout(() => { if (flash.parentNode) flash.parentNode.removeChild(flash); }, 1500);
+    setTimeout(() => {
+      if (flash.parentNode) flash.parentNode.removeChild(flash);
+    }, 1500);
   }
 
   _showControls() {
-    // Same as title screen controls
-    const overlay = document.createElement('div');
-    overlay.className = 'menu-overlay';
-    overlay.style.zIndex = '60';
-    overlay.innerHTML = `
+    if (this.controlsOverlay) return;
+
+    this.controlsOverlay = document.createElement('div');
+    this.controlsOverlay.className = 'menu-overlay';
+    this.controlsOverlay.style.zIndex = '60';
+    this.controlsOverlay.innerHTML = `
       <div class="menu-panel">
         <div class="menu-title">CONTROLS</div>
         <div style="color: #ddd; font-family: 'VT323', monospace; font-size: 22px; line-height: 1.8;">
-          <div><span style="color: #e94560;">WASD / Arrows</span> — Move</div>
-          <div><span style="color: #e94560;">E / Enter</span> — Interact / Confirm</div>
-          <div><span style="color: #e94560;">ESC</span> — Back / Pause Menu</div>
-          <div><span style="color: #e94560;">Space</span> — Advance Dialog</div>
+          <div><span style="color: #e94560;">WASD / Arrows</span> - Move</div>
+          <div><span style="color: #e94560;">E / Enter</span> - Interact / Confirm</div>
+          <div><span style="color: #e94560;">ESC</span> - Back / Pause Menu</div>
+          <div><span style="color: #e94560;">Space</span> - Advance Dialog</div>
         </div>
-        <div class="menu-item" style="margin-top: 20px;" id="menu-controls-back">← Back</div>
+        <div class="menu-item" style="margin-top: 20px;" id="menu-controls-back">Back</div>
       </div>
     `;
-    document.getElementById('ui-overlay').appendChild(overlay);
+    document.getElementById('ui-overlay').appendChild(this.controlsOverlay);
     document.getElementById('menu-controls-back').addEventListener('click', () => {
-      overlay.parentNode.removeChild(overlay);
+      this._closeControls();
     });
-    const handler = (e) => {
-      if (e.key === 'Escape' || e.key === 'Enter') {
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-        window.removeEventListener('keydown', handler);
-      }
-    };
-    window.addEventListener('keydown', handler);
+  }
+
+  _closeControls() {
+    if (this.controlsOverlay && this.controlsOverlay.parentNode) {
+      this.controlsOverlay.parentNode.removeChild(this.controlsOverlay);
+    }
+    this.controlsOverlay = null;
   }
 
   update(dt) {
+    if (this.controlsOverlay) {
+      if (InputManager.isConfirmPressed() || InputManager.isCancelPressed()) {
+        this._closeControls();
+      }
+      return;
+    }
+
     if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this._updateSelection();

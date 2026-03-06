@@ -143,7 +143,7 @@ export const DIALOGS = {
     /* 19 */ { type: 'text', speaker: 'Alex', text: "The last trust officer who handled the Henderson account had a 'nervous event' in the parking garage. He's fine now. Mostly. He flinches when he hears the word 'beneficiary.'" },
     /* 20 */ { type: 'text', speaker: 'Alex', text: "But that won't happen to you! Probably! Go get 'em, tiger!" },
     /* 21 */ { type: 'action', action: 'set_flag', flag: 'briefing_complete', value: true, next: 22 },
-    /* 22 */ { type: 'action', action: 'quest_update', quest: 'henderson_trust', objective: 'briefing', status: 'complete', next: 23 },
+    /* 22 */ { type: 'action', action: 'quest_update', quest: 'main_act2', objective: 0, status: 'complete', next: 23 },
     /* 23 */ { type: 'text', speaker: 'Alex', text: "Oh, one more thing. If Karen asks you about the pre-audit documents, just say they're 'in process.' Don't say anything about the shredder." },
     /* 24 */ { type: 'text', speaker: 'Alex', text: "Wait, you don't know about the shredder. Forget I said that. Circle back later. *finger guns*" },
     /* 25 */ { type: 'end' },
@@ -987,6 +987,7 @@ export const DIALOGS = {
     { type: 'text', speaker: 'The Intern', text: 'Anyway, I panicked! And when I panic, I do paperwork! AGGRESSIVE paperwork!' },
     { type: 'text', speaker: 'Narrator', text: 'The Intern grabs a nearby stack of documents and begins hurling them with wild abandon.' },
     { type: 'text', speaker: 'The Intern', text: 'PAPER FIIIIGHT!!!' },
+    { type: 'action', action: 'start_combat', encounter: 'intern' },
     { type: 'end' },
   ],
 };

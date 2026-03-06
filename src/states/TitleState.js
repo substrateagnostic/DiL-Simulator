@@ -1,7 +1,6 @@
 import { InputManager } from '../core/InputManager.js';
 import { AudioManager } from '../core/AudioManager.js';
 import { SaveManager } from '../core/SaveManager.js';
-import { EventBus } from '../core/EventBus.js';
 
 export class TitleState {
   constructor(stateManager, onStart) {
@@ -11,6 +10,7 @@ export class TitleState {
     this.selectedIndex = 0;
     this.menuItems = [];
     this.hasSave = SaveManager.hasSave();
+    this.controlsOverlay = null;
   }
 
   enter() {
@@ -20,7 +20,6 @@ export class TitleState {
     this.element = document.createElement('div');
     this.element.className = 'title-screen';
 
-    // Logo
     const logo = document.createElement('div');
     logo.className = 'title-logo';
     logo.innerHTML = `
@@ -29,7 +28,6 @@ export class TitleState {
     `;
     this.element.appendChild(logo);
 
-    // Menu
     const menu = document.createElement('div');
     menu.className = 'title-menu';
 
@@ -42,6 +40,7 @@ export class TitleState {
       item.className = `title-menu-item${i === this.selectedIndex ? ' selected' : ''}`;
       item.textContent = label;
       item.addEventListener('click', () => {
+        if (this.controlsOverlay) return;
         this.selectedIndex = i;
         this._select();
       });
@@ -50,13 +49,11 @@ export class TitleState {
 
     this.element.appendChild(menu);
 
-    // Bottom prompt
     const prompt = document.createElement('div');
     prompt.className = 'title-prompt';
     prompt.textContent = 'Press ENTER to start';
     this.element.appendChild(prompt);
 
-    // Version
     const version = document.createElement('div');
     version.className = 'title-version';
     version.textContent = 'v1.0.0 // "Handle their assets carefully"';
@@ -66,6 +63,7 @@ export class TitleState {
   }
 
   exit() {
+    this._closeControls();
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -92,39 +90,46 @@ export class TitleState {
   }
 
   _showControls() {
-    // Simple controls overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'menu-overlay';
-    overlay.innerHTML = `
+    if (this.controlsOverlay) return;
+
+    this.controlsOverlay = document.createElement('div');
+    this.controlsOverlay.className = 'menu-overlay';
+    this.controlsOverlay.innerHTML = `
       <div class="menu-panel">
         <div class="menu-title">CONTROLS</div>
         <div style="color: #ddd; font-family: 'VT323', monospace; font-size: 22px; line-height: 1.8;">
-          <div><span style="color: #e94560;">WASD / Arrows</span> — Move</div>
-          <div><span style="color: #e94560;">E / Enter</span> — Interact / Confirm</div>
-          <div><span style="color: #e94560;">ESC</span> — Back / Menu</div>
-          <div><span style="color: #e94560;">Space</span> — Advance Dialog</div>
+          <div><span style="color: #e94560;">WASD / Arrows</span> - Move</div>
+          <div><span style="color: #e94560;">E / Enter</span> - Interact / Confirm</div>
+          <div><span style="color: #e94560;">ESC</span> - Back / Menu</div>
+          <div><span style="color: #e94560;">Space</span> - Advance Dialog</div>
           <div style="margin-top: 16px; color: #888; font-size: 18px;">
             "Your patience is your HP.<br>Your coffee is your mana.<br>Welcome to corporate America."
           </div>
         </div>
-        <div class="menu-item" style="margin-top: 20px;" id="controls-back">← Back</div>
+        <div class="menu-item" style="margin-top: 20px;" id="controls-back">Back</div>
       </div>
     `;
-    document.getElementById('ui-overlay').appendChild(overlay);
+    document.getElementById('ui-overlay').appendChild(this.controlsOverlay);
     document.getElementById('controls-back').addEventListener('click', () => {
-      overlay.parentNode.removeChild(overlay);
+      this._closeControls();
     });
-    // Also close on ESC
-    const handler = (e) => {
-      if (e.key === 'Escape' || e.key === 'Enter') {
-        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-        window.removeEventListener('keydown', handler);
-      }
-    };
-    window.addEventListener('keydown', handler);
+  }
+
+  _closeControls() {
+    if (this.controlsOverlay && this.controlsOverlay.parentNode) {
+      this.controlsOverlay.parentNode.removeChild(this.controlsOverlay);
+    }
+    this.controlsOverlay = null;
   }
 
   update(dt) {
+    if (this.controlsOverlay) {
+      if (InputManager.isConfirmPressed() || InputManager.isCancelPressed()) {
+        this._closeControls();
+      }
+      return;
+    }
+
     if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this._updateSelection();
