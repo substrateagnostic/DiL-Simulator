@@ -1,0 +1,139 @@
+/* Exploration HUD */
+.exploration-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.hud-location {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.5);
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid rgba(233, 69, 96, 0.3);
+}
+
+.hud-quest-tracker {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(233, 69, 96, 0.3);
+  border-radius: 6px;
+  padding: 12px 16px;
+  max-width: 280px;
+}
+
+.hud-quest-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  color: #e94560;
+  margin-bottom: 8px;
+}
+
+.hud-quest-objective {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #ddd;
+  padding-left: 16px;
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.hud-quest-objective::before {
+  content: '>';
+  position: absolute;
+  left: 0;
+  color: #e94560;
+  animation: pulse 1.5s infinite;
+}
+
+.hud-quest-objective.completed {
+  color: #666;
+  text-decoration: line-through;
+}
+
+.hud-quest-objective.completed::before {
+  content: '✓';
+  color: #44ff44;
+  animation: none;
+}
+
+/* Interaction prompt */
+.interact-prompt {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: #fff;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px 20px;
+  border-radius: 20px;
+  border: 2px solid rgba(233, 69, 96, 0.5);
+  animation: promptBob 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes promptBob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+.interact-prompt kbd {
+  background: #e94560;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
+.interact-prompt.read {
+  opacity: 0.5;
+  border-color: rgba(100, 100, 100, 0.4);
+}
+
+.interact-prompt.read kbd {
+  background: #666;
+}
+
+/* Mini stats (top left, below location) */
+.hud-mini-stats {
+  position: absolute;
+  top: 52px;
+  left: 16px;
+  display: flex;
+  gap: 12px;
+}
+
+.hud-mini-stat {
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.hud-mini-stat .label {
+  color: #888;
+  margin-right: 4px;
+}
+
+.hud-mini-stat .value.hp { color: #ff6b6b; }
+.hud-mini-stat .value.mp { color: #53a8b6; }

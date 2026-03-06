@@ -1,0 +1,113 @@
+/* Dialog Box */
+.dialog-container {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(90%, 800px);
+  z-index: 20;
+  animation: dialogSlideUp 0.2s ease-out;
+}
+
+@keyframes dialogSlideUp {
+  from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+  to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
+.dialog-box {
+  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+  border: 3px solid #e94560;
+  border-radius: 8px;
+  padding: 20px 24px;
+  color: #fff;
+  position: relative;
+  box-shadow: 0 0 20px rgba(233, 69, 96, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+.dialog-speaker {
+  position: absolute;
+  top: -14px;
+  left: 20px;
+  background: #e94560;
+  color: #fff;
+  padding: 2px 12px;
+  border-radius: 4px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.dialog-text {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  line-height: 1.4;
+  min-height: 60px;
+  margin-top: 4px;
+  color: #eee;
+}
+
+.dialog-text .cursor {
+  display: inline-block;
+  width: 12px;
+  height: 24px;
+  background: #e94560;
+  animation: blink 0.6s infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.dialog-advance {
+  position: absolute;
+  bottom: 8px;
+  right: 16px;
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #e94560;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* Choices */
+.dialog-choices {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dialog-choice {
+  background: rgba(233, 69, 96, 0.1);
+  border: 2px solid rgba(233, 69, 96, 0.4);
+  border-radius: 6px;
+  padding: 10px 16px;
+  color: #fff;
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.dialog-choice:hover,
+.dialog-choice.selected {
+  background: rgba(233, 69, 96, 0.3);
+  border-color: #e94560;
+  transform: translateX(8px);
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
+.dialog-choice-indicator {
+  color: #e94560;
+  margin-right: 8px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 12px;
+}
