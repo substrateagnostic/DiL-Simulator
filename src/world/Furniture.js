@@ -44,6 +44,7 @@ export const Furniture = {
     const screenGeo = new THREE.BoxGeometry(0.5, 0.32, 0.02);
     const screen = new THREE.Mesh(screenGeo, Materials.monitorScreen());
     screen.position.y = 0.94;
+    screen.position.z = 0.007;
     group.add(screen);
     // Bezel
     const bezelGeo = new THREE.BoxGeometry(0.54, 0.36, 0.03);

@@ -282,31 +282,20 @@ export class Room {
   }
 
   /**
-   * Add door frame geometry at each exit tile.
-   * Two vertical posts (frame) flanking the gap, plus a door panel.
+   * Add luxury door geometry at each exit tile.
+   * Solid mahogany doors with raised panels, gold molding, brass rose plate, and spherical gold knob.
    */
   _addDoorFrames(w, h, wallHeight) {
     if (!this.data.exits) return;
-
-    const frameMat = Materials.custom(0x6b5335); // dark wood
-    const doorMat = new THREE.MeshToonMaterial({
-      color: 0x8b7355,
-      transparent: true,
-      opacity: 0.6,
-    });
-    const postGeo = new THREE.BoxGeometry(0.08, wallHeight, 0.08);
-    const doorWidth = TILE_SIZE * 0.7;
-    const doorHeight = wallHeight * 0.85;
-    const doorGeo = new THREE.PlaneGeometry(doorWidth, doorHeight);
 
     // Group exits by wall to merge adjacent exits into wider doors
     const exitsByKey = {};
     for (const exit of this.data.exits) {
       let wall, coord;
-      if (exit.z === 0) { wall = 'north'; coord = exit.x; }
-      else if (exit.z === h - 1) { wall = 'south'; coord = exit.x; }
-      else if (exit.x === 0) { wall = 'west'; coord = exit.z; }
-      else if (exit.x === w - 1) { wall = 'east'; coord = exit.z; }
+      if (exit.z === 0)         { wall = 'north'; coord = exit.x; }
+      else if (exit.z === h - 1){ wall = 'south'; coord = exit.x; }
+      else if (exit.x === 0)    { wall = 'west';  coord = exit.z; }
+      else if (exit.x === w - 1){ wall = 'east';  coord = exit.z; }
       else continue;
       if (!exitsByKey[wall]) exitsByKey[wall] = [];
       exitsByKey[wall].push(coord);
@@ -317,62 +306,167 @@ export class Room {
 
       // Find contiguous runs
       const runs = [];
-      let start = coords[0];
-      let end = coords[0];
+      let start = coords[0], end = coords[0];
       for (let i = 1; i < coords.length; i++) {
-        if (coords[i] === end + 1) {
-          end = coords[i];
-        } else {
-          runs.push({ start, end });
-          start = coords[i];
-          end = coords[i];
-        }
+        if (coords[i] === end + 1) { end = coords[i]; }
+        else { runs.push({ start, end }); start = coords[i]; end = coords[i]; }
       }
       runs.push({ start, end });
 
       for (const run of runs) {
         const midCoord = (run.start + run.end) / 2;
-        const span = (run.end - run.start + 1);
-        const widerDoorGeo = new THREE.PlaneGeometry(span * TILE_SIZE * 0.85, doorHeight);
+        const span = run.end - run.start + 1;
+        const doorGroup = this._buildLuxuryDoorGroup(span, wallHeight);
 
         if (wall === 'north' || wall === 'south') {
           const zPos = wall === 'north'
             ? -TILE_SIZE / 2
             : (h - 1) * TILE_SIZE + TILE_SIZE / 2;
-
-          // Left post
-          const lp = new THREE.Mesh(postGeo, frameMat);
-          lp.position.set((run.start - 0.45) * TILE_SIZE, wallHeight / 2, zPos);
-          this.scene.add(lp);
-          // Right post
-          const rp = new THREE.Mesh(postGeo, frameMat);
-          rp.position.set((run.end + 0.45) * TILE_SIZE, wallHeight / 2, zPos);
-          this.scene.add(rp);
-          // Door panel
-          const door = new THREE.Mesh(widerDoorGeo, doorMat);
-          door.position.set(midCoord * TILE_SIZE, doorHeight / 2, zPos);
-          this.scene.add(door);
+          doorGroup.position.set(midCoord * TILE_SIZE, 0, zPos);
+          if (wall === 'south') doorGroup.rotation.y = Math.PI;
         } else {
           const xPos = wall === 'west'
             ? -TILE_SIZE / 2
             : (w - 1) * TILE_SIZE + TILE_SIZE / 2;
-
-          // Top post
-          const tp = new THREE.Mesh(postGeo, frameMat);
-          tp.position.set(xPos, wallHeight / 2, (run.start - 0.45) * TILE_SIZE);
-          this.scene.add(tp);
-          // Bottom post
-          const bp = new THREE.Mesh(postGeo, frameMat);
-          bp.position.set(xPos, wallHeight / 2, (run.end + 0.45) * TILE_SIZE);
-          this.scene.add(bp);
-          // Door panel (rotated 90° for side walls)
-          const door = new THREE.Mesh(widerDoorGeo, doorMat);
-          door.rotation.y = Math.PI / 2;
-          door.position.set(xPos, doorHeight / 2, midCoord * TILE_SIZE);
-          this.scene.add(door);
+          doorGroup.position.set(xPos, 0, midCoord * TILE_SIZE);
+          doorGroup.rotation.y = wall === 'west' ? Math.PI / 2 : -Math.PI / 2;
         }
+
+        this.scene.add(doorGroup);
       }
     }
+  }
+
+  /**
+   * Build a single luxury door group (mahogany, raised panels, gold trim, knob).
+   * The group's local +Z faces into the room; position and rotate as needed.
+   */
+  _buildLuxuryDoorGroup(spanTiles, wallHeight) {
+    const group = new THREE.Group();
+
+    const doorWidth    = spanTiles * TILE_SIZE * 0.82;
+    const doorHeight   = wallHeight * 0.88;
+    const doorThick    = 0.07;
+
+    // Materials
+    const mahoganyMat = new THREE.MeshStandardMaterial({ color: 0x7a3018, roughness: 0.5,  metalness: 0.0 });
+    const panelMat    = new THREE.MeshStandardMaterial({ color: 0x5a2010, roughness: 0.6,  metalness: 0.0 });
+    const goldMat     = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.1,  metalness: 0.98 });
+    const brassMat    = new THREE.MeshStandardMaterial({ color: 0xe0a830, roughness: 0.2,  metalness: 0.92 });
+    const frameMat    = new THREE.MeshStandardMaterial({ color: 0x4a1e0a, roughness: 0.5,  metalness: 0.0  });
+
+    // --- Solid mahogany door body ---
+    const doorBody = new THREE.Mesh(
+      new THREE.BoxGeometry(doorWidth, doorHeight, doorThick),
+      mahoganyMat
+    );
+    doorBody.position.set(0, doorHeight / 2, 0);
+    group.add(doorBody);
+
+    // --- Raised door panels (recessed darker boxes on the front face) ---
+    const panelInsetX = doorWidth * 0.08;
+    const panelDepth  = 0.014;
+    const panelZ      = doorThick / 2 + panelDepth / 2;
+
+    // Upper panel (~top 35% of door)
+    const upperPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(doorWidth - panelInsetX * 2, doorHeight * 0.35, panelDepth),
+      panelMat
+    );
+    upperPanel.position.set(0, doorHeight * 0.625, panelZ);
+    group.add(upperPanel);
+
+    // Lower panel (~bottom 40% of door)
+    const lowerPanel = new THREE.Mesh(
+      new THREE.BoxGeometry(doorWidth - panelInsetX * 2, doorHeight * 0.40, panelDepth),
+      panelMat
+    );
+    lowerPanel.position.set(0, doorHeight * 0.215, panelZ);
+    group.add(lowerPanel);
+
+    // --- Gold molding strips (horizontal dividers & border) ---
+    const stripDepth = 0.022;
+    const stripZ     = doorThick / 2 + stripDepth / 2;
+    for (const sy of [doorHeight * 0.055, doorHeight * 0.44, doorHeight * 0.79, doorHeight * 0.875]) {
+      const strip = new THREE.Mesh(
+        new THREE.BoxGeometry(doorWidth * 0.93, 0.022, stripDepth),
+        goldMat
+      );
+      strip.position.set(0, sy, stripZ);
+      group.add(strip);
+    }
+
+    // Gold vertical side trim strips
+    for (const sx of [-(doorWidth * 0.42), doorWidth * 0.42]) {
+      const vStrip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.022, doorHeight * 0.93, stripDepth),
+        goldMat
+      );
+      vStrip.position.set(sx, doorHeight / 2, stripZ);
+      group.add(vStrip);
+    }
+
+    // --- Door knob: brass rose plate + gold sphere ---
+    const knobX = doorWidth / 2 - 0.13;
+    const knobY = 1.02;
+
+    // Brass backplate (rose)
+    const rose = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.062, 0.062, 0.014, 20),
+      brassMat
+    );
+    rose.rotation.x = Math.PI / 2;
+    rose.position.set(knobX, knobY, doorThick / 2 + 0.007);
+    group.add(rose);
+
+    // Gold spherical knob
+    const knob = new THREE.Mesh(
+      new THREE.SphereGeometry(0.052, 20, 16),
+      goldMat
+    );
+    knob.position.set(knobX, knobY, doorThick / 2 + 0.072);
+    group.add(knob);
+
+    // --- Ornate frame: dark mahogany posts + lintel with gold edge trim ---
+    const frameW     = 0.11;
+    const frameDepth = 0.14;
+    const lintelH    = 0.12;
+
+    // Left post
+    const leftPost = new THREE.Mesh(new THREE.BoxGeometry(frameW, wallHeight, frameDepth), frameMat);
+    leftPost.position.set(-(doorWidth / 2 + frameW / 2), wallHeight / 2, 0);
+    group.add(leftPost);
+
+    // Right post
+    const rightPost = new THREE.Mesh(new THREE.BoxGeometry(frameW, wallHeight, frameDepth), frameMat);
+    rightPost.position.set(doorWidth / 2 + frameW / 2, wallHeight / 2, 0);
+    group.add(rightPost);
+
+    // Lintel
+    const lintel = new THREE.Mesh(
+      new THREE.BoxGeometry(doorWidth + frameW * 2, lintelH, frameDepth),
+      frameMat
+    );
+    lintel.position.set(0, doorHeight + lintelH / 2, 0);
+    group.add(lintel);
+
+    // Gold trim strips on front edges of frame posts
+    for (const sx of [-(doorWidth / 2), doorWidth / 2]) {
+      const postTrim = new THREE.Mesh(new THREE.BoxGeometry(0.016, wallHeight, 0.016), goldMat);
+      postTrim.position.set(sx, wallHeight / 2, frameDepth / 2);
+      group.add(postTrim);
+    }
+
+    // Gold trim strip along lintel bottom edge
+    const lintelTrim = new THREE.Mesh(
+      new THREE.BoxGeometry(doorWidth + frameW * 2 + 0.02, 0.016, 0.016),
+      goldMat
+    );
+    lintelTrim.position.set(0, doorHeight + lintelH, frameDepth / 2);
+    group.add(lintelTrim);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
   }
 
   /**
