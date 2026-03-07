@@ -613,6 +613,18 @@ export class ExplorationState {
     this.player.move(x, z, dt, this.tileMap);
     this.player.update(dt);
 
+    // Fade south wall when player gets close to it
+    const southWallMeshes = this.roomManager.currentRoom?.getSouthWallMeshes() ?? [];
+    if (southWallMeshes.length > 0 && this.tileMap) {
+      const southWallZ = this.tileMap.height - 0.5;
+      const dist = southWallZ - this.player.position.z;
+      // Fully opaque 3+ tiles away, fades to 0.15 opacity within 1 tile
+      const opacity = Math.min(1, Math.max(0.15, (dist - 1) / 2));
+      for (const mesh of southWallMeshes) {
+        mesh.material.opacity = opacity;
+      }
+    }
+
     this.camera.follow(this.player.position.x, this.player.position.z);
     this.camera.update(dt);
 

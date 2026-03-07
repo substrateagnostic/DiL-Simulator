@@ -80,10 +80,20 @@ export class DialogBox {
     this.choicesEl.className = 'dialog-choices';
     this.choicesEl.style.display = 'none';
 
+    this.escHintEl = document.createElement('div');
+    this.escHintEl.className = 'dialog-esc-hint';
+    this.escHintEl.textContent = '[ESC] Exit';
+    this.escHintEl.style.cssText = `
+      position: absolute; bottom: 6px; left: 10px;
+      font-family: 'VT323', monospace; font-size: 14px;
+      color: rgba(255,255,255,0.35); pointer-events: none;
+    `;
+
     this.box.appendChild(this.speakerEl);
     this.box.appendChild(this.textEl);
     this.box.appendChild(this.choicesEl);
     this.box.appendChild(this.advanceEl);
+    this.box.appendChild(this.escHintEl);
     this.container.appendChild(this.box);
     this.overlay.appendChild(this.container);
   }

@@ -91,7 +91,7 @@ export const Furniture = {
     group.add(post);
     // Base star (simplified as a disc)
     const baseGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.03, 5);
-    const base = new THREE.Mesh(baseGeo, Materials.custom(0x222222));
+    const base = new THREE.Mesh(baseGeo, Materials.metal());
     base.position.y = 0.015;
     group.add(base);
 
@@ -179,8 +179,110 @@ export const Furniture = {
     return group;
   },
 
+  // Sansevieria — tall upright flat leaves, two-tone striping
+  plantTall() {
+    const group = new THREE.Group();
+    const pot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.11, 0.28, 8),
+      Materials.plantPot()
+    );
+    pot.position.y = 0.14;
+    group.add(pot);
+    const darkMat  = new THREE.MeshStandardMaterial({ color: 0x244f24, roughness: 0.8 });
+    const lightMat = new THREE.MeshStandardMaterial({ color: 0x4a8c3a, roughness: 0.8 });
+    for (let i = 0; i < 6; i++) {
+      const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.4;
+      const height = 0.5 + Math.random() * 0.5;
+      const leaf = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, height, 0.11),
+        i % 2 === 0 ? darkMat : lightMat
+      );
+      leaf.position.set(Math.cos(angle) * 0.06, 0.28 + height / 2, Math.sin(angle) * 0.06);
+      leaf.rotation.y = angle;
+      leaf.rotation.z = (Math.random() - 0.5) * 0.12;
+      group.add(leaf);
+    }
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  // Echeveria — low compact rosette succulent
+  plantSucculent() {
+    const group = new THREE.Group();
+    const pot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.11, 0.08, 0.13, 8),
+      Materials.plantPot()
+    );
+    pot.position.y = 0.065;
+    group.add(pot);
+    const outerMat = new THREE.MeshStandardMaterial({ color: 0x5a8c52, roughness: 0.65, metalness: 0.05 });
+    const innerMat = new THREE.MeshStandardMaterial({ color: 0x7ab86e, roughness: 0.6 });
+    [[6, 0.09, 0.14, 0.38], [4, 0.05, 0.17, 0.45], [3, 0.02, 0.20, 0.55]].forEach(([cnt, r, yBase, tilt], ring) => {
+      for (let i = 0; i < cnt; i++) {
+        const angle = (i / cnt) * Math.PI * 2 + ring * 0.5;
+        const leaf = new THREE.Mesh(
+          new THREE.SphereGeometry(0.042 - ring * 0.007, 5, 4),
+          ring < 2 ? outerMat : innerMat
+        );
+        leaf.scale.set(0.6, 0.4, 1.15);
+        leaf.position.set(Math.cos(angle) * r, yBase, Math.sin(angle) * r);
+        leaf.rotation.y = angle;
+        leaf.rotation.x = tilt;
+        group.add(leaf);
+      }
+    });
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  // Boston fern — wide drooping fronds
+  plantFern() {
+    const group = new THREE.Group();
+    const pot = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.11, 0.22, 8),
+      Materials.plantPot()
+    );
+    pot.position.y = 0.11;
+    group.add(pot);
+    const leafMat = new THREE.MeshStandardMaterial({ color: 0x3a8c42, roughness: 0.85 });
+    for (let i = 0; i < 10; i++) {
+      const angle = (i / 10) * Math.PI * 2;
+      const reach = 0.18 + Math.random() * 0.08;
+      for (let j = 0; j < 3; j++) {
+        const t = (j + 1) / 3;
+        const leaflet = new THREE.Mesh(
+          new THREE.SphereGeometry(0.048 - j * 0.009, 5, 4),
+          leafMat
+        );
+        leaflet.scale.set(1.1, 0.32, 0.62);
+        leaflet.position.set(Math.cos(angle) * reach * t, 0.27 - t * 0.07, Math.sin(angle) * reach * t);
+        group.add(leaflet);
+      }
+    }
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
   coffeeMachine() {
     const group = new THREE.Group();
+    // Counter base
+    const counterBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.42, 0.7, 0.37),
+      Materials.deskDark()
+    );
+    counterBody.position.y = 0.35;
+    counterBody.castShadow = true;
+    counterBody.receiveShadow = true;
+    group.add(counterBody);
+    const counterTop = new THREE.Mesh(
+      new THREE.BoxGeometry(0.44, 0.04, 0.39),
+      Materials.desk()
+    );
+    counterTop.position.y = 0.72;
+    counterTop.castShadow = true;
+    counterTop.receiveShadow = true;
+    group.add(counterTop);
+    // Machine body
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(0.3, 0.4, 0.25),
       Materials.custom(0x222222)
@@ -218,6 +320,24 @@ export const Furniture = {
 
   microwave() {
     const group = new THREE.Group();
+    // Counter base
+    const counterBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.52, 0.7, 0.42),
+      Materials.deskDark()
+    );
+    counterBody.position.y = 0.35;
+    counterBody.castShadow = true;
+    counterBody.receiveShadow = true;
+    group.add(counterBody);
+    const counterTop = new THREE.Mesh(
+      new THREE.BoxGeometry(0.54, 0.04, 0.44),
+      Materials.desk()
+    );
+    counterTop.position.y = 0.72;
+    counterTop.castShadow = true;
+    counterTop.receiveShadow = true;
+    group.add(counterTop);
+    // Microwave body
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(0.4, 0.25, 0.3),
       Materials.microwave()
@@ -322,15 +442,63 @@ export const Furniture = {
   },
 
   trashCan() {
-    const geo = new THREE.CylinderGeometry(0.14, 0.12, 0.35, 8, 1, true);
-    const mesh = new THREE.Mesh(geo, Materials.custom(0x555555));
-    mesh.position.y = 0.175;
-    mesh.castShadow = true;
-    return mesh;
+    const group = new THREE.Group();
+    const bodyMat = Materials.custom(0x4a4a4a);
+    const rimMat  = Materials.custom(0x333333);
+
+    // Tapered body
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.13, 0.10, 0.34, 10, 1, false),
+      bodyMat
+    );
+    body.position.y = 0.17;
+    group.add(body);
+
+    // Top rim ring (slightly wider lip)
+    const rim = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.145, 0.135, 0.03, 10),
+      rimMat
+    );
+    rim.position.y = 0.355;
+    group.add(rim);
+
+    // Vertical stripe accents (3 evenly spaced)
+    const stripeMat = Materials.custom(0x666666);
+    for (let i = 0; i < 3; i++) {
+      const angle = (i / 3) * Math.PI * 2;
+      const stripe = new THREE.Mesh(
+        new THREE.BoxGeometry(0.018, 0.28, 0.012),
+        stripeMat
+      );
+      stripe.position.set(Math.cos(angle) * 0.125, 0.18, Math.sin(angle) * 0.125);
+      stripe.rotation.y = -angle;
+      group.add(stripe);
+    }
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
   },
 
   printer() {
     const group = new THREE.Group();
+    // Counter base
+    const counterBody = new THREE.Mesh(
+      new THREE.BoxGeometry(0.62, 0.7, 0.52),
+      Materials.deskDark()
+    );
+    counterBody.position.y = 0.35;
+    counterBody.castShadow = true;
+    counterBody.receiveShadow = true;
+    group.add(counterBody);
+    const counterTop = new THREE.Mesh(
+      new THREE.BoxGeometry(0.64, 0.04, 0.54),
+      Materials.desk()
+    );
+    counterTop.position.y = 0.72;
+    counterTop.castShadow = true;
+    counterTop.receiveShadow = true;
+    group.add(counterTop);
+    // Printer body
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(0.5, 0.3, 0.4),
       Materials.custom(0xe0ddd0)

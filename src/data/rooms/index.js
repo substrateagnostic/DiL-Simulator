@@ -27,137 +27,149 @@ export const ROOMS = {
     floorColor: 0xc8bfa9,
     walls: true,
     furniture: [
-      // === Andrew's cubicle cluster (column 3, row 8) ===
-      { type: 'desk', x: 3, z: 8, rotation: 0 },
-      { type: 'monitor', x: 3, z: 7.7 },
-      { type: 'keyboard', x: 3, z: 8.2 },
-      { type: 'chair', x: 3, z: 8.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 2, z: 7, rotation: 0 },
-      { type: 'cubicleWall', x: 4, z: 7, rotation: 0 },
-      { type: 'cubicleWall', x: 2, z: 7.5, rotation: Math.PI / 2 },
-      { type: 'fileCabinet', x: 2, z: 9 },
-      { type: 'trashCan', x: 4, z: 9 },
+      // ============================================================
+      // NORTH CUBICLE ROW  (back walls at z=2, desks at z=3)
+      // Two pods: NW (x=1-7) and NE (x=14-18), open aisle between
+      // ============================================================
 
-      // === Janet's cubicle (column 5, row 8) ===
-      { type: 'desk', x: 6, z: 8, rotation: 0 },
-      { type: 'monitor', x: 6, z: 7.7 },
-      { type: 'keyboard', x: 6, z: 8.2 },
-      { type: 'chair', x: 6, z: 8.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 5, z: 7, rotation: 0 },
-      { type: 'cubicleWall', x: 7, z: 7, rotation: 0 },
-      { type: 'plant', x: 7, z: 9 },
+      // --- NW pod — 3 cubicles (x=2, 4, 6) ---
+      // Continuous back wall across all three
+      { type: 'cubicleWall', x: 1, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 3, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 5, z: 2, rotation: 0 },
+      // Side dividers (outer walls + shared dividers between bays)
+      { type: 'cubicleWall', x: 1, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 3, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 5, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 7, z: 2.5, rotation: Math.PI / 2 },
+      // Cubicle desks
+      { type: 'desk', x: 2, z: 3, rotation: 0 },
+      { type: 'monitor', x: 2, z: 2.7 },
+      { type: 'keyboard', x: 2, z: 3.2 },
+      { type: 'chair', x: 2, z: 3.8, rotation: Math.PI },
+      { type: 'trashCan', x: 2.5, z: 4 },
 
-      // === Cubicle row 2 (column 3, row 5) ===
-      { type: 'desk', x: 3, z: 5, rotation: 0 },
-      { type: 'monitor', x: 3, z: 4.7 },
-      { type: 'keyboard', x: 3, z: 5.2 },
-      { type: 'chair', x: 3, z: 5.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 2, z: 4, rotation: 0 },
-      { type: 'cubicleWall', x: 4, z: 4, rotation: 0 },
-      { type: 'cubicleWall', x: 2, z: 4.5, rotation: Math.PI / 2 },
+      { type: 'desk', x: 4, z: 3, rotation: 0 },
+      { type: 'monitor', x: 4, z: 2.7 },
+      { type: 'keyboard', x: 4, z: 3.2 },
+      { type: 'chair', x: 4, z: 3.8, rotation: Math.PI },
+      { type: 'trashCan', x: 4.5, z: 4 },
 
-      // === Cubicle row 2 (column 6, row 5) ===
-      { type: 'desk', x: 6, z: 5, rotation: 0 },
-      { type: 'monitor', x: 6, z: 4.7 },
-      { type: 'keyboard', x: 6, z: 5.2 },
-      { type: 'chair', x: 6, z: 5.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 5, z: 4, rotation: 0 },
-      { type: 'cubicleWall', x: 7, z: 4, rotation: 0 },
-      { type: 'fileCabinet', x: 7, z: 5 },
+      { type: 'desk', x: 6, z: 3, rotation: 0 },
+      { type: 'monitor', x: 6, z: 2.7 },
+      { type: 'keyboard', x: 6, z: 3.2 },
+      { type: 'chair', x: 6, z: 3.8, rotation: Math.PI },
+      { type: 'trashCan', x: 6.5, z: 4 },
+      { type: 'plantFern', x: 7, z: 4.5 },
 
-      // === Cubicle row 3 (column 10, row 5) ===
-      { type: 'desk', x: 10, z: 5, rotation: 0 },
-      { type: 'monitor', x: 10, z: 4.7 },
-      { type: 'keyboard', x: 10, z: 5.2 },
-      { type: 'chair', x: 10, z: 5.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 9, z: 4, rotation: 0 },
-      { type: 'cubicleWall', x: 11, z: 4, rotation: 0 },
-      { type: 'trashCan', x: 11, z: 5 },
+      // --- NE pod — 2 cubicles (x=15, 17) ---
+      // Back walls
+      { type: 'cubicleWall', x: 14, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 16, z: 2, rotation: 0 },
+      // Side dividers
+      { type: 'cubicleWall', x: 14, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 16, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 18, z: 2.5, rotation: Math.PI / 2 },
+      // Cubicle desks
+      { type: 'desk', x: 15, z: 3, rotation: 0 },
+      { type: 'monitor', x: 15, z: 2.7 },
+      { type: 'keyboard', x: 15, z: 3.2 },
+      { type: 'chair', x: 15, z: 3.8, rotation: Math.PI },
+      { type: 'trashCan', x: 15.5, z: 4 },
 
-      // === Cubicle row 3 (column 10, row 8) ===
-      { type: 'desk', x: 10, z: 8, rotation: 0 },
-      { type: 'monitor', x: 10, z: 7.7 },
-      { type: 'keyboard', x: 10, z: 8.2 },
-      { type: 'chair', x: 10, z: 8.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 9, z: 7, rotation: 0 },
-      { type: 'cubicleWall', x: 11, z: 7, rotation: 0 },
-      { type: 'fileCabinet', x: 11, z: 9 },
+      { type: 'desk', x: 17, z: 3, rotation: 0 },
+      { type: 'monitor', x: 17, z: 2.7 },
+      { type: 'keyboard', x: 17, z: 3.2 },
+      { type: 'chair', x: 17, z: 3.8, rotation: Math.PI },
+      { type: 'trashCan', x: 17.5, z: 4 },
+      { type: 'plantSucculent', x: 18, z: 4 },
 
-      // === Cubicle row 4 (column 14, row 5) ===
-      { type: 'desk', x: 14, z: 5, rotation: 0 },
-      { type: 'monitor', x: 14, z: 4.7 },
-      { type: 'keyboard', x: 14, z: 5.2 },
-      { type: 'chair', x: 14, z: 5.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 13, z: 4, rotation: 0 },
-      { type: 'cubicleWall', x: 15, z: 4, rotation: 0 },
-      { type: 'plant', x: 15, z: 6 },
+      // ============================================================
+      // SOUTH CUBICLE ROW  (back walls at z=9, desks at z=10)
+      // Two pods: SW (Andrew's area, x=1-7) and SE (x=12-16)
+      // ============================================================
 
-      // === Cubicle row 4 (column 14, row 8) ===
-      { type: 'desk', x: 14, z: 8, rotation: 0 },
-      { type: 'monitor', x: 14, z: 7.7 },
-      { type: 'keyboard', x: 14, z: 8.2 },
-      { type: 'chair', x: 14, z: 8.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 13, z: 7, rotation: 0 },
-      { type: 'cubicleWall', x: 15, z: 7, rotation: 0 },
-      { type: 'fileCabinet', x: 15, z: 9 },
+      // --- SW pod — Andrew (x=3) + 1 neighbor (x=6) ---
+      // Back walls
+      { type: 'cubicleWall', x: 2, z: 9, rotation: 0 },
+      { type: 'cubicleWall', x: 5, z: 9, rotation: 0 },
+      // Side dividers
+      { type: 'cubicleWall', x: 2, z: 9.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 4, z: 9.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 5, z: 9.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 7, z: 9.5, rotation: Math.PI / 2 },
+      // Andrew's desk — keep at (3,10) for the interactable
+      { type: 'desk', x: 3, z: 10, rotation: 0 },
+      { type: 'monitor', x: 3, z: 9.7 },
+      { type: 'keyboard', x: 3, z: 10.2 },
+      { type: 'chair', x: 3, z: 10.8, rotation: Math.PI },
+      { type: 'trashCan', x: 3.5, z: 11 },
+      { type: 'plantTall', x: 2, z: 11 },
+      // Neighbor cubicle
+      { type: 'desk', x: 6, z: 10, rotation: 0 },
+      { type: 'monitor', x: 6, z: 9.7 },
+      { type: 'keyboard', x: 6, z: 10.2 },
+      { type: 'chair', x: 6, z: 10.8, rotation: Math.PI },
+      { type: 'trashCan', x: 6.5, z: 11 },
+      { type: 'plantFern', x: 7, z: 11 },
 
-      // === Cubicle row 5 (column 17, row 5) ===
-      { type: 'desk', x: 17, z: 5, rotation: 0 },
-      { type: 'monitor', x: 17, z: 4.7 },
-      { type: 'keyboard', x: 17, z: 5.2 },
-      { type: 'chair', x: 17, z: 5.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 16, z: 4, rotation: 0 },
-      { type: 'cubicleWall', x: 18, z: 4, rotation: 0 },
+      // --- SE pod — 1 cubicle (x=13) + open water-cooler alcove ---
+      // Back wall
+      { type: 'cubicleWall', x: 12, z: 9, rotation: 0 },
+      // Side dividers
+      { type: 'cubicleWall', x: 12, z: 9.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 14, z: 9.5, rotation: Math.PI / 2 },
+      // Cubicle desk
+      { type: 'desk', x: 13, z: 10, rotation: 0 },
+      { type: 'monitor', x: 13, z: 9.7 },
+      { type: 'keyboard', x: 13, z: 10.2 },
+      { type: 'chair', x: 13, z: 10.8, rotation: Math.PI },
+      { type: 'trashCan', x: 13.5, z: 11 },
+      { type: 'plantSucculent', x: 14.5, z: 11 },
 
-      // === Cubicle row 5 (column 17, row 8) ===
-      { type: 'desk', x: 17, z: 8, rotation: 0 },
-      { type: 'monitor', x: 17, z: 7.7 },
-      { type: 'keyboard', x: 17, z: 8.2 },
-      { type: 'chair', x: 17, z: 8.8, rotation: Math.PI },
-      { type: 'cubicleWall', x: 16, z: 7, rotation: 0 },
-      { type: 'cubicleWall', x: 18, z: 7, rotation: 0 },
-
-      // === Shared resources area (central) ===
-      { type: 'printer', x: 12, z: 2 },
-      { type: 'fileCabinet', x: 13, z: 2 },
-      { type: 'fileCabinet', x: 14, z: 2 },
-      { type: 'trashCan', x: 11, z: 2 },
-
-      // === Water cooler alcove ===
+      // ============================================================
+      // WATER COOLER ALCOVE  (open area, x=14-17, z=11-13)
+      // ============================================================
       { type: 'waterCooler', x: 15, z: 12 },
       { type: 'plant', x: 16, z: 12 },
-      { type: 'trashCan', x: 14, z: 12 },
 
-      // === Southern lounge area near reception exit ===
-      { type: 'plant', x: 7, z: 13 },
-      { type: 'plant', x: 12, z: 13 },
-      { type: 'trashCan', x: 5, z: 14 },
+      // ============================================================
+      // SHARED RESOURCE STATION — north-center (x=11-13, z=2)
+      // Printer flanked symmetrically by file cabinets
+      // ============================================================
+      { type: 'fileCabinet', x: 11, z: 2 },
+      { type: 'printer', x: 12, z: 2 },
+      { type: 'fileCabinet', x: 13, z: 2 },
 
-      // === File cabinets along north wall ===
-      { type: 'fileCabinet', x: 2, z: 1 },
-      { type: 'fileCabinet', x: 3, z: 1 },
-      { type: 'fileCabinet', x: 4, z: 1 },
-      { type: 'fileCabinet', x: 5, z: 1 },
-      { type: 'fileCabinet', x: 16, z: 1 },
-      { type: 'fileCabinet', x: 17, z: 1 },
-      { type: 'fileCabinet', x: 18, z: 1 },
+      // ============================================================
+      // STORAGE — neat file cabinet rows along north wall
+      // Left bank (behind NW pod) and right bank (behind NE pod)
+      // ============================================================
+      { type: 'fileCabinet', x: 2, z: 0.5 },
+      { type: 'fileCabinet', x: 3, z: 0.5 },
+      { type: 'fileCabinet', x: 4, z: 0.5 },
+      { type: 'fileCabinet', x: 16, z: 0.5 },
+      { type: 'fileCabinet', x: 17, z: 0.5 },
+      { type: 'fileCabinet', x: 18, z: 0.5 },
 
-      // === Plants along edges ===
-      { type: 'plant', x: 1, z: 1 },
-      { type: 'plant', x: 1, z: 14 },
-      { type: 'plant', x: 18, z: 1 },
-      { type: 'plant', x: 18, z: 14 },
+      // ============================================================
+      // STORAGE — file cabinet rows along south wall
+      // Left bank (SW) and right bank (SE), flanking the south exit
+      // ============================================================
+      { type: 'fileCabinet', x: 2, z: 14.5 },
+      { type: 'fileCabinet', x: 3, z: 14.5 },
+      { type: 'fileCabinet', x: 4, z: 14.5 },
+      { type: 'fileCabinet', x: 15, z: 14.5 },
+      { type: 'fileCabinet', x: 16, z: 14.5 },
+      { type: 'fileCabinet', x: 17, z: 14.5 },
 
-      // === Extra cubicle walls for maze feel ===
-      { type: 'cubicleWall', x: 9, z: 10, rotation: 0 },
-      { type: 'cubicleWall', x: 10, z: 10, rotation: 0 },
-      { type: 'cubicleWall', x: 8, z: 11, rotation: Math.PI / 2 },
+
     ],
     npcs: [
-      { id: 'janet', x: 5, z: 8, facing: Math.PI },
-      { id: 'intern', x: 10, z: 6, facing: 0 },
-      { id: 'monica', x: 14, z: 6, facing: Math.PI / 2 },
-      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2 },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI },    // NW pod, cubicle 3
+      { id: 'monica', x: 15, z: 5, facing: Math.PI },  // NE pod, cubicle 4
+      { id: 'intern', x: 17, z: 5, facing: Math.PI },  // NE pod, cubicle 5
+      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2 }, // water cooler (client)
     ],
     exits: [
       // NORTH exits -> Alex's Office
@@ -170,15 +182,15 @@ export const ROOMS = {
       { x: 19, z: 7, targetRoom: 'server_room', spawnX: 2, spawnZ: 7 },
       { x: 19, z: 8, targetRoom: 'server_room', spawnX: 2, spawnZ: 7 },
       // SOUTH exits -> Reception
-      { x: 9, z: 15, targetRoom: 'reception', spawnX: 7, spawnZ: 1 },
-      { x: 10, z: 15, targetRoom: 'reception', spawnX: 7, spawnZ: 1 },
+      { x: 9, z: 15, targetRoom: 'reception', spawnX: 7, spawnZ: 2 },
+      { x: 10, z: 15, targetRoom: 'reception', spawnX: 7, spawnZ: 2 },
     ],
     interactables: [
       { x: 15, z: 12, type: 'water_cooler', dialogId: 'water_cooler' },
       { x: 12, z: 2, type: 'printer', dialogId: 'printer_interact' },
       { x: 3, z: 10, type: 'andrews_desk', dialogId: 'andrews_desk' },
     ],
-    playerSpawn: { x: 3, z: 11 },
+    playerSpawn: { x: 5, z: 12 },
   },
 
   // ----------------------------------------------------------
@@ -202,8 +214,8 @@ export const ROOMS = {
       { type: 'fridge', x: 1, z: 0.5, rotation: 0 },
 
       // === Vending machines along east wall ===
-      { type: 'vendingMachine', x: 8, z: 2, rotation: -Math.PI / 2 },
-      { type: 'vendingMachine', x: 8, z: 4, rotation: -Math.PI / 2 },
+      { type: 'vendingMachine', x: 8, z: 1, rotation: -Math.PI / 2 },
+      { type: 'vendingMachine', x: 8, z: 6, rotation: -Math.PI / 2 },
 
       // === Table 1 (center-left) ===
       { type: 'desk', x: 3, z: 4, rotation: 0 },  // break table
@@ -221,8 +233,8 @@ export const ROOMS = {
 
       // === Trash and misc ===
       { type: 'trashCan', x: 5, z: 1 },
-      { type: 'trashCan', x: 8, z: 6 },
-      { type: 'plant', x: 1, z: 6 },
+      { type: 'plantSucculent', x: 2, z: 5 },
+      { type: 'plantFern', x: 7.5, z: 5 },
 
       // === Motivational poster ===
       { type: 'motivationalPoster', x: 5, z: 0.1, rotation: 0 },
@@ -241,8 +253,8 @@ export const ROOMS = {
     interactables: [
       { x: 2, z: 1, type: 'coffee_machine', dialogId: 'coffee_machine' },
       { x: 1, z: 0, type: 'fridge', dialogId: 'fridge_notes' },
-      { x: 8, z: 2, type: 'vending_machine', dialogId: 'vending_machine' },
-      { x: 8, z: 4, type: 'vending_machine', dialogId: 'vending_machine' },
+      { x: 8, z: 1, type: 'vending_machine', dialogId: 'vending_machine' },
+      { x: 8, z: 6, type: 'vending_machine', dialogId: 'vending_machine' },
       { x: 4, z: 1, type: 'microwave', dialogId: 'microwave' },
     ],
     playerSpawn: { x: 7, z: 2 },
@@ -287,17 +299,15 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 0.5, z: 4 },
       { type: 'fileCabinet', x: 0.5, z: 5 },
 
-      // === Small meeting table ===
-      { type: 'plant', x: 7, z: 6 },
-      { type: 'trashCan', x: 7, z: 1 },
+      { type: 'plantTall', x: 5, z: 2 },
     ],
     npcs: [
       { id: 'alex', x: 4, z: 1.5, facing: Math.PI },
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
-      { x: 3, z: 7, targetRoom: 'cubicle_farm', spawnX: 9, spawnZ: 2 },
-      { x: 4, z: 7, targetRoom: 'cubicle_farm', spawnX: 10, spawnZ: 1 },
+      { x: 3, z: 7, targetRoom: 'cubicle_farm', spawnX: 9, spawnZ: 4 },
+      { x: 4, z: 7, targetRoom: 'cubicle_farm', spawnX: 10, spawnZ: 4 },
       // EAST exit -> Conference Room
       { x: 7, z: 3, targetRoom: 'conference_room', spawnX: 1, spawnZ: 4 },
       { x: 7, z: 4, targetRoom: 'conference_room', spawnX: 1, spawnZ: 4 },
@@ -344,15 +354,7 @@ export const ROOMS = {
       // === Projector screen area — just a motivational poster placeholder ===
       { type: 'motivationalPoster', x: 3, z: 0.1, rotation: 0 },
 
-      // === Plants in corners ===
-      { type: 'plant', x: 1, z: 1 },
-      { type: 'plant', x: 10, z: 1 },
-      { type: 'plant', x: 1, z: 6 },
-      { type: 'plant', x: 10, z: 6 },
 
-      // === Trash can ===
-      { type: 'trashCan', x: 11, z: 1 },
-      { type: 'trashCan', x: 11, z: 6 },
     ],
     npcs: [
       // Henderson beneficiaries appear based on quest progress
@@ -472,23 +474,17 @@ export const ROOMS = {
       { type: 'chair', x: 12, z: 6, rotation: -Math.PI / 2 },
       { type: 'desk', x: 11, z: 5.5, rotation: 0 },  // side table
 
-      // === Decorative plants ===
-      { type: 'plant', x: 1, z: 1 },
-      { type: 'plant', x: 13, z: 1 },
-      { type: 'plant', x: 1, z: 6 },
-      { type: 'plant', x: 13, z: 6 },
-      { type: 'plant', x: 5, z: 1 },
-      { type: 'plant', x: 9, z: 1 },
+      // === Plants next to desks ===
+      { type: 'plantTall', x: 6, z: 2 },
+      { type: 'plantTall', x: 8, z: 2 },
+      { type: 'plantSucculent', x: 3, z: 4.5 },
+      { type: 'plantFern', x: 11, z: 4.5 },
 
       // === Company sign area (north wall, above reception desk) ===
       { type: 'motivationalPoster', x: 7, z: 0.1, rotation: 0 },
 
       // === Elevator on east wall ===
       { type: 'elevatorDoors', x: 13, z: 3, rotation: -Math.PI / 2 },
-
-      // === Trash cans ===
-      { type: 'trashCan', x: 5, z: 7 },
-      { type: 'trashCan', x: 9, z: 7 },
 
       // === Magazine rack / file cabinet near entrance ===
       { type: 'fileCabinet', x: 1, z: 3 },
@@ -498,8 +494,8 @@ export const ROOMS = {
     ],
     exits: [
       // NORTH exits -> Cubicle Farm
-      { x: 6, z: 0, targetRoom: 'cubicle_farm', spawnX: 9, spawnZ: 14 },
-      { x: 7, z: 0, targetRoom: 'cubicle_farm', spawnX: 10, spawnZ: 14 },
+      { x: 6, z: 0, targetRoom: 'cubicle_farm', spawnX: 9, spawnZ: 13 },
+      { x: 7, z: 0, targetRoom: 'cubicle_farm', spawnX: 10, spawnZ: 13 },
       // SOUTH exits -> Parking Garage (front entrance)
       { x: 6, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
       { x: 7, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
@@ -547,16 +543,7 @@ export const ROOMS = {
 
       // === Janitor's corner (southeast) ===
       { type: 'fileCabinet', x: 12, z: 8, rotation: 0 },  // janitor's supply shelf
-      { type: 'trashCan', x: 13, z: 8 },
-      { type: 'trashCan', x: 11, z: 8 },
 
-      // === Structural pillars (plants as placeholders) ===
-      { type: 'plant', x: 3, z: 1 },   // pillar
-      { type: 'plant', x: 7, z: 1 },   // pillar
-      { type: 'plant', x: 10, z: 1 },  // pillar
-      { type: 'plant', x: 3, z: 8 },   // pillar
-      { type: 'plant', x: 7, z: 8 },   // pillar
-      { type: 'plant', x: 10, z: 8 },  // pillar
     ],
     npcs: [
       { id: 'janitor', x: 12, z: 9, facing: Math.PI },
@@ -637,20 +624,14 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 10, z: 0.1, rotation: 0 },
       { type: 'motivationalPoster', x: 12, z: 0.1, rotation: 0 },
 
-      // === Lavish plants ===
-      { type: 'plant', x: 1, z: 1 },
-      { type: 'plant', x: 15, z: 1 },
-      { type: 'plant', x: 1, z: 10 },
-      { type: 'plant', x: 15, z: 10 },
-      { type: 'plant', x: 5, z: 6 },
-      { type: 'plant', x: 11, z: 6 },
+      // === Plants next to desks ===
+      { type: 'plantTall', x: 7, z: 2 },
+      { type: 'plantFern', x: 10, z: 2 },
+      { type: 'plantSucculent', x: 2.5, z: 3 },
+      { type: 'plant', x: 14, z: 3 },
 
       // === Printer / fax near east wall ===
       { type: 'printer', x: 15, z: 4 },
-
-      // === Trash cans ===
-      { type: 'trashCan', x: 1, z: 5 },
-      { type: 'trashCan', x: 15, z: 8 },
 
       // === Elevator doors (south wall) ===
       { type: 'elevatorDoors', x: 8, z: 11, rotation: Math.PI },

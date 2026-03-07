@@ -40,12 +40,15 @@ export class Player {
 
     // Check X and Z independently for wall sliding
     if (tileMap) {
-      if (tileMap.canMove(nx, this.position.z)) {
+      if (tileMap.canMove(nx, this.position.z, 0.3)) {
         this.position.x = nx;
       }
-      if (tileMap.canMove(this.position.x, nz)) {
+      if (tileMap.canMove(this.position.x, nz, 0.3)) {
         this.position.z = nz;
       }
+      // Clamp to room perimeter so character doesn't clip through walls
+      this.position.x = Math.max(0.4, Math.min(tileMap.width - 1.4, this.position.x));
+      this.position.z = Math.max(0.4, Math.min(tileMap.height - 1.4, this.position.z));
     } else {
       this.position.x = nx;
       this.position.z = nz;

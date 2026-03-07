@@ -30,7 +30,7 @@ const FURNITURE_FOOTPRINTS = {
 // Small/decorative items that should NOT block movement.
 // Players can clip through these slightly for smoother pathing.
 const NO_BLOCK = new Set([
-  'monitor', 'keyboard', 'chair', 'plant', 'trashCan',
+  'monitor', 'keyboard', 'chair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan',
   'coffeeMachine', 'microwave', 'waterCooler', 'printer',
   'whiteboard', 'motivationalPoster',
 ]);
@@ -124,6 +124,10 @@ export class Room {
     return this.data.exits || [];
   }
 
+  getSouthWallMeshes() {
+    return this._southWallMeshes || [];
+  }
+
   // ----------------------------------------------------------
   // Internals
   // ----------------------------------------------------------
@@ -177,11 +181,12 @@ export class Room {
     // Helper: build wall segments along a horizontal wall (north or south).
     // Iterates x from 0..w-1, skipping exit tiles, producing segments for runs of non-exit tiles.
     const buildHWall = (exitTiles, zPos) => {
+      const meshes = [];
       let segStart = null;
       for (let x = 0; x < w; x++) {
         if (exitTiles.has(x)) {
           if (segStart !== null) {
-            this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, x - 1, zPos, 'h');
+            meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, x - 1, zPos, 'h'));
             segStart = null;
           }
         } else {
@@ -189,8 +194,9 @@ export class Room {
         }
       }
       if (segStart !== null) {
-        this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, w - 1, zPos, 'h');
+        meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, w - 1, zPos, 'h'));
       }
+      return meshes;
     };
 
     // Helper: build wall segments along a vertical wall (west or east).
@@ -213,8 +219,14 @@ export class Room {
 
     // North wall (z = -0.5 in world)
     buildHWall(exitsByWall.north, -TILE_SIZE / 2 - wallThickness / 2);
-    // South wall
-    buildHWall(exitsByWall.south, (h - 1) * TILE_SIZE + TILE_SIZE / 2 + wallThickness / 2);
+    // South wall — capture meshes and clone material for transparency support
+    this._southWallMeshes = buildHWall(exitsByWall.south, (h - 1) * TILE_SIZE + TILE_SIZE / 2 + wallThickness / 2);
+    for (const mesh of this._southWallMeshes) {
+      const mat = mesh.material.clone();
+      mat.transparent = true;
+      mat.opacity = 1.0;
+      mesh.material = mat;
+    }
     // West wall (x = -0.5 in world)
     buildVWall(exitsByWall.west, -TILE_SIZE / 2 - wallThickness / 2);
     // East wall
@@ -238,25 +250,24 @@ export class Room {
    */
   _addWallSegment(wallMat, wallHeight, wallThickness, from, to, fixedPos, orientation) {
     const count = to - from + 1;
+    let mesh;
     if (orientation === 'h') {
       const segWidth = count * TILE_SIZE;
       const geo = new THREE.BoxGeometry(segWidth, wallHeight, wallThickness);
-      const mesh = new THREE.Mesh(geo, wallMat);
+      mesh = new THREE.Mesh(geo, wallMat);
       const centerX = ((from + to) / 2) * TILE_SIZE;
       mesh.position.set(centerX, wallHeight / 2, fixedPos);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      this.scene.add(mesh);
     } else {
       const segHeight = count * TILE_SIZE;
       const geo = new THREE.BoxGeometry(wallThickness, wallHeight, segHeight);
-      const mesh = new THREE.Mesh(geo, wallMat);
+      mesh = new THREE.Mesh(geo, wallMat);
       const centerZ = ((from + to) / 2) * TILE_SIZE;
       mesh.position.set(fixedPos, wallHeight / 2, centerZ);
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      this.scene.add(mesh);
     }
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    this.scene.add(mesh);
+    return mesh;
   }
 
   /**

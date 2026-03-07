@@ -264,10 +264,12 @@ export class DialogState {
       }
     }
 
-    // Cancel / skip to end of text
+    // Cancel / skip to end of text, then exit dialog on second press
     if (InputManager.isJustPressed('escape')) {
       if (!this.dialogBox.isComplete()) {
         this.dialogBox.skipToEnd();
+      } else {
+        this._endDialog();
       }
     }
   }
