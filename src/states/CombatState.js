@@ -40,6 +40,7 @@ export class CombatState {
       compliance: [0x0a0a1a, 0x1a1a2a, 0x0a0a2a, 0xcc2222],
       regional: [0x2a1a0a, 0x3a2a1a, 0x4a3a2a, 0xdaa520],
       alex_boss: [0x1a3a1a, 0x0a2a3a, 0x2a1a3a, 0xe94560],
+      reception_client: [0x0a1a2a, 0x1a2a3a, 0x0a0a1a, 0x3a8aaa],
     };
     const colors = bgColors[this.enemyId] || [0x1a0533, 0x0a2463, 0x3e1f47, 0xe94560];
     this.scene.setBackgroundColors(...colors);
@@ -156,7 +157,7 @@ export class CombatState {
 
     this.phase = 'animating';
     this.hud.disableInput();
-    const delay = this._playPlayerActionResult(result);
+    const delay = this._playPlayerActionResult(result, abilityId);
 
     this._updateHUD();
     setTimeout(() => {
@@ -222,11 +223,10 @@ export class CombatState {
     }
   }
 
-  _playPlayerActionResult(result) {
-    if (!result) {
-      return 1000;
-    }
+  _playPlayerActionResult(result, abilityId = null) {
+    if (!result) return 1000;
 
+    // Confusion and counter always use generic handling regardless of ability
     if (result.type === 'confused') {
       this.scene.flash(0xffaa00, 0.12);
       this.scene.shake(result.critical ? 0.5 : 0.3);
@@ -246,16 +246,28 @@ export class CombatState {
       return 1200;
     }
 
+    // Route special abilities to their unique animations
+    if (abilityId) {
+      return this._playAbilityAnim(abilityId, result);
+    }
+
+    // --- Generic handling for basic attack ---
     if (result.type === 'attack' || result.type === 'attack_aoe') {
-      this.scene.enemyHurtAnim();
-      this.scene.shake(result.critical ? 0.8 : 0.3);
+      this.scene.playerAttackAnim();
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
-      this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
-      if (result.critical) {
-        this.particles.burst({ x: 0, y: 1.2, z: 0 }, 25, 0xff4444, 4, 1.0);
-      } else {
-        this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
-      }
+      // Particle streams fly from player toward enemy
+      this.particles.stream({ x:  0.2, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 14, 0xffffff, 0.20);
+      this.particles.stream({ x: -0.1, y: 1.1, z: 3.8 }, { x: 0, y: 1.0, z: 0.2 },  8, 0xffee88, 0.22);
+      setTimeout(() => {
+        this.scene.enemyHurtAnim();
+        this.scene.shake(result.critical ? 0.8 : 0.3);
+        this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+        if (result.critical) {
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 25, 0xff4444, 4, 1.0);
+        } else {
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
+        }
+      }, 220);
       return 1200;
     }
 
@@ -276,8 +288,7 @@ export class CombatState {
     if (result.type === 'item') {
       if (result.healAmount) {
         AudioManager.playSfx('heal');
-        const target = result.healType === 'mp' ? 'player' : 'player';
-        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', target);
+        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
         this.particles.burst({ x: 0, y: 1, z: 4 }, 10, 0x44ff44, 2, 1.0);
       } else if (result.buffAmount) {
         AudioManager.playSfx('confirm');
@@ -287,6 +298,138 @@ export class CombatState {
     }
 
     return 1000;
+  }
+
+  // Unique animations for each player special ability
+  _playAbilityAnim(abilityId, result) {
+    const crit = result.critical;
+
+    switch (abilityId) {
+
+      case 'file_motion': {
+        // Legal paperwork hurled across the field — stream of paper, then scraps burst on impact
+        this.particles.stream(
+          { x: 0.1, y: 1.0, z: 3.5 },
+          { x: 0.0, y: 1.2, z: 0.3 },
+          20, 0xfffde8, 0.35
+        );
+        setTimeout(() => {
+          this.scene.enemyHurtAnim();
+          this.scene.shake(crit ? 0.7 : 0.35);
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 30 : 18, 0xfffde8, 2.5, 0.7);
+          this.particles.burst({ x: 0, y: 1.0, z: 0 }, 8, 0xccccaa, 1.5, 0.5);
+          if (crit) this.scene.flash(0xffffee, 0.1);
+        }, 350);
+        return 1400;
+      }
+
+      case 'cite_precedent': {
+        // Golden law energy condenses overhead, then SLAMS down with authority
+        this.scene.flash(0xddaa00, 0.08);
+        this.particles.burst({ x: 0,    y: 2.8, z: 0 }, 15, 0xffdd44, 0.8, 0.55);
+        this.particles.burst({ x: 0.3,  y: 2.5, z: 0 }, 10, 0xddaa00, 0.6, 0.45);
+        setTimeout(() => {
+          this.scene.flash(0xffdd00, 0.2);
+          this.scene.shake(crit ? 1.0 : 0.7);
+          this.scene.enemyHurtAnim();
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.5, z: 0 }, crit ? 35 : 25, 0xffd700, 3.5, 1.0);
+          this.particles.burst({ x: 0, y: 0.3, z: 0 }, 12, 0xaa8800, 2.0, 0.6);
+        }, 500);
+        return 1600;
+      }
+
+      case 'per_my_last_email': {
+        // Three escalating waves of corporate fury — the most devastating phrase known to man
+        this.hud.showMessage('Per My Last Email...');
+        this.scene.flash(0x660000, 0.15);
+        this.particles.burst({ x: 0, y: 1.8, z: 1.5 }, 20, 0xff2200, 3, 0.55);
+        setTimeout(() => {
+          this.scene.flash(0xaa0000, 0.18);
+          this.scene.shake(0.6);
+          this.particles.burst({ x: 0, y: 1.5, z: 0.8 }, 30, 0xff4400, 4, 0.75);
+        }, 250);
+        setTimeout(() => {
+          this.scene.flash(0xff0000, 0.3);
+          this.scene.shake(crit ? 1.5 : 1.2);
+          this.scene.enemyHurtAnim();
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 50 : 40, 0xff0000, 5,   1.2);
+          this.particles.burst({ x: 0, y: 1.4, z: 0 }, 20,             0xff8800, 4,   0.9);
+          this.particles.burst({ x: 0, y: 1.0, z: 0 }, 15,             0xffff00, 3,   0.7);
+        }, 500);
+        return 1800;
+      }
+
+      case 'cc_all': {
+        // Passive-aggressive email blast — three expanding rings of corporate blue
+        this.hud.showMessage('CC All! Everyone is now involved.');
+        this.scene.flash(0x2244aa, 0.10);
+        this.particles.ring({ x: 0, y: 1.0, z: 0 }, 28, 0x4488ff, 3.5, 1.0);
+        setTimeout(() => {
+          this.scene.shake(crit ? 0.7 : 0.4);
+          this.scene.enemyHurtAnim();
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.ring({ x: 0, y: 1.3, z: 0 }, 24, 0x2266dd, 4.5, 0.85);
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 25 : 15, 0x88aaff, 3, 0.8);
+        }, 300);
+        setTimeout(() => {
+          this.particles.ring({ x: 0, y: 0.7, z: 0 }, 20, 0x66aaff, 5.5, 0.70);
+        }, 500);
+        return 1600;
+      }
+
+      case 'coffee_break': {
+        // Warm coffee steam rises from the player's side — soothing, healing
+        AudioManager.playSfx('heal');
+        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+        this.hud.showMessage(`${result.abilityName}!`);
+        this.scene.flash(0x7a4522, 0.08);
+        this.particles.rise({ x:  0.0, y: 0.4, z: 4.0 }, 18, 0xaa7744, 1.8);
+        this.particles.rise({ x:  0.2, y: 0.7, z: 4.1 }, 12, 0xffcc88, 1.5);
+        setTimeout(() => {
+          this.particles.rise({ x: -0.2, y: 0.5, z: 3.9 }, 10, 0xdd9955, 1.3);
+          this.particles.burst({ x: 0, y: 1.1, z: 4 }, 8, 0x44ff88, 1.5, 0.8);
+        }, 300);
+        return 1200;
+      }
+
+      case 'billable_hours': {
+        // Golden orbital aura spins into existence, then coin shower explodes outward
+        AudioManager.playSfx('confirm');
+        this.hud.showMessage(`${result.abilityName}! Stats buffed for ${result.duration} turns!`);
+        this.scene.flash(0xddaa00, 0.12);
+        this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 16, 0xffd700, 0.9, 1.4);
+        this.particles.orbit({ x: 0, y: 1.2, z: 4 }, 10, 0xffee44, 0.6, 1.1);
+        setTimeout(() => {
+          this.scene.flash(0xffdd00, 0.10);
+          this.particles.burst({ x: 0, y: 2.2, z: 4 }, 25, 0xffd700, 2.5, 1.0);
+          this.particles.burst({ x: 0, y: 1.8, z: 4 }, 15, 0xffee88, 2.0, 0.8);
+        }, 400);
+        return 1400;
+      }
+
+      default: {
+        // Fallback for any future abilities
+        this.scene.enemyHurtAnim();
+        this.scene.shake(crit ? 0.8 : 0.3);
+        AudioManager.playSfx(crit ? 'critical' : 'hit');
+        if (result.damage) {
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
+        }
+        if (result.healAmount) {
+          this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+          this.particles.burst({ x: 0, y: 1, z: 4 }, 10, 0x44ff44, 2, 1.0);
+        }
+        return 1200;
+      }
+    }
   }
 
   _startEnemyTurn() {

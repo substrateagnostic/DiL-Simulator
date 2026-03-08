@@ -150,6 +150,17 @@ export const ENEMY_STATS = {
     xpReward: 200,
     abilities: ['quick_sync', 'circle_back', 'great_catch'],
   },
+  // Mutable placeholder — overwritten by ClientGenerator before each reception fight
+  reception_client: {
+    name: 'Prospective Client',
+    maxHP: 80,
+    hp: 80,
+    atk: 10,
+    def: 8,
+    spd: 6,
+    xpReward: 40,
+    abilities: ['portfolio_panic', 'demand_guarantees'],
+  },
 };
 
 // Enemy ability definitions
@@ -187,6 +198,12 @@ export const ENEMY_ABILITIES = {
   quick_sync: { name: 'Quick Sync', power: 0, type: 'stun', duration: 1, message: '"Hey, got a sec for a quick sync?" (You don\'t.)' },
   circle_back: { name: 'Let\'s Circle Back', power: 0, type: 'repeat', message: '"Let\'s circle back on that." (He repeats his last attack.)' },
   great_catch: { name: 'Great Catch!', power: 0, type: 'counter', message: '"Great catch! But actually..." (Counter stance activated.)' },
+
+  // Reception Clients
+  portfolio_panic: { name: 'Portfolio Panic', power: 14, type: 'attack', message: 'The client erupts over their portfolio performance!' },
+  demand_guarantees: { name: 'Demand Guarantees', power: 0, type: 'confuse', duration: 2, message: '"I need guaranteed 20% returns! Is that so hard?!"' },
+  call_the_other_advisor: { name: 'Call My Other Advisor', power: 20, type: 'attack', message: 'The client threatens to take their business to Merrill Lynch!' },
+  client_bro_down: { name: 'Bro, Trust Me', power: 16, type: 'attack', message: 'The client insists on putting everything in crypto, bro.' },
 };
 
 // Items

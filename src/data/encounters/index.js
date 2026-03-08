@@ -43,4 +43,10 @@ export const ENCOUNTERS = {
     postDialogId: 'alex_boss_defeated',
     canFlee: false,
   },
+  reception_client: {
+    enemyId: 'reception_client',
+    preDialogId: null,
+    postDialogId: null,
+    canFlee: false,
+  },
 };

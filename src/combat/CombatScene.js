@@ -177,6 +177,60 @@ export class CombatScene {
     }, duration * 1000);
   }
 
+  // Player attack animation — camera punch-in + sprite slash streaks
+  // Uses THREE.Sprite so slashes always face the camera (guaranteed visible).
+  playerAttackAnim() {
+    // Zoom camera toward enemy (via _basePos so the shake system respects it)
+    const origZ = this._basePos.z;
+    this._basePos.z = origZ - 1.0;
+    setTimeout(() => { this._basePos.z = origZ; }, 200);
+
+    // Brief white flash for instant visual punch
+    this.flash(0xffffff, 0.06);
+
+    // Helper: create a sprite slash at a given position/size/rotation
+    const makeSlash = (x, y, z, color, scaleX, scaleY, rotation) => {
+      const mat = new THREE.SpriteMaterial({
+        color,
+        transparent: true,
+        opacity: 1.0,
+        rotation,
+        depthWrite: false,
+      });
+      const sprite = new THREE.Sprite(mat);
+      sprite.position.set(x, y, z);
+      sprite.scale.set(scaleX, scaleY, 1);
+      this.scene.add(sprite);
+      return { sprite, mat };
+    };
+
+    // Primary slash (bright white, wide)
+    const s1 = makeSlash(0.1,  1.0, 2.5, 0xffffff, 4.0, 0.18,  0.35);
+    // Secondary slash (warm yellow, narrower, slightly offset)
+    const s2 = makeSlash(-0.1, 1.2, 2.2, 0xffee88, 3.0, 0.12, -0.25);
+
+    const DURATION = 0.25; // seconds
+    let elapsed = 0;
+    const tick = () => {
+      elapsed += 0.016;
+      const t = Math.min(elapsed / DURATION, 1);
+      const ease = 1 - t * t; // ease-out
+      s1.mat.opacity = ease;
+      s2.mat.opacity = ease * 0.75;
+      s1.sprite.position.z = 2.5 - t * 2.8;
+      s2.sprite.position.z = 2.2 - t * 2.5;
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        this.scene.remove(s1.sprite);
+        this.scene.remove(s2.sprite);
+        s1.mat.dispose();
+        s2.mat.dispose();
+      }
+    };
+    requestAnimationFrame(tick);
+  }
+
   // Enemy attack animation (lunge forward)
   enemyAttackAnim() {
     if (!this.enemyGroup) return;

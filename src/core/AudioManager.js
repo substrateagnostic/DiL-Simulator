@@ -123,46 +123,59 @@ class AudioManagerClass {
    */
   _getMusicTracks() {
     return {
-      // ---- EXPLORATION: lo-fi office ambient, ~80 BPM, 8-bar loop ----------
+      // ---- EXPLORATION: lo-fi office ambient, ~80 BPM, 16-bar loop ---------
+      // A section (bars 1-8):  sustained pads + sub-bass + sparse arpeggios
+      // B section (bars 9-16): walking bass + counter-melody over same chords
       exploration: () => {
         const bpm = 80;
-        const beat = 60 / bpm;            // 0.75 s per beat
-        const bar = beat * 4;             // 3 s per bar
-        const loopBars = 8;
-        const loopDuration = bar * loopBars; // 24 s
-        const now = this.ctx.currentTime;
+        const beat = 60 / bpm;              // 0.75 s per beat
+        const bar  = beat * 4;              // 3 s per bar
+        const loopDuration = bar * 16;      // 48 s
+        const now  = this.ctx.currentTime;
 
-        // Chord progression: C - Am - F - G  (repeat twice for 8 bars)
-        // Frequencies for root + third + fifth of each chord
+        // Chord progression: C - Am - F - G  (used throughout)
         const chords = [
-          // C major:  C4, E4, G4
-          [261.63, 329.63, 392.00],
-          // A minor:  A3, C4, E4
-          [220.00, 261.63, 329.63],
-          // F major:  F3, A3, C4
-          [174.61, 220.00, 261.63],
-          // G major:  G3, B3, D4
-          [196.00, 246.94, 293.66],
+          [261.63, 329.63, 392.00],  // C major:  C4, E4, G4
+          [220.00, 261.63, 329.63],  // A minor:  A3, C4, E4
+          [174.61, 220.00, 261.63],  // F major:  F3, A3, C4
+          [196.00, 246.94, 293.66],  // G major:  G3, B3, D4
         ];
+        const bassRoots = [130.81, 110.00, 87.31, 98.00]; // C3, A2, F2, G2
 
         const nodes = [];
 
-        // --- Pad layer: soft sine wave chords ---
+        // Helper: schedule one oscillator note
+        const schedNote = (freq, start, dur, type, vol, attack = 0.05) => {
+          const osc  = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(vol, start + attack);
+          gain.gain.setValueAtTime(vol, start + dur * 0.85);
+          gain.gain.linearRampToValueAtTime(0, start + dur);
+          osc.connect(gain);
+          gain.connect(this.musicGain);
+          osc.start(start);
+          osc.stop(start + dur + 0.05);
+          nodes.push(osc);
+        };
+
+        // === A SECTION: bars 1-8 ===
+
+        // Pad layer: soft sine chords, one per bar
         for (let rep = 0; rep < 2; rep++) {
           chords.forEach((chord, ci) => {
             const barStart = now + (rep * 4 + ci) * bar;
             chord.forEach((freq) => {
-              const osc = this.ctx.createOscillator();
+              const osc  = this.ctx.createOscillator();
               const gain = this.ctx.createGain();
               osc.type = 'sine';
               osc.frequency.value = freq;
-
-              // Gentle fade in / out over the bar
               gain.gain.setValueAtTime(0, barStart);
               gain.gain.linearRampToValueAtTime(0.10, barStart + beat * 0.5);
               gain.gain.setValueAtTime(0.10, barStart + bar - beat * 0.5);
               gain.gain.linearRampToValueAtTime(0, barStart + bar);
-
               osc.connect(gain);
               gain.connect(this.musicGain);
               osc.start(barStart);
@@ -172,21 +185,18 @@ class AudioManagerClass {
           });
         }
 
-        // --- Sub-bass: root notes, one per bar, sine an octave below ---
-        const bassRoots = [130.81, 110.00, 87.31, 98.00]; // C3, A2, F2, G2
+        // Sub-bass: one root note per bar, sine
         for (let rep = 0; rep < 2; rep++) {
           bassRoots.forEach((freq, ci) => {
             const barStart = now + (rep * 4 + ci) * bar;
-            const osc = this.ctx.createOscillator();
+            const osc  = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sine';
             osc.frequency.value = freq;
-
             gain.gain.setValueAtTime(0, barStart);
             gain.gain.linearRampToValueAtTime(0.08, barStart + beat * 0.3);
             gain.gain.setValueAtTime(0.08, barStart + bar - beat);
             gain.gain.linearRampToValueAtTime(0, barStart + bar);
-
             osc.connect(gain);
             gain.connect(this.musicGain);
             osc.start(barStart);
@@ -195,47 +205,140 @@ class AudioManagerClass {
           });
         }
 
-        // --- Gentle high arpeggiated notes (triangle wave, sparse) ---
-        // Play a slow arpeggio on beats 2 and 4 of every other bar
-        const arpNotes = [523.25, 659.25, 587.33, 523.25, 493.88, 440.00, 523.25, 587.33];
-        for (let i = 0; i < loopBars; i++) {
-          const barStart = now + i * bar;
-          const freq = arpNotes[i % arpNotes.length];
-          const noteStart = barStart + beat * 1.5; // off-beat
+        // Sparse arpeggios: one triangle note per bar, off-beat
+        const arpA = [523.25, 659.25, 587.33, 523.25, 493.88, 440.00, 523.25, 587.33];
+        for (let i = 0; i < 8; i++) {
+          const noteStart = now + i * bar + beat * 1.5;
+          schedNote(arpA[i], noteStart, beat * 2, 'triangle', 0.04, 0.05);
+        }
 
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.value = freq;
+        // === B SECTION: bars 9-16 ===
 
-          gain.gain.setValueAtTime(0, noteStart);
-          gain.gain.linearRampToValueAtTime(0.04, noteStart + 0.05);
-          gain.gain.exponentialRampToValueAtTime(0.001, noteStart + beat * 2);
+        // Pads continue at slightly lower volume to make room for melody
+        for (let rep = 0; rep < 2; rep++) {
+          chords.forEach((chord, ci) => {
+            const barStart = now + (8 + rep * 4 + ci) * bar;
+            chord.forEach((freq) => {
+              const osc  = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.value = freq;
+              gain.gain.setValueAtTime(0, barStart);
+              gain.gain.linearRampToValueAtTime(0.07, barStart + beat * 0.5);
+              gain.gain.setValueAtTime(0.07, barStart + bar - beat * 0.5);
+              gain.gain.linearRampToValueAtTime(0, barStart + bar);
+              osc.connect(gain);
+              gain.connect(this.musicGain);
+              osc.start(barStart);
+              osc.stop(barStart + bar + 0.05);
+              nodes.push(osc);
+            });
+          });
+        }
 
-          osc.connect(gain);
-          gain.connect(this.musicGain);
-          osc.start(noteStart);
-          osc.stop(noteStart + beat * 2 + 0.05);
-          nodes.push(osc);
+        // Walking bass: 8th-note lines (triangle) instead of sustained roots
+        const walkBass = [
+          [130.81, 164.81, 196.00, 220.00, 130.81, 164.81, 196.00, 220.00], // C walk
+          [110.00, 130.81, 164.81, 196.00, 110.00, 130.81, 164.81, 130.81], // Am walk
+          [87.31,  110.00, 130.81, 164.81, 87.31,  110.00, 130.81, 110.00], // F walk
+          [98.00,  123.47, 146.83, 174.61, 98.00,  123.47, 146.83, 123.47], // G walk
+        ];
+        const eighth = beat / 2;
+        for (let rep = 0; rep < 2; rep++) {
+          walkBass.forEach((pattern, ci) => {
+            const barStart = now + (8 + rep * 4 + ci) * bar;
+            pattern.forEach((freq, i) => {
+              schedNote(freq, barStart + i * eighth, eighth * 0.85, 'triangle', 0.07, 0.02);
+            });
+          });
+        }
+
+        // Counter-melody A (bars 9-12): ascending questioning phrases
+        const counterA = [
+          // Bar 9  (C): stepwise ascent, hold on top
+          [{ f: 523.25, t: 0,         d: beat },
+           { f: 587.33, t: beat,       d: beat * 0.5 },
+           { f: 659.25, t: beat * 1.5, d: beat * 2.5 }],
+          // Bar 10 (Am): inner movement, resolve to A4
+          [{ f: 440.00, t: 0,         d: beat * 0.5 },
+           { f: 523.25, t: beat * 0.5, d: beat * 0.5 },
+           { f: 493.88, t: beat,       d: beat * 3 }],
+          // Bar 11 (F): warm descent
+          [{ f: 523.25, t: 0,         d: beat * 0.5 },
+           { f: 440.00, t: beat * 0.5, d: beat * 0.5 },
+           { f: 349.23, t: beat,       d: beat * 3 }],
+          // Bar 12 (G): rising tension
+          [{ f: 392.00, t: 0,         d: beat * 0.5 },
+           { f: 493.88, t: beat * 0.5, d: beat * 0.5 },
+           { f: 587.33, t: beat,       d: beat },
+           { f: 659.25, t: beat * 2,   d: beat * 2 }],
+        ];
+        counterA.forEach((barMelody, ci) => {
+          const barStart = now + (8 + ci) * bar;
+          barMelody.forEach(({ f, t, d }) => {
+            schedNote(f, barStart + t, d, 'triangle', 0.05, 0.04);
+          });
+        });
+
+        // Counter-melody B (bars 13-16): descending resolution + final flourish
+        const counterB = [
+          // Bar 13 (C): high start, drift down
+          [{ f: 784.00, t: 0,         d: beat * 0.5 },
+           { f: 659.25, t: beat * 0.5, d: beat * 0.5 },
+           { f: 587.33, t: beat,       d: beat * 0.5 },
+           { f: 523.25, t: beat * 1.5, d: beat * 2.5 }],
+          // Bar 14 (Am): lyrical answer
+          [{ f: 493.88, t: 0,         d: beat },
+           { f: 440.00, t: beat,       d: beat * 0.5 },
+           { f: 392.00, t: beat * 1.5, d: beat * 0.5 },
+           { f: 440.00, t: beat * 2,   d: beat * 2 }],
+          // Bar 15 (F): ascending build
+          [{ f: 349.23, t: 0,         d: beat * 0.5 },
+           { f: 440.00, t: beat * 0.5, d: beat * 0.5 },
+           { f: 523.25, t: beat,       d: beat * 0.5 },
+           { f: 587.33, t: beat * 1.5, d: beat * 0.5 },
+           { f: 659.25, t: beat * 2,   d: beat * 2 }],
+          // Bar 16 (G): flourish → leads back into A section
+          [{ f: 784.00, t: 0,         d: beat * 0.5 },
+           { f: 659.25, t: beat * 0.5, d: beat * 0.5 },
+           { f: 587.33, t: beat,       d: beat },
+           { f: 523.25, t: beat * 2,   d: beat },
+           { f: 392.00, t: beat * 3,   d: beat }],
+        ];
+        counterB.forEach((barMelody, ci) => {
+          const barStart = now + (12 + ci) * bar;
+          barMelody.forEach(({ f, t, d }) => {
+            schedNote(f, barStart + t, d, 'triangle', 0.05, 0.04);
+          });
+        });
+
+        // Denser arpeggios for B section: two hits per bar (beats 1.5 and 3.5)
+        const arpB = [523.25, 440.00, 349.23, 392.00, 659.25, 523.25, 440.00, 587.33];
+        for (let i = 0; i < 8; i++) {
+          const barStart = now + (8 + i) * bar;
+          const freq = arpB[i];
+          schedNote(freq,            barStart + beat * 0.5, beat * 1.5, 'triangle', 0.03, 0.04);
+          schedNote(freq * 1.498307, barStart + beat * 2.5, beat * 1.5, 'triangle', 0.03, 0.04); // up a fifth
         }
 
         return { nodes, loopDuration };
       },
 
-      // ---- COMBAT: chiptune battle theme, ~140 BPM, 4-bar loop ------------
+      // ---- COMBAT: chiptune battle theme, ~140 BPM, 8-bar loop ------------
+      // A section (bars 1-4): Em-C-D-Bm, original driving theme
+      // B section (bars 5-8): Am-F-C-G, raised register + 16th hi-hats
       combat: () => {
         const bpm = 140;
-        const beat = 60 / bpm;                // ~0.4286 s
-        const bar = beat * 4;                  // ~1.714 s
-        const loopBars = 4;
-        const loopDuration = bar * loopBars;   // ~6.857 s
-        const now = this.ctx.currentTime;
+        const beat = 60 / bpm;              // ~0.4286 s
+        const bar  = beat * 4;              // ~1.714 s
+        const loopDuration = bar * 8;       // ~13.714 s
+        const now  = this.ctx.currentTime;
 
         const nodes = [];
 
-        // Helper: schedule a note
+        // Helper: schedule a melodic note
         const note = (freq, start, dur, type, vol) => {
-          const osc = this.ctx.createOscillator();
+          const osc  = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
           osc.type = type;
           osc.frequency.value = freq;
@@ -250,113 +353,173 @@ class AudioManagerClass {
           nodes.push(osc);
         };
 
-        // --- Driving bass line (sawtooth) ---
-        // Pattern per bar: root 8th notes with octave jumps
-        const bassPatterns = [
-          // Bar 1: E minor feel  (E2, E3)
-          [82.41, 82.41, 164.81, 82.41, 82.41, 164.81, 82.41, 164.81],
-          // Bar 2: C major feel  (C2, C3)
-          [65.41, 65.41, 130.81, 65.41, 65.41, 130.81, 65.41, 130.81],
-          // Bar 3: D major feel  (D2, D3)
-          [73.42, 73.42, 146.83, 73.42, 73.42, 146.83, 73.42, 146.83],
-          // Bar 4: B minor feel  (B1, B2)
-          [61.74, 61.74, 123.47, 61.74, 61.74, 123.47, 123.47, 61.74],
-        ];
+        // Helper: noise percussion hit
+        const noiseHit = (hitTime, dur, vol) => {
+          const bufferSize = Math.floor(this.ctx.sampleRate * dur);
+          const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+          const data   = buffer.getChannelData(0);
+          for (let s = 0; s < bufferSize; s++) data[s] = Math.random() * 2 - 1;
+          const src  = this.ctx.createBufferSource();
+          src.buffer = buffer;
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(vol, hitTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, hitTime + dur);
+          src.connect(gain);
+          gain.connect(this.musicGain);
+          src.start(hitTime);
+          src.stop(hitTime + dur + 0.01);
+          nodes.push(src);
+        };
 
-        for (let b = 0; b < loopBars; b++) {
+        // === A SECTION: bars 1-4 (Em-C-D-Bm) ===
+
+        // Driving sawtooth bass: root 8th-notes with octave jumps
+        const bassA = [
+          [82.41, 82.41, 164.81, 82.41, 82.41, 164.81, 82.41, 164.81],  // Em
+          [65.41, 65.41, 130.81, 65.41, 65.41, 130.81, 65.41, 130.81],  // C
+          [73.42, 73.42, 146.83, 73.42, 73.42, 146.83, 73.42, 146.83],  // D
+          [61.74, 61.74, 123.47, 61.74, 61.74, 123.47, 123.47, 61.74],  // Bm
+        ];
+        for (let b = 0; b < 4; b++) {
           const barStart = now + b * bar;
-          const pattern = bassPatterns[b];
-          const eighth = beat / 2;
-          pattern.forEach((freq, i) => {
+          const eighth   = beat / 2;
+          bassA[b].forEach((freq, i) => {
             note(freq, barStart + i * eighth, eighth * 0.9, 'sawtooth', 0.12);
           });
         }
 
-        // --- Melody (square wave, Earthbound-style) ---
-        // E minor pentatonic: E4, G4, A4, B4, D5, E5
-        const melodyBars = [
-          // Bar 1
-          [
-            { f: 329.63, t: 0,           d: beat },         // E4
-            { f: 392.00, t: beat,         d: beat * 0.5 },   // G4
-            { f: 440.00, t: beat * 1.5,   d: beat * 0.5 },   // A4
-            { f: 493.88, t: beat * 2,     d: beat },         // B4
-            { f: 440.00, t: beat * 3,     d: beat * 0.5 },   // A4
-            { f: 392.00, t: beat * 3.5,   d: beat * 0.5 },   // G4
-          ],
-          // Bar 2
-          [
-            { f: 523.25, t: 0,           d: beat * 0.5 },   // C5
-            { f: 493.88, t: beat * 0.5,   d: beat * 0.5 },   // B4
-            { f: 440.00, t: beat,         d: beat },         // A4
-            { f: 329.63, t: beat * 2,     d: beat * 1.5 },   // E4
-            { f: 392.00, t: beat * 3.5,   d: beat * 0.5 },   // G4
-          ],
-          // Bar 3
-          [
-            { f: 587.33, t: 0,           d: beat },         // D5
-            { f: 523.25, t: beat,         d: beat * 0.5 },   // C5
-            { f: 493.88, t: beat * 1.5,   d: beat * 0.5 },   // B4
-            { f: 440.00, t: beat * 2,     d: beat * 0.5 },   // A4
-            { f: 493.88, t: beat * 2.5,   d: beat * 0.5 },   // B4
-            { f: 523.25, t: beat * 3,     d: beat },         // C5
-          ],
-          // Bar 4
-          [
-            { f: 659.25, t: 0,           d: beat * 0.5 },   // E5
-            { f: 587.33, t: beat * 0.5,   d: beat * 0.5 },   // D5
-            { f: 493.88, t: beat,         d: beat },         // B4
-            { f: 392.00, t: beat * 2,     d: beat * 0.5 },   // G4
-            { f: 440.00, t: beat * 2.5,   d: beat * 0.5 },   // A4
-            { f: 329.63, t: beat * 3,     d: beat },         // E4 (resolve)
-          ],
+        // Melody A: E minor pentatonic, Earthbound-style square wave
+        const melodyA = [
+          [{ f: 329.63, t: 0,         d: beat },
+           { f: 392.00, t: beat,       d: beat * 0.5 },
+           { f: 440.00, t: beat * 1.5, d: beat * 0.5 },
+           { f: 493.88, t: beat * 2,   d: beat },
+           { f: 440.00, t: beat * 3,   d: beat * 0.5 },
+           { f: 392.00, t: beat * 3.5, d: beat * 0.5 }],
+          [{ f: 523.25, t: 0,         d: beat * 0.5 },
+           { f: 493.88, t: beat * 0.5, d: beat * 0.5 },
+           { f: 440.00, t: beat,       d: beat },
+           { f: 329.63, t: beat * 2,   d: beat * 1.5 },
+           { f: 392.00, t: beat * 3.5, d: beat * 0.5 }],
+          [{ f: 587.33, t: 0,         d: beat },
+           { f: 523.25, t: beat,       d: beat * 0.5 },
+           { f: 493.88, t: beat * 1.5, d: beat * 0.5 },
+           { f: 440.00, t: beat * 2,   d: beat * 0.5 },
+           { f: 493.88, t: beat * 2.5, d: beat * 0.5 },
+           { f: 523.25, t: beat * 3,   d: beat }],
+          [{ f: 659.25, t: 0,         d: beat * 0.5 },
+           { f: 587.33, t: beat * 0.5, d: beat * 0.5 },
+           { f: 493.88, t: beat,       d: beat },
+           { f: 392.00, t: beat * 2,   d: beat * 0.5 },
+           { f: 440.00, t: beat * 2.5, d: beat * 0.5 },
+           { f: 329.63, t: beat * 3,   d: beat }],
         ];
-
-        for (let b = 0; b < loopBars; b++) {
+        for (let b = 0; b < 4; b++) {
           const barStart = now + b * bar;
-          melodyBars[b].forEach(({ f, t, d }) => {
-            note(f, barStart + t, d * 0.9, 'square', 0.09);
-          });
+          melodyA[b].forEach(({ f, t, d }) => note(f, barStart + t, d * 0.9, 'square', 0.09));
         }
 
-        // --- Percussion: noise hits on every beat, accented on 1 and 3 ---
-        for (let b = 0; b < loopBars; b++) {
+        // Percussion A: beat hits accented on 1 & 3
+        for (let b = 0; b < 4; b++) {
           for (let i = 0; i < 4; i++) {
-            const hitTime = now + b * bar + i * beat;
-            const accent = (i === 0 || i === 2) ? 0.15 : 0.07;
-            const dur = (i === 0 || i === 2) ? 0.06 : 0.03;
-
-            const bufferSize = Math.floor(this.ctx.sampleRate * dur);
-            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let s = 0; s < bufferSize; s++) {
-              data[s] = (Math.random() * 2 - 1);
-            }
-            const src = this.ctx.createBufferSource();
-            src.buffer = buffer;
-            const gain = this.ctx.createGain();
-            gain.gain.setValueAtTime(accent, hitTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, hitTime + dur);
-            src.connect(gain);
-            gain.connect(this.musicGain);
-            src.start(hitTime);
-            src.stop(hitTime + dur + 0.01);
-            nodes.push(src);
+            const accent = (i === 0 || i === 2);
+            noiseHit(now + b * bar + i * beat, accent ? 0.06 : 0.03, accent ? 0.15 : 0.07);
           }
         }
 
-        // --- Harmony layer: sustained square wave chord stabs on beat 1 ---
-        const harmChords = [
-          [329.63, 392.00, 493.88],  // Em:  E4, G4, B4
-          [261.63, 329.63, 392.00],  // C:   C4, E4, G4
-          [293.66, 369.99, 440.00],  // D:   D4, F#4, A4
-          [246.94, 329.63, 392.00],  // Em/B: B3, E4, G4
+        // Harmony A: chord stabs on beat 1
+        const harmA = [
+          [329.63, 392.00, 493.88],  // Em
+          [261.63, 329.63, 392.00],  // C
+          [293.66, 369.99, 440.00],  // D
+          [246.94, 329.63, 392.00],  // Em/B
         ];
-
-        for (let b = 0; b < loopBars; b++) {
+        for (let b = 0; b < 4; b++) {
           const barStart = now + b * bar;
-          harmChords[b].forEach((freq) => {
-            note(freq, barStart, beat * 1.5, 'square', 0.04);
+          harmA[b].forEach((freq) => note(freq, barStart, beat * 1.5, 'square', 0.04));
+        }
+
+        // === B SECTION: bars 5-8 (Am-F-C-G) — raised register, more intense ===
+
+        // Bass B: Am-F-C-G, same sawtooth pattern
+        const bassB = [
+          [110.00, 110.00, 220.00, 110.00, 110.00, 220.00, 110.00, 220.00], // Am
+          [87.31,  87.31,  174.61, 87.31,  87.31,  174.61, 87.31,  174.61], // F
+          [65.41,  65.41,  130.81, 65.41,  98.00,  65.41,  130.81, 98.00],  // C (with G passing)
+          [98.00,  98.00,  196.00, 98.00,  98.00,  196.00, 82.41,  98.00],  // G (lead back to Em)
+        ];
+        for (let b = 0; b < 4; b++) {
+          const barStart = now + (4 + b) * bar;
+          const eighth   = beat / 2;
+          bassB[b].forEach((freq, i) => {
+            note(freq, barStart + i * eighth, eighth * 0.9, 'sawtooth', 0.12);
+          });
+        }
+
+        // Melody B: higher register, urgent — Am pentatonic an octave up
+        const melodyB = [
+          // Bar 5 (Am): urgent ascending run
+          [{ f: 880.00, t: 0,         d: beat * 0.5 },
+           { f: 783.99, t: beat * 0.5, d: beat * 0.5 },
+           { f: 659.25, t: beat,       d: beat * 0.5 },
+           { f: 783.99, t: beat * 1.5, d: beat * 0.5 },
+           { f: 880.00, t: beat * 2,   d: beat * 0.5 },
+           { f: 987.77, t: beat * 2.5, d: beat * 0.5 },
+           { f: 880.00, t: beat * 3,   d: beat }],
+          // Bar 6 (F): drop then soar
+          [{ f: 523.25, t: 0,         d: beat * 0.5 },
+           { f: 587.33, t: beat * 0.5, d: beat * 0.5 },
+           { f: 659.25, t: beat,       d: beat },
+           { f: 783.99, t: beat * 2,   d: beat * 0.5 },
+           { f: 880.00, t: beat * 2.5, d: beat * 1.5 }],
+          // Bar 7 (C): triumphant cascade down
+          [{ f: 1046.50, t: 0,         d: beat * 0.5 },
+           { f: 987.77,  t: beat * 0.5, d: beat * 0.5 },
+           { f: 880.00,  t: beat,       d: beat * 0.5 },
+           { f: 783.99,  t: beat * 1.5, d: beat * 0.5 },
+           { f: 659.25,  t: beat * 2,   d: beat * 0.5 },
+           { f: 523.25,  t: beat * 2.5, d: beat * 0.5 },
+           { f: 659.25,  t: beat * 3,   d: beat }],
+          // Bar 8 (G): dramatic descent, resolve to loop start
+          [{ f: 783.99, t: 0,         d: beat * 0.5 },
+           { f: 659.25, t: beat * 0.5, d: beat * 0.5 },
+           { f: 587.33, t: beat,       d: beat * 0.5 },
+           { f: 493.88, t: beat * 1.5, d: beat * 0.5 },
+           { f: 440.00, t: beat * 2,   d: beat * 0.5 },
+           { f: 392.00, t: beat * 2.5, d: beat * 0.5 },
+           { f: 329.63, t: beat * 3,   d: beat }],
+        ];
+        for (let b = 0; b < 4; b++) {
+          const barStart = now + (4 + b) * bar;
+          melodyB[b].forEach(({ f, t, d }) => note(f, barStart + t, d * 0.85, 'square', 0.09));
+        }
+
+        // Percussion B: slightly louder beats + 16th off-beat hi-hats
+        for (let b = 0; b < 4; b++) {
+          for (let i = 0; i < 4; i++) {
+            const accent = (i === 0 || i === 2);
+            noiseHit(now + (4 + b) * bar + i * beat, accent ? 0.06 : 0.03, accent ? 0.18 : 0.09);
+          }
+          // 16th-note hi-hats on the off-sixteenths (between each 8th)
+          for (let i = 0; i < 8; i++) {
+            if (i % 2 === 1) {
+              noiseHit(now + (4 + b) * bar + i * (beat / 2), 0.02, 0.05);
+            }
+          }
+        }
+
+        // Harmony B: Am-F-C-G stabs on beats 1 and 3
+        const harmB = [
+          [220.00, 261.63, 329.63, 440.00],  // Am: A3, C4, E4, A4
+          [174.61, 220.00, 261.63, 349.23],  // F:  F3, A3, C4, F4
+          [130.81, 196.00, 261.63, 329.63],  // C:  C3, G3, C4, E4
+          [196.00, 246.94, 293.66, 392.00],  // G:  G3, B3, D4, G4
+        ];
+        for (let b = 0; b < 4; b++) {
+          const barStart = now + (4 + b) * bar;
+          harmB[b].forEach((freq) => {
+            note(freq, barStart,            beat * 1.5,  'square', 0.04); // beat 1
+            note(freq, barStart + beat * 2, beat * 0.75, 'square', 0.03); // beat 3
           });
         }
 

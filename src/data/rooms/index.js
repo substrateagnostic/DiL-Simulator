@@ -273,14 +273,14 @@ export const ROOMS = {
     furniture: [
       // === Boss desk (commanding position, north-center) ===
       { type: 'desk', x: 4, z: 2, rotation: Math.PI },
-      { type: 'monitor', x: 4, z: 2.3 },
-      { type: 'monitor', x: 3.3, z: 2.3 },  // dual monitors, of course
+      { type: 'monitor', x: 4, z: 2.0, rotation: Math.PI },
+      { type: 'monitor', x: 3.5, z: 2.0, rotation: Math.PI },  // dual monitors, of course
       { type: 'keyboard', x: 4, z: 1.8 },
       { type: 'chair', x: 4, z: 1, rotation: 0 },  // behind desk facing south
 
       // === Visitor chairs ===
-      { type: 'chair', x: 3, z: 4, rotation: 0 },
-      { type: 'chair', x: 5, z: 4, rotation: 0 },
+      { type: 'chair', x: 3, z: 4, rotation: Math.PI },
+      { type: 'chair', x: 5, z: 4, rotation: Math.PI },
 
       // === Motivational posters along walls ===
       { type: 'motivationalPoster', x: 1, z: 0.1, rotation: 0 },   // "SYNERGY"
