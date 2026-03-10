@@ -162,6 +162,16 @@ export class ExplorationState {
           this._updateMiniStats();
           this._showToast('SPD +3! The overclocked badge hums with power.', 'item');
         }
+        // Janitor riddles complete — +2 all stats
+        if (key === 'janitor_riddle_3_done') {
+          this.player.stats.hp += 2;
+          this.player.stats.maxHp += 2;
+          this.player.stats.atk += 2;
+          this.player.stats.def += 2;
+          this.player.stats.spd += 2;
+          this._updateMiniStats();
+          this._showToast('All stats +2! The Janitor nods approvingly.', 'item');
+        }
       }),
       EventBus.on('item-received', ({ name, quantity }) => {
         const prefix = quantity > 1 ? `${quantity}x ` : '';
@@ -694,6 +704,25 @@ export class ExplorationState {
       DIALOGS.act4_trigger
     ) {
       return 'act4_trigger';
+    }
+
+    // Janitor riddle progression (available from act 3+)
+    if (id === 'janitor' && act >= 3) {
+      if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) return 'janitor_riddle_1';
+      if (this.player.getFlag('janitor_riddle_1_done') && !this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) return 'janitor_riddle_2';
+      if (this.player.getFlag('janitor_riddle_2_done') && !this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) return 'janitor_riddle_3';
+    }
+
+    // Compliance crossword (available when act >= 3 and compliance NPC is on exec floor)
+    if (id === 'compliance' && act >= 3 && !this.player.getFlag('compliance_crossword_done') && DIALOGS.compliance_crossword) {
+      return 'compliance_crossword';
+    }
+
+    // Social engineering chain (act 4+): Isaiah → Diane → Intern
+    if (act >= 4 && !this.player.getFlag('social_eng_complete')) {
+      if (id === 'isaiah' && !this.player.getFlag('social_eng_started') && DIALOGS.social_engineering_1) return 'social_engineering_1';
+      if (id === 'diane' && this.player.getFlag('social_eng_started') && !this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_2) return 'social_engineering_2';
+      if (id === 'intern' && this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_3) return 'social_engineering_3';
     }
 
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;

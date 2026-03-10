@@ -1839,6 +1839,169 @@ export const DIALOGS = {
   // Reward: Invoke Charter ability
   // --------------------------------------------------------------------------
 
+  // ==========================================================================
+  // PUZZLES
+  // ==========================================================================
+
+  // --------------------------------------------------------------------------
+  // COMPLIANCE CROSSWORD — 5 regulation questions for archive terminal password
+  // Talk to Compliance Auditor NPC on executive floor when act >= 3
+  // --------------------------------------------------------------------------
+
+  compliance_crossword: [
+    /* 0  */ { type: 'condition', flag: 'compliance_crossword_done', ifTrue: 35, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Compliance Auditor', text: "You again. I've been expecting you." },
+    /* 2  */ { type: 'text', speaker: 'Compliance Auditor', text: "You want access to the secure terminal in the Archive. I know because I monitor all access requests. Even the ones that haven't been made yet." },
+    /* 3  */ { type: 'text', speaker: 'Compliance Auditor', text: "The password is regulatory knowledge. Prove to me that you understand compliance, and I'll give you the key." },
+    /* 4  */ { type: 'text', speaker: 'Compliance Auditor', text: "Five questions. Five correct answers. No partial credit. This is compliance, not a poetry class." },
+    /* 5  */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 1: Under the prudent investor rule, a fiduciary must invest trust assets as what?", choices: [
+      { text: "A reasonable person would.", next: 6, flag: 'crossword_1', flagValue: true },
+      { text: "A maximum-return optimizer.", next: 8 },
+      { text: "The beneficiary requests.", next: 8 },
+    ]},
+    /* 6  */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. A reasonable person standard. Not a genius. Not Ross. A REASONABLE person." },
+    /* 7  */ { type: 'text', speaker: 'Compliance Auditor', text: "Moving on." },
+    /* 8  */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 2: What fiduciary duty prohibits self-dealing in trust administration?", choices: [
+      { text: "Duty of loyalty.", next: 9, flag: 'crossword_2', flagValue: true },
+      { text: "Duty of care.", next: 11 },
+      { text: "Duty of synergy.", next: 11 },
+    ]},
+    /* 9  */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. Loyalty. Not to be confused with the thing Ross asks for at every team meeting." },
+    /* 10 */ { type: 'text', speaker: 'Compliance Auditor', text: "Three more." },
+    /* 11 */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 3: What form must be filed with FINRA when a trust officer discovers a regulatory violation?", choices: [
+      { text: "Form U4.", next: 14 },
+      { text: "Form 27B/6.", next: 12, flag: 'crossword_3', flagValue: true },
+      { text: "Form 1099.", next: 14 },
+    ]},
+    /* 12 */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. Form 27B/6. Forty-seven pages. Double-sided. My personal favorite form." },
+    /* 13 */ { type: 'text', speaker: 'Compliance Auditor', text: "You're doing well. Suspiciously well." },
+    /* 14 */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 4: What is the maximum statute of limitations for breach of fiduciary duty in most jurisdictions?", choices: [
+      { text: "3 years.", next: 17 },
+      { text: "6 years.", next: 15, flag: 'crossword_4', flagValue: true },
+      { text: "There is no limit.", next: 17 },
+    ]},
+    /* 15 */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. Six years in most jurisdictions. Which means the admin_legacy account's activities are still within the window." },
+    /* 16 */ { type: 'text', speaker: 'Compliance Auditor', text: "One more question." },
+    /* 17 */ { type: 'choice', speaker: 'Compliance Auditor', text: "Final question: What document establishes the foundational obligations of a trust institution?", choices: [
+      { text: "The operating agreement.", next: 20 },
+      { text: "The trust charter.", next: 18, flag: 'crossword_5', flagValue: true },
+      { text: "The employee handbook.", next: 20 },
+    ]},
+    /* 18 */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. The trust charter. The very foundation this building stands on." },
+    /* 19 */ { type: 'text', speaker: 'Compliance Auditor', text: "Interesting that you know that." },
+    /* 20 */ { type: 'text', speaker: 'Compliance Auditor', text: "Results are in." },
+    /* 21 */ { type: 'condition', flag: 'crossword_1', ifTrue: 22, ifFalse: 30 },
+    /* 22 */ { type: 'condition', flag: 'crossword_2', ifTrue: 23, ifFalse: 30 },
+    /* 23 */ { type: 'condition', flag: 'crossword_3', ifTrue: 24, ifFalse: 30 },
+    /* 24 */ { type: 'condition', flag: 'crossword_4', ifTrue: 25, ifFalse: 30 },
+    /* 25 */ { type: 'condition', flag: 'crossword_5', ifTrue: 26, ifFalse: 30 },
+    /* 26 */ { type: 'text', speaker: 'Compliance Auditor', text: "Perfect score. I'm... impressed. That's the second time I've ever said that. The first was in a mirror." },
+    /* 27 */ { type: 'text', speaker: 'Compliance Auditor', text: "The archive terminal password is: FIDUCIARY. All caps. No spaces. Because compliance doesn't believe in spaces." },
+    /* 28 */ { type: 'action', action: 'set_flag', flag: 'compliance_crossword_done', value: true, next: 29 },
+    /* 29 */ { type: 'action', action: 'set_flag', flag: 'has_archive_password', value: true, next: 35 },
+    /* 30 */ { type: 'text', speaker: 'Compliance Auditor', text: "Insufficient. Your regulatory knowledge has gaps. Like your department's internal controls." },
+    /* 31 */ { type: 'text', speaker: 'Compliance Auditor', text: "Come back when you've studied. I recommend reading the entire CFR Title 12. It's only 40,000 pages." },
+    /* 32 */ { type: 'action', action: 'set_flag', flag: 'crossword_1', value: false, next: 33 },
+    /* 33 */ { type: 'action', action: 'set_flag', flag: 'crossword_2', value: false, next: 34 },
+    /* 34 */ { type: 'action', action: 'set_flag', flag: 'crossword_3', value: false, next: 35 },
+    /* 35 */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // JANITOR'S RIDDLES — 3 visits, 3 riddles, +2 all stats
+  // --------------------------------------------------------------------------
+
+  janitor_riddle_1: [
+    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Ah, Andrew. Looking for wisdom? I have a riddle for you." },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I am owed by many but owned by none. I am earned by actions, not by transactions. What am I?" },
+    /* 2  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Take your time.", choices: [
+      { text: "Trust.", next: 3 },
+      { text: "Money.", next: 6 },
+      { text: "Respect.", next: 6 },
+    ]},
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Trust. Correct. The very thing this building was built to protect." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Here's something for your trouble. Come back — I have more riddles." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_1_done', value: true, next: 8 },
+    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not quite. Think about what this place is supposed to protect. What people give us when they walk through those doors." },
+    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back when you've thought about it." },
+    /* 8  */ { type: 'end' },
+  ],
+
+  janitor_riddle_2: [
+    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Back for more? Good. Second riddle." },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I grow stronger when tested, weaker when assumed. I am the foundation of every contract but written in no clause. What am I?" },
+    /* 2  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Think carefully.", choices: [
+      { text: "Good faith.", next: 3 },
+      { text: "Power.", next: 6 },
+      { text: "Obligation.", next: 6 },
+    ]},
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Good faith. The implied covenant. Every contract assumes it, but no one can define it." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Two for two. One more to go." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_2_done', value: true, next: 8 },
+    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Close, but no. Think about what holds a contract together even when the words fail." },
+    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back and try again." },
+    /* 8  */ { type: 'end' },
+  ],
+
+  janitor_riddle_3: [
+    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "The final riddle. The hardest one." },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I was here before the building. I will be here after it falls. I am not in the charter, but the charter is in me. What am I?" },
+    /* 2  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Last chance.", choices: [
+      { text: "Duty.", next: 3 },
+      { text: "The building.", next: 7 },
+      { text: "Memory.", next: 7 },
+    ]},
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Duty. Not the legal kind. The human kind. The obligation we feel to each other, written in no law but felt in every bone." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Three for three. You remind me of someone I used to be." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The Janitor's Rolex glows briefly. You feel stronger. Wiser. More... composed." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_3_done', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not quite. Duty predates every institution. It's what makes us build them in the first place." },
+    /* 8  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back when you've considered what brought you to this building." },
+    /* 9  */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // SOCIAL ENGINEERING — 3-step info chain from Isaiah → Diane → Intern
+  // --------------------------------------------------------------------------
+
+  social_engineering_1: [
+    /* 0  */ { type: 'condition', flag: 'social_eng_started', ifTrue: 6, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Isaiah', text: "Hey Andrew. I overheard something. Rachel has an assistant — someone she brought with her. They're on the executive floor." },
+    /* 2  */ { type: 'text', speaker: 'Isaiah', text: "The assistant has Rachel's schedule. If we knew when she was meeting the board, we could prepare." },
+    /* 3  */ { type: 'text', speaker: 'Isaiah', text: "But the assistant won't talk to anyone from our department. We'd need to... get creative." },
+    /* 4  */ { type: 'text', speaker: 'Isaiah', text: "Diane might know who the assistant is. She processes everyone who enters the building." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'social_eng_started', value: true, next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Isaiah', text: "Talk to Diane about Rachel's assistant. She processes everyone who enters the building." },
+    /* 7  */ { type: 'end' },
+  ],
+
+  social_engineering_2: [
+    /* 0  */ { type: 'condition', flag: 'social_eng_started', ifTrue: 1, ifFalse: 7 },
+    /* 1  */ { type: 'condition', flag: 'social_eng_diane', ifTrue: 7, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Diane', text: "Rachel's assistant? Yes, I signed them in. Name is Morgan. Very young. Very nervous." },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "They asked me where the bathroom was three times. And where to get coffee. They're out of their depth." },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "If someone brought them a coffee — large, oat milk, extra shot — they might be grateful enough to chat." },
+    /* 5  */ { type: 'text', speaker: 'Diane', text: "The Intern makes coffee runs. He could deliver it without raising suspicion." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'social_eng_diane', value: true, next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  social_engineering_3: [
+    /* 0  */ { type: 'condition', flag: 'social_eng_diane', ifTrue: 1, ifFalse: 8 },
+    /* 1  */ { type: 'condition', flag: 'social_eng_complete', ifTrue: 8, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'The Intern', text: "A coffee mission? A STEALTH coffee mission? This is the greatest day of my unpaid career!" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "Ten minutes later, the Intern returns, vibrating with excitement." },
+    /* 4  */ { type: 'text', speaker: 'The Intern', text: "OKAY so Morgan is SUPER stressed. Rachel makes them carry three tablets and a backup clipboard." },
+    /* 5  */ { type: 'text', speaker: 'The Intern', text: "The board meeting is scheduled for 4 PM tomorrow. Rachel is presenting a 'dissolution recommendation.' And she has backup from the Regional Manager's office." },
+    /* 6  */ { type: 'text', speaker: 'The Intern', text: "Also Morgan said thank you for the coffee and asked if we're all going to be fired. I said 'probably not!' Which I realize was not reassuring." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'social_eng_complete', value: true, next: 8 },
+    /* 8  */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // ALEX FROM IT SUBQUESTS (continued)
+  // ==========================================================================
+
   alex_it_quest_final: [
     /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 1, ifFalse: 8 },
     /* 1  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 5, ifFalse: 2 },
