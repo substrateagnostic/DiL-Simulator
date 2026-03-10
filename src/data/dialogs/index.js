@@ -918,12 +918,13 @@ export const DIALOGS = {
   ],
 
   elevator: [
-    { type: 'condition', flag: 'branch_chosen', ifTrue: 4, ifFalse: 1 },
+    { type: 'condition', flag: 'branch_chosen', ifTrue: 5, ifFalse: 1 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: 'The elevator to the Executive Floor. A keycard reader blinks red.' },
     /* 2 */ { type: 'text', speaker: 'Narrator', text: 'A sign: "AUTHORIZED PERSONNEL ONLY. If you have to ask, you\'re not authorized. If you ARE authorized, you already know."' },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: 'You don\'t have clearance yet. Maybe after the Henderson situation resolves...' },
-    /* 4 */ { type: 'text', speaker: 'Narrator', text: 'The elevator light blinks green. Someone upstairs is waiting for you.' },
-    /* 5 */ { type: 'end' },
+    /* 4 */ { type: 'end' },
+    /* 5 */ { type: 'text', speaker: 'Narrator', text: 'The elevator light blinks green. Someone upstairs is waiting for you.' },
+    /* 6 */ { type: 'end' },
   ],
 
   reception_desk: [

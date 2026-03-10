@@ -171,7 +171,7 @@
 }
 
 .hud-mini-stat .label {
-  color: #888;
+  color: #aaa;
   margin-right: 4px;
 }
 
@@ -188,6 +188,10 @@
   border-radius: 6px;
   padding: 10px 14px;
   min-width: 180px;
+}
+
+.hud-portfolio:empty {
+  display: none;
 }
 
 .portfolio-title {
@@ -207,7 +211,7 @@
   line-height: 1.3;
 }
 
-.portfolio-label { color: #888; }
+.portfolio-label { color: #aaa; }
 .portfolio-value { color: #fff; }
 .portfolio-gold  { color: #ffd700; }
 

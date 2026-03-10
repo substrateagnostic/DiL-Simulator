@@ -24,7 +24,7 @@ export class TitleState {
     logo.className = 'title-logo';
     logo.innerHTML = `
       <span class="title-main">TRUST ISSUES</span>
-      <span class="title-sub">A WELLS FARGO SIMULATOR</span>
+      <span class="title-sub">A TRUST OFFICER SIMULATOR</span>
     `;
     this.element.appendChild(logo);
 

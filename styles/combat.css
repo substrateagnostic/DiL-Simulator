@@ -21,7 +21,7 @@
   border-radius: 8px;
   padding: 16px 20px;
   color: #fff;
-  min-width: 280px;
+  min-width: min(280px, 90vw);
   box-shadow: 0 0 15px rgba(15, 52, 96, 0.5);
 }
 
@@ -84,7 +84,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  min-width: 300px;
+  min-width: min(300px, 90vw);
   box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
 }
 
@@ -128,7 +128,7 @@
   border: 3px solid #e94560;
   border-radius: 8px;
   padding: 12px;
-  min-width: 300px;
+  min-width: min(300px, 90vw);
   box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
 }
 

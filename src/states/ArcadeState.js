@@ -5,7 +5,7 @@ import { InputManager } from '../core/InputManager.js';
 // ============================================================
 // STAGECOACH STAMPEDE — A retro side-scrolling minigame
 // ============================================================
-// Ride the Wells Fargo stagecoach through the Old West.
+// Ride the Trust Officer stagecoach through the Old West.
 // Jump over regulations, dodge auditors, collect trust documents.
 // Score is measured in Fiduciary Points.
 // ============================================================
