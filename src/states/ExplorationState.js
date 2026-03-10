@@ -144,6 +144,24 @@ export class ExplorationState {
         if (key === 'has_charter') {
           this._showToast('You have the 1947 Charter! Its power resonates through the building.', 'item');
         }
+        // Wire quest completion flags to ability unlock system
+        const questFlagMap = {
+          quest_legacy_admin_complete: 'legacy_admin',
+          quest_network_ghost_complete: 'network_ghost',
+          quest_daves_legacy_complete: 'daves_legacy',
+          quest_printers_soul_complete: 'printers_soul',
+          quest_final_patch_complete: 'final_patch',
+        };
+        if (questFlagMap[key]) {
+          this.player.questStates[questFlagMap[key]] = 'complete';
+          this._showToast('New ability unlocked!', 'item');
+        }
+        // 3:47 Anomaly quest gives permanent SPD boost
+        if (key === 'quest_anomaly_347_complete') {
+          this.player.stats.spd += 3;
+          this._updateMiniStats();
+          this._showToast('SPD +3! The overclocked badge hums with power.', 'item');
+        }
       }),
       EventBus.on('item-received', ({ name, quantity }) => {
         const prefix = quantity > 1 ? `${quantity}x ` : '';

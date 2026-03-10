@@ -91,4 +91,67 @@ export const QUESTS = {
       { id: 2, objective: 'Decide what to do with the evidence' },
     ],
   },
+  // Alex from IT Subquests
+  anomaly_347: {
+    id: 'anomaly_347',
+    name: 'The 3:47 AM Anomaly',
+    stages: [
+      { id: 0, objective: 'Ask Alex from IT about the 3:47 AM signal' },
+      { id: 1, objective: 'Find the Morse code pattern in the server room' },
+      { id: 2, objective: 'Decode the Morse code message' },
+      { id: 3, objective: 'Report back to Alex' },
+    ],
+  },
+  legacy_admin: {
+    id: 'legacy_admin',
+    name: 'Legacy Admin Account',
+    stages: [
+      { id: 0, objective: 'Help Alex trace the admin_legacy account' },
+      { id: 1, objective: 'Find the access logs in the Archive' },
+      { id: 2, objective: 'Find the password hint in HR records' },
+      { id: 3, objective: 'Bring Alex the evidence to crack the account' },
+    ],
+  },
+  network_ghost: {
+    id: 'network_ghost',
+    name: 'Network Ghost',
+    stages: [
+      { id: 0, objective: 'Investigate network outages with Alex' },
+      { id: 1, objective: 'Place signal booster in the break room' },
+      { id: 2, objective: 'Place signal booster in the stairwell' },
+      { id: 3, objective: 'Place signal booster in the executive floor' },
+      { id: 4, objective: 'Return to Alex to triangulate the signal' },
+    ],
+  },
+  daves_legacy: {
+    id: 'daves_legacy',
+    name: "Dave's Legacy",
+    stages: [
+      { id: 0, objective: 'Alex tells you about his predecessor Dave' },
+      { id: 1, objective: 'Ask the Janitor about Dave' },
+      { id: 2, objective: 'Search the Archive for Dave\'s records' },
+      { id: 3, objective: 'Check HR for Dave\'s exit interview' },
+      { id: 4, objective: 'Return to Alex with the full story' },
+    ],
+  },
+  printers_soul: {
+    id: 'printers_soul',
+    name: "Printer's Soul",
+    stages: [
+      { id: 0, objective: 'The printer is acting stranger than usual' },
+      { id: 1, objective: 'Find the original printer receipt in the Archive' },
+      { id: 2, objective: 'Connect the printer to Alex\'s network' },
+      { id: 3, objective: 'Return to Alex to free the printer\'s soul' },
+    ],
+  },
+  final_patch: {
+    id: 'final_patch',
+    name: 'The Final Patch',
+    stages: [
+      { id: 0, objective: 'Alex needs to deploy the charter to the server' },
+      { id: 1, objective: 'Bring the charter to Alex in the server room' },
+      { id: 2, objective: 'Defend the server room during the upload' },
+      { id: 3, objective: 'The patch is deployed' },
+    ],
+  },
 };

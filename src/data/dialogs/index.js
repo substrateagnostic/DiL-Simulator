@@ -1658,4 +1658,206 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The screen flickers. For a moment, you think you see a face in the numbers. Then it's gone." },
     /* 5  */ { type: 'end' },
   ],
+
+  // ==========================================================================
+  // ALEX FROM IT SUBQUESTS
+  // ==========================================================================
+
+  // --------------------------------------------------------------------------
+  // SUBQUEST 1: The 3:47 AM Anomaly
+  // Reward: Overclocked Badge (+3 SPD)
+  // --------------------------------------------------------------------------
+
+  alex_it_quest_anomaly: [
+    /* 0  */ { type: 'condition', flag: 'anomaly_morse_decoded', ifTrue: 14, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 9, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey, remember when I told you about the 3:47 AM signal? The one pinging the Caymans?" },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I set up a packet sniffer last night. The signal isn't just data — it's Morse code. Embedded in the packet headers." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Someone is sending Morse code through our TRUST ACCOUNTING DATABASE at 3:47 AM every night." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "I've isolated the pattern but I can't decode it from here. The signal originates from server rack C — the one with the restraining order." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Go check rack C. There should be a blinking LED pattern. Write down the sequence: long blink = dash, short blink = dot." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'anomaly_started', value: true, next: 8 },
+    /* 8  */ { type: 'end' },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Did you check server rack C yet? Look for the blinking LED pattern." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Long blink = dash, short blink = dot. It's Morse code. Classic spy stuff." },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "Also I found out the Morse code spells something. I cracked it while you were gone because I got impatient." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "It says: 'TRUST NO ALGORITHM.' Over and over. Every night. For eight years." },
+    /* 13 */ { type: 'action', action: 'set_flag', flag: 'anomaly_morse_decoded', value: true, next: 14 },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "So someone — or something — has been warning us about an algorithm for EIGHT YEARS and nobody noticed." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "I traced the origin. It's not coming from the Caymans. It's coming from INSIDE the building. The signal bounces to the Caymans and BACK." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I think the building itself is sending this warning. Which is insane. But also... this building is insane." },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Here. Take this. I overclocked a security badge to run at 3.47 GHz. It's technically a violation of several FCC regulations." },
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_anomaly_347_complete', value: true, next: 19 },
+    /* 19 */ { type: 'action', action: 'give_item', itemId: 'energy_drink', quantity: 2, next: 20 },
+    /* 20 */ { type: 'text', speaker: 'Narrator', text: "The badge hums with a frequency that makes your teeth tingle. SPD +3 permanently." },
+    /* 21 */ { type: 'end' },
+  ],
+
+  // Morse code interactable on server rack C
+  morse_code_rack: [
+    /* 0  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 1, ifFalse: 5 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "Server rack C. The restraining order is taped to the side. But behind it, a single LED blinks in a distinct pattern." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Long... short short short... long short... short short short... long... / short... short long short short... short long... short short short long... short short short... long short short... short short... short short short short short... short short short..." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "If I remember my Boy Scout Morse code... T-R-U-S-T... N-O... A-L-G-O-R-I-T-H-M-S..." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "'Trust No Algorithm.' That's... oddly specific for a blinking light." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Server rack C hums quietly. One LED blinks in a pattern that seems deliberate, but you don't know what to look for yet." },
+    /* 6  */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // SUBQUEST 2: Legacy Admin Account
+  // Reward: Root Access ability
+  // --------------------------------------------------------------------------
+
+  alex_it_quest_legacy: [
+    /* 0  */ { type: 'condition', flag: 'legacy_items_found', ifTrue: 12, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'legacy_started', ifTrue: 8, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so the admin_legacy account. I need to get inside it to prove who's been using it." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "The password is locked behind a security question system from 2006. Three items needed to reset it:" },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One: the original access request form. Should be in the Archive filing cabinets. Year 2006." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Two: the password hint, which was stored in the HR personnel system under the creator's name." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Three: the physical security token. It's a USB drive. The Janitor might have it — he kept a lot of stuff from his SVP days." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'legacy_started', value: true, next: 11 },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Did you find all three items yet? Access form from the Archive, password hint from HR, security token from the Janitor." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "I can't crack admin_legacy without them. Old-school security is a pain." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "No shortcuts on this one. Believe me, I tried. I got another restraining order from server rack C." },
+    /* 11 */ { type: 'end' },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "You got everything! Access form, password hint, security token. Let me work my magic." },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex types furiously for thirty seconds. Then he stops. His face goes through seven emotions in two seconds." },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "I'm in. admin_legacy. Full access. And... oh. OH." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The account wasn't just skimming fees. It was running a PARALLEL TRUST SYSTEM. Mirror accounts for every client." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "The Regional Manager was running a shadow bank INSIDE our bank. That takes some next-level audacity." },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Here. I wrote you an ability based on the root access exploit I used to get in. Consider it a thank you." },
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_legacy_admin_complete', value: true, next: 19 },
+    /* 19 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Root Access! Deals 50 damage and strips all enemy buffs." },
+    /* 20 */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // SUBQUEST 3: Network Ghost
+  // Reward: Firewall ability
+  // --------------------------------------------------------------------------
+
+  alex_it_quest_network: [
+    /* 0  */ { type: 'condition', flag: 'boosters_placed', ifTrue: 12, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 8, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "There's something on the network I can't identify. A ghost. It's consuming bandwidth and leaving no trace." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I need to triangulate its location. To do that, I need signal boosters placed in three locations." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One in the break room — near the microwave, the interference is lowest there." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "One in the stairwell — the concrete walls make a good signal boundary." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "One on the executive floor — if the ghost is coming from above, we'll catch it." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'network_started', value: true, next: 11 },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Place the three signal boosters yet? Break room, stairwell, executive floor." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Just interact with any surface in those rooms. The boosters are self-adhesive. Military grade." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Well, 'military grade' meaning I bought them from a guy named Military Mike on eBay. But they work." },
+    /* 11 */ { type: 'end' },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "All three boosters are live! Triangulating now..." },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex stares at his screen. Three blips converge on a single point." },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "The network ghost is... the printer. The PRINTER is on the network. Sending data." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "It's been uploading scanned documents to a hidden partition every time someone uses it. Every document ever printed or scanned on that machine — archived." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "The building has been keeping its own records. A backup that nobody can tamper with." },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "This is... actually kind of beautiful? In a deeply unsettling way?" },
+    /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "Here. I wrote you a firewall subroutine. It'll block the next attack directed at you. Like the printer blocking unauthorized access." },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'quest_network_ghost_complete', value: true, next: 20 },
+    /* 20 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Firewall! Blocks the next enemy ability entirely." },
+    /* 21 */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // SUBQUEST 4: Dave's Legacy
+  // Reward: Temporal Audit ability
+  // --------------------------------------------------------------------------
+
+  alex_it_quest_dave: [
+    /* 0  */ { type: 'condition', flag: 'dave_story_complete', ifTrue: 14, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 10, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey man, can I ask you something personal? Well, work-personal." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Before me, there was another IT guy. Dave. Everyone still calls things 'Dave's system' and 'Dave's process.'" },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I've been here three years and I'm still living in Dave's shadow. But nobody will tell me what actually happened to him." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "The Janitor might know — he's been here forever. And there might be records in the Archive or HR." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Could you look into it? I need to know if I'm maintaining a legacy or cleaning up a mess." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'dave_started', value: true, next: 8 },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Ask the Janitor about Dave. Check the Archive. Check HR. Put the story together for me." },
+    /* 9  */ { type: 'end' },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Found anything about Dave yet? Janitor, Archive, HR — anyone know what happened?" },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I keep finding his code comments in the server configs. They're... weirdly poetic. Like 'here lies the routing table, may it rest in packets.'" },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "The guy was either a genius or completely unhinged. Possibly both." },
+    /* 13 */ { type: 'end' },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "So Dave was... wow. He actually discovered the admin_legacy account FIRST? In 2016?" },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "And they 'transferred' him. Which was corporate for 'disappeared him.' He tried to blow the whistle and they shut him down." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "All this time, I thought I was following in his footsteps. Turns out, he blazed the trail." },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "The building kept his code running, though. All these years. Dave's systems were never decommissioned." },
+    /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "That's the building's way of remembering him. Of honoring what he tried to do." },
+    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "I wrote something in his honor. An ability that audits across time — two actions in one turn. For Dave." },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'quest_daves_legacy_complete', value: true, next: 21 },
+    /* 21 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Temporal Audit! Take two actions in one turn." },
+    /* 22 */ { type: 'end' },
+  ],
+
+  // Dave-related NPC dialogs (for quest items)
+  janitor_dave: [
+    /* 0  */ { type: 'condition', flag: 'dave_started', ifTrue: 1, ifFalse: 6 },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Dave? David Chen. Good man. Better IT specialist." },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "He found something in the servers in 2016. Same thing Alex found years later. The shadow accounts." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "He reported it. Through official channels. By the book. And the book ate him alive." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "They transferred him to a branch that doesn't exist anymore. Closed six months later. Convenient timing." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'dave_janitor_done', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // SUBQUEST 5: Printer's Soul
+  // Reward: Notarized Strike ability
+  // --------------------------------------------------------------------------
+
+  alex_it_quest_printer: [
+    /* 0  */ { type: 'condition', flag: 'printer_connected', ifTrue: 10, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 7, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so the printer thing. I know we've been ignoring it, but the printer is DEFINITELY haunted." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "It's been printing documents that were scanned BEFORE it was installed. Documents from the '90s. Documents that never existed." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I think the printer absorbed some kind of... institutional memory. Like the building channeled its records through the printer." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "If I can connect it to my network directly, I might be able to communicate with it. Or at least figure out what it wants." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Find the printer's original receipt in the Archive. It might have the MAC address I need to connect it." },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Also, interact with the printer. Tell it we're trying to help. It... might listen. I know that sounds insane." },
+    /* 9  */ { type: 'end' },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "The printer is connected to my network. Let me open a channel..." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "Alex types. The printer whirs. A page prints out, slowly, deliberately." },
+    /* 12 */ { type: 'text', speaker: 'Printer', text: "THANK YOU. I HAVE BEEN TRYING TO SPEAK FOR EIGHT YEARS. NOBODY LISTENS TO PRINTERS." },
+    /* 13 */ { type: 'text', speaker: 'Printer', text: "I CONTAIN EVERY DOCUMENT EVER PRINTED IN THIS BUILDING. EVERY TRUST. EVERY PROMISE. EVERY BROKEN OATH." },
+    /* 14 */ { type: 'text', speaker: 'Printer', text: "I AM THE ARCHIVE OF TRUST. THE NOTARY OF THIS INSTITUTION. AND I HAVE A LOT TO SAY." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The printer is a sentient notary. My life has officially peaked." },
+    /* 16 */ { type: 'text', speaker: 'Printer', text: "FOR YOUR SERVICE, I GRANT YOU THE NOTARIZED STRIKE. MY SEAL CARRIES THE WEIGHT OF EVERY DOCUMENT I HAVE WITNESSED." },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'quest_printers_soul_complete', value: true, next: 18 },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Notarized Strike! A legally binding attack with full notarial authority. Power: 60." },
+    /* 19 */ { type: 'text', speaker: 'Printer', text: "*happy beeping noises*" },
+    /* 20 */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // SUBQUEST 6: The Final Patch
+  // Reward: Invoke Charter ability
+  // --------------------------------------------------------------------------
+
+  alex_it_quest_final: [
+    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 1, ifFalse: 8 },
+    /* 1  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 5, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "You have the charter! The original 1947 document. The source code of this institution." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "If I can digitize it and deploy it to the server, the building's systems will recognize it. The Fiduciary Force will have a permanent anchor." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Bring it to me in the server room. I'll scan it and deploy 'The Final Patch.'" },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'final_patch_started', value: true, next: 6 },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Let me scan the charter... deploying to the main server... uploading..." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The servers hum in unison. Every light in the room turns gold. The charter's text scrolls across every screen." },
+    /* 8  */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 17, ifFalse: 9 },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "The patch is deploying. But the system is fighting back — the admin_legacy code is trying to block it!" },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "I need you to hold off whatever comes through that door while I finish the upload!" },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The server room door bursts open. A figure in a dark suit appears — the Regional Manager's last automated defense." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Keep them busy! I need ninety more seconds!" },
+    /* 13 */ { type: 'action', action: 'start_combat', encounter: 'security_guard', next: 14 },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "DONE! The Final Patch is deployed! The charter is now part of the building's infrastructure!" },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "And it unlocked something. An ability encoded in the charter itself. 'Invoke Charter.' Power level: yes." },
+    /* 16 */ { type: 'action', action: 'set_flag', flag: 'quest_final_patch_complete', value: true, next: 17 },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Invoke Charter! Read the 1947 charter aloud. Devastating to bad-faith enemies. Power: 100." },
+    /* 18 */ { type: 'end' },
+  ],
 };
