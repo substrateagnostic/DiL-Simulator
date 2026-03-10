@@ -54,6 +54,45 @@ const CLIENT_TYPES = [
     assetMax: 2_000_000,
     abilities: ['portfolio_panic', 'call_the_other_advisor'],
   },
+  // ── Phase 7: New client types ─────────────────────────────────────────────
+  {
+    type: 'Widow/Widower',
+    visualId: 'grandma',
+    assetMin: 500_000,
+    assetMax: 4_000_000,
+    abilities: ['portfolio_panic', 'demand_guarantees'],
+    chainEligible: true, // can appear in beneficiary chains
+  },
+  {
+    type: 'Crypto Enthusiast',
+    visualId: 'chad',
+    assetMin: 200_000,
+    assetMax: 12_000_000,
+    abilities: ['client_bro_down', 'portfolio_panic', 'trust_fund_tantrum'],
+    volatileAssets: true, // wider asset variance
+  },
+  {
+    type: 'Family Dynasty',
+    visualId: 'karen',
+    assetMin: 5_000_000,
+    assetMax: 25_000_000,
+    abilities: ['speak_to_manager', 'demand_guarantees', 'call_the_other_advisor'],
+    chainEligible: true,
+  },
+  {
+    type: 'Charitable Foundation',
+    visualId: 'grandma',
+    assetMin: 2_000_000,
+    assetMax: 15_000_000,
+    abilities: ['demand_guarantees', 'portfolio_panic'],
+  },
+  {
+    type: 'Professional Athlete',
+    visualId: 'chad',
+    assetMin: 3_000_000,
+    assetMax: 20_000_000,
+    abilities: ['client_bro_down', 'trust_fund_tantrum', 'call_the_other_advisor'],
+  },
 ];
 
 const RISK_PROFILES = [
@@ -100,6 +139,42 @@ export const POSITIVE_ATTRIBUTES = [
     buff: { atk: 3 },
     angerDelta: 0,
   },
+  // ── Phase 7: New positive attributes ────────────────────────────────────
+  {
+    id: 'philanthropic',
+    label: 'Philanthropic',
+    desc: 'Donates generously — great PR for the department',
+    buff: { def: 1, atk: 1 },
+    angerDelta: -2,
+  },
+  {
+    id: 'long_horizon',
+    label: 'Long Horizon',
+    desc: '30+ year time horizon — no quarterly panic',
+    buff: { def: 3 },
+    angerDelta: -1,
+  },
+  {
+    id: 'simple_estate',
+    label: 'Simple Estate',
+    desc: 'One account, no trusts, no complications. Bliss.',
+    buff: { spd: 3 },
+    angerDelta: -1,
+  },
+  {
+    id: 'pre_documented',
+    label: 'Pre-Documented',
+    desc: 'Arrives with all paperwork already filled out perfectly',
+    buff: { spd: 2, def: 1 },
+    angerDelta: -2,
+  },
+  {
+    id: 'returning_client',
+    label: 'Returning Client',
+    desc: 'Used to be with Wells Fargo — knows the drill',
+    buff: { atk: 2, def: 1 },
+    angerDelta: -1,
+  },
 ];
 
 export const NEGATIVE_ATTRIBUTES = [
@@ -138,6 +213,42 @@ export const NEGATIVE_ATTRIBUTES = [
     debuff: { atk: -1, spd: -1 },
     angerDelta: 2,
   },
+  // ── Phase 7: New negative attributes ────────────────────────────────────
+  {
+    id: 'multi_jurisdiction',
+    label: 'Multi-Jurisdiction',
+    desc: 'Assets in 4 countries with conflicting tax treaties',
+    debuff: { spd: -3 },
+    angerDelta: 2,
+  },
+  {
+    id: 'family_feud',
+    label: 'Family Feud',
+    desc: 'Three siblings, three lawyers, zero agreement',
+    debuff: { def: -2, atk: -1 },
+    angerDelta: 3,
+  },
+  {
+    id: 'social_media',
+    label: 'Social Media Complainant',
+    desc: 'Live-tweets every meeting, 200K followers',
+    debuff: { def: -3 },
+    angerDelta: 3,
+  },
+  {
+    id: 'day_trader',
+    label: 'Day Trader',
+    desc: 'Calls at market open demanding 47 trades before lunch',
+    debuff: { spd: -3 },
+    angerDelta: 2,
+  },
+  {
+    id: 'conspiracy',
+    label: 'Conspiracy Theorist',
+    desc: '"I want all my assets in physical gold buried in my yard"',
+    debuff: { atk: -2, def: -1 },
+    angerDelta: 2,
+  },
 ];
 
 function randomInt(min, max) {
@@ -158,7 +269,7 @@ function shuffle(arr) {
 }
 
 function scaleEnemyStats(assets) {
-  const MAX_ASSET = 10_000_000;
+  const MAX_ASSET = 25_000_000; // raised for new high-AUM types
   const t = Math.min(1, assets / MAX_ASSET);
   return {
     maxHP: Math.round(45 + t * 115),  // 45–160
@@ -169,11 +280,19 @@ function scaleEnemyStats(assets) {
   };
 }
 
-export function generateClient() {
+export function generateClient(overrideLastName) {
   const typeDef = pick(CLIENT_TYPES);
-  const name = `${pick(FIRST_NAMES)} ${pick(LAST_NAMES)}`;
+  const lastName = overrideLastName || pick(LAST_NAMES);
+  const name = `${pick(FIRST_NAMES)} ${lastName}`;
 
-  const assets  = randomInt(typeDef.assetMin, typeDef.assetMax);
+  let assets = randomInt(typeDef.assetMin, typeDef.assetMax);
+  // Crypto clients get wider variance — could moon or crash
+  if (typeDef.volatileAssets) {
+    const swing = Math.random();
+    if (swing > 0.85) assets = Math.round(assets * 2.5); // to the moon
+    else if (swing < 0.15) assets = Math.round(assets * 0.3); // rug pull
+  }
+
   const feeRate = randomInt(100, 250) / 10000; // 1.0%–2.5%
   const annualFees = Math.round(assets * feeRate);
   const riskProfile = pick(RISK_PROFILES);
@@ -206,6 +325,7 @@ export function generateClient() {
 
   return {
     name,
+    lastName,
     type: typeDef.type,
     visualId: typeDef.visualId,
     assets,
@@ -215,5 +335,126 @@ export function generateClient() {
     attributes,
     netAngerDelta,
     enemyStats,
+    chainEligible: !!typeDef.chainEligible,
   };
+}
+
+// ── Beneficiary Chain Generation ──────────────────────────────────────────────
+// Generate a 3-client family chain sharing a last name.
+// Accept one → others follow with better stats.
+// Reject one → others arrive angrier.
+
+export function generateBeneficiaryChain() {
+  const lastName = pick(LAST_NAMES);
+  const chainTypes = CLIENT_TYPES.filter(t => t.chainEligible);
+  // If no chain-eligible types, fall back to any type
+  const pool = chainTypes.length >= 3 ? chainTypes : CLIENT_TYPES;
+
+  const members = [];
+  for (let i = 0; i < 3; i++) {
+    const client = generateClient(lastName);
+    // Force chain-eligible type if available
+    if (chainTypes.length > 0) {
+      const typeDef = chainTypes[i % chainTypes.length];
+      client.type = typeDef.type;
+      client.visualId = typeDef.visualId;
+      client.enemyStats.abilities = [...typeDef.abilities];
+    }
+    client.chainId = `chain_${lastName.toLowerCase()}_${Date.now()}`;
+    client.chainIndex = i;
+    client.chainSize = 3;
+    members.push(client);
+  }
+
+  // First member is the "lead" — if accepted, others are friendlier
+  members[0].chainRole = 'lead';
+  members[1].chainRole = 'follower';
+  members[2].chainRole = 'follower';
+
+  return {
+    id: members[0].chainId,
+    lastName,
+    members,
+    acceptedCount: 0,
+    rejectedCount: 0,
+  };
+}
+
+// Modify a chain follower based on what happened with previous members
+export function applyChainModifiers(client, chain) {
+  if (chain.acceptedCount > 0) {
+    // Family members heard good things — easier to deal with
+    client.netAngerDelta = Math.max(-3, client.netAngerDelta - chain.acceptedCount);
+    client.attributes.push({
+      id: 'family_referral',
+      label: 'Family Referral',
+      desc: `The ${chain.lastName} family speaks highly of you`,
+      buff: { atk: 1, def: 1 },
+      positive: true,
+      angerDelta: -1,
+    });
+  }
+  if (chain.rejectedCount > 0) {
+    // Family members are upset you rejected their kin
+    client.netAngerDelta += chain.rejectedCount * 2;
+    client.attributes.push({
+      id: 'family_grudge',
+      label: 'Family Grudge',
+      desc: `You rejected their ${chain.rejectedCount === 1 ? 'relative' : 'relatives'}. They remember.`,
+      debuff: { def: -2 },
+      positive: false,
+      angerDelta: 2,
+    });
+    // Angrier clients hit harder
+    client.enemyStats.atk += chain.rejectedCount * 2;
+  }
+  return client;
+}
+
+// ── Portfolio Health Calculator ───────────────────────────────────────────────
+// Returns a rating based on current portfolio metrics
+
+export function calculatePortfolioHealth(portfolioClients, portfolioAUM, portfolioFees) {
+  if (portfolioClients === 0) return { rating: 'Empty', score: 0, grade: 'F' };
+
+  const avgAUM = portfolioAUM / portfolioClients;
+  const feeYield = portfolioFees / portfolioAUM;
+
+  let score = 0;
+
+  // Client count (0-25 points)
+  if (portfolioClients >= 8) score += 25;
+  else if (portfolioClients >= 5) score += 20;
+  else if (portfolioClients >= 3) score += 15;
+  else score += 5;
+
+  // AUM per client (0-25 points)
+  if (avgAUM >= 5_000_000) score += 25;
+  else if (avgAUM >= 2_000_000) score += 20;
+  else if (avgAUM >= 1_000_000) score += 15;
+  else if (avgAUM >= 500_000) score += 10;
+  else score += 5;
+
+  // Total AUM (0-25 points)
+  if (portfolioAUM >= 30_000_000) score += 25;
+  else if (portfolioAUM >= 15_000_000) score += 20;
+  else if (portfolioAUM >= 5_000_000) score += 15;
+  else if (portfolioAUM >= 1_000_000) score += 10;
+  else score += 5;
+
+  // Fee yield (0-25 points) — higher yield means more revenue
+  if (feeYield >= 0.02) score += 25;
+  else if (feeYield >= 0.015) score += 20;
+  else if (feeYield >= 0.012) score += 15;
+  else score += 10;
+
+  let grade, rating;
+  if (score >= 90) { grade = 'A+'; rating = 'Outstanding'; }
+  else if (score >= 80) { grade = 'A'; rating = 'Excellent'; }
+  else if (score >= 70) { grade = 'B'; rating = 'Good'; }
+  else if (score >= 55) { grade = 'C'; rating = 'Acceptable'; }
+  else if (score >= 40) { grade = 'D'; rating = 'Needs Improvement'; }
+  else { grade = 'F'; rating = 'Underperforming'; }
+
+  return { rating, score, grade, avgAUM, feeYield };
 }

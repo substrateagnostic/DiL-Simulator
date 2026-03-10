@@ -12,7 +12,7 @@ import { ClientReviewState } from './ClientReviewState.js';
 import { DIALOGS } from '../data/dialogs/index.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { TransitionOverlay } from '../ui/TransitionOverlay.js';
-import { generateClient } from '../data/ClientGenerator.js';
+import { generateClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
 import { ENEMY_STATS } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 
@@ -464,6 +464,9 @@ export class ExplorationState {
   }
 
   _onClientDecision(accepted, clientData) {
+    // Track chain state if this client is part of a beneficiary chain
+    this._updateChainState(clientData, accepted);
+
     if (accepted) {
       this._applyClientAcceptBuff(clientData);
       const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + clientData.netAngerDelta));
@@ -486,15 +489,177 @@ export class ExplorationState {
 
     this.player.setFlag('currentClient', null);
 
+    // Track total clients seen for quarterly review
+    const totalSeen = (this.player.getFlag('totalClientsSeen') || 0) + 1;
+    this.player.setFlag('totalClientsSeen', totalSeen);
+
+    // Quarterly review every 3 clients
+    if (totalSeen > 0 && totalSeen % 3 === 0) {
+      setTimeout(() => this._showQuarterlyReview(), 800);
+      return; // quarterly review will generate next client when dismissed
+    }
+
     // Generate the next client after a short pause if still in reception
+    this._scheduleNextClient();
+  }
+
+  _scheduleNextClient() {
     setTimeout(() => {
       if (this.player.currentRoom === 'reception') {
-        const next = generateClient();
+        const next = this._getNextClient();
         this.player.setFlag('currentClient', JSON.stringify(next));
         this._applyClientToGameData(next);
         this._showToast(`Next client: ${next.name}`, 'objective');
       }
     }, 1600);
+  }
+
+  _getNextClient() {
+    // Check if there's a pending chain member
+    const chainQueue = this.player.getFlag('chainQueue');
+    if (chainQueue && Array.isArray(chainQueue) && chainQueue.length > 0) {
+      const nextChainMember = chainQueue.shift();
+      this.player.setFlag('chainQueue', chainQueue);
+
+      // Apply chain modifiers based on how previous family members were handled
+      const chainState = this.player.getFlag(`chain_${nextChainMember.chainId}`) || { acceptedCount: 0, rejectedCount: 0 };
+      applyChainModifiers(nextChainMember, { ...chainState, lastName: nextChainMember.lastName });
+
+      this._showToast(`Another ${nextChainMember.lastName} family member approaches...`, 'info');
+      return nextChainMember;
+    }
+
+    // 20% chance to generate a beneficiary chain (starts at client #4+)
+    const totalSeen = this.player.getFlag('totalClientsSeen') || 0;
+    if (totalSeen >= 4 && Math.random() < 0.2) {
+      const chain = generateBeneficiaryChain();
+      this.player.setFlag(`chain_${chain.id}`, { acceptedCount: 0, rejectedCount: 0 });
+      // Queue the followers, return the lead
+      const [lead, ...followers] = chain.members;
+      this.player.setFlag('chainQueue', followers);
+      this._showToast(`The ${chain.lastName} family wants your services...`, 'info');
+      return lead;
+    }
+
+    return generateClient();
+  }
+
+  _updateChainState(clientData, accepted) {
+    if (!clientData.chainId) return;
+    const key = `chain_${clientData.chainId}`;
+    const state = this.player.getFlag(key) || { acceptedCount: 0, rejectedCount: 0 };
+    if (accepted) state.acceptedCount++;
+    else state.rejectedCount++;
+    this.player.setFlag(key, state);
+  }
+
+  _showQuarterlyReview() {
+    const clients = this.player.getFlag('portfolioClients') || 0;
+    const aum     = this.player.getFlag('portfolioAUM')     || 0;
+    const fees    = this.player.getFlag('portfolioFees')    || 0;
+    const health  = calculatePortfolioHealth(clients, aum, fees);
+    const quarter = Math.ceil((this.player.getFlag('totalClientsSeen') || 0) / 3);
+
+    const fmt = (n) => '$' + n.toLocaleString();
+
+    const overlay = document.getElementById('ui-overlay');
+    const el = document.createElement('div');
+    el.className = 'cr-overlay';
+
+    // Determine grade color
+    const gradeColor = health.score >= 80 ? '#4ade80' : health.score >= 55 ? '#facc15' : '#f87171';
+
+    // Portfolio health affects story: good portfolio = ammo against Rachel in Act 5+
+    const act = this.player.actIndex || 1;
+    let storyNote = '';
+    if (act >= 5 && health.score >= 70) {
+      storyNote = '<div class="qr-story-note">Your strong portfolio gives you leverage against Rachel\'s restructuring arguments.</div>';
+      this.player.setFlag('portfolio_strong', true);
+    } else if (act >= 5 && health.score < 40) {
+      storyNote = '<div class="qr-story-note qr-story-warn">Rachel will use your weak portfolio as evidence for restructuring.</div>';
+      this.player.setFlag('portfolio_strong', false);
+    }
+
+    // Reward or penalty based on grade
+    let rewardText = '';
+    if (health.score >= 80) {
+      this.player.stats.atk += 1;
+      this.player.stats.def += 1;
+      this._updateMiniStats();
+      rewardText = 'Ross is impressed. ATK +1, Composure +1.';
+    } else if (health.score < 40) {
+      const anger = Math.min(10, (this.player.getFlag('bossAnger') || 0) + 2);
+      this.player.setFlag('bossAnger', anger);
+      rewardText = 'Ross is disappointed. Boss Anger +2.';
+    } else {
+      rewardText = 'Ross gives a noncommittal nod. Acceptable performance.';
+    }
+
+    el.innerHTML = `
+      <div class="cr-panel">
+        <div class="cr-header">
+          <div class="cr-title">QUARTERLY REVIEW — Q${quarter}</div>
+          <div class="cr-subtitle">Portfolio Performance Assessment</div>
+        </div>
+
+        <div class="cr-body">
+          <div class="qr-grade-block">
+            <div class="qr-grade" style="color: ${gradeColor}">${health.grade}</div>
+            <div class="qr-rating">${health.rating}</div>
+          </div>
+
+          <div class="cr-financials">
+            <div class="cr-fin-row">
+              <span class="cr-fin-label">Active Clients</span>
+              <span class="cr-fin-value">${clients}</span>
+            </div>
+            <div class="cr-fin-row">
+              <span class="cr-fin-label">Total AUM</span>
+              <span class="cr-fin-value cr-gold">${fmt(aum)}</span>
+            </div>
+            <div class="cr-fin-row">
+              <span class="cr-fin-label">Annual Fees</span>
+              <span class="cr-fin-value cr-gold">${fmt(fees)}</span>
+            </div>
+            <div class="cr-fin-row">
+              <span class="cr-fin-label">Avg AUM/Client</span>
+              <span class="cr-fin-value">${clients > 0 ? fmt(Math.round(aum / clients)) : '$0'}</span>
+            </div>
+            <div class="cr-fin-row">
+              <span class="cr-fin-label">Fee Yield</span>
+              <span class="cr-fin-value">${aum > 0 ? ((fees / aum) * 100).toFixed(1) + '%' : '0%'}</span>
+            </div>
+          </div>
+
+          <div class="qr-feedback">${rewardText}</div>
+          ${storyNote}
+        </div>
+
+        <div class="cr-footer">
+          <button class="cr-btn cr-accept cr-focused" id="qr-dismiss">
+            Continue
+          </button>
+        </div>
+        <div class="cr-hint">Press Enter to continue</div>
+      </div>
+    `;
+
+    overlay.appendChild(el);
+
+    const dismiss = () => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+      window.removeEventListener('keydown', keyHandler);
+      this._scheduleNextClient();
+    };
+
+    const keyHandler = (e) => {
+      if (e.key === 'Enter' || e.key === 'e' || e.key === 'E' || e.key === 'Escape') {
+        dismiss();
+      }
+    };
+
+    window.addEventListener('keydown', keyHandler);
+    el.querySelector('#qr-dismiss').addEventListener('click', dismiss);
   }
 
   _applyClientAcceptBuff(clientData) {
