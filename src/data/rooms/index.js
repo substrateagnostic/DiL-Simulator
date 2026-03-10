@@ -1,17 +1,25 @@
 // ============================================================
-// Room Definitions — all 8 rooms for the DiL Simulator
+// Room Definitions — all 14 rooms for the DiL Simulator
 // ============================================================
 // Each room is pure data consumed by Room.js builder.
 // Furniture types must match Furniture factory methods.
 // Connection map:
 //   cubicle_farm (hub)
 //     NORTH  -> ross_office
-//     WEST   -> break_room
+//     WEST   -> break_room / stairwell
 //     EAST   -> server_room
 //     SOUTH  -> reception
+//     NE     -> hr_department (Act 4+)
 //   ross_office EAST -> conference_room
 //   reception SOUTH  -> parking_garage
 //   reception ELEVATOR -> executive_floor (Act 3)
+//   stairwell SOUTH -> cubicle_farm, NORTH -> archive (Act 3+)
+//   archive SOUTH -> stairwell, EAST -> vault (Act 4+)
+//   hr_department SOUTH -> cubicle_farm
+//   vault WEST -> archive
+//   executive_floor NORTH -> board_room (Act 5+)
+//   board_room SOUTH -> executive_floor, NORTH -> penthouse (Act 7)
+//   penthouse SOUTH -> board_room
 // ============================================================
 
 export const ROOMS = {
@@ -203,6 +211,12 @@ export const ROOMS = {
       // SOUTH exits -> Reception
       { x: 9, z: 15, targetRoom: 'reception', spawnX: 7, spawnZ: 2 },
       { x: 10, z: 15, targetRoom: 'reception', spawnX: 7, spawnZ: 2 },
+      // WEST stairwell exit (west wall, z=12-13)
+      { x: 0, z: 12, targetRoom: 'stairwell', spawnX: 2, spawnZ: 18 },
+      { x: 0, z: 13, targetRoom: 'stairwell', spawnX: 2, spawnZ: 18 },
+      // NE exit -> HR Department (x=19, z=2-3)
+      { x: 19, z: 2, targetRoom: 'hr_department', spawnX: 1, spawnZ: 8 },
+      { x: 19, z: 3, targetRoom: 'hr_department', spawnX: 1, spawnZ: 8 },
     ],
     interactables: [
       { x: 15, z: 12, type: 'water_cooler', dialogId: 'water_cooler' },
@@ -672,6 +686,9 @@ export const ROOMS = {
       // SOUTH elevator -> Reception
       { x: 7, z: 11, targetRoom: 'reception', spawnX: 12, spawnZ: 4 },
       { x: 8, z: 11, targetRoom: 'reception', spawnX: 12, spawnZ: 4 },
+      // NORTH exit -> Board Room (Act 5+)
+      { x: 7, z: 0, targetRoom: 'board_room', spawnX: 6, spawnZ: 8 },
+      { x: 8, z: 0, targetRoom: 'board_room', spawnX: 6, spawnZ: 8 },
     ],
     interactables: [
       { x: 8, z: 2, type: 'executive_desk', dialogId: 'executive_desk' },
@@ -682,6 +699,313 @@ export const ROOMS = {
       { x: 6,  z: 0, type: 'poster', dialogId: 'poster_hustle' },
       { x: 10, z: 0, type: 'poster', dialogId: 'poster_teamwork' },
       { x: 12, z: 0, type: 'poster', dialogId: 'poster_excellence' },
+    ],
+    playerSpawn: { x: 8, z: 10 },
+  },
+
+  // ----------------------------------------------------------
+  // 9. STAIRWELL — 4x20, vertical corridor
+  // ----------------------------------------------------------
+  stairwell: {
+    id: 'stairwell',
+    name: 'The Stairwell',
+    width: 4,
+    height: 20,
+    floorColor: 0x666666,
+    walls: true,
+    furniture: [
+      // Staircase at south end (going down toward cubicle_farm)
+      { type: 'staircase', x: 2, z: 17, rotation: 0 },
+      // Staircase at north end (going up toward archive)
+      { type: 'staircase', x: 2, z: 2, rotation: Math.PI },
+      // Cobwebs in corners
+      { type: 'cobweb', x: 0.2, z: 0.2 },
+      { type: 'cobweb', x: 3.8, z: 0.2 },
+      { type: 'cobweb', x: 0.2, z: 19.8 },
+      { type: 'cobweb', x: 3.8, z: 19.8 },
+      // Motivational poster on wall
+      { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
+    ],
+    npcs: [],
+    exits: [
+      // SOUTH exit -> Cubicle Farm
+      { x: 1, z: 19, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 12 },
+      { x: 2, z: 19, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 13 },
+      // NORTH exit -> Archive (Act 3+)
+      { x: 1, z: 0, targetRoom: 'archive', spawnX: 6, spawnZ: 8 },
+      { x: 2, z: 0, targetRoom: 'archive', spawnX: 6, spawnZ: 8 },
+    ],
+    interactables: [
+      { x: 3, z: 10, type: 'graffiti', dialogId: 'stairwell_graffiti' },
+      { x: 0, z: 10, type: 'poster', dialogId: 'poster_synergy' },
+    ],
+    playerSpawn: { x: 2, z: 18 },
+  },
+
+  // ----------------------------------------------------------
+  // 10. THE ARCHIVE — 12x10, dusty file storage (Act 3+)
+  // ----------------------------------------------------------
+  archive: {
+    id: 'archive',
+    name: 'The Archive',
+    width: 12,
+    height: 10,
+    floorColor: 0x8a7a6a,
+    walls: true,
+    furniture: [
+      // Rows of file cabinets
+      { type: 'fileCabinet', x: 1, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 2, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 3, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 1, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 2, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 3, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 1, z: 5, rotation: 0 },
+      { type: 'fileCabinet', x: 2, z: 5, rotation: 0 },
+      { type: 'fileCabinet', x: 3, z: 5, rotation: 0 },
+      { type: 'fileCabinet', x: 8, z: 1, rotation: Math.PI },
+      { type: 'fileCabinet', x: 9, z: 1, rotation: Math.PI },
+      { type: 'fileCabinet', x: 10, z: 1, rotation: Math.PI },
+      { type: 'fileCabinet', x: 8, z: 3, rotation: Math.PI },
+      { type: 'fileCabinet', x: 9, z: 3, rotation: Math.PI },
+      { type: 'fileCabinet', x: 10, z: 3, rotation: Math.PI },
+      // Desk with terminal in far corner
+      { type: 'desk', x: 10, z: 7, rotation: -Math.PI / 2 },
+      { type: 'monitor', x: 10.3, z: 7 },
+      { type: 'keyboard', x: 9.8, z: 7 },
+      { type: 'chair', x: 9, z: 7, rotation: Math.PI / 2 },
+      // Cobwebs
+      { type: 'cobweb', x: 0.2, z: 0.2 },
+      { type: 'cobweb', x: 11.8, z: 0.2 },
+      { type: 'cobweb', x: 0.2, z: 9.8 },
+      { type: 'cobweb', x: 11.8, z: 9.8 },
+    ],
+    npcs: [
+      { id: 'janitor', x: 5, z: 7, facing: 0 },
+    ],
+    exits: [
+      // SOUTH exit -> Stairwell
+      { x: 5, z: 9, targetRoom: 'stairwell', spawnX: 1, spawnZ: 2 },
+      { x: 6, z: 9, targetRoom: 'stairwell', spawnX: 2, spawnZ: 2 },
+      // EAST exit -> Vault (Act 4+, gated by game logic)
+      { x: 11, z: 5, targetRoom: 'vault', spawnX: 1, spawnZ: 4 },
+    ],
+    interactables: [
+      { x: 10, z: 7, type: 'archive_terminal', dialogId: 'archive_terminal' },
+      { x: 2, z: 3, type: 'filing_cabinets', dialogId: 'archive_cabinets' },
+    ],
+    playerSpawn: { x: 6, z: 8 },
+  },
+
+  // ----------------------------------------------------------
+  // 11. HR DEPARTMENT — 16x10, cubicle maze (Act 4+)
+  // ----------------------------------------------------------
+  hr_department: {
+    id: 'hr_department',
+    name: 'HR Department',
+    width: 16,
+    height: 10,
+    floorColor: 0xc8bfa9,
+    floorPattern: 'carpet',
+    walls: true,
+    furniture: [
+      // Cubicle maze walls — outer perimeter
+      { type: 'cubicleWall', x: 2, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 4, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 6, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 10, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 12, z: 2, rotation: 0 },
+      // Inner maze walls
+      { type: 'cubicleWall', x: 4, z: 4, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 8, z: 3, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 8, z: 5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 12, z: 4, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 4, z: 6, rotation: 0 },
+      { type: 'cubicleWall', x: 6, z: 6, rotation: 0 },
+      { type: 'cubicleWall', x: 10, z: 6, rotation: 0 },
+      { type: 'cubicleWall', x: 12, z: 6, rotation: 0 },
+      // Desks inside cubicles
+      { type: 'desk', x: 3, z: 3, rotation: 0 },
+      { type: 'monitor', x: 3, z: 2.7 },
+      { type: 'chair', x: 3, z: 3.8, rotation: Math.PI },
+      { type: 'desk', x: 6, z: 3, rotation: 0 },
+      { type: 'monitor', x: 6, z: 2.7 },
+      { type: 'chair', x: 6, z: 3.8, rotation: Math.PI },
+      { type: 'desk', x: 11, z: 3, rotation: 0 },
+      { type: 'monitor', x: 11, z: 2.7 },
+      { type: 'chair', x: 11, z: 3.8, rotation: Math.PI },
+      { type: 'desk', x: 14, z: 3, rotation: 0 },
+      { type: 'monitor', x: 14, z: 2.7 },
+      { type: 'chair', x: 14, z: 3.8, rotation: Math.PI },
+      // File cabinets
+      { type: 'fileCabinet', x: 1, z: 1 },
+      { type: 'fileCabinet', x: 14, z: 1 },
+      { type: 'fileCabinet', x: 1, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', x: 14, z: 8, rotation: Math.PI },
+      // Suggestion box area
+      { type: 'fileCabinetLow', x: 10, z: 8, rotation: Math.PI },
+      // Motivational posters
+      { type: 'motivationalPoster', x: 8, z: 0.1, rotation: 0 },
+      { type: 'motivationalPoster', x: 0.1, z: 5, rotation: Math.PI / 2 },
+    ],
+    npcs: [
+      { id: 'hr_rep', x: 10, z: 4, facing: Math.PI },
+    ],
+    exits: [
+      // SOUTH exit -> Cubicle Farm
+      { x: 0, z: 8, targetRoom: 'cubicle_farm', spawnX: 18, spawnZ: 2 },
+      { x: 0, z: 9, targetRoom: 'cubicle_farm', spawnX: 18, spawnZ: 3 },
+    ],
+    interactables: [
+      { x: 10, z: 8, type: 'suggestion_box', dialogId: 'suggestion_box' },
+      { x: 8, z: 0, type: 'poster', dialogId: 'poster_excellence' },
+    ],
+    playerSpawn: { x: 1, z: 8 },
+  },
+
+  // ----------------------------------------------------------
+  // 12. THE VAULT — 8x8, secure room (Act 4+)
+  // ----------------------------------------------------------
+  vault: {
+    id: 'vault',
+    name: 'The Vault',
+    width: 8,
+    height: 8,
+    floorColor: 0x3a3a4a,
+    walls: true,
+    lights: [
+      { type: 'point', color: 0x8888ff, intensity: 0.5, x: 4, y: 2, z: 4, distance: 8 },
+    ],
+    furniture: [
+      // 3x3 grid of safe deposit boxes
+      { type: 'safeDepositBox', x: 2, z: 2 },
+      { type: 'safeDepositBox', x: 4, z: 2 },
+      { type: 'safeDepositBox', x: 6, z: 2 },
+      { type: 'safeDepositBox', x: 2, z: 4 },
+      { type: 'safeDepositBox', x: 4, z: 4 },
+      { type: 'safeDepositBox', x: 6, z: 4 },
+      { type: 'safeDepositBox', x: 2, z: 6 },
+      { type: 'safeDepositBox', x: 4, z: 6 },
+      { type: 'safeDepositBox', x: 6, z: 6 },
+      // Desk for examining contents
+      { type: 'desk', x: 1, z: 6, rotation: Math.PI / 2 },
+      { type: 'chair', x: 1, z: 7, rotation: Math.PI },
+    ],
+    npcs: [],
+    exits: [
+      // WEST exit -> Archive
+      { x: 0, z: 3, targetRoom: 'archive', spawnX: 10, spawnZ: 5 },
+      { x: 0, z: 4, targetRoom: 'archive', spawnX: 10, spawnZ: 5 },
+    ],
+    interactables: [
+      { x: 4, z: 4, type: 'safe_deposit_boxes', dialogId: 'vault_boxes' },
+      { x: 6, z: 2, type: 'charter_display', dialogId: 'vault_charter' },
+    ],
+    playerSpawn: { x: 1, z: 4 },
+  },
+
+  // ----------------------------------------------------------
+  // 13. THE BOARD ROOM — 12x10, Rachel's domain (Act 5+)
+  // ----------------------------------------------------------
+  board_room: {
+    id: 'board_room',
+    name: 'The Board Room',
+    width: 12,
+    height: 10,
+    floorColor: 0x6b5335,
+    walls: true,
+    furniture: [
+      // Conference table (center)
+      { type: 'conferenceTable', x: 6, z: 5, rotation: 0 },
+      // Chairs around the table
+      { type: 'chair', x: 4, z: 4, rotation: Math.PI / 2 },
+      { type: 'chair', x: 4, z: 6, rotation: Math.PI / 2 },
+      { type: 'chair', x: 5, z: 4, rotation: 0 },
+      { type: 'chair', x: 6, z: 4, rotation: 0 },
+      { type: 'chair', x: 7, z: 4, rotation: 0 },
+      { type: 'chair', x: 5, z: 6, rotation: Math.PI },
+      { type: 'chair', x: 6, z: 6, rotation: Math.PI },
+      { type: 'chair', x: 7, z: 6, rotation: Math.PI },
+      { type: 'chair', x: 8, z: 4, rotation: -Math.PI / 2 },
+      { type: 'chair', x: 8, z: 6, rotation: -Math.PI / 2 },
+      // Oil paintings on walls
+      { type: 'oilPainting', x: 2, z: 0.1, rotation: 0 },
+      { type: 'oilPainting', x: 5, z: 0.1, rotation: 0 },
+      { type: 'oilPainting', x: 8, z: 0.1, rotation: 0 },
+      { type: 'oilPainting', x: 11, z: 0.1, rotation: 0 },
+      // Sculpture
+      { type: 'sculpture', x: 10, z: 1 },
+      // File cabinets / credenza
+      { type: 'fileCabinetLateral', x: 1, z: 1 },
+      { type: 'fileCabinetLateral', x: 10, z: 8, rotation: Math.PI },
+    ],
+    npcs: [
+      { id: 'rachel', x: 6, z: 3, facing: Math.PI },
+    ],
+    exits: [
+      // SOUTH exit -> Executive Floor
+      { x: 5, z: 9, targetRoom: 'executive_floor', spawnX: 7, spawnZ: 2 },
+      { x: 6, z: 9, targetRoom: 'executive_floor', spawnX: 8, spawnZ: 2 },
+      // NORTH exit -> Penthouse (Act 7)
+      { x: 5, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },
+      { x: 6, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },
+    ],
+    interactables: [
+      { x: 6, z: 1, type: 'charter_plaque', dialogId: 'board_charter' },
+    ],
+    playerSpawn: { x: 6, z: 8 },
+  },
+
+  // ----------------------------------------------------------
+  // 14. THE PENTHOUSE — 16x12, final boss arena (Act 7)
+  // ----------------------------------------------------------
+  penthouse: {
+    id: 'penthouse',
+    name: 'The Penthouse',
+    width: 16,
+    height: 12,
+    floorColor: 0x2a2a3a,
+    walls: true,
+    lights: [
+      { type: 'point', color: 0x4444ff, intensity: 0.6, x: 4, y: 2.5, z: 4, distance: 8 },
+      { type: 'point', color: 0x8844ff, intensity: 0.5, x: 12, y: 2.5, z: 4, distance: 8 },
+      { type: 'point', color: 0x4444ff, intensity: 0.5, x: 4, y: 2.5, z: 8, distance: 8 },
+      { type: 'point', color: 0x8844ff, intensity: 0.6, x: 12, y: 2.5, z: 8, distance: 8 },
+    ],
+    furniture: [
+      // Massive executive desk (north-center)
+      { type: 'desk', x: 8, z: 2, rotation: Math.PI },
+      { type: 'desk', x: 9, z: 2, rotation: Math.PI },
+      { type: 'desk', x: 7, z: 2, rotation: Math.PI },
+      { type: 'monitor', x: 8, z: 2.3 },
+      { type: 'monitor', x: 7.3, z: 2.3 },
+      { type: 'monitor', x: 8.7, z: 2.3 },
+      { type: 'keyboard', x: 8, z: 1.8 },
+      { type: 'chair', x: 8, z: 1, rotation: 0 },
+      // Putting green
+      { type: 'puttingGreen', x: 4, z: 8, rotation: 0 },
+      // Sculptures
+      { type: 'sculpture', x: 1, z: 1 },
+      { type: 'sculpture', x: 14, z: 1 },
+      // Oil paintings
+      { type: 'oilPainting', x: 3, z: 0.1, rotation: 0 },
+      { type: 'oilPainting', x: 6, z: 0.1, rotation: 0 },
+      { type: 'oilPainting', x: 11, z: 0.1, rotation: 0 },
+      // Conference table
+      { type: 'conferenceTable', x: 12, z: 6, rotation: Math.PI / 2 },
+      { type: 'chair', x: 11, z: 5, rotation: Math.PI / 2 },
+      { type: 'chair', x: 11, z: 7, rotation: Math.PI / 2 },
+      { type: 'chair', x: 13, z: 5, rotation: -Math.PI / 2 },
+      { type: 'chair', x: 13, z: 7, rotation: -Math.PI / 2 },
+    ],
+    npcs: [],
+    exits: [
+      // SOUTH exit -> Board Room
+      { x: 7, z: 11, targetRoom: 'board_room', spawnX: 5, spawnZ: 2 },
+      { x: 8, z: 11, targetRoom: 'board_room', spawnX: 6, spawnZ: 2 },
+    ],
+    interactables: [
+      { x: 8, z: 2, type: 'algorithm_terminal', dialogId: 'algorithm_terminal' },
     ],
     playerSpawn: { x: 8, z: 10 },
   },

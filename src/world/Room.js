@@ -31,6 +31,10 @@ const FURNITURE_FOOTPRINTS = {
   carSUV:             { w: 1, h: 2 },
   carSports:          { w: 1, h: 2 },
   andrewsCar:         { w: 1, h: 2 },
+  staircase:          { w: 2, h: 2 },
+  safeDepositBox:     { w: 1, h: 1 },
+  sculpture:          { w: 1, h: 1 },
+  puttingGreen:       { w: 3, h: 2 },
 };
 
 // Small/decorative items that should NOT block movement.
@@ -40,6 +44,7 @@ const NO_BLOCK = new Set([
   'coffeeMachine', 'microwave', 'waterCooler', 'printer',
   'whiteboard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
+  'cobweb', 'oilPainting',
 ]);
 
 export class Room {

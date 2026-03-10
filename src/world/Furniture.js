@@ -1069,6 +1069,180 @@ export const Furniture = {
     return group;
   },
 
+  staircase() {
+    const group = new THREE.Group();
+    const stepMat = Materials.custom(0x888888);
+    const railMat = Materials.metal();
+    // 3 visible steps going up
+    for (let i = 0; i < 3; i++) {
+      const step = new THREE.Mesh(
+        new THREE.BoxGeometry(1.6, 0.12, 0.5),
+        stepMat
+      );
+      step.position.set(0, 0.12 + i * 0.24, -i * 0.5);
+      step.castShadow = true;
+      step.receiveShadow = true;
+      group.add(step);
+    }
+    // Side rails
+    for (const sx of [-0.85, 0.85]) {
+      const rail = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 1.0, 1.6),
+        railMat
+      );
+      rail.position.set(sx, 0.6, -0.5);
+      rail.castShadow = true;
+      group.add(rail);
+    }
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  cobweb() {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.25,
+      roughness: 1.0,
+      metalness: 0,
+      side: THREE.DoubleSide,
+    });
+    const geo = new THREE.PlaneGeometry(0.4, 0.4);
+    const web = new THREE.Mesh(geo, mat);
+    web.position.y = 2.2;
+    web.rotation.x = -Math.PI / 4;
+    group.add(web);
+    return group;
+  },
+
+  safeDepositBox() {
+    const group = new THREE.Group();
+    const bodyMat = Materials.custom(0x777788);
+    const handleMat = Materials.custom(0x999999);
+    // Box body
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.4, 0.3, 0.5),
+      bodyMat
+    );
+    body.position.y = 0.15;
+    group.add(body);
+    // Handle
+    const handle = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.04, 0.02),
+      handleMat
+    );
+    handle.position.set(0, 0.2, 0.26);
+    group.add(handle);
+    // Keyhole
+    const keyhole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.015, 0.015, 0.02, 8),
+      Materials.custom(0x333333)
+    );
+    keyhole.rotation.x = Math.PI / 2;
+    keyhole.position.set(0, 0.12, 0.26);
+    group.add(keyhole);
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  oilPainting() {
+    const group = new THREE.Group();
+    // Thick gold frame
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.56, 0.04),
+      Materials.custom(0xb8860b)
+    );
+    frame.position.y = 1.5;
+    group.add(frame);
+    // Dark canvas
+    const canvasColors = [0x2a1a0a, 0x1a2a1a, 0x1a1a2a, 0x2a1a1a, 0x1a1a1a];
+    const canvasColor = canvasColors[Math.floor(Math.random() * canvasColors.length)];
+    const canvas = new THREE.Mesh(
+      new THREE.BoxGeometry(0.58, 0.44, 0.005),
+      Materials.custom(canvasColor)
+    );
+    canvas.position.set(0, 1.5, 0.022);
+    group.add(canvas);
+    // Inner gold trim
+    const trimMat = Materials.custom(0xdaa520);
+    const topTrim = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.02, 0.006), trimMat);
+    topTrim.position.set(0, 1.73, 0.023);
+    group.add(topTrim);
+    const bottomTrim = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.02, 0.006), trimMat);
+    bottomTrim.position.set(0, 1.27, 0.023);
+    group.add(bottomTrim);
+    return group;
+  },
+
+  sculpture() {
+    const group = new THREE.Group();
+    const matA = Materials.custom(0x888899);
+    const matB = Materials.custom(0x667788);
+    const matC = Materials.custom(0x998877);
+    // Base cylinder
+    const base = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.15, 0.18, 0.6, 12),
+      matA
+    );
+    base.position.y = 0.3;
+    group.add(base);
+    // Middle box
+    const mid = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.3, 0.22),
+      matB
+    );
+    mid.position.y = 0.75;
+    mid.rotation.y = Math.PI / 4;
+    group.add(mid);
+    // Top sphere
+    const top = new THREE.Mesh(
+      new THREE.SphereGeometry(0.12, 12, 10),
+      matC
+    );
+    top.position.y = 1.05;
+    group.add(top);
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  puttingGreen() {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0x2d8a4e,
+      roughness: 0.9,
+      metalness: 0,
+    });
+    const geo = new THREE.BoxGeometry(2.8, 0.02, 1.6);
+    const green = new THREE.Mesh(geo, mat);
+    green.position.y = 0.01;
+    green.receiveShadow = true;
+    group.add(green);
+    // Hole marker
+    const hole = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 0.005, 10),
+      Materials.custom(0x111111)
+    );
+    hole.position.set(1.0, 0.025, 0);
+    group.add(hole);
+    // Flag stick
+    const stick = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.008, 0.008, 0.4, 6),
+      Materials.custom(0xdddddd)
+    );
+    stick.position.set(1.0, 0.22, 0);
+    group.add(stick);
+    // Flag
+    const flag = new THREE.Mesh(
+      new THREE.BoxGeometry(0.12, 0.06, 0.005),
+      Materials.custom(0xcc2222)
+    );
+    flag.position.set(1.06, 0.4, 0);
+    group.add(flag);
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
   elevatorDoors() {
     const group = new THREE.Group();
     const doorMat = Materials.metal();

@@ -708,6 +708,12 @@ export class ExplorationState {
       reception: 'Reception',
       parking_garage: 'Parking Garage',
       executive_floor: 'Executive Floor',
+      stairwell: 'The Stairwell',
+      archive: 'The Archive',
+      hr_department: 'HR Department',
+      vault: 'The Vault',
+      board_room: 'The Board Room',
+      penthouse: 'The Penthouse',
     };
     if (this.locationElement) {
       this.locationElement.textContent = names[roomId] || roomId;

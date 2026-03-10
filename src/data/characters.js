@@ -166,6 +166,28 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['glasses'],
   },
+  hr_rep: {
+    name: 'HR Representative',
+    bodyColor: 0x6a4a8a, // Purple blazer
+    pantsColor: 0x2a2a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: null,
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_BROWN,
+    hairStyle: 'bun',
+    accessories: ['clipboard'],
+  },
+  security_guard: {
+    name: 'Security Guard',
+    bodyColor: 0x2a2a4a, // Dark uniform
+    pantsColor: 0x2a2a4a,
+    shirtColor: null,
+    tieColor: null,
+    skinColor: COLORS.SKIN_DARK,
+    hairColor: COLORS.HAIR_DARK,
+    hairStyle: 'short',
+    accessories: [],
+  },
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
   reception_client: {
     name: 'Prospective Client',
