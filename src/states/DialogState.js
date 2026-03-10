@@ -128,7 +128,7 @@ export class DialogState {
 
     // Set up advance callback
     this.dialogBox.onAdvance = () => {
-      this.currentIndex++;
+      this.currentIndex = node.next !== undefined ? node.next : this.currentIndex + 1;
       this.waitingForInput = false;
       this._processNode();
     };
