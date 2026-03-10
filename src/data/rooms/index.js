@@ -193,8 +193,7 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'janet', x: 6, z: 5, facing: Math.PI },    // NW pod, cubicle 3
-      { id: 'diane', x: 15, z: 5, facing: Math.PI },  // NE pod, cubicle 4
-      { id: 'intern', x: 17, z: 5, facing: Math.PI },  // NE pod, cubicle 5
+      { id: 'intern', x: 15, z: 5, facing: Math.PI },  // NE pod, cubicle 4
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2 }, // water cooler (client)
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI }, // near water cooler
     ],
@@ -535,8 +534,9 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 9, z: 3, rotation: Math.PI },
     ],
     npcs: [
+      { id: 'diane', x: 7, z: 4, facing: Math.PI, sitting: true },
       { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2 },
-      { id: 'reception_client', x: 7, z: 4, facing: Math.PI, interactable: false, sitting: true },
+      { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: false, sitting: true },
     ],
     exits: [
       // NORTH exits -> Cubicle Farm
