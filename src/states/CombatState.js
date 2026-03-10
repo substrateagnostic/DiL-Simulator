@@ -106,7 +106,7 @@ export class CombatState {
     this.phase = 'player_turn';
     this.inputEnabled = true;
     this.hud.enableInput();
-    this.hud.showMainMenu();
+    this.hud.showMainMenu(this.engine.player.silencedThisTurn);
     this.hud.updatePlayerStats({
       ...this.player.stats,
       hp: this.engine.player.hp,
@@ -163,6 +163,9 @@ export class CombatState {
     setTimeout(() => {
       if (this.engine.isOver) {
         this._handleResult();
+      } else if (result.doubleTurn) {
+        this.hud.showMessage('Double turn!');
+        setTimeout(() => this._startPlayerTurn(), 600);
       } else {
         this._startEnemyTurn();
       }
@@ -282,6 +285,18 @@ export class CombatState {
     if (result.type === 'buff') {
       AudioManager.playSfx('confirm');
       this.hud.showMessage(`${result.abilityName}! Buffed for ${result.duration} turns!`);
+      return 1000;
+    }
+
+    if (result.type === 'debuff') {
+      AudioManager.playSfx('confirm');
+      this.hud.showMessage(`${result.abilityName}! Enemy weakened for ${result.duration} turns!`);
+      return 1000;
+    }
+
+    if (result.type === 'special') {
+      AudioManager.playSfx('confirm');
+      this.hud.showMessage(`${result.abilityName}!`);
       return 1000;
     }
 
@@ -414,6 +429,148 @@ export class CombatState {
         return 1400;
       }
 
+      case 'fiduciary_shield': {
+        // Blue shield particles orbiting player
+        AudioManager.playSfx('confirm');
+        this.hud.showMessage(`${result.abilityName}! DEF buffed for ${result.duration} turns!`);
+        this.scene.flash(0x2266ff, 0.12);
+        this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 20, 0x4488ff, 1.2, 1.6);
+        this.particles.orbit({ x: 0, y: 1.4, z: 4 }, 12, 0x88bbff, 0.8, 1.2);
+        setTimeout(() => {
+          this.particles.burst({ x: 0, y: 1.2, z: 4 }, 18, 0x4488ff, 2.5, 0.9);
+        }, 400);
+        return 1400;
+      }
+
+      case 'due_diligence': {
+        // Magnifying glass effect — gold burst on enemy
+        AudioManager.playSfx('confirm');
+        this.hud.showMessage(`${result.abilityName}! Enemy weakened for ${result.duration} turns!`);
+        this.scene.flash(0xddaa00, 0.10);
+        this.particles.burst({ x: 0, y: 1.5, z: 0 }, 20, 0xffd700, 3, 1.0);
+        setTimeout(() => {
+          this.scene.enemyHurtAnim();
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffee44, 2.5, 0.8);
+        }, 300);
+        return 1300;
+      }
+
+      case 'whistleblower': {
+        // Red alert — three escalating flashes + damage
+        this.hud.showMessage('Whistleblower!');
+        this.scene.flash(0xcc0000, 0.12);
+        this.particles.burst({ x: 0, y: 1.5, z: 2 }, 15, 0xff2200, 3, 0.6);
+        setTimeout(() => {
+          this.scene.flash(0xff0000, 0.15);
+          this.scene.shake(0.5);
+          this.particles.burst({ x: 0, y: 1.3, z: 1 }, 20, 0xff4400, 3.5, 0.8);
+        }, 250);
+        setTimeout(() => {
+          this.scene.flash(0xff2200, 0.25);
+          this.scene.shake(crit ? 1.2 : 0.9);
+          this.scene.enemyHurtAnim();
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 40 : 30, 0xff0000, 4, 1.0);
+        }, 500);
+        return 1600;
+      }
+
+      case 'power_of_attorney': {
+        // Green healing aura, large heal number
+        AudioManager.playSfx('heal');
+        this.hud.showMessage(`${result.abilityName}!`);
+        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+        this.scene.flash(0x22aa44, 0.15);
+        this.particles.burst({ x: 0, y: 0.5, z: 4 }, 25, 0x44ff88, 3, 1.2);
+        this.particles.rise({ x: 0, y: 0.3, z: 4 }, 20, 0x88ffaa, 2.0);
+        setTimeout(() => {
+          this.particles.burst({ x: 0, y: 1.5, z: 4 }, 15, 0x44ff44, 2.5, 0.9);
+        }, 400);
+        return 1400;
+      }
+
+      case 'root_access': {
+        // Green matrix-style particles streaming to enemy
+        this.hud.showMessage('Root Access!');
+        this.particles.stream(
+          { x: 0.1, y: 1.0, z: 3.5 },
+          { x: 0, y: 1.2, z: 0.3 },
+          25, 0x00ff44, 0.4
+        );
+        this.particles.stream(
+          { x: -0.1, y: 1.3, z: 3.5 },
+          { x: 0, y: 1.0, z: 0.2 },
+          15, 0x44ff88, 0.35
+        );
+        setTimeout(() => {
+          this.scene.enemyHurtAnim();
+          this.scene.shake(crit ? 0.9 : 0.5);
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 35 : 22, 0x00ff44, 3.5, 1.0);
+          if (result.strippedBuffs) {
+            this.hud.showMessage('All enemy buffs stripped!');
+          }
+        }, 400);
+        return 1500;
+      }
+
+      case 'firewall': {
+        // Blue shield wall effect
+        AudioManager.playSfx('confirm');
+        this.hud.showMessage('Firewall active! Next enemy action will be blocked.');
+        this.scene.flash(0x2244aa, 0.15);
+        this.particles.burst({ x: 0, y: 1.0, z: 3 }, 20, 0x4488ff, 3, 1.0);
+        this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 14, 0x88aaff, 1.0, 1.4);
+        return 1300;
+      }
+
+      case 'temporal_audit': {
+        // Purple time-warp effect
+        AudioManager.playSfx('confirm');
+        this.hud.showMessage('Temporal Audit! You get another action!');
+        this.scene.flash(0x8844cc, 0.15);
+        this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0xaa66ff, 3, 1.0);
+        this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 16, 0xcc88ff, 1.2, 1.5);
+        return 1200;
+      }
+
+      case 'notarized_strike': {
+        // Gold stamp effect — heavy impact
+        this.hud.showMessage('Notarized Strike!');
+        this.scene.flash(0xddaa00, 0.10);
+        this.particles.burst({ x: 0, y: 2.5, z: 0 }, 12, 0xffd700, 1.0, 0.5);
+        setTimeout(() => {
+          this.scene.flash(0xffdd00, 0.25);
+          this.scene.shake(crit ? 1.2 : 0.8);
+          this.scene.enemyHurtAnim();
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 35 : 25, 0xffd700, 4, 1.0);
+          this.particles.burst({ x: 0, y: 0.5, z: 0 }, 10, 0xaa8800, 2, 0.6);
+        }, 400);
+        return 1500;
+      }
+
+      case 'invoke_charter': {
+        // White/gold holy light from above
+        this.hud.showMessage('Invoke Charter!');
+        this.scene.flash(0xffffff, 0.15);
+        this.particles.burst({ x: 0, y: 3.0, z: 0 }, 20, 0xffffff, 1.5, 0.6);
+        this.particles.burst({ x: 0, y: 2.8, z: 0 }, 15, 0xffd700, 1.2, 0.5);
+        setTimeout(() => {
+          this.scene.flash(0xffffcc, 0.30);
+          this.scene.shake(crit ? 1.5 : 1.0);
+          this.scene.enemyHurtAnim();
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this.particles.burst({ x: 0, y: 1.5, z: 0 }, crit ? 45 : 35, 0xffffff, 5, 1.2);
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 20, 0xffd700, 4, 1.0);
+        }, 500);
+        return 1700;
+      }
+
       default: {
         // Fallback for any future abilities
         this.scene.enemyHurtAnim();
@@ -456,6 +613,18 @@ export class CombatState {
     setTimeout(() => {
       const result = this.engine.enemyTurn();
       if (!result) return;
+
+      if (result.type === 'blocked') {
+        this.hud.showMessage(result.message);
+        AudioManager.playSfx('confirm');
+        this.particles.burst({ x: 0, y: 1, z: 4 }, 15, 0x4488ff, 3, 0.8);
+        this._updateHUD();
+        setTimeout(() => {
+          this.engine.turn = 'player';
+          this._startPlayerTurn();
+        }, 1500);
+        return;
+      }
 
       if (result.message) {
         this.hud.showMessage(result.message);
@@ -556,6 +725,10 @@ export class CombatState {
           this.hud.showMessage('Still stunned!');
         } else if (effect.type === 'confused') {
           this.hud.showMessage('Confused! Your next action may backfire.');
+        } else if (effect.type === 'silenced') {
+          this.hud.showMessage(effect.message || 'Silenced! Can only use basic attacks.');
+        } else if (effect.type === 'status_expire') {
+          this.hud.showMessage(effect.message);
         }
         this._updateHUD();
       }, delay);

@@ -50,12 +50,12 @@ export class CombatHUD {
     this.showMainMenu();
   }
 
-  showMainMenu() {
+  showMainMenu(silenced = false) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
     this.menuItems = [
       { label: 'Attack', action: 'attack' },
-      { label: 'Special', action: 'special' },
+      { label: silenced ? 'Special (Silenced)' : 'Special', action: 'special', disabled: silenced },
       { label: 'Item', action: 'item' },
     ];
 
@@ -95,11 +95,17 @@ export class CombatHUD {
     this.menuEl.innerHTML = '';
     this.menuItems.forEach((item, i) => {
       const btn = document.createElement('div');
-      btn.className = `combat-action-btn${i === this.selectedIndex ? ' selected' : ''}`;
+      btn.className = `combat-action-btn${i === this.selectedIndex ? ' selected' : ''}${item.disabled ? ' disabled' : ''}`;
       btn.textContent = item.label;
+      if (item.disabled) {
+        btn.style.opacity = '0.4';
+        btn.style.pointerEvents = 'none';
+      }
       btn.addEventListener('click', () => {
-        this.selectedIndex = i;
-        this._selectCurrent();
+        if (!item.disabled) {
+          this.selectedIndex = i;
+          this._selectCurrent();
+        }
       });
       this.menuEl.appendChild(btn);
     });

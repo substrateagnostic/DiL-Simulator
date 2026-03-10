@@ -1,6 +1,7 @@
 import { PLAYER_ABILITIES, ENEMY_ABILITIES, ENEMY_STATS, ITEMS } from '../data/stats.js';
 import { COMBAT } from '../utils/constants.js';
 import { randomRange } from '../utils/math.js';
+import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
 
 export class CombatEngine {
   constructor(playerStats, enemyId) {
@@ -10,20 +11,26 @@ export class CombatEngine {
       dots: [],
       stunned: 0,
       confused: 0,
+      silenced: 0,
+      exposed: 0,
+      protected: 0,
       stunnedThisTurn: false,
       confusedThisTurn: false,
+      silencedThisTurn: false,
+      blockNext: false,
     };
-    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null };
+    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0 };
     this.enemyId = enemyId;
     this.turn = 'player';
     this.turnCount = 0;
+    this.abilityIndex = 0;
     this.isOver = false;
     this.result = null;
     this.log = [];
     this.counterActive = false;
   }
 
-  _calcDamage(attackerAtk, power, defenderDef) {
+  _calcDamage(attackerAtk, power, defenderDef, target = null) {
     const baseDmg = (attackerAtk + power) * COMBAT.BASE_DAMAGE_MULTIPLIER;
     const defense = defenderDef * COMBAT.DEFENSE_FACTOR;
     let damage = Math.max(1, Math.floor(baseDmg - defense + randomRange(-3, 3)));
@@ -32,6 +39,12 @@ export class CombatEngine {
     if (Math.random() < COMBAT.CRITICAL_CHANCE) {
       damage = Math.floor(damage * COMBAT.CRITICAL_MULTIPLIER);
       critical = true;
+    }
+
+    // Apply expose/protect modifiers
+    if (target) {
+      if (target.exposed > 0) damage = Math.floor(damage * 1.3);
+      if (target.protected > 0) damage = Math.floor(damage * 0.5);
     }
 
     return { damage, critical };
@@ -70,16 +83,16 @@ export class CombatEngine {
 
     if (this.counterActive) {
       this.counterActive = false;
-      const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def);
+      const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def, this.player);
       this.player.hp = Math.max(0, this.player.hp - counterDmg.damage);
-      this.log.push({ type: 'counter', damage: counterDmg.damage, message: '"Great catch! But actually..." Alex counters!' });
+      this.log.push({ type: 'counter', damage: counterDmg.damage, message: '"Great catch! But actually..." Ross counters!' });
       this._checkDefeat();
       return { type: 'counter', damage: counterDmg.damage, critical: counterDmg.critical };
     }
 
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
-    const result = this._calcDamage(pStats.atk, 10, eStats.def);
+    const result = this._calcDamage(pStats.atk, 10, eStats.def, this.enemy);
     this.enemy.hp = Math.max(0, this.enemy.hp - result.damage);
     this.log.push({ type: 'attack', damage: result.damage, critical: result.critical });
 
@@ -98,7 +111,7 @@ export class CombatEngine {
 
     if (this.counterActive && ability.type === 'attack') {
       this.counterActive = false;
-      const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def);
+      const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def, this.player);
       this.player.hp = Math.max(0, this.player.hp - counterDmg.damage);
       this._checkDefeat();
       return { type: 'counter', damage: counterDmg.damage, critical: counterDmg.critical, abilityName: ability.name };
@@ -111,9 +124,14 @@ export class CombatEngine {
     switch (ability.type) {
       case 'attack':
       case 'attack_aoe': {
-        const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def);
+        const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, this.enemy);
         this.enemy.hp = Math.max(0, this.enemy.hp - dmg.damage);
         result = { ...result, damage: dmg.damage, critical: dmg.critical };
+        // Handle stripBuffs special
+        if (ability.stripBuffs) {
+          this.enemy.buffs = [];
+          result.strippedBuffs = true;
+        }
         break;
       }
       case 'heal': {
@@ -128,7 +146,27 @@ export class CombatEngine {
           duration: ability.buffDuration,
           name: ability.name,
         });
+        // Handle block_next special
+        if (ability.special === 'block_next') {
+          this.player.blockNext = true;
+          result.blockNext = true;
+        }
         result = { ...result, buffAmount: ability.buffAmount, duration: ability.buffDuration };
+        break;
+      }
+      case 'debuff': {
+        this.enemy.buffs.push({
+          stats: ability.debuffAmount,
+          duration: ability.debuffDuration,
+          name: ability.name,
+        });
+        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration };
+        break;
+      }
+      case 'special': {
+        if (ability.special === 'double_turn') {
+          result.doubleTurn = true;
+        }
         break;
       }
     }
@@ -188,6 +226,13 @@ export class CombatEngine {
   enemyTurn() {
     if (this.isOver) return null;
 
+    // Check if player's blockNext is active
+    if (this.player.blockNext) {
+      this.player.blockNext = false;
+      this.turnCount++;
+      return { type: 'blocked', message: 'Blocked! The enemy\'s action was nullified!' };
+    }
+
     const eStats = this._getEffective(this.enemy);
     const pStats = this._getEffective(this.player);
     const abilityId = this._pickEnemyAbility();
@@ -198,6 +243,7 @@ export class CombatEngine {
       this.enemy.lastAbility = abilityId;
     }
 
+    this.turnCount++;
     this._checkDefeat();
     return result;
   }
@@ -206,7 +252,7 @@ export class CombatEngine {
     const ability = ENEMY_ABILITIES[abilityId];
 
     if (!ability) {
-      const dmg = this._calcDamage(eStats.atk, 10, pStats.def);
+      const dmg = this._calcDamage(eStats.atk, 10, pStats.def, this.player);
       this.player.hp = Math.max(0, this.player.hp - dmg.damage);
       return { type: 'attack', damage: dmg.damage, critical: dmg.critical, message: `${this.enemy.name} attacks!` };
     }
@@ -215,7 +261,7 @@ export class CombatEngine {
 
     switch (ability.type) {
       case 'attack': {
-        const dmg = this._calcDamage(eStats.atk, ability.power, pStats.def);
+        const dmg = this._calcDamage(eStats.atk, ability.power, pStats.def, this.player);
         this.player.hp = Math.max(0, this.player.hp - dmg.damage);
         result.damage = dmg.damage;
         result.critical = dmg.critical;
@@ -264,14 +310,14 @@ export class CombatEngine {
           }
         }
 
-        const dmg = this._calcDamage(eStats.atk, 15, pStats.def);
+        const dmg = this._calcDamage(eStats.atk, 15, pStats.def, this.player);
         this.player.hp = Math.max(0, this.player.hp - dmg.damage);
         result.damage = dmg.damage;
         result.message = `${ability.message} It devolves into a louder basic attack.`;
         break;
       }
       case 'summon': {
-        const dmg = this._calcDamage(eStats.atk, ability.power || 8, pStats.def);
+        const dmg = this._calcDamage(eStats.atk, ability.power || 8, pStats.def, this.player);
         this.player.hp = Math.max(0, this.player.hp - dmg.damage);
         result.damage = dmg.damage;
         break;
@@ -282,16 +328,122 @@ export class CombatEngine {
   }
 
   _pickEnemyAbility() {
-    const abilities = this.enemy.abilities;
-    if (!abilities || abilities.length === 0) return null;
-
-    const hpPercent = this.enemy.hp / this.enemy.maxHP;
-
-    if (hpPercent < 0.3) {
-      const healAbility = abilities.find((id) => ENEMY_ABILITIES[id]?.type === 'heal');
-      if (healAbility && Math.random() < 0.6) return healAbility;
+    // Check for multi-phase boss support
+    let abilities = this.enemy.abilities;
+    if (this.enemy.phases) {
+      const hpPercent = this.enemy.hp / this.enemy.maxHP;
+      let activePhase = null;
+      for (const phase of this.enemy.phases) {
+        if (hpPercent <= phase.hpThreshold) {
+          if (!activePhase || phase.hpThreshold >= activePhase.hpThreshold) {
+            activePhase = phase;
+          }
+        }
+      }
+      if (activePhase) {
+        abilities = activePhase.abilities;
+      }
     }
 
+    if (!abilities || abilities.length === 0) return null;
+
+    const pattern = ENEMY_AI_PATTERNS[this.enemyId];
+    if (!pattern) {
+      // Default: random with heal preference at low HP
+      return this._pickRandom(abilities, true);
+    }
+
+    switch (pattern.pattern) {
+      case 'random':
+        return this._pickRandom(abilities, true);
+
+      case 'escalating': {
+        const seq = pattern.sequence || [];
+        if (this.abilityIndex < seq.length) {
+          const pick = seq[this.abilityIndex];
+          this.abilityIndex++;
+          if (abilities.includes(pick)) return pick;
+        }
+        // Past sequence
+        if (pattern.randomAfter) {
+          return abilities[Math.floor(Math.random() * abilities.length)];
+        }
+        // Repeat last in sequence
+        const last = seq[seq.length - 1];
+        return abilities.includes(last) ? last : abilities[Math.floor(Math.random() * abilities.length)];
+      }
+
+      case 'aggressive': {
+        const preferAttack = pattern.preferAttack || 0.7;
+        if (Math.random() < preferAttack) {
+          const attackAbilities = abilities.filter((id) => {
+            const a = ENEMY_ABILITIES[id];
+            return a && (a.type === 'attack' || a.type === 'dot');
+          });
+          if (attackAbilities.length > 0) {
+            return attackAbilities[Math.floor(Math.random() * attackAbilities.length)];
+          }
+        }
+        return abilities[Math.floor(Math.random() * abilities.length)];
+      }
+
+      case 'tactical': {
+        const hpPercent = this.enemy.hp / this.enemy.maxHP;
+        const healThreshold = pattern.healThreshold || 0.5;
+        if (hpPercent < healThreshold) {
+          const healAbility = abilities.find((id) => ENEMY_ABILITIES[id]?.type === 'heal');
+          if (healAbility && Math.random() < 0.6) return healAbility;
+        }
+        const debuffChance = pattern.debuffChance || 0.3;
+        if (Math.random() < debuffChance) {
+          const debuffAbilities = abilities.filter((id) => {
+            const a = ENEMY_ABILITIES[id];
+            return a && (a.type === 'debuff' || a.type === 'confuse');
+          });
+          if (debuffAbilities.length > 0) {
+            return debuffAbilities[Math.floor(Math.random() * debuffAbilities.length)];
+          }
+        }
+        return abilities[Math.floor(Math.random() * abilities.length)];
+      }
+
+      case 'rotation': {
+        const pick = abilities[this.abilityIndex % abilities.length];
+        this.abilityIndex++;
+        return pick;
+      }
+
+      case 'strategic': {
+        const p1 = pattern.phase1 || [];
+        const p2 = pattern.phase2 || [];
+        if (this.abilityIndex < p1.length) {
+          const pick = p1[this.abilityIndex];
+          this.abilityIndex++;
+          return abilities.includes(pick) ? pick : abilities[Math.floor(Math.random() * abilities.length)];
+        }
+        // Phase 2: loop through
+        const p2Index = (this.abilityIndex - p1.length) % p2.length;
+        this.abilityIndex++;
+        const pick = p2[p2Index];
+        return abilities.includes(pick) ? pick : abilities[Math.floor(Math.random() * abilities.length)];
+      }
+
+      case 'chaotic':
+        return abilities[Math.floor(Math.random() * abilities.length)];
+
+      default:
+        return this._pickRandom(abilities, true);
+    }
+  }
+
+  _pickRandom(abilities, healPreference = false) {
+    if (healPreference) {
+      const hpPercent = this.enemy.hp / this.enemy.maxHP;
+      if (hpPercent < 0.3) {
+        const healAbility = abilities.find((id) => ENEMY_ABILITIES[id]?.type === 'heal');
+        if (healAbility && Math.random() < 0.6) return healAbility;
+      }
+    }
     return abilities[Math.floor(Math.random() * abilities.length)];
   }
 
@@ -329,6 +481,27 @@ export class CombatEngine {
       if (entity.confusedThisTurn) {
         entity.confused--;
         results.push({ type: 'confused' });
+      }
+      if (entity.silenced > 0) {
+        entity.silencedThisTurn = true;
+        entity.silenced--;
+        results.push({ type: 'silenced', message: 'Silenced! Can only use basic attacks.' });
+      } else {
+        entity.silencedThisTurn = false;
+      }
+    }
+
+    // Decrement exposed/protected for both player and enemy
+    if (entity.exposed > 0) {
+      entity.exposed--;
+      if (entity.exposed <= 0) {
+        results.push({ type: 'status_expire', message: 'Expose wore off.' });
+      }
+    }
+    if (entity.protected > 0) {
+      entity.protected--;
+      if (entity.protected <= 0) {
+        results.push({ type: 'status_expire', message: 'Protect wore off.' });
       }
     }
 

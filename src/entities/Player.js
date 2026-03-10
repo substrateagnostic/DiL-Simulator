@@ -61,11 +61,16 @@ export class Player {
     this.animator.update(dt);
   }
 
-  // Get available abilities based on level
+  // Get available abilities based on level or quest completion
   getAbilities() {
     const abilities = [];
     for (const [id, ability] of Object.entries(PLAYER_ABILITIES)) {
-      if (this.stats.level >= ability.unlockLevel) {
+      if (ability.unlockQuest) {
+        // Quest-unlocked abilities require the quest to be completed
+        if (this.questStates[ability.unlockQuest] === 'complete') {
+          abilities.push({ id, ...ability });
+        }
+      } else if (this.stats.level >= ability.unlockLevel) {
         abilities.push({ id, ...ability });
       }
     }
