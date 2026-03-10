@@ -12,8 +12,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['coffee_mug'],
   },
-  alex: {
-    name: 'Alex',
+  ross: {
+    name: 'Ross',
     bodyColor: COLORS.POLO_GREEN,
     pantsColor: COLORS.KHAKI,
     shirtColor: null,
@@ -34,8 +34,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: ['wine_tumbler'],
   },
-  dave: {
-    name: 'Dave from IT',
+  alex_it: {
+    name: 'Alex from IT',
     bodyColor: COLORS.HAWAIIAN,
     pantsColor: 0x5a5a3a,
     shirtColor: null,
@@ -56,8 +56,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['name_tag'],
   },
-  monica: {
-    name: 'Monica',
+  diane: {
+    name: 'Diane',
     bodyColor: COLORS.BLAZER,
     pantsColor: 0x2a2a3a,
     shirtColor: COLORS.SHIRT_WHITE,
@@ -133,8 +133,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['golf_putter'],
   },
-  alex_boss: {
-    name: 'Alex (Unhinged)',
+  ross_boss: {
+    name: 'Ross (Unhinged)',
     bodyColor: 0x2a4a2a, // Dark power polo
     pantsColor: COLORS.KHAKI,
     shirtColor: null,
@@ -143,6 +143,28 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'short',
     accessories: ['bluetooth_earpiece', 'golf_putter'],
+  },
+  rachel: {
+    name: 'Rachel',
+    bodyColor: 0x1a1a3a, // Navy power suit
+    pantsColor: 0x1a1a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: null,
+    skinColor: COLORS.SKIN,
+    hairColor: 0xc0c0c0, // Silver
+    hairStyle: 'bob',
+    accessories: ['tablet', 'pearl_earrings'],
+  },
+  isaiah: {
+    name: 'Isaiah',
+    bodyColor: 0x3a5a8a, // Blue button-down
+    pantsColor: 0x2a2a3a,
+    shirtColor: null,
+    tieColor: null,
+    skinColor: COLORS.SKIN_DARK,
+    hairColor: COLORS.HAIR_DARK,
+    hairStyle: 'short',
+    accessories: ['glasses'],
   },
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
   reception_client: {

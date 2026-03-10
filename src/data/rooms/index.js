@@ -5,11 +5,11 @@
 // Furniture types must match Furniture factory methods.
 // Connection map:
 //   cubicle_farm (hub)
-//     NORTH  -> alex_office
+//     NORTH  -> ross_office
 //     WEST   -> break_room
 //     EAST   -> server_room
 //     SOUTH  -> reception
-//   alex_office EAST -> conference_room
+//   ross_office EAST -> conference_room
 //   reception SOUTH  -> parking_garage
 //   reception ELEVATOR -> executive_floor (Act 3)
 // ============================================================
@@ -185,14 +185,15 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'janet', x: 6, z: 5, facing: Math.PI },    // NW pod, cubicle 3
-      { id: 'monica', x: 15, z: 5, facing: Math.PI },  // NE pod, cubicle 4
+      { id: 'diane', x: 15, z: 5, facing: Math.PI },  // NE pod, cubicle 4
       { id: 'intern', x: 17, z: 5, facing: Math.PI },  // NE pod, cubicle 5
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2 }, // water cooler (client)
+      { id: 'isaiah', x: 16, z: 12, facing: Math.PI }, // near water cooler
     ],
     exits: [
       // NORTH exits -> Alex's Office
-      { x: 9, z: 0, targetRoom: 'alex_office', spawnX: 4, spawnZ: 6 },
-      { x: 10, z: 0, targetRoom: 'alex_office', spawnX: 4, spawnZ: 6 },
+      { x: 9, z: 0, targetRoom: 'ross_office', spawnX: 4, spawnZ: 6 },
+      { x: 10, z: 0, targetRoom: 'ross_office', spawnX: 4, spawnZ: 6 },
       // WEST exit -> Break Room
       { x: 0, z: 7, targetRoom: 'break_room', spawnX: 7, spawnZ: 3 },
       { x: 0, z: 8, targetRoom: 'break_room', spawnX: 7, spawnZ: 3 },
@@ -283,11 +284,11 @@ export const ROOMS = {
   },
 
   // ----------------------------------------------------------
-  // 3. ALEX'S OFFICE — 8x8, boss room
+  // 3. ROSS'S OFFICE — 8x8, boss room
   // ----------------------------------------------------------
-  alex_office: {
-    id: 'alex_office',
-    name: "Alex's Office",
+  ross_office: {
+    id: 'ross_office',
+    name: "Ross's Office",
     width: 8,
     height: 8,
     floorColor: 0x4a6741,  // nicer carpet for the boss
@@ -323,7 +324,7 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'alex', x: 4, z: 1.5, facing: Math.PI },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI },
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
@@ -334,7 +335,7 @@ export const ROOMS = {
       { x: 7, z: 4, targetRoom: 'conference_room', spawnX: 1, spawnZ: 4 },
     ],
     interactables: [
-      { x: 4, z: 2, type: 'alex_desk', dialogId: 'alex_desk' },
+      { x: 4, z: 2, type: 'ross_desk', dialogId: 'ross_desk' },
       // Motivational posters
       { x: 1, z: 0, type: 'poster', dialogId: 'poster_synergy' },
       { x: 3, z: 0, type: 'poster', dialogId: 'poster_hustle' },
@@ -393,8 +394,8 @@ export const ROOMS = {
     ],
     exits: [
       // WEST exit -> Alex's Office
-      { x: 0, z: 3, targetRoom: 'alex_office', spawnX: 6, spawnZ: 3 },
-      { x: 0, z: 4, targetRoom: 'alex_office', spawnX: 6, spawnZ: 4 },
+      { x: 0, z: 3, targetRoom: 'ross_office', spawnX: 6, spawnZ: 3 },
+      { x: 0, z: 4, targetRoom: 'ross_office', spawnX: 6, spawnZ: 4 },
     ],
     interactables: [
       { x: 6, z: 0, type: 'whiteboard', dialogId: 'conference_whiteboard' },
@@ -440,7 +441,7 @@ export const ROOMS = {
       { type: 'serverRack', x: 5, z: 3, rotation: 0 },
       { type: 'serverRack', x: 5, z: 4, rotation: 0 },
 
-      // === Dave's corner (southeast) — his desk among the racks ===
+      // === Alex IT's corner (southeast) — his desk among the racks ===
       { type: 'desk', x: 6, z: 7, rotation: 0 },
       { type: 'monitor', x: 6, z: 6.7 },
       { type: 'monitor', x: 6.5, z: 6.7 },
@@ -459,7 +460,7 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 7, z: 2 },
     ],
     npcs: [
-      { id: 'dave', x: 6, z: 8, facing: 0 },
+      { id: 'alex_it', x: 6, z: 8, facing: 0 },
     ],
     exits: [
       // WEST exit -> Cubicle Farm
@@ -468,7 +469,7 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 1, z: 3, type: 'server_rack', dialogId: 'server_rack_inspect' },
-      { x: 6, z: 7, type: 'daves_desk', dialogId: 'daves_desk' },
+      { x: 6, z: 7, type: 'alex_it_desk', dialogId: 'alex_it_desk' },
     ],
     playerSpawn: { x: 2, z: 7 },
   },

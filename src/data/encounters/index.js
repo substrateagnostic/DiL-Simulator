@@ -37,10 +37,10 @@ export const ENCOUNTERS = {
     postDialogId: 'regional_defeated',
     canFlee: false,
   },
-  alex_boss: {
-    enemyId: 'alex_boss',
+  ross_boss: {
+    enemyId: 'ross_boss',
     preDialogId: 'secret_ending',
-    postDialogId: 'alex_boss_defeated',
+    postDialogId: 'ross_boss_defeated',
     canFlee: false,
   },
   reception_client: {

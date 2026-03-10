@@ -140,8 +140,8 @@ export const ENEMY_STATS = {
     xpReward: 200,
     abilities: ['synergy_blast', 'corporate_restructure', 'golden_parachute'],
   },
-  alex_boss: {
-    name: 'Alex (Unhinged)',
+  ross_boss: {
+    name: 'Ross (Unhinged)',
     maxHP: 150,
     hp: 150,
     atk: 18,

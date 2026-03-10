@@ -28,7 +28,7 @@ const QUEST_OBJECTIVES = {
   main_act1: {
     0: 'Find your cubicle and settle in',
     1: 'Meet your coworkers',
-    2: 'Report to Alex for your assignment',
+    2: 'Report to Ross for your assignment',
     3: 'Handle the Henderson Trust meetings',
     4: 'Meet Karen Henderson in the Conference Room',
   },
@@ -421,10 +421,10 @@ export class ExplorationState {
       this.player.stats.def = Math.max(1, defBefore - 3);
       const actualAtkLoss = atkBefore - this.player.stats.atk;
       const actualDefLoss = defBefore - this.player.stats.def;
-      const prev = this.player.getFlag('alexAngerDebuffTotal') || { atk: 0, def: 0 };
-      this.player.setFlag('alexAngerDebuffTotal', { atk: prev.atk + actualAtkLoss, def: prev.def + actualDefLoss });
+      const prev = this.player.getFlag('rossAngerDebuffTotal') || { atk: 0, def: 0 };
+      this.player.setFlag('rossAngerDebuffTotal', { atk: prev.atk + actualAtkLoss, def: prev.def + actualDefLoss });
       this._updateMiniStats();
-      this._showToast('Alex: "Your client choices are an embarrassment." (ATK -3, Composure -3)', 'objective');
+      this._showToast('Ross: "Your client choices are an embarrassment." (ATK -3, Composure -3)', 'objective');
     }
   }
 
@@ -438,20 +438,20 @@ export class ExplorationState {
         }
       }
     }
-    // Reverse Alex anger debuffs
-    const alexDebuff = this.player.getFlag('alexAngerDebuffTotal') || { atk: 0, def: 0 };
-    if (typeof alexDebuff === 'object') {
-      this.player.stats.atk += alexDebuff.atk || 0;
-      this.player.stats.def += alexDebuff.def || 0;
-    } else if (alexDebuff > 0) {
+    // Reverse Ross anger debuffs
+    const rossDebuff = this.player.getFlag('rossAngerDebuffTotal') || { atk: 0, def: 0 };
+    if (typeof rossDebuff === 'object') {
+      this.player.stats.atk += rossDebuff.atk || 0;
+      this.player.stats.def += rossDebuff.def || 0;
+    } else if (rossDebuff > 0) {
       // Legacy: old format was a single number
-      this.player.stats.atk += alexDebuff;
-      this.player.stats.def += alexDebuff;
+      this.player.stats.atk += rossDebuff;
+      this.player.stats.def += rossDebuff;
     }
     this.player.setFlag('currentClient', null);
     this.player.setFlag('bossAnger', 0);
     this.player.setFlag('clientBuffTotal', null);
-    this.player.setFlag('alexAngerDebuffTotal', 0);
+    this.player.setFlag('rossAngerDebuffTotal', 0);
   }
 
   // ── End reception system ────────────────────────────────────────────────────
@@ -702,7 +702,7 @@ export class ExplorationState {
     const names = {
       cubicle_farm: 'Cubicle Farm',
       break_room: 'Break Room',
-      alex_office: "Alex's Office",
+      ross_office: "Ross's Office",
       conference_room: 'Conference Room',
       server_room: 'IT Server Room',
       reception: 'Reception',
@@ -743,7 +743,7 @@ export class ExplorationState {
     if (
       this.player.getFlag('regional_defeated') ||
       this.player.getFlag('compliance_defeated') ||
-      this.player.getFlag('alex_defeated')
+      this.player.getFlag('ross_defeated')
     ) {
       return 'Take a breath. You survived your first week.';
     }
@@ -766,7 +766,7 @@ export class ExplorationState {
       return 'Meet Karen Henderson in the Conference Room';
     }
 
-    const metCoworkers = ['met_janet', 'met_dave', 'met_intern', 'met_monica']
+    const metCoworkers = ['met_janet', 'met_alex_it', 'met_intern', 'met_diane']
       .filter((flag) => this.player.getFlag(flag))
       .length;
 
@@ -776,7 +776,7 @@ export class ExplorationState {
     if (metCoworkers < 2) {
       return 'Meet your coworkers';
     }
-    return 'Report to Alex for your assignment';
+    return 'Report to Ross for your assignment';
   }
 
   _refreshStoryProgress(silent = false) {

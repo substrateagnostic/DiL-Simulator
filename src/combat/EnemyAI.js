@@ -33,7 +33,7 @@ export const ENEMY_AI_PATTERNS = {
     phase1: ['corporate_restructure'],
     phase2: ['synergy_blast', 'synergy_blast', 'golden_parachute'],
   },
-  alex_boss: {
+  ross_boss: {
     // Unpredictable - quick_sync to stun, circle_back to repeat, great_catch to counter
     pattern: 'chaotic',
   },
