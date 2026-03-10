@@ -44,7 +44,7 @@ const NO_BLOCK = new Set([
   'coffeeMachine', 'microwave', 'waterCooler', 'printer',
   'whiteboard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
-  'cobweb', 'oilPainting',
+  'cobweb', 'oilPainting', 'staircase',
 ]);
 
 export class Room {

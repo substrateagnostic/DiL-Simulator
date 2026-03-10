@@ -1,6 +1,5 @@
 import { NPC } from './NPC.js';
 import { distance2D } from '../utils/math.js';
-import { PLAYER } from '../utils/constants.js';
 
 export class EntityManager {
   constructor() {
@@ -34,7 +33,7 @@ export class EntityManager {
     for (const npc of this.npcs) {
       if (!npc.visible || !npc.interactable) continue;
       const dist = distance2D(npc.position.x, npc.position.z, playerX, playerZ);
-      if (dist < PLAYER.INTERACT_RANGE && dist < nearestDist) {
+      if (dist < npc.interactRange && dist < nearestDist) {
         nearest = npc;
         nearestDist = dist;
       }

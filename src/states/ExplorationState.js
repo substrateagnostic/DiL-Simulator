@@ -224,14 +224,6 @@ export class ExplorationState {
         if (STORY_THOUGHTS[key]) {
           setTimeout(() => this._showMonologue(STORY_THOUGHTS[key]), 2000);
         }
-        // Arcade minigame launch
-        if (key === 'launch_arcade') {
-          this.player.setFlag('launch_arcade', false);
-          import('./ArcadeState.js').then(({ ArcadeState }) => {
-            const arcadeState = new ArcadeState(this.stateManager, this.player);
-            this.stateManager.push(arcadeState);
-          });
-        }
         // Janitor riddles complete — +2 all stats
         if (key === 'janitor_riddle_3_done') {
           this.player.stats.hp += 2;

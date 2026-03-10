@@ -27,6 +27,7 @@ export class NPC {
     this.visible = options.visible !== false;
     this.interactable = options.interactable !== false;
     this.sitting = options.sitting || false;
+    this.interactRange = options.interactRange || PLAYER.INTERACT_RANGE;
     this.name = this.config?.name || id;
 
     // Movement pattern config
@@ -54,7 +55,7 @@ export class NPC {
   }
 
   isInRange(playerX, playerZ) {
-    return distance2D(this.position.x, this.position.z, playerX, playerZ) < PLAYER.INTERACT_RANGE;
+    return distance2D(this.position.x, this.position.z, playerX, playerZ) < this.interactRange;
   }
 
   faceTowards(x, z) {

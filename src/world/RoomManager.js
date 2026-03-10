@@ -65,6 +65,7 @@ export class RoomManager {
         interactable: npc.interactable !== false,
         sitting: npc.sitting || false,
         movement: npc.movement || null,
+        interactRange: npc.interactRange,
         conditionFn,
       });
       npcEntity.tileMap = room.tileMap;
