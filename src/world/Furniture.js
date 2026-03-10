@@ -1265,4 +1265,60 @@ export const Furniture = {
     group.add(frame);
     return group;
   },
+
+  arcadeCabinet() {
+    const group = new THREE.Group();
+    // Main body
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 1.7, 0.6),
+      Materials.custom(0x1a1a2e)
+    );
+    body.position.y = 0.85;
+    group.add(body);
+    // Screen
+    const screen = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.4, 0.02),
+      Materials.custom(0x113311)
+    );
+    screen.position.set(0, 1.3, 0.32);
+    group.add(screen);
+    // Screen glow
+    const glow = new THREE.Mesh(
+      new THREE.BoxGeometry(0.45, 0.35, 0.01),
+      new THREE.MeshBasicMaterial({ color: 0x33ff33, transparent: true, opacity: 0.3 })
+    );
+    glow.position.set(0, 1.3, 0.335);
+    group.add(glow);
+    // Control panel
+    const panel = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.15, 0.25),
+      Materials.custom(0x222244)
+    );
+    panel.rotation.x = -0.3;
+    panel.position.set(0, 0.95, 0.35);
+    group.add(panel);
+    // Joystick
+    const stick = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.02, 0.02, 0.12, 6),
+      Materials.custom(0xff3333)
+    );
+    stick.position.set(-0.08, 1.05, 0.4);
+    group.add(stick);
+    // Button
+    const btn = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.04, 0.04, 0.02, 8),
+      Materials.custom(0x33ff33)
+    );
+    btn.position.set(0.08, 1.0, 0.4);
+    group.add(btn);
+    // Marquee top
+    const marquee = new THREE.Mesh(
+      new THREE.BoxGeometry(0.7, 0.2, 0.1),
+      Materials.custom(0xcc8833)
+    );
+    marquee.position.set(0, 1.8, 0.28);
+    group.add(marquee);
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
 };

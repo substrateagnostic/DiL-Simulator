@@ -177,6 +177,14 @@ export class ExplorationState {
             this.stateManager.push(dialogState);
           }, 2000);
         }
+        // Arcade minigame launch
+        if (key === 'launch_arcade') {
+          this.player.setFlag('launch_arcade', false);
+          import('./ArcadeState.js').then(({ ArcadeState }) => {
+            const arcadeState = new ArcadeState(this.stateManager, this.player);
+            this.stateManager.push(arcadeState);
+          });
+        }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
         if (key === 'penthouse_entered') {
           setTimeout(() => this._startCombat('cfos_assistant'), 2000);
@@ -215,6 +223,14 @@ export class ExplorationState {
         // Story thoughts triggered by flags
         if (STORY_THOUGHTS[key]) {
           setTimeout(() => this._showMonologue(STORY_THOUGHTS[key]), 2000);
+        }
+        // Arcade minigame launch
+        if (key === 'launch_arcade') {
+          this.player.setFlag('launch_arcade', false);
+          import('./ArcadeState.js').then(({ ArcadeState }) => {
+            const arcadeState = new ArcadeState(this.stateManager, this.player);
+            this.stateManager.push(arcadeState);
+          });
         }
         // Janitor riddles complete — +2 all stats
         if (key === 'janitor_riddle_3_done') {

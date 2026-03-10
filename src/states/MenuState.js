@@ -2,6 +2,8 @@ import { InputManager } from '../core/InputManager.js';
 import { AudioManager } from '../core/AudioManager.js';
 import { SaveManager } from '../core/SaveManager.js';
 import { EventBus } from '../core/EventBus.js';
+import { BESTIARY_DATA } from '../data/bestiary.js';
+import { ENEMY_STATS } from '../data/stats.js';
 
 export class MenuState {
   constructor(stateManager, player) {
@@ -9,9 +11,11 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Bestiary', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
     this.controlsOverlay = null;
     this.audioOverlay = null;
+    this.bestiaryOverlay = null;
+    this.bestiarySelectedIndex = 0;
   }
 
   enter() {
@@ -56,6 +60,7 @@ export class MenuState {
   }
 
   exit() {
+    this._closeBestiary();
     this._closeControls();
     this._closeAudioSettings();
     if (this.element && this.element.parentNode) {
@@ -77,6 +82,9 @@ export class MenuState {
     switch (choice) {
       case 'Resume':
         this.stateManager.pop();
+        break;
+      case 'Bestiary':
+        this._showBestiary();
         break;
       case 'Save Game':
         this._saveGame();
@@ -109,6 +117,98 @@ export class MenuState {
     setTimeout(() => {
       if (flash.parentNode) flash.parentNode.removeChild(flash);
     }, 1500);
+  }
+
+  _showBestiary() {
+    if (this.bestiaryOverlay) return;
+
+    const entries = Object.entries(BESTIARY_DATA);
+    const defeated = entries.filter(([id]) => this.player.getFlag('bestiary_' + id));
+    const clientCount = this.player.getFlag('portfolioClients') || 0;
+
+    this.bestiaryOverlay = document.createElement('div');
+    this.bestiaryOverlay.className = 'menu-overlay';
+    this.bestiaryOverlay.style.zIndex = '60';
+
+    const panel = document.createElement('div');
+    panel.className = 'menu-panel bestiary-panel';
+
+    const title = document.createElement('div');
+    title.className = 'menu-title';
+    title.textContent = 'BESTIARY';
+    panel.appendChild(title);
+
+    const summary = document.createElement('div');
+    summary.className = 'bestiary-summary';
+    summary.innerHTML = `
+      <span>Defeated: ${defeated.length} / ${entries.length}</span>
+      <span>Clients Served: ${clientCount}</span>
+    `;
+    panel.appendChild(summary);
+
+    const grid = document.createElement('div');
+    grid.className = 'bestiary-grid';
+
+    entries.forEach(([id, entry]) => {
+      const isDefeated = this.player.getFlag('bestiary_' + id);
+      const stats = ENEMY_STATS[id];
+      const card = document.createElement('div');
+      card.className = `bestiary-card${isDefeated ? ' defeated' : ' unknown'}`;
+
+      if (isDefeated && stats) {
+        card.innerHTML = `
+          <div class="bestiary-card-header">
+            <span class="bestiary-name">${entry.name}</span>
+            <span class="bestiary-category">${entry.category}</span>
+          </div>
+          <div class="bestiary-stats">
+            <span>HP: ${stats.maxHP}</span>
+            <span>ATK: ${stats.atk}</span>
+            <span>DEF: ${stats.def}</span>
+            <span>SPD: ${stats.spd}</span>
+          </div>
+          <div class="bestiary-quip">"${entry.quip}"</div>
+        `;
+      } else {
+        card.innerHTML = `
+          <div class="bestiary-card-header">
+            <span class="bestiary-name">???</span>
+            <span class="bestiary-category">${entry.category}</span>
+          </div>
+          <div class="bestiary-stats">
+            <span>HP: ???</span>
+            <span>ATK: ???</span>
+            <span>DEF: ???</span>
+            <span>SPD: ???</span>
+          </div>
+          <div class="bestiary-quip unknown-quip">Not yet defeated</div>
+        `;
+      }
+
+      grid.appendChild(card);
+    });
+
+    panel.appendChild(grid);
+
+    const back = document.createElement('div');
+    back.className = 'menu-item';
+    back.style.marginTop = '16px';
+    back.textContent = 'Back';
+    back.id = 'bestiary-back';
+    back.addEventListener('click', () => this._closeBestiary());
+    panel.appendChild(back);
+
+    this.bestiaryOverlay.appendChild(panel);
+    document.getElementById('ui-overlay').appendChild(this.bestiaryOverlay);
+    if (this.element) this.element.style.display = 'none';
+  }
+
+  _closeBestiary() {
+    if (this.bestiaryOverlay && this.bestiaryOverlay.parentNode) {
+      this.bestiaryOverlay.parentNode.removeChild(this.bestiaryOverlay);
+    }
+    this.bestiaryOverlay = null;
+    if (this.element) this.element.style.display = '';
   }
 
   _showControls() {
@@ -207,6 +307,13 @@ export class MenuState {
   }
 
   update(dt) {
+    if (this.bestiaryOverlay) {
+      if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
+        this._closeBestiary();
+      }
+      return;
+    }
+
     if (this.controlsOverlay) {
       if (InputManager.isConfirmPressed() || InputManager.isCancelPressed()) {
         this._closeControls();

@@ -1,0 +1,18 @@
+export const BESTIARY_DATA = {
+  intern: { name: 'The Intern', category: 'Coworker', quip: 'Still hasn\'t figured out the copier. Bless his heart.' },
+  karen: { name: 'Karen Henderson', category: 'Client', quip: 'Defeated. Still sends me emails.' },
+  chad: { name: 'Chad Henderson', category: 'Client', quip: 'His lawyer did NOT, in fact, say that.' },
+  grandma: { name: 'Grandma Henderson', category: 'Client', quip: 'The cookies were actually really good.' },
+  compliance: { name: 'Compliance Auditor', category: 'Corporate', quip: 'I still have nightmares about Form 27B/6.' },
+  regional: { name: 'Regional Manager', category: 'Corporate', quip: 'His golden parachute deployed. Of course.' },
+  ross_boss: { name: 'Ross (Unhinged)', category: 'Boss', quip: 'He circled back. I circled forward.' },
+  security_guard: { name: 'Security Guard', category: 'Corporate', quip: 'My badge was NOT expired.' },
+  hr_rep: { name: 'HR Representative', category: 'Corporate', quip: 'I completed that sensitivity training. Didn\'t help.' },
+  restructuring_analyst: { name: 'Restructuring Analyst', category: 'Corporate', quip: 'Tried to replace me with a SaaS platform. I\'m worth at least two SaaS platforms.' },
+  brand_consultant: { name: 'Brand Consultant', category: 'Corporate', quip: 'The new logo was genuinely worse.' },
+  corporate_lawyer: { name: 'Corporate Lawyer', category: 'Corporate', quip: 'Billed me $450/hour for the privilege of being attacked.' },
+  rachel_boss: { name: 'Rachel, SVP', category: 'Boss', quip: 'Reassigned to Fargo. ACTUAL Fargo.' },
+  cfos_assistant: { name: "CFO's Assistant", category: 'Boss', quip: 'Had my severance pre-drafted. Efficient, I\'ll give them that.' },
+  regional_director: { name: 'Regional Director', category: 'Boss', quip: 'His time was worth $4,200/hour. Mine was priceless.' },
+  algorithm: { name: 'The Algorithm', category: 'Final Boss', quip: 'It missed the one variable that matters: trust.' },
+};

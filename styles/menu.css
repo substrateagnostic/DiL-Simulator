@@ -143,3 +143,118 @@
   font-size: 14px;
   color: #333;
 }
+
+/* Bestiary */
+.bestiary-panel {
+  max-width: 700px;
+  max-height: 80vh;
+  overflow-y: auto;
+  min-width: 500px;
+}
+
+.bestiary-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bestiary-panel::-webkit-scrollbar-track {
+  background: #1a1a2e;
+}
+
+.bestiary-panel::-webkit-scrollbar-thumb {
+  background: #e94560;
+  border-radius: 3px;
+}
+
+.bestiary-summary {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: #53a8b6;
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  background: rgba(83, 168, 182, 0.1);
+  border: 1px solid rgba(83, 168, 182, 0.3);
+  border-radius: 6px;
+}
+
+.bestiary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.bestiary-card {
+  background: rgba(26, 26, 46, 0.8);
+  border: 2px solid rgba(233, 69, 96, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.15s;
+}
+
+.bestiary-card.defeated {
+  border-color: rgba(233, 69, 96, 0.6);
+}
+
+.bestiary-card.defeated:hover {
+  border-color: #e94560;
+  box-shadow: 0 0 12px rgba(233, 69, 96, 0.3);
+  transform: scale(1.02);
+}
+
+.bestiary-card.unknown {
+  border-color: rgba(100, 100, 100, 0.3);
+  opacity: 0.5;
+}
+
+.bestiary-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.bestiary-name {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  color: #e94560;
+}
+
+.unknown .bestiary-name {
+  color: #666;
+}
+
+.bestiary-category {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #53a8b6;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bestiary-stats {
+  display: flex;
+  gap: 12px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #ccc;
+  margin-bottom: 8px;
+}
+
+.unknown .bestiary-stats {
+  color: #555;
+}
+
+.bestiary-quip {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #d4a437;
+  font-style: italic;
+  line-height: 1.3;
+}
+
+.bestiary-quip.unknown-quip {
+  color: #555;
+  font-style: normal;
+}

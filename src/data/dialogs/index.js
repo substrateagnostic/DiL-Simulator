@@ -2370,6 +2370,17 @@ export const DIALOGS = {
   // POST-CREDITS SCENE
   // ==========================================================================
 
+  arcade_intro: [
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: 'An old arcade cabinet sits in the corner. The screen flickers with pixel art of a stagecoach. "STAGECOACH STAMPEDE" blinks in gold letters.' },
+    /* 1 */ { type: 'text', speaker: 'Narrator', text: '"Insert Quarter" it says. Someone has taped a note over the coin slot: "FREE PLAY \u2014 Management"' },
+    /* 2 */ { type: 'choice', prompt: 'Play Stagecoach Stampede?', choices: [
+      { text: 'Yes! (This is definitely a productive use of company time)', next: 3 },
+      { text: 'No (You have actual work to do)', next: 4 },
+    ]},
+    /* 3 */ { type: 'action', action: 'set_flag', flag: 'launch_arcade', value: true, next: 4 },
+    /* 4 */ { type: 'end' },
+  ],
+
   post_credits: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "..." },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The server room. 3:47 AM." },

@@ -278,6 +278,9 @@ export const ROOMS = {
 
       // === Water cooler ===
       { type: 'waterCooler', x: 0.5, z: 1.5 },
+
+      // === Arcade cabinet ===
+      { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
     ],
     npcs: [
       { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2 },
@@ -294,6 +297,7 @@ export const ROOMS = {
       { x: 6, z: 1, type: 'vending_machine', dialogId: 'vending_machine' },
       { x: 4, z: 1, type: 'microwave', dialogId: 'microwave' },
       { x: 5, z: 0, type: 'poster', dialogId: 'poster_excellence' },
+      { x: 8, z: 6, type: 'arcade_cabinet', dialogId: 'arcade_intro' },
     ],
     playerSpawn: { x: 7, z: 2 },
   },
