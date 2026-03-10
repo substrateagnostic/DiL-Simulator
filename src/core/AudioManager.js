@@ -525,6 +525,287 @@ class AudioManagerClass {
 
         return { nodes, loopDuration };
       },
+
+      // ---- SERVER ROOM: dark electronic, 126 BPM, 8-bar loop ---------------
+      server: () => {
+        const bpm = 126;
+        const beat = 60 / bpm;
+        const bar  = beat * 4;
+        const loopDuration = bar * 8;
+        const now  = this.ctx.currentTime;
+        const nodes = [];
+
+        const n = (freq, start, dur, type, vol) => {
+          const osc  = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(vol, start + 0.005);
+          gain.gain.setValueAtTime(vol, start + dur * 0.8);
+          gain.gain.linearRampToValueAtTime(0, start + dur);
+          osc.connect(gain);
+          gain.connect(this.musicGain);
+          osc.start(start);
+          osc.stop(start + dur + 0.02);
+          nodes.push(osc);
+        };
+
+        // Dm-Gm-Bb-A (x2), pulsing sawtooth bass with octave jumps
+        const bassRoots = [73.41, 98.00, 116.54, 110.00];
+        const eighth = beat / 2;
+        for (let rep = 0; rep < 2; rep++) {
+          for (let b = 0; b < 4; b++) {
+            const bs = now + (rep * 4 + b) * bar;
+            const r  = bassRoots[b];
+            [r, r, r*2, r, r*2, r, r, r*2].forEach((f, i) => {
+              n(f, bs + i * eighth, eighth * 0.85, 'sawtooth', 0.11);
+            });
+          }
+        }
+
+        // Quiet sine tension pad (root an octave up)
+        for (let rep = 0; rep < 2; rep++) {
+          bassRoots.forEach((r, b) => {
+            n(r * 4, now + (rep * 4 + b) * bar, bar * 0.92, 'sine', 0.04);
+          });
+        }
+
+        // Electronic blips (square, high register, irregular pattern)
+        [
+          { b: 0, t: beat*0.5,  f: 587.33 }, { b: 0, t: beat*2.5,  f: 880.00 },
+          { b: 1, t: beat*1.0,  f: 659.25 }, { b: 1, t: beat*3.0,  f: 783.99 },
+          { b: 2, t: beat*0.5,  f: 587.33 }, { b: 2, t: beat*1.5,  f: 783.99 },
+          { b: 2, t: beat*3.0,  f: 659.25 },
+          { b: 3, t: beat*2.0,  f: 880.00 }, { b: 3, t: beat*2.5,  f: 1174.66 },
+          { b: 3, t: beat*3.0,  f: 987.77 },
+          { b: 4, t: beat*0.5,  f: 659.25 }, { b: 4, t: beat*2.0,  f: 783.99 },
+          { b: 5, t: beat*1.0,  f: 587.33 }, { b: 5, t: beat*3.0,  f: 880.00 },
+          { b: 6, t: beat*0.5,  f: 783.99 }, { b: 6, t: beat*1.5,  f: 659.25 },
+          { b: 6, t: beat*2.5,  f: 783.99 },
+          { b: 7, t: beat*1.0,  f: 1174.66 }, { b: 7, t: beat*2.0, f: 987.77 },
+          { b: 7, t: beat*3.0,  f: 880.00 },  { b: 7, t: beat*3.5, f: 783.99 },
+        ].forEach(({ b, t, f }) => n(f, now + b * bar + t, beat * 0.18, 'square', 0.06));
+
+        return { nodes, loopDuration };
+      },
+
+      // ---- EXECUTIVE FLOOR: pompous slow, 68 BPM, 8-bar loop ---------------
+      executive: () => {
+        const bpm = 68;
+        const beat = 60 / bpm;
+        const bar  = beat * 4;
+        const loopDuration = bar * 8;
+        const now  = this.ctx.currentTime;
+        const nodes = [];
+
+        const n = (freq, start, dur, type, vol, attack = 0.06) => {
+          const osc  = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(vol, start + attack);
+          gain.gain.setValueAtTime(vol, start + dur * 0.85);
+          gain.gain.linearRampToValueAtTime(0, start + dur);
+          osc.connect(gain);
+          gain.connect(this.musicGain);
+          osc.start(start);
+          osc.stop(start + dur + 0.05);
+          nodes.push(osc);
+        };
+
+        // Bb-Eb-F-Cm (x2) — rich sine pads
+        const chords = [
+          [116.54, 146.83, 174.61],  // Bb maj
+          [155.56, 196.00, 233.08],  // Eb maj
+          [174.61, 220.00, 261.63],  // F maj
+          [130.81, 155.56, 196.00],  // Cm
+        ];
+        for (let rep = 0; rep < 2; rep++) {
+          chords.forEach((chord, ci) => {
+            const bs = now + (rep * 4 + ci) * bar;
+            chord.forEach(f => n(f, bs, bar, 'sine', 0.09, 0.3));
+          });
+        }
+
+        // Walking bass (triangle, quarter notes)
+        const walkLines = [
+          [116.54, 130.81, 146.83, 174.61],
+          [155.56, 174.61, 196.00, 174.61],
+          [174.61, 196.00, 220.00, 246.94],
+          [130.81, 146.83, 155.56, 130.81],
+        ];
+        for (let rep = 0; rep < 2; rep++) {
+          walkLines.forEach((line, ci) => {
+            const bs = now + (rep * 4 + ci) * bar;
+            line.forEach((f, i) => n(f, bs + i * beat, beat * 0.85, 'triangle', 0.08, 0.03));
+          });
+        }
+
+        // Stately melody (triangle, slow and deliberate)
+        [
+          [{ f: 466.16, t: 0 },       { f: 523.25, t: beat*2 }],
+          [{ f: 587.33, t: 0 },       { f: 622.25, t: beat }],
+          [{ f: 698.46, t: 0 },       { f: 659.25, t: beat*1.5 }, { f: 587.33, t: beat*2.5 }],
+          [{ f: 523.25, t: 0 },       { f: 493.88, t: beat*1.5 }, { f: 466.16, t: beat*2.5 }],
+          [{ f: 523.25, t: 0 },       { f: 587.33, t: beat },     { f: 622.25, t: beat*2 }],
+          [{ f: 698.46, t: 0 },       { f: 622.25, t: beat*2 }],
+          [{ f: 783.99, t: 0 },       { f: 698.46, t: beat*1.5 }, { f: 622.25, t: beat*2.5 }],
+          [{ f: 466.16, t: 0 }],
+        ].forEach((barMel, b) => {
+          const bs = now + b * bar;
+          const durations = [beat * 2, beat * 3, beat * 1.5, beat * 1.5, beat * 2, beat * 4];
+          barMel.forEach(({ f, t }, i) => {
+            const dur = barMel[i + 1] ? (barMel[i + 1].t - t) : beat * (4 - t / beat);
+            n(f, bs + t, Math.max(dur * 0.88, beat * 0.5), 'triangle', 0.07, 0.1);
+          });
+        });
+
+        return { nodes, loopDuration };
+      },
+
+      // ---- PARKING GARAGE: lonely lo-fi, 78 BPM, 8-bar loop ----------------
+      parking: () => {
+        const bpm = 78;
+        const beat = 60 / bpm;
+        const bar  = beat * 4;
+        const loopDuration = bar * 8;
+        const now  = this.ctx.currentTime;
+        const nodes = [];
+
+        const n = (freq, start, dur, type, vol, attack = 0.05) => {
+          const osc  = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(vol, start + attack);
+          gain.gain.setValueAtTime(vol, start + dur * 0.8);
+          gain.gain.linearRampToValueAtTime(0, start + dur);
+          osc.connect(gain);
+          gain.connect(this.musicGain);
+          osc.start(start);
+          osc.stop(start + dur + 0.05);
+          nodes.push(osc);
+        };
+
+        // Am7-Dm7-G7-Cmaj7 (x2), sparse bass
+        const bassRoots = [110.00, 146.83, 98.00, 130.81];
+        for (let rep = 0; rep < 2; rep++) {
+          bassRoots.forEach((f, b) => {
+            const bs = now + (rep * 4 + b) * bar;
+            n(f, bs, beat * 1.5, 'sine', 0.09, 0.08);
+            n(f * 2, bs + beat * 2.5, beat, 'sine', 0.06, 0.06);
+          });
+        }
+
+        // Quiet jazz chord pads (sine, delayed entry)
+        const jazzChords = [
+          [220.00, 261.63, 329.63, 392.00],
+          [146.83, 174.61, 220.00, 261.63],
+          [196.00, 246.94, 293.66, 349.23],
+          [261.63, 329.63, 392.00, 493.88],
+        ];
+        for (let rep = 0; rep < 2; rep++) {
+          jazzChords.forEach((chord, b) => {
+            const bs = now + (rep * 4 + b) * bar;
+            chord.forEach(f => n(f, bs + beat * 0.5, bar * 0.6, 'sine', 0.04, 0.15));
+          });
+        }
+
+        // Lonely melody (triangle, very sparse)
+        [
+          { b: 0, t: beat*1.0, f: 440.00 }, { b: 0, t: beat*2.5, f: 523.25 },
+          { b: 1, t: beat*3.0, f: 493.88 },
+          { b: 2, t: beat*1.0, f: 392.00 }, { b: 2, t: beat*3.0, f: 440.00 },
+          { b: 3, t: beat*1.5, f: 523.25 }, { b: 3, t: beat*3.5, f: 493.88 },
+          { b: 4, t: beat*0.5, f: 440.00 }, { b: 4, t: beat*2.0, f: 392.00 },
+          { b: 5, t: beat*1.0, f: 329.63 }, { b: 5, t: beat*3.0, f: 392.00 },
+          { b: 6, t: beat*2.0, f: 440.00 }, { b: 6, t: beat*3.0, f: 493.88 },
+          { b: 7, t: beat*1.0, f: 523.25 }, { b: 7, t: beat*2.5, f: 440.00 },
+          { b: 7, t: beat*3.5, f: 392.00 },
+        ].forEach(({ b, t, f }) => n(f, now + b * bar + t, beat * 0.9, 'triangle', 0.06, 0.05));
+
+        return { nodes, loopDuration };
+      },
+
+      // ---- BREAK ROOM: light upbeat, 100 BPM, 8-bar loop -------------------
+      break_room: () => {
+        const bpm = 100;
+        const beat = 60 / bpm;
+        const bar  = beat * 4;
+        const loopDuration = bar * 8;
+        const now  = this.ctx.currentTime;
+        const nodes = [];
+
+        const n = (freq, start, dur, type, vol, attack = 0.03) => {
+          const osc  = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0, start);
+          gain.gain.linearRampToValueAtTime(vol, start + attack);
+          gain.gain.setValueAtTime(vol, start + dur * 0.8);
+          gain.gain.linearRampToValueAtTime(0, start + dur);
+          osc.connect(gain);
+          gain.connect(this.musicGain);
+          osc.start(start);
+          osc.stop(start + dur + 0.02);
+          nodes.push(osc);
+        };
+
+        // C-G-Am-F (x2)
+        const chords = [
+          [261.63, 329.63, 392.00],
+          [196.00, 246.94, 293.66],
+          [220.00, 261.63, 329.63],
+          [174.61, 220.00, 261.63],
+        ];
+        const bassRoots = [130.81, 98.00, 110.00, 87.31];
+        const eighth = beat / 2;
+
+        // Bouncy bass (triangle)
+        for (let rep = 0; rep < 2; rep++) {
+          bassRoots.forEach((f, b) => {
+            const bs = now + (rep * 4 + b) * bar;
+            [f, 0, f*1.5, 0, f, 0, f*1.5, f].forEach((freq, i) => {
+              if (freq > 0) n(freq, bs + i * eighth, eighth * 0.85, 'triangle', 0.08, 0.02);
+            });
+          });
+        }
+
+        // Bright chord arpeggios (triangle, 8th notes, one octave up)
+        for (let rep = 0; rep < 2; rep++) {
+          chords.forEach((chord, b) => {
+            const bs = now + (rep * 4 + b) * bar;
+            [chord[0], chord[1], chord[2], chord[2], chord[1], chord[0], chord[1], chord[2]].forEach((f, i) => {
+              n(f * 2, bs + i * eighth, eighth * 0.8, 'triangle', 0.05, 0.02);
+            });
+          });
+        }
+
+        // Light sine melody
+        [
+          [{ f: 784.00, t: 0 }, { f: 880.00, t: beat }, { f: 987.77, t: beat*1.5 }],
+          [{ f: 880.00, t: 0 }, { f: 783.99, t: beat*0.5 }, { f: 698.46, t: beat }],
+          [{ f: 880.00, t: 0 }, { f: 987.77, t: beat }, { f: 880.00, t: beat*1.5 }, { f: 783.99, t: beat*2 }],
+          [{ f: 698.46, t: 0 }, { f: 784.00, t: beat*0.5 }, { f: 880.00, t: beat }],
+          [{ f: 784.00, t: 0 }, { f: 880.00, t: beat }, { f: 987.77, t: beat*1.5 }],
+          [{ f: 880.00, t: 0 }, { f: 783.99, t: beat*0.5 }, { f: 698.46, t: beat }],
+          [{ f: 1046.50, t: 0 }, { f: 987.77, t: beat*0.5 }, { f: 880.00, t: beat }, { f: 783.99, t: beat*2 }],
+          [{ f: 784.00, t: 0 }],
+        ].forEach((barMel, b) => {
+          const bs = now + b * bar;
+          barMel.forEach(({ f, t }, i) => {
+            const next = barMel[i + 1];
+            const dur = next ? (next.t - t) * 0.88 : beat * (4 - t / beat) * 0.88;
+            n(f, bs + t, Math.max(dur, beat * 0.4), 'sine', 0.055, 0.04);
+          });
+        });
+
+        return { nodes, loopDuration };
+      },
     };
   }
 
@@ -637,6 +918,24 @@ class AudioManagerClass {
       this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
       this.musicGain.gain.linearRampToValueAtTime(this.musicVolume, now + 0.1);
     }
+  }
+
+  setSfxVolume(volume) {
+    this.sfxVolume = Math.max(0, Math.min(1, volume));
+    if (this.ctx && this.sfxGain) {
+      const now = this.ctx.currentTime;
+      this.sfxGain.gain.cancelScheduledValues(now);
+      this.sfxGain.gain.setValueAtTime(this.sfxGain.gain.value, now);
+      this.sfxGain.gain.linearRampToValueAtTime(this.sfxVolume, now + 0.05);
+    }
+  }
+
+  setMusicEnabled(enabled) {
+    if (enabled && !this.currentTrack) return; // nothing to resume
+    if (!enabled) {
+      this._stopMusicImmediate(0.4);
+    }
+    // re-enabling is handled by the caller invoking playMusic()
   }
 
   toggleMute() {

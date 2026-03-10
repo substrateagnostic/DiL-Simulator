@@ -25,6 +25,12 @@ const FURNITURE_FOOTPRINTS = {
   elevatorDoors:      { w: 2, h: 1 },
   fridge:             { w: 1, h: 1 },
   fileCabinet:        { w: 1, h: 1 },
+  fileCabinetLow:     { w: 1, h: 1 },
+  fileCabinetLateral: { w: 1, h: 1 },
+  car:                { w: 1, h: 2 },
+  carSUV:             { w: 1, h: 2 },
+  carSports:          { w: 1, h: 2 },
+  andrewsCar:         { w: 1, h: 2 },
 };
 
 // Small/decorative items that should NOT block movement.
@@ -32,7 +38,8 @@ const FURNITURE_FOOTPRINTS = {
 const NO_BLOCK = new Set([
   'monitor', 'keyboard', 'chair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan',
   'coffeeMachine', 'microwave', 'waterCooler', 'printer',
-  'whiteboard', 'motivationalPoster',
+  'whiteboard', 'motivationalPoster', 'parkingSpot',
+  'deskPlant', 'deskPlantSucculent', 'speakerphone',
 ]);
 
 export class Room {
@@ -51,7 +58,7 @@ export class Room {
   // Primary build — call once, returns THREE.Group
   // ----------------------------------------------------------
   build() {
-    const { width, height, floorColor, walls, furniture, exits, interactables } = this.data;
+    const { width, height, floorColor, floorPattern, walls, furniture, exits, interactables } = this.data;
 
     this.scene = new THREE.Group();
     this.scene.name = `room_${this.data.id}`;
@@ -60,7 +67,7 @@ export class Room {
     this.tileMap = new TileMap(width, height);
 
     // 1. Floor
-    this._buildFloor(width, height, floorColor);
+    this._buildFloor(width, height, floorColor, floorPattern);
 
     // 2. Perimeter walls
     if (walls) {
@@ -128,6 +135,10 @@ export class Room {
     return this._southWallMeshes || [];
   }
 
+  getEastWallMeshes() {
+    return this._eastWallMeshes || [];
+  }
+
   // ----------------------------------------------------------
   // Internals
   // ----------------------------------------------------------
@@ -135,9 +146,11 @@ export class Room {
   /**
    * Build a flat floor plane.
    */
-  _buildFloor(w, h, color) {
+  _buildFloor(w, h, color, floorPattern) {
     const geo = new THREE.PlaneGeometry(w * TILE_SIZE, h * TILE_SIZE);
-    const mat = Materials.custom(color);
+    const mat = floorPattern === 'carpet'
+      ? Materials.carpetPattern(w, h, color)
+      : Materials.custom(color);
     const floor = new THREE.Mesh(geo, mat);
 
     // PlaneGeometry faces +Y by default; rotate to be horizontal
@@ -201,11 +214,12 @@ export class Room {
 
     // Helper: build wall segments along a vertical wall (west or east).
     const buildVWall = (exitTiles, xPos) => {
+      const meshes = [];
       let segStart = null;
       for (let z = 0; z < h; z++) {
         if (exitTiles.has(z)) {
           if (segStart !== null) {
-            this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, z - 1, xPos, 'v');
+            meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, z - 1, xPos, 'v'));
             segStart = null;
           }
         } else {
@@ -213,8 +227,9 @@ export class Room {
         }
       }
       if (segStart !== null) {
-        this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, h - 1, xPos, 'v');
+        meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, h - 1, xPos, 'v'));
       }
+      return meshes;
     };
 
     // North wall (z = -0.5 in world)
@@ -229,8 +244,14 @@ export class Room {
     }
     // West wall (x = -0.5 in world)
     buildVWall(exitsByWall.west, -TILE_SIZE / 2 - wallThickness / 2);
-    // East wall
-    buildVWall(exitsByWall.east, (w - 1) * TILE_SIZE + TILE_SIZE / 2 + wallThickness / 2);
+    // East wall — capture meshes and clone material for transparency support
+    this._eastWallMeshes = buildVWall(exitsByWall.east, (w - 1) * TILE_SIZE + TILE_SIZE / 2 + wallThickness / 2);
+    for (const mesh of this._eastWallMeshes) {
+      const mat = mesh.material.clone();
+      mat.transparent = true;
+      mat.opacity = 1.0;
+      mesh.material = mat;
+    }
 
     // Add glowing floor markers and door frames at exit tiles
     this._addExitMarkers();

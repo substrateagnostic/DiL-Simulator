@@ -80,7 +80,7 @@ export class ExplorationState {
     Engine.scene.add(this.player.mesh);
     this._createHUD();
     this._loadRoom(this.player.currentRoom);
-    AudioManager.playMusic('exploration');
+    AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
 
     this._listeners.push(
       EventBus.on('start-combat', (data) => {
@@ -169,13 +169,25 @@ export class ExplorationState {
   resume() {
     this.paused = false;
     this._updateMiniStats();
-    AudioManager.playMusic('exploration');
+    this._updatePortfolioDisplay();
+    AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
+  }
+
+  _getMusicForRoom(roomId) {
+    const map = {
+      server_room:     'server',
+      executive_floor: 'executive',
+      parking_garage:  'parking',
+      break_room:      'break_room',
+    };
+    return map[roomId] || 'exploration';
   }
 
   syncFromPlayerState() {
     this._syncActFromFlags();
     this._refreshStoryProgress(true);
     this._updateMiniStats();
+    this._updatePortfolioDisplay();
     this._updateLocationDisplay(this.player.currentRoom);
   }
 
@@ -214,6 +226,14 @@ export class ExplorationState {
       const roomData = this.roomManager.getRoomData(targetRoom);
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
+      }
+      AudioManager.playMusic(this._getMusicForRoom(targetRoom));
+
+      if (targetRoom === 'reception' && !this.player.getFlag('reception_intro_done')) {
+        setTimeout(() => {
+          const dialogState = new DialogState(DIALOGS['receptionist_intro'], this.player, this.stateManager, 'receptionist_intro');
+          this.stateManager.push(dialogState);
+        }, 400);
       }
     }
 
@@ -313,10 +333,17 @@ export class ExplorationState {
     Object.assign(ENEMY_STATS.reception_client, {
       ...client.enemyStats,
     });
+    const visualBase = client.visualConfig || CHARACTER_CONFIGS[client.visualId] || {};
     Object.assign(CHARACTER_CONFIGS.reception_client, {
-      ...CHARACTER_CONFIGS[client.visualId],
+      ...visualBase,
       name: client.name,
     });
+    this._refreshClientNpc();
+  }
+
+  _refreshClientNpc() {
+    const npc = this.roomManager.entityManager.getNPC('reception_client');
+    if (npc) npc.rebuild(CHARACTER_CONFIGS.reception_client);
   }
 
   _handleReceptionDesk() {
@@ -334,6 +361,12 @@ export class ExplorationState {
       this._applyClientAcceptBuff(clientData);
       const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + clientData.netAngerDelta));
       this.player.setFlag('bossAnger', anger);
+
+      this.player.setFlag('portfolioClients', (this.player.getFlag('portfolioClients') || 0) + 1);
+      this.player.setFlag('portfolioAUM',     (this.player.getFlag('portfolioAUM')     || 0) + clientData.assets);
+      this.player.setFlag('portfolioFees',    (this.player.getFlag('portfolioFees')    || 0) + clientData.annualFees);
+      this._updatePortfolioDisplay();
+
       this._showToast(`${clientData.name} onboarded! Portfolio stats updated.`, 'item');
       this._checkBossAnger();
     } else {
@@ -590,6 +623,11 @@ export class ExplorationState {
     this.promptElement.style.display = 'none';
     this.hudElement.appendChild(this.promptElement);
 
+    this.portfolioElement = document.createElement('div');
+    this.portfolioElement.className = 'hud-portfolio';
+    this.hudElement.appendChild(this.portfolioElement);
+    this._updatePortfolioDisplay();
+
     overlay.appendChild(this.hudElement);
   }
 
@@ -613,6 +651,35 @@ export class ExplorationState {
       <div class="hud-mini-stat">
         <span class="label">Lv</span>
         <span class="value">${this.player.stats.level}</span>
+      </div>
+    `;
+  }
+
+  _updatePortfolioDisplay() {
+    if (!this.portfolioElement) return;
+    const clients = this.player.getFlag('portfolioClients') || 0;
+    const aum     = this.player.getFlag('portfolioAUM')     || 0;
+    const fees    = this.player.getFlag('portfolioFees')    || 0;
+
+    if (clients === 0) {
+      this.portfolioElement.innerHTML = '';
+      return;
+    }
+
+    const fmt = (n) => '$' + n.toLocaleString();
+    this.portfolioElement.innerHTML = `
+      <div class="portfolio-title">BOOK OF BUSINESS</div>
+      <div class="portfolio-row">
+        <span class="portfolio-label">Clients</span>
+        <span class="portfolio-value">${clients}</span>
+      </div>
+      <div class="portfolio-row">
+        <span class="portfolio-label">AUM</span>
+        <span class="portfolio-value portfolio-gold">${fmt(aum)}</span>
+      </div>
+      <div class="portfolio-row">
+        <span class="portfolio-label">Fees/yr</span>
+        <span class="portfolio-value portfolio-gold">${fmt(fees)}</span>
       </div>
     `;
   }
@@ -782,6 +849,18 @@ export class ExplorationState {
       // Fully opaque 3+ tiles away, fades to 0.15 opacity within 1 tile
       const opacity = Math.min(1, Math.max(0.15, (dist - 1) / 2));
       for (const mesh of southWallMeshes) {
+        mesh.material.opacity = opacity;
+      }
+    }
+
+    // Fade east wall when player gets close to it
+    const eastWallMeshes = this.roomManager.currentRoom?.getEastWallMeshes() ?? [];
+    if (eastWallMeshes.length > 0 && this.tileMap) {
+      const eastWallX = this.tileMap.width - 0.5;
+      const dist = eastWallX - this.player.position.x;
+      // Fully opaque 3+ tiles away, fades to 0.15 opacity within 1 tile
+      const opacity = Math.min(1, Math.max(0.15, (dist - 1) / 2));
+      for (const mesh of eastWallMeshes) {
         mesh.material.opacity = opacity;
       }
     }

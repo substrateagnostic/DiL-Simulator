@@ -9,8 +9,9 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Save Game', 'Controls', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
     this.controlsOverlay = null;
+    this.audioOverlay = null;
   }
 
   enter() {
@@ -56,6 +57,7 @@ export class MenuState {
 
   exit() {
     this._closeControls();
+    this._closeAudioSettings();
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -81,6 +83,9 @@ export class MenuState {
         break;
       case 'Controls':
         this._showControls();
+        break;
+      case 'Audio Settings':
+        this._showAudioSettings();
         break;
       case 'Quit to Title':
         EventBus.emit('quit-to-title');
@@ -137,11 +142,101 @@ export class MenuState {
     this.controlsOverlay = null;
   }
 
+  _showAudioSettings() {
+    if (this.audioOverlay) return;
+
+    const musicVol  = Math.round(AudioManager.musicVolume * 100);
+    const sfxVol    = Math.round(AudioManager.sfxVolume * 100);
+    const musicOn   = AudioManager.musicVolume > 0;
+
+    this.audioOverlay = document.createElement('div');
+    this.audioOverlay.className = 'menu-overlay';
+    this.audioOverlay.style.zIndex = '60';
+
+    const render = () => {
+      const mv = Math.round(AudioManager.musicVolume * 100);
+      const sv = Math.round(AudioManager.sfxVolume * 100);
+      const on = AudioManager.musicVolume > 0;
+      const bar = (pct) => {
+        const filled = Math.round(pct / 10);
+        return '■'.repeat(filled) + '□'.repeat(10 - filled);
+      };
+      this.audioOverlay.innerHTML = `
+        <div class="menu-panel">
+          <div class="menu-title">AUDIO</div>
+          <div style="color:#ddd;font-family:'VT323',monospace;font-size:22px;line-height:2.2;">
+            <div>
+              <span style="color:#e94560;">Music:</span>
+              <span id="audio-music-toggle" style="cursor:pointer;margin-left:12px;color:${on ? '#44ff44' : '#ff4444'};">
+                ${on ? 'ON' : 'OFF'}
+              </span>
+            </div>
+            <div><span style="color:#e94560;">Music Vol:</span> [${bar(mv)}] ${mv}%</div>
+            <div style="font-size:16px;color:#888;margin-left:8px;">← → to adjust</div>
+            <div><span style="color:#e94560;">SFX Vol:</span>&nbsp;&nbsp; [${bar(sv)}] ${sv}%</div>
+            <div style="font-size:16px;color:#888;margin-left:8px;">← → to adjust</div>
+          </div>
+          <div class="menu-item" style="margin-top:16px;" id="audio-back">Back</div>
+        </div>
+      `;
+      document.getElementById('audio-music-toggle')?.addEventListener('click', () => {
+        if (AudioManager.musicVolume > 0) {
+          AudioManager.setMusicVolume(0);
+        } else {
+          AudioManager.setMusicVolume(0.3);
+        }
+        render();
+      });
+      document.getElementById('audio-back')?.addEventListener('click', () => this._closeAudioSettings());
+    };
+
+    document.getElementById('ui-overlay').appendChild(this.audioOverlay);
+    if (this.element) this.element.style.display = 'none';
+    render();
+    this._audioRender = render;
+    this._audioFocus = 'music'; // 'music' or 'sfx'
+  }
+
+  _closeAudioSettings() {
+    if (this.audioOverlay && this.audioOverlay.parentNode) {
+      this.audioOverlay.parentNode.removeChild(this.audioOverlay);
+    }
+    this.audioOverlay = null;
+    this._audioRender = null;
+    if (this.element) this.element.style.display = '';
+  }
+
   update(dt) {
     if (this.controlsOverlay) {
       if (InputManager.isConfirmPressed() || InputManager.isCancelPressed()) {
         this._closeControls();
       }
+      return;
+    }
+
+    if (this.audioOverlay) {
+      if (InputManager.isCancelPressed()) { this._closeAudioSettings(); return; }
+
+      const left  = InputManager.isJustPressed('arrowleft')  || InputManager.isJustPressed('a');
+      const right = InputManager.isJustPressed('arrowright') || InputManager.isJustPressed('d');
+      const up    = InputManager.isJustPressed('arrowup')    || InputManager.isJustPressed('w');
+      const down  = InputManager.isJustPressed('arrowdown')  || InputManager.isJustPressed('s');
+
+      if (up || down) {
+        this._audioFocus = this._audioFocus === 'music' ? 'sfx' : 'music';
+        AudioManager.playSfx('cursor');
+      }
+      if (left || right) {
+        const delta = right ? 0.1 : -0.1;
+        if (this._audioFocus === 'music') {
+          AudioManager.setMusicVolume(AudioManager.musicVolume + delta);
+        } else {
+          AudioManager.setSfxVolume(AudioManager.sfxVolume + delta);
+          AudioManager.playSfx('cursor');
+        }
+      }
+      if (left || right || up || down) this._audioRender?.();
+      if (InputManager.isConfirmPressed()) { this._closeAudioSettings(); return; }
       return;
     }
 

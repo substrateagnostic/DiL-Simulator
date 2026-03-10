@@ -62,6 +62,8 @@ export class RoomManager {
         facing: npc.facing || 0,
         dialogId: npc.dialogId || npc.id,
         visible: npc.visible !== false,
+        interactable: npc.interactable !== false,
+        sitting: npc.sitting || false,
         conditionFn,
       });
       this.entityManager.addNPC(npcEntity);

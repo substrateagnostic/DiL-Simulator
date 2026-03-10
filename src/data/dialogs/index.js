@@ -14,6 +14,27 @@
 
 export const DIALOGS = {
 
+  // --------------------------------------------------------------------------
+  // RECEPTIONIST INTRO — plays once on first entry to reception
+  // --------------------------------------------------------------------------
+  receptionist_intro: [
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "Oh! You must be the new hire. Andrew, right?" },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "I'm Diane. I run the front desk. Welcome to Wells Fargo. Please don't touch the orchid." },
+    { type: 'text', speaker: 'Andrew', text: "...There's no orchid." },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "Exactly. Chad killed it. The point stands." },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "HR asked me to give you this." },
+    { type: 'action', action: 'give_item', itemId: 'coffee_large', quantity: 1, next: 6 },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "It's a large coffee. You'll want it. Trust me." },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "Your desk is on the cubicle floor. Through the north door, up the stairs. Well — there are no stairs. Through the north door." },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "Your manager is Alex. He'll brief you. Don't be late." },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "Oh, and keep your badge visible at all times. Alex gets... particular about that." },
+    { type: 'text', speaker: 'Andrew', text: "What does a Seasonal Compliance Associate even do?" },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "..." },
+    { type: 'text', speaker: 'Diane (Front Desk)', text: "Good luck, Andrew." },
+    { type: 'action', action: 'set_flag', flag: 'reception_intro_done', next: 14 },
+    { type: 'end' },
+  ],
+
   // ==========================================================================
   // ACT 1 -- INTRODUCTION NPCs
   // ==========================================================================
@@ -834,6 +855,38 @@ export const DIALOGS = {
     { type: 'text', speaker: 'Narrator', text: 'A label reads: "Mr. Fernsworth III — Alex\'s Responsibility Since 2021."' },
     { type: 'text', speaker: 'Narrator', text: 'Mr. Fernsworth III has clearly not been watered since 2021. His leaves are the color of compliance documentation.' },
     { type: 'text', speaker: 'Narrator', text: 'A tiny post-it on the pot reads: "help me" in suspiciously plant-like handwriting.' },
+    { type: 'end' },
+  ],
+
+  poster_synergy: [
+    { type: 'text', speaker: 'Narrator', text: '"SYNERGY" — printed over a stock photo of six people enthusiastically fist-bumping over a laptop.' },
+    { type: 'text', speaker: 'Narrator', text: 'A small sticker has been added: "This word has appeared in 6 consecutive quarterly reviews. We looked it up. No one agrees what it means."' },
+    { type: 'text', speaker: 'Narrator', text: 'Fine print at the bottom: "Wells Fargo is not responsible for any morale improvement, career advancement, or wellness that does or does not result from viewing this poster."' },
+    { type: 'text', speaker: 'Narrator', text: 'You feel 0% more synergized. Impressive.' },
+    { type: 'end' },
+  ],
+
+  poster_hustle: [
+    { type: 'text', speaker: 'Narrator', text: '"HUSTLE" — above a blurred photo of someone sprinting. It is unclear if they are running toward success or away from HR.' },
+    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "Hours are not capped. Neither is coffee. One of those is reimbursable."' },
+    { type: 'text', speaker: 'Narrator', text: 'A sticky note in familiar handwriting: "Does hustle cover doing HR\'s job for them? Asking for a friend. — A. Walker"' },
+    { type: 'text', speaker: 'Narrator', text: 'Below that, in different handwriting: "Please remove personal notes from company property. — Facilities"' },
+    { type: 'text', speaker: 'Narrator', text: 'Below THAT: "Facilities doesn\'t own me. — A. Walker"' },
+    { type: 'end' },
+  ],
+
+  poster_teamwork: [
+    { type: 'text', speaker: 'Narrator', text: '"TEAMWORK MAKES THE DREAM WORK"' },
+    { type: 'text', speaker: 'Narrator', text: 'Fine print: "Individual contributors are reminded that credit for team achievements belongs to the team, unless the team underperforms, in which case accountability is individual."' },
+    { type: 'text', speaker: 'Narrator', text: 'A sticky note signed "Janet": "I read the policy. This is actually just policy."' },
+    { type: 'end' },
+  ],
+
+  poster_excellence: [
+    { type: 'text', speaker: 'Narrator', text: '"EXCELLENCE IS NOT A DESTINATION. IT\'S A JOURNEY."' },
+    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "So is the commute. Neither is compensated."' },
+    { type: 'text', speaker: 'Narrator', text: 'An HR approval stamp reads: "APPROVED — Annual Morale Initiative. Budget: $14.50 (includes frame)."' },
+    { type: 'text', speaker: 'Narrator', text: 'The frame is visibly from a dollar store. The glass is slightly crooked. It has been this way since 2019. No one has fixed it. No one will.' },
     { type: 'end' },
   ],
 

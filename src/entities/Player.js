@@ -16,7 +16,7 @@ export class Player {
     this.flags = {}; // Story flags
     this.questStates = {}; // Quest progress
     this.position = { x: 0, z: 0 };
-    this.currentRoom = 'cubicle_farm';
+    this.currentRoom = 'parking_garage';
     this.actIndex = 0;
   }
 
