@@ -147,7 +147,7 @@ export class DialogState {
       id: i,
     }));
 
-    this.dialogBox.show(node.speaker || 'Narrator', node.text, boxChoices);
+    this.dialogBox.show(node.speaker || 'Narrator', node.prompt || node.text || '', boxChoices);
 
     // Set up choice callback
     this.dialogBox.onChoice = (choiceIndex) => {

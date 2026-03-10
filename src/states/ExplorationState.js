@@ -878,6 +878,16 @@ export class ExplorationState {
   }
 
   _interact() {
+    const { exit, interactable } = this._getNearbyTargets();
+
+    // Exit on the player's own tile always takes priority
+    const onExitTile = exit && exit.x === Math.floor(this.player.position.x)
+      && exit.z === Math.floor(this.player.position.z);
+    if (onExitTile) {
+      this._changeRoom(exit.data.targetRoom, exit.data.spawnX, exit.data.spawnZ);
+      return;
+    }
+
     const npc = this.roomManager.entityManager.getNearestInteractable(
       this.player.position.x,
       this.player.position.z
@@ -896,8 +906,6 @@ export class ExplorationState {
       }
       return;
     }
-
-    const { exit, interactable } = this._getNearbyTargets();
 
     if (this._shouldPrioritizeExit(exit, interactable)) {
       this._changeRoom(exit.data.targetRoom, exit.data.spawnX, exit.data.spawnZ);
@@ -1379,7 +1387,15 @@ export class ExplorationState {
     );
     const { exit: nearExit, interactable: nearInteractable } = this._getNearbyTargets();
 
-    if (nearNPC) {
+    // Exit on the player's own tile takes priority over nearby NPCs
+    const onExitTile = nearExit && nearExit.x === Math.floor(this.player.position.x)
+      && nearExit.z === Math.floor(this.player.position.z);
+
+    if (onExitTile) {
+      this._showInteractPrompt(
+        nearExit.data.targetRoom === 'executive_floor' ? 'Ride elevator' : 'Go through'
+      );
+    } else if (nearNPC) {
       const dialogId = this._getDialogId(nearNPC);
       const isRead = this.player.getFlag(`read_${dialogId}`);
       this._showInteractPrompt(`Talk to ${nearNPC.name}`, isRead);
