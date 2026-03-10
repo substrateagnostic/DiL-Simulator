@@ -73,28 +73,28 @@ export const ROOMS = {
       { type: 'chair', x: 6, z: 3.8, rotation: Math.PI },
       { type: 'trashCan', x: 6.5, z: 4 },
 
-      // --- NE pod — 2 cubicles (x=15, 17) ---
+      // --- NE pod — 2 cubicles (x=13, 15) --- shifted west to clear HR door at (19,2-3)
       // Back walls
-      { type: 'cubicleWall', x: 14, z: 2, rotation: 0 },
-      { type: 'cubicleWall', x: 16, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 12, z: 4, rotation: 0 },
+      { type: 'cubicleWall', x: 14, z: 4, rotation: 0 },
       // Side dividers
-      { type: 'cubicleWall', x: 14, z: 2.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 16, z: 2.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 18, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 12, z: 4.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 14, z: 4.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 16, z: 4.5, rotation: Math.PI / 2 },
       // Cubicle desks
-      { type: 'desk', x: 15, z: 3, rotation: 0 },
-      { type: 'monitor', x: 15, z: 2.7 },
-      { type: 'deskPlant', x: 15.4, z: 2.9 },
-      { type: 'keyboard', x: 15, z: 3.2 },
-      { type: 'chair', x: 15, z: 3.8, rotation: Math.PI },
-      { type: 'trashCan', x: 15.5, z: 4 },
+      { type: 'desk', x: 13, z: 5, rotation: 0 },
+      { type: 'monitor', x: 13, z: 4.7 },
+      { type: 'deskPlant', x: 13.4, z: 4.9 },
+      { type: 'keyboard', x: 13, z: 5.2 },
+      { type: 'chair', x: 13, z: 5.8, rotation: Math.PI },
+      { type: 'trashCan', x: 13.5, z: 6 },
 
-      { type: 'desk', x: 17, z: 3, rotation: 0 },
-      { type: 'monitor', x: 17, z: 2.7 },
-      { type: 'deskPlantSucculent', x: 16.6, z: 2.9 },
-      { type: 'keyboard', x: 17, z: 3.2 },
-      { type: 'chair', x: 17, z: 3.8, rotation: Math.PI },
-      { type: 'trashCan', x: 17.5, z: 4 },
+      { type: 'desk', x: 15, z: 5, rotation: 0 },
+      { type: 'monitor', x: 15, z: 4.7 },
+      { type: 'deskPlantSucculent', x: 14.6, z: 4.9 },
+      { type: 'keyboard', x: 15, z: 5.2 },
+      { type: 'chair', x: 15, z: 5.8, rotation: Math.PI },
+      { type: 'trashCan', x: 15.5, z: 6 },
 
       // ============================================================
       // SOUTH CUBICLE ROW  (back walls at z=9, desks at z=10)
@@ -159,9 +159,9 @@ export const ROOMS = {
       { type: 'fileCabinet',        x: 2,  z: 0.5 },
       { type: 'fileCabinetLateral', x: 3,  z: 0.5 },
       { type: 'fileCabinetLow',     x: 4,  z: 0.5 },
-      { type: 'fileCabinetLow',     x: 16, z: 0.5 },
-      { type: 'fileCabinetLateral', x: 17, z: 0.5 },
-      { type: 'fileCabinet',        x: 18, z: 0.5 },
+      { type: 'fileCabinetLow',     x: 14, z: 0.5 },
+      { type: 'fileCabinetLateral', x: 15, z: 0.5 },
+      { type: 'fileCabinet',        x: 16, z: 0.5 },
 
       // ============================================================
       // STORAGE — file cabinet rows along south wall (handles face north/center)
@@ -193,7 +193,7 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' } },    // NW pod, paces nervously
-      { id: 'intern', x: 15, z: 5, facing: Math.PI, movement: { type: 'wander', radius: 3 } },  // NE pod, wanders looking lost
+      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 } },  // NE pod, wanders looking lost
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' } }, // water cooler, paces
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
