@@ -23,7 +23,7 @@
   border: 3px solid #e94560;
   border-radius: 12px;
   padding: 32px 40px;
-  min-width: 320px;
+  min-width: min(320px, 90vw);
   box-shadow: 0 0 40px rgba(233, 69, 96, 0.3);
 }
 
@@ -149,7 +149,7 @@
   max-width: 700px;
   max-height: 80vh;
   overflow-y: auto;
-  min-width: 500px;
+  min-width: min(500px, 90vw);
 }
 
 .bestiary-panel::-webkit-scrollbar {
