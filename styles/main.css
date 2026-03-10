@@ -23,8 +23,7 @@ html, body {
 
 #game-canvas {
   display: block;
-  width: 100%;
-  height: 100%;
+  /* Three.js renderer.setSize() manages width/height via inline styles */
 }
 
 #ui-overlay {
