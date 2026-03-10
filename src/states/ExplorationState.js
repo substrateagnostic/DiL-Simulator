@@ -1377,7 +1377,7 @@ export class ExplorationState {
     this.camera.follow(this.player.position.x, this.player.position.z);
     this.camera.update(dt);
 
-    this.roomManager.update(dt, this.player.flags);
+    this.roomManager.update(dt, this.player.flags, this.paused);
 
     const nearNPC = this.roomManager.entityManager.getNearestInteractable(
       this.player.position.x,

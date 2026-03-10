@@ -192,10 +192,10 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'janet', x: 6, z: 5, facing: Math.PI },    // NW pod, cubicle 3
-      { id: 'intern', x: 15, z: 5, facing: Math.PI },  // NE pod, cubicle 4
-      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2 }, // water cooler (client)
-      { id: 'isaiah', x: 16, z: 12, facing: Math.PI }, // near water cooler
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' } },    // NW pod, paces nervously
+      { id: 'intern', x: 15, z: 5, facing: Math.PI, movement: { type: 'wander', radius: 3 } },  // NE pod, wanders looking lost
+      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' } }, // water cooler, paces
+      { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
     exits: [
       // NORTH exits -> Alex's Office
@@ -282,7 +282,7 @@ export const ROOMS = {
       { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
     ],
     npcs: [
-      { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2 },
+      { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 } },
       { id: 'grandma', x: 6, z: 5, facing: Math.PI, condition: { flag: 'act5_complete' } },
     ],
     exits: [
@@ -342,7 +342,7 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' } },  // paces behind desk
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
@@ -478,7 +478,7 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 7, z: 2 },
     ],
     npcs: [
-      { id: 'alex_it', x: 6, z: 8, facing: 0 },
+      { id: 'alex_it', x: 6, z: 8, facing: 0, movement: { type: 'wander', radius: 3 } },  // wanders among servers
     ],
     exits: [
       // WEST exit -> Cubicle Farm
@@ -595,7 +595,7 @@ export const ROOMS = {
       { type: 'carSports', x: 12, z: 6, rotation: Math.PI / 2 },
     ],
     npcs: [
-      { id: 'janitor', x: 12, z: 9, facing: Math.PI },
+      { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage
     ],
     exits: [
       // NORTH exits -> Reception
@@ -684,8 +684,8 @@ export const ROOMS = {
       { type: 'waterCooler', x: 1, z: 8 },
     ],
     npcs: [
-      { id: 'regional', x: 8, z: 1.5, facing: Math.PI },
-      { id: 'compliance', x: 13, z: 4, facing: Math.PI / 2 },
+      { id: 'regional', x: 8, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' } },
+      { id: 'compliance', x: 13, z: 4, facing: Math.PI / 2, movement: { type: 'pace', distance: 1.5, axis: 'z' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -786,7 +786,7 @@ export const ROOMS = {
       { type: 'cobweb', x: 11.8, z: 9.8 },
     ],
     npcs: [
-      { id: 'janitor', x: 5, z: 7, facing: 0 },
+      { id: 'janitor', x: 5, z: 7, facing: 0, movement: { type: 'pace', distance: 2, axis: 'x' } },  // paces among shelves
     ],
     exits: [
       // SOUTH exit -> Stairwell
@@ -854,7 +854,7 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 0.1, z: 5, rotation: Math.PI / 2 },
     ],
     npcs: [
-      { id: 'hr_rep', x: 10, z: 4, facing: Math.PI },
+      { id: 'hr_rep', x: 10, z: 4, facing: Math.PI, movement: { type: 'wander', radius: 2.5 } },
     ],
     exits: [
       // SOUTH exit -> Cubicle Farm
@@ -945,7 +945,7 @@ export const ROOMS = {
       { type: 'fileCabinetLateral', x: 10, z: 8, rotation: Math.PI },
     ],
     npcs: [
-      { id: 'rachel', x: 6, z: 3, facing: Math.PI },
+      { id: 'rachel', x: 6, z: 3, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x', speed: 1.2 } },  // paces deliberately
     ],
     exits: [
       // SOUTH exit -> Executive Floor

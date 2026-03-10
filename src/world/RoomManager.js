@@ -64,8 +64,10 @@ export class RoomManager {
         visible: npc.visible !== false,
         interactable: npc.interactable !== false,
         sitting: npc.sitting || false,
+        movement: npc.movement || null,
         conditionFn,
       });
+      npcEntity.tileMap = room.tileMap;
       this.entityManager.addNPC(npcEntity);
       this.mainScene.add(npcEntity.mesh);
     }
@@ -104,7 +106,7 @@ export class RoomManager {
     return ROOMS[roomId] || null;
   }
 
-  update(dt, flags) {
-    this.entityManager.update(dt, flags);
+  update(dt, flags, paused) {
+    this.entityManager.update(dt, flags, paused);
   }
 }

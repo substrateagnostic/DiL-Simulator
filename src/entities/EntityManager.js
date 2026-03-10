@@ -42,7 +42,7 @@ export class EntityManager {
     return nearest;
   }
 
-  update(dt, flags) {
+  update(dt, flags, paused) {
     for (const npc of this.npcs) {
       // Check condition function
       if (npc.conditionFn) {
@@ -50,6 +50,10 @@ export class EntityManager {
         if (shouldShow && !npc.visible) npc.show();
         if (!shouldShow && npc.visible) npc.hide();
       }
+      // Freeze/unfreeze NPCs based on pause state
+      if (paused && !npc._frozen) npc.freeze();
+      if (!paused && npc._frozen) npc.unfreeze();
+
       if (npc.visible) {
         npc.update(dt);
       }
