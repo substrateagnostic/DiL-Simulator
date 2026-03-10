@@ -15,6 +15,7 @@ import { TransitionOverlay } from '../ui/TransitionOverlay.js';
 import { generateClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
 import { ENEMY_STATS } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
+import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
 
 const INTERACTION_OFFSETS = [
   [0, 0],
@@ -163,6 +164,19 @@ export class ExplorationState {
             this.stateManager.push(dialogState);
           }, 500);
         }
+        if (key === 'ending_architect' && DIALOGS.ending_architect) {
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['ending_architect'], this.player, this.stateManager, 'ending_architect');
+            this.stateManager.push(dialogState);
+          }, 500);
+        }
+        // Post-credits: fires after ANY ending dialog completes (via read_ flag)
+        if ((key === 'read_ending_cooperative' || key === 'read_ending_compromise' || key === 'read_ending_dissolution' || key === 'read_ending_architect') && DIALOGS.post_credits) {
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['post_credits'], this.player, this.stateManager, 'post_credits');
+            this.stateManager.push(dialogState);
+          }, 2000);
+        }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
         if (key === 'penthouse_entered') {
           setTimeout(() => this._startCombat('cfos_assistant'), 2000);
@@ -198,6 +212,10 @@ export class ExplorationState {
           this._updateMiniStats();
           this._showToast('SPD +3! The overclocked badge hums with power.', 'item');
         }
+        // Story thoughts triggered by flags
+        if (STORY_THOUGHTS[key]) {
+          setTimeout(() => this._showMonologue(STORY_THOUGHTS[key]), 2000);
+        }
         // Janitor riddles complete — +2 all stats
         if (key === 'janitor_riddle_3_done') {
           this.player.stats.hp += 2;
@@ -216,6 +234,15 @@ export class ExplorationState {
       EventBus.on('room-entered', (roomId) => {
         this._updateLocationDisplay(roomId);
         this._refreshStoryProgress(true);
+
+        // Inner monologue on first room visit
+        const thoughtKey = `thought_${roomId}`;
+        if (!this.player.getFlag(thoughtKey) && ROOM_THOUGHTS[roomId]) {
+          this.player.setFlag(thoughtKey, true);
+          const thoughts = ROOM_THOUGHTS[roomId];
+          const thought = thoughts[Math.floor(Math.random() * thoughts.length)];
+          setTimeout(() => this._showMonologue(thought), 1500);
+        }
 
         if (roomId === 'reception') {
           this._onReceptionEntered();
@@ -405,6 +432,8 @@ export class ExplorationState {
           });
 
           if (result === 'victory') {
+            this.player.setFlag('bestiary_' + encounterId, true);
+
             if (encounterId === 'reception_client') {
               this._updateMiniStats();
               const clientRaw = this.player.getFlag('currentClient');
@@ -991,6 +1020,10 @@ export class ExplorationState {
     this.hudElement.appendChild(this.portfolioElement);
     this._updatePortfolioDisplay();
 
+    this.monologueElement = document.createElement('div');
+    this.monologueElement.className = 'inner-monologue';
+    this.hudElement.appendChild(this.monologueElement);
+
     overlay.appendChild(this.hudElement);
   }
 
@@ -1278,6 +1311,20 @@ export class ExplorationState {
         }
       }, 250);
     }, 2600);
+  }
+
+  _showMonologue(text) {
+    if (!this.monologueElement || !text) return;
+    // Cancel any existing monologue timer
+    if (this._monologueTimer) clearTimeout(this._monologueTimer);
+
+    this.monologueElement.textContent = text;
+    this.monologueElement.classList.add('visible');
+
+    this._monologueTimer = setTimeout(() => {
+      this.monologueElement.classList.remove('visible');
+      this._monologueTimer = null;
+    }, 5000);
   }
 
   update(dt) {

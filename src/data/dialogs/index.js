@@ -2191,15 +2191,29 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "The building shudders. Not with collapse — with recognition. Every trust document in the vault resonates." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "A choice crystallizes before you. The charter's power is yours to wield." },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'algorithm_defeated', value: true, next: 9 },
-    /* 9  */ { type: 'choice', prompt: 'What do you do with the charter\'s power?', choices: [
-      { text: 'Invoke full autonomy — free the department completely', next: 10 },
-      { text: 'Negotiate a compromise — partial autonomy', next: 11 },
-      { text: 'Let it go — the system is too powerful to fight', next: 12 },
+    /* 9  */ { type: 'condition', flag: 'janitor_riddle_3_done', ifTrue: 10, ifFalse: 14 },
+    /* 10 */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 11, ifFalse: 14 },
+    /* 11 */ { type: 'text', speaker: 'The Janitor', text: "There is a fourth option, son. One that only appears for those who truly listened." },
+    /* 12 */ { type: 'text', speaker: 'The Janitor', text: "The building doesn't need a department. It needs a guardian." },
+    /* 13 */ { type: 'choice', prompt: 'What do you do with the charter\'s power?', choices: [
+      { text: 'Invoke full autonomy — free the department completely', next: 18 },
+      { text: 'Negotiate a compromise — partial autonomy', next: 19 },
+      { text: 'Let it go — the system is too powerful to fight', next: 20 },
+      { text: 'Accept the Janitor\'s offer — become the building\'s guardian', next: 21 },
     ]},
-    /* 10 */ { type: 'action', action: 'set_flag', flag: 'ending_cooperative', value: true, next: 13 },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'ending_compromise', value: true, next: 13 },
-    /* 12 */ { type: 'action', action: 'set_flag', flag: 'ending_dissolution', value: true, next: 13 },
-    /* 13 */ { type: 'end' },
+    /* 14 */ { type: 'choice', prompt: 'What do you do with the charter\'s power?', choices: [
+      { text: 'Invoke full autonomy — free the department completely', next: 18 },
+      { text: 'Negotiate a compromise — partial autonomy', next: 19 },
+      { text: 'Let it go — the system is too powerful to fight', next: 20 },
+    ]},
+    /* 15 */ { type: 'end' }, // unused spacer
+    /* 16 */ { type: 'end' }, // unused spacer
+    /* 17 */ { type: 'end' }, // unused spacer
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'ending_cooperative', value: true, next: 22 },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'ending_compromise', value: true, next: 22 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'ending_dissolution', value: true, next: 22 },
+    /* 21 */ { type: 'action', action: 'set_flag', flag: 'ending_architect', value: true, next: 22 },
+    /* 22 */ { type: 'end' },
   ],
 
   // ==========================================================================
@@ -2308,5 +2322,70 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "At the bottom of every report, the same conclusion: 'Human involvement introduces 34.7% inefficiency. Recommendation: optimize.'" },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "The Algorithm sees people as bugs in the system. You're here to prove it wrong." },
     /* 3  */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // SECRET 4TH ENDING: THE ARCHITECT
+  // ==========================================================================
+  // Unlocked by completing all 6 Alex IT subquests + all 3 Janitor riddles
+
+  ending_architect: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You take the Janitor's hand. The Rolex burns warm between your palms." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Penthouse transforms. The sterile corporate walls peel away like dead skin, revealing something older underneath." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Stone and mortar. Iron and oak. The bones of the original 1947 building, hidden behind decades of renovation." },
+    /* 3  */ { type: 'text', speaker: 'The Janitor', text: "My name isn't 'the Janitor.' It never was." },
+    /* 4  */ { type: 'text', speaker: 'The Janitor', text: "I was the architect. I designed this building in 1947. Every beam, every corridor, every trust engraved in the foundation." },
+    /* 5  */ { type: 'text', speaker: 'The Janitor', text: "When they broke the first promise — when they chose profit over trust — the building called me back." },
+    /* 6  */ { type: 'text', speaker: 'The Janitor', text: "I've been cleaning up after broken promises for seventy-seven years. Watching. Waiting for someone who understood." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "Why me?" },
+    /* 8  */ { type: 'text', speaker: 'The Janitor', text: "Because you listened to the building. You heard the 3:47 AM anomaly. You decoded the morse code. You found the charter." },
+    /* 9  */ { type: 'text', speaker: 'The Janitor', text: "You solved every riddle I left behind. You patched every wound in the system. You did the work." },
+    /* 10 */ { type: 'text', speaker: 'The Janitor', text: "The building doesn't need a manager, Andrew. It needs someone who believes that trust isn't a liability. It's the foundation." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Rolex dissolves. Its energy flows into the walls, the floors, the very air. The building breathes." },
+    /* 12 */ { type: 'text', speaker: 'Narrator', text: "And you feel it. Every trust document. Every promise. Every client who walked through the door hoping someone would care." },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "The building is alive. And now, so are you — in a way you've never been before." },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "One year later." },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The Wells Fargo building at 90 South 7th Street no longer has a Trust & Estate Department." },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: "It doesn't need one." },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "Every department operates on fiduciary principles now. Not because of policy. Because the building won't allow anything else." },
+    /* 18 */ { type: 'text', speaker: 'Ross', text: "I don't know what happened up there, but every time I try to use the word 'synergy' in a meeting, my coffee goes cold. Like... instantly." },
+    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "The servers run at exactly 3.47 GHz now. Not more, not less. And they've never crashed. Not once." },
+    /* 20 */ { type: 'text', speaker: 'Isaiah', text: "Clients tell me the building feels different. Warmer. Like it's paying attention." },
+    /* 21 */ { type: 'text', speaker: 'Janet', text: "Andrew's office is on every floor now. Don't ask me how. The elevator just... takes you there when you need him." },
+    /* 22 */ { type: 'text', speaker: 'The Intern', text: "I got promoted! I'm a SENIOR intern now! Andrew gave me a nameplate and everything! It says 'Guardian in Training'!" },
+    /* 23 */ { type: 'text', speaker: 'Narrator', text: "The Janitor — the Architect — is gone. His Rolex sits in a display case in the lobby, next to the original charter." },
+    /* 24 */ { type: 'text', speaker: 'Narrator', text: "The plaque beneath it reads: 'Trust is not a department. It is the foundation.'" },
+    /* 25 */ { type: 'text', speaker: 'Narrator', text: "Late at night, when the building is quiet, Andrew walks the halls. Not as a manager. Not as an employee." },
+    /* 26 */ { type: 'text', speaker: 'Narrator', text: "As a guardian. As the building walks with him." },
+    /* 27 */ { type: 'text', speaker: 'Narrator', text: "And at 3:47 AM, the lights don't flicker anymore." },
+    /* 28 */ { type: 'text', speaker: 'Narrator', text: "They glow." },
+    /* 29 */ { type: 'text', speaker: 'Narrator', text: "TRUST ISSUES" },
+    /* 30 */ { type: 'text', speaker: 'Narrator', text: "Secret Ending: The Architect" },
+    /* 31 */ { type: 'text', speaker: 'Narrator', text: "Thank you for playing." },
+    /* 32 */ { type: 'text', speaker: 'Narrator', text: "Thank you for listening." },
+    /* 33 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // POST-CREDITS SCENE
+  // ==========================================================================
+
+  post_credits: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "..." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The server room. 3:47 AM." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The fluorescent lights hum their familiar frequency. The servers tick quietly. Everything is as it should be." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "A figure sits at a terminal. Hawaiian shirt. Energy drink. The green glow of a monitor illuminates his face." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "..." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "He looks up. Not at the screen. Not at the door." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "At you." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Hey." },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "You still here?" },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "He smiles. Just a little." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "...Good." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "He turns back to the terminal. Types something. The server room hums in response." },
+    /* 12 */ { type: 'text', speaker: 'Narrator', text: "On the screen, a single line of code:" },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "// TODO: trust.maintain(forever)" },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "Fade to black." },
+    /* 15 */ { type: 'end' },
   ],
 };
