@@ -281,6 +281,7 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2 },
+      { id: 'grandma', x: 6, z: 5, facing: Math.PI, condition: { flag: 'act5_complete' } },
     ],
     exits: [
       // EAST exit -> Cubicle Farm
