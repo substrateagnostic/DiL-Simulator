@@ -47,6 +47,9 @@ export class CombatState {
       brand_consultant: [0x3a1a2a, 0x4a2a3a, 0x2a0a1a, 0xcc6688],
       corporate_lawyer: [0x0a0a0a, 0x1a1a1a, 0x0a0a0a, 0xaaaaaa],
       rachel_boss: [0x0a0a2a, 0x1a1a3a, 0x0a0a1a, 0xc0c0c0],
+      cfos_assistant: [0x1a0a2e, 0x2a1a3e, 0x0a0a1e, 0x8844cc],
+      regional_director: [0x0a1628, 0x1a2638, 0x0a0a18, 0x4488cc],
+      algorithm: [0x000000, 0x0a0a0a, 0x000000, 0xff0000],
     };
     const colors = bgColors[this.enemyId] || [0x1a0533, 0x0a2463, 0x3e1f47, 0xe94560];
     this.scene.setBackgroundColors(...colors);

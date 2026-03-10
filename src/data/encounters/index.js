@@ -85,4 +85,22 @@ export const ENCOUNTERS = {
     postDialogId: 'rachel_boss_defeated',
     canFlee: false,
   },
+  cfos_assistant: {
+    enemyId: 'cfos_assistant',
+    preDialogId: 'cfos_assistant_combat',
+    postDialogId: 'cfos_assistant_defeated',
+    canFlee: false,
+  },
+  regional_director: {
+    enemyId: 'regional_director',
+    preDialogId: 'regional_director_combat',
+    postDialogId: 'regional_director_defeated',
+    canFlee: false,
+  },
+  algorithm: {
+    enemyId: 'algorithm',
+    preDialogId: 'algorithm_combat',
+    postDialogId: 'algorithm_defeated',
+    canFlee: false,
+  },
 };

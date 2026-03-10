@@ -307,6 +307,46 @@ export const ENEMY_STATS = {
       { hpThreshold: 0, abilities: ['hostile_takeover', 'board_resolution', 'final_assessment'] },
     ],
   },
+  cfos_assistant: {
+    name: 'CFO\'s Assistant',
+    maxHP: 160,
+    hp: 160,
+    atk: 18,
+    def: 14,
+    spd: 14,
+    xpReward: 180,
+    abilities: ['expense_review', 'budget_slash', 'cfo_call'],
+  },
+  regional_director: {
+    name: 'Regional Director',
+    maxHP: 220,
+    hp: 220,
+    atk: 24,
+    def: 20,
+    spd: 10,
+    xpReward: 350,
+    abilities: ['corporate_mandate', 'synergy_blast', 'market_correction', 'quarterly_target'],
+    phases: [
+      { hpThreshold: 0.6, abilities: ['corporate_mandate', 'synergy_blast', 'quarterly_target'] },
+      { hpThreshold: 0.3, abilities: ['market_correction', 'corporate_mandate', 'quarterly_target'] },
+      { hpThreshold: 0, abilities: ['market_correction', 'synergy_blast', 'corporate_mandate'] },
+    ],
+  },
+  algorithm: {
+    name: 'The Algorithm',
+    maxHP: 300,
+    hp: 300,
+    atk: 20,
+    def: 22,
+    spd: 16,
+    xpReward: 500,
+    abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'],
+    phases: [
+      { hpThreshold: 0.7, abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'] },
+      { hpThreshold: 0.35, abilities: ['predictive_model', 'algorithmic_trading', 'data_harvest'] },
+      { hpThreshold: 0, abilities: ['total_optimization', 'algorithmic_trading', 'predictive_model'] },
+    ],
+  },
 };
 
 // Enemy ability definitions
@@ -384,6 +424,24 @@ export const ENEMY_ABILITIES = {
   board_resolution: { name: 'Board Resolution', power: 0, type: 'heal', healAmount: 40, message: 'Rachel invokes a board resolution. The corporate hierarchy reinforces her.' },
   golden_handcuffs: { name: 'Golden Handcuffs', power: 0, type: 'stun', duration: 1, message: '"Your compensation package includes a non-compete. You can\'t leave. Ever."' },
   final_assessment: { name: 'Final Assessment', power: 35, type: 'attack', message: '"My final assessment: this department doesn\'t need you. It needs ME."' },
+
+  // CFO's Assistant
+  expense_review: { name: 'Expense Review', power: 18, type: 'attack', message: '"This lunch receipt from 2019... explain yourself."' },
+  budget_slash: { name: 'Budget Slash', power: 0, type: 'debuff', debuff: { atk: -5, spd: -3 }, duration: 3, message: '"Your department budget has been reduced by 40%."' },
+  cfo_call: { name: 'CFO on Line One', power: 0, type: 'buff', buff: { atk: 6, def: 6 }, duration: 2, message: '"The CFO is backing me on this." The assistant grows more confident.' },
+
+  // Regional Director
+  corporate_mandate: { name: 'Corporate Mandate', power: 24, type: 'attack', message: '"By mandate of the board: your department is being absorbed."' },
+  market_correction: { name: 'Market Correction', power: 30, type: 'attack', message: '"The market has spoken. Your services are... corrected."' },
+  quarterly_target: { name: 'Quarterly Target', power: 0, type: 'dot', duration: 3, message: '"You missed Q3 targets by 0.3%. This will be on your record."' },
+
+  // The Algorithm (Final Boss)
+  data_harvest: { name: 'Data Harvest', power: 18, type: 'attack', message: 'The Algorithm scrapes your performance data and weaponizes it.' },
+  pattern_recognition: { name: 'Pattern Recognition', power: 0, type: 'debuff', debuff: { def: -6 }, duration: 2, message: '"I have identified 47 inefficiencies in your workflow." Your defenses crumble.' },
+  risk_assessment: { name: 'Risk Assessment', power: 0, type: 'confuse', duration: 2, message: '"Probability of your success: 3.7%." The numbers swirl around you.' },
+  predictive_model: { name: 'Predictive Model', power: 0, type: 'counter', message: '"I predicted your move 3 turns ago." Counter stance activated.' },
+  algorithmic_trading: { name: 'Algorithmic Trading', power: 28, type: 'attack', message: 'The Algorithm executes 10,000 trades per second. Each one costs you patience.' },
+  total_optimization: { name: 'TOTAL OPTIMIZATION', power: 40, type: 'attack', message: '"Humans are the bottleneck. I am the solution." The Algorithm unleashes its full power.' },
 };
 
 // Items

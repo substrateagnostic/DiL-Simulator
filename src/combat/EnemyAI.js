@@ -71,4 +71,20 @@ export const ENEMY_AI_PATTERNS = {
     phase1: ['performance_review'],
     phase2: ['strategic_pivot', 'hostile_takeover', 'board_resolution'],
   },
+  cfos_assistant: {
+    // Debuffs first, then calls CFO for backup
+    pattern: 'strategic',
+    phase1: ['budget_slash'],
+    phase2: ['expense_review', 'cfo_call', 'expense_review'],
+  },
+  regional_director: {
+    // 3-phase boss - handled by phase system in CombatEngine
+    pattern: 'strategic',
+    phase1: ['corporate_mandate'],
+    phase2: ['market_correction', 'quarterly_target', 'corporate_mandate'],
+  },
+  algorithm: {
+    // 3-phase final boss - unpredictable
+    pattern: 'chaotic',
+  },
 };

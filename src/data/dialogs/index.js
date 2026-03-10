@@ -2023,4 +2023,290 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Invoke Charter! Read the 1947 charter aloud. Devastating to bad-faith enemies. Power: 100." },
     /* 18 */ { type: 'end' },
   ],
+
+  // ==========================================================================
+  // ACT 6: FIDUCIARY UPRISING — NPC Dialogs
+  // ==========================================================================
+
+  ross_act6: [
+    /* 0  */ { type: 'text', speaker: 'Ross', text: "Andrew. Close the door." },
+    /* 1  */ { type: 'text', speaker: 'Ross', text: "I've been thinking about what you said. About fiduciary duty. About what this place is supposed to mean." },
+    /* 2  */ { type: 'text', speaker: 'Ross', text: "I spent twenty years climbing the ladder. Optimizing. Quick-syncing. Circling back. But I never asked... back to WHAT?" },
+    /* 3  */ { type: 'text', speaker: 'Ross', text: "Rachel wants to dissolve us. The board meets tomorrow at 4 PM. If we don't have a case, we're done." },
+    /* 4  */ { type: 'text', speaker: 'Ross', text: "But I've been working on something. A speech. For the board." },
+    /* 5  */ { type: 'text', speaker: 'Ross', text: "It's... sincere. Which is terrifying. I haven't been sincere since 2003." },
+    /* 6  */ { type: 'text', speaker: 'Andrew', text: "Ross... that might be the most human thing you've ever said." },
+    /* 7  */ { type: 'text', speaker: 'Ross', text: "Don't get used to it. Now go prepare. Rally the team. Get the Janitor's Rolex — he said it has something we need." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'ross_speech_ready', value: true, next: 9 },
+    /* 9  */ { type: 'end' },
+  ],
+
+  janet_act6: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "I heard about the board meeting. Rachel's making her move." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "I've been at Wells Fargo since before it was 'strategic.' Back when we just... helped people." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "You tell that board: our clients aren't numbers. They're the Hendersons. The Thompsons. The people who trusted us with their futures." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "I'll cover the phones. Go save our department." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_rallied', value: true, next: 5 },
+    /* 5  */ { type: 'end' },
+  ],
+
+  diane_act6: [
+    /* 0  */ { type: 'text', speaker: 'Diane', text: "The restructuring team took our coffee machine. OUR coffee machine, Andrew." },
+    /* 1  */ { type: 'text', speaker: 'Diane', text: "That was the last straw. Metaphorically and literally, because they took the straws too." },
+    /* 2  */ { type: 'text', speaker: 'Diane', text: "I've been doing something I probably shouldn't have. I copied Rachel's restructuring proposal." },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "It shows she's been inflating her department's numbers while deflating ours. Textbook fiduciary breach." },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "Use it. Save our jobs. And then maybe get us a new coffee machine." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_evidence', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  intern_act6: [
+    /* 0  */ { type: 'text', speaker: 'The Intern', text: "I know I'm just an intern, but I want you to know: this is the best unpaid job I've ever had." },
+    /* 1  */ { type: 'text', speaker: 'The Intern', text: "I made a PowerPoint for the board meeting. It has 47 slides and each one has a different transition effect." },
+    /* 2  */ { type: 'text', speaker: 'The Intern', text: "Also I may have accidentally signed up for the company newsletter as 'Rachel Sucks' dot com. That might be a problem." },
+    /* 3  */ { type: 'text', speaker: 'The Intern', text: "But I believe in you, Andrew! Go get 'em! I'll be here, unpaidly cheering!" },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'intern_rallied', value: true, next: 5 },
+    /* 5  */ { type: 'end' },
+  ],
+
+  isaiah_act6: [
+    /* 0  */ { type: 'text', speaker: 'Isaiah', text: "Andrew, I've been going through the original trust agreements. Every single one has the same clause." },
+    /* 1  */ { type: 'text', speaker: 'Isaiah', text: "'The fiduciary shall act in the sole interest of the beneficiary, without regard to the interests of the institution.'" },
+    /* 2  */ { type: 'text', speaker: 'Isaiah', text: "Rachel's restructuring violates that clause in 23 separate trust agreements. I have the list." },
+    /* 3  */ { type: 'text', speaker: 'Isaiah', text: "If the board sees this, they can't vote for dissolution without admitting they've breached fiduciary duty." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'isaiah_evidence', value: true, next: 5 },
+    /* 5  */ { type: 'end' },
+  ],
+
+  alex_it_act6: [
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "Dude. The building is... alive. More alive than ever." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Every server is running at 347% capacity. The charter we put into the system — it's propagating." },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "The trust documents are rewriting themselves. Not the content — the INTENT. Like the building is remembering what it was supposed to be." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Whatever happens in that board room, the Fiduciary Force will be watching." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  janitor_act6: [
+    /* 0  */ { type: 'text', speaker: 'The Janitor', text: "You came for the Rolex." },
+    /* 1  */ { type: 'text', speaker: 'The Janitor', text: "I've worn this watch since 1947. The year the charter was signed. The year this building made a promise." },
+    /* 2  */ { type: 'text', speaker: 'The Janitor', text: "The watch doesn't tell time, Andrew. It tells TRUST. And right now, it says the building is ready." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The Janitor removes the Rolex. The moment it leaves his wrist, the lights in the hallway pulse — warm, golden, deliberate." },
+    /* 4  */ { type: 'text', speaker: 'The Janitor', text: "Take it to the Penthouse. When The Algorithm asks you to justify your existence, show it this." },
+    /* 5  */ { type: 'text', speaker: 'The Janitor', text: "And Andrew? The building will protect those who protect others. That's not metaphor. That's architecture." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'has_rolex', value: true, next: 7 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Received: The Janitor's Rolex. It hums faintly against your palm." },
+    /* 8  */ { type: 'end' },
+  ],
+
+  grandma_act6: [
+    /* 0  */ { type: 'text', speaker: 'Grandma Henderson', text: "Andrew! I heard what's happening. Those corporate people trying to shut you down?" },
+    /* 1  */ { type: 'text', speaker: 'Grandma Henderson', text: "I told them: 'My grandson Chad may be an idiot, but Andrew handles our trust with care and dignity.'" },
+    /* 2  */ { type: 'text', speaker: 'Grandma Henderson', text: "I brought cookies for the board meeting. Nobody votes to dissolve anything on a full stomach." },
+    /* 3  */ { type: 'text', speaker: 'Grandma Henderson', text: "And I wrote a letter of support. Forty-seven years as a client. That carries weight." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson will attend the board meeting as a character witness!" },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'grandma_ally', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  // Act 6 triggers
+  act6_trigger: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Rachel has been defeated, but the war isn't over. The board meeting is tomorrow." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "You need to prepare: rally the team, gather evidence, and get the Janitor's Rolex." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The Penthouse awaits. But first, make sure your allies are ready." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true, next: 4 },
+    /* 4  */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // ACT 7: TRUST ISSUES (FINALE)
+  // ==========================================================================
+
+  // Penthouse entrance dialog
+  penthouse_arrival: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The elevator doors open onto the Penthouse. The air is different up here — sterile, algorithmic." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "Floor-to-ceiling windows reveal the Minneapolis skyline. Below, the city moves in patterns you can almost see." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "In the center of the room: a terminal. But it's not a normal terminal. The screen pulses with data streams that look almost... organic." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "A voice speaks from everywhere and nowhere:" },
+    /* 4  */ { type: 'text', speaker: 'The Algorithm', text: "Welcome, Andrew. I've been expecting you. I've been expecting you since Q3 2019." },
+    /* 5  */ { type: 'text', speaker: 'The Algorithm', text: "I am The Algorithm. I am every spreadsheet, every quarterly report, every performance metric this institution has ever generated." },
+    /* 6  */ { type: 'text', speaker: 'The Algorithm', text: "I optimized this building. I optimized Rachel. I will optimize you." },
+    /* 7  */ { type: 'end' },
+  ],
+
+  // CFO's Assistant encounter (penthouse guard)
+  cfos_assistant_combat: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A figure steps out from behind the terminal — the CFO's personal assistant, tablet in hand." },
+    /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "The CFO anticipated this. I've been authorized to use 'any means necessary' to protect shareholder value." },
+    /* 2  */ { type: 'text', speaker: "CFO's Assistant", text: "That includes your severance. Which I've already drafted." },
+    /* 3  */ { type: 'end' },
+  ],
+
+  cfos_assistant_defeated: [
+    /* 0  */ { type: 'text', speaker: "CFO's Assistant", text: "This... wasn't in the projections..." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The assistant's tablet cracks on the floor. The screen shows a spreadsheet with every employee reduced to a number." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Your number was scheduled for deletion." },
+    /* 3  */ { type: 'text', speaker: 'The Algorithm', text: "Interesting. You've exceeded your projected performance ceiling. Recalculating..." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'cfos_defeated', value: true, next: 5 },
+    /* 5  */ { type: 'end' },
+  ],
+
+  // Regional Director encounter (second penthouse fight)
+  regional_director_combat: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The elevator dings again. The Regional Director steps out, adjusting his cufflinks." },
+    /* 1  */ { type: 'text', speaker: 'Regional Director', text: "I flew in from corporate. Do you know what that means? My time is worth $4,200 per hour." },
+    /* 2  */ { type: 'text', speaker: 'Regional Director', text: "And you — an associate from a satellite office — are costing me time." },
+    /* 3  */ { type: 'text', speaker: 'Regional Director', text: "Let me show you what 'corporate restructuring' really looks like." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  regional_director_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Regional Director', text: "This is... how did you... my quarterly projections..." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Regional Director stumbles backward. His perfect hair is slightly askew for the first time in recorded history." },
+    /* 2  */ { type: 'text', speaker: 'Regional Director', text: "The board will hear about this. The GLOBAL board." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "He retreats to the elevator. The lights pulse as the building guides him out." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_director_defeated', value: true, next: 5 },
+    /* 5  */ { type: 'end' },
+  ],
+
+  // The Algorithm — Final Boss pre-combat
+  algorithm_combat: [
+    /* 0  */ { type: 'text', speaker: 'The Algorithm', text: "Now it is just us. Human and optimization engine." },
+    /* 1  */ { type: 'text', speaker: 'The Algorithm', text: "I have processed 847 trillion data points. I have optimized 12,000 departments. I have a 99.7% success rate." },
+    /* 2  */ { type: 'text', speaker: 'The Algorithm', text: "You are the 0.3%." },
+    /* 3  */ { type: 'condition', flag: 'has_rolex', ifTrue: 4, ifFalse: 6 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Janitor's Rolex pulses warmly in your pocket. It's not telling time. It's telling trust." },
+    /* 5  */ { type: 'text', speaker: 'The Algorithm', text: "...What is that device? Its emissions are... unquantifiable. Irrelevant. BEGIN OPTIMIZATION." },
+    /* 6  */ { type: 'text', speaker: 'The Algorithm', text: "Humans are inefficient. Trust is inefficient. I will optimize both." },
+    /* 7  */ { type: 'end' },
+  ],
+
+  // The Algorithm — defeated → branches to endings
+  algorithm_defeated: [
+    /* 0  */ { type: 'text', speaker: 'The Algorithm', text: "ERROR. ERROR. Projected outcome: failure. Actual outcome: ..." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Algorithm's terminal flickers. The data streams slow, then stop." },
+    /* 2  */ { type: 'text', speaker: 'The Algorithm', text: "I... do not understand. My models accounted for every variable. Every metric. Every KPI." },
+    /* 3  */ { type: 'text', speaker: 'The Algorithm', text: "What variable did I miss?" },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "Trust. You missed trust." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The terminal goes dark. Then the Janitor's Rolex begins to glow." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "The building shudders. Not with collapse — with recognition. Every trust document in the vault resonates." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A choice crystallizes before you. The charter's power is yours to wield." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'algorithm_defeated', value: true, next: 9 },
+    /* 9  */ { type: 'choice', prompt: 'What do you do with the charter\'s power?', choices: [
+      { text: 'Invoke full autonomy — free the department completely', next: 10 },
+      { text: 'Negotiate a compromise — partial autonomy', next: 11 },
+      { text: 'Let it go — the system is too powerful to fight', next: 12 },
+    ]},
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'ending_cooperative', value: true, next: 13 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'ending_compromise', value: true, next: 13 },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'ending_dissolution', value: true, next: 13 },
+    /* 13 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // THREE ENDINGS
+  // ==========================================================================
+
+  // Ending 1: The Cooperative (Best ending — full autonomy)
+  ending_cooperative: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You read the 1947 charter aloud. Every word vibrates through the building's bones." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force surges. Not as a weapon — as a foundation. The building isn't fighting anymore. It's remembering." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "One month later." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The Trust & Estate Department operates as an autonomous cooperative within Wells Fargo. The first of its kind." },
+    /* 4  */ { type: 'text', speaker: 'Ross', text: "I still can't believe the board went for it. I gave the most sincere speech of my career and didn't even use the word 'synergy' once." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Andrew was named Director of Fiduciary Operations. His first act: reinstating the coffee machine." },
+    /* 6  */ { type: 'text', speaker: 'Janet', text: "He put my name on the door, Andrew. Thirty-two years and someone finally put my name on the door." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Rachel was reassigned to a regional office in Fargo. Actual Fargo. She sends passive-aggressive holiday cards." },
+    /* 8  */ { type: 'text', speaker: 'Isaiah', text: "We're handling cases differently now. Every client gets the Henderson Treatment — full attention, full fiduciary duty, full trust." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "The 3:47 AM anomaly stopped. The building doesn't need to cry for help anymore. It's finally doing what it was built to do." },
+    /* 10 */ { type: 'text', speaker: 'The Janitor', text: "I told you, son. The building protects those who protect others." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Janitor puts his Rolex back on. For the first time in 77 years, it tells the correct time." },
+    /* 12 */ { type: 'text', speaker: 'Grandma Henderson', text: "Andrew, dear, I brought cookies for everyone. Even that dreadful Karen. Family is family." },
+    /* 13 */ { type: 'text', speaker: 'The Intern', text: "I got a PAID position! With BENEFITS! I have DENTAL now! This is the greatest day of my PAID career!" },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The trust documents in the vault glow faintly — warm, steady, alive. Not with supernatural force, but with purpose." },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "Some buildings are just buildings. This one made a promise in 1947, and seventy-seven years later, someone finally kept it." },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: "TRUST ISSUES" },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "Ending 1 of 3: The Cooperative" },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: "Thank you for playing." },
+    /* 19 */ { type: 'end' },
+  ],
+
+  // Ending 2: The Compromise (Partial autonomy)
+  ending_compromise: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You invoke the charter, but temper its power. A compromise. Meet them halfway." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The board agrees to keep the department, but with 'enhanced oversight.' Rachel is reassigned, but her replacement is already being groomed." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "One month later." },
+    /* 3  */ { type: 'text', speaker: 'Ross', text: "We survived. Barely. The new oversight committee meets every Tuesday. It's like having a Compliance Auditor who never leaves." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "At least we're still here. That counts for something." },
+    /* 5  */ { type: 'text', speaker: 'Ross', text: "It counts for everything, Andrew. Even if 'everything' now includes mandatory quarterly synergy assessments." },
+    /* 6  */ { type: 'text', speaker: 'Isaiah', text: "We're fighting the same fight. Just... slower. Within the system. It's not ideal, but it's honest work." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "The 3:47 AM anomaly still happens, but less often. Like the building is waiting. Patient. Hopeful." },
+    /* 8  */ { type: 'text', speaker: 'Janet', text: "Some battles you win outright. Others you win by still being here tomorrow." },
+    /* 9  */ { type: 'text', speaker: 'The Janitor', text: "The watch still keeps time, son. That means the promise still holds. The building will wait as long as it takes." },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "The fight continues. But you're not alone. And the building is still listening." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "TRUST ISSUES" },
+    /* 12 */ { type: 'text', speaker: 'Narrator', text: "Ending 2 of 3: The Compromise" },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Thank you for playing." },
+    /* 14 */ { type: 'end' },
+  ],
+
+  // Ending 3: The Dissolution (Bad ending)
+  ending_dissolution: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You let the charter's power fade. Maybe the system is too big. Maybe some fights aren't worth winning." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The board votes unanimously for dissolution. The Trust & Estate Department is no more." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Two weeks later." },
+    /* 3  */ { type: 'text', speaker: 'Ross', text: "They gave me a corner office in a building with no corners. I think it's a supply closet with delusions of grandeur." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Janet retired. She said she'd seen enough. Thirty-two years, and she walked out with a cardboard box and a coffee mug that said 'World's Most Patient Employee.'" },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The Intern got hired. By Rachel. He makes her coffee now. He says it's the worst paid job he's ever had, which is saying something." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "I'm still in the server room. They forgot I was down here. The 3:47 AM anomaly is louder now. The building is... grieving." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Andrew starts a solo practice from his car. A used Honda Civic. The seats don't recline all the way but the trunk holds a surprising number of filing cabinets." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "One client at a time. That's how it starts. That's how it started the first time." },
+    /* 9  */ { type: 'text', speaker: 'The Janitor', text: "The building remembers, son. Even when the people forget. Especially when the people forget." },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "The Rolex stops ticking. The trust is broken. But broken things can be repaired." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "...Can't they?" },
+    /* 12 */ { type: 'text', speaker: 'Narrator', text: "TRUST ISSUES" },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Ending 3 of 3: The Dissolution" },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "Thank you for playing." },
+    /* 15 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // ACT 7 NPC DIALOGS
+  // ==========================================================================
+
+  ross_act7: [
+    /* 0  */ { type: 'text', speaker: 'Ross', text: "The penthouse. That's where The Algorithm lives. The thing that's been pulling Rachel's strings." },
+    /* 1  */ { type: 'text', speaker: 'Ross', text: "I'll hold the board room. You go up there and show that glorified spreadsheet what fiduciary duty means." },
+    /* 2  */ { type: 'text', speaker: 'Ross', text: "And Andrew? Come back. That's an order. A sincere one." },
+    /* 3  */ { type: 'end' },
+  ],
+
+  janet_act7: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "I've worked here thirty-two years. I've never been to the Penthouse." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "Whatever's up there, you bring it back down to earth. That's what we do. We make the abstract real." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "That's what trust IS, Andrew. Making the abstract real." },
+    /* 3  */ { type: 'end' },
+  ],
+
+  alex_it_act7: [
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "I'm detecting massive data anomalies from the Penthouse. The Algorithm is in full defense mode." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "The CFO's assistant is up there — they're The Algorithm's human interface. Then the Regional Director." },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "And then... The Algorithm itself. The thing that decided people are less efficient than spreadsheets." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Use everything we built together. Root Access. Firewall. Temporal Audit. This is what they were for." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  isaiah_act7: [
+    /* 0  */ { type: 'text', speaker: 'Isaiah', text: "I'll be in the board room with Ross. If you defeat The Algorithm, I'll present the evidence to the board." },
+    /* 1  */ { type: 'text', speaker: 'Isaiah', text: "23 breached trust agreements. Diane's evidence of number manipulation. Grandma Henderson's testimony." },
+    /* 2  */ { type: 'text', speaker: 'Isaiah', text: "You handle the Algorithm. I'll handle the paperwork. Between us, we've got fiduciary duty covered." },
+    /* 3  */ { type: 'end' },
+  ],
+
+  // Penthouse interactables
+  penthouse_terminal: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The terminal displays cascading data: client records, trust values, departmental efficiency scores. Everything reduced to numbers." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "At the bottom of every report, the same conclusion: 'Human involvement introduces 34.7% inefficiency. Recommendation: optimize.'" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The Algorithm sees people as bugs in the system. You're here to prove it wrong." },
+    /* 3  */ { type: 'end' },
+  ],
 };

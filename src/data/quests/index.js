@@ -63,6 +63,28 @@ export const QUESTS = {
       { id: 4, objective: 'Confront Rachel in the Board Room' },
     ],
   },
+  main_act6: {
+    id: 'main_act6',
+    name: 'Fiduciary Uprising',
+    stages: [
+      { id: 0, objective: 'Rally the team for the board meeting' },
+      { id: 1, objective: 'Gather evidence against Rachel' },
+      { id: 2, objective: 'Get Ross to prepare his speech' },
+      { id: 3, objective: 'Recruit Grandma Henderson as ally' },
+      { id: 4, objective: 'Get the Janitor\'s Rolex' },
+    ],
+  },
+  main_act7: {
+    id: 'main_act7',
+    name: 'Trust Issues',
+    stages: [
+      { id: 0, objective: 'Ascend to the Penthouse' },
+      { id: 1, objective: 'Defeat the CFO\'s Assistant' },
+      { id: 2, objective: 'Defeat the Regional Director' },
+      { id: 3, objective: 'Face The Algorithm' },
+      { id: 4, objective: 'Choose the fate of the Trust Department' },
+    ],
+  },
   side_lunch_thief: {
     id: 'side_lunch_thief',
     name: 'The Lunch Thief',

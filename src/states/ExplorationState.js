@@ -139,7 +139,43 @@ export class ExplorationState {
           this._showToast('Rachel has locked down the building. Rally the team!', 'objective');
         }
         if (key === 'act5_complete') {
-          this._showToast('The trust department is saved. For now...', 'objective');
+          this._showToast('Rachel is defeated, but the board meets tomorrow. Prepare the team!', 'objective');
+        }
+        if (key === 'act6_complete') {
+          this._showToast('The Penthouse awaits. Face The Algorithm.', 'objective');
+        }
+        // Ending triggers — show appropriate ending dialog after Algorithm defeated
+        if (key === 'ending_cooperative' && DIALOGS.ending_cooperative) {
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['ending_cooperative'], this.player, this.stateManager, 'ending_cooperative');
+            this.stateManager.push(dialogState);
+          }, 500);
+        }
+        if (key === 'ending_compromise' && DIALOGS.ending_compromise) {
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['ending_compromise'], this.player, this.stateManager, 'ending_compromise');
+            this.stateManager.push(dialogState);
+          }, 500);
+        }
+        if (key === 'ending_dissolution' && DIALOGS.ending_dissolution) {
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['ending_dissolution'], this.player, this.stateManager, 'ending_dissolution');
+            this.stateManager.push(dialogState);
+          }, 500);
+        }
+        // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
+        if (key === 'penthouse_entered') {
+          setTimeout(() => this._startCombat('cfos_assistant'), 2000);
+        }
+        if (key === 'cfos_defeated') {
+          setTimeout(() => this._startCombat('regional_director'), 1500);
+        }
+        if (key === 'regional_director_defeated') {
+          setTimeout(() => this._startCombat('algorithm'), 1500);
+        }
+        // Act 6 → 7 transition: all allies rallied + rolex = penthouse unlocks
+        if (key === 'has_rolex') {
+          this.player.setFlag('act6_complete', true);
         }
         if (key === 'has_charter') {
           this._showToast('You have the 1947 Charter! Its power resonates through the building.', 'item');
@@ -230,6 +266,17 @@ export class ExplorationState {
             }, 800);
           }
         }
+
+        // Penthouse: Act 7 entrance triggers arrival dialog + CFO's Assistant fight
+        if (roomId === 'penthouse' && this.player.getFlag('act6_complete') && !this.player.getFlag('penthouse_entered')) {
+          this.player.setFlag('penthouse_entered');
+          if (DIALOGS.penthouse_arrival) {
+            setTimeout(() => {
+              const dialogState = new DialogState(DIALOGS['penthouse_arrival'], this.player, this.stateManager, 'penthouse_arrival');
+              this.stateManager.push(dialogState);
+            }, 800);
+          }
+        }
       }),
     );
 
@@ -302,7 +349,7 @@ export class ExplorationState {
       hr_department: { flag: 'hr_accessible', message: "The HR Department is locked down. You need authorization." },
       vault: { flag: 'vault_accessible', message: "The vault door is sealed shut. You need more information." },
       board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
-      penthouse: { flag: 'act5_complete', message: "The staircase to the penthouse is blocked. Something must happen first." },
+      penthouse: { flag: 'act6_complete', message: "The staircase to the Penthouse is sealed. You need the Janitor's Rolex." },
     };
     const gate = gatedRooms[targetRoom];
     if (gate && !this.player.getFlag(gate.flag)) {
@@ -890,11 +937,15 @@ export class ExplorationState {
       if (id === 'intern' && this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_3) return 'social_engineering_3';
     }
 
+    if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
+    if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
     if (act >= 3 && DIALOGS[`${id}_act3`] && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
     if (act >= 1 && DIALOGS[`${id}_act2`] && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
+    if (act >= 7 && DIALOGS[`${id}_act7`]) return `${id}_act7`;
+    if (act >= 6 && DIALOGS[`${id}_act6`]) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`]) return `${id}_act4`;
     if (act >= 3 && DIALOGS[`${id}_act3`]) return `${id}_act3`;
     if (act >= 1 && DIALOGS[`${id}_act2`]) return `${id}_act2`;
@@ -1044,14 +1095,35 @@ export class ExplorationState {
     if (this.player.getFlag('act3_complete')) act = 4;
     if (this.player.getFlag('act4_complete')) act = 5;
     if (this.player.getFlag('act5_complete')) act = 6;
+    if (this.player.getFlag('act6_complete')) act = 7;
     this.player.actIndex = act;
   }
 
   _getStoryObjective() {
-    // Act 5+
-    if (this.player.getFlag('act5_complete')) {
-      return 'The trust department is saved. Explore at your leisure.';
+    // Game complete
+    if (this.player.getFlag('algorithm_defeated')) {
+      return 'The story is over. Thank you for playing.';
     }
+
+    // Act 7
+    if (this.player.getFlag('act6_complete')) {
+      if (this.player.getFlag('regional_director_defeated')) return 'Face The Algorithm in the Penthouse';
+      if (this.player.getFlag('cfos_defeated')) return 'Defeat the Regional Director';
+      return 'Ascend to the Penthouse and face The Algorithm';
+    }
+
+    // Act 6
+    if (this.player.getFlag('act5_complete')) {
+      if (this.player.getFlag('has_rolex')) return 'Enter the Penthouse — you have the Janitor\'s Rolex';
+      const rallied = ['janet_rallied', 'diane_rallied', 'intern_rallied', 'ross_speech_ready'].filter(f => this.player.getFlag(f)).length;
+      const evidence = ['diane_evidence', 'isaiah_evidence'].filter(f => this.player.getFlag(f)).length;
+      if (rallied < 4 || evidence < 2) {
+        return `Prepare for the finale (${rallied}/4 allies, ${evidence}/2 evidence)`;
+      }
+      return 'Get the Janitor\'s Rolex';
+    }
+
+    // Act 5
     if (this.player.getFlag('rachel_fight_started')) {
       return 'Defeat Rachel in the Board Room';
     }
@@ -1143,6 +1215,8 @@ export class ExplorationState {
     if (this.player.getFlag('act2_complete')) questId = 'main_act3';
     if (this.player.getFlag('act3_complete')) questId = 'main_act4';
     if (this.player.getFlag('act4_complete')) questId = 'main_act5';
+    if (this.player.getFlag('act5_complete')) questId = 'main_act6';
+    if (this.player.getFlag('act6_complete')) questId = 'main_act7';
 
     this._setQuest(this._getStoryObjective(), { questId, silent });
   }
