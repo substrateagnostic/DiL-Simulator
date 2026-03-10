@@ -64,7 +64,7 @@ export const Materials = {
   chair: () => toon(0x333333),
   chairFabric: () => toon(0x444466),
   plant: () => toon(0x3a7a3a),
-  plantPot: () => toon(0x8b6e4e),
+  plantPot: () => toon(0xc1622a),
   paper: () => toon(0xf5f0e8),
   coffee: () => toon(COLORS.COFFEE),
   mug: () => toon(COLORS.COFFEE_MUG),
@@ -100,4 +100,53 @@ export const Materials = {
 
   // Custom color toon material
   custom: (color, opts) => toon(color, opts),
+
+  // Carpet pattern — canvas texture with a repeating loop-pile grid
+  carpetPattern(w, h, color) {
+    const size = 128;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    const r = (color >> 16) & 0xff;
+    const g = (color >> 8) & 0xff;
+    const b = color & 0xff;
+    const dr = Math.max(0, r - 28);
+    const dg = Math.max(0, g - 28);
+    const db = Math.max(0, b - 28);
+
+    // Base fill
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(0, 0, size, size);
+
+    // Tight cross-hatch grid
+    ctx.strokeStyle = `rgba(${dr},${dg},${db},0.4)`;
+    ctx.lineWidth = 0.5;
+    for (let i = 0; i <= size; i += 8) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, size); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(size, i); ctx.stroke();
+    }
+
+    // Small loop dots at grid intersections
+    ctx.fillStyle = `rgba(${dr},${dg},${db},0.55)`;
+    for (let x = 4; x < size; x += 8) {
+      for (let y = 4; y < size; y += 8) {
+        ctx.beginPath();
+        ctx.arc(x, y, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(w / 2, h / 2);
+
+    return new THREE.MeshToonMaterial({
+      map: texture,
+      color: new THREE.Color(color),
+      gradientMap: gradientMap3,
+    });
+  },
 };

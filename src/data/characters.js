@@ -144,4 +144,16 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['bluetooth_earpiece', 'golf_putter'],
   },
+  // Mutable placeholder — overwritten by ExplorationState before each reception fight
+  reception_client: {
+    name: 'Prospective Client',
+    bodyColor: COLORS.SUIT_BLUE,
+    pantsColor: 0x2a2a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: COLORS.BLUE_TIE,
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_BROWN,
+    hairStyle: 'short',
+    accessories: [],
+  },
 };

@@ -137,6 +137,18 @@ export class CombatScene {
     this.enemyGroup.scale.set(1.8, 1.8, 1.8); // Enemies are big in combat
     this.enemyGroup.rotation.y = Math.PI; // Face player
     this.scene.add(this.enemyGroup);
+
+    // Add player character on right side, facing enemy
+    if (this.playerGroup) this.scene.remove(this.playerGroup);
+    const playerConfig = CHARACTER_CONFIGS['andrew'];
+    if (playerConfig) {
+      this.playerGroup = buildCharacter(playerConfig);
+      this.playerAnimator = new CharacterAnimator(this.playerGroup);
+      this.playerGroup.position.set(2.2, 0, 3.5);
+      this.playerGroup.scale.set(1.4, 1.4, 1.4);
+      this.playerGroup.rotation.y = -Math.PI * 0.6; // angled toward enemy
+      this.scene.add(this.playerGroup);
+    }
   }
 
   setBackgroundColors(c1, c2, c3, c4) {
@@ -175,6 +187,78 @@ export class CombatScene {
         mesh.material = material;
       }
     }, duration * 1000);
+  }
+
+  // Player attack animation — character lunges forward + slash sprites
+  playerAttackAnim() {
+    // Lunge player character toward enemy then snap back
+    if (this.playerGroup) {
+      const startX = this.playerGroup.position.x;
+      const startZ = this.playerGroup.position.z;
+      // Lunge toward enemy (negative x, negative z)
+      this.playerGroup.position.x = startX - 1.4;
+      this.playerGroup.position.z = startZ - 1.8;
+      // Punch-in camera too
+      const origZ = this._basePos.z;
+      this._basePos.z = origZ - 0.6;
+      setTimeout(() => {
+        if (this.playerGroup) {
+          this.playerGroup.position.x = startX;
+          this.playerGroup.position.z = startZ;
+        }
+        this._basePos.z = origZ;
+      }, 180);
+    }
+
+    // Brief white flash for instant visual punch
+    this.flash(0xffffff, 0.06);
+
+    // Helper: create a sprite slash at a given position/size/rotation
+    const makeSlash = (x, y, z, color, scaleX, scaleY, rotation) => {
+      const mat = new THREE.SpriteMaterial({
+        color,
+        transparent: true,
+        opacity: 1.0,
+        rotation,
+        depthWrite: false,
+      });
+      const sprite = new THREE.Sprite(mat);
+      sprite.position.set(x, y, z);
+      sprite.scale.set(scaleX, scaleY, 1);
+      this.scene.add(sprite);
+      return { sprite, mat };
+    };
+
+    // Slashes appear directly on the enemy and expand outward then fade
+    const s1 = makeSlash( 0.1, 1.2, 0.3, 0xffffff, 0.5, 0.5,  0.35);
+    const s2 = makeSlash(-0.2, 0.9, 0.2, 0xffee88, 0.4, 0.4, -0.25);
+    const s3 = makeSlash( 0.3, 1.5, 0.4, 0xffffff, 0.3, 0.3,  0.9);
+
+    const DURATION = 0.3; // seconds
+    let elapsed = 0;
+    const tick = () => {
+      elapsed += 0.016;
+      const t = Math.min(elapsed / DURATION, 1);
+      const ease = 1 - t * t; // ease-out fade
+      const grow = 1 + t * 3; // expand outward
+      s1.mat.opacity = ease;
+      s2.mat.opacity = ease * 0.85;
+      s3.mat.opacity = ease * 0.7;
+      s1.sprite.scale.set(0.5 * grow, 0.5 * grow, 1);
+      s2.sprite.scale.set(0.4 * grow, 0.4 * grow, 1);
+      s3.sprite.scale.set(0.3 * grow, 0.3 * grow, 1);
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        this.scene.remove(s1.sprite);
+        this.scene.remove(s2.sprite);
+        this.scene.remove(s3.sprite);
+        s1.mat.dispose();
+        s2.mat.dispose();
+        s3.mat.dispose();
+      }
+    };
+    requestAnimationFrame(tick);
   }
 
   // Enemy attack animation (lunge forward)
@@ -226,9 +310,12 @@ export class CombatScene {
       this.bgMesh.material.uniforms.uTime.value = this.time;
     }
 
-    // Update enemy idle animation
+    // Update character idle animations
     if (this.enemyAnimator) {
       this.enemyAnimator.update(dt);
+    }
+    if (this.playerAnimator) {
+      this.playerAnimator.update(dt);
     }
 
     // Camera shake
@@ -264,6 +351,10 @@ export class CombatScene {
     if (this.enemyGroup) {
       this.scene.remove(this.enemyGroup);
       this.enemyGroup = null;
+    }
+    if (this.playerGroup) {
+      this.scene.remove(this.playerGroup);
+      this.playerGroup = null;
     }
   }
 }

@@ -177,3 +177,36 @@
 
 .hud-mini-stat .value.hp { color: #ff6b6b; }
 .hud-mini-stat .value.mp { color: #53a8b6; }
+
+/* Portfolio / Book of Business panel */
+.hud-portfolio {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: rgba(0, 0, 0, 0.65);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 6px;
+  padding: 10px 14px;
+  min-width: 180px;
+}
+
+.portfolio-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  color: #e94560;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.portfolio-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.portfolio-label { color: #888; }
+.portfolio-value { color: #fff; }
+.portfolio-gold  { color: #ffd700; }

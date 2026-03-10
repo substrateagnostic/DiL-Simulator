@@ -18,6 +18,7 @@ export class NPC {
     this.dialogId = options.dialogId || id;
     this.visible = options.visible !== false;
     this.interactable = options.interactable !== false;
+    this.sitting = options.sitting || false;
     this.wanderRadius = options.wanderRadius || 0;
     this.name = this.config?.name || id;
 
@@ -27,6 +28,9 @@ export class NPC {
 
     if (!this.visible) {
       this.mesh.visible = false;
+    }
+    if (this.sitting) {
+      this.animator.setSitting(true);
     }
   }
 
@@ -47,6 +51,21 @@ export class NPC {
   hide() {
     this.visible = false;
     this.mesh.visible = false;
+  }
+
+  // Rebuild the mesh with a new config (e.g. when a procedural client is generated)
+  rebuild(config) {
+    const parent = this.mesh.parent;
+    if (parent) parent.remove(this.mesh);
+
+    this.mesh = buildCharacter({ ...config, name: this.id });
+    this.mesh.position.set(this.position.x, 0, this.position.z);
+    this.animator = new CharacterAnimator(this.mesh);
+    this.animator.setFacing(this.facingAngle);
+    if (!this.visible) this.mesh.visible = false;
+
+    if (parent) parent.add(this.mesh);
+    if (this.sitting) this.animator.setSitting(true);
   }
 
   update(dt) {
