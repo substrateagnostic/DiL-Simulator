@@ -8,11 +8,13 @@ import { TitleState } from './states/TitleState.js';
 import { ExplorationState } from './states/ExplorationState.js';
 import { PostProcessing } from './effects/PostProcessing.js';
 import { updateTweens } from './utils/tween.js';
+import { TouchControls } from './ui/TouchControls.js';
 
 class Game {
   constructor() {
     this.stateManager = new GameStateManager();
     this.postProcessing = new PostProcessing();
+    this.touchControls = new TouchControls();
     this.explorationState = null;
   }
 
@@ -22,6 +24,7 @@ class Game {
     InputManager.init();
     AudioManager.init();
     this.postProcessing.init();
+    this.touchControls.init();
 
     // Start with title screen
     this._showTitle();
@@ -40,9 +43,11 @@ class Game {
       AudioManager.resume();
       window.removeEventListener('click', initAudio);
       window.removeEventListener('keydown', initAudio);
+      window.removeEventListener('touchstart', initAudio);
     };
     window.addEventListener('click', initAudio);
     window.addEventListener('keydown', initAudio);
+    window.addEventListener('touchstart', initAudio);
 
     // Main game loop
     Engine.onUpdate((dt) => this._update(dt));

@@ -1029,6 +1029,7 @@ export class ExplorationState {
     this.promptElement.className = 'interact-prompt';
     this.promptElement.innerHTML = '<kbd>E</kbd> Interact';
     this.promptElement.style.display = 'none';
+    this.promptElement.addEventListener('click', () => this._interact());
     this.hudElement.appendChild(this.promptElement);
 
     this.portfolioElement = document.createElement('div');
@@ -1120,7 +1121,8 @@ export class ExplorationState {
 
   _showInteractPrompt(text, isRead = false) {
     if (this.promptElement) {
-      this.promptElement.innerHTML = `<kbd>E</kbd> ${text || 'Interact'}`;
+      const key = ('ontouchstart' in window) ? 'A' : 'E';
+      this.promptElement.innerHTML = `<kbd>${key}</kbd> ${text || 'Interact'}`;
       this.promptElement.style.display = 'block';
       this.promptElement.classList.toggle('read', isRead);
     }

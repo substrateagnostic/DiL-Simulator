@@ -51,7 +51,7 @@ export class TitleState {
 
     const prompt = document.createElement('div');
     prompt.className = 'title-prompt';
-    prompt.textContent = 'Press ENTER to start';
+    prompt.textContent = ('ontouchstart' in window) ? 'Tap to start' : 'Press ENTER to start';
     this.element.appendChild(prompt);
 
     const version = document.createElement('div');
@@ -102,6 +102,15 @@ export class TitleState {
           <div><span style="color: #e94560;">E / Enter</span> - Interact / Confirm</div>
           <div><span style="color: #e94560;">ESC</span> - Back / Menu</div>
           <div><span style="color: #e94560;">Space</span> - Advance Dialog</div>
+          ${'ontouchstart' in window ? `
+          <div style="margin-top: 12px; border-top: 1px solid #333; padding-top: 12px;">
+            <div style="color: #53a8b6; font-size: 18px; margin-bottom: 6px;">TOUCH CONTROLS</div>
+            <div><span style="color: #e94560;">D-Pad</span> - Move</div>
+            <div><span style="color: #64dc64;">A Button</span> - Interact / Confirm</div>
+            <div><span style="color: #dc6464;">B Button</span> - Back / Menu</div>
+            <div><span style="color: #e94560;">Tap Dialog</span> - Advance Text</div>
+          </div>
+          ` : ''}
           <div style="margin-top: 16px; color: #888; font-size: 18px;">
             "Your patience is your HP.<br>Your coffee is your mana.<br>Welcome to corporate America."
           </div>

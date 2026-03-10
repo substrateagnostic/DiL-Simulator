@@ -82,7 +82,7 @@ export class DialogBox {
 
     this.escHintEl = document.createElement('div');
     this.escHintEl.className = 'dialog-esc-hint';
-    this.escHintEl.textContent = '[ESC] Exit';
+    this.escHintEl.textContent = ('ontouchstart' in window) ? '[B] Exit' : '[ESC] Exit';
     this.escHintEl.style.cssText = `
       position: absolute; bottom: 6px; left: 10px;
       font-family: 'VT323', monospace; font-size: 14px;
@@ -96,6 +96,16 @@ export class DialogBox {
     this.box.appendChild(this.escHintEl);
     this.container.appendChild(this.box);
     this.overlay.appendChild(this.container);
+
+    // Tap-to-advance for mobile (skip typewriter or advance to next line)
+    this.box.addEventListener('click', () => {
+      if (this.choicesEl && this.choicesEl.style.display !== 'none') return; // don't interfere with choice taps
+      if (!this.isComplete()) {
+        this.skipToEnd();
+      } else if (this.onAdvance) {
+        this.onAdvance();
+      }
+    });
   }
 
   /**
