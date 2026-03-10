@@ -80,6 +80,7 @@ export class ExplorationState {
     Engine.scene.add(this.player.mesh);
     this._createHUD();
     this._loadRoom(this.player.currentRoom);
+    this._updateLocationDisplay(this.player.currentRoom);
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
 
     this._listeners.push(
@@ -259,7 +260,9 @@ export class ExplorationState {
               this._updateMiniStats();
               const clientRaw = this.player.getFlag('currentClient');
               if (clientRaw) {
-                const clientData = JSON.parse(clientRaw);
+                let clientData;
+              try { clientData = JSON.parse(clientRaw); } catch { clientData = null; }
+              if (!clientData) return;
                 setTimeout(() => {
                   const reviewState = new ClientReviewState(
                     this.stateManager,
@@ -317,7 +320,9 @@ export class ExplorationState {
   _onReceptionEntered() {
     const existing = this.player.getFlag('currentClient');
     if (existing) {
-      const client = JSON.parse(existing);
+      let client;
+      try { client = JSON.parse(existing); } catch { client = null; }
+      if (!client) { this.player.setFlag('currentClient', null); return; }
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
@@ -410,10 +415,14 @@ export class ExplorationState {
     const anger = this.player.getFlag('bossAnger') || 0;
     if (anger >= 10) {
       this.player.setFlag('bossAnger', 5);
-      this.player.stats.atk = Math.max(1, this.player.stats.atk - 3);
-      this.player.stats.def = Math.max(1, this.player.stats.def - 3);
-      const prev = this.player.getFlag('alexAngerDebuffTotal') || 0;
-      this.player.setFlag('alexAngerDebuffTotal', prev + 3);
+      const atkBefore = this.player.stats.atk;
+      const defBefore = this.player.stats.def;
+      this.player.stats.atk = Math.max(1, atkBefore - 3);
+      this.player.stats.def = Math.max(1, defBefore - 3);
+      const actualAtkLoss = atkBefore - this.player.stats.atk;
+      const actualDefLoss = defBefore - this.player.stats.def;
+      const prev = this.player.getFlag('alexAngerDebuffTotal') || { atk: 0, def: 0 };
+      this.player.setFlag('alexAngerDebuffTotal', { atk: prev.atk + actualAtkLoss, def: prev.def + actualDefLoss });
       this._updateMiniStats();
       this._showToast('Alex: "Your client choices are an embarrassment." (ATK -3, Composure -3)', 'objective');
     }
@@ -430,8 +439,12 @@ export class ExplorationState {
       }
     }
     // Reverse Alex anger debuffs
-    const alexDebuff = this.player.getFlag('alexAngerDebuffTotal') || 0;
-    if (alexDebuff > 0) {
+    const alexDebuff = this.player.getFlag('alexAngerDebuffTotal') || { atk: 0, def: 0 };
+    if (typeof alexDebuff === 'object') {
+      this.player.stats.atk += alexDebuff.atk || 0;
+      this.player.stats.def += alexDebuff.def || 0;
+    } else if (alexDebuff > 0) {
+      // Legacy: old format was a single number
       this.player.stats.atk += alexDebuff;
       this.player.stats.def += alexDebuff;
     }
@@ -495,8 +508,9 @@ export class ExplorationState {
     if (interactableTarget.data.type === 'reception_desk') {
       const clientRaw = this.player.getFlag('currentClient');
       if (clientRaw) {
-        const client = JSON.parse(clientRaw);
-        return `Meet ${client.name}`;
+        let client;
+        try { client = JSON.parse(clientRaw); } catch { client = null; }
+        if (client) return `Meet ${client.name}`;
       }
       return 'Reception Desk';
     }

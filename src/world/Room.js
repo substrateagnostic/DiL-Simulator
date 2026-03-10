@@ -537,7 +537,14 @@ export class Room {
       }
 
       const footprint = FURNITURE_FOOTPRINTS[type] || { w: 1, h: 1 };
-      this.tileMap.blockRect(tileX, tileZ, footprint.w, footprint.h);
+      // Cubicle walls are the only type whose footprint (2x1) doesn't account
+      // for rotation — swap w/h when they're placed as side dividers (90°).
+      let fw = footprint.w, fh = footprint.h;
+      if (type === 'cubicleWall' && rotation && Math.abs(rotation % Math.PI - Math.PI / 2) < 0.1) {
+        fw = footprint.h;
+        fh = footprint.w;
+      }
+      this.tileMap.blockRect(tileX, tileZ, fw, fh);
     }
   }
 

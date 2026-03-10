@@ -26,13 +26,14 @@ class Game {
     // Start with title screen
     this._showTitle();
 
-    // Listen for quit to title
-    EventBus.on('quit-to-title', () => {
+    // Listen for quit to title (use once-style by removing previous)
+    this._quitHandler = () => {
       this.stateManager.clear();
       Engine.scene.children.length = 0;
       Engine._setupLighting();
       this._showTitle();
-    });
+    };
+    EventBus.on('quit-to-title', this._quitHandler);
 
     // Initialize audio on first user interaction
     const initAudio = () => {
