@@ -754,17 +754,14 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Compliance Auditor', text: "Don't let it happen again. I'll be watching. I'm always watching." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor puts their sunglasses back on and walks away. You notice they leave no footprints.' },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'compliance_defeated', value: true },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: '~ THE BRO CODE ENDING ~' },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: 'You chose flexibility over formality. Compliance had feelings about that.' },
-    /* 7  */ { type: 'text', speaker: 'Narrator', text: 'The Henderson Trust was distributed with a "creative" approach. Everyone got something. Nobody got what they actually wanted. Classic trust law.' },
-    /* 8  */ { type: 'text', speaker: 'Narrator', text: 'Chad immediately tried to convert his share to PumpCoin. The transaction was declined seventeen times. The dog on the logo looked disappointed.' },
-    /* 9  */ { type: 'text', speaker: 'Narrator', text: 'Karen filed a complaint. Then another complaint about the first complaint. She now has a complaint about complaints.' },
-    /* 10 */ { type: 'text', speaker: 'Narrator', text: 'Grandma Henderson doubled her portion through careful index fund investing. She was always the smart one.' },
-    /* 11 */ { type: 'text', speaker: 'Narrator', text: 'Ross took full credit for the "innovative resolution strategy." He got a corner office. It has two windows and zero self-awareness.' },
-    /* 12 */ { type: 'text', speaker: 'Narrator', text: 'You became known as "The Cool Trust Officer." This reputation exists only in your mind and Chad\'s Instagram story (12 views, 11 of them bots).' },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: '~ TRUST ISSUES: A Wells Fargo Simulator ~' },
-    /* 14 */ { type: 'text', speaker: 'Narrator', text: 'Thanks for playing! Remember: vibes are NOT legally binding. Probably.' },
-    /* 15 */ { type: 'end' },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor walks away. You exhale for the first time in what feels like hours.' },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: 'Then the lights flicker. Not the normal "this building is old" flicker. Something else.' },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: 'The printer in the corner starts up on its own. A single page emerges.' },
+    /* 8  */ { type: 'text', speaker: 'Printer', text: 'THE LEDGER REMEMBERS. FIND THE ARCHIVE.' },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: '...What the hell was that?' },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "Dude. Server room. NOW. The 3:47 AM thing just happened at 2 PM. Something is very wrong."' },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 12 },
+    /* 12 */ { type: 'end' },
   ],
 
   regional_defeated: [
@@ -774,17 +771,14 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Regional Manager', text: "Correctly. How quaint. Enjoy your moral victory. I'll be on the golf course." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager deploys their golden parachute -- metaphorically -- and exits the building. You never see them again.' },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'regional_defeated', value: true },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: '~ THE LEGAL EAGLE ENDING ~' },
-    /* 7  */ { type: 'text', speaker: 'Narrator', text: 'You chose the law. The law chose you back.' },
-    /* 8  */ { type: 'text', speaker: 'Narrator', text: 'The Henderson Trust was distributed according to strict legal interpretation. Karen got most of it and immediately sued everyone anyway, because some people just enjoy litigation.' },
-    /* 9  */ { type: 'text', speaker: 'Narrator', text: 'Chad started a podcast about "trust fund trauma." It has 12 listeners. All of them are Grandma on different devices.' },
-    /* 10 */ { type: 'text', speaker: 'Narrator', text: 'Grandma Henderson sent you a card: "You chose well, dear. Not wisely, but well."' },
-    /* 11 */ { type: 'text', speaker: 'Narrator', text: 'Ross was promoted to a title that doesn\'t mean anything. He has never been happier.' },
-    /* 12 */ { type: 'text', speaker: 'Narrator', text: 'You got promoted to Senior Trust Officer. The raise was $3,000/year before taxes. You bought a nicer coffee mug.' },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: 'Mr. Fernsworth III the plant finally died. Janet gave the eulogy. It was suspiciously coherent for a Tuesday afternoon.' },
-    /* 14 */ { type: 'text', speaker: 'Narrator', text: '~ TRUST ISSUES: A Wells Fargo Simulator ~' },
-    /* 15 */ { type: 'text', speaker: 'Narrator', text: 'Thanks for playing! This has been a production of questionable taste and excessive corporate satire.' },
-    /* 16 */ { type: 'end' },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager straightens his tie. His golden parachute remains undeployed. For now.' },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: 'Then something strange happens. The elevator behind you dings. Nobody pressed it.' },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: 'The doors open to an empty car. The floor indicator scrolls through numbers that this building doesn\'t have.' },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: 'A document slides out from under the elevator door. It\'s dated 1947. The letterhead reads "WELLS FARGO TRUST CHARTER — ORIGINAL."' },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: '1947? This branch wasn\'t built until the \'80s...' },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "GET TO THE SERVER ROOM. The encrypted partition just decrypted ITSELF. I did NOT do this."' },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 13 },
+    /* 13 */ { type: 'end' },
   ],
 
   ross_boss_defeated: [
@@ -797,15 +791,15 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Of course, dear.' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'Ross eats a cookie. He starts to cry. It is somehow the most normal thing that has happened all week.' },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'ross_defeated', value: true },
-    /* 9  */ { type: 'text', speaker: 'Narrator', text: '~ THE SECRET ENDING ~' },
-    /* 10 */ { type: 'text', speaker: 'Narrator', text: 'You uncovered the truth: Ross assigned you the Henderson case because he couldn\'t handle his own family\'s trust. Conflict of interest? More like conflict of EVERYTHING.' },
-    /* 11 */ { type: 'text', speaker: 'Narrator', text: 'Grandma Henderson used the discretionary provision to restructure everything. Karen got therapy (and a smaller binder). Chad got a financial advisor (and the advisor got a stress ball).' },
-    /* 12 */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager was quietly investigated for the admin_legacy account. He\'s now a "consultant," which is corporate for "we can\'t prove anything but please leave."' },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: 'Ross was reassigned to a branch in Fargo. Actual Fargo, North Dakota. He sends postcards that just say "SYNERGY" in increasingly desperate handwriting.' },
-    /* 14 */ { type: 'text', speaker: 'Narrator', text: 'You were promoted to Trust Department Manager. Your first act was to water Mr. Fernsworth III. The plant survived. Against all odds, so did you.' },
-    /* 15 */ { type: 'text', speaker: 'Narrator', text: 'The Mysterious Janitor nodded approvingly from the parking garage. His Rolex caught the light one last time.' },
-    /* 16 */ { type: 'text', speaker: 'Narrator', text: '~ TRUST ISSUES: A Wells Fargo Simulator ~' },
-    /* 17 */ { type: 'text', speaker: 'Narrator', text: 'Thanks for playing! The real trust was the $4.2 million we litigated along the way.' },
+    /* 9  */ { type: 'text', speaker: 'Grandma Henderson', text: "Well. Now that Ross has gotten that out of his system..." },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: 'The overhead lights surge. Every screen in the office flickers to the same image: a trust document, dated 1947, scrolling endlessly.' },
+    /* 11 */ { type: 'text', speaker: 'Ross', text: "Mom... what's happening to the building?" },
+    /* 12 */ { type: 'text', speaker: 'Grandma Henderson', text: "It's waking up. I was afraid of this." },
+    /* 13 */ { type: 'text', speaker: 'Grandma Henderson', text: "The Henderson Trust isn't the only thing that's been mismanaged, Andrew. This building... has a longer memory than any of us." },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: 'The Janitor appears in the doorway. His expression is grim. His Rolex is glowing.' },
+    /* 15 */ { type: 'text', speaker: 'Mysterious Janitor', text: "It's started. I hoped we'd have more time." },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "DUDE. Every server just rebooted. The encrypted partition is BROADCASTING. Something is VERY wrong."' },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 18 },
     /* 18 */ { type: 'end' },
   ],
 
@@ -1091,5 +1085,577 @@ export const DIALOGS = {
   rachel_return: [
     /* 0 */ { type: 'text', speaker: 'Rachel', text: "I don't have time for small talk. Do you have results?" },
     /* 1 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // ACT 3 -- THE DEEPER LEDGER
+  // ==========================================================================
+
+  // --------------------------------------------------------------------------
+  // ACT 3 NPC DIALOGS — triggered when actIndex >= 3
+  // --------------------------------------------------------------------------
+
+  alex_it_act3: [
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "DUDE. You're here. Good. Close the door. Lock it. No, unlock it, locking is suspicious. Just... stand in front of it." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Okay. So. The encrypted partition? The one that's been pinging the Caymans since 2016?" },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "It just decrypted itself. Not 'I cracked it' decrypted. ITSELF. Like it WANTED to be found." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "And what's inside is... it's a shadow ledger. Every trust account this branch has ever managed. Parallel books." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Not just the Hendersons. Dozens of accounts. Hundreds of small adjustments. Basis point skims. Fee reallocations. All traced back to one account: admin_legacy." },
+    /* 5  */ { type: 'choice', speaker: 'Alex from IT', text: "Someone's been running a shadow trust system for EIGHT YEARS. And the building's servers just... revealed it. On purpose.", choices: [
+      { text: "Who created admin_legacy?", next: 6 },
+      { text: "What do you mean the building revealed it on purpose?", next: 10 },
+      { text: "How much money are we talking about?", next: 14 },
+    ]},
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "The account metadata traces back to an IP address on the executive floor. Created 2006. The username format matches old Wells Fargo sysadmin conventions." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "But here's the thing — the Janitor told me something. When he was SVP, there was a server room in the basement. The Archive. It had the original trust records going back to 1947." },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "The Archive was sealed in 2016. Same year admin_legacy was created. Coincidence? In this building, nothing is a coincidence." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "I need you to find the Archive. There's supposed to be access from the parking garage. Some kind of old freight elevator." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Bro. I know how it sounds. But listen. The decryption key that was used? It's not any standard algorithm I've seen." },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "It's a hash of a trust document. A SPECIFIC trust document. Dated 1947. The original Wells Fargo branch charter." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Someone — or something — used a 77-year-old legal document as a cryptographic key. And then used it to unlock itself." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Either this building has a very sophisticated automated system nobody told me about, or... I don't know, man. Buildings don't have opinions. Usually." },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "Conservative estimate? $2.3 million across all accounts over eight years. The Henderson Trust was the biggest target — $200K — but it wasn't the only one." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "This is FINRA territory. SEC territory. Possibly FBI territory. We're talking systematic breach of fiduciary duty at an institutional level." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "And the only person who had consistent executive access across all eight years is the Regional Manager. He rotated through three other branches but kept 'oversight' of this one." },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "But we need proof. Physical proof. The digital trail isn't enough — they'll say I fabricated it. We need the original trust records from the Archive." },
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'alex_it_act3_done', value: true, next: 19 },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'archive_accessible', value: true, next: 20 },
+    /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "Find the Archive. The Janitor might know how to get in. And Andrew — be careful. If the Regional Manager finds out we're looking..." },
+    /* 21 */ { type: 'text', speaker: 'Alex from IT', text: "Well. Let's just say 'restructuring' isn't always a metaphor." },
+    /* 22 */ { type: 'end' },
+  ],
+
+  janet_act3: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "Andrew. Close the door. *very aggressive sip*" },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "Have you noticed anything... weird today? The lights keep flickering. The elevator went to a floor that doesn't exist. And my computer printed a document I didn't write." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "It was a trust account statement from 1987. I wasn't even WORKING here in 1987. I was in middle school. Badly." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "Also — and this is the part that's making me drink faster — there's a woman on the executive floor I've never seen before." },
+    /* 4  */ { type: 'text', speaker: 'Janet', text: "Silver hair. Navy suit. Looks at everyone like she's calculating their net worth and finding it insufficient." },
+    /* 5  */ { type: 'text', speaker: 'Janet', text: "Someone said her name is Rachel. SVP of Strategic Operations. Nobody knew we HAD a Strategic Operations." },
+    /* 6  */ { type: 'text', speaker: 'Janet', text: "She's been in Ross's office for two hours. Ross hasn't said 'synergy' once. That's how I know it's serious." },
+    /* 7  */ { type: 'text', speaker: 'Janet', text: "*extremely long sip* I'm switching to the emergency reserves." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'read_janet_act3', value: true, next: 9 },
+    /* 9  */ { type: 'end' },
+  ],
+
+  ross_act3: [
+    /* 0  */ { type: 'text', speaker: 'Ross', text: "Andrew. Hey. Come in. Sit down. Actually, don't sit down. Actually... I don't know. Everything is weird today." },
+    /* 1  */ { type: 'text', speaker: 'Ross', text: "So. There's a woman from corporate here. Rachel. She's... she's doing a review." },
+    /* 2  */ { type: 'text', speaker: 'Ross', text: "A 'comprehensive operational assessment.' That's corporate for 'finding reasons to fire people.'" },
+    /* 3  */ { type: 'text', speaker: 'Ross', text: "She asked me about the Henderson Trust. About our procedures. About our... 'fiduciary controls.'" },
+    /* 4  */ { type: 'text', speaker: 'Ross', text: "I tried to use buzzwords. They bounced off her like... like buzzwords bouncing off a wall. She's immune. Nobody's ever been immune before." },
+    /* 5  */ { type: 'choice', speaker: 'Ross', text: "Andrew, I'm scared. Is it okay to say that? Leadership books say you're never supposed to say that.", choices: [
+      { text: "It's okay to be scared, Ross.", next: 6 },
+      { text: "What does Rachel actually want?", next: 8 },
+    ]},
+    /* 6  */ { type: 'text', speaker: 'Ross', text: "Really? Because 'Dare to Lead' says fear is just 'an unrealized growth metric.' But it doesn't feel like a growth metric. It feels like fear." },
+    /* 7  */ { type: 'text', speaker: 'Ross', text: "Thanks, Andrew. You're... you're a good employee. And maybe also a good person. I'm realizing those might be different things." },
+    /* 8  */ { type: 'text', speaker: 'Ross', text: "She wants to 'optimize' the trust department. Which I think means cutting half of us and making the other half do twice the work." },
+    /* 9  */ { type: 'text', speaker: 'Ross', text: "She mentioned something about 'legacy systems' and 'archival redundancies.' I think she's talking about the old records in the basement." },
+    /* 10 */ { type: 'text', speaker: 'Ross', text: "Also she asked about the Janitor. By name. Which is weird because nobody knows the Janitor's actual name. I just call him 'sir' because he scares me a little." },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'read_ross_act3', value: true, next: 12 },
+    /* 12 */ { type: 'end' },
+  ],
+
+  intern_act3: [
+    /* 0  */ { type: 'text', speaker: 'The Intern', text: "Aiden! I mean Andrew! I mean... whoever you are, HELP." },
+    /* 1  */ { type: 'text', speaker: 'The Intern', text: "The lady from corporate — Rachel — she asked me for 'all Henderson-related documentation from the past five years.'" },
+    /* 2  */ { type: 'text', speaker: 'The Intern', text: "I may have... accidentally told her about the shredding. And the fire. And the coffee machine." },
+    /* 3  */ { type: 'text', speaker: 'The Intern', text: "She wrote something on her tablet. I think it was 'terminate.' She might have been playing Wordle but I'm NOT optimistic." },
+    /* 4  */ { type: 'text', speaker: 'The Intern', text: "Also something really weird happened. I was alone in the copy room and the printer turned on by itself." },
+    /* 5  */ { type: 'text', speaker: 'The Intern', text: "It printed a list of names. People who used to work here. Some of them going back to the '40s. And at the bottom it said 'THE CHARTER REMEMBERS.'" },
+    /* 6  */ { type: 'text', speaker: 'The Intern', text: "I don't know what that means and I'm choosing not to find out. I'm going to go reorganize the supply closet by color. And also hide." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'read_intern_act3', value: true, next: 8 },
+    /* 8  */ { type: 'end' },
+  ],
+
+  diane_act3: [
+    /* 0  */ { type: 'text', speaker: 'Diane', text: "Andrew. I need to talk to you. Privately." },
+    /* 1  */ { type: 'text', speaker: 'Diane', text: "Rachel — the SVP from corporate — she's not just doing a review. I've been watching her. She's been accessing old personnel files. Trust records from before my time." },
+    /* 2  */ { type: 'text', speaker: 'Diane', text: "She asked me about the Archive. The old records room in the sub-basement. It's been sealed since 2016." },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "I told her I didn't have access. Which is true. But I didn't tell her that the Janitor does." },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "Andrew, I've worked here for twelve years. I've seen managers come and go. Regional directors. SVPs. None of them ever asked about the Archive." },
+    /* 5  */ { type: 'text', speaker: 'Diane', text: "Whatever's down there, Rachel doesn't want you to find it first. So maybe you should." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'read_diane_act3', value: true, next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  janitor_act3: [
+    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I've been expecting you, Andrew." },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "You felt it too, didn't you? The building shifting. The lights. The printer." },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Let me tell you something I should have told you on your first day." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "When this branch was chartered in 1947, the founders wrote something into the original trust charter. Not a legal clause. Something... older." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "A declaration that the fiduciary duty of this institution was not just to its clients but to the concept of trust itself. The actual, philosophical concept." },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Decades of promises. Decades of people putting their faith in this building. Their estates. Their families' futures. All of that faith... accumulated." },
+    /* 6  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "This building is alive, Andrew. It has been for a very long time.", choices: [
+      { text: "That's impossible.", next: 7 },
+      { text: "The Fiduciary Force.", next: 11 },
+    ]},
+    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Is it? You've seen the printer. You've felt the elevator. You've watched documents appear from nowhere." },
+    /* 8  */ { type: 'text', speaker: 'Mysterious Janitor', text: "This building was built on trust. Literal trust. Fiduciary trust. And when someone breaches that trust — really, fundamentally breaches it — the building reacts." },
+    /* 9  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Why do you think I stayed? Twenty-two years as SVP, and then I picked up a mop. Because someone needs to watch." },
+    /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The Fiduciary Force. That's what the founders called it. The accumulated weight of every promise made within these walls." },
+    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "You're quick. Good. The Fiduciary Force is waking up because someone has been violating the charter for eight years. The admin_legacy account. The shadow ledger." },
+    /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Every skimmed basis point. Every redirected fee. The building felt each one. And now it's reached a threshold." },
+    /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The Archive has the original records. The 1947 charter. The proof of what this institution was SUPPOSED to be." },
+    /* 14 */ { type: 'text', speaker: 'Mysterious Janitor', text: "I can get you in. The freight elevator in the parking garage — use this keycard." },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'has_archive_key', value: true, next: 16 },
+    /* 16 */ { type: 'action', action: 'give_item', itemId: 'compliance_manual', quantity: 1, next: 17 },
+    /* 17 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Take my old compliance manual too. You'll need it where you're going." },
+    /* 18 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And Andrew — be careful in the Archive. The building protects its secrets. Not everything down there wants to be found." },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_act3', value: true, next: 20 },
+    /* 20 */ { type: 'end' },
+  ],
+
+  isaiah_act3: [
+    /* 0  */ { type: 'text', speaker: 'Isaiah', text: "Hey Andrew. I've been hearing things. Weird things." },
+    /* 1  */ { type: 'text', speaker: 'Isaiah', text: "The woman from corporate — Rachel — she asked me to compile a list of everyone in the trust department and their 'redundancy potential.'" },
+    /* 2  */ { type: 'text', speaker: 'Isaiah', text: "I told her I'd get right on it. Politely. Then I immediately came to find you." },
+    /* 3  */ { type: 'choice', speaker: 'Isaiah', text: "What's going on? Can I help?", choices: [
+      { text: "We're investigating something big. Could use your help.", next: 4, flag: 'isaiah_friendly', flagValue: 2 },
+      { text: "Stay out of it. It's safer for you.", next: 7 },
+    ]},
+    /* 4  */ { type: 'text', speaker: 'Isaiah', text: "I knew it. The building's been... strange. I thought it was just me." },
+    /* 5  */ { type: 'text', speaker: 'Isaiah', text: "Whatever you need — filing, research, distraction — I'm in. Just ask nicely." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'isaiah_act3_allied', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Isaiah', text: "I appreciate the concern. But I've been here long enough to know when something needs fixing." },
+    /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I'll keep my head down, but if you change your mind, you know where to find me." },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_isaiah_act3', value: true, next: 10 },
+    /* 10 */ { type: 'end' },
+  ],
+
+  rachel_act3: [
+    /* 0  */ { type: 'text', speaker: 'Rachel', text: "Andrew. I've been reviewing your work on the Henderson Trust." },
+    /* 1  */ { type: 'text', speaker: 'Rachel', text: "Interesting approach. Unconventional. Some might say reckless." },
+    /* 2  */ { type: 'text', speaker: 'Rachel', text: "I'm here to ensure this department meets corporate standards. Standards that, frankly, it has not been meeting." },
+    /* 3  */ { type: 'text', speaker: 'Rachel', text: "Ross is a competent motivational speaker. As a department head, however, he leaves much to be desired." },
+    /* 4  */ { type: 'choice', speaker: 'Rachel', text: "I have plans for this department. Big plans. You could be part of them.", choices: [
+      { text: "What kind of plans?", next: 5 },
+      { text: "I'm happy with how things are.", next: 8 },
+    ]},
+    /* 5  */ { type: 'text', speaker: 'Rachel', text: "Optimization. Modernization. Eliminating redundancies. This department has twelve people doing work that six could handle." },
+    /* 6  */ { type: 'text', speaker: 'Rachel', text: "I've identified several positions for... reassignment. But someone with your results could have a future here." },
+    /* 7  */ { type: 'text', speaker: 'Rachel', text: "Think about it. And don't waste time on 'investigations.' I know what Alex from IT has been doing in that server room. It stops now." },
+    /* 8  */ { type: 'text', speaker: 'Rachel', text: "'Happy.' That's a luxury, Andrew. Not a strategy." },
+    /* 9  */ { type: 'text', speaker: 'Rachel', text: "This department will change. The question is whether you're driving the change or being driven over by it." },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'read_rachel_act3', value: true, next: 11 },
+    /* 11 */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // ARCHIVE ROOM INTERACTIONS
+  // --------------------------------------------------------------------------
+
+  archive_terminal: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A CRT monitor coated in dust. The keyboard has keys that haven't been pressed since the Obama administration." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "You press Enter. The screen flickers to life. Green text on black. It reads:" },
+    /* 2  */ { type: 'text', speaker: 'Archive Terminal', text: "WELLS FARGO TRUST ARCHIVE — BRANCH 4471 — ESTABLISHED 1947" },
+    /* 3  */ { type: 'text', speaker: 'Archive Terminal', text: "WARNING: UNAUTHORIZED ACCESS DETECTED. FIDUCIARY INTEGRITY CHECK... PASSED." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "'Fiduciary integrity check'? The terminal is checking if I'm trustworthy?" },
+    /* 5  */ { type: 'text', speaker: 'Archive Terminal', text: "DISPLAYING: ADMIN_LEGACY TRANSACTION LOG — 2016 TO PRESENT" },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Rows and rows of transactions scroll by. Small amounts. $50 here. $200 there. Fee adjustments. Basis point modifications. All from the same account." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "At the bottom, a total: $2,347,891.22. Skimmed from 47 trust accounts over eight years." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "Two point three million dollars. My God." },
+    /* 9  */ { type: 'text', speaker: 'Archive Terminal', text: "PRINT EVIDENCE? [Y/N]" },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "You press Y. A dot-matrix printer in the corner whirs to life and produces a thick stack of transaction records." },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'has_archive_evidence', value: true, next: 12 },
+    /* 12 */ { type: 'text', speaker: 'Andrew', text: "Alex was right. Now we have the proof." },
+    /* 13 */ { type: 'end' },
+  ],
+
+  archive_cabinets: [
+    /* 0  */ { type: 'condition', flag: 'archive_filing_done', ifTrue: 9, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "Filing cabinets stretch from floor to ceiling. Each is labeled with a year, going back to 1947." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Most are locked. But five cabinets are ajar, their locks rusted open: 1947, 1971, 1993, 2006, and 2016." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "1947: The original branch charter. Yellowed paper. The ink has a faint gold shimmer that shouldn't be possible." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "1971: A restructuring memo. The trust department was nearly shut down. A janitor — the FIRST janitor — filed a motion to preserve it." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "1993: Performance reviews for a young trust officer. The name is familiar: it's the Janitor. Top marks in every category." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "2006: A system access request for 'admin_legacy.' Approved by the Regional Manager. No other signatures." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "2016: A memo ordering the Archive sealed. 'Redundant records. Digital migration complete.' Signed by the Regional Manager." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'archive_filing_done', value: true, next: 10 },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "The filing cabinets stand like silent witnesses. You've read enough to understand the pattern." },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "The timeline is clear: the Regional Manager created the shadow account, then sealed the evidence. The building's been waiting for someone to open these drawers." },
+    /* 11 */ { type: 'end' },
+  ],
+
+  stairwell_graffiti: [
+    /* 0  */ { type: 'condition', flag: 'act2_complete', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The stairwell walls are concrete. Someone has scratched into them: 'TRUST FALLS — FLOOR COUNT: 17'" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Below it: 'If found, return to the 6th floor. Or don't. — The Intern (probably)'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The stairwell echoes with the hum of the building. It sounds almost... intentional." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "New graffiti has appeared since last time. In gold ink that shouldn't exist on concrete:" },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "'THE FIDUCIARY FORCE IS NOT A METAPHOR.'" },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Below it, in different handwriting: 'Neither is my mop. — J'" },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The gold ink pulses faintly. You're not imagining it." },
+    /* 8  */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // ACT 3 COMBAT DIALOGS — Security Guard encounter in Archive
+  // --------------------------------------------------------------------------
+
+  security_guard_combat: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A security guard steps out from behind a row of filing cabinets. He does not look friendly." },
+    /* 1  */ { type: 'text', speaker: 'Security Guard', text: "Hold it. This area is restricted. I don't care what keycard you have." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "I'm a trust officer. I have authorization to—" },
+    /* 3  */ { type: 'text', speaker: 'Security Guard', text: "You have authorization to LEAVE. The Regional Manager gave me specific orders: nobody accesses these records." },
+    /* 4  */ { type: 'text', speaker: 'Security Guard', text: "Now turn around, or I'll file a security incident report. And NOBODY wants to deal with that paperwork." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "I can't do that. There are trust accounts being—" },
+    /* 6  */ { type: 'text', speaker: 'Security Guard', text: "Wrong answer." },
+    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'security_guard', next: 8 },
+    /* 8  */ { type: 'end' },
+  ],
+
+  security_guard_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Security Guard', text: "Alright, alright! I'm just doing my job, man. The Regional Manager pays extra for 'archive duty.' I didn't ask questions." },
+    /* 1  */ { type: 'text', speaker: 'Security Guard', text: "But between you and me? He's been down here three times this month. Always after hours. Always alone." },
+    /* 2  */ { type: 'text', speaker: 'Security Guard', text: "I don't know what he's hiding, but it's not my problem anymore. I'm going back to the lobby." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'security_guard_info', value: true, next: 4 },
+    /* 4  */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // ACT 4 -- THE TRUST AWAKENS
+  // --------------------------------------------------------------------------
+
+  // Act 4 starts when player returns evidence to Alex from IT
+  act4_trigger: [
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "You found it. The transaction logs. The filing records. The 2006 access request." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "This is everything we need. I can correlate this with the server data and build a complete case." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "As Alex speaks, the monitors in the server room all switch to the same display: the 1947 trust charter." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Uh... I didn't do that." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The text of the charter begins to glow. Not the screen — the TEXT ITSELF, as if the words have weight and light." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A deep hum resonates through the building. You feel it in your chest. In your teeth. In the space behind your eyes." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Okay, THAT is not a server issue. That is a BUILDING issue. And I am only certified for server issues." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Your phone rings. It's Diane." },
+    /* 8  */ { type: 'text', speaker: 'Diane', text: "Andrew. Rachel just locked down the entire floor. Security at every exit. Nobody in or out without her approval." },
+    /* 9  */ { type: 'text', speaker: 'Diane', text: "She knows. I don't know how, but she knows you've been in the Archive." },
+    /* 10 */ { type: 'text', speaker: 'Diane', text: "She's calling an emergency board meeting. She wants to dissolve the trust department entirely." },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act3_complete', value: true, next: 12 },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'rachel_lockdown', value: true, next: 13 },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Dissolve the— she can't DO that. Can she?" },
+    /* 14 */ { type: 'text', speaker: 'Andrew', text: "Not if we can prove what the Regional Manager has been doing. We need to rally everyone. Janet, Ross, Diane, Isaiah — everyone." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "And the Janitor. Don't forget the Janitor. He's been waiting for this moment for twenty years." },
+    /* 16 */ { type: 'end' },
+  ],
+
+  // Act 4 NPC dialogs
+  janet_act4: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "Rally? You want me to RALLY? Andrew, I'm not a rally person. I'm a 'sit quietly and drink' person." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "But... *sip* ...you know what? Fine. You know why?" },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "Because Rachel tried to take my tumbler. Said it was 'unprofessional.' UNPROFESSIONAL." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "This is a $40 insulated wine tumbler with a motivational quote that says 'Rosé All Day' and I will DIE before I surrender it." },
+    /* 4  */ { type: 'text', speaker: 'Janet', text: "What do you need from me? I know where every document in this building is. Including the ones Ross hid in the ceiling tiles." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'janet_rallied', value: true, next: 6 },
+    /* 6  */ { type: 'text', speaker: 'Janet', text: "I'm in. For the tumbler." },
+    /* 7  */ { type: 'text', speaker: 'Janet', text: "...And for the department, I guess. But mostly the tumbler." },
+    /* 8  */ { type: 'end' },
+  ],
+
+  diane_act4: [
+    /* 0  */ { type: 'text', speaker: 'Diane', text: "I've been documenting everything Rachel's done since she arrived. Every meeting. Every access request. Every personnel file she's reviewed." },
+    /* 1  */ { type: 'text', speaker: 'Diane', text: "Old habits. I document everything. It's why they haven't been able to fire me for twelve years." },
+    /* 2  */ { type: 'text', speaker: 'Diane', text: "Here's what I know: Rachel has been in contact with the Regional Manager. Frequently. Before she even arrived for the 'review.'" },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "This isn't a review, Andrew. This is a cover-up. She's here to bury the evidence before you can use it." },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "The HR Department has the original employment records. If the Janitor was really SVP, there's a paper trail. Rachel can't delete paper." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_rallied', value: true, next: 6 },
+    /* 6 */ { type: 'action', action: 'set_flag', flag: 'hr_accessible', value: true, next: 7 },
+    /* 7  */ { type: 'text', speaker: 'Diane', text: "I can get you into the HR Department. I still have my old access from when I covered for the HR coordinator. Use it wisely." },
+    /* 8  */ { type: 'end' },
+  ],
+
+  // Convince Ross puzzle — need to use his buzzwords correctly (4 choice points, need 3/4)
+  ross_act4: [
+    /* 0  */ { type: 'text', speaker: 'Ross', text: "Andrew. I... I've been thinking. Which is new for me, but I'm trying it." },
+    /* 1  */ { type: 'text', speaker: 'Ross', text: "Rachel wants to dissolve the department. MY department. The one I built from... okay, I didn't build it. The Janitor built it. But I've been MANAGING it." },
+    /* 2  */ { type: 'text', speaker: 'Ross', text: "The thing is... she's not wrong about everything. I haven't been a great leader. I've been a great TALKER. Those are different things." },
+    /* 3  */ { type: 'choice', speaker: 'Ross', text: "So tell me, Andrew. Why should I fight for this department?", choices: [
+      { text: "Because this department leverages core competencies that can't be outsourced.", next: 4, flag: 'ross_convince_1', flagValue: true },
+      { text: "Because you care about your team, Ross.", next: 6 },
+    ]},
+    /* 4  */ { type: 'text', speaker: 'Ross', text: "'Leverages core competencies'... that's... that's MY phrase. You're speaking my language." },
+    /* 5  */ { type: 'text', speaker: 'Ross', text: "Okay, I'm listening. But I need more." },
+    /* 6  */ { type: 'text', speaker: 'Ross', text: "I DO care about the team. Janet. The Intern. Even Alex, who definitely runs Minecraft on company servers." },
+    /* 7  */ { type: 'choice', speaker: 'Ross', text: "But caring isn't a strategy. What's the strategy?", choices: [
+      { text: "We disrupt Rachel's narrative by pivoting to a transparency-first paradigm.", next: 8, flag: 'ross_convince_2', flagValue: true },
+      { text: "We tell the truth about what's been happening.", next: 10 },
+    ]},
+    /* 8  */ { type: 'text', speaker: 'Ross', text: "'Disrupt.' 'Pivot.' 'Paradigm.' Andrew, you magnificent bastard. You're speaking fluent Ross." },
+    /* 9  */ { type: 'text', speaker: 'Ross', text: "I'm getting FIRED UP. What else?" },
+    /* 10 */ { type: 'text', speaker: 'Ross', text: "The truth? The TRUTH? Andrew, the truth is terrifying. The truth is that someone has been stealing from our clients and I didn't notice because I was too busy reading leadership books." },
+    /* 11 */ { type: 'choice', speaker: 'Ross', text: "How do we actually win this?", choices: [
+      { text: "We need to synergize our stakeholder alignment across all trust verticals.", next: 12, flag: 'ross_convince_3', flagValue: true },
+      { text: "We show the board that Rachel is part of the cover-up.", next: 14 },
+    ]},
+    /* 12 */ { type: 'text', speaker: 'Ross', text: "'SYNERGIZE.' 'STAKEHOLDER ALIGNMENT.' 'TRUST VERTICALS.'" },
+    /* 13 */ { type: 'text', speaker: 'Ross', text: "Andrew. That sentence means absolutely nothing. And yet... it means EVERYTHING to me." },
+    /* 14 */ { type: 'text', speaker: 'Ross', text: "Rachel is part of it? She's not just reviewing us, she's PROTECTING the person who—" },
+    /* 15 */ { type: 'choice', speaker: 'Ross', text: "If that's true, we need to move fast. What's the endgame?", choices: [
+      { text: "We circle back to the original charter and leverage our fiduciary moat.", next: 16, flag: 'ross_convince_4', flagValue: true },
+      { text: "We go to the board with the evidence. All of it.", next: 18 },
+    ]},
+    /* 16 */ { type: 'text', speaker: 'Ross', text: "'Circle back.' 'Fiduciary moat.' That's... that's beautiful. I don't know what it means but I feel it in my SOUL." },
+    /* 17 */ { type: 'text', speaker: 'Ross', text: "I'm in. Whatever it takes. For the department. For the team. For the synergy." },
+    /* 18 */ { type: 'text', speaker: 'Ross', text: "The board. You're right. We take the evidence to the board meeting. All of it." },
+    /* 19 */ { type: 'text', speaker: 'Ross', text: "I'm done hiding behind buzzwords. Well... I'm done hiding behind MOST buzzwords. Some of them are load-bearing." },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'ross_rallied', value: true, next: 21 },
+    /* 21 */ { type: 'text', speaker: 'Ross', text: "Let's do this. *finger guns* ...Sorry. Force of habit." },
+    /* 22 */ { type: 'end' },
+  ],
+
+  intern_act4: [
+    /* 0  */ { type: 'text', speaker: 'The Intern', text: "Andrew! I know I'm just an intern — well, a 'Trust Operations Support Specialist' — but I want to help!" },
+    /* 1  */ { type: 'text', speaker: 'The Intern', text: "Rachel told me to clean out my desk. Which is harsh because I don't even HAVE a desk. I have a folding table near the fire exit." },
+    /* 2  */ { type: 'text', speaker: 'The Intern', text: "But I found something! When she told me to shred the Henderson pre-audit files? I didn't shred ALL of them." },
+    /* 3  */ { type: 'text', speaker: 'The Intern', text: "I couldn't figure out the shredder setting so some of them came out as really thin strips instead of confetti. I taped them back together!" },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Intern produces a crumpled sheet of paper that has been reassembled with scotch tape, band-aids, and what appears to be a Fruit Roll-Up wrapper." },
+    /* 5  */ { type: 'text', speaker: 'The Intern', text: "It's a memo from the Regional Manager to Rachel. From THREE MONTHS AGO. Before she was supposedly 'assigned' to review us." },
+    /* 6  */ { type: 'text', speaker: 'The Intern', text: "It says 'Re: Archive Containment' and then there's a bunch of words I don't understand but 'destroy records' seems pretty clear." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'has_intern_evidence', value: true, next: 8 },
+    /* 8  */ { type: 'text', speaker: 'The Intern', text: "Did I do good? I feel like I did good. This is the best day of my unpaid career!" },
+    /* 9  */ { type: 'end' },
+  ],
+
+  janitor_act4: [
+    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "You've done well, Andrew. The Archive. The evidence. The team." },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "But there's one more thing you need. The original charter. The 1947 document." },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "It's not in the Archive. I moved it years ago. To the Vault. Behind the Archive." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "The Vault has a combination lock. Three numbers. They're scattered across the building — I hid them so no one person could access it alone." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "One is in the HR Department records. One is in Alex's server room. One is..." },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "...engraved on the back of this Rolex." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "The Janitor removes his gold Rolex and turns it over. On the case back, tiny numbers are engraved: 47." },
+    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "47. For 1947. The year it all began." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'vault_code_1', value: true, next: 9 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'vault_accessible', value: true, next: 10 },
+    /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Find the other two numbers. Open the Vault. Get the charter." },
+    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And when the time comes to confront Rachel... read it aloud. Every word. Trust me." },
+    /* 12 */ { type: 'end' },
+  ],
+
+  // HR Department interaction
+  hr_rep_combat: [
+    /* 0  */ { type: 'text', speaker: 'HR Representative', text: "I'm sorry, you can't be in here. This area is restricted during the departmental review." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "I need to access the employment records. Historical personnel files." },
+    /* 2  */ { type: 'text', speaker: 'HR Representative', text: "Those files are sealed. By order of the SVP of Strategic Operations." },
+    /* 3  */ { type: 'text', speaker: 'HR Representative', text: "I'm going to have to ask you to leave. And then attend a mandatory conflict resolution seminar." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "I'm not leaving without those records." },
+    /* 5  */ { type: 'text', speaker: 'HR Representative', text: "Then I'm afraid this is going to go on your permanent record. ALL of the records." },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'hr_rep', next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  hr_rep_defeated: [
+    /* 0  */ { type: 'text', speaker: 'HR Representative', text: "Fine. FINE. Take the records. But I'm filing an incident report. In triplicate." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "You search the HR files. In the historical personnel section, you find the Janitor's original employment record." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "'HIRED: 1982. POSITION: Trust Officer. PROMOTED: Senior VP, Trust Administration, 1993. VOLUNTARY RECLASSIFICATION: Facilities, 2005.'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "Attached to the file is a sticky note with a number: 19. The second vault combination digit." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true, next: 5 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'has_hr_evidence', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  // Server room vault code
+  server_vault_code: [
+    /* 0  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "You check the server rack the Janitor mentioned. Behind the third-floor stairwell dead drop location." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Taped to the back of server rack C — the one with the restraining order — is a small card with the number: 82." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'vault_code_3', value: true, next: 4 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The number 82. The year the Janitor was hired. Three numbers: 47, 19, 82." },
+    /* 5  */ { type: 'end' },
+  ],
+
+  // Vault interaction
+  vault_boxes: [
+    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 14, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'vault_code_1', ifTrue: 2, ifFalse: 12 },
+    /* 2  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 3, ifFalse: 12 },
+    /* 3  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 12 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "A heavy safe deposit box. Three-dial combination lock. You enter the numbers: 47-19-82." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "*CLUNK*. The lock turns. The door swings open." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Inside is a single document. Thick parchment. Gold-embossed letterhead. The ink has a warmth to it, like sunlight trapped in amber." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "'WELLS FARGO TRUST CHARTER — BRANCH 4471 — ORIGINAL CHARTER OF FIDUCIARY OBLIGATION'" },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The moment you touch the document, the room trembles. Not an earthquake. Something deeper. The building is responding." },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: "I can feel it. The weight of every promise ever made in this building." },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'has_charter', value: true, next: 11 },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force surges through the charter. You feel stronger. More certain. The building is with you." },
+    /* 12 */ { type: 'text', speaker: 'Narrator', text: "The safe is locked. A three-dial combination. You don't have all the numbers yet." },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room." },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The safe is open. Empty now. The charter is with you. Where it belongs." },
+    /* 15 */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // ACT 5 -- CORPORATE ESCALATION
+  // --------------------------------------------------------------------------
+
+  act5_trigger: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You have the charter. The evidence. The team. It's time to confront Rachel." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "But when you reach the cubicle farm, everything has changed." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "New people are everywhere. Suits you've never seen. Clipboards. Tablets. Earpieces." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "They're calling themselves the 'Restructuring Team.' Rachel brought them in. They're dismantling our systems as we speak." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One of them tried to reformat my server. MY server. I may have... physically intervened." },
+    /* 5  */ { type: 'text', speaker: 'Diane', text: "Andrew, Rachel's moved to the Board Room. She's calling an emergency vote to dissolve the trust department." },
+    /* 6  */ { type: 'text', speaker: 'Diane', text: "You need to get up there. But first, you'll need to deal with her team down here. They're blocking all access." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true, next: 8 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'board_room_accessible', value: true, next: 9 },
+    /* 9  */ { type: 'end' },
+  ],
+
+  restructuring_combat: [
+    /* 0  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Ah. Andrew, is it? I've heard about you. The 'disruptive element.'" },
+    /* 1  */ { type: 'text', speaker: 'Restructuring Analyst', text: "I've been reviewing your department's metrics. Your efficiency ratio is 0.34. Industry standard is 0.78." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "You can't reduce trust administration to a ratio." },
+    /* 3  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Everything can be reduced to a ratio. People. Departments. Careers. It's all just numbers." },
+    /* 4  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Your number is up." },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_analyst', next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  restructuring_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Restructuring Analyst', text: "This is... not in my efficiency model. Human variables. Always the hardest to account for." },
+    /* 1  */ { type: 'text', speaker: 'Restructuring Analyst', text: "You know Rachel won't stop. She's been planning this for months. The Regional Manager promised her this branch." },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'restructuring_defeated', value: true, next: 3 },
+    /* 3  */ { type: 'end' },
+  ],
+
+  brand_consultant_combat: [
+    /* 0  */ { type: 'text', speaker: 'Brand Consultant', text: "Oh! Perfect timing. I'm redesigning your department's identity. Trust is SO last decade." },
+    /* 1  */ { type: 'text', speaker: 'Brand Consultant', text: "We're pivoting to 'Wealth Solutions.' Or maybe 'Asset Synergy Partners.' I'm still workshopping." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "We're a trust department. We manage trusts. The name is fine." },
+    /* 3  */ { type: 'text', speaker: 'Brand Consultant', text: "'Fine' is the ENEMY of 'brand excellence.' Let me show you the mood board." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The mood board is just a photo of a sunset with the word 'DISRUPT' in Helvetica." },
+    /* 5  */ { type: 'text', speaker: 'Brand Consultant', text: "You don't appreciate art. Or vision. Or mid-century modern fonts." },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'brand_consultant', next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  brand_consultant_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Brand Consultant', text: "Fine. Keep your boring name. Keep your boring department. But mark my words — 'trust' as a brand is OVER." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Brand Consultant retreats, clutching their mood board. The sunset looks dimmer somehow." },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true, next: 3 },
+    /* 3  */ { type: 'end' },
+  ],
+
+  corporate_lawyer_combat: [
+    /* 0  */ { type: 'text', speaker: 'Corporate Lawyer', text: "Mr. Andrew. I represent the interests of Wells Fargo Regional Operations." },
+    /* 1  */ { type: 'text', speaker: 'Corporate Lawyer', text: "You have been engaging in unauthorized access of restricted company records. Insubordination. Disruption of corporate operations." },
+    /* 2  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I have here a cease and desist order, a termination notice, and a non-disclosure agreement. Sign all three." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "I'm a trust officer with evidence of systematic fiduciary breach. I'm not signing anything." },
+    /* 4  */ { type: 'text', speaker: 'Corporate Lawyer', text: "Brave. Foolish. But brave. Very well. Let's do this the litigious way." },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'corporate_lawyer', next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  corporate_lawyer_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I... I've never lost a case. Or a fight. This is unprecedented." },
+    /* 1  */ { type: 'text', speaker: 'Corporate Lawyer', text: "For the record, I was retained by the Regional Manager personally. Not by Wells Fargo corporate. That distinction may matter later." },
+    /* 2  */ { type: 'text', speaker: 'Corporate Lawyer', text: "Rachel is upstairs. The Board Room. She's presenting her case to dissolve your department. You'd better hurry." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'corporate_lawyer_defeated', value: true, next: 4 },
+    /* 4  */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // RACHEL BOSS FIGHT — Board Room confrontation
+  // --------------------------------------------------------------------------
+
+  rachel_boss_combat: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You enter the Board Room. Rachel stands at the head of the table. Behind her, a screen displays charts and graphs that all say the same thing: DISSOLVE." },
+    /* 1  */ { type: 'text', speaker: 'Rachel', text: "Andrew. I was wondering when you'd show up." },
+    /* 2  */ { type: 'text', speaker: 'Rachel', text: "I've already presented my case to the board. The vote is in one hour. Your department is finished." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Not if they see this." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "You place the evidence on the table. The transaction logs. The filing records. The Intern's taped-together memo. And the charter." },
+    /* 5  */ { type: 'text', speaker: 'Rachel', text: "...Where did you get that charter. That was locked in the Vault." },
+    /* 6  */ { type: 'text', speaker: 'Andrew', text: "The building helped." },
+    /* 7  */ { type: 'text', speaker: 'Rachel', text: "The BUILDING. You've lost your mind. Just like the old janitor. Just like everyone who works in trust too long." },
+    /* 8  */ { type: 'text', speaker: 'Rachel', text: "You think a 77-year-old piece of paper is going to save your department? This is the real world. Power. Money. Results." },
+    /* 9  */ { type: 'text', speaker: 'Rachel', text: "I've spent fifteen years climbing the corporate ladder. I will NOT be stopped by a first-week trust officer and a JANITOR." },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "The building hums. The charter on the table begins to glow with that impossible warm light." },
+    /* 11 */ { type: 'text', speaker: 'Rachel', text: "What is— this is some kind of trick. Fine. If you want a fight, I'll give you one." },
+    /* 12 */ { type: 'text', speaker: 'Rachel', text: "I am Rachel, SVP of Strategic Operations. I have a Harvard MBA, a corner office, and ZERO patience for corporate fairy tales." },
+    /* 13 */ { type: 'action', action: 'start_combat', encounter: 'rachel_boss', next: 14 },
+    /* 14 */ { type: 'end' },
+  ],
+
+  rachel_boss_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Rachel', text: "I... this isn't possible. No one has ever..." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The charter glows brighter. The Fiduciary Force fills the Board Room. Every promise ever made within these walls resonates." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Rachel's phone rings. She answers. Her face goes white." },
+    /* 3  */ { type: 'text', speaker: 'Rachel', text: "The Regional Manager has been arrested. The SEC found the offshore accounts. The board vote is... cancelled." },
+    /* 4  */ { type: 'text', speaker: 'Rachel', text: "You win. This time. But corporations have long memories, Andrew. Longer than any building." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Rachel leaves the Board Room. Her heels echo on the marble floor, each step a little less certain than the last." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "The charter's glow fades to a gentle warmth. The building settles. Not asleep — just... satisfied." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Ross appears in the doorway. Behind him, Janet, Diane, Alex, the Intern, Isaiah, and the Janitor." },
+    /* 8  */ { type: 'text', speaker: 'Ross', text: "Andrew... did we just save the department?" },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: "We saved more than that, Ross." },
+    /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The charter is restored. The trust is honored. The building remembers." },
+    /* 11 */ { type: 'text', speaker: 'Janet', text: "*raises tumbler* To trust issues. May we always have them." },
+    /* 12 */ { type: 'text', speaker: 'Ross', text: "That's the most beautiful thing I've ever heard. And I've read SEVEN leadership books this month." },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "~ END OF ACT 5 ~" },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The trust department stands. Battered, caffeinated, and slightly traumatized. But standing." },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force sleeps again. Until the next breach. Until the next broken promise." },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: "But that's a story for another day. Or maybe... another floor." },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "The penthouse elevator dings. Nobody pressed it." },
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true, next: 19 },
+    /* 19 */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // NEW ROOM INTERACTION DIALOGS
+  // --------------------------------------------------------------------------
+
+  board_room_table: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A mahogany conference table that seats twenty. Each chair costs more than a semester of college." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "A crystal decanter sits in the center, empty. A nameplate at the head reads 'RESERVED FOR STRATEGIC OPERATIONS.'" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The walls are lined with portraits of past branch directors. The Janitor's portrait is conspicuously absent." },
+    /* 3  */ { type: 'end' },
+  ],
+
+  suggestion_box: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "An HR suggestion box. The lock has been glued shut." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "Through the slot, you can see dozens of slips of paper. The top one reads: 'SUGGESTION: Actually read these. — Everyone (2019-2024)'" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Another reads: 'Please provide a suggestion box that works. This one has been glued shut since February. — Anonymous'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The most recent one is in Rachel's handwriting: 'Suggestion: eliminate the suggestion box. Optimize.'" },
+    /* 4  */ { type: 'end' },
+  ],
+
+  penthouse_window: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Floor-to-ceiling windows. The Minneapolis skyline stretches in every direction." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "From up here, the world looks clean. Organized. Like a spreadsheet come to life." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "You can see the parking garage below. Your Honda Civic looks very small. Much like your savings account." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "A plaque on the window reads: 'FROM THIS HEIGHT, EVERYTHING LOOKS LIKE AN ASSET.' It's meant to be inspirational. It isn't." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  vault_entrance: [
+    /* 0  */ { type: 'condition', flag: 'vault_accessible', ifTrue: 2, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "A heavy steel door behind the Archive shelving. It won't budge. You need more information." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The vault door is open. The Janitor's keycard works here too." },
+    /* 3  */ { type: 'end' },
+  ],
+
+  vault_charter: [
+    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "A glass display case. Inside, you can see a document on a velvet stand. It glows faintly." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A plaque reads: 'THE ORIGINAL CHARTER — To be opened only in times of fiduciary crisis.'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The display case is locked. The combination lock has three dials." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The display case is empty. You carry the charter now. Its warmth pulses against your chest like a second heartbeat." },
+    /* 5  */ { type: 'end' },
+  ],
+
+  board_charter: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A bronze plaque on the wall. Engraved in old-fashioned script:" },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "'THIS INSTITUTION SHALL SERVE AS FAITHFUL STEWARD OF THE PUBLIC TRUST. ANY BREACH OF THIS SACRED DUTY SHALL BE MET WITH THE FULL WEIGHT OF THE CHARTER.'" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "'— Original Board of Directors, 1947'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The words shimmer slightly. As if they're not just engraved — they're alive." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  algorithm_terminal: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A sleek terminal unlike anything else in the building. Modern. Minimalist. Cold." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The screen displays cascading numbers. Portfolio values. Trust balances. Client assets. All flowing in real-time." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A cursor blinks: 'THE ALGORITHM SEES ALL. THE ALGORITHM OPTIMIZES ALL. THE ALGORITHM IS ALL.'" },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "That's... ominous. Even for a bank." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The screen flickers. For a moment, you think you see a face in the numbers. Then it's gone." },
+    /* 5  */ { type: 'end' },
   ],
 };

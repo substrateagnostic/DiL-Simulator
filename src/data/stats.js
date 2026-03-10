@@ -240,6 +240,73 @@ export const ENEMY_STATS = {
     xpReward: 40,
     abilities: ['portfolio_panic', 'demand_guarantees'],
   },
+
+  // Acts 3–5 enemies
+  security_guard: {
+    name: 'Security Guard',
+    maxHP: 90,
+    hp: 90,
+    atk: 16,
+    def: 14,
+    spd: 8,
+    xpReward: 60,
+    abilities: ['badge_check', 'tackle', 'radio_backup'],
+  },
+  hr_rep: {
+    name: 'HR Representative',
+    maxHP: 60,
+    hp: 60,
+    atk: 10,
+    def: 12,
+    spd: 6,
+    xpReward: 45,
+    abilities: ['mandatory_training', 'formal_warning', 'sensitivity_seminar'],
+  },
+  restructuring_analyst: {
+    name: 'Restructuring Analyst',
+    maxHP: 80,
+    hp: 80,
+    atk: 14,
+    def: 10,
+    spd: 12,
+    xpReward: 70,
+    abilities: ['downsize', 'efficiency_report', 'outsource_threat'],
+  },
+  brand_consultant: {
+    name: 'Brand Consultant',
+    maxHP: 70,
+    hp: 70,
+    atk: 12,
+    def: 8,
+    spd: 14,
+    xpReward: 65,
+    abilities: ['rebrand', 'focus_group', 'logo_redesign'],
+  },
+  corporate_lawyer: {
+    name: 'Corporate Lawyer',
+    maxHP: 130,
+    hp: 130,
+    atk: 20,
+    def: 16,
+    spd: 10,
+    xpReward: 120,
+    abilities: ['cease_desist', 'legal_jargon', 'billable_assault'],
+  },
+  rachel_boss: {
+    name: 'Rachel, SVP',
+    maxHP: 200,
+    hp: 200,
+    atk: 22,
+    def: 18,
+    spd: 12,
+    xpReward: 300,
+    abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'],
+    phases: [
+      { hpThreshold: 0.6, abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'] },
+      { hpThreshold: 0.3, abilities: ['hostile_takeover', 'board_resolution', 'golden_handcuffs'] },
+      { hpThreshold: 0, abilities: ['hostile_takeover', 'board_resolution', 'final_assessment'] },
+    ],
+  },
 };
 
 // Enemy ability definitions
@@ -283,6 +350,40 @@ export const ENEMY_ABILITIES = {
   demand_guarantees: { name: 'Demand Guarantees', power: 0, type: 'confuse', duration: 2, message: '"I need guaranteed 20% returns! Is that so hard?!"' },
   call_the_other_advisor: { name: 'Call My Other Advisor', power: 20, type: 'attack', message: 'The client threatens to take their business to Merrill Lynch!' },
   client_bro_down: { name: 'Bro, Trust Me', power: 16, type: 'attack', message: 'The client insists on putting everything in crypto, bro.' },
+
+  // Security Guard
+  badge_check: { name: 'Badge Check', power: 14, type: 'attack', message: '"Your badge is expired." The guard doesn\'t wait for you to explain.' },
+  tackle: { name: 'Tackle', power: 20, type: 'attack', message: 'The security guard tackles you into a filing cabinet!' },
+  radio_backup: { name: 'Radio for Backup', power: 0, type: 'buff', buff: { atk: 4, def: 4 }, duration: 3, message: '"All units, I need backup on the sixth floor!" The guard looks more confident.' },
+
+  // HR Representative
+  mandatory_training: { name: 'Mandatory Training', power: 0, type: 'stun', duration: 1, message: '"You\'re required to complete a 4-hour sensitivity module. Right now."' },
+  formal_warning: { name: 'Formal Warning', power: 12, type: 'dot', duration: 3, message: 'The HR Rep places a formal warning in your permanent file. It stings.' },
+  sensitivity_seminar: { name: 'Sensitivity Seminar', power: 0, type: 'debuff', debuff: { atk: -3, spd: -3 }, duration: 2, message: '"Perhaps we should discuss your communication style." You feel vaguely guilty.' },
+
+  // Restructuring Analyst
+  downsize: { name: 'Downsize', power: 18, type: 'attack', message: '"Your position has been identified for potential elimination." Ouch.' },
+  efficiency_report: { name: 'Efficiency Report', power: 0, type: 'debuff', debuff: { def: -4, spd: -4 }, duration: 2, message: 'The analyst shows you a graph where your productivity is a flatline.' },
+  outsource_threat: { name: 'Outsource Threat', power: 22, type: 'attack', message: '"We could replace your entire department with a SaaS platform for $9.99/month."' },
+
+  // Brand Consultant
+  rebrand: { name: 'Rebrand', power: 0, type: 'confuse', duration: 2, message: '"We\'re pivoting your identity to align with our new brand architecture." You forget who you are.' },
+  focus_group: { name: 'Focus Group', power: 14, type: 'attack', message: '"Our focus group found your performance \'deeply concerning.\' Here are 47 pages of feedback."' },
+  logo_redesign: { name: 'Logo Redesign', power: 0, type: 'heal', healAmount: 20, message: 'The consultant unveils a new logo. It\'s the old logo but in a different font. They feel energized.' },
+
+  // Corporate Lawyer
+  cease_desist: { name: 'Cease & Desist', power: 0, type: 'stun', duration: 1, message: '"You are hereby ordered to cease and desist all activities pending review." You freeze.' },
+  legal_jargon: { name: 'Legal Jargon', power: 0, type: 'confuse', duration: 2, message: '"Pursuant to Section 14(a)(2)(iii) of the aforementioned..." Your brain shuts down.' },
+  billable_assault: { name: 'Billable Assault', power: 28, type: 'attack', message: 'The lawyer charges you $450/hour while also charging AT you.' },
+
+  // Rachel SVP (3-phase boss)
+  strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', message: '"This department is pivoting. You\'re either on the bus or under it."' },
+  performance_review: { name: 'Performance Review', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 2, message: 'Rachel reads your performance review aloud. Every word is a scalpel.' },
+  restructure_threat: { name: 'Restructure Threat', power: 16, type: 'dot', duration: 3, message: '"I\'m restructuring this department. Starting with your position."' },
+  hostile_takeover: { name: 'Hostile Takeover', power: 30, type: 'attack', message: 'Rachel executes a hostile takeover of your composure!' },
+  board_resolution: { name: 'Board Resolution', power: 0, type: 'heal', healAmount: 40, message: 'Rachel invokes a board resolution. The corporate hierarchy reinforces her.' },
+  golden_handcuffs: { name: 'Golden Handcuffs', power: 0, type: 'stun', duration: 1, message: '"Your compensation package includes a non-compete. You can\'t leave. Ever."' },
+  final_assessment: { name: 'Final Assessment', power: 35, type: 'attack', message: '"My final assessment: this department doesn\'t need you. It needs ME."' },
 };
 
 // Items

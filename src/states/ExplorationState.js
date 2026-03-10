@@ -120,6 +120,30 @@ export class ExplorationState {
         if (key === 'branch_chosen') {
           this._showToast('The executive elevator is now unlocked.', 'objective');
         }
+        if (key === 'act2_complete') {
+          this._showToast('Something is stirring in the building...', 'objective');
+        }
+        if (key === 'archive_accessible') {
+          this._showToast('The Archive is now accessible from the parking garage.', 'objective');
+        }
+        if (key === 'hr_accessible') {
+          this._showToast('The HR Department is now accessible.', 'objective');
+        }
+        if (key === 'vault_accessible') {
+          this._showToast('The Vault behind the Archive is now accessible.', 'objective');
+        }
+        if (key === 'board_room_accessible') {
+          this._showToast('The Board Room is now accessible from the executive floor.', 'objective');
+        }
+        if (key === 'act3_complete') {
+          this._showToast('Rachel has locked down the building. Rally the team!', 'objective');
+        }
+        if (key === 'act5_complete') {
+          this._showToast('The trust department is saved. For now...', 'objective');
+        }
+        if (key === 'has_charter') {
+          this._showToast('You have the 1947 Charter! Its power resonates through the building.', 'item');
+        }
       }),
       EventBus.on('item-received', ({ name, quantity }) => {
         const prefix = quantity > 1 ? `${quantity}x ` : '';
@@ -146,6 +170,36 @@ export class ExplorationState {
               const endingDialog = new DialogState(DIALOGS[endingDialogId], this.player, this.stateManager, endingDialogId);
               this.stateManager.push(endingDialog);
             }, 1000);
+          }
+        }
+
+        // Archive: first visit triggers security guard encounter
+        if (roomId === 'archive' && !this.player.getFlag('visited_archive')) {
+          this.player.setFlag('visited_archive');
+          if (DIALOGS.security_guard_combat) {
+            setTimeout(() => {
+              const dialogState = new DialogState(DIALOGS['security_guard_combat'], this.player, this.stateManager, 'security_guard_combat');
+              this.stateManager.push(dialogState);
+            }, 800);
+          }
+        }
+
+        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team
+        if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && !this.player.getFlag('act4_complete') && DIALOGS.act5_trigger) {
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
+            this.stateManager.push(dialogState);
+          }, 800);
+        }
+
+        // Board Room: first visit with act5 triggers Rachel boss
+        if (roomId === 'board_room' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('rachel_fight_started')) {
+          this.player.setFlag('rachel_fight_started');
+          if (DIALOGS.rachel_boss_combat) {
+            setTimeout(() => {
+              const dialogState = new DialogState(DIALOGS['rachel_boss_combat'], this.player, this.stateManager, 'rachel_boss_combat');
+              this.stateManager.push(dialogState);
+            }, 800);
           }
         }
       }),
@@ -180,6 +234,12 @@ export class ExplorationState {
       executive_floor: 'executive',
       parking_garage:  'parking',
       break_room:      'break_room',
+      archive:         'server',
+      vault:           'server',
+      stairwell:       'parking',
+      board_room:      'executive',
+      penthouse:       'executive',
+      hr_department:   'exploration',
     };
     return map[roomId] || 'exploration';
   }
@@ -208,6 +268,20 @@ export class ExplorationState {
   }
 
   async _changeRoom(targetRoom, spawnX, spawnZ) {
+    // Room gating — check access before allowing entry
+    const gatedRooms = {
+      archive: { flag: 'archive_accessible', message: "The freight elevator won't move. You need a keycard." },
+      hr_department: { flag: 'hr_accessible', message: "The HR Department is locked down. You need authorization." },
+      vault: { flag: 'vault_accessible', message: "The vault door is sealed shut. You need more information." },
+      board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
+      penthouse: { flag: 'act5_complete', message: "The staircase to the penthouse is blocked. Something must happen first." },
+    };
+    const gate = gatedRooms[targetRoom];
+    if (gate && !this.player.getFlag(gate.flag)) {
+      this._showToast(gate.message, 'info');
+      return;
+    }
+
     this.paused = true;
     AudioManager.playSfx('door');
 
@@ -594,11 +668,23 @@ export class ExplorationState {
       return 'intern_combat_intro';
     }
 
-    if (act >= 2 && DIALOGS[`${id}_act3`] && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
+    // Special: Alex from IT + archive evidence = Act 4 trigger
+    if (
+      id === 'alex_it' &&
+      this.player.getFlag('has_archive_evidence') &&
+      !this.player.getFlag('act3_complete') &&
+      DIALOGS.act4_trigger
+    ) {
+      return 'act4_trigger';
+    }
+
+    if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
+    if (act >= 3 && DIALOGS[`${id}_act3`] && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
     if (act >= 1 && DIALOGS[`${id}_act2`] && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
-    if (act >= 2 && DIALOGS[`${id}_act3`]) return `${id}_act3`;
+    if (act >= 4 && DIALOGS[`${id}_act4`]) return `${id}_act4`;
+    if (act >= 3 && DIALOGS[`${id}_act3`]) return `${id}_act3`;
     if (act >= 1 && DIALOGS[`${id}_act2`]) return `${id}_act2`;
     if (DIALOGS[`${id}_intro`]) return `${id}_intro`;
     if (DIALOGS[id]) return id;
@@ -742,16 +828,67 @@ export class ExplorationState {
     let act = 0;
     if (this.player.getFlag('briefing_complete')) act = 1;
     if (this.player.getFlag('branch_chosen')) act = 2;
+    if (this.player.getFlag('act2_complete')) act = 3;
+    if (this.player.getFlag('act3_complete')) act = 4;
+    if (this.player.getFlag('act4_complete')) act = 5;
+    if (this.player.getFlag('act5_complete')) act = 6;
     this.player.actIndex = act;
   }
 
   _getStoryObjective() {
+    // Act 5+
+    if (this.player.getFlag('act5_complete')) {
+      return 'The trust department is saved. Explore at your leisure.';
+    }
+    if (this.player.getFlag('rachel_fight_started')) {
+      return 'Defeat Rachel in the Board Room';
+    }
+    if (this.player.getFlag('act4_complete')) {
+      return 'Fight through the Restructuring Team to reach the Board Room';
+    }
+
+    // Act 4
+    if (this.player.getFlag('has_charter')) {
+      return 'Return to the cubicle farm with the charter';
+    }
+    if (this.player.getFlag('vault_accessible') && !this.player.getFlag('has_charter')) {
+      const codes = [this.player.getFlag('vault_code_1'), this.player.getFlag('vault_code_2'), this.player.getFlag('vault_code_3')];
+      const codeCount = codes.filter(Boolean).length;
+      if (codeCount < 3) return `Find the Vault combination (${codeCount}/3 codes found)`;
+      return 'Open the Vault and retrieve the 1947 charter';
+    }
+    if (this.player.getFlag('act3_complete')) {
+      const rallied = ['janet_rallied', 'diane_rallied', 'ross_rallied'].filter(f => this.player.getFlag(f)).length;
+      if (rallied < 3) return `Rally the team against Rachel (${rallied}/3)`;
+      return 'Talk to the Janitor about the charter';
+    }
+
+    // Act 3
+    if (this.player.getFlag('has_archive_evidence') && !this.player.getFlag('act3_complete')) {
+      return 'Return the Archive evidence to Alex from IT';
+    }
+    if (this.player.getFlag('visited_archive') && !this.player.getFlag('has_archive_evidence')) {
+      return 'Search the Archive for evidence';
+    }
+    if (this.player.getFlag('archive_accessible') && !this.player.getFlag('visited_archive')) {
+      return 'Find the Archive in the parking garage';
+    }
+    if (this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done')) {
+      return 'Talk to Alex from IT about the encrypted partition';
+    }
+
+    // Act 2 finale
+    if (
+      this.player.getFlag('act2_complete')
+    ) {
+      return 'Something strange is happening. Investigate.';
+    }
     if (
       this.player.getFlag('regional_defeated') ||
       this.player.getFlag('compliance_defeated') ||
       this.player.getFlag('ross_defeated')
     ) {
-      return 'Take a breath. You survived your first week.';
+      return 'Something strange is happening...';
     }
     if (this.player.getFlag('ending_started')) {
       return 'Face the consequences';
@@ -790,7 +927,10 @@ export class ExplorationState {
 
     let questId = 'main_act1';
     if (this.player.getFlag('briefing_complete')) questId = 'main_act2';
-    if (this.player.getFlag('branch_chosen')) questId = 'main_act3';
+    if (this.player.getFlag('branch_chosen')) questId = 'main_act2_finale';
+    if (this.player.getFlag('act2_complete')) questId = 'main_act3';
+    if (this.player.getFlag('act3_complete')) questId = 'main_act4';
+    if (this.player.getFlag('act4_complete')) questId = 'main_act5';
 
     this._setQuest(this._getStoryObjective(), { questId, silent });
   }

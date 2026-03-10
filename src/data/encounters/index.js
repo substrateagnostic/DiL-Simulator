@@ -49,4 +49,40 @@ export const ENCOUNTERS = {
     postDialogId: null,
     canFlee: false,
   },
+  security_guard: {
+    enemyId: 'security_guard',
+    preDialogId: 'security_guard_combat',
+    postDialogId: 'security_guard_defeated',
+    canFlee: true,
+  },
+  hr_rep: {
+    enemyId: 'hr_rep',
+    preDialogId: 'hr_rep_combat',
+    postDialogId: 'hr_rep_defeated',
+    canFlee: true,
+  },
+  restructuring_analyst: {
+    enemyId: 'restructuring_analyst',
+    preDialogId: 'restructuring_combat',
+    postDialogId: 'restructuring_defeated',
+    canFlee: false,
+  },
+  brand_consultant: {
+    enemyId: 'brand_consultant',
+    preDialogId: 'brand_consultant_combat',
+    postDialogId: 'brand_consultant_defeated',
+    canFlee: true,
+  },
+  corporate_lawyer: {
+    enemyId: 'corporate_lawyer',
+    preDialogId: 'corporate_lawyer_combat',
+    postDialogId: 'corporate_lawyer_defeated',
+    canFlee: false,
+  },
+  rachel_boss: {
+    enemyId: 'rachel_boss',
+    preDialogId: 'rachel_boss_combat',
+    postDialogId: 'rachel_boss_defeated',
+    canFlee: false,
+  },
 };

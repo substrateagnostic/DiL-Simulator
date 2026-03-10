@@ -37,4 +37,38 @@ export const ENEMY_AI_PATTERNS = {
     // Unpredictable - quick_sync to stun, circle_back to repeat, great_catch to counter
     pattern: 'chaotic',
   },
+  security_guard: {
+    // Straightforward - tackles, then calls backup
+    pattern: 'escalating',
+    sequence: ['badge_check', 'tackle', 'radio_backup'],
+    randomAfter: true,
+  },
+  hr_rep: {
+    // Methodical HR process
+    pattern: 'rotation',
+  },
+  restructuring_analyst: {
+    // Debuffs first, then attacks
+    pattern: 'strategic',
+    phase1: ['efficiency_report'],
+    phase2: ['downsize', 'outsource_threat', 'outsource_threat'],
+  },
+  brand_consultant: {
+    // Random with self-heal tendency
+    pattern: 'tactical',
+    healThreshold: 0.6,
+    debuffChance: 0.4,
+  },
+  corporate_lawyer: {
+    // Stun then heavy attack
+    pattern: 'escalating',
+    sequence: ['cease_desist', 'legal_jargon', 'billable_assault'],
+    randomAfter: true,
+  },
+  rachel_boss: {
+    // 3-phase boss - handled by phase system in CombatEngine
+    pattern: 'strategic',
+    phase1: ['performance_review'],
+    phase2: ['strategic_pivot', 'hostile_takeover', 'board_resolution'],
+  },
 };
