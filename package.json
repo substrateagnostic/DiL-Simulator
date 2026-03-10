@@ -1,7 +1,7 @@
 {
   "name": "trust-issues",
   "version": "1.0.0",
-  "description": "TRUST ISSUES: A Wells Fargo Simulator - Satirical Office RPG",
+  "description": "TRUST ISSUES: A Trust Officer Simulator - Satirical Office RPG",
   "type": "module",
   "scripts": {
     "dev": "vite",

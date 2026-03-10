@@ -48,7 +48,7 @@ class Game {
     Engine.onUpdate((dt) => this._update(dt));
     Engine.start();
 
-    console.log('%c TRUST ISSUES: A Wells Fargo Simulator ', 'background: #e94560; color: white; font-size: 16px; font-weight: bold; padding: 4px 8px;');
+    console.log('%c TRUST ISSUES: A Trust Officer Simulator', 'background: #e94560; color: white; font-size: 16px; font-weight: bold; padding: 4px 8px;');
     console.log('%c "Handle their assets carefully." ', 'color: #53a8b6; font-style: italic;');
   }
 

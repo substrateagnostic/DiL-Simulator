@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**TRUST ISSUES: A Wells Fargo Simulator** — a satirical office RPG built with Three.js and Vite. No framework; pure vanilla JS ES modules.
+**TRUST ISSUES: A Trust Officer Simulator** — a satirical office RPG built with Three.js and Vite. No framework; pure vanilla JS ES modules.
 
 ## Commands
 

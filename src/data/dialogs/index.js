@@ -1,5 +1,5 @@
 // ============================================================================
-// TRUST ISSUES: A Wells Fargo Simulator -- All Dialog Trees
+// TRUST ISSUES: A Trust Officer Simulator -- All Dialog Trees
 // ============================================================================
 // Node types:
 //   { type: 'text', speaker, text }
