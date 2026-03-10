@@ -23,7 +23,7 @@ export const DIALOGS = {
     { type: 'text', speaker: 'Andrew', text: "...There's no orchid." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "Exactly. Chad killed it. The point stands." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "HR asked me to give you this." },
-    { type: 'action', action: 'give_item', itemId: 'coffee_large', quantity: 1, next: 6 },
+    { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1, next: 6 },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "It's a large coffee. You'll want it. Trust me." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "Your desk is on the cubicle floor. Through the north door, up the stairs. Well — there are no stairs. Through the north door." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "Your manager is Ross. He'll brief you. Don't be late." },

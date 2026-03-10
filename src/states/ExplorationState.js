@@ -489,6 +489,8 @@ export class ExplorationState {
   _handleDefeat() {
     this.player.rest();
     this._resetClientSystem();
+    // Reset ending gate so boss fights can be retried
+    this.player.setFlag('ending_started', false);
     this._loadRoom('cubicle_farm');
 
     const msg = document.createElement('div');
@@ -515,7 +517,7 @@ export class ExplorationState {
       const client = generateClient();
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
-      setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
+      setTimeout(() => this._showToast(`New client waiting: ${client.name} — approach the reception desk`, 'objective'), 600);
     }
   }
 

@@ -11,7 +11,7 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Bestiary', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Journal', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
     this.controlsOverlay = null;
     this.audioOverlay = null;
     this.bestiaryOverlay = null;
@@ -83,7 +83,7 @@ export class MenuState {
       case 'Resume':
         this.stateManager.pop();
         break;
-      case 'Bestiary':
+      case 'Journal':
         this._showBestiary();
         break;
       case 'Save Game':
@@ -135,7 +135,7 @@ export class MenuState {
 
     const title = document.createElement('div');
     title.className = 'menu-title';
-    title.textContent = 'BESTIARY';
+    title.textContent = 'JOURNAL';
     panel.appendChild(title);
 
     const summary = document.createElement('div');
