@@ -509,7 +509,7 @@ export const ROOMS = {
       { type: 'monitor', x: 7.5, z: 2.8, rotation: Math.PI },
       { type: 'deskPlant', x: 8.0, z: 2.9 },
       { type: 'keyboard', x: 7, z: 3.3 },
-      { type: 'chair', x: 7, z: 4, rotation: Math.PI },
+      { type: 'chair', x: 7, z: 2, rotation: Math.PI },  // behind desk, facing south
 
       // === Waiting area (southwest) ===
       { type: 'chair', x: 2, z: 5, rotation: Math.PI / 2 },
@@ -534,7 +534,7 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 9, z: 3, rotation: Math.PI },
     ],
     npcs: [
-      { id: 'diane', x: 7, z: 4, facing: Math.PI, sitting: true },
+      { id: 'diane', x: 7, z: 2, facing: Math.PI, sitting: true },  // behind desk, facing south
       { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2 },
       { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: false, sitting: true },
     ],
