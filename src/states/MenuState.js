@@ -3,7 +3,8 @@ import { AudioManager } from '../core/AudioManager.js';
 import { SaveManager } from '../core/SaveManager.js';
 import { EventBus } from '../core/EventBus.js';
 import { BESTIARY_DATA } from '../data/bestiary.js';
-import { ENEMY_STATS } from '../data/stats.js';
+import { ENEMY_STATS, PLAYER_ABILITIES } from '../data/stats.js';
+import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 
 export class MenuState {
   constructor(stateManager, player) {
@@ -11,11 +12,16 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Journal', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
     this.controlsOverlay = null;
     this.audioOverlay = null;
     this.bestiaryOverlay = null;
+    this.abilitiesOverlay = null;
+    this.cosmeticsOverlay = null;
     this.bestiarySelectedIndex = 0;
+    this._abilitySelectedIndex = 0;
+    this._cosmeticSelectedIndex = 0;
+    this._cosmeticSlotIndex = 0;
   }
 
   enter() {
@@ -63,6 +69,8 @@ export class MenuState {
     this._closeBestiary();
     this._closeControls();
     this._closeAudioSettings();
+    this._closeAbilities();
+    this._closeCosmetics();
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -82,6 +90,12 @@ export class MenuState {
     switch (choice) {
       case 'Resume':
         this.stateManager.pop();
+        break;
+      case 'Abilities':
+        this._showAbilities();
+        break;
+      case 'Cosmetics':
+        this._showCosmetics();
         break;
       case 'Journal':
         this._showBestiary();
@@ -309,7 +323,302 @@ export class MenuState {
     if (this.element) this.element.style.display = '';
   }
 
+  // ---- Abilities Screen ----
+  _showAbilities() {
+    if (this.abilitiesOverlay) return;
+    this.abilitiesOverlay = document.createElement('div');
+    this.abilitiesOverlay.className = 'menu-overlay';
+    this.abilitiesOverlay.style.zIndex = '60';
+    this._abilitySelectedIndex = 0;
+    this._renderAbilities();
+    document.getElementById('ui-overlay').appendChild(this.abilitiesOverlay);
+    if (this.element) this.element.style.display = 'none';
+  }
+
+  _renderAbilities() {
+    if (!this.abilitiesOverlay) return;
+    const panel = document.createElement('div');
+    panel.className = 'menu-panel abilities-panel';
+
+    const title = document.createElement('div');
+    title.className = 'menu-title';
+    title.textContent = 'ABILITIES';
+    panel.appendChild(title);
+
+    const pointsDiv = document.createElement('div');
+    pointsDiv.className = 'abilities-points';
+    pointsDiv.innerHTML = `Upgrade Points: <span class="abilities-points-value">${this.player.upgradePoints}</span>`;
+    panel.appendChild(pointsDiv);
+
+    const grid = document.createElement('div');
+    grid.className = 'abilities-grid';
+
+    // Group abilities by tier
+    const allAbilities = Object.entries(PLAYER_ABILITIES).filter(([, a]) => !a.unlockQuest);
+    const questAbilities = Object.entries(PLAYER_ABILITIES).filter(([, a]) => a.unlockQuest);
+    const tiers = [0, 1, 2, 3];
+    let itemIndex = 0;
+
+    for (const tier of tiers) {
+      const tierAbilities = allAbilities.filter(([, a]) => (a.tier ?? 0) === tier);
+      if (tierAbilities.length === 0) continue;
+
+      const tierLabel = document.createElement('div');
+      tierLabel.className = 'abilities-tier-label';
+      tierLabel.textContent = tier === 0 ? 'STARTER' : `TIER ${tier}`;
+      grid.appendChild(tierLabel);
+
+      for (const [id, ability] of tierAbilities) {
+        const unlocked = this.player.unlockedAbilities.has(id);
+        const canUnlock = this.player.canUnlockAbility(id);
+        const hasPrereq = !ability.requires || this.player.unlockedAbilities.has(ability.requires);
+        const idx = itemIndex++;
+
+        const card = document.createElement('div');
+        card.className = `ability-card${unlocked ? ' unlocked' : canUnlock ? ' available' : ' locked'}${idx === this._abilitySelectedIndex ? ' selected' : ''}`;
+        card.dataset.index = idx;
+
+        const header = document.createElement('div');
+        header.className = 'ability-card-header';
+        header.innerHTML = `<span class="ability-name">${ability.name}</span>`;
+        if (!unlocked && ability.upgradePointCost) {
+          header.innerHTML += `<span class="ability-cost-badge">${ability.upgradePointCost} PT${ability.upgradePointCost > 1 ? 'S' : ''}</span>`;
+        }
+        if (unlocked) {
+          header.innerHTML += `<span class="ability-unlocked-badge">LEARNED</span>`;
+        }
+        card.appendChild(header);
+
+        const desc = document.createElement('div');
+        desc.className = 'ability-desc';
+        desc.textContent = ability.description;
+        card.appendChild(desc);
+
+        const meta = document.createElement('div');
+        meta.className = 'ability-meta';
+        const typeLabel = ability.type === 'attack' ? 'ATK' : ability.type === 'heal' ? 'HEAL' : ability.type === 'buff' ? 'BUFF' : ability.type === 'debuff' ? 'DEBUFF' : ability.type.toUpperCase();
+        meta.innerHTML = `<span>${typeLabel}</span><span>${ability.cost} Coffee</span>`;
+        if (ability.power) meta.innerHTML += `<span>Power: ${ability.power}</span>`;
+        if (ability.healAmount) meta.innerHTML += `<span>+${ability.healAmount} HP</span>`;
+        card.appendChild(meta);
+
+        if (!unlocked && ability.requires && !hasPrereq) {
+          const req = document.createElement('div');
+          req.className = 'ability-req';
+          req.textContent = `Requires: ${PLAYER_ABILITIES[ability.requires]?.name || ability.requires}`;
+          card.appendChild(req);
+        }
+
+        card.addEventListener('click', () => {
+          this._abilitySelectedIndex = idx;
+          if (canUnlock) {
+            this.player.unlockAbility(id);
+            AudioManager.playSfx('confirm');
+          }
+          this._rerenderAbilities();
+        });
+        grid.appendChild(card);
+      }
+    }
+
+    // Quest abilities section
+    if (questAbilities.length > 0) {
+      const tierLabel = document.createElement('div');
+      tierLabel.className = 'abilities-tier-label';
+      tierLabel.textContent = 'QUEST REWARDS';
+      grid.appendChild(tierLabel);
+
+      for (const [id, ability] of questAbilities) {
+        const unlocked = this.player.questStates[ability.unlockQuest] === 'complete';
+        const idx = itemIndex++;
+
+        const card = document.createElement('div');
+        card.className = `ability-card${unlocked ? ' unlocked' : ' locked'}${idx === this._abilitySelectedIndex ? ' selected' : ''}`;
+        card.dataset.index = idx;
+
+        const header = document.createElement('div');
+        header.className = 'ability-card-header';
+        header.innerHTML = `<span class="ability-name">${unlocked ? ability.name : '???'}</span>`;
+        if (unlocked) header.innerHTML += `<span class="ability-unlocked-badge">LEARNED</span>`;
+        card.appendChild(header);
+
+        const desc = document.createElement('div');
+        desc.className = 'ability-desc';
+        desc.textContent = unlocked ? ability.description : 'Complete the associated quest to unlock';
+        card.appendChild(desc);
+
+        if (unlocked) {
+          const meta = document.createElement('div');
+          meta.className = 'ability-meta';
+          meta.innerHTML = `<span>${ability.type.toUpperCase()}</span><span>${ability.cost} Coffee</span>`;
+          if (ability.power) meta.innerHTML += `<span>Power: ${ability.power}</span>`;
+          card.appendChild(meta);
+        }
+
+        grid.appendChild(card);
+      }
+    }
+
+    panel.appendChild(grid);
+
+    const back = document.createElement('div');
+    back.className = 'menu-item';
+    back.style.marginTop = '16px';
+    back.textContent = 'Back';
+    back.addEventListener('click', () => this._closeAbilities());
+    panel.appendChild(back);
+
+    this.abilitiesOverlay.innerHTML = '';
+    this.abilitiesOverlay.appendChild(panel);
+  }
+
+  _rerenderAbilities() {
+    this._renderAbilities();
+  }
+
+  _closeAbilities() {
+    if (this.abilitiesOverlay && this.abilitiesOverlay.parentNode) {
+      this.abilitiesOverlay.parentNode.removeChild(this.abilitiesOverlay);
+    }
+    this.abilitiesOverlay = null;
+    if (this.element) this.element.style.display = '';
+  }
+
+  // ---- Cosmetics Screen ----
+  _showCosmetics() {
+    if (this.cosmeticsOverlay) return;
+    this.cosmeticsOverlay = document.createElement('div');
+    this.cosmeticsOverlay.className = 'menu-overlay';
+    this.cosmeticsOverlay.style.zIndex = '60';
+    this._cosmeticSlotIndex = 0;
+    this._renderCosmetics();
+    document.getElementById('ui-overlay').appendChild(this.cosmeticsOverlay);
+    if (this.element) this.element.style.display = 'none';
+  }
+
+  _renderCosmetics() {
+    if (!this.cosmeticsOverlay) return;
+    const panel = document.createElement('div');
+    panel.className = 'menu-panel cosmetics-panel';
+
+    const title = document.createElement('div');
+    title.className = 'menu-title';
+    title.textContent = 'COSMETICS';
+    panel.appendChild(title);
+
+    // Current equipped summary
+    const equipped = document.createElement('div');
+    equipped.className = 'cosmetics-equipped';
+    for (const slot of COSMETIC_SLOTS) {
+      const cosId = this.player.equipped[slot];
+      const cos = cosId ? COSMETICS[cosId] : null;
+      const div = document.createElement('div');
+      div.className = 'cosmetics-slot';
+      div.innerHTML = `<span class="cosmetics-slot-label">${slot.toUpperCase()}</span><span class="cosmetics-slot-value">${cos ? cos.name : '— empty —'}</span>`;
+      equipped.appendChild(div);
+    }
+    panel.appendChild(equipped);
+
+    // Items by slot
+    for (const slot of COSMETIC_SLOTS) {
+      const slotItems = Object.entries(COSMETICS).filter(([, c]) => c.slot === slot);
+      if (slotItems.length === 0) continue;
+
+      const slotLabel = document.createElement('div');
+      slotLabel.className = 'abilities-tier-label';
+      slotLabel.textContent = slot.toUpperCase();
+      panel.appendChild(slotLabel);
+
+      const row = document.createElement('div');
+      row.className = 'cosmetics-items-row';
+
+      for (const [id, cos] of slotItems) {
+        const unlocked = this.player.isCosmeticUnlocked(id);
+        const isEquipped = this.player.equipped[slot] === id;
+
+        const card = document.createElement('div');
+        card.className = `cosmetic-card${unlocked ? (isEquipped ? ' equipped' : ' available') : ' locked'}`;
+
+        const header = document.createElement('div');
+        header.className = 'ability-card-header';
+        header.innerHTML = `<span class="ability-name">${unlocked ? cos.name : '???'}</span>`;
+        if (isEquipped) header.innerHTML += `<span class="ability-unlocked-badge">EQUIPPED</span>`;
+        card.appendChild(header);
+
+        if (unlocked) {
+          const desc = document.createElement('div');
+          desc.className = 'ability-desc';
+          desc.textContent = cos.description;
+          card.appendChild(desc);
+
+          if (cos.stats) {
+            const statLine = document.createElement('div');
+            statLine.className = 'ability-meta';
+            statLine.innerHTML = Object.entries(cos.stats)
+              .map(([s, v]) => `<span>+${v} ${s.toUpperCase()}</span>`)
+              .join('');
+            card.appendChild(statLine);
+          }
+
+          card.addEventListener('click', () => {
+            if (isEquipped) {
+              this.player.unequipCosmetic(slot);
+            } else {
+              this.player.equipCosmetic(id);
+            }
+            AudioManager.playSfx('confirm');
+            this._rerenderCosmetics();
+          });
+        } else {
+          const desc = document.createElement('div');
+          desc.className = 'ability-desc';
+          desc.textContent = 'Not yet discovered';
+          card.appendChild(desc);
+        }
+
+        row.appendChild(card);
+      }
+      panel.appendChild(row);
+    }
+
+    const back = document.createElement('div');
+    back.className = 'menu-item';
+    back.style.marginTop = '16px';
+    back.textContent = 'Back';
+    back.addEventListener('click', () => this._closeCosmetics());
+    panel.appendChild(back);
+
+    this.cosmeticsOverlay.innerHTML = '';
+    this.cosmeticsOverlay.appendChild(panel);
+  }
+
+  _rerenderCosmetics() {
+    this._renderCosmetics();
+  }
+
+  _closeCosmetics() {
+    if (this.cosmeticsOverlay && this.cosmeticsOverlay.parentNode) {
+      this.cosmeticsOverlay.parentNode.removeChild(this.cosmeticsOverlay);
+    }
+    this.cosmeticsOverlay = null;
+    if (this.element) this.element.style.display = '';
+  }
+
   update(dt) {
+    if (this.abilitiesOverlay) {
+      if (InputManager.isCancelPressed()) {
+        this._closeAbilities();
+      }
+      return;
+    }
+
+    if (this.cosmeticsOverlay) {
+      if (InputManager.isCancelPressed()) {
+        this._closeCosmetics();
+      }
+      return;
+    }
+
     if (this.bestiaryOverlay) {
       if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
         this._closeBestiary();

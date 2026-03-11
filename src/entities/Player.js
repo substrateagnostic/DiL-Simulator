@@ -4,6 +4,7 @@ import { CharacterAnimator } from './CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { PLAYER_BASE_STATS, PLAYER_ABILITIES, XP_TABLE, LEVEL_GROWTH } from '../data/stats.js';
 import { STARTING_INVENTORY } from '../data/items.js';
+import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { PLAYER } from '../utils/constants.js';
 import { EventBus } from '../core/EventBus.js';
 
@@ -18,6 +19,12 @@ export class Player {
     this.position = { x: 0, z: 0 };
     this.currentRoom = 'parking_garage';
     this.actIndex = 0;
+    // Upgrade system
+    this.upgradePoints = 0;
+    this.unlockedAbilities = new Set(['file_motion', 'coffee_break']); // starters
+    // Cosmetic equipment: { hat: null, glasses: null, badge: null, accessory: null }
+    this.equipped = {};
+    for (const slot of COSMETIC_SLOTS) this.equipped[slot] = null;
   }
 
   setPosition(x, z) {
@@ -61,23 +68,86 @@ export class Player {
     this.animator.update(dt);
   }
 
-  // Get available abilities based on level or quest completion
+  // Get available abilities — only unlocked ones (manual + quest)
   getAbilities() {
     const abilities = [];
     for (const [id, ability] of Object.entries(PLAYER_ABILITIES)) {
       if (ability.unlockQuest) {
-        // Quest-unlocked abilities require the quest to be completed
         if (this.questStates[ability.unlockQuest] === 'complete') {
           abilities.push({ id, ...ability });
         }
-      } else if (this.stats.level >= ability.unlockLevel) {
+      } else if (this.unlockedAbilities.has(id)) {
         abilities.push({ id, ...ability });
       }
     }
     return abilities;
   }
 
-  // Gain XP and check for level up
+  // Check if an ability can be unlocked (has prerequisite + enough points)
+  canUnlockAbility(id) {
+    const ability = PLAYER_ABILITIES[id];
+    if (!ability || ability.unlockQuest) return false;
+    if (this.unlockedAbilities.has(id)) return false;
+    if (ability.tier === 0) return false; // starters are auto-unlocked
+    const pointCost = ability.upgradePointCost || 1;
+    if (this.upgradePoints < pointCost) return false;
+    if (ability.requires && !this.unlockedAbilities.has(ability.requires)) return false;
+    return true;
+  }
+
+  // Spend upgrade points to unlock an ability
+  unlockAbility(id) {
+    if (!this.canUnlockAbility(id)) return false;
+    const ability = PLAYER_ABILITIES[id];
+    this.upgradePoints -= (ability.upgradePointCost || 1);
+    this.unlockedAbilities.add(id);
+    return true;
+  }
+
+  // Get combat stats with cosmetic bonuses applied
+  getCombatStats() {
+    const base = { ...this.stats };
+    for (const slot of COSMETIC_SLOTS) {
+      const cosId = this.equipped[slot];
+      if (!cosId) continue;
+      const cos = COSMETICS[cosId];
+      if (!cos || !cos.stats) continue;
+      for (const [stat, val] of Object.entries(cos.stats)) {
+        if (base[stat] !== undefined) base[stat] += val;
+      }
+    }
+    // Ensure hp/mp don't exceed boosted max
+    if (base.hp > base.maxHP) base.hp = base.maxHP;
+    if (base.mp > base.maxMP) base.mp = base.maxMP;
+    return base;
+  }
+
+  // Equip a cosmetic item (returns true if changed)
+  equipCosmetic(id) {
+    const cos = COSMETICS[id];
+    if (!cos) return false;
+    this.equipped[cos.slot] = id;
+    return true;
+  }
+
+  // Unequip a slot
+  unequipCosmetic(slot) {
+    if (!this.equipped[slot]) return false;
+    this.equipped[slot] = null;
+    return true;
+  }
+
+  // Check if a cosmetic is unlocked based on flags/quests
+  isCosmeticUnlocked(id) {
+    const cos = COSMETICS[id];
+    if (!cos) return false;
+    if (cos.unlock === 'default') return true;
+    if (cos.unlock.flag) return !!this.flags[cos.unlock.flag];
+    if (cos.unlock.quest) return this.questStates[cos.unlock.quest] === 'complete';
+    return false;
+  }
+
+  // Gain XP and check for level up — grants upgrade points instead of auto-unlocking abilities
   gainXP(amount) {
     this.stats.xp += amount;
     const results = [];
@@ -90,6 +160,7 @@ export class Player {
       this.stats.spd += LEVEL_GROWTH.spd;
       this.stats.hp = this.stats.maxHP;
       this.stats.mp = this.stats.maxMP;
+      this.upgradePoints += 1;
       results.push(this.stats.level);
     }
     return results; // Returns array of levels gained
@@ -145,6 +216,9 @@ export class Player {
       position: { ...this.position },
       currentRoom: this.currentRoom,
       actIndex: this.actIndex,
+      upgradePoints: this.upgradePoints,
+      unlockedAbilities: [...this.unlockedAbilities],
+      equipped: { ...this.equipped },
     };
   }
 
@@ -156,6 +230,9 @@ export class Player {
     this.position = { ...data.position };
     this.currentRoom = data.currentRoom;
     this.actIndex = data.actIndex || 0;
+    this.upgradePoints = data.upgradePoints || 0;
+    this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break']);
+    if (data.equipped) this.equipped = { ...data.equipped };
     this.setPosition(this.position.x, this.position.z);
   }
 }

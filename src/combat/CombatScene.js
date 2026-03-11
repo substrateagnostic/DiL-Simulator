@@ -126,7 +126,7 @@ export class CombatScene {
     this.scene.add(this.bgMesh);
   }
 
-  setEnemy(enemyId) {
+  setEnemy(enemyId, player) {
     // Remove old enemy
     if (this.enemyGroup) {
       this.scene.remove(this.enemyGroup);
@@ -135,7 +135,7 @@ export class CombatScene {
     const config = CHARACTER_CONFIGS[enemyId];
     if (!config) return;
 
-    this.enemyGroup = buildCharacter(config);
+    this.enemyGroup = buildCharacter(config, { detailed: true });
     this.enemyAnimator = new CharacterAnimator(this.enemyGroup);
     this.enemyGroup.position.set(0, 0, 0);
     this.enemyGroup.scale.set(2.2, 2.2, 2.2); // Enemies loom large in combat
@@ -146,7 +146,17 @@ export class CombatScene {
     if (this.playerGroup) this.scene.remove(this.playerGroup);
     const playerConfig = CHARACTER_CONFIGS['andrew'];
     if (playerConfig) {
-      this.playerGroup = buildCharacter(playerConfig);
+      // Merge equipped cosmetic visuals into player config for combat
+      const combatConfig = { ...playerConfig };
+      if (player && player.equipped) {
+        const extraAccessories = [...(combatConfig.accessories || [])];
+        for (const slot of Object.keys(player.equipped)) {
+          const cosId = player.equipped[slot];
+          if (cosId) extraAccessories.push('cosmetic_' + cosId);
+        }
+        combatConfig.accessories = extraAccessories;
+      }
+      this.playerGroup = buildCharacter(combatConfig, { detailed: true });
       this.playerAnimator = new CharacterAnimator(this.playerGroup);
       this.playerGroup.position.set(2.2, 0, 3.5);
       this.playerGroup.scale.set(1.8, 1.8, 1.8);

@@ -246,3 +246,16 @@
   from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
   to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
+
+/* Ability tooltip in combat */
+.combat-ability-tooltip {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #aaa;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border-top: 1px solid rgba(233, 69, 96, 0.3);
+  margin-top: 6px;
+  font-style: italic;
+}

@@ -73,6 +73,7 @@ export class CombatHUD {
       label: ability.name,
       cost: ability.cost,
       id: ability.id,
+      description: ability.description,
       disabled: playerMP < ability.cost,
     }));
     this.menuItems.push({ label: 'Back', action: 'back' });
@@ -114,6 +115,9 @@ export class CombatHUD {
   _renderSubmenu() {
     this.menuEl.className = 'combat-submenu';
     this.menuEl.innerHTML = '';
+    // Tooltip element for ability descriptions
+    if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }
+
     this.menuItems.forEach((item, i) => {
       const el = document.createElement('div');
       el.className = `combat-submenu-item${i === this.selectedIndex ? ' selected' : ''}${item.disabled ? ' disabled' : ''}`;
@@ -135,6 +139,15 @@ export class CombatHUD {
       });
       this.menuEl.appendChild(el);
     });
+
+    // Show tooltip for selected ability
+    const selected = this.menuItems[this.selectedIndex];
+    if (selected && selected.description) {
+      this._tooltip = document.createElement('div');
+      this._tooltip.className = 'combat-ability-tooltip';
+      this._tooltip.textContent = selected.description;
+      this.menuEl.appendChild(this._tooltip);
+    }
   }
 
   navigate(direction) {
@@ -234,6 +247,7 @@ export class CombatHUD {
   }
 
   remove() {
+    if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);
     if (this.enemyInfo && this.enemyInfo.parentNode) this.enemyInfo.parentNode.removeChild(this.enemyInfo);
     this.root = null;

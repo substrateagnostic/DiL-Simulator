@@ -25,6 +25,8 @@ export const LEVEL_GROWTH = {
 };
 
 // Player abilities
+// Starter abilities (tier 0) are free at level 1.
+// Others require spending upgrade points AND having the prerequisite unlocked.
 export const PLAYER_ABILITIES = {
   file_motion: {
     name: 'File Motion',
@@ -32,31 +34,7 @@ export const PLAYER_ABILITIES = {
     cost: 10,
     power: 18,
     type: 'attack',
-    unlockLevel: 1,
-  },
-  cite_precedent: {
-    name: 'Cite Precedent',
-    description: 'Reference devastating case law',
-    cost: 25,
-    power: 40,
-    type: 'attack',
-    unlockLevel: 1,
-  },
-  per_my_last_email: {
-    name: 'Per My Last Email',
-    description: 'The most devastating phrase in corporate America',
-    cost: 50,
-    power: 75,
-    type: 'attack',
-    unlockLevel: 3,
-  },
-  cc_all: {
-    name: 'CC All',
-    description: 'Passive-aggressive email blast to everyone',
-    cost: 40,
-    power: 30,
-    type: 'attack_aoe',
-    unlockLevel: 2,
+    tier: 0, // starter — free
   },
   coffee_break: {
     name: 'Coffee Break',
@@ -64,17 +42,28 @@ export const PLAYER_ABILITIES = {
     cost: 0,
     healAmount: 35,
     type: 'heal',
-    unlockLevel: 1,
+    tier: 0, // starter — free
     skipsTurn: true,
   },
-  billable_hours: {
-    name: 'Billable Hours',
-    description: 'Buff all stats for 3 turns',
-    cost: 30,
-    buffAmount: { atk: 5, def: 5, spd: 3 },
-    buffDuration: 3,
-    type: 'buff',
-    unlockLevel: 2,
+  cite_precedent: {
+    name: 'Cite Precedent',
+    description: 'Reference devastating case law',
+    cost: 25,
+    power: 40,
+    type: 'attack',
+    tier: 1,
+    requires: 'file_motion',
+    upgradePointCost: 1,
+  },
+  cc_all: {
+    name: 'CC All',
+    description: 'Passive-aggressive email blast to everyone',
+    cost: 40,
+    power: 30,
+    type: 'attack_aoe',
+    tier: 1,
+    requires: 'file_motion',
+    upgradePointCost: 1,
   },
   due_diligence: {
     name: 'Due Diligence',
@@ -83,7 +72,30 @@ export const PLAYER_ABILITIES = {
     type: 'debuff',
     debuffAmount: { def: -5 },
     debuffDuration: 3,
-    unlockLevel: 3,
+    tier: 1,
+    requires: 'coffee_break',
+    upgradePointCost: 1,
+  },
+  billable_hours: {
+    name: 'Billable Hours',
+    description: 'Buff all stats for 3 turns',
+    cost: 30,
+    buffAmount: { atk: 5, def: 5, spd: 3 },
+    buffDuration: 3,
+    type: 'buff',
+    tier: 2,
+    requires: 'cc_all',
+    upgradePointCost: 1,
+  },
+  per_my_last_email: {
+    name: 'Per My Last Email',
+    description: 'The most devastating phrase in corporate America',
+    cost: 50,
+    power: 75,
+    type: 'attack',
+    tier: 2,
+    requires: 'cite_precedent',
+    upgradePointCost: 2,
   },
   fiduciary_shield: {
     name: 'Fiduciary Shield',
@@ -92,7 +104,9 @@ export const PLAYER_ABILITIES = {
     type: 'buff',
     buffAmount: { def: 8 },
     buffDuration: 2,
-    unlockLevel: 4,
+    tier: 2,
+    requires: 'due_diligence',
+    upgradePointCost: 1,
   },
   whistleblower: {
     name: 'Whistleblower',
@@ -100,7 +114,9 @@ export const PLAYER_ABILITIES = {
     cost: 45,
     power: 55,
     type: 'attack',
-    unlockLevel: 5,
+    tier: 3,
+    requires: 'per_my_last_email',
+    upgradePointCost: 2,
   },
   power_of_attorney: {
     name: 'Power of Attorney',
@@ -108,10 +124,12 @@ export const PLAYER_ABILITIES = {
     cost: 40,
     healAmount: 100,
     type: 'heal',
-    unlockLevel: 6,
+    tier: 3,
+    requires: 'fiduciary_shield',
+    upgradePointCost: 2,
     skipsTurn: false,
   },
-  // Subquest-unlocked abilities
+  // Subquest-unlocked abilities (no upgrade points needed)
   root_access: {
     name: 'Root Access',
     description: 'Hack directly into the enemy\'s mainframe',

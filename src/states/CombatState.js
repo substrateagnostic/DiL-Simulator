@@ -29,8 +29,8 @@ export class CombatState {
   }
 
   enter() {
-    this.scene.setEnemy(this.enemyId);
-    this.engine = new CombatEngine(this.player.stats, this.enemyId);
+    this.scene.setEnemy(this.enemyId, this.player);
+    this.engine = new CombatEngine(this.player.getCombatStats(), this.enemyId);
 
     const bgColors = {
       intern: [0x1a2a1a, 0x0a3a0a, 0x2a3a1a, 0x4a8a2a],
@@ -692,7 +692,7 @@ export class CombatState {
         if (levels.length > 0) {
           setTimeout(() => {
             AudioManager.playSfx('levelup');
-            this.hud.showMessage(`Level Up! Now level ${levels[levels.length - 1]}!`);
+            this.hud.showMessage(`Level Up! Lv.${levels[levels.length - 1]}! +${levels.length} Upgrade Point${levels.length > 1 ? 's' : ''}!`);
           }, 1500);
         }
         setTimeout(() => this._endCombat('victory'), levels.length > 0 ? 3500 : 2000);
