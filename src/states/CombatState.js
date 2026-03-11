@@ -258,6 +258,19 @@ export class CombatState {
       return 1200;
     }
 
+    if (result.type === 'break_counter') {
+      this.scene.playerAttackAnim();
+      AudioManager.playSfx('hit');
+      this.scene.shake(0.2);
+      setTimeout(() => {
+        this.scene.enemyHurtAnim();
+        this._spawnDamageNumber(result.damage, 'damage', 'enemy');
+      }, 100);
+      this.hud.showMessage('Pushed through the counter!');
+      this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44aaff, 2, 0.6);
+      return 1200;
+    }
+
     // Route special abilities to their unique animations
     if (abilityId) {
       return this._playAbilityAnim(abilityId, result);

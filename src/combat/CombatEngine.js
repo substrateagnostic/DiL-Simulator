@@ -82,12 +82,18 @@ export class CombatEngine {
     if (confusion) return confusion;
 
     if (this.counterActive) {
+      // Basic attack breaks through counter at half power
       this.counterActive = false;
-      const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def, this.player);
-      this.player.hp = Math.max(0, this.player.hp - counterDmg.damage);
-      this.log.push({ type: 'counter', damage: counterDmg.damage, message: '"Great catch! But actually..." Ross counters!' });
-      this._checkDefeat();
-      return { type: 'counter', damage: counterDmg.damage, critical: counterDmg.critical };
+      const pStats = this._getEffective(this.player);
+      const eStats = this._getEffective(this.enemy);
+      const result = this._calcDamage(pStats.atk, 5, eStats.def, this.enemy);
+      this.enemy.hp = Math.max(0, this.enemy.hp - result.damage);
+      // Also clear stun — fighting through the corporate BS
+      this.player.stunned = 0;
+      this.player.stunnedThisTurn = false;
+      this.log.push({ type: 'break_counter', damage: result.damage });
+      this._checkVictory();
+      return { ...result, type: 'break_counter', message: 'Pushed through the counter! Reduced damage dealt.' };
     }
 
     const pStats = this._getEffective(this.player);
@@ -431,8 +437,20 @@ export class CombatEngine {
         return abilities.includes(pick) ? pick : abilities[Math.floor(Math.random() * abilities.length)];
       }
 
-      case 'chaotic':
-        return abilities[Math.floor(Math.random() * abilities.length)];
+      case 'chaotic': {
+        // Prevent degenerate loops: don't stun if counter is active, don't counter if just stunned
+        let pool = [...abilities];
+        if (this.counterActive) {
+          // Counter is up — don't also stun (that creates an unbreakable loop)
+          pool = pool.filter(a => ENEMY_ABILITIES[a]?.type !== 'stun');
+        }
+        if (this.player.stunned > 0) {
+          // Player is stunned — don't waste a counter (they can't attack anyway)
+          pool = pool.filter(a => ENEMY_ABILITIES[a]?.type !== 'counter');
+        }
+        if (pool.length === 0) pool = abilities;
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
 
       default:
         return this._pickRandom(abilities, true);
