@@ -349,99 +349,334 @@ export const ENEMY_STATS = {
   },
 };
 
+// Pick a random message from an array, or return the string if it's not an array
+export function pickMessage(msg) {
+  return Array.isArray(msg) ? msg[Math.floor(Math.random() * msg.length)] : msg;
+}
+
 // Enemy ability definitions
 export const ENEMY_ABILITIES = {
   // Intern
-  paper_jam: { name: 'Paper Jam', power: 8, type: 'attack', message: 'The Intern caused a paper jam!!' },
-  confused_filing: { name: 'Confused Filing', power: 12, type: 'attack', message: 'The Intern filed your documents in the shredder!' },
+  paper_jam: { name: 'Paper Jam', power: 8, type: 'attack', messages: [
+    'The Intern caused a paper jam!!',
+    'The Intern jams the copier. Paper flies everywhere!',
+    'The Intern accidentally prints 500 copies of their lunch order!',
+  ]},
+  confused_filing: { name: 'Confused Filing', power: 12, type: 'attack', messages: [
+    'The Intern filed your documents in the shredder!',
+    'The Intern alphabetized your files... by the second letter.',
+    'The Intern stapled your lunch to a Form W-2!',
+  ]},
 
   // Karen
-  speak_to_manager: { name: 'Speak to Manager!', power: 10, type: 'attack', message: 'Karen demands to speak to your manager!', effect: 'summon' },
-  yelp_review: { name: 'Yelp Review', power: 8, type: 'dot', duration: 3, message: 'Karen is writing a scathing Yelp review in real time!' },
-  father_wanted: { name: '"My Father Would Have..."', power: 25, type: 'attack', message: '"My father would have WANTED me to have everything!"' },
+  speak_to_manager: { name: 'Speak to Manager!', power: 10, type: 'attack', effect: 'summon', messages: [
+    'Karen demands to speak to your manager!',
+    '"I WILL be speaking to someone in charge about this!"',
+    'Karen pulls out her phone. "I\'m calling corporate RIGHT NOW."',
+  ]},
+  yelp_review: { name: 'Yelp Review', power: 8, type: 'dot', duration: 3, messages: [
+    'Karen is writing a scathing Yelp review in real time!',
+    'Karen begins live-tweeting her dissatisfaction!',
+    '"One star. Would give zero if I could." Karen types furiously.',
+  ]},
+  father_wanted: { name: '"My Father Would Have..."', power: 25, type: 'attack', messages: [
+    '"My father would have WANTED me to have everything!"',
+    '"Daddy promised me the lake house! I have TEXTS!"',
+    '"Do you know what my father went through to build this?!"',
+  ]},
 
   // Chad
-  bro_down: { name: 'Bro Down', power: 22, type: 'attack', message: 'Chad flexes aggressively!' },
-  my_lawyer_says: { name: '"My Lawyer Says..."', power: 0, type: 'confuse', duration: 2, message: '"My lawyer says vibes are legally binding, bro."' },
-  trust_fund_tantrum: { name: 'Trust Fund Tantrum', power: 30, type: 'attack', message: 'Chad throws a tantrum about his trust fund distribution!' },
+  bro_down: { name: 'Bro Down', power: 22, type: 'attack', messages: [
+    'Chad flexes aggressively!',
+    'Chad slams a protein shake and charges!',
+    '"You don\'t even LIFT, bro!" Chad attacks!',
+    'Chad does a power clean and hurls the barbell at you!',
+  ]},
+  my_lawyer_says: { name: '"My Lawyer Says..."', power: 0, type: 'confuse', duration: 2, messages: [
+    '"My lawyer says vibes are legally binding, bro."',
+    '"My lawyer is like, super smart dude. He went to online law school."',
+    '"My lawyer says I can sue for emotional damages from this meeting."',
+  ]},
+  trust_fund_tantrum: { name: 'Trust Fund Tantrum', power: 30, type: 'attack', messages: [
+    'Chad throws a tantrum about his trust fund distribution!',
+    '"I NEED that money for my NFT project!" Chad rages!',
+    'Chad kicks over a chair and screams about his inheritance!',
+    '"This is literally THEFT! Grandpa SAID I could have it all!"',
+  ]},
 
   // Grandma
-  guilt_trip: { name: 'Guilt Trip', power: 30, type: 'attack', message: '"I just want what\'s best for my grandchildren... *sniff*"' },
-  fresh_cookies: { name: 'Fresh Cookies', power: 0, type: 'heal', healAmount: 25, message: 'Grandma pulls out a fresh batch of cookies!' },
-  changed_the_will: { name: '"I Changed the Will"', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 3, message: '"I\'ve been thinking about changing the will..."' },
+  guilt_trip: { name: 'Guilt Trip', power: 30, type: 'attack', messages: [
+    '"I just want what\'s best for my grandchildren... *sniff*"',
+    '"I\'ve given my whole LIFE to this family..." *dabs eyes with handkerchief*',
+    '"Your grandfather would be rolling in his grave right now."',
+    '"No, no. I\'ll be fine. I always am. Don\'t worry about little old me."',
+  ]},
+  fresh_cookies: { name: 'Fresh Cookies', power: 0, type: 'heal', healAmount: 25, messages: [
+    'Grandma pulls out a fresh batch of cookies!',
+    'Grandma opens her purse. The smell of snickerdoodles fills the room.',
+    '"Cookie, dear? I made them this morning." Grandma heals!',
+  ]},
+  changed_the_will: { name: '"I Changed the Will"', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 3, messages: [
+    '"I\'ve been thinking about changing the will..."',
+    '"Perhaps I should leave everything to the church instead."',
+    '"Did I mention I spoke with MY attorney yesterday?"',
+  ]},
 
   // Compliance Auditor
-  regulation_cite: { name: 'Regulation §17.4.2', power: 22, type: 'attack', message: 'The Auditor cites regulation §17.4.2 at you!' },
-  audit_trail: { name: 'Audit Trail', power: 15, type: 'dot', duration: 3, message: 'The Auditor begins tracing your audit trail!' },
-  form_27b_stroke_6: { name: 'Form 27B/6', power: 35, type: 'attack', message: 'You haven\'t filed Form 27B/6. This is... problematic.' },
+  regulation_cite: { name: 'Regulation §17.4.2', power: 22, type: 'attack', messages: [
+    'The Auditor cites regulation §17.4.2 at you!',
+    'The Auditor drops a 400-page compliance manual on the table!',
+    '"Per federal regulation 12 CFR §9.18..." The Auditor attacks!',
+  ]},
+  audit_trail: { name: 'Audit Trail', power: 15, type: 'dot', duration: 3, messages: [
+    'The Auditor begins tracing your audit trail!',
+    'The Auditor pulls up your transaction history. All of it.',
+    '"We\'ll be reviewing every entry since 2019." The paper trail grows.',
+  ]},
+  form_27b_stroke_6: { name: 'Form 27B/6', power: 35, type: 'attack', messages: [
+    'You haven\'t filed Form 27B/6. This is... problematic.',
+    '"This form needed three signatures. You have two. DENIED."',
+    'The Auditor stamps REJECTED in red ink across your face!',
+  ]},
 
   // Regional Manager
-  synergy_blast: { name: 'SYNERGY BLAST', power: 25, type: 'attack', message: 'The Regional Manager fires a devastating blast of SYNERGY!' },
-  corporate_restructure: { name: 'Corporate Restructure', power: 0, type: 'debuff', debuff: { atk: -5, def: -5, spd: -3 }, duration: 2, message: '"We\'re restructuring your department."' },
-  golden_parachute: { name: 'Golden Parachute', power: 0, type: 'heal', healAmount: 40, message: 'The Regional Manager activates their golden parachute!' },
+  synergy_blast: { name: 'SYNERGY BLAST', power: 25, type: 'attack', messages: [
+    'The Regional Manager fires a devastating blast of SYNERGY!',
+    '"Let\'s leverage our core competencies!" A beam of pure buzzwords hits you!',
+    '"SYNERGY! DISRUPTION! PARADIGM SHIFT!" The words deal physical damage!',
+  ]},
+  corporate_restructure: { name: 'Corporate Restructure', power: 0, type: 'debuff', debuff: { atk: -5, def: -5, spd: -3 }, duration: 2, messages: [
+    '"We\'re restructuring your department."',
+    '"Going forward, your role has been... redefined."',
+    '"The org chart changed overnight. You report to a committee now."',
+  ]},
+  golden_parachute: { name: 'Golden Parachute', power: 0, type: 'heal', healAmount: 40, messages: [
+    'The Regional Manager activates their golden parachute!',
+    'The manager opens a briefcase full of stock options. They feel renewed.',
+    '"My severance package is worth more than your salary." The manager heals!',
+  ]},
 
   // Alex Boss
-  quick_sync: { name: 'Quick Sync', power: 0, type: 'stun', duration: 1, message: '"Hey, got a sec for a quick sync?" (You don\'t.)' },
-  circle_back: { name: 'Let\'s Circle Back', power: 0, type: 'repeat', message: '"Let\'s circle back on that." (He repeats his last attack.)' },
-  great_catch: { name: 'Great Catch!', power: 0, type: 'counter', message: '"Great catch! But actually..." (Counter stance activated.)' },
+  quick_sync: { name: 'Quick Sync', power: 0, type: 'stun', duration: 1, messages: [
+    '"Hey, got a sec for a quick sync?" (You don\'t.)',
+    '"Let\'s just hop on a quick call—" You\'re trapped.',
+    '"This will only take a minute." (It never does.)',
+  ]},
+  circle_back: { name: 'Let\'s Circle Back', power: 0, type: 'repeat', messages: [
+    '"Let\'s circle back on that." (He repeats his last attack.)',
+    '"Per our earlier discussion..." (Same attack, new buzzwords.)',
+    '"Just following up on my follow-up." (Here we go again.)',
+  ]},
+  great_catch: { name: 'Great Catch!', power: 0, type: 'counter', messages: [
+    '"Great catch! But actually..." (Counter stance activated.)',
+    '"Love the initiative! However..." (He braces for your next move.)',
+    '"That\'s a great point. Let me push back on that." (Counter ready.)',
+  ]},
 
   // Reception Clients
-  portfolio_panic: { name: 'Portfolio Panic', power: 14, type: 'attack', message: 'The client erupts over their portfolio performance!' },
-  demand_guarantees: { name: 'Demand Guarantees', power: 0, type: 'confuse', duration: 2, message: '"I need guaranteed 20% returns! Is that so hard?!"' },
-  call_the_other_advisor: { name: 'Call My Other Advisor', power: 20, type: 'attack', message: 'The client threatens to take their business to Merrill Lynch!' },
-  client_bro_down: { name: 'Bro, Trust Me', power: 16, type: 'attack', message: 'The client insists on putting everything in crypto, bro.' },
+  portfolio_panic: { name: 'Portfolio Panic', power: 14, type: 'attack', messages: [
+    'The client erupts over their portfolio performance!',
+    '"Why is my balance LOWER than yesterday?!" The client rages!',
+    '"I saw on CNBC that everyone else is making money!" The client attacks!',
+    '"My brother-in-law\'s advisor gets him 30% returns!" Panic ensues!',
+  ]},
+  demand_guarantees: { name: 'Demand Guarantees', power: 0, type: 'confuse', duration: 2, messages: [
+    '"I need guaranteed 20% returns! Is that so hard?!"',
+    '"Just put it all in something SAFE that also grows 25% a year."',
+    '"My last advisor PROMISED me no losses!" (They didn\'t.)',
+    '"Can\'t you just guarantee the market goes up?"',
+  ]},
+  call_the_other_advisor: { name: 'Call My Other Advisor', power: 20, type: 'attack', messages: [
+    'The client threatens to take their business to Merrill Lynch!',
+    '"Morgan Stanley would NEVER treat me this way!"',
+    '"I\'m calling Schwab. They appreciate their clients!"',
+    '"My golf buddy says his advisor at JPMorgan is MUCH better."',
+  ]},
+  client_bro_down: { name: 'Bro, Trust Me', power: 16, type: 'attack', messages: [
+    'The client insists on putting everything in crypto, bro.',
+    '"Have you heard of this new memecoin? It\'s gonna 100x, trust me."',
+    '"My buddy on Reddit says SPY puts are free money!"',
+    '"Just YOLO the whole trust into GameStop. What could go wrong?"',
+  ]},
 
   // Security Guard
-  badge_check: { name: 'Badge Check', power: 14, type: 'attack', message: '"Your badge is expired." The guard doesn\'t wait for you to explain.' },
-  tackle: { name: 'Tackle', power: 20, type: 'attack', message: 'The security guard tackles you into a filing cabinet!' },
-  radio_backup: { name: 'Radio for Backup', power: 0, type: 'buff', buff: { atk: 4, def: 4 }, duration: 3, message: '"All units, I need backup on the sixth floor!" The guard looks more confident.' },
+  badge_check: { name: 'Badge Check', power: 14, type: 'attack', messages: [
+    '"Your badge is expired." The guard doesn\'t wait for you to explain.',
+    '"This badge photo doesn\'t even look like you." The guard squints.',
+    '"Floor access denied." The guard blocks your path!',
+  ]},
+  tackle: { name: 'Tackle', power: 20, type: 'attack', messages: [
+    'The security guard tackles you into a filing cabinet!',
+    'The guard body-checks you into the wall!',
+    '"STOP RIGHT THERE!" The guard charges!',
+  ]},
+  radio_backup: { name: 'Radio for Backup', power: 0, type: 'buff', buff: { atk: 4, def: 4 }, duration: 3, messages: [
+    '"All units, I need backup on the sixth floor!" The guard looks more confident.',
+    'The guard clicks their radio. "Send reinforcements." Static crackles.',
+  ]},
 
   // HR Representative
-  mandatory_training: { name: 'Mandatory Training', power: 0, type: 'stun', duration: 1, message: '"You\'re required to complete a 4-hour sensitivity module. Right now."' },
-  formal_warning: { name: 'Formal Warning', power: 12, type: 'dot', duration: 3, message: 'The HR Rep places a formal warning in your permanent file. It stings.' },
-  sensitivity_seminar: { name: 'Sensitivity Seminar', power: 0, type: 'debuff', debuff: { atk: -3, spd: -3 }, duration: 2, message: '"Perhaps we should discuss your communication style." You feel vaguely guilty.' },
+  mandatory_training: { name: 'Mandatory Training', power: 0, type: 'stun', duration: 1, messages: [
+    '"You\'re required to complete a 4-hour sensitivity module. Right now."',
+    '"We need you to watch this 90-minute video on workplace decorum."',
+    '"Sign this acknowledgment form. All 47 pages."',
+  ]},
+  formal_warning: { name: 'Formal Warning', power: 12, type: 'dot', duration: 3, messages: [
+    'The HR Rep places a formal warning in your permanent file. It stings.',
+    '"This will go on your record." The words echo ominously.',
+    'A yellow post-it appears on your file: "SEE ME." The bureaucracy wounds.',
+  ]},
+  sensitivity_seminar: { name: 'Sensitivity Seminar', power: 0, type: 'debuff', debuff: { atk: -3, spd: -3 }, duration: 2, messages: [
+    '"Perhaps we should discuss your communication style." You feel vaguely guilty.',
+    '"Let\'s unpack your behavior in that last meeting." Your confidence shrinks.',
+  ]},
 
   // Restructuring Analyst
-  downsize: { name: 'Downsize', power: 18, type: 'attack', message: '"Your position has been identified for potential elimination." Ouch.' },
-  efficiency_report: { name: 'Efficiency Report', power: 0, type: 'debuff', debuff: { def: -4, spd: -4 }, duration: 2, message: 'The analyst shows you a graph where your productivity is a flatline.' },
-  outsource_threat: { name: 'Outsource Threat', power: 22, type: 'attack', message: '"We could replace your entire department with a SaaS platform for $9.99/month."' },
+  downsize: { name: 'Downsize', power: 18, type: 'attack', messages: [
+    '"Your position has been identified for potential elimination." Ouch.',
+    '"We\'re optimizing headcount." The analyst highlights your name on a list.',
+    '"The data suggests your role is... redundant."',
+  ]},
+  efficiency_report: { name: 'Efficiency Report', power: 0, type: 'debuff', debuff: { def: -4, spd: -4 }, duration: 2, messages: [
+    'The analyst shows you a graph where your productivity is a flatline.',
+    '"Your KPIs are... concerning." A spreadsheet materializes.',
+    'The analyst taps a pie chart. Your slice is labeled "waste."',
+  ]},
+  outsource_threat: { name: 'Outsource Threat', power: 22, type: 'attack', messages: [
+    '"We could replace your entire department with a SaaS platform for $9.99/month."',
+    '"AI could do your job. In fact, it already does — better."',
+    '"Have you seen what contractors in Bangalore charge? Much less than you."',
+  ]},
 
   // Brand Consultant
-  rebrand: { name: 'Rebrand', power: 0, type: 'confuse', duration: 2, message: '"We\'re pivoting your identity to align with our new brand architecture." You forget who you are.' },
-  focus_group: { name: 'Focus Group', power: 14, type: 'attack', message: '"Our focus group found your performance \'deeply concerning.\' Here are 47 pages of feedback."' },
-  logo_redesign: { name: 'Logo Redesign', power: 0, type: 'heal', healAmount: 20, message: 'The consultant unveils a new logo. It\'s the old logo but in a different font. They feel energized.' },
+  rebrand: { name: 'Rebrand', power: 0, type: 'confuse', duration: 2, messages: [
+    '"We\'re pivoting your identity to align with our new brand architecture." You forget who you are.',
+    '"Your personal brand needs work. Let me show you a mood board."',
+    '"Have you considered that your name doesn\'t test well in focus groups?"',
+  ]},
+  focus_group: { name: 'Focus Group', power: 14, type: 'attack', messages: [
+    '"Our focus group found your performance \'deeply concerning.\' Here are 47 pages of feedback."',
+    'The consultant reads anonymous feedback aloud. It\'s not anonymous anymore.',
+    '"On a scale of 1-10, the group rated you a \'yikes.\'"',
+  ]},
+  logo_redesign: { name: 'Logo Redesign', power: 0, type: 'heal', healAmount: 20, messages: [
+    'The consultant unveils a new logo. It\'s the old logo but in a different font. They feel energized.',
+    '"Behold our refreshed visual identity!" It\'s imperceptibly different. The consultant heals.',
+  ]},
 
   // Corporate Lawyer
-  cease_desist: { name: 'Cease & Desist', power: 0, type: 'stun', duration: 1, message: '"You are hereby ordered to cease and desist all activities pending review." You freeze.' },
-  legal_jargon: { name: 'Legal Jargon', power: 0, type: 'confuse', duration: 2, message: '"Pursuant to Section 14(a)(2)(iii) of the aforementioned..." Your brain shuts down.' },
-  billable_assault: { name: 'Billable Assault', power: 28, type: 'attack', message: 'The lawyer charges you $450/hour while also charging AT you.' },
+  cease_desist: { name: 'Cease & Desist', power: 0, type: 'stun', duration: 1, messages: [
+    '"You are hereby ordered to cease and desist all activities pending review." You freeze.',
+    '"My client demands you stop. Immediately. I have paperwork." You\'re paralyzed.',
+    'A cease and desist letter materializes from thin air. You can\'t move.',
+  ]},
+  legal_jargon: { name: 'Legal Jargon', power: 0, type: 'confuse', duration: 2, messages: [
+    '"Pursuant to Section 14(a)(2)(iii) of the aforementioned..." Your brain shuts down.',
+    '"The party of the first part, notwithstanding..." Your eyes glaze over.',
+    '"Under the doctrine of respondeat superior, vis-à-vis..." Nothing makes sense anymore.',
+  ]},
+  billable_assault: { name: 'Billable Assault', power: 28, type: 'attack', messages: [
+    'The lawyer charges you $450/hour while also charging AT you.',
+    '"This conversation is billable." The lawyer attacks and invoices you simultaneously.',
+    'Each word costs $50. The lawyer uses a LOT of words. Violently.',
+  ]},
 
   // Rachel SVP (3-phase boss)
-  strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', message: '"This department is pivoting. You\'re either on the bus or under it."' },
-  performance_review: { name: 'Performance Review', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 2, message: 'Rachel reads your performance review aloud. Every word is a scalpel.' },
-  restructure_threat: { name: 'Restructure Threat', power: 16, type: 'dot', duration: 3, message: '"I\'m restructuring this department. Starting with your position."' },
-  hostile_takeover: { name: 'Hostile Takeover', power: 30, type: 'attack', message: 'Rachel executes a hostile takeover of your composure!' },
-  board_resolution: { name: 'Board Resolution', power: 0, type: 'heal', healAmount: 40, message: 'Rachel invokes a board resolution. The corporate hierarchy reinforces her.' },
-  golden_handcuffs: { name: 'Golden Handcuffs', power: 0, type: 'stun', duration: 1, message: '"Your compensation package includes a non-compete. You can\'t leave. Ever."' },
-  final_assessment: { name: 'Final Assessment', power: 35, type: 'attack', message: '"My final assessment: this department doesn\'t need you. It needs ME."' },
+  strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', messages: [
+    '"This department is pivoting. You\'re either on the bus or under it."',
+    '"We\'re going in a new direction. You\'re not invited."',
+    '"Strategic realignment requires... sacrifices." Rachel strikes!',
+  ]},
+  performance_review: { name: 'Performance Review', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 2, messages: [
+    'Rachel reads your performance review aloud. Every word is a scalpel.',
+    '"Let me share some \'constructive feedback.\'" Rachel\'s smile doesn\'t reach her eyes.',
+    '"I\'ve prepared a 360-degree assessment. It\'s mostly degrees of disappointment."',
+  ]},
+  restructure_threat: { name: 'Restructure Threat', power: 16, type: 'dot', duration: 3, messages: [
+    '"I\'m restructuring this department. Starting with your position."',
+    '"By Friday, this department will look very different. Very." The threat lingers.',
+    '"I have a meeting with the board tomorrow. About you." Dread sets in.',
+  ]},
+  hostile_takeover: { name: 'Hostile Takeover', power: 30, type: 'attack', messages: [
+    'Rachel executes a hostile takeover of your composure!',
+    '"This isn\'t personal. It\'s structural." Rachel\'s attack feels VERY personal.',
+    'Rachel presents a PowerPoint titled "Why You\'re Wrong." It has 30 slides.',
+  ]},
+  board_resolution: { name: 'Board Resolution', power: 0, type: 'heal', healAmount: 40, messages: [
+    'Rachel invokes a board resolution. The corporate hierarchy reinforces her.',
+    '"The board has approved my proposal." Rachel\'s power grows.',
+  ]},
+  golden_handcuffs: { name: 'Golden Handcuffs', power: 0, type: 'stun', duration: 1, messages: [
+    '"Your compensation package includes a non-compete. You can\'t leave. Ever."',
+    '"I\'ve locked your stock options. You\'re not going anywhere."',
+  ]},
+  final_assessment: { name: 'Final Assessment', power: 35, type: 'attack', messages: [
+    '"My final assessment: this department doesn\'t need you. It needs ME."',
+    '"The data is clear. I am the future of this organization. You are the past."',
+  ]},
 
   // CFO's Assistant
-  expense_review: { name: 'Expense Review', power: 18, type: 'attack', message: '"This lunch receipt from 2019... explain yourself."' },
-  budget_slash: { name: 'Budget Slash', power: 0, type: 'debuff', debuff: { atk: -5, spd: -3 }, duration: 3, message: '"Your department budget has been reduced by 40%."' },
-  cfo_call: { name: 'CFO on Line One', power: 0, type: 'buff', buff: { atk: 6, def: 6 }, duration: 2, message: '"The CFO is backing me on this." The assistant grows more confident.' },
+  expense_review: { name: 'Expense Review', power: 18, type: 'attack', messages: [
+    '"This lunch receipt from 2019... explain yourself."',
+    '"You claimed $12 for parking on a day the office was closed."',
+    '"Your coffee expenses exceed your department\'s supply budget."',
+  ]},
+  budget_slash: { name: 'Budget Slash', power: 0, type: 'debuff', debuff: { atk: -5, spd: -3 }, duration: 3, messages: [
+    '"Your department budget has been reduced by 40%."',
+    '"We\'re implementing a spending freeze. Effective now."',
+  ]},
+  cfo_call: { name: 'CFO on Line One', power: 0, type: 'buff', buff: { atk: 6, def: 6 }, duration: 2, messages: [
+    '"The CFO is backing me on this." The assistant grows more confident.',
+    'The assistant holds up their phone. "The CFO says hi." Power radiates from the screen.',
+  ]},
 
   // Regional Director
-  corporate_mandate: { name: 'Corporate Mandate', power: 24, type: 'attack', message: '"By mandate of the board: your department is being absorbed."' },
-  market_correction: { name: 'Market Correction', power: 30, type: 'attack', message: '"The market has spoken. Your services are... corrected."' },
-  quarterly_target: { name: 'Quarterly Target', power: 0, type: 'dot', duration: 3, message: '"You missed Q3 targets by 0.3%. This will be on your record."' },
+  corporate_mandate: { name: 'Corporate Mandate', power: 24, type: 'attack', messages: [
+    '"By mandate of the board: your department is being absorbed."',
+    '"Corporate has decided. There is no appeal." The director strikes!',
+    '"This comes from the top. You have no recourse."',
+  ]},
+  market_correction: { name: 'Market Correction', power: 30, type: 'attack', messages: [
+    '"The market has spoken. Your services are... corrected."',
+    '"Consider this a correction to your career trajectory."',
+    '"Markets are efficient. Your employment is not." A devastating blow!',
+  ]},
+  quarterly_target: { name: 'Quarterly Target', power: 0, type: 'dot', duration: 3, messages: [
+    '"You missed Q3 targets by 0.3%. This will be on your record."',
+    '"Your quarterly performance is trending down. Again."',
+    '"Every quarter you underperform, the board takes notice."',
+  ]},
 
   // The Algorithm (Final Boss)
-  data_harvest: { name: 'Data Harvest', power: 18, type: 'attack', message: 'The Algorithm scrapes your performance data and weaponizes it.' },
-  pattern_recognition: { name: 'Pattern Recognition', power: 0, type: 'debuff', debuff: { def: -6 }, duration: 2, message: '"I have identified 47 inefficiencies in your workflow." Your defenses crumble.' },
-  risk_assessment: { name: 'Risk Assessment', power: 0, type: 'confuse', duration: 2, message: '"Probability of your success: 3.7%." The numbers swirl around you.' },
-  predictive_model: { name: 'Predictive Model', power: 0, type: 'counter', message: '"I predicted your move 3 turns ago." Counter stance activated.' },
-  algorithmic_trading: { name: 'Algorithmic Trading', power: 28, type: 'attack', message: 'The Algorithm executes 10,000 trades per second. Each one costs you patience.' },
-  total_optimization: { name: 'TOTAL OPTIMIZATION', power: 40, type: 'attack', message: '"Humans are the bottleneck. I am the solution." The Algorithm unleashes its full power.' },
+  data_harvest: { name: 'Data Harvest', power: 18, type: 'attack', messages: [
+    'The Algorithm scrapes your performance data and weaponizes it.',
+    'The Algorithm processes your entire work history in 0.003 seconds. It\'s not impressed.',
+    'Every email you\'ve ever sent is analyzed. The Algorithm attacks with your own words.',
+  ]},
+  pattern_recognition: { name: 'Pattern Recognition', power: 0, type: 'debuff', debuff: { def: -6 }, duration: 2, messages: [
+    '"I have identified 47 inefficiencies in your workflow." Your defenses crumble.',
+    '"Your behavioral patterns are... predictable." The Algorithm adapts.',
+    '"Anomaly detected: human error rate 94.7%." Your guard drops.',
+  ]},
+  risk_assessment: { name: 'Risk Assessment', power: 0, type: 'confuse', duration: 2, messages: [
+    '"Probability of your success: 3.7%." The numbers swirl around you.',
+    '"Running Monte Carlo simulation... all outcomes unfavorable."',
+    '"Risk assessment complete. Recommendation: surrender."',
+  ]},
+  predictive_model: { name: 'Predictive Model', power: 0, type: 'counter', messages: [
+    '"I predicted your move 3 turns ago." Counter stance activated.',
+    '"Your next action has already been accounted for." The Algorithm braces.',
+  ]},
+  algorithmic_trading: { name: 'Algorithmic Trading', power: 28, type: 'attack', messages: [
+    'The Algorithm executes 10,000 trades per second. Each one costs you patience.',
+    'High-frequency trading algorithms assault your composure at lightspeed!',
+    'The Algorithm shorts your confidence and goes long on despair.',
+  ]},
+  total_optimization: { name: 'TOTAL OPTIMIZATION', power: 40, type: 'attack', messages: [
+    '"Humans are the bottleneck. I am the solution." The Algorithm unleashes its full power.',
+    '"OPTIMIZATION COMPLETE. HUMAN INPUT: DEPRECATED." Reality warps!',
+    '"All inefficiencies will be eliminated. Starting with you." Maximum power!',
+  ]},
 };
 
 // Items

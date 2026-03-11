@@ -268,19 +268,21 @@ function shuffle(arr) {
   return a;
 }
 
-function scaleEnemyStats(assets) {
+function scaleEnemyStats(assets, playerLevel = 1) {
   const MAX_ASSET = 25_000_000; // raised for new high-AUM types
   const t = Math.min(1, assets / MAX_ASSET);
+  // Level scaling: each player level adds ~8% to base stats
+  const lvlScale = 1 + (playerLevel - 1) * 0.08;
   return {
-    maxHP: Math.round(45 + t * 115),  // 45–160
-    atk:   Math.round(6  + t * 16),   // 6–22
-    def:   Math.round(3  + t * 15),   // 3–18
-    spd:   Math.round(4  + t * 10),   // 4–14
-    xpReward: Math.round(15 + t * 135), // 15–150
+    maxHP: Math.round((45 + t * 115) * lvlScale),
+    atk:   Math.round((6  + t * 16)  * lvlScale),
+    def:   Math.round((3  + t * 15)  * lvlScale),
+    spd:   Math.round((4  + t * 10)  * lvlScale),
+    xpReward: Math.round((15 + t * 135) * lvlScale),
   };
 }
 
-export function generateClient(overrideLastName) {
+export function generateClient(overrideLastName, playerLevel = 1) {
   const typeDef = pick(CLIENT_TYPES);
   const lastName = overrideLastName || pick(LAST_NAMES);
   const name = `${pick(FIRST_NAMES)} ${lastName}`;
@@ -311,7 +313,7 @@ export function generateClient(overrideLastName) {
   const attributes = [...posAttrs, ...negAttrs];
   const netAngerDelta = attributes.reduce((sum, a) => sum + a.angerDelta, 0);
 
-  const scaled = scaleEnemyStats(assets);
+  const scaled = scaleEnemyStats(assets, playerLevel);
   const enemyStats = {
     name,
     maxHP: scaled.maxHP,
@@ -344,7 +346,7 @@ export function generateClient(overrideLastName) {
 // Accept one → others follow with better stats.
 // Reject one → others arrive angrier.
 
-export function generateBeneficiaryChain() {
+export function generateBeneficiaryChain(playerLevel = 1) {
   const lastName = pick(LAST_NAMES);
   const chainTypes = CLIENT_TYPES.filter(t => t.chainEligible);
   // If no chain-eligible types, fall back to any type
@@ -352,7 +354,7 @@ export function generateBeneficiaryChain() {
 
   const members = [];
   for (let i = 0; i < 3; i++) {
-    const client = generateClient(lastName);
+    const client = generateClient(lastName, playerLevel);
     // Force chain-eligible type if available
     if (chainTypes.length > 0) {
       const typeDef = chainTypes[i % chainTypes.length];

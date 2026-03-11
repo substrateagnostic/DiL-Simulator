@@ -519,7 +519,7 @@ export class ExplorationState {
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
-      const client = generateClient();
+      const client = generateClient(null, this.player.stats.level);
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
@@ -628,7 +628,7 @@ export class ExplorationState {
     // 20% chance to generate a beneficiary chain (starts at client #4+)
     const totalSeen = this.player.getFlag('totalClientsSeen') || 0;
     if (totalSeen >= 4 && Math.random() < 0.2) {
-      const chain = generateBeneficiaryChain();
+      const chain = generateBeneficiaryChain(this.player.stats.level);
       this.player.setFlag(`chain_${chain.id}`, { acceptedCount: 0, rejectedCount: 0 });
       // Queue the followers, return the lead
       const [lead, ...followers] = chain.members;
@@ -637,7 +637,7 @@ export class ExplorationState {
       return lead;
     }
 
-    return generateClient();
+    return generateClient(null, this.player.stats.level);
   }
 
   _updateChainState(clientData, accepted) {

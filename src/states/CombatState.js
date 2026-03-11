@@ -332,6 +332,7 @@ export class CombatState {
 
       case 'file_motion': {
         // Legal paperwork hurled across the field — stream of paper, then scraps burst on impact
+        this.scene.playerAbilityLunge(0.5);
         this.particles.stream(
           { x: 0.1, y: 1.0, z: 3.5 },
           { x: 0.0, y: 1.2, z: 0.3 },
@@ -351,6 +352,7 @@ export class CombatState {
 
       case 'cite_precedent': {
         // Golden law energy condenses overhead, then SLAMS down with authority
+        this.scene.playerAbilityLunge(0.4);
         this.scene.flash(0xddaa00, 0.08);
         this.particles.burst({ x: 0,    y: 2.8, z: 0 }, 15, 0xffdd44, 0.8, 0.55);
         this.particles.burst({ x: 0.3,  y: 2.5, z: 0 }, 10, 0xddaa00, 0.6, 0.45);
@@ -368,6 +370,7 @@ export class CombatState {
 
       case 'per_my_last_email': {
         // Three escalating waves of corporate fury — the most devastating phrase known to man
+        this.scene.playerAbilityLunge(0.8);
         this.hud.showMessage('Per My Last Email...');
         this.scene.flash(0x660000, 0.15);
         this.particles.burst({ x: 0, y: 1.8, z: 1.5 }, 20, 0xff2200, 3, 0.55);
@@ -391,6 +394,7 @@ export class CombatState {
 
       case 'cc_all': {
         // Passive-aggressive email blast — three expanding rings of corporate blue
+        this.scene.playerAbilityLunge(0.5);
         this.hud.showMessage('CC All! Everyone is now involved.');
         this.scene.flash(0x2244aa, 0.10);
         this.particles.ring({ x: 0, y: 1.0, z: 0 }, 28, 0x4488ff, 3.5, 1.0);
@@ -466,6 +470,7 @@ export class CombatState {
 
       case 'whistleblower': {
         // Red alert — three escalating flashes + damage
+        this.scene.playerAbilityLunge(0.7);
         this.hud.showMessage('Whistleblower!');
         this.scene.flash(0xcc0000, 0.12);
         this.particles.burst({ x: 0, y: 1.5, z: 2 }, 15, 0xff2200, 3, 0.6);
@@ -501,6 +506,7 @@ export class CombatState {
 
       case 'root_access': {
         // Green matrix-style particles streaming to enemy
+        this.scene.playerAbilityLunge(0.6);
         this.hud.showMessage('Root Access!');
         this.particles.stream(
           { x: 0.1, y: 1.0, z: 3.5 },
@@ -547,6 +553,7 @@ export class CombatState {
 
       case 'notarized_strike': {
         // Gold stamp effect — heavy impact
+        this.scene.playerAbilityLunge(0.7);
         this.hud.showMessage('Notarized Strike!');
         this.scene.flash(0xddaa00, 0.10);
         this.particles.burst({ x: 0, y: 2.5, z: 0 }, 12, 0xffd700, 1.0, 0.5);
@@ -564,6 +571,7 @@ export class CombatState {
 
       case 'invoke_charter': {
         // White/gold holy light from above
+        this.scene.playerAbilityLunge(0.9);
         this.hud.showMessage('Invoke Charter!');
         this.scene.flash(0xffffff, 0.15);
         this.particles.burst({ x: 0, y: 3.0, z: 0 }, 20, 0xffffff, 1.5, 0.6);

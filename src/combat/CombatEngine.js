@@ -1,4 +1,4 @@
-import { PLAYER_ABILITIES, ENEMY_ABILITIES, ENEMY_STATS, ITEMS } from '../data/stats.js';
+import { PLAYER_ABILITIES, ENEMY_ABILITIES, ENEMY_STATS, ITEMS, pickMessage } from '../data/stats.js';
 import { COMBAT } from '../utils/constants.js';
 import { randomRange } from '../utils/math.js';
 import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
@@ -257,7 +257,7 @@ export class CombatEngine {
       return { type: 'attack', damage: dmg.damage, critical: dmg.critical, message: `${this.enemy.name} attacks!` };
     }
 
-    let result = { type: ability.type, abilityName: ability.name, message: ability.message };
+    let result = { type: ability.type, abilityName: ability.name, message: pickMessage(ability.messages || ability.message) };
 
     switch (ability.type) {
       case 'attack': {
@@ -305,7 +305,7 @@ export class CombatEngine {
         if (previousAbilityId && previousAbilityId !== abilityId) {
           const repeated = this._executeEnemyAbility(previousAbilityId, eStats, pStats, previousAbilityId);
           if (repeated) {
-            repeated.message = `${ability.message} ${repeated.message}`.trim();
+            repeated.message = `${pickMessage(ability.messages || ability.message)} ${repeated.message}`.trim();
             return repeated;
           }
         }
@@ -313,7 +313,7 @@ export class CombatEngine {
         const dmg = this._calcDamage(eStats.atk, 15, pStats.def, this.player);
         this.player.hp = Math.max(0, this.player.hp - dmg.damage);
         result.damage = dmg.damage;
-        result.message = `${ability.message} It devolves into a louder basic attack.`;
+        result.message = `${pickMessage(ability.messages || ability.message)} It devolves into a louder basic attack.`;
         break;
       }
       case 'summon': {

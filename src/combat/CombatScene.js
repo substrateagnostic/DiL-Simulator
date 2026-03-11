@@ -34,6 +34,10 @@ export class CombatScene {
     const backLight = new THREE.DirectionalLight(0x8888ff, 0.3);
     backLight.position.set(-2, 3, -3);
     this.scene.add(backLight);
+    // Rim light for character silhouette definition
+    const rimLight = new THREE.DirectionalLight(0xe94560, 0.4);
+    rimLight.position.set(-3, 2, 1);
+    this.scene.add(rimLight);
 
     // Psychedelic scrolling background (shader plane)
     this._createBackground();
@@ -134,7 +138,7 @@ export class CombatScene {
     this.enemyGroup = buildCharacter(config);
     this.enemyAnimator = new CharacterAnimator(this.enemyGroup);
     this.enemyGroup.position.set(0, 0, 0);
-    this.enemyGroup.scale.set(1.8, 1.8, 1.8); // Enemies are big in combat
+    this.enemyGroup.scale.set(2.2, 2.2, 2.2); // Enemies loom large in combat
     this.enemyGroup.rotation.y = Math.PI; // Face player
     this.scene.add(this.enemyGroup);
 
@@ -145,7 +149,7 @@ export class CombatScene {
       this.playerGroup = buildCharacter(playerConfig);
       this.playerAnimator = new CharacterAnimator(this.playerGroup);
       this.playerGroup.position.set(2.2, 0, 3.5);
-      this.playerGroup.scale.set(1.4, 1.4, 1.4);
+      this.playerGroup.scale.set(1.8, 1.8, 1.8);
       this.playerGroup.rotation.y = -Math.PI * 0.6; // angled toward enemy
       this.scene.add(this.playerGroup);
     }
@@ -189,29 +193,45 @@ export class CombatScene {
     }, duration * 1000);
   }
 
-  // Player attack animation — character lunges forward + slash sprites
+  // Player attack animation — wind-up, lunge, slash sprites
   playerAttackAnim() {
-    // Lunge player character toward enemy then snap back
-    if (this.playerGroup) {
-      const startX = this.playerGroup.position.x;
-      const startZ = this.playerGroup.position.z;
-      // Lunge toward enemy (negative x, negative z)
+    if (!this.playerGroup) {
+      this.flash(0xffffff, 0.06);
+      return;
+    }
+
+    const startX = this.playerGroup.position.x;
+    const startZ = this.playerGroup.position.z;
+    const startRotY = this.playerGroup.rotation.y;
+
+    // Phase 1: Wind-up — pull back slightly and rotate
+    this.playerGroup.position.x = startX + 0.3;
+    this.playerGroup.position.z = startZ + 0.2;
+    this.playerGroup.rotation.y = startRotY + 0.15;
+
+    setTimeout(() => {
+      if (!this.playerGroup) return;
+      // Phase 2: Lunge forward toward enemy
       this.playerGroup.position.x = startX - 1.4;
       this.playerGroup.position.z = startZ - 1.8;
-      // Punch-in camera too
+      this.playerGroup.rotation.y = startRotY - 0.1;
+      // Punch-in camera
       const origZ = this._basePos.z;
       this._basePos.z = origZ - 0.6;
+
+      // Phase 3: Snap back
       setTimeout(() => {
         if (this.playerGroup) {
           this.playerGroup.position.x = startX;
           this.playerGroup.position.z = startZ;
+          this.playerGroup.rotation.y = startRotY;
         }
         this._basePos.z = origZ;
-      }, 180);
-    }
+      }, 160);
+    }, 80);
 
-    // Brief white flash for instant visual punch
-    this.flash(0xffffff, 0.06);
+    // Flash on impact (delayed to match lunge)
+    setTimeout(() => this.flash(0xffffff, 0.06), 80);
 
     // Helper: create a sprite slash at a given position/size/rotation
     const makeSlash = (x, y, z, color, scaleX, scaleY, rotation) => {
@@ -229,46 +249,79 @@ export class CombatScene {
       return { sprite, mat };
     };
 
-    // Slashes appear directly on the enemy and expand outward then fade
-    const s1 = makeSlash( 0.1, 1.2, 0.3, 0xffffff, 0.5, 0.5,  0.35);
-    const s2 = makeSlash(-0.2, 0.9, 0.2, 0xffee88, 0.4, 0.4, -0.25);
-    const s3 = makeSlash( 0.3, 1.5, 0.4, 0xffffff, 0.3, 0.3,  0.9);
+    // Slashes appear on impact (delayed)
+    setTimeout(() => {
+      const s1 = makeSlash( 0.1, 1.2, 0.3, 0xffffff, 0.6, 0.6,  0.35);
+      const s2 = makeSlash(-0.2, 0.9, 0.2, 0xffee88, 0.5, 0.5, -0.25);
+      const s3 = makeSlash( 0.3, 1.5, 0.4, 0xffffff, 0.35, 0.35, 0.9);
+      const s4 = makeSlash(-0.1, 1.3, 0.1, 0xe94560, 0.3, 0.3,  0.6);
 
-    const DURATION = 0.3; // seconds
-    let elapsed = 0;
-    const tick = () => {
-      elapsed += 0.016;
-      const t = Math.min(elapsed / DURATION, 1);
-      const ease = 1 - t * t; // ease-out fade
-      const grow = 1 + t * 3; // expand outward
-      s1.mat.opacity = ease;
-      s2.mat.opacity = ease * 0.85;
-      s3.mat.opacity = ease * 0.7;
-      s1.sprite.scale.set(0.5 * grow, 0.5 * grow, 1);
-      s2.sprite.scale.set(0.4 * grow, 0.4 * grow, 1);
-      s3.sprite.scale.set(0.3 * grow, 0.3 * grow, 1);
-      if (t < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        this.scene.remove(s1.sprite);
-        this.scene.remove(s2.sprite);
-        this.scene.remove(s3.sprite);
-        s1.mat.dispose();
-        s2.mat.dispose();
-        s3.mat.dispose();
-      }
-    };
-    requestAnimationFrame(tick);
+      const DURATION = 0.35;
+      let elapsed = 0;
+      const tick = () => {
+        elapsed += 0.016;
+        const t = Math.min(elapsed / DURATION, 1);
+        const ease = 1 - t * t;
+        const grow = 1 + t * 3;
+        s1.mat.opacity = ease;
+        s2.mat.opacity = ease * 0.85;
+        s3.mat.opacity = ease * 0.7;
+        s4.mat.opacity = ease * 0.6;
+        s1.sprite.scale.set(0.6 * grow, 0.6 * grow, 1);
+        s2.sprite.scale.set(0.5 * grow, 0.5 * grow, 1);
+        s3.sprite.scale.set(0.35 * grow, 0.35 * grow, 1);
+        s4.sprite.scale.set(0.3 * grow, 0.3 * grow, 1);
+        if (t < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          [s1, s2, s3, s4].forEach(s => {
+            this.scene.remove(s.sprite);
+            s.mat.dispose();
+          });
+        }
+      };
+      requestAnimationFrame(tick);
+    }, 80);
   }
 
-  // Enemy attack animation (lunge forward)
+  // Player lunge helper for special abilities — shorter, no slashes
+  playerAbilityLunge(distance = 0.6) {
+    if (!this.playerGroup) return;
+    const startX = this.playerGroup.position.x;
+    const startZ = this.playerGroup.position.z;
+    this.playerGroup.position.x = startX - distance;
+    this.playerGroup.position.z = startZ - distance * 1.2;
+    setTimeout(() => {
+      if (this.playerGroup) {
+        this.playerGroup.position.x = startX;
+        this.playerGroup.position.z = startZ;
+      }
+    }, 200);
+  }
+
+  // Enemy attack animation — wind-up and lunge with rotation
   enemyAttackAnim() {
     if (!this.enemyGroup) return;
     const startZ = this.enemyGroup.position.z;
-    this.enemyGroup.position.z = startZ + 1.5;
+    const startX = this.enemyGroup.position.x;
+    const startRotY = this.enemyGroup.rotation.y;
+
+    // Wind-up: pull back
+    this.enemyGroup.position.z = startZ - 0.3;
     setTimeout(() => {
-      if (this.enemyGroup) this.enemyGroup.position.z = startZ;
-    }, 200);
+      if (!this.enemyGroup) return;
+      // Lunge forward
+      this.enemyGroup.position.z = startZ + 1.5;
+      this.enemyGroup.position.x = startX + 0.15;
+      this.enemyGroup.rotation.y = startRotY + 0.08;
+      setTimeout(() => {
+        if (this.enemyGroup) {
+          this.enemyGroup.position.z = startZ;
+          this.enemyGroup.position.x = startX;
+          this.enemyGroup.rotation.y = startRotY;
+        }
+      }, 180);
+    }, 60);
   }
 
   // Enemy hurt animation (recoil)
@@ -296,7 +349,7 @@ export class CombatScene {
       if (t > 1 || !this.enemyGroup) return;
       this.enemyGroup.position.y = startY - t * 2;
       this.enemyGroup.rotation.z = startRot + t * 1.5;
-      this.enemyGroup.scale.setScalar(1.8 * (1 - t * 0.5));
+      this.enemyGroup.scale.setScalar(2.2 * (1 - t * 0.5));
       requestAnimationFrame(animate);
     };
     animate();
