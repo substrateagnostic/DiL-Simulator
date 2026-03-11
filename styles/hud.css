@@ -109,6 +109,30 @@
   animation: none;
 }
 
+.hud-quest-divider {
+  border-top: 1px solid rgba(233, 69, 96, 0.2);
+  margin: 8px 0 6px;
+}
+
+.hud-quest-optional {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #999;
+  font-style: italic;
+  padding-left: 16px;
+  position: relative;
+  margin-bottom: 3px;
+  line-height: 1.3;
+}
+
+.hud-quest-optional::before {
+  content: '◇';
+  position: absolute;
+  left: 0;
+  color: #53a8b6;
+  font-style: normal;
+}
+
 /* Interaction prompt */
 .interact-prompt {
   position: absolute;

@@ -224,6 +224,8 @@ export class ExplorationState {
         if (STORY_THOUGHTS[key]) {
           setTimeout(() => this._showMonologue(STORY_THOUGHTS[key]), 2000);
         }
+        // Refresh quest tracker on any flag change (picks up side quest starts/completions)
+        this._refreshStoryProgress(true);
         // Janitor riddles complete — +2 all stats
         if (key === 'janitor_riddle_3_done') {
           this.player.stats.hp += 2;
@@ -506,6 +508,9 @@ export class ExplorationState {
   // ── Reception roguelite system ──────────────────────────────────────────────
 
   _onReceptionEntered() {
+    // Don't spawn clients until after first story battle
+    if (!this.player.getFlag('defeated_karen')) return;
+
     const existing = this.player.getFlag('currentClient');
     if (existing) {
       let client;
@@ -517,7 +522,7 @@ export class ExplorationState {
       const client = generateClient();
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
-      setTimeout(() => this._showToast(`New client waiting: ${client.name} — approach the reception desk`, 'objective'), 600);
+      setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
     }
   }
 
@@ -540,6 +545,11 @@ export class ExplorationState {
   }
 
   _handleReceptionDesk() {
+    // Roguelike not available until after the first story battle
+    if (!this.player.getFlag('defeated_karen')) {
+      this._showToast('You need to handle the Henderson meetings first.', 'info');
+      return;
+    }
     const clientRaw = this.player.getFlag('currentClient');
     if (!clientRaw) {
       this._onReceptionEntered();
@@ -897,6 +907,12 @@ export class ExplorationState {
 
     if (npc) {
       npc.faceTowards(this.player.position.x, this.player.position.z);
+
+      // Reception client NPC triggers roguelike combat directly
+      if (npc.id === 'reception_client') {
+        this._handleReceptionDesk();
+        return;
+      }
 
       const dialogId = this._getDialogId(npc);
       const dialog = DIALOGS[dialogId];
@@ -1285,15 +1301,55 @@ export class ExplorationState {
 
     if (this.questElement) {
       this.questElement.style.display = 'block';
+      const sideHints = this._getActiveSideQuestHints();
+      const sideHTML = sideHints.map(h =>
+        `<div class="hud-quest-optional">${h}</div>`
+      ).join('');
       this.questElement.innerHTML = `
         <div class="hud-quest-title">OBJECTIVE</div>
         <div class="hud-quest-objective">${objective}</div>
+        ${sideHTML ? `<div class="hud-quest-divider"></div>${sideHTML}` : ''}
       `;
     }
 
     if (changed && !silent) {
       this._showToast(`Objective Updated: ${objective}`, 'objective');
     }
+  }
+
+  _getActiveSideQuestHints() {
+    const hints = [];
+    const f = (flag) => this.player.getFlag(flag);
+
+    // Alex IT subquests — only show hints, no detailed steps
+    if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
+      hints.push('Alex mentioned a signal at 3:47 AM...');
+    }
+    if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
+      hints.push('Alex needs help tracing an old admin account');
+    }
+    if (f('network_started') && !f('quest_network_ghost_complete')) {
+      hints.push('Something strange on the network — Alex is investigating');
+    }
+    if (f('daves_legacy_started') && !f('quest_daves_legacy_complete')) {
+      hints.push('What happened to Alex\'s predecessor, Dave?');
+    }
+    if (f('printer_quest_started') && !f('quest_printers_soul_complete')) {
+      hints.push('The printer is acting stranger than usual...');
+    }
+    if (f('quest_final_patch_started') && !f('quest_final_patch_complete')) {
+      hints.push('Alex has a plan for the charter and the server');
+    }
+
+    // Misc side quests
+    if (f('lunch_thief_started') && !f('lunch_thief_complete')) {
+      hints.push('Someone keeps stealing lunches from the fridge');
+    }
+    if (f('server_secret_started') && !f('knows_server_secret')) {
+      hints.push('There\'s something hidden in the server room');
+    }
+
+    return hints;
   }
 
   _updateQuest(questId, stage) {

@@ -261,20 +261,23 @@ export class MenuState {
         const filled = Math.round(pct / 10);
         return '■'.repeat(filled) + '□'.repeat(10 - filled);
       };
+      const focusMusic = this._audioFocus === 'music';
+      const hl = 'background:rgba(233,69,96,0.15);border-left:3px solid #e94560;padding-left:8px;margin-left:-11px;';
       this.audioOverlay.innerHTML = `
         <div class="menu-panel">
           <div class="menu-title">AUDIO</div>
           <div style="color:#ddd;font-family:'VT323',monospace;font-size:22px;line-height:2.2;">
-            <div>
+            <div style="${focusMusic ? hl : ''}">
               <span style="color:#e94560;">Music:</span>
               <span id="audio-music-toggle" style="cursor:pointer;margin-left:12px;color:${on ? '#44ff44' : '#ff4444'};">
                 ${on ? 'ON' : 'OFF'}
               </span>
+              &nbsp; [${bar(mv)}] ${mv}%
             </div>
-            <div><span style="color:#e94560;">Music Vol:</span> [${bar(mv)}] ${mv}%</div>
-            <div style="font-size:16px;color:#888;margin-left:8px;">← → to adjust</div>
-            <div><span style="color:#e94560;">SFX Vol:</span>&nbsp;&nbsp; [${bar(sv)}] ${sv}%</div>
-            <div style="font-size:16px;color:#888;margin-left:8px;">← → to adjust</div>
+            <div style="${!focusMusic ? hl : ''}">
+              <span style="color:#e94560;">SFX Vol:</span>&nbsp;&nbsp; [${bar(sv)}] ${sv}%
+            </div>
+            <div style="font-size:16px;color:#888;margin-left:8px;">↑↓ select &nbsp; ← → adjust</div>
           </div>
           <div class="menu-item" style="margin-top:16px;" id="audio-back">Back</div>
         </div>

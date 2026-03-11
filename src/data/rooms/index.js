@@ -536,7 +536,7 @@ export const ROOMS = {
     npcs: [
       { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
       { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2 },
-      { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: false, sitting: true },
+      { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: true, sitting: true },
     ],
     exits: [
       // NORTH exits -> Cubicle Farm
