@@ -860,7 +860,7 @@ export const ROOMS = {
       // File cabinets
       { type: 'fileCabinet', x: 1, z: 1 },
       { type: 'fileCabinet', x: 14, z: 1 },
-      { type: 'fileCabinet', x: 1, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', x: 3, z: 8, rotation: Math.PI },
       { type: 'fileCabinet', x: 14, z: 8, rotation: Math.PI },
       // Suggestion box area
       { type: 'fileCabinetLow', x: 10, z: 8, rotation: Math.PI },
