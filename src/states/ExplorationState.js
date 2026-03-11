@@ -134,7 +134,7 @@ export class ExplorationState {
           this._showToast('Something is stirring in the building...', 'objective');
         }
         if (key === 'archive_accessible') {
-          this._showToast('The Archive is now accessible from the parking garage.', 'objective');
+          this._showToast('The Archive is now accessible from the stairwell.', 'objective');
         }
         if (key === 'hr_accessible') {
           this._showToast('The HR Department is now accessible.', 'objective');
@@ -1232,7 +1232,7 @@ export class ExplorationState {
       return 'Search the Archive for evidence';
     }
     if (this.player.getFlag('archive_accessible') && !this.player.getFlag('visited_archive')) {
-      return 'Find the Archive in the parking garage';
+      return 'Find the Archive through the stairwell';
     }
     if (this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done')) {
       return 'Talk to Alex from IT about the encrypted partition';
