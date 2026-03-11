@@ -120,6 +120,15 @@ export class ExplorationState {
         }
         if (key === 'branch_chosen') {
           this._showToast('The executive elevator is now unlocked.', 'objective');
+          // Apply Henderson decision buff/debuff
+          if (this.player.getFlag('path_legal')) {
+            this.player.stats.def += 3;
+          } else if (this.player.getFlag('path_bro')) {
+            this.player.stats.spd += 3;
+            this.player.stats.def -= 2;
+          } else if (this.player.getFlag('path_grandma')) {
+            this.player.stats.atk += 3;
+          }
         }
         if (key === 'act2_complete') {
           this._showToast('Something is stirring in the building...', 'objective');
@@ -258,7 +267,9 @@ export class ExplorationState {
           this._onReceptionEntered();
         }
 
-        if (roomId === 'executive_floor' && this.player.getFlag('branch_chosen') && !this.player.getFlag('ending_started')) {
+        // Ending dialog re-triggers on every executive floor visit until the boss is defeated
+        const endingBossDefeated = this.player.getFlag('regional_defeated') || this.player.getFlag('compliance_defeated') || this.player.getFlag('ross_defeated');
+        if (roomId === 'executive_floor' && this.player.getFlag('branch_chosen') && !endingBossDefeated) {
           this.player.setFlag('ending_started');
 
           let endingDialogId = null;
@@ -470,9 +481,6 @@ export class ExplorationState {
 
             const encounter = ENCOUNTERS[encounterId];
             if (encounter && encounter.postDialogId && DIALOGS[encounter.postDialogId]) {
-              if (encounterId === 'grandma' && !this.player.getFlag('branch_chosen')) {
-                this._pendingDialog = 'branch_decision';
-              }
               setTimeout(() => {
                 const postDialog = new DialogState(DIALOGS[encounter.postDialogId], this.player, this.stateManager, encounter.postDialogId);
                 this.stateManager.push(postDialog);

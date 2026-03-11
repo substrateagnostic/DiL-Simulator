@@ -194,7 +194,7 @@ export const ROOMS = {
     npcs: [
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' } },    // NW pod, paces nervously
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 } },  // NE pod, wanders looking lost
-      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' } }, // water cooler, paces
+      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'karen_defeated' } }, // water cooler, paces
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
     exits: [
@@ -282,7 +282,7 @@ export const ROOMS = {
       { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
     ],
     npcs: [
-      { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 } },
+      { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 }, condition: { notFlag: 'chad_defeated' } },
       { id: 'grandma', x: 6, z: 5, facing: Math.PI, condition: { flag: 'act5_complete' } },
     ],
     exits: [
@@ -342,7 +342,7 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' } },  // paces behind desk
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'branch_chosen' } },  // paces behind desk, leaves after Henderson decision
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
@@ -535,7 +535,7 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
-      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2 },
+      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { notFlag: 'grandma_defeated' } },
       { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: true, sitting: true },
     ],
     exits: [
@@ -686,6 +686,9 @@ export const ROOMS = {
     npcs: [
       { id: 'regional', x: 8, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' } },
       { id: 'compliance', x: 13, z: 4, facing: Math.PI / 2, movement: { type: 'pace', distance: 1.5, axis: 'z' } },
+      // Grandma and Ross appear at conference table after Henderson decision
+      { id: 'grandma', x: 7, z: 8, facing: 0, sitting: true, condition: { flag: 'branch_chosen' } },
+      { id: 'ross', x: 9, z: 8, facing: 0, sitting: true, condition: { flag: 'branch_chosen' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
