@@ -226,6 +226,9 @@ export class CombatEngine {
   enemyTurn() {
     if (this.isOver) return null;
 
+    // Counter expires at start of enemy turn — prevents stun+counter lock
+    this.counterActive = false;
+
     // Check if player's blockNext is active
     if (this.player.blockNext) {
       this.player.blockNext = false;

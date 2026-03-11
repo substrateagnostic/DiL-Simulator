@@ -326,6 +326,8 @@ export class MenuState {
   // ---- Abilities Screen ----
   _showAbilities() {
     if (this.abilitiesOverlay) return;
+    // Dismiss upgrade tooltip — player has seen the abilities screen
+    EventBus.emit('abilities-viewed');
     this.abilitiesOverlay = document.createElement('div');
     this.abilitiesOverlay.className = 'menu-overlay';
     this.abilitiesOverlay.style.zIndex = '60';

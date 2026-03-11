@@ -127,6 +127,7 @@ export class Player {
     const cos = COSMETICS[id];
     if (!cos) return false;
     this.equipped[cos.slot] = id;
+    this.rebuildMesh();
     return true;
   }
 
@@ -134,7 +135,31 @@ export class Player {
   unequipCosmetic(slot) {
     if (!this.equipped[slot]) return false;
     this.equipped[slot] = null;
+    this.rebuildMesh();
     return true;
+  }
+
+  // Rebuild mesh with current cosmetics applied (for third-person + combat)
+  rebuildMesh() {
+    const parent = this.mesh.parent;
+    const pos = this.mesh.position.clone();
+    const rot = this.mesh.rotation.clone();
+    if (parent) parent.remove(this.mesh);
+
+    // Build config with cosmetic accessories
+    const config = { ...CHARACTER_CONFIGS.andrew };
+    const extraAccessories = [...(config.accessories || [])];
+    for (const slot of COSMETIC_SLOTS) {
+      const cosId = this.equipped[slot];
+      if (cosId) extraAccessories.push('cosmetic_' + cosId);
+    }
+    config.accessories = extraAccessories;
+
+    this.mesh = buildCharacter(config);
+    this.animator = new CharacterAnimator(this.mesh);
+    this.mesh.position.copy(pos);
+    this.mesh.rotation.copy(rot);
+    if (parent) parent.add(this.mesh);
   }
 
   // Check if a cosmetic is unlocked based on flags/quests
@@ -232,7 +257,12 @@ export class Player {
     this.actIndex = data.actIndex || 0;
     this.upgradePoints = data.upgradePoints || 0;
     this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break']);
-    if (data.equipped) this.equipped = { ...data.equipped };
+    if (data.equipped) {
+      this.equipped = { ...data.equipped };
+      // Rebuild mesh to show saved cosmetics
+      const hasCosmetics = COSMETIC_SLOTS.some(s => this.equipped[s]);
+      if (hasCosmetics) this.rebuildMesh();
+    }
     this.setPosition(this.position.x, this.position.z);
   }
 }

@@ -73,6 +73,11 @@ export class ExplorationState {
     this.currentObjective = '';
     this.currentQuestId = 'main_act1';
 
+    // Upgrade tooltip state
+    this.upgradeTooltip = null;
+    this._upgradeTooltipDismissed = false;
+    this._lastSeenUpgradePoints = 0;
+
     // Event listeners
     this._listeners = [];
   }
@@ -112,6 +117,9 @@ export class ExplorationState {
         const questId = typeof data === 'string' ? data : data.quest;
         const stage = typeof data === 'string' ? undefined : data.objective;
         this._updateQuest(questId, stage);
+      }),
+      EventBus.on('abilities-viewed', () => {
+        this._dismissUpgradeTooltip();
       }),
       EventBus.on('flag-set', ({ key }) => {
         this._refreshStoryProgress();
@@ -348,7 +356,10 @@ export class ExplorationState {
     this.paused = false;
     this._updateMiniStats();
     this._updatePortfolioDisplay();
+    this._refreshStoryProgress(true);
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
+    // Check for upgrade points tooltip
+    this._checkUpgradeTooltip();
   }
 
   _getMusicForRoom(roomId) {
@@ -1047,6 +1058,12 @@ export class ExplorationState {
     this.questElement.style.display = 'none';
     this.hudElement.appendChild(this.questElement);
 
+    this.upgradeTooltip = document.createElement('div');
+    this.upgradeTooltip.className = 'hud-upgrade-tooltip';
+    this.upgradeTooltip.textContent = 'Upgrade available! Open the menu to assign upgrade points.';
+    this.upgradeTooltip.style.display = 'none';
+    this.hudElement.appendChild(this.upgradeTooltip);
+
     this.toastContainer = document.createElement('div');
     this.toastContainer.className = 'hud-toast-container';
     this.hudElement.appendChild(this.toastContainer);
@@ -1395,6 +1412,26 @@ export class ExplorationState {
         }
       }, 250);
     }, 2600);
+  }
+
+  _checkUpgradeTooltip() {
+    if (!this.upgradeTooltip) return;
+    // Reset dismissed state if player gained new points since last dismiss
+    if (this.player.upgradePoints > 0 && this.player.upgradePoints !== this._lastSeenUpgradePoints) {
+      this._upgradeTooltipDismissed = false;
+    }
+    // Show tooltip if player has unspent upgrade points and hasn't opened abilities tab
+    if (this.player.upgradePoints > 0 && !this._upgradeTooltipDismissed) {
+      this.upgradeTooltip.style.display = '';
+    } else {
+      this.upgradeTooltip.style.display = 'none';
+    }
+  }
+
+  _dismissUpgradeTooltip() {
+    this._upgradeTooltipDismissed = true;
+    this._lastSeenUpgradePoints = this.player.upgradePoints;
+    if (this.upgradeTooltip) this.upgradeTooltip.style.display = 'none';
   }
 
   _showMonologue(text) {
