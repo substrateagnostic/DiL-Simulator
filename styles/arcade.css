@@ -153,3 +153,80 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
 }
+
+/* ---- Stomp Effect ---- */
+
+.arcade-stomp-text {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'VT323', monospace;
+  font-size: 36px;
+  color: #ffaa00;
+  text-shadow: 0 0 12px rgba(255, 170, 0, 0.8), 0 0 24px rgba(255, 100, 0, 0.4);
+  z-index: 1002;
+  pointer-events: none;
+  animation: arcade-stomp-rise 0.8s ease-out forwards;
+  letter-spacing: 3px;
+}
+
+@keyframes arcade-stomp-rise {
+  0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+  60% { transform: translate(-50%, -80%) scale(1.2); opacity: 1; }
+  100% { transform: translate(-50%, -120%) scale(1.0); opacity: 0; }
+}
+
+/* ---- Milestone Popup ---- */
+
+.arcade-milestone-popup {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'VT323', monospace;
+  font-size: 28px;
+  color: #ffd700;
+  text-shadow: 0 0 16px rgba(255, 215, 0, 0.8), 0 0 32px rgba(255, 170, 0, 0.5);
+  z-index: 1002;
+  pointer-events: none;
+  text-align: center;
+  animation: arcade-milestone-flash 2.5s ease-out forwards;
+  letter-spacing: 2px;
+}
+
+.arcade-milestone-star {
+  font-size: 48px;
+  margin-bottom: 4px;
+  animation: arcade-star-spin 1s ease-out;
+}
+
+@keyframes arcade-milestone-flash {
+  0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+  15% { transform: translateX(-50%) scale(1.3); opacity: 1; }
+  30% { transform: translateX(-50%) scale(1.0); opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes arcade-star-spin {
+  0% { transform: rotate(0deg) scale(0.3); }
+  50% { transform: rotate(360deg) scale(1.2); }
+  100% { transform: rotate(720deg) scale(1.0); }
+}
+
+/* ---- Unlock Items (Game Over) ---- */
+
+.arcade-unlocks {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.arcade-unlock-item {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+  margin: 4px 0;
+  animation: arcade-pulse 1.5s ease-in-out infinite;
+}

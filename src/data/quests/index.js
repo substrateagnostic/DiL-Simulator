@@ -34,7 +34,7 @@ export const QUESTS = {
     name: 'The Deeper Ledger',
     stages: [
       { id: 0, objective: 'Talk to Alex from IT about the encrypted partition' },
-      { id: 1, objective: 'Find the Archive in the parking garage' },
+      { id: 1, objective: 'Find the Archive through the stairwell' },
       { id: 2, objective: 'Search the Archive for Henderson records' },
       { id: 3, objective: 'Confront the Janitor about his past' },
       { id: 4, objective: 'Return to Alex with the evidence' },

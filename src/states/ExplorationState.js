@@ -73,6 +73,11 @@ export class ExplorationState {
     this.currentObjective = '';
     this.currentQuestId = 'main_act1';
 
+    // Upgrade tooltip state
+    this.upgradeTooltip = null;
+    this._upgradeTooltipDismissed = false;
+    this._lastSeenUpgradePoints = 0;
+
     // Event listeners
     this._listeners = [];
   }
@@ -113,6 +118,9 @@ export class ExplorationState {
         const stage = typeof data === 'string' ? undefined : data.objective;
         this._updateQuest(questId, stage);
       }),
+      EventBus.on('abilities-viewed', () => {
+        this._dismissUpgradeTooltip();
+      }),
       EventBus.on('flag-set', ({ key }) => {
         this._refreshStoryProgress();
         if (key === 'briefing_complete' && !this.player.getFlag('defeated_intern')) {
@@ -120,12 +128,21 @@ export class ExplorationState {
         }
         if (key === 'branch_chosen') {
           this._showToast('The executive elevator is now unlocked.', 'objective');
+          // Apply Henderson decision buff/debuff
+          if (this.player.getFlag('path_legal')) {
+            this.player.stats.def += 3;
+          } else if (this.player.getFlag('path_bro')) {
+            this.player.stats.spd += 3;
+            this.player.stats.def -= 2;
+          } else if (this.player.getFlag('path_grandma')) {
+            this.player.stats.atk += 3;
+          }
         }
         if (key === 'act2_complete') {
           this._showToast('Something is stirring in the building...', 'objective');
         }
         if (key === 'archive_accessible') {
-          this._showToast('The Archive is now accessible from the parking garage.', 'objective');
+          this._showToast('The Archive is now accessible from the stairwell.', 'objective');
         }
         if (key === 'hr_accessible') {
           this._showToast('The HR Department is now accessible.', 'objective');
@@ -224,6 +241,8 @@ export class ExplorationState {
         if (STORY_THOUGHTS[key]) {
           setTimeout(() => this._showMonologue(STORY_THOUGHTS[key]), 2000);
         }
+        // Refresh quest tracker on any flag change (picks up side quest starts/completions)
+        this._refreshStoryProgress(true);
         // Janitor riddles complete — +2 all stats
         if (key === 'janitor_riddle_3_done') {
           this.player.stats.hp += 2;
@@ -256,7 +275,9 @@ export class ExplorationState {
           this._onReceptionEntered();
         }
 
-        if (roomId === 'executive_floor' && this.player.getFlag('branch_chosen') && !this.player.getFlag('ending_started')) {
+        // Ending dialog re-triggers on every executive floor visit until the boss is defeated
+        const endingBossDefeated = this.player.getFlag('regional_defeated') || this.player.getFlag('compliance_defeated') || this.player.getFlag('ross_defeated');
+        if (roomId === 'executive_floor' && this.player.getFlag('branch_chosen') && !endingBossDefeated) {
           this.player.setFlag('ending_started');
 
           let endingDialogId = null;
@@ -335,7 +356,10 @@ export class ExplorationState {
     this.paused = false;
     this._updateMiniStats();
     this._updatePortfolioDisplay();
+    this._refreshStoryProgress(true);
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
+    // Check for upgrade points tooltip
+    this._checkUpgradeTooltip();
   }
 
   _getMusicForRoom(roomId) {
@@ -468,9 +492,6 @@ export class ExplorationState {
 
             const encounter = ENCOUNTERS[encounterId];
             if (encounter && encounter.postDialogId && DIALOGS[encounter.postDialogId]) {
-              if (encounterId === 'grandma' && !this.player.getFlag('branch_chosen')) {
-                this._pendingDialog = 'branch_decision';
-              }
               setTimeout(() => {
                 const postDialog = new DialogState(DIALOGS[encounter.postDialogId], this.player, this.stateManager, encounter.postDialogId);
                 this.stateManager.push(postDialog);
@@ -506,6 +527,9 @@ export class ExplorationState {
   // ── Reception roguelite system ──────────────────────────────────────────────
 
   _onReceptionEntered() {
+    // Don't spawn clients until after first story battle
+    if (!this.player.getFlag('defeated_karen')) return;
+
     const existing = this.player.getFlag('currentClient');
     if (existing) {
       let client;
@@ -514,10 +538,10 @@ export class ExplorationState {
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
-      const client = generateClient();
+      const client = generateClient(null, this.player.stats.level);
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
-      setTimeout(() => this._showToast(`New client waiting: ${client.name} — approach the reception desk`, 'objective'), 600);
+      setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
     }
   }
 
@@ -540,6 +564,11 @@ export class ExplorationState {
   }
 
   _handleReceptionDesk() {
+    // Roguelike not available until after the first story battle
+    if (!this.player.getFlag('defeated_karen')) {
+      this._showToast('You need to handle the Henderson meetings first.', 'info');
+      return;
+    }
     const clientRaw = this.player.getFlag('currentClient');
     if (!clientRaw) {
       this._onReceptionEntered();
@@ -618,7 +647,7 @@ export class ExplorationState {
     // 20% chance to generate a beneficiary chain (starts at client #4+)
     const totalSeen = this.player.getFlag('totalClientsSeen') || 0;
     if (totalSeen >= 4 && Math.random() < 0.2) {
-      const chain = generateBeneficiaryChain();
+      const chain = generateBeneficiaryChain(this.player.stats.level);
       this.player.setFlag(`chain_${chain.id}`, { acceptedCount: 0, rejectedCount: 0 });
       // Queue the followers, return the lead
       const [lead, ...followers] = chain.members;
@@ -627,7 +656,7 @@ export class ExplorationState {
       return lead;
     }
 
-    return generateClient();
+    return generateClient(null, this.player.stats.level);
   }
 
   _updateChainState(clientData, accepted) {
@@ -898,6 +927,12 @@ export class ExplorationState {
     if (npc) {
       npc.faceTowards(this.player.position.x, this.player.position.z);
 
+      // Reception client NPC triggers roguelike combat directly
+      if (npc.id === 'reception_client') {
+        this._handleReceptionDesk();
+        return;
+      }
+
       const dialogId = this._getDialogId(npc);
       const dialog = DIALOGS[dialogId];
 
@@ -1022,6 +1057,12 @@ export class ExplorationState {
     this.questElement.className = 'hud-quest-tracker';
     this.questElement.style.display = 'none';
     this.hudElement.appendChild(this.questElement);
+
+    this.upgradeTooltip = document.createElement('div');
+    this.upgradeTooltip.className = 'hud-upgrade-tooltip';
+    this.upgradeTooltip.textContent = 'Upgrade available! Open the menu to assign upgrade points.';
+    this.upgradeTooltip.style.display = 'none';
+    this.hudElement.appendChild(this.upgradeTooltip);
 
     this.toastContainer = document.createElement('div');
     this.toastContainer.className = 'hud-toast-container';
@@ -1208,7 +1249,7 @@ export class ExplorationState {
       return 'Search the Archive for evidence';
     }
     if (this.player.getFlag('archive_accessible') && !this.player.getFlag('visited_archive')) {
-      return 'Find the Archive in the parking garage';
+      return 'Find the Archive through the stairwell';
     }
     if (this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done')) {
       return 'Talk to Alex from IT about the encrypted partition';
@@ -1285,15 +1326,55 @@ export class ExplorationState {
 
     if (this.questElement) {
       this.questElement.style.display = 'block';
+      const sideHints = this._getActiveSideQuestHints();
+      const sideHTML = sideHints.map(h =>
+        `<div class="hud-quest-optional">${h}</div>`
+      ).join('');
       this.questElement.innerHTML = `
         <div class="hud-quest-title">OBJECTIVE</div>
         <div class="hud-quest-objective">${objective}</div>
+        ${sideHTML ? `<div class="hud-quest-divider"></div>${sideHTML}` : ''}
       `;
     }
 
     if (changed && !silent) {
       this._showToast(`Objective Updated: ${objective}`, 'objective');
     }
+  }
+
+  _getActiveSideQuestHints() {
+    const hints = [];
+    const f = (flag) => this.player.getFlag(flag);
+
+    // Alex IT subquests — only show hints, no detailed steps
+    if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
+      hints.push('Alex mentioned a signal at 3:47 AM...');
+    }
+    if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
+      hints.push('Alex needs help tracing an old admin account');
+    }
+    if (f('network_started') && !f('quest_network_ghost_complete')) {
+      hints.push('Something strange on the network — Alex is investigating');
+    }
+    if (f('daves_legacy_started') && !f('quest_daves_legacy_complete')) {
+      hints.push('What happened to Alex\'s predecessor, Dave?');
+    }
+    if (f('printer_quest_started') && !f('quest_printers_soul_complete')) {
+      hints.push('The printer is acting stranger than usual...');
+    }
+    if (f('quest_final_patch_started') && !f('quest_final_patch_complete')) {
+      hints.push('Alex has a plan for the charter and the server');
+    }
+
+    // Misc side quests
+    if (f('lunch_thief_started') && !f('lunch_thief_complete')) {
+      hints.push('Someone keeps stealing lunches from the fridge');
+    }
+    if (f('server_secret_started') && !f('knows_server_secret')) {
+      hints.push('There\'s something hidden in the server room');
+    }
+
+    return hints;
   }
 
   _updateQuest(questId, stage) {
@@ -1331,6 +1412,26 @@ export class ExplorationState {
         }
       }, 250);
     }, 2600);
+  }
+
+  _checkUpgradeTooltip() {
+    if (!this.upgradeTooltip) return;
+    // Reset dismissed state if player gained new points since last dismiss
+    if (this.player.upgradePoints > 0 && this.player.upgradePoints !== this._lastSeenUpgradePoints) {
+      this._upgradeTooltipDismissed = false;
+    }
+    // Show tooltip if player has unspent upgrade points and hasn't opened abilities tab
+    if (this.player.upgradePoints > 0 && !this._upgradeTooltipDismissed) {
+      this.upgradeTooltip.style.display = '';
+    } else {
+      this.upgradeTooltip.style.display = 'none';
+    }
+  }
+
+  _dismissUpgradeTooltip() {
+    this._upgradeTooltipDismissed = true;
+    this._lastSeenUpgradePoints = this.player.upgradePoints;
+    if (this.upgradeTooltip) this.upgradeTooltip.style.display = 'none';
   }
 
   _showMonologue(text) {

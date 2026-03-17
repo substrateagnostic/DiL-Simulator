@@ -194,7 +194,7 @@ export const ROOMS = {
     npcs: [
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' } },    // NW pod, paces nervously
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 } },  // NE pod, wanders looking lost
-      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' } }, // water cooler, paces
+      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'karen_defeated' } }, // water cooler, paces
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
     exits: [
@@ -282,7 +282,7 @@ export const ROOMS = {
       { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
     ],
     npcs: [
-      { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 } },
+      { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 }, condition: { notFlag: 'chad_defeated' } },
       { id: 'grandma', x: 6, z: 5, facing: Math.PI, condition: { flag: 'act5_complete' } },
     ],
     exits: [
@@ -314,8 +314,8 @@ export const ROOMS = {
     furniture: [
       // === Boss desk (commanding position, north-center) ===
       { type: 'desk', x: 4, z: 2, rotation: Math.PI },
-      { type: 'monitor', x: 4, z: 2.0, rotation: Math.PI },
-      { type: 'monitor', x: 3.5, z: 2.0, rotation: Math.PI },  // dual monitors, of course
+      { type: 'monitor', x: 4, z: 2.0, rotation: 0 },
+      { type: 'monitor', x: 3.5, z: 2.0, rotation: 0 },  // dual monitors, of course
       { type: 'deskPlantSucculent', x: 4.5, z: 2.0 },
       { type: 'keyboard', x: 4, z: 1.8 },
       { type: 'chair', x: 4, z: 1, rotation: 0 },  // behind desk facing south
@@ -342,7 +342,7 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' } },  // paces behind desk
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'branch_chosen' } },  // paces behind desk, leaves after Henderson decision
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
@@ -487,6 +487,7 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 1, z: 3, type: 'server_rack', dialogId: 'server_rack_inspect' },
+      { x: 5, z: 3, type: 'server_rack', dialogId: 'server_vault_code' },
       { x: 6, z: 7, type: 'alex_it_desk', dialogId: 'alex_it_desk' },
     ],
     playerSpawn: { x: 2, z: 7 },
@@ -535,8 +536,8 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
-      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2 },
-      { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: false, sitting: true },
+      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { notFlag: 'grandma_defeated' } },
+      { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: true, sitting: true },
     ],
     exits: [
       // NORTH exits -> Cubicle Farm
@@ -629,23 +630,23 @@ export const ROOMS = {
       { type: 'keyboard', x: 8, z: 1.8 },
       { type: 'chair', x: 8, z: 1, rotation: 0 },  // big boss chair
 
-      // === Power seating area (visitor chairs) ===
-      { type: 'chair', x: 6, z: 4, rotation: 0 },
-      { type: 'chair', x: 7, z: 4, rotation: 0 },
-      { type: 'chair', x: 9, z: 4, rotation: 0 },
-      { type: 'chair', x: 10, z: 4, rotation: 0 },
+      // === Power seating area (visitor chairs, facing desk) ===
+      { type: 'chair', x: 6, z: 4, rotation: Math.PI },
+      { type: 'chair', x: 7, z: 4, rotation: Math.PI },
+      { type: 'chair', x: 9, z: 4, rotation: Math.PI },
+      { type: 'chair', x: 10, z: 4, rotation: Math.PI },
 
-      // === Secondary executive desk (west side) ===
+      // === Secondary executive desk (west side, faces east) ===
       { type: 'desk', x: 3, z: 3, rotation: Math.PI / 2 },
-      { type: 'monitor', x: 2.7, z: 3 },
+      { type: 'monitor', x: 2.7, z: 3, rotation: Math.PI / 2 },
       { type: 'keyboard', x: 3.2, z: 3 },
-      { type: 'chair', x: 3, z: 4, rotation: Math.PI },
+      { type: 'chair', x: 2, z: 3, rotation: Math.PI / 2 },
 
-      // === Secondary executive desk (east side) ===
+      // === Secondary executive desk (east side, faces west) ===
       { type: 'desk', x: 13, z: 3, rotation: -Math.PI / 2 },
-      { type: 'monitor', x: 13.3, z: 3 },
+      { type: 'monitor', x: 13.3, z: 3, rotation: -Math.PI / 2 },
       { type: 'keyboard', x: 12.8, z: 3 },
-      { type: 'chair', x: 13, z: 4, rotation: Math.PI },
+      { type: 'chair', x: 14, z: 3, rotation: -Math.PI / 2 },
 
       // === Credenza / power decor along north wall ===
       { type: 'fileCabinet', x: 1, z: 1 },
@@ -655,13 +656,15 @@ export const ROOMS = {
 
       // === Conference area (south half) ===
       { type: 'conferenceTable', x: 8, z: 8, rotation: 0 },
+      // West side chairs (face east toward table)
       { type: 'chair', x: 6, z: 7, rotation: Math.PI / 2 },
       { type: 'chair', x: 6, z: 9, rotation: Math.PI / 2 },
-      { type: 'chair', x: 7, z: 7, rotation: Math.PI / 2 },
+      // East side chairs (face west toward table)
       { type: 'chair', x: 10, z: 7, rotation: -Math.PI / 2 },
       { type: 'chair', x: 10, z: 9, rotation: -Math.PI / 2 },
-      { type: 'chair', x: 9, z: 7, rotation: -Math.PI / 2 },
+      // North end chair (face south toward table)
       { type: 'chair', x: 8, z: 6, rotation: 0 },
+      // South end chair (face north toward table)
       { type: 'chair', x: 8, z: 10, rotation: Math.PI },
 
       // === Whiteboard ===
@@ -686,6 +689,9 @@ export const ROOMS = {
     npcs: [
       { id: 'regional', x: 8, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' } },
       { id: 'compliance', x: 13, z: 4, facing: Math.PI / 2, movement: { type: 'pace', distance: 1.5, axis: 'z' } },
+      // Grandma and Ross appear at conference table after Henderson decision
+      { id: 'grandma', x: 7, z: 8, facing: 0, sitting: true, condition: { flag: 'branch_chosen' } },
+      { id: 'ross', x: 9, z: 8, facing: 0, sitting: true, condition: { flag: 'branch_chosen' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -758,22 +764,31 @@ export const ROOMS = {
     floorColor: 0x8a7a6a,
     walls: true,
     furniture: [
-      // Rows of file cabinets
+      // Rows of file cabinets — all facing south (toward player)
+      // West bank
       { type: 'fileCabinet', x: 1, z: 1, rotation: 0 },
       { type: 'fileCabinet', x: 2, z: 1, rotation: 0 },
       { type: 'fileCabinet', x: 3, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 4, z: 1, rotation: 0 },
       { type: 'fileCabinet', x: 1, z: 3, rotation: 0 },
       { type: 'fileCabinet', x: 2, z: 3, rotation: 0 },
       { type: 'fileCabinet', x: 3, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 4, z: 3, rotation: 0 },
       { type: 'fileCabinet', x: 1, z: 5, rotation: 0 },
       { type: 'fileCabinet', x: 2, z: 5, rotation: 0 },
       { type: 'fileCabinet', x: 3, z: 5, rotation: 0 },
-      { type: 'fileCabinet', x: 8, z: 1, rotation: Math.PI },
-      { type: 'fileCabinet', x: 9, z: 1, rotation: Math.PI },
-      { type: 'fileCabinet', x: 10, z: 1, rotation: Math.PI },
-      { type: 'fileCabinet', x: 8, z: 3, rotation: Math.PI },
-      { type: 'fileCabinet', x: 9, z: 3, rotation: Math.PI },
-      { type: 'fileCabinet', x: 10, z: 3, rotation: Math.PI },
+      { type: 'fileCabinet', x: 4, z: 5, rotation: 0 },
+      // East bank
+      { type: 'fileCabinet', x: 7, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 8, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 9, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 10, z: 1, rotation: 0 },
+      { type: 'fileCabinet', x: 7, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 8, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 9, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 10, z: 3, rotation: 0 },
+      { type: 'fileCabinet', x: 7, z: 5, rotation: 0 },
+      { type: 'fileCabinet', x: 8, z: 5, rotation: 0 },
       // Desk with terminal in far corner
       { type: 'desk', x: 10, z: 7, rotation: -Math.PI / 2 },
       { type: 'monitor', x: 10.3, z: 7 },
@@ -845,7 +860,7 @@ export const ROOMS = {
       // File cabinets
       { type: 'fileCabinet', x: 1, z: 1 },
       { type: 'fileCabinet', x: 14, z: 1 },
-      { type: 'fileCabinet', x: 1, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', x: 3, z: 8, rotation: Math.PI },
       { type: 'fileCabinet', x: 14, z: 8, rotation: Math.PI },
       // Suggestion box area
       { type: 'fileCabinetLow', x: 10, z: 8, rotation: Math.PI },
@@ -863,6 +878,7 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 10, z: 8, type: 'suggestion_box', dialogId: 'suggestion_box' },
+      { x: 1, z: 1, type: 'filing_cabinets', dialogId: 'hr_vault_code' },
       { x: 8, z: 0, type: 'poster', dialogId: 'poster_excellence' },
     ],
     playerSpawn: { x: 1, z: 8 },

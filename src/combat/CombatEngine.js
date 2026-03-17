@@ -1,4 +1,4 @@
-import { PLAYER_ABILITIES, ENEMY_ABILITIES, ENEMY_STATS, ITEMS } from '../data/stats.js';
+import { PLAYER_ABILITIES, ENEMY_ABILITIES, ENEMY_STATS, ITEMS, pickMessage } from '../data/stats.js';
 import { COMBAT } from '../utils/constants.js';
 import { randomRange } from '../utils/math.js';
 import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
@@ -82,12 +82,18 @@ export class CombatEngine {
     if (confusion) return confusion;
 
     if (this.counterActive) {
+      // Basic attack breaks through counter at half power
       this.counterActive = false;
-      const counterDmg = this._calcDamage(this._getEffective(this.enemy).atk, 15, this._getEffective(this.player).def, this.player);
-      this.player.hp = Math.max(0, this.player.hp - counterDmg.damage);
-      this.log.push({ type: 'counter', damage: counterDmg.damage, message: '"Great catch! But actually..." Ross counters!' });
-      this._checkDefeat();
-      return { type: 'counter', damage: counterDmg.damage, critical: counterDmg.critical };
+      const pStats = this._getEffective(this.player);
+      const eStats = this._getEffective(this.enemy);
+      const result = this._calcDamage(pStats.atk, 5, eStats.def, this.enemy);
+      this.enemy.hp = Math.max(0, this.enemy.hp - result.damage);
+      // Also clear stun — fighting through the corporate BS
+      this.player.stunned = 0;
+      this.player.stunnedThisTurn = false;
+      this.log.push({ type: 'break_counter', damage: result.damage });
+      this._checkVictory();
+      return { ...result, type: 'break_counter', message: 'Pushed through the counter! Reduced damage dealt.' };
     }
 
     const pStats = this._getEffective(this.player);
@@ -226,6 +232,9 @@ export class CombatEngine {
   enemyTurn() {
     if (this.isOver) return null;
 
+    // Counter expires at start of enemy turn — prevents stun+counter lock
+    this.counterActive = false;
+
     // Check if player's blockNext is active
     if (this.player.blockNext) {
       this.player.blockNext = false;
@@ -257,7 +266,7 @@ export class CombatEngine {
       return { type: 'attack', damage: dmg.damage, critical: dmg.critical, message: `${this.enemy.name} attacks!` };
     }
 
-    let result = { type: ability.type, abilityName: ability.name, message: ability.message };
+    let result = { type: ability.type, abilityName: ability.name, message: pickMessage(ability.messages || ability.message) };
 
     switch (ability.type) {
       case 'attack': {
@@ -305,7 +314,7 @@ export class CombatEngine {
         if (previousAbilityId && previousAbilityId !== abilityId) {
           const repeated = this._executeEnemyAbility(previousAbilityId, eStats, pStats, previousAbilityId);
           if (repeated) {
-            repeated.message = `${ability.message} ${repeated.message}`.trim();
+            repeated.message = `${pickMessage(ability.messages || ability.message)} ${repeated.message}`.trim();
             return repeated;
           }
         }
@@ -313,7 +322,7 @@ export class CombatEngine {
         const dmg = this._calcDamage(eStats.atk, 15, pStats.def, this.player);
         this.player.hp = Math.max(0, this.player.hp - dmg.damage);
         result.damage = dmg.damage;
-        result.message = `${ability.message} It devolves into a louder basic attack.`;
+        result.message = `${pickMessage(ability.messages || ability.message)} It devolves into a louder basic attack.`;
         break;
       }
       case 'summon': {
@@ -428,8 +437,20 @@ export class CombatEngine {
         return abilities.includes(pick) ? pick : abilities[Math.floor(Math.random() * abilities.length)];
       }
 
-      case 'chaotic':
-        return abilities[Math.floor(Math.random() * abilities.length)];
+      case 'chaotic': {
+        // Prevent degenerate loops: don't stun if counter is active, don't counter if just stunned
+        let pool = [...abilities];
+        if (this.counterActive) {
+          // Counter is up — don't also stun (that creates an unbreakable loop)
+          pool = pool.filter(a => ENEMY_ABILITIES[a]?.type !== 'stun');
+        }
+        if (this.player.stunned > 0) {
+          // Player is stunned — don't waste a counter (they can't attack anyway)
+          pool = pool.filter(a => ENEMY_ABILITIES[a]?.type !== 'counter');
+        }
+        if (pool.length === 0) pool = abilities;
+        return pool[Math.floor(Math.random() * pool.length)];
+      }
 
       default:
         return this._pickRandom(abilities, true);

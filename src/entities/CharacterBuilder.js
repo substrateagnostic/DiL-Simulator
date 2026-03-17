@@ -3,9 +3,13 @@ import { Materials } from '../effects/MaterialLibrary.js';
 import { CHAR } from '../utils/constants.js';
 
 // Build a character from primitives - capsules, spheres, boxes
-export function buildCharacter(config) {
+// options.detailed = true for higher-poly combat close-up models
+export function buildCharacter(config, options = {}) {
   const group = new THREE.Group();
   group.name = config.name || 'character';
+  const detailed = options.detailed || false;
+  const headSegments = detailed ? 24 : 12;
+  const headRings = detailed ? 20 : 10;
 
   // Legs
   const legGeo = new THREE.BoxGeometry(CHAR.LEG_WIDTH, CHAR.LEG_HEIGHT, CHAR.LEG_WIDTH);
@@ -71,11 +75,30 @@ export function buildCharacter(config) {
   const leftArmMesh = new THREE.Mesh(armGeo, armMat);
   leftArmMesh.position.y = -CHAR.ARM_HEIGHT / 2 + 0.05;
   leftArm.add(leftArmMesh);
-  // Hand
-  const handGeo = new THREE.SphereGeometry(0.055, 8, 8);
-  const leftHand = new THREE.Mesh(handGeo, skinMat);
-  leftHand.position.y = -CHAR.ARM_HEIGHT + 0.1;
-  leftArm.add(leftHand);
+  // Hand — detailed mode uses separate fingers
+  if (detailed) {
+    const palmGeo = new THREE.BoxGeometry(0.08, 0.04, 0.06);
+    const palm = new THREE.Mesh(palmGeo, skinMat);
+    palm.position.y = -CHAR.ARM_HEIGHT + 0.1;
+    leftArm.add(palm);
+    const fingerGeo = new THREE.BoxGeometry(0.015, 0.04, 0.015);
+    for (let f = 0; f < 4; f++) {
+      const finger = new THREE.Mesh(fingerGeo, skinMat);
+      finger.position.set(-0.025 + f * 0.017, -CHAR.ARM_HEIGHT + 0.07, 0);
+      leftArm.add(finger);
+    }
+    // Thumb
+    const thumbGeo = new THREE.BoxGeometry(0.015, 0.03, 0.015);
+    const thumb = new THREE.Mesh(thumbGeo, skinMat);
+    thumb.position.set(0.045, -CHAR.ARM_HEIGHT + 0.09, 0.02);
+    thumb.rotation.z = 0.4;
+    leftArm.add(thumb);
+  } else {
+    const handGeo = new THREE.SphereGeometry(0.055, 8, 8);
+    const leftHand = new THREE.Mesh(handGeo, skinMat);
+    leftHand.position.y = -CHAR.ARM_HEIGHT + 0.1;
+    leftArm.add(leftHand);
+  }
   leftArm.position.set(-(CHAR.BODY_WIDTH / 2 + CHAR.ARM_WIDTH / 2), CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT - 0.05, 0);
   group.add(leftArm);
   group.leftArm = leftArm;
@@ -84,15 +107,42 @@ export function buildCharacter(config) {
   const rightArmMesh = new THREE.Mesh(armGeo, armMat);
   rightArmMesh.position.y = -CHAR.ARM_HEIGHT / 2 + 0.05;
   rightArm.add(rightArmMesh);
-  const rightHand = new THREE.Mesh(handGeo, skinMat);
-  rightHand.position.y = -CHAR.ARM_HEIGHT + 0.1;
-  rightArm.add(rightHand);
+  if (detailed) {
+    const palmGeo = new THREE.BoxGeometry(0.08, 0.04, 0.06);
+    const palm = new THREE.Mesh(palmGeo, skinMat);
+    palm.position.y = -CHAR.ARM_HEIGHT + 0.1;
+    rightArm.add(palm);
+    const fingerGeo = new THREE.BoxGeometry(0.015, 0.04, 0.015);
+    for (let f = 0; f < 4; f++) {
+      const finger = new THREE.Mesh(fingerGeo, skinMat);
+      finger.position.set(-0.025 + f * 0.017, -CHAR.ARM_HEIGHT + 0.07, 0);
+      rightArm.add(finger);
+    }
+    const thumbGeo = new THREE.BoxGeometry(0.015, 0.03, 0.015);
+    const thumb = new THREE.Mesh(thumbGeo, skinMat);
+    thumb.position.set(-0.045, -CHAR.ARM_HEIGHT + 0.09, 0.02);
+    thumb.rotation.z = -0.4;
+    rightArm.add(thumb);
+  } else {
+    const handGeo = new THREE.SphereGeometry(0.055, 8, 8);
+    const rightHand = new THREE.Mesh(handGeo, skinMat);
+    rightHand.position.y = -CHAR.ARM_HEIGHT + 0.1;
+    rightArm.add(rightHand);
+  }
   rightArm.position.set(CHAR.BODY_WIDTH / 2 + CHAR.ARM_WIDTH / 2, CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT - 0.05, 0);
   group.add(rightArm);
   group.rightArm = rightArm;
 
-  // Head
-  const headGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS, 12, 10);
+  // Neck (detailed only)
+  if (detailed) {
+    const neckGeo = new THREE.CylinderGeometry(0.06, 0.07, 0.08, 12);
+    const neck = new THREE.Mesh(neckGeo, skinMat);
+    neck.position.y = CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT + 0.04;
+    group.add(neck);
+  }
+
+  // Head — higher poly in detailed mode
+  const headGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS, headSegments, headRings);
   const headMat = skinMat;
   const head = new THREE.Mesh(headGeo, headMat);
   head.position.y = CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT + CHAR.HEAD_RADIUS * 0.8;
@@ -103,18 +153,18 @@ export function buildCharacter(config) {
   if (config.hairColor) {
     const hairMat = Materials.custom(config.hairColor);
     if (config.hairStyle === 'short') {
-      const hairGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.02, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.6);
+      const hairGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.02, headSegments, headRings, 0, Math.PI * 2, 0, Math.PI * 0.6);
       const hair = new THREE.Mesh(hairGeo, hairMat);
       hair.position.y = head.position.y + 0.02;
       group.add(hair);
     } else if (config.hairStyle === 'karen') {
       // "Speak to manager" angular bob
-      const hairGeo = new THREE.BoxGeometry(CHAR.HEAD_RADIUS * 2.2, CHAR.HEAD_RADIUS * 1.2, CHAR.HEAD_RADIUS * 2);
+      const hairGeo = new THREE.BoxGeometry(CHAR.HEAD_RADIUS * 2.2, CHAR.HEAD_RADIUS * 1.2, CHAR.HEAD_RADIUS * 2.0);
       const hair = new THREE.Mesh(hairGeo, hairMat);
       hair.position.y = head.position.y + CHAR.HEAD_RADIUS * 0.2;
       group.add(hair);
     } else if (config.hairStyle === 'bun') {
-      const hairBase = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.02, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.55);
+      const hairBase = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.02, headSegments, headRings, 0, Math.PI * 2, 0, Math.PI * 0.55);
       const hairMesh = new THREE.Mesh(hairBase, hairMat);
       hairMesh.position.y = head.position.y + 0.02;
       group.add(hairMesh);
@@ -134,21 +184,21 @@ export function buildCharacter(config) {
       group.add(brim);
     } else if (config.hairStyle === 'shawl') {
       // Grandma's hair with shawl
-      const hairGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.04, 12, 10);
+      const hairGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.04, headSegments, headRings);
       const hair = new THREE.Mesh(hairGeo, hairMat);
       hair.position.y = head.position.y;
       group.add(hair);
     } else {
       // Default medium hair
-      const hairGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.02, 12, 10, 0, Math.PI * 2, 0, Math.PI * 0.55);
+      const hairGeo = new THREE.SphereGeometry(CHAR.HEAD_RADIUS + 0.02, headSegments, headRings, 0, Math.PI * 2, 0, Math.PI * 0.55);
       const hair = new THREE.Mesh(hairGeo, hairMat);
       hair.position.y = head.position.y + 0.02;
       group.add(hair);
     }
   }
 
-  // Eyes (simple dark spheres)
-  const eyeGeo = new THREE.SphereGeometry(0.03, 6, 6);
+  // Eyes
+  const eyeGeo = new THREE.SphereGeometry(detailed ? 0.035 : 0.03, detailed ? 10 : 6, detailed ? 10 : 6);
   const eyeMat = new THREE.MeshBasicMaterial({ color: 0x222222 });
   const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
   leftEye.position.set(-0.07, head.position.y + 0.02, CHAR.HEAD_RADIUS - 0.02);
@@ -156,6 +206,57 @@ export function buildCharacter(config) {
   const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
   rightEye.position.set(0.07, head.position.y + 0.02, CHAR.HEAD_RADIUS - 0.02);
   group.add(rightEye);
+
+  // Detailed face features
+  if (detailed) {
+    // Eye whites
+    const whiteGeo = new THREE.SphereGeometry(0.04, 10, 10);
+    const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const leftWhite = new THREE.Mesh(whiteGeo, whiteMat);
+    leftWhite.position.set(-0.07, head.position.y + 0.02, CHAR.HEAD_RADIUS - 0.03);
+    group.add(leftWhite);
+    const rightWhite = new THREE.Mesh(whiteGeo, whiteMat);
+    rightWhite.position.set(0.07, head.position.y + 0.02, CHAR.HEAD_RADIUS - 0.03);
+    group.add(rightWhite);
+    // Move pupils forward
+    leftEye.position.z = CHAR.HEAD_RADIUS + 0.005;
+    rightEye.position.z = CHAR.HEAD_RADIUS + 0.005;
+
+    // Eyebrows
+    const browGeo = new THREE.BoxGeometry(0.06, 0.015, 0.02);
+    const browMat = Materials.custom(config.hairColor || 0x333333);
+    const leftBrow = new THREE.Mesh(browGeo, browMat);
+    leftBrow.position.set(-0.07, head.position.y + 0.065, CHAR.HEAD_RADIUS - 0.01);
+    leftBrow.rotation.z = 0.1;
+    group.add(leftBrow);
+    const rightBrow = new THREE.Mesh(browGeo, browMat);
+    rightBrow.position.set(0.07, head.position.y + 0.065, CHAR.HEAD_RADIUS - 0.01);
+    rightBrow.rotation.z = -0.1;
+    group.add(rightBrow);
+
+    // Nose
+    const noseGeo = new THREE.ConeGeometry(0.02, 0.05, 6);
+    const nose = new THREE.Mesh(noseGeo, skinMat);
+    nose.position.set(0, head.position.y - 0.01, CHAR.HEAD_RADIUS + 0.01);
+    nose.rotation.x = -Math.PI / 2;
+    group.add(nose);
+
+    // Mouth
+    const mouthGeo = new THREE.BoxGeometry(0.06, 0.012, 0.01);
+    const mouthMat = Materials.custom(0xcc6666);
+    const mouth = new THREE.Mesh(mouthGeo, mouthMat);
+    mouth.position.set(0, head.position.y - 0.05, CHAR.HEAD_RADIUS - 0.01);
+    group.add(mouth);
+
+    // Ears
+    const earGeo = new THREE.SphereGeometry(0.03, 8, 8);
+    const leftEar = new THREE.Mesh(earGeo, skinMat);
+    leftEar.position.set(-CHAR.HEAD_RADIUS - 0.01, head.position.y, 0);
+    group.add(leftEar);
+    const rightEar = new THREE.Mesh(earGeo, skinMat);
+    rightEar.position.set(CHAR.HEAD_RADIUS + 0.01, head.position.y, 0);
+    group.add(rightEar);
+  }
 
   // Accessories
   if (config.accessories) {
@@ -317,5 +418,150 @@ function addAccessory(group, acc, headY, config) {
       group.add(shaft);
       break;
     }
+    // ---- Cosmetic equipment visuals ----
+    default: {
+      if (typeof acc === 'string' && acc.startsWith('cosmetic_')) {
+        _addCosmeticVisual(group, acc.replace('cosmetic_', ''), headY, config);
+      }
+      break;
+    }
   }
+}
+
+function _addCosmeticVisual(group, cosmeticId, headY) {
+  // Render cosmetic equipment visuals based on the cosmetic ID
+  const COSMETIC_VISUALS = {
+    // Hats
+    visor_green: (g, hy) => {
+      const visor = new THREE.Mesh(
+        new THREE.BoxGeometry(CHAR.HEAD_RADIUS * 2.2, 0.04, 0.15),
+        Materials.custom(0x22aa44)
+      );
+      visor.position.set(0, hy + CHAR.HEAD_RADIUS * 0.5, CHAR.HEAD_RADIUS * 0.5);
+      g.add(visor);
+    },
+    party_hat: (g, hy) => {
+      const hat = new THREE.Mesh(
+        new THREE.ConeGeometry(CHAR.HEAD_RADIUS * 0.7, 0.25, 8),
+        Materials.custom(0xff4488)
+      );
+      hat.position.set(0, hy + CHAR.HEAD_RADIUS + 0.1, 0);
+      g.add(hat);
+    },
+    tin_foil_hat: (g, hy) => {
+      const hat = new THREE.Mesh(
+        new THREE.ConeGeometry(CHAR.HEAD_RADIUS * 0.9, 0.2, 6),
+        Materials.custom(0xcccccc)
+      );
+      hat.position.set(0, hy + CHAR.HEAD_RADIUS + 0.05, 0);
+      g.add(hat);
+    },
+    executives_fedora: (g, hy) => {
+      const crown = new THREE.Mesh(
+        new THREE.CylinderGeometry(CHAR.HEAD_RADIUS * 0.7, CHAR.HEAD_RADIUS * 0.8, 0.12, 12),
+        Materials.custom(0x333333)
+      );
+      crown.position.set(0, hy + CHAR.HEAD_RADIUS * 0.6, 0);
+      g.add(crown);
+      const brim = new THREE.Mesh(
+        new THREE.CylinderGeometry(CHAR.HEAD_RADIUS * 1.3, CHAR.HEAD_RADIUS * 1.3, 0.02, 12),
+        Materials.custom(0x333333)
+      );
+      brim.position.set(0, hy + CHAR.HEAD_RADIUS * 0.5, 0);
+      g.add(brim);
+    },
+    // Glasses
+    reading_glasses: (g, hy) => {
+      const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(CHAR.HEAD_RADIUS * 2.0, 0.04, 0.015),
+        Materials.custom(0x888888)
+      );
+      frame.position.set(0, hy + 0.02, CHAR.HEAD_RADIUS + 0.005);
+      g.add(frame);
+    },
+    blue_light_blockers: (g, hy) => {
+      const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(CHAR.HEAD_RADIUS * 2.0, 0.05, 0.015),
+        Materials.custom(0x4488ff)
+      );
+      frame.position.set(0, hy + 0.02, CHAR.HEAD_RADIUS + 0.005);
+      g.add(frame);
+    },
+    power_shades: (g, hy) => {
+      const frame = new THREE.Mesh(
+        new THREE.BoxGeometry(CHAR.HEAD_RADIUS * 2.2, 0.06, 0.02),
+        Materials.custom(0x111111)
+      );
+      frame.position.set(0, hy + 0.02, CHAR.HEAD_RADIUS);
+      g.add(frame);
+    },
+    // Badges
+    intern_badge: (g) => {
+      const tag = new THREE.Mesh(
+        new THREE.BoxGeometry(0.1, 0.06, 0.01),
+        Materials.paper()
+      );
+      tag.position.set(0.08, CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT * 0.75, CHAR.BODY_DEPTH / 2 + 0.01);
+      g.add(tag);
+    },
+    compliance_pin: (g) => {
+      const pin = new THREE.Mesh(
+        new THREE.SphereGeometry(0.025, 8, 8),
+        Materials.custom(0xdd4444)
+      );
+      pin.position.set(0.08, CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT * 0.8, CHAR.BODY_DEPTH / 2 + 0.01);
+      g.add(pin);
+    },
+    corner_office_key: (g) => {
+      const lanyard = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 0.15, 0.01),
+        Materials.custom(0xdaa520)
+      );
+      lanyard.position.set(0, CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT * 0.6, CHAR.BODY_DEPTH / 2 + 0.01);
+      g.add(lanyard);
+      const key = new THREE.Mesh(
+        new THREE.BoxGeometry(0.04, 0.03, 0.01),
+        Materials.custom(0xdaa520)
+      );
+      key.position.set(0, CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT * 0.5, CHAR.BODY_DEPTH / 2 + 0.01);
+      g.add(key);
+    },
+    // Accessories
+    stress_ball_clip: (g) => {
+      const ball = new THREE.Mesh(
+        new THREE.SphereGeometry(0.04, 8, 8),
+        Materials.custom(0xff6633)
+      );
+      ball.position.set(CHAR.BODY_WIDTH / 2 + 0.03, CHAR.LEG_HEIGHT + 0.05, 0);
+      g.add(ball);
+    },
+    fountain_pen: (g) => {
+      const pen = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.006, 0.12, 6),
+        Materials.custom(0x111111)
+      );
+      pen.position.set(0.12, CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT * 0.8, CHAR.BODY_DEPTH / 2 + 0.01);
+      pen.rotation.z = 0.3;
+      g.add(pen);
+    },
+    janitors_keyring: (g) => {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.03, 0.005, 6, 12),
+        Materials.custom(0xaaaaaa)
+      );
+      ring.position.set(CHAR.BODY_WIDTH / 2 + 0.05, CHAR.LEG_HEIGHT + 0.1, 0);
+      g.add(ring);
+    },
+    golden_calculator: (g) => {
+      const calc = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.09, 0.01),
+        Materials.custom(0xdaa520)
+      );
+      calc.position.set(-(CHAR.BODY_WIDTH / 2 + CHAR.ARM_WIDTH + 0.08), CHAR.LEG_HEIGHT + CHAR.BODY_HEIGHT * 0.35, 0.05);
+      g.add(calc);
+    },
+  };
+
+  const visualFn = COSMETIC_VISUALS[cosmeticId];
+  if (visualFn) visualFn(group, headY);
 }
