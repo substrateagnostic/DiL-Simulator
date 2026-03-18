@@ -256,6 +256,7 @@ export class Player {
     this.currentRoom = data.currentRoom;
     this.actIndex = data.actIndex || 0;
     this.upgradePoints = data.upgradePoints || 0;
+    if (data.stats?.aum !== undefined) this.stats.aum = data.stats.aum;
     this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break']);
     if (data.equipped) {
       this.equipped = { ...data.equipped };

@@ -4,8 +4,8 @@ import { Engine } from '../core/Engine.js';
 
 export class IsometricCamera {
   constructor() {
-    this.target = { x: 0, z: 0 };
-    this.current = { x: 0, z: 0 };
+    this.target = { x: 0, y: 0, z: 0 };
+    this.current = { x: 0, y: 0, z: 0 };
     this.shakeAmount = 0;
     this.shakeDecay = 0.9;
     this.bounds = null; // { minX, maxX, minZ, maxZ }
@@ -23,8 +23,9 @@ export class IsometricCamera {
     cam.lookAt(0, 0, 0);
   }
 
-  follow(x, z) {
+  follow(x, z, y = 0) {
     this.target.x = x;
+    this.target.y = y;
     this.target.z = z;
   }
 
@@ -52,6 +53,7 @@ export class IsometricCamera {
       this.current.x = lerp(this.current.x, this.target.x, CAMERA.FOLLOW_SPEED);
       this.current.z = lerp(this.current.z, this.target.z, CAMERA.FOLLOW_SPEED);
     }
+    this.current.y = lerp(this.current.y, this.target.y, CAMERA.FOLLOW_SPEED);
 
     // Clamp to bounds
     let cx = this.current.x;
@@ -73,18 +75,21 @@ export class IsometricCamera {
 
     // Position camera relative to follow point
     const dist2 = 20;
+    const cy = this.current.y;
     cam.position.set(
       cx + dist2 * Math.sin(CAMERA.ANGLE_Y) * Math.cos(CAMERA.ANGLE_X) + shakeX,
-      dist2 * Math.sin(CAMERA.ANGLE_X) + shakeY,
+      dist2 * Math.sin(CAMERA.ANGLE_X) + cy + shakeY,
       cz + dist2 * Math.cos(CAMERA.ANGLE_Y) * Math.cos(CAMERA.ANGLE_X)
     );
-    cam.lookAt(cx + shakeX, 0, cz);
+    cam.lookAt(cx + shakeX, cy, cz);
   }
 
-  snapTo(x, z) {
+  snapTo(x, z, y = 0) {
     this.target.x = x;
+    this.target.y = y;
     this.target.z = z;
     this.current.x = x;
+    this.current.y = y;
     this.current.z = z;
     this.update(0);
   }

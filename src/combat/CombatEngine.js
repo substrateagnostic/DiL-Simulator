@@ -18,8 +18,12 @@ export class CombatEngine {
       confusedThisTurn: false,
       silencedThisTurn: false,
       blockNext: false,
+      momentum: 0,
+      bracing: false,
+      retaliateReady: false,
     };
-    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0 };
+    this.telegraphedAbility = null;
+    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0 };
     this.enemyId = enemyId;
     this.turn = 'player';
     this.turnCount = 0;
@@ -30,7 +34,7 @@ export class CombatEngine {
     this.counterActive = false;
   }
 
-  _calcDamage(attackerAtk, power, defenderDef, target = null) {
+  _calcDamage(attackerAtk, power, defenderDef, target = null, abilityTag = null) {
     const baseDmg = (attackerAtk + power) * COMBAT.BASE_DAMAGE_MULTIPLIER;
     const defense = defenderDef * COMBAT.DEFENSE_FACTOR;
     let damage = Math.max(1, Math.floor(baseDmg - defense + randomRange(-3, 3)));
@@ -47,7 +51,26 @@ export class CombatEngine {
       if (target.protected > 0) damage = Math.floor(damage * 0.5);
     }
 
-    return { damage, critical };
+    // Weakness / resistance (only applies when hitting the enemy)
+    let effective = null;
+    if (abilityTag && target === this.enemy) {
+      if (this.enemy.weakness === abilityTag) {
+        damage = Math.floor(damage * 1.5);
+        effective = 'super';
+      } else if (this.enemy.resistance === abilityTag) {
+        damage = Math.floor(damage * 0.7);
+        effective = 'resist';
+      }
+    }
+
+    // Vulnerability window — enemy exposed after healing/buffing
+    if (target === this.enemy && this.enemy.vulnerable > 0) {
+      damage = Math.floor(damage * 1.5);
+      this.enemy.vulnerable = 0;
+      effective = effective || 'vulnerable';
+    }
+
+    return { damage, critical, effective };
   }
 
   _getEffective(entity) {
@@ -82,28 +105,35 @@ export class CombatEngine {
     if (confusion) return confusion;
 
     if (this.counterActive) {
-      // Basic attack breaks through counter at half power
       this.counterActive = false;
       const pStats = this._getEffective(this.player);
       const eStats = this._getEffective(this.enemy);
-      const result = this._calcDamage(pStats.atk, 5, eStats.def, this.enemy);
-      this.enemy.hp = Math.max(0, this.enemy.hp - result.damage);
-      // Also clear stun — fighting through the corporate BS
+      const dmg = this._calcDamage(pStats.atk, 5, eStats.def, this.enemy);
+      this.enemy.hp = Math.max(0, this.enemy.hp - dmg.damage);
       this.player.stunned = 0;
       this.player.stunnedThisTurn = false;
-      this.log.push({ type: 'break_counter', damage: result.damage });
+      this.log.push({ type: 'break_counter', damage: dmg.damage });
       this._checkVictory();
-      return { ...result, type: 'break_counter', message: 'Pushed through the counter! Reduced damage dealt.' };
+      return { ...dmg, type: 'break_counter', message: 'Pushed through the counter! Reduced damage dealt.' };
     }
 
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
-    const result = this._calcDamage(pStats.atk, 10, eStats.def, this.enemy);
-    this.enemy.hp = Math.max(0, this.enemy.hp - result.damage);
-    this.log.push({ type: 'attack', damage: result.damage, critical: result.critical });
+    const dmg = this._calcDamage(pStats.atk, 10, eStats.def, this.enemy);
 
+    // Combo: bonus damage if enemy has active debuffs
+    const combo = this._enemyHasDebuff();
+    let finalDamage = dmg.damage;
+    if (combo) finalDamage = Math.floor(finalDamage * 1.25);
+
+    this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
+
+    const momentumGain = 5 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
+    this._gainMomentum(momentumGain);
+
+    this.log.push({ type: 'attack', damage: finalDamage, critical: dmg.critical });
     this._checkVictory();
-    return result;
+    return { ...dmg, damage: finalDamage, combo, momentumGain };
   }
 
   playerAbility(abilityId) {
@@ -130,10 +160,14 @@ export class CombatEngine {
     switch (ability.type) {
       case 'attack':
       case 'attack_aoe': {
-        const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, this.enemy);
-        this.enemy.hp = Math.max(0, this.enemy.hp - dmg.damage);
-        result = { ...result, damage: dmg.damage, critical: dmg.critical };
-        // Handle stripBuffs special
+        const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, this.enemy, ability.tag);
+        const combo = this._enemyHasDebuff();
+        let finalDamage = dmg.damage;
+        if (combo) finalDamage = Math.floor(finalDamage * 1.25);
+        this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
+        const momentumGain = 5 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
+        this._gainMomentum(momentumGain);
+        result = { ...result, damage: finalDamage, critical: dmg.critical, effective: dmg.effective, combo, momentumGain };
         if (ability.stripBuffs) {
           this.enemy.buffs = [];
           result.strippedBuffs = true;
@@ -238,13 +272,15 @@ export class CombatEngine {
     // Check if player's blockNext is active
     if (this.player.blockNext) {
       this.player.blockNext = false;
+      this.telegraphedAbility = null;
       this.turnCount++;
       return { type: 'blocked', message: 'Blocked! The enemy\'s action was nullified!' };
     }
 
     const eStats = this._getEffective(this.enemy);
     const pStats = this._getEffective(this.player);
-    const abilityId = this._pickEnemyAbility();
+    const abilityId = this.telegraphedAbility ?? this._pickEnemyAbility();
+    this.telegraphedAbility = null;
     const previousAbilityId = this.enemy.lastAbility;
     const result = this._executeEnemyAbility(abilityId, eStats, pStats, previousAbilityId);
 
@@ -271,9 +307,19 @@ export class CombatEngine {
     switch (ability.type) {
       case 'attack': {
         const dmg = this._calcDamage(eStats.atk, ability.power, pStats.def, this.player);
-        this.player.hp = Math.max(0, this.player.hp - dmg.damage);
-        result.damage = dmg.damage;
+        let finalDamage = dmg.damage;
+        let braced = false;
+        if (this.player.bracing) {
+          finalDamage = Math.floor(finalDamage * 0.5);
+          this.player.bracing = false;
+          braced = true;
+          this.player.retaliateReady = true;
+        }
+        this.player.hp = Math.max(0, this.player.hp - finalDamage);
+        if (!braced && finalDamage > this.player.maxHP * 0.25) this._loseMomentum(10);
+        result.damage = finalDamage;
         result.critical = dmg.critical;
+        result.braced = braced;
         break;
       }
       case 'dot': {
@@ -288,6 +334,8 @@ export class CombatEngine {
         const heal = ability.healAmount;
         this.enemy.hp = Math.min(this.enemy.maxHP, this.enemy.hp + heal);
         result.healAmount = heal;
+        // Enemy is vulnerable after healing — player can punish it
+        this.enemy.vulnerable = 1;
         break;
       }
       case 'debuff': {
@@ -300,10 +348,13 @@ export class CombatEngine {
       }
       case 'confuse': {
         this.player.confused = Math.max(this.player.confused, ability.duration);
+        // Enemy distracted while confusing — vulnerable window
+        this.enemy.vulnerable = 1;
         break;
       }
       case 'stun': {
         this.player.stunned = Math.max(this.player.stunned, ability.duration);
+        this._loseMomentum(10);
         break;
       }
       case 'counter': {
@@ -327,8 +378,17 @@ export class CombatEngine {
       }
       case 'summon': {
         const dmg = this._calcDamage(eStats.atk, ability.power || 8, pStats.def, this.player);
-        this.player.hp = Math.max(0, this.player.hp - dmg.damage);
-        result.damage = dmg.damage;
+        let finalDamage = dmg.damage;
+        let braced = false;
+        if (this.player.bracing) {
+          finalDamage = Math.floor(finalDamage * 0.5);
+          this.player.bracing = false;
+          braced = true;
+        }
+        this.player.hp = Math.max(0, this.player.hp - finalDamage);
+        if (!braced && finalDamage > this.player.maxHP * 0.25) this._loseMomentum(10);
+        result.damage = finalDamage;
+        result.braced = braced;
         break;
       }
     }
@@ -344,7 +404,8 @@ export class CombatEngine {
       let activePhase = null;
       for (const phase of this.enemy.phases) {
         if (hpPercent <= phase.hpThreshold) {
-          if (!activePhase || phase.hpThreshold >= activePhase.hpThreshold) {
+          // Pick the phase with the smallest matching threshold (deepest phase reached)
+          if (!activePhase || phase.hpThreshold <= activePhase.hpThreshold) {
             activePhase = phase;
           }
         }
@@ -525,6 +586,10 @@ export class CombatEngine {
         results.push({ type: 'status_expire', message: 'Protect wore off.' });
       }
     }
+    // Decrement enemy vulnerability window
+    if (who === 'enemy' && entity.vulnerable > 0) {
+      entity.vulnerable--;
+    }
 
     if (who === 'player') this._checkDefeat();
     else this._checkVictory();
@@ -552,6 +617,106 @@ export class CombatEngine {
       this.isOver = true;
       this.result = 'defeat';
     }
+  }
+
+  // Pre-roll and store the enemy's next ability for telegraphing
+  telegraph() {
+    this.telegraphedAbility = this._pickEnemyAbility();
+    return this.telegraphedAbility;
+  }
+
+  // Player chooses to brace — halves next incoming hit, adds DEF buff
+  playerBrace() {
+    this.player.bracing = true;
+    const defBonus = 5;
+    this.player.buffs.push({ stats: { def: defBonus }, duration: 2, name: 'Brace Stance' });
+    return { type: 'brace', defBonus };
+  }
+
+  // Spend full momentum bar for a powerful free attack
+  playerPowerMove() {
+    if (this.player.momentum < 100) return null;
+    const pStats = this._getEffective(this.player);
+    const eStats = this._getEffective(this.enemy);
+    const baseDmg = (pStats.atk + 30) * COMBAT.BASE_DAMAGE_MULTIPLIER;
+    const defense = eStats.def * COMBAT.DEFENSE_FACTOR * 0.25;
+    const damage = Math.max(10, Math.floor(baseDmg - defense + randomRange(-5, 5)));
+    this.enemy.hp = Math.max(0, this.enemy.hp - damage);
+    this.player.momentum = 0;
+    this._checkVictory();
+    return { type: 'power_move', damage };
+  }
+
+  // Returns true if the enemy has any active debuff (negative stats)
+  _enemyHasDebuff() {
+    return this.enemy.buffs.some(b => Object.values(b.stats).some(v => v < 0));
+  }
+
+  _gainMomentum(amount) {
+    this.player.momentum = Math.min(100, this.player.momentum + amount);
+  }
+
+  _loseMomentum(amount) {
+    this.player.momentum = Math.max(0, this.player.momentum - amount);
+  }
+
+  // Spend 25 momentum — press the attack and lower enemy DEF
+  playerPressAdvantage() {
+    if (this.player.momentum < 25) return null;
+    const pStats = this._getEffective(this.player);
+    const eStats = this._getEffective(this.enemy);
+    const dmg = this._calcDamage(pStats.atk, 18, eStats.def, this.enemy);
+    const combo = this._enemyHasDebuff();
+    let finalDamage = dmg.damage;
+    if (combo) finalDamage = Math.floor(finalDamage * 1.25);
+    this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
+    // Apply DEF debuff
+    this.enemy.buffs.push({ stats: { def: -5 }, duration: 2, name: 'Press Advantage' });
+    this.player.momentum = Math.max(0, this.player.momentum - 25);
+    this._checkVictory();
+    return { type: 'press_advantage', damage: finalDamage, critical: dmg.critical, combo };
+  }
+
+  // Spend 50 momentum — recover 25% HP and clear a stun/confuse
+  playerSecondWind() {
+    if (this.player.momentum < 50) return null;
+    const healAmt = Math.floor(this.player.maxHP * 0.25);
+    this.player.hp = Math.min(this.player.maxHP, this.player.hp + healAmt);
+    // Clear one negative status
+    let clearedStatus = null;
+    if (this.player.confused > 0) { this.player.confused = 0; clearedStatus = 'confusion'; }
+    else if (this.player.stunned > 0) { this.player.stunned = 0; clearedStatus = 'stun'; }
+    this.player.momentum = Math.max(0, this.player.momentum - 50);
+    return { type: 'second_wind', healAmount: healAmt, clearedStatus };
+  }
+
+  // Free counter-attack after a successful brace
+  playerRetaliate() {
+    if (!this.player.retaliateReady) return null;
+    this.player.retaliateReady = false;
+    const pStats = this._getEffective(this.player);
+    const eStats = this._getEffective(this.enemy);
+    const dmg = this._calcDamage(pStats.atk, 22, eStats.def, this.enemy);
+    this.enemy.hp = Math.max(0, this.enemy.hp - dmg.damage);
+    this._gainMomentum(15);
+    this._checkVictory();
+    return { type: 'retaliate', damage: dmg.damage, critical: dmg.critical };
+  }
+
+  // Returns the index of the current phase (0-based), or -1 if no phases or in default phase
+  getActivePhaseIndex() {
+    if (!this.enemy.phases) return -1;
+    const hpPercent = this.enemy.hp / this.enemy.maxHP;
+    let activeIndex = -1;
+    let lowestThreshold = Infinity;
+    for (let i = 0; i < this.enemy.phases.length; i++) {
+      const phase = this.enemy.phases[i];
+      if (hpPercent <= phase.hpThreshold && phase.hpThreshold <= lowestThreshold) {
+        lowestThreshold = phase.hpThreshold;
+        activeIndex = i;
+      }
+    }
+    return activeIndex;
   }
 
   getXPReward() {

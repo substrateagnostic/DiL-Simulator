@@ -294,6 +294,7 @@ export const ROOMS = {
       { x: 2, z: 1, type: 'coffee_machine', dialogId: 'coffee_machine' },
       { x: 1, z: 0, type: 'fridge', dialogId: 'fridge_notes' },
       { x: 6, z: 1, type: 'vending_machine', dialogId: 'vending_machine' },
+      { x: 7, z: 1, type: 'supply_shop' },
       { x: 4, z: 1, type: 'microwave', dialogId: 'microwave' },
       { x: 5, z: 0, type: 'poster', dialogId: 'poster_excellence' },
       { x: 8, z: 6, type: 'arcade_cabinet', dialogId: 'arcade_intro' },
@@ -314,8 +315,8 @@ export const ROOMS = {
     furniture: [
       // === Boss desk (commanding position, north-center) ===
       { type: 'desk', x: 4, z: 2, rotation: Math.PI },
-      { type: 'monitor', x: 4, z: 2.0, rotation: 0 },
-      { type: 'monitor', x: 3.5, z: 2.0, rotation: 0 },  // dual monitors, of course
+      { type: 'monitor', x: 4, z: 2.0, rotation: Math.PI },
+      { type: 'monitor', x: 3.5, z: 2.0, rotation: Math.PI },  // dual monitors, of course
       { type: 'deskPlantSucculent', x: 4.5, z: 2.0 },
       { type: 'keyboard', x: 4, z: 1.8 },
       { type: 'chair', x: 4, z: 1, rotation: 0 },  // behind desk facing south
@@ -724,6 +725,7 @@ export const ROOMS = {
     height: 20,
     floorColor: 0x666666,
     walls: true,
+    slope: 0.0375,  // radians — tilts the whole room so north end (archive) is lower
     furniture: [
       // Staircase at south end (going down toward cubicle_farm)
       { type: 'staircase', x: 2, z: 17, rotation: 0 },

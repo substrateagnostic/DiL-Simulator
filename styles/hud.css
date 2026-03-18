@@ -201,6 +201,7 @@
 
 .hud-mini-stat .value.hp { color: #ff6b6b; }
 .hud-mini-stat .value.mp { color: #53a8b6; }
+.hud-mini-stat .value.xp { color: #88aaff; }
 
 /* Portfolio / Book of Business panel */
 .hud-portfolio {
@@ -308,3 +309,5 @@
   0%, 100% { border-color: rgba(255, 204, 51, 0.4); box-shadow: 0 0 6px rgba(255, 204, 51, 0.1); }
   50% { border-color: rgba(255, 204, 51, 0.8); box-shadow: 0 0 12px rgba(255, 204, 51, 0.3); }
 }
+
+@keyframes achievementSlide { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }

@@ -61,7 +61,7 @@ export class RoomManager {
       const npcEntity = new NPC(npc.id, npc.x, npc.z, {
         facing: npc.facing || 0,
         dialogId: npc.dialogId || npc.id,
-        visible: npc.visible !== false,
+        visible: conditionFn ? false : npc.visible !== false,
         interactable: npc.interactable !== false,
         sitting: npc.sitting || false,
         movement: npc.movement || null,

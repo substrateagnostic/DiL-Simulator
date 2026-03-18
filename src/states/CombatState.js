@@ -5,7 +5,8 @@ import { CombatScene } from '../combat/CombatScene.js';
 import { CombatEngine } from '../combat/CombatEngine.js';
 import { CombatHUD } from '../ui/CombatHUD.js';
 import { FloatingText } from '../ui/FloatingText.js';
-import { ITEMS } from '../data/stats.js';
+import { ITEMS, ENEMY_ABILITIES, ENEMY_STATS, ANDREW_TAUNTS, XP_TABLE } from '../data/stats.js';
+import { AchievementManager } from '../core/AchievementManager.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
 
@@ -26,6 +27,7 @@ export class CombatState {
     this.animTimer = 0;
     this.pendingActions = [];
     this.inputEnabled = false;
+    this._lastPhaseIndex = -1;
   }
 
   enter() {
@@ -115,12 +117,24 @@ export class CombatState {
     this.phase = 'player_turn';
     this.inputEnabled = true;
     this.hud.enableInput();
-    this.hud.showMainMenu(this.engine.player.silencedThisTurn);
+
+    const telegraphed = this.engine.telegraph();
+    const vulnerable = this.engine.enemy.vulnerable > 0;
+    const hint = this._getTelegraphHint(telegraphed) + (vulnerable ? ' (VULNERABLE — hit for 1.5×!)' : '');
+    this.hud.updateTelegraph(hint);
+    this.hud.showMainMenu(
+      this.engine.player.silencedThisTurn,
+      this.engine.player.momentum,
+      this.engine.player.bracing,
+      this.engine.player.retaliateReady
+    );
     this.hud.updatePlayerStats({
       ...this.player.stats,
       hp: this.engine.player.hp,
       mp: this.engine.player.mp,
+      momentum: this.engine.player.momentum,
       name: 'Andrew',
+      _xpTable: XP_TABLE,
     });
     this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
   }
@@ -138,6 +152,9 @@ export class CombatState {
         this.inputEnabled = true;
         this.hud.showAbilities(this.player.getAbilities(), this.engine.player.mp);
         break;
+      case 'brace':
+        this._executeBrace();
+        break;
       case 'item':
         this.inputEnabled = true;
         this.hud.showItems(this.player.inventory, ITEMS);
@@ -149,6 +166,18 @@ export class CombatState {
           return;
         }
         this._executeFlee();
+        break;
+      case 'power_move':
+        this._executePowerMove();
+        break;
+      case 'press_advantage':
+        this._executePressAdvantage();
+        break;
+      case 'second_wind':
+        this._executeSecondWind();
+        break;
+      case 'retaliate':
+        this._executeRetaliate();
         break;
     }
   }
@@ -168,6 +197,9 @@ export class CombatState {
     this.hud.disableInput();
     const delay = this._playPlayerActionResult(result, abilityId);
 
+    if (result.critical) this._fireTaunt('crit');
+    if (result.effective === 'super') this._fireTaunt('weakness_hit');
+    this._checkPhaseChange();
     this._updateHUD();
     setTimeout(() => {
       if (this.engine.isOver) {
@@ -214,6 +246,9 @@ export class CombatState {
     const result = this.engine.playerAttack();
     const delay = this._playPlayerActionResult(result);
 
+    if (result && result.critical) this._fireTaunt('crit');
+    if (result && result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
+    this._checkPhaseChange();
     this._updateHUD();
     setTimeout(() => {
       if (this.engine.isOver) {
@@ -280,7 +315,6 @@ export class CombatState {
     if (result.type === 'attack' || result.type === 'attack_aoe') {
       this.scene.playerAttackAnim();
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
-      // Particle streams fly from player toward enemy
       this.particles.stream({ x:  0.2, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 14, 0xffffff, 0.20);
       this.particles.stream({ x: -0.1, y: 1.1, z: 3.8 }, { x: 0, y: 1.0, z: 0.2 },  8, 0xffee88, 0.22);
       setTimeout(() => {
@@ -291,6 +325,14 @@ export class CombatState {
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, 25, 0xff4444, 4, 1.0);
         } else {
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
+        }
+        if (result.effective === 'super') {
+          setTimeout(() => this.hud.showMessage('WEAKNESS! +50% damage!'), 300);
+        } else if (result.effective === 'resist') {
+          setTimeout(() => this.hud.showMessage('Resisted... -30% damage.'), 300);
+        }
+        if (result.combo) {
+          setTimeout(() => this.hud.showMessage('FOLLOW THROUGH! +25% damage!'), result.effective ? 600 : 300);
         }
       }, 220);
       return 1200;
@@ -602,13 +644,20 @@ export class CombatState {
       }
 
       default: {
-        // Fallback for any future abilities
         this.scene.enemyHurtAnim();
         this.scene.shake(crit ? 0.8 : 0.3);
         AudioManager.playSfx(crit ? 'critical' : 'hit');
         if (result.damage) {
           this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
+          if (result.effective === 'super') {
+            setTimeout(() => this.hud.showMessage('WEAKNESS! +50% damage!'), 300);
+          } else if (result.effective === 'resist') {
+            setTimeout(() => this.hud.showMessage('Resisted... -30% damage.'), 300);
+          }
+          if (result.combo) {
+            setTimeout(() => this.hud.showMessage('FOLLOW THROUGH! +25% damage!'), result.effective ? 600 : 300);
+          }
         }
         if (result.healAmount) {
           this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
@@ -664,10 +713,19 @@ export class CombatState {
         this.scene.enemyAttackAnim();
         setTimeout(() => {
           this.scene.shake(result.critical ? 0.8 : 0.4);
-          this.scene.flash(0xff0000, 0.1);
-          AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+          if (result.braced) {
+            this.scene.flash(0x4488ff, 0.15);
+            this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0x4488ff, 3, 0.9);
+            this.hud.showMessage('BRACED! Damage halved! Retaliate available!');
+            setTimeout(() => this._fireTaunt('brace_success'), 400);
+            AchievementManager.check(this.player, { event: 'brace_success' });
+          } else {
+            this.scene.flash(0xff0000, 0.1);
+            this.particles.burst({ x: 0, y: 1, z: 4 }, 12, 0xff0000, 2, 0.6);
+            if (result.critical) setTimeout(() => this._fireTaunt('enemy_crit'), 400);
+          }
+          AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
           this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'player');
-          this.particles.burst({ x: 0, y: 1, z: 4 }, 12, 0xff0000, 2, 0.6);
           this._updateHUD();
         }, 200);
       } else if (result.healAmount) {
@@ -703,6 +761,7 @@ export class CombatState {
         this.player.stats.mp = this.engine.player.mp;
         const levels = this.player.gainXP(xp);
         if (levels.length > 0) {
+          AchievementManager.check(this.player, { event: 'level_up' });
           setTimeout(() => {
             AudioManager.playSfx('levelup');
             this.hud.showMessage(`Level Up! Lv.${levels[levels.length - 1]}! +${levels.length} Upgrade Point${levels.length > 1 ? 's' : ''}!`);
@@ -729,7 +788,9 @@ export class CombatState {
       mp: this.engine.player.mp,
       maxHP: this.engine.player.maxHP,
       maxMP: this.engine.player.maxMP,
+      momentum: this.engine.player.momentum,
       name: 'Andrew',
+      _xpTable: XP_TABLE,
     });
     this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
   }
@@ -765,6 +826,199 @@ export class CombatState {
       delay += 800;
     }
     setTimeout(callback, delay + 300);
+  }
+
+  _executeBrace() {
+    const result = this.engine.playerBrace();
+    if (!result) return;
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+
+    this.hud.showMessage(`Bracing! DEF +${result.defBonus} for 2 turns.`);
+    AudioManager.playSfx('confirm');
+    this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0x4488ff, 2.5, 1.0);
+    this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 12, 0x88aaff, 1.0, 1.2);
+
+    this._updateHUD();
+    setTimeout(() => this._startEnemyTurn(), 1200);
+  }
+
+  _executePowerMove() {
+    const result = this.engine.playerPowerMove();
+    if (!result) return;
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+
+    this.hud.showMessage('ASSERT DOMINANCE!');
+    this._fireTaunt('power_move');
+    this._checkPhaseChange();
+    AchievementManager.check(this.player, { event: 'power_move_used' });
+    this.scene.flash(0xffd700, 0.15);
+    this.particles.burst({ x: 0, y: 2.5, z: 2 }, 30, 0xffd700, 4, 0.8);
+    this.particles.burst({ x: 0, y: 1.8, z: 2 }, 20, 0xffff00, 3, 0.6);
+
+    setTimeout(() => {
+      this.scene.flash(0xffffff, 0.3);
+      this.scene.shake(1.5);
+      this.scene.enemyHurtAnim();
+      this.scene.playerAbilityLunge(1.0);
+      AudioManager.playSfx('critical');
+      this._spawnDamageNumber(result.damage, 'critical', 'enemy');
+      this.particles.burst({ x: 0, y: 1.2, z: 0 }, 50, 0xffd700, 6, 1.5);
+      this.particles.burst({ x: 0, y: 1.5, z: 0 }, 25, 0xffffff, 5, 1.2);
+    }, 400);
+
+    this._updateHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) {
+        this._handleResult();
+      } else {
+        this._startEnemyTurn();
+      }
+    }, 2000);
+  }
+
+  _executePressAdvantage() {
+    const result = this.engine.playerPressAdvantage();
+    if (!result) return;
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+    this.hud.showMessage('Press Advantage! Enemy DEF lowered!');
+    this.scene.playerAbilityLunge(0.6);
+    this.scene.flash(0x8844ff, 0.10);
+    this.particles.stream({ x: 0.1, y: 1.0, z: 3.5 }, { x: 0, y: 1.2, z: 0.3 }, 18, 0xaa66ff, 0.30);
+    setTimeout(() => {
+      this.scene.enemyHurtAnim();
+      this.scene.shake(result.critical ? 0.7 : 0.4);
+      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+      this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 25 : 15, 0xaa66ff, 3, 0.9);
+    }, 300);
+
+    if (result.critical) this._fireTaunt('crit');
+    this._checkPhaseChange();
+    this._updateHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) {
+        this._handleResult();
+      } else {
+        this._startEnemyTurn();
+      }
+    }, 1400);
+  }
+
+  _executeSecondWind() {
+    const result = this.engine.playerSecondWind();
+    if (!result) return;
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+    let msg = `Second Wind! +${result.healAmount} HP`;
+    if (result.clearedStatus) msg += ` | ${result.clearedStatus} cleared!`;
+    this.hud.showMessage(msg);
+    AudioManager.playSfx('heal');
+    this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+    this.scene.flash(0x44aaff, 0.12);
+    this.particles.burst({ x: 0, y: 1.0, z: 4 }, 18, 0x44aaff, 2.5, 1.0);
+    this.particles.rise({ x: 0, y: 0.5, z: 4 }, 12, 0x88ccff, 1.8);
+
+    this._updateHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) {
+        this._handleResult();
+      } else {
+        this._startEnemyTurn();
+      }
+    }, 1400);
+  }
+
+  _executeRetaliate() {
+    const result = this.engine.playerRetaliate();
+    if (!result) return;
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+    this.hud.showMessage('Counter-attack!');
+    this._fireTaunt('retaliate');
+    AchievementManager.check(this.player, { event: 'retaliate_used' });
+    this.scene.playerAttackAnim();
+    AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+    this.particles.stream({ x: 0.1, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 16, 0x44ffaa, 0.25);
+    setTimeout(() => {
+      this.scene.enemyHurtAnim();
+      this.scene.shake(result.critical ? 0.8 : 0.4);
+      this.scene.flash(0x44ffaa, 0.12);
+      this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+      this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 28 : 18, 0x44ffaa, 3, 0.9);
+    }, 200);
+
+    this._checkPhaseChange();
+    this._updateHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) {
+        this._handleResult();
+      } else {
+        this._startEnemyTurn();
+      }
+    }, 1300);
+  }
+
+  _checkPhaseChange() {
+    const enemyData = ENEMY_STATS[this.enemyId];
+    if (!enemyData || !enemyData.phases) return;
+    const currentPhase = this.engine.getActivePhaseIndex();
+    if (currentPhase > this._lastPhaseIndex) {
+      this._lastPhaseIndex = currentPhase;
+      const msg = enemyData.phaseMessages?.[currentPhase];
+      const phaseMsg = Array.isArray(msg) ? msg[0] : (msg || `${this.engine.enemy.name} enters a new phase!`);
+      setTimeout(() => {
+        this.hud.showMessage(phaseMsg);
+        this.scene.flash(0xff4400, 0.20);
+        this.particles.burst({ x: 0, y: 1.5, z: 0 }, 25, 0xff4400, 4, 1.0);
+        // Trigger enemy taunt
+        const taunt = this._pickTaunt('enemy');
+        if (taunt) setTimeout(() => this.hud.showTaunt(taunt, 'enemy'), 600);
+      }, 500);
+    }
+  }
+
+  _fireTaunt(type) {
+    if (!ANDREW_TAUNTS[type]) return;
+    const lines = ANDREW_TAUNTS[type];
+    const line = lines[Math.floor(Math.random() * lines.length)];
+    // 60% chance to show taunt — not too spammy
+    if (Math.random() < 0.6) {
+      setTimeout(() => this.hud.showTaunt(line, 'player'), 300);
+    }
+  }
+
+  _pickTaunt(side) {
+    const enemyData = ENEMY_STATS[this.enemyId];
+    if (!enemyData || !enemyData.taunts) return null;
+    const taunts = enemyData.taunts;
+    return taunts[Math.floor(Math.random() * taunts.length)];
+  }
+
+  _getTelegraphHint(abilityId) {
+    if (!abilityId) return null;
+    const ability = ENEMY_ABILITIES[abilityId];
+    const name = this.engine.enemy.name;
+    if (!ability) return `${name} is making a move...`;
+    switch (ability.type) {
+      case 'attack': return `${name} is preparing to attack!`;
+      case 'dot': return `${name} is winding up a lingering attack!`;
+      case 'heal': return `${name} is about to recover!`;
+      case 'debuff': return `${name} is about to weaken you!`;
+      case 'confuse': return `${name} is about to confuse you!`;
+      case 'stun': return `${name} is winding up a stun — consider bracing!`;
+      case 'counter': return `${name} is taking a counter stance — don't use abilities!`;
+      case 'buff': return `${name} is about to power up!`;
+      case 'repeat': return `${name} is repeating their last move!`;
+      default: return `${name} is making a move...`;
+    }
   }
 
   update(dt) {

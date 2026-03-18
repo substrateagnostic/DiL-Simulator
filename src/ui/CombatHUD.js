@@ -13,6 +13,7 @@ export class CombatHUD {
     this.currentMenu = 'main';
     this.menuItems = [];
     this.canFlee = true;
+    this.telegraphEl = null;
   }
 
   show(playerStats, enemyName, enemyHP, enemyMaxHP, options = {}) {
@@ -29,7 +30,9 @@ export class CombatHUD {
       <div class="combat-enemy-hp-bar">
         <div class="combat-enemy-hp-fill" style="width: ${(enemyHP / enemyMaxHP) * 100}%"></div>
       </div>
+      <div class="combat-telegraph" style="display:none;"></div>
     `;
+    this.telegraphEl = this.enemyInfo.querySelector('.combat-telegraph');
     this.container.appendChild(this.enemyInfo);
 
     const panel = document.createElement('div');
@@ -50,17 +53,33 @@ export class CombatHUD {
     this.showMainMenu();
   }
 
-  showMainMenu(silenced = false) {
+  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
     this.menuItems = [
       { label: 'Attack', action: 'attack' },
       { label: silenced ? 'Special (Silenced)' : 'Special', action: 'special', disabled: silenced },
+      { label: bracing ? 'Bracing...' : 'Brace', action: 'brace', braceActive: bracing },
       { label: 'Item', action: 'item' },
     ];
 
     if (this.canFlee) {
       this.menuItems.push({ label: 'Flee', action: 'flee' });
+    }
+
+    if (retaliateReady) {
+      this.menuItems.push({ label: '↩ Retaliate (Free)', action: 'retaliate', retaliateBtn: true });
+    }
+
+    if (momentum >= 25 && momentum < 50) {
+      this.menuItems.push({ label: `▶ Press Advantage (25%)`, action: 'press_advantage', momentumSpend: true });
+    } else if (momentum >= 50 && momentum < 100) {
+      this.menuItems.push({ label: `▶ Press Advantage (25%)`, action: 'press_advantage', momentumSpend: true });
+      this.menuItems.push({ label: `★ Second Wind (50%)`, action: 'second_wind', momentumSpend: true });
+    }
+
+    if (momentum >= 100) {
+      this.menuItems.push({ label: '⚡ ASSERT DOMINANCE', action: 'power_move', powerMove: true });
     }
 
     this._renderMenu();
@@ -96,7 +115,12 @@ export class CombatHUD {
     this.menuEl.innerHTML = '';
     this.menuItems.forEach((item, i) => {
       const btn = document.createElement('div');
-      btn.className = `combat-action-btn${i === this.selectedIndex ? ' selected' : ''}${item.disabled ? ' disabled' : ''}`;
+      let className = `combat-action-btn${i === this.selectedIndex ? ' selected' : ''}${item.disabled ? ' disabled' : ''}`;
+      if (item.powerMove) className += ' power-move';
+      if (item.braceActive) className += ' brace-active';
+      if (item.retaliateBtn) className += ' retaliate-btn';
+      if (item.momentumSpend) className += ' momentum-spend';
+      btn.className = className;
       btn.textContent = item.label;
       if (item.disabled) {
         btn.style.opacity = '0.4';
@@ -204,8 +228,48 @@ export class CombatHUD {
     }
   }
 
+  updateTelegraph(hint) {
+    if (!this.telegraphEl) return;
+    if (hint) {
+      this.telegraphEl.textContent = `⚠ ${hint}`;
+      this.telegraphEl.style.display = '';
+    } else {
+      this.telegraphEl.style.display = 'none';
+    }
+  }
+
   _updateStats(stats) {
     if (!this.statsEl) return;
+    const momentum = Math.round(stats.momentum || 0);
+    const momentumReady = momentum >= 100;
+    const level = stats.level || 1;
+    const xp = stats.xp || 0;
+    const XP_TABLE = stats._xpTable;
+    let xpBarHtml = '';
+    if (XP_TABLE) {
+      if (level >= XP_TABLE.length) {
+        xpBarHtml = `
+          <div class="combat-stat-row">
+            <span class="combat-stat-label" style="color:#ffd700">Lv.${level}</span>
+            <div class="combat-stat-bar">
+              <div class="combat-stat-bar-fill xp" style="width:100%"></div>
+            </div>
+            <span class="combat-stat-value" style="color:#ffd700">MAX</span>
+          </div>`;
+      } else {
+        const prevXP = level > 1 ? XP_TABLE[level - 1] : 0;
+        const nextXP = XP_TABLE[level];
+        const pct = Math.min(100, Math.max(0, ((xp - prevXP) / (nextXP - prevXP)) * 100));
+        xpBarHtml = `
+          <div class="combat-stat-row">
+            <span class="combat-stat-label" style="color:#88aaff">Lv.${level}</span>
+            <div class="combat-stat-bar">
+              <div class="combat-stat-bar-fill xp" style="width:${pct}%"></div>
+            </div>
+            <span class="combat-stat-value" style="font-size:14px;color:#88aaff">${xp - prevXP}/${nextXP - prevXP}</span>
+          </div>`;
+      }
+    }
     this.statsEl.innerHTML = `
       <div class="combat-stats-name">${stats.name || 'Andrew'}</div>
       <div class="combat-stat-row">
@@ -222,7 +286,26 @@ export class CombatHUD {
         </div>
         <span class="combat-stat-value">${stats.mp}/${stats.maxMP}</span>
       </div>
+      <div class="combat-stat-row">
+        <span class="combat-stat-label" style="color: ${momentumReady ? '#ffd700' : '#aaa'}">Confidence</span>
+        <div class="combat-stat-bar">
+          <div class="combat-stat-bar-fill momentum" style="width: ${momentum}%"></div>
+        </div>
+        <span class="combat-stat-value" style="color: ${momentumReady ? '#ffd700' : '#fff'}">${momentum}%${momentumReady ? ' ⚡' : ''}</span>
+      </div>
+      ${xpBarHtml}
     `;
+  }
+
+  showTaunt(text, side = 'player') {
+    const el = document.createElement('div');
+    el.className = `combat-taunt combat-taunt-${side}`;
+    el.textContent = text;
+    this.container.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
+    }, 2500);
   }
 
   showMessage(text) {
@@ -252,5 +335,6 @@ export class CombatHUD {
     if (this.enemyInfo && this.enemyInfo.parentNode) this.enemyInfo.parentNode.removeChild(this.enemyInfo);
     this.root = null;
     this.enemyInfo = null;
+    this.telegraphEl = null;
   }
 }

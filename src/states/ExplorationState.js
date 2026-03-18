@@ -13,9 +13,12 @@ import { DIALOGS } from '../data/dialogs/index.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { TransitionOverlay } from '../ui/TransitionOverlay.js';
 import { generateClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
-import { ENEMY_STATS } from '../data/stats.js';
+import { ENEMY_STATS, XP_TABLE } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
+import { SaveManager } from '../core/SaveManager.js';
+import { AchievementManager } from '../core/AchievementManager.js';
+import { ShopState } from './ShopState.js';
 
 const INTERACTION_OFFSETS = [
   [0, 0],
@@ -281,9 +284,16 @@ export class ExplorationState {
           this.player.setFlag('ending_started');
 
           let endingDialogId = null;
-          if (this.player.getFlag('path_legal')) endingDialogId = 'legal_eagle_ending';
-          else if (this.player.getFlag('path_bro')) endingDialogId = 'bro_code_ending';
-          else if (this.player.getFlag('path_grandma')) endingDialogId = 'secret_ending';
+          if (this.player.getFlag('path_legal')) {
+            const isRetry = this.player.getFlag('retry_regional');
+            endingDialogId = isRetry && DIALOGS.regional_retry ? 'regional_retry' : 'legal_eagle_ending';
+          } else if (this.player.getFlag('path_bro')) {
+            const isRetry = this.player.getFlag('retry_compliance');
+            endingDialogId = isRetry && DIALOGS.compliance_retry ? 'compliance_retry' : 'bro_code_ending';
+          } else if (this.player.getFlag('path_grandma')) {
+            const isRetry = this.player.getFlag('retry_ross_boss');
+            endingDialogId = isRetry && DIALOGS.ross_boss_retry ? 'ross_boss_retry' : 'secret_ending';
+          }
 
           if (endingDialogId && DIALOGS[endingDialogId]) {
             setTimeout(() => {
@@ -419,7 +429,17 @@ export class ExplorationState {
     this.paused = true;
     AudioManager.playSfx('door');
 
-    await this.transition.fadeOut(0.3);
+    const currentRoom = this.player.currentRoom;
+    const goingDown = targetRoom === 'archive' || (targetRoom === 'vault' && currentRoom === 'archive');
+    const goingUp = currentRoom === 'archive' && targetRoom === 'stairwell';
+
+    if (goingDown) {
+      await this.transition.wipeDownOut(0.4);
+    } else if (goingUp) {
+      await this.transition.wipeUpOut(0.4);
+    } else {
+      await this.transition.fadeOut(0.3);
+    }
 
     Engine.scene.remove(this.player.mesh);
     this.roomManager._clearCurrentRoom();
@@ -446,8 +466,15 @@ export class ExplorationState {
       }
     }
 
-    await this.transition.fadeIn(0.3);
+    if (goingDown) {
+      await this.transition.wipeDownIn(0.4);
+    } else if (goingUp) {
+      await this.transition.wipeUpIn(0.4);
+    } else {
+      await this.transition.fadeIn(0.3);
+    }
     this.paused = false;
+    this._autoSave(false);
   }
 
   _startCombat(encounterId) {
@@ -465,6 +492,7 @@ export class ExplorationState {
 
           if (result === 'victory') {
             this.player.setFlag('bestiary_' + encounterId, true);
+            AchievementManager.check(this.player, { event: 'combat_victory', encounterId });
 
             if (encounterId === 'reception_client') {
               this._updateMiniStats();
@@ -489,6 +517,7 @@ export class ExplorationState {
             this.player.setFlag(`defeated_${encounterId}`);
             EventBus.emit('combat-won', encounterId);
             this._updateMiniStats();
+            this._autoSave(true);
 
             const encounter = ENCOUNTERS[encounterId];
             if (encounter && encounter.postDialogId && DIALOGS[encounter.postDialogId]) {
@@ -498,6 +527,7 @@ export class ExplorationState {
               }, 500);
             }
           } else if (result === 'defeat') {
+            this.player.setFlag('retry_' + encounterId, true);
             this._handleDefeat();
           }
         }
@@ -505,6 +535,11 @@ export class ExplorationState {
       this.stateManager.push(combatState);
       this.transition.remove();
     });
+  }
+
+  _autoSave(showToast = false) {
+    SaveManager.save(this.player.serialize());
+    if (showToast) this._showToast('Game saved.', 'info');
   }
 
   _handleDefeat() {
@@ -592,7 +627,14 @@ export class ExplorationState {
       this.player.setFlag('portfolioFees',    (this.player.getFlag('portfolioFees')    || 0) + clientData.annualFees);
       this._updatePortfolioDisplay();
 
-      this._showToast(`${clientData.name} onboarded! Portfolio stats updated.`, 'item');
+      // Award AUM currency (player's spending money) — 1% of assets, minimum 50
+      const aumEarned = Math.max(50, Math.floor(clientData.assets * 0.01));
+      this.player.stats.aum = (this.player.stats.aum || 0) + aumEarned;
+      this._updateMiniStats();
+      AchievementManager.check(this.player, { event: 'client_accepted' });
+      this._autoSave(false);
+
+      this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned.`, 'item');
       this._checkBossAnger();
     } else {
       // Declining bad clients reduces anger slightly; declining good ones has no benefit
@@ -905,6 +947,11 @@ export class ExplorationState {
       return 'Review desk';
     }
 
+    if (interactableTarget.data.type === 'supply_shop') {
+      const aum = this.player.stats.aum || 0;
+      return `Supply Shop (${aum.toLocaleString()} AUM)`;
+    }
+
     return 'Examine';
   }
 
@@ -955,6 +1002,12 @@ export class ExplorationState {
         return;
       }
 
+      if (interactable.data.type === 'supply_shop') {
+        AudioManager.playSfx('confirm');
+        this.stateManager.push(new ShopState(this.stateManager, this.player));
+        return;
+      }
+
       if (interactable.data.dialogId) {
         const dialogId = this._getInteractableDialogId(interactable.data);
         const dialog = DIALOGS[dialogId];
@@ -973,12 +1026,18 @@ export class ExplorationState {
   }
 
   _getDialogId(npc) {
+    const id = npc.id;
+    const act = this.player.actIndex;
+
+    // Combat retry check runs first — overrides hardcoded dialogId on NPC
+    const retryEncId = { ross: 'ross_boss' }[id] || id;
+    if (DIALOGS[`${retryEncId}_retry`] && this.player.getFlag(`retry_${retryEncId}`) && !this.player.getFlag(`defeated_${retryEncId}`)) {
+      return `${retryEncId}_retry`;
+    }
+
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
       return npc.dialogId;
     }
-
-    const id = npc.id;
-    const act = this.player.actIndex;
 
     if (
       id === 'intern' &&
@@ -987,6 +1046,7 @@ export class ExplorationState {
       !this.player.getFlag('defeated_intern') &&
       DIALOGS.intern_combat_intro
     ) {
+      if (this.player.getFlag('retry_intern') && DIALOGS.intern_retry) return 'intern_retry';
       return 'intern_combat_intro';
     }
 
@@ -1095,18 +1155,24 @@ export class ExplorationState {
 
   _updateMiniStats() {
     if (!this.miniStatsElement) return;
+    const { hp, maxHP, mp, maxMP, level, xp = 0 } = this.player.stats;
+    const nextXP = level < XP_TABLE.length ? XP_TABLE[level] : XP_TABLE[XP_TABLE.length - 1];
     this.miniStatsElement.innerHTML = `
       <div class="hud-mini-stat">
         <span class="label">HP</span>
-        <span class="value hp">${this.player.stats.hp}/${this.player.stats.maxHP}</span>
+        <span class="value hp">${hp}/${maxHP}</span>
       </div>
       <div class="hud-mini-stat">
         <span class="label">Coffee</span>
-        <span class="value mp">${this.player.stats.mp}/${this.player.stats.maxMP}</span>
+        <span class="value mp">${mp}/${maxMP}</span>
       </div>
       <div class="hud-mini-stat">
         <span class="label">Lv</span>
-        <span class="value">${this.player.stats.level}</span>
+        <span class="value">${level}</span>
+      </div>
+      <div class="hud-mini-stat">
+        <span class="label">XP</span>
+        <span class="value xp">${xp}/${nextXP}</span>
       </div>
     `;
   }
@@ -1455,6 +1521,14 @@ export class ExplorationState {
     this.player.move(x, z, dt, this.tileMap);
     this.player.update(dt);
 
+    // Slope the stairwell — player and camera descend together as they walk north
+    if (this.player.currentRoom === 'stairwell') {
+      const t = Math.max(0, Math.min(1, (18 - this.player.position.z) / 16));
+      const elevation = -0.6 * t;
+      this.player.mesh.position.y = elevation;
+      this.camera.follow(this.player.position.x, this.player.position.z, elevation);
+    }
+
     // Fade south wall when player gets close to it
     const southWallMeshes = this.roomManager.currentRoom?.getSouthWallMeshes() ?? [];
     if (southWallMeshes.length > 0 && this.tileMap) {
@@ -1479,7 +1553,9 @@ export class ExplorationState {
       }
     }
 
-    this.camera.follow(this.player.position.x, this.player.position.z);
+    if (this.player.currentRoom !== 'stairwell') {
+      this.camera.follow(this.player.position.x, this.player.position.z, 0);
+    }
     this.camera.update(dt);
 
     this.roomManager.update(dt, this.player.flags, this.paused);

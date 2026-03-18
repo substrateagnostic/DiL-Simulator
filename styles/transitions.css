@@ -81,6 +81,48 @@
   100% { clip-path: circle(0% at 50% 50%); }
 }
 
+/* Descend wipe — dark curtain sweeps down from top (entering archive/basement) */
+.transition-wipe-down-out {
+  background: #000;
+  animation: wipeDownOut var(--duration, 0.4s) ease-in forwards;
+}
+
+@keyframes wipeDownOut {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+
+.transition-wipe-down-in {
+  background: #000;
+  animation: wipeDownIn var(--duration, 0.4s) ease-out forwards;
+}
+
+@keyframes wipeDownIn {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+
+/* Ascend wipe — dark curtain sweeps up from bottom (leaving archive/basement) */
+.transition-wipe-up-out {
+  background: #000;
+  animation: wipeUpOut var(--duration, 0.4s) ease-in forwards;
+}
+
+@keyframes wipeUpOut {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.transition-wipe-up-in {
+  background: #000;
+  animation: wipeUpIn var(--duration, 0.4s) ease-out forwards;
+}
+
+@keyframes wipeUpIn {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-100%); }
+}
+
 /* Screen shake utility */
 .screen-shake {
   animation: shake 0.3s ease-out;

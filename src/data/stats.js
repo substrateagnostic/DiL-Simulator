@@ -10,10 +10,31 @@ export const PLAYER_BASE_STATS = {
   spd: 8,
   level: 1,
   xp: 0,
+  aum: 0,       // Assets Under Management — earned from reception clients, spent at shop
 };
 
-// XP needed per level
-export const XP_TABLE = [0, 30, 80, 150, 250, 400, 600, 900, 1300, 2000];
+// XP needed per level — 15 levels, exponential curve (~1.35x per gap).
+// Level 1→2 costs 325 XP (~5 reception fights at 65 XP each).
+// Story bosses alone yield ~835 XP total, landing the player around level 4.
+// Levels 5–10 require consistent roguelite grinding; 11–15 are hardcore territory.
+//   Gap per level: 325→450→600→800→1075→1450→1950→2625→3550→4800→6475→8750→11800→16000
+export const XP_TABLE = [
+  0,      // Lv 1
+  325,    // Lv 2  (+325,   ~5 fights)
+  775,    // Lv 3  (+450,   ~7 fights)
+  1375,   // Lv 4  (+600,   ~9 fights)
+  2175,   // Lv 5  (+800,   ~12 fights)
+  3250,   // Lv 6  (+1075,  ~17 fights)
+  4700,   // Lv 7  (+1450,  ~22 fights)
+  6650,   // Lv 8  (+1950,  ~30 fights)
+  9275,   // Lv 9  (+2625,  ~40 fights)
+  12825,  // Lv 10 (+3550,  ~55 fights)
+  17625,  // Lv 11 (+4800,  ~74 fights)
+  24100,  // Lv 12 (+6475,  ~100 fights)
+  32850,  // Lv 13 (+8750,  ~135 fights)
+  44650,  // Lv 14 (+11800, ~182 fights)
+  60650,  // Lv 15 (+16000, ~246 fights)
+];
 
 // Stat growth per level
 export const LEVEL_GROWTH = {
@@ -34,6 +55,7 @@ export const PLAYER_ABILITIES = {
     cost: 10,
     power: 18,
     type: 'attack',
+    tag: 'legal',
     tier: 0, // starter — free
   },
   coffee_break: {
@@ -51,6 +73,7 @@ export const PLAYER_ABILITIES = {
     cost: 25,
     power: 40,
     type: 'attack',
+    tag: 'legal',
     tier: 1,
     requires: 'file_motion',
     upgradePointCost: 1,
@@ -61,6 +84,7 @@ export const PLAYER_ABILITIES = {
     cost: 40,
     power: 30,
     type: 'attack_aoe',
+    tag: 'social',
     tier: 1,
     requires: 'file_motion',
     upgradePointCost: 1,
@@ -70,6 +94,7 @@ export const PLAYER_ABILITIES = {
     description: 'Expose the enemy\'s weaknesses through thorough analysis',
     cost: 15,
     type: 'debuff',
+    tag: 'audit',
     debuffAmount: { def: -5 },
     debuffDuration: 3,
     tier: 1,
@@ -93,6 +118,7 @@ export const PLAYER_ABILITIES = {
     cost: 50,
     power: 75,
     type: 'attack',
+    tag: 'social',
     tier: 2,
     requires: 'cite_precedent',
     upgradePointCost: 2,
@@ -114,6 +140,7 @@ export const PLAYER_ABILITIES = {
     cost: 45,
     power: 55,
     type: 'attack',
+    tag: 'legal',
     tier: 3,
     requires: 'per_my_last_email',
     upgradePointCost: 2,
@@ -136,6 +163,7 @@ export const PLAYER_ABILITIES = {
     cost: 35,
     power: 50,
     type: 'attack',
+    tag: 'technical',
     stripBuffs: true,
     unlockQuest: 'legacy_admin',
   },
@@ -163,6 +191,7 @@ export const PLAYER_ABILITIES = {
     cost: 30,
     power: 60,
     type: 'attack',
+    tag: 'legal',
     unlockQuest: 'printers_soul',
   },
   invoke_charter: {
@@ -171,6 +200,7 @@ export const PLAYER_ABILITIES = {
     cost: 60,
     power: 100,
     type: 'attack',
+    tag: 'legal',
     unlockQuest: 'final_patch',
   },
 };
@@ -186,36 +216,82 @@ export const ENEMY_STATS = {
     spd: 5,
     xpReward: 25,
     abilities: ['paper_jam', 'confused_filing'],
+    weakness: 'legal', resistance: null,
   },
   karen: {
     name: 'Karen Henderson',
-    maxHP: 120,
-    hp: 120,
-    atk: 16,
-    def: 8,
-    spd: 10,
-    xpReward: 80,
+    maxHP: 200,
+    hp: 200,
+    atk: 24,
+    def: 16,
+    spd: 14,
+    xpReward: 150,
     abilities: ['speak_to_manager', 'yelp_review', 'father_wanted'],
+    weakness: 'legal', resistance: 'social',
+    phases: [
+      { hpThreshold: 0.5, abilities: ['speak_to_manager', 'yelp_review', 'father_wanted', 'demand_corporate'] },
+      { hpThreshold: 0.25, abilities: ['father_wanted', 'demand_corporate', 'live_tweet_rampage'] },
+    ],
+    phaseMessages: [
+      "Karen is FURIOUS. She's calling everyone she's ever met!",
+      "Karen has GONE NUCLEAR. The Yelp review is going viral!",
+    ],
+    taunts: [
+      "I WANT YOUR SUPERVISOR. And your supervisor's supervisor.",
+      '"My attorney is on speed dial and I am not afraid to use it!"',
+      '"One star. Zero. Stars. I am telling EVERYONE."',
+      '"Do you know who my father was?! DO YOU?!"',
+    ],
   },
   chad: {
     name: 'Chad Henderson',
-    maxHP: 100,
-    hp: 100,
-    atk: 18,
-    def: 6,
-    spd: 12,
-    xpReward: 80,
+    maxHP: 220,
+    hp: 220,
+    atk: 26,
+    def: 14,
+    spd: 20,
+    xpReward: 200,
     abilities: ['bro_down', 'my_lawyer_says', 'trust_fund_tantrum'],
+    weakness: 'social', resistance: 'legal',
+    phases: [
+      { hpThreshold: 0.5, abilities: ['bro_down', 'trust_fund_tantrum', 'alpha_mode'] },
+      { hpThreshold: 0.25, abilities: ['trust_fund_tantrum', 'alpha_mode', 'rage_quit_attack'] },
+    ],
+    phaseMessages: [
+      'Chad flexes and enters ALPHA MODE. His protein shake overflows.',
+      'Chad is COMPLETELY unhinged. He throws away his CFA study guide.',
+    ],
+    taunts: [
+      '"BRO you literally cannot do this to me, do you know who I am?!"',
+      '"My lawyers are CALLING RIGHT NOW. Multiple lawyers, bro."',
+      '"ALPHA DOES NOT LOSE, BRO. ALPHA. DOES. NOT. LOSE."',
+      '"I\'m going to put everything in crypto and there\'s nothing you can do!"',
+    ],
   },
   grandma: {
     name: 'Grandma Henderson',
-    maxHP: 90,
-    hp: 90,
-    atk: 14,
-    def: 12,
-    spd: 6,
-    xpReward: 100,
+    maxHP: 180,
+    hp: 180,
+    atk: 22,
+    def: 22,
+    spd: 12,
+    xpReward: 250,
     abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will'],
+    weakness: 'audit', resistance: 'social',
+    phases: [
+      { hpThreshold: 0.5, abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will', 'emergency_shortbread'] },
+      { hpThreshold: 0.25, abilities: ['changed_the_will', 'emergency_shortbread', 'final_revision'] },
+    ],
+    phaseMessages: [
+      'Grandma looks... disappointed. Dangerously, quietly disappointed.',
+      'Grandma has changed the will. Again. She brought a notary.',
+    ],
+    taunts: [
+      '"This is not what your grandfather would have wanted. Not one bit."',
+      '"I may need to re-examine the beneficiary designations... all of them."',
+      '*dabs eyes* "I just want what\'s best. For everyone. Except you, apparently."',
+      '"The church has been very understanding. Very generous, actually."',
+    ],
   },
   compliance: {
     name: 'Compliance Auditor',
@@ -226,6 +302,7 @@ export const ENEMY_STATS = {
     spd: 8,
     xpReward: 150,
     abilities: ['regulation_cite', 'audit_trail', 'form_27b_stroke_6'],
+    weakness: 'legal', resistance: 'audit',
   },
   regional: {
     name: 'Regional Manager',
@@ -236,6 +313,7 @@ export const ENEMY_STATS = {
     spd: 10,
     xpReward: 200,
     abilities: ['synergy_blast', 'corporate_restructure', 'golden_parachute'],
+    weakness: 'social', resistance: 'legal',
   },
   ross_boss: {
     name: 'Ross (Unhinged)',
@@ -246,6 +324,7 @@ export const ENEMY_STATS = {
     spd: 14,
     xpReward: 200,
     abilities: ['quick_sync', 'circle_back', 'great_catch'],
+    weakness: 'social', resistance: 'technical',
   },
   // Mutable placeholder — overwritten by ClientGenerator before each reception fight
   reception_client: {
@@ -255,8 +334,9 @@ export const ENEMY_STATS = {
     atk: 10,
     def: 8,
     spd: 6,
-    xpReward: 40,
+    xpReward: 65,
     abilities: ['portfolio_panic', 'demand_guarantees'],
+    weakness: 'audit', resistance: null,
   },
 
   // Acts 3–5 enemies
@@ -269,6 +349,7 @@ export const ENEMY_STATS = {
     spd: 8,
     xpReward: 60,
     abilities: ['badge_check', 'tackle', 'radio_backup'],
+    weakness: 'legal', resistance: null,
   },
   hr_rep: {
     name: 'HR Representative',
@@ -279,6 +360,7 @@ export const ENEMY_STATS = {
     spd: 6,
     xpReward: 45,
     abilities: ['mandatory_training', 'formal_warning', 'sensitivity_seminar'],
+    weakness: 'social', resistance: null,
   },
   restructuring_analyst: {
     name: 'Restructuring Analyst',
@@ -289,6 +371,7 @@ export const ENEMY_STATS = {
     spd: 12,
     xpReward: 70,
     abilities: ['downsize', 'efficiency_report', 'outsource_threat'],
+    weakness: 'audit', resistance: null,
   },
   brand_consultant: {
     name: 'Brand Consultant',
@@ -299,6 +382,7 @@ export const ENEMY_STATS = {
     spd: 14,
     xpReward: 65,
     abilities: ['rebrand', 'focus_group', 'logo_redesign'],
+    weakness: 'social', resistance: 'audit',
   },
   corporate_lawyer: {
     name: 'Corporate Lawyer',
@@ -309,6 +393,7 @@ export const ENEMY_STATS = {
     spd: 10,
     xpReward: 120,
     abilities: ['cease_desist', 'legal_jargon', 'billable_assault'],
+    weakness: 'audit', resistance: 'legal',
   },
   rachel_boss: {
     name: 'Rachel, SVP',
@@ -319,6 +404,7 @@ export const ENEMY_STATS = {
     spd: 12,
     xpReward: 300,
     abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'],
+    weakness: 'audit', resistance: 'social',
     phases: [
       { hpThreshold: 0.6, abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'] },
       { hpThreshold: 0.3, abilities: ['hostile_takeover', 'board_resolution', 'golden_handcuffs'] },
@@ -334,6 +420,7 @@ export const ENEMY_STATS = {
     spd: 14,
     xpReward: 180,
     abilities: ['expense_review', 'budget_slash', 'cfo_call'],
+    weakness: 'audit', resistance: 'legal',
   },
   regional_director: {
     name: 'Regional Director',
@@ -344,6 +431,7 @@ export const ENEMY_STATS = {
     spd: 10,
     xpReward: 350,
     abilities: ['corporate_mandate', 'synergy_blast', 'market_correction', 'quarterly_target'],
+    weakness: 'legal', resistance: 'social',
     phases: [
       { hpThreshold: 0.6, abilities: ['corporate_mandate', 'synergy_blast', 'quarterly_target'] },
       { hpThreshold: 0.3, abilities: ['market_correction', 'corporate_mandate', 'quarterly_target'] },
@@ -359,6 +447,7 @@ export const ENEMY_STATS = {
     spd: 16,
     xpReward: 500,
     abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'],
+    weakness: 'technical', resistance: 'social',
     phases: [
       { hpThreshold: 0.7, abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'] },
       { hpThreshold: 0.35, abilities: ['predictive_model', 'algorithmic_trading', 'data_harvest'] },
@@ -420,6 +509,42 @@ export const ENEMY_ABILITIES = {
     '"I NEED that money for my NFT project!" Chad rages!',
     'Chad kicks over a chair and screams about his inheritance!',
     '"This is literally THEFT! Grandpa SAID I could have it all!"',
+  ]},
+
+  // Karen phase abilities
+  demand_corporate: { name: 'Demand Corporate', power: 0, type: 'buff', buff: { atk: 8, def: 6 }, duration: 2, messages: [
+    '"I am DEMANDING to speak with your entire corporate chain of command!"',
+    'Karen pulls out a laminated list of demands. Each one is legally dubious.',
+    '"I have RIGHTS. I have READ them. ALL of them." Karen steels herself.',
+  ]},
+  live_tweet_rampage: { name: 'Live Tweet Rampage', power: 35, type: 'attack', messages: [
+    'Karen live-tweets the entire meeting. Her 12 followers are outraged.',
+    '"THREAD: A Trust Officer Tried to DENY My Rightful Inheritance (1/47)"',
+    'Karen\'s phone screen glows as she tweets into the void. It still hurts somehow.',
+  ]},
+
+  // Chad phase abilities
+  alpha_mode: { name: 'Alpha Mode', power: 0, type: 'buff', buff: { atk: 12, spd: 6 }, duration: 3, messages: [
+    '"ALPHA MODE ACTIVATED." Chad crushes his empty protein container.',
+    '"I am the apex predator of this trust dispute." Chad\'s eyes go blank.',
+    '"No thoughts. Head empty. Pure AGGRESSION." Chad enters the zone.',
+  ]},
+  rage_quit_attack: { name: 'Rage Quit', power: 42, type: 'attack', messages: [
+    'Chad upends the conference table in a fit of entitled rage!',
+    '"I AM DONE WITH THIS PROCESS." Chad flings a stack of legal briefs!',
+    '"My therapist said I needed to set BOUNDARIES." The briefcase becomes a weapon.',
+  ]},
+
+  // Grandma phase abilities
+  emergency_shortbread: { name: 'Emergency Shortbread', power: 0, type: 'heal', healAmount: 45, messages: [
+    'Grandma produces an entire tin of emergency shortbread from her handbag.',
+    '"I baked these this morning. I knew today would be difficult."',
+    'The smell of butter and passive aggression fills the room. Grandma heals.',
+  ]},
+  final_revision: { name: '"Final" Revision', power: 0, type: 'debuff', debuff: { atk: -8, def: -6 }, duration: 3, messages: [
+    '"I\'ve drafted a final revision to the trust. My attorney has a copy."',
+    '"Funny you should mention legacy. I was just thinking about legacy." The words land like a gavel.',
+    '"This is the final revision. I said that last time too." The threat is absolute.',
   ]},
 
   // Grandma
@@ -695,6 +820,51 @@ export const ENEMY_ABILITIES = {
     '"OPTIMIZATION COMPLETE. HUMAN INPUT: DEPRECATED." Reality warps!',
     '"All inefficiencies will be eliminated. Starting with you." Maximum power!',
   ]},
+};
+
+// Andrew's in-combat quips
+export const ANDREW_TAUNTS = {
+  crit: [
+    "That's going in the quarterly report.",
+    "Documented. Timestamped. Witnessed.",
+    "You call that a defense?",
+    "That's why I bill hourly.",
+  ],
+  weakness_hit: [
+    "I did my due diligence.",
+    "Should've read the fine print.",
+    "Weakness identified. Exploited. Filed.",
+    "That's what the risk assessment was for.",
+  ],
+  brace_success: [
+    "I anticipated that.",
+    "Already had the counter-memo drafted.",
+    "Predicted it. Mitigated it. Moving on.",
+    "Per my earlier risk assessment.",
+  ],
+  power_move: [
+    "ASSERT DOMINANCE. This meeting is adjourned.",
+    "Conference room. Now. Everyone.",
+    "I invoke my full authority as Trust Officer.",
+    "Andrew has entered the building.",
+  ],
+  confused: [
+    "What was I... where is my coffee.",
+    "The synergy is... disorienting.",
+    "I need to reschedule my thoughts.",
+  ],
+  enemy_crit: [
+    "That's going on your permanent record.",
+    "HR will be hearing about this.",
+    "Bold move. Filing a counter-claim.",
+    "Noted. Not appreciated. But noted.",
+  ],
+  retaliate: [
+    "Counter-offer.",
+    "Per my last email — no.",
+    "You should've read the brace clause.",
+    "That's what we call a learning moment.",
+  ],
 };
 
 // Items

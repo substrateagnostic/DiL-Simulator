@@ -113,6 +113,14 @@ export class Room {
     // 7. Cache NPC data
     this._builtNPCData = (this.data.npcs || []).map(npc => ({ ...npc }));
 
+    // 8. Apply room slope (e.g. stairwell descends north)
+    if (this.data.slope) {
+      const angle = this.data.slope;
+      const spawnZ = this.data.playerSpawn?.z ?? 0;
+      this.scene.rotation.x = angle;
+      this.scene.position.y = -spawnZ * Math.sin(angle);
+    }
+
     this.group = this.scene; // Alias for RoomManager
     return this.scene;
   }

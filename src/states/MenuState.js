@@ -5,6 +5,7 @@ import { EventBus } from '../core/EventBus.js';
 import { BESTIARY_DATA } from '../data/bestiary.js';
 import { ENEMY_STATS, PLAYER_ABILITIES } from '../data/stats.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
+import { AchievementManager } from '../core/AchievementManager.js';
 
 export class MenuState {
   constructor(stateManager, player) {
@@ -12,7 +13,8 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Achievements', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    this.achievementsOverlay = null;
     this.controlsOverlay = null;
     this.audioOverlay = null;
     this.bestiaryOverlay = null;
@@ -71,6 +73,7 @@ export class MenuState {
     this._closeAudioSettings();
     this._closeAbilities();
     this._closeCosmetics();
+    this._closeAchievements();
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -99,6 +102,9 @@ export class MenuState {
         break;
       case 'Journal':
         this._showBestiary();
+        break;
+      case 'Achievements':
+        this._showAchievements();
         break;
       case 'Save Game':
         this._saveGame();
@@ -661,6 +667,13 @@ export class MenuState {
       return;
     }
 
+    if (this.achievementsOverlay) {
+      if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
+        this._closeAchievements();
+      }
+      return;
+    }
+
     if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this._updateSelection();
@@ -677,5 +690,48 @@ export class MenuState {
     if (InputManager.isCancelPressed()) {
       this.stateManager.pop();
     }
+  }
+
+  _showAchievements() {
+    const achievements = AchievementManager.getAll();
+    const unlocked = achievements.filter(a => a.unlocked).length;
+
+    this.achievementsOverlay = document.createElement('div');
+    this.achievementsOverlay.style.cssText = `
+      position: absolute; inset: 0; background: rgba(0,0,0,0.88);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; font-family: 'VT323', monospace; color: #fff;
+    `;
+
+    const rows = achievements.map(a => {
+      const color = a.unlocked ? '#ffd700' : '#444';
+      const nameColor = a.unlocked ? '#fff' : '#555';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+        <span style="font-size:22px;filter:${a.unlocked ? 'none' : 'grayscale(1) opacity(0.3)'}">${a.icon}</span>
+        <div>
+          <div style="color:${nameColor};font-size:18px">${a.unlocked ? a.name : '???'}</div>
+          <div style="color:${color};font-size:15px">${a.unlocked ? a.desc : 'Locked'}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    this.achievementsOverlay.innerHTML = `
+      <div style="font-family:'Press Start 2P',cursive;font-size:14px;color:#e94560;margin-bottom:12px">ACHIEVEMENTS</div>
+      <div style="color:#aaa;font-size:16px;margin-bottom:16px">${unlocked} / ${achievements.length} unlocked</div>
+      <div style="min-width:360px;max-width:480px;max-height:380px;overflow-y:auto;padding:0 16px">
+        ${rows}
+      </div>
+      <div style="margin-top:16px;color:#888;font-size:15px">Enter / Esc to close</div>
+    `;
+
+    this.achievementsOverlay.addEventListener('click', () => this._closeAchievements());
+    document.getElementById('ui-overlay').appendChild(this.achievementsOverlay);
+  }
+
+  _closeAchievements() {
+    if (this.achievementsOverlay && this.achievementsOverlay.parentNode) {
+      this.achievementsOverlay.parentNode.removeChild(this.achievementsOverlay);
+    }
+    this.achievementsOverlay = null;
   }
 }
