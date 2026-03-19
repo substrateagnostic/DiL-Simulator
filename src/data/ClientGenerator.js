@@ -322,7 +322,7 @@ function scaleEnemyStats(assets, playerLevel = 1) {
   // Level scaling: each player level adds ~8% to base stats
   const lvlScale = 1 + (playerLevel - 1) * 0.08;
   return {
-    maxHP: Math.round((45 + t * 115) * lvlScale),
+    maxHP: Math.round((100 + t * 160) * lvlScale),
     atk:   Math.round((6  + t * 16)  * lvlScale),
     def:   Math.round((3  + t * 15)  * lvlScale),
     spd:   Math.round((4  + t * 10)  * lvlScale),

@@ -49,6 +49,35 @@ const QUEST_OBJECTIVES = {
   henderson_trust: {
     briefing: 'Meet Karen Henderson in the Conference Room',
   },
+  main_act4: {
+    0: 'Investigate the strange occurrences',
+    1: 'Rally the team: Talk to Janet, Diane, and the Mysterious Janitor',
+    2: 'Convince Ross to stand up for the department',
+    3: 'Access the HR Department',
+    4: 'Find the Vault behind the Archive',
+    5: 'Retrieve the 1947 charter from the Vault',
+  },
+  main_act5: {
+    0: 'Defend the department from the Restructuring Team',
+    1: 'Defeat the Brand Consultant',
+    2: 'Defeat the Corporate Lawyer',
+    3: 'Access the Board Room',
+    4: 'Confront Rachel in the Board Room',
+  },
+  main_act6: {
+    0: 'Rally the team for the board meeting',
+    1: 'Gather evidence against Rachel',
+    2: 'Get Ross to prepare his speech',
+    3: 'Recruit Grandma Henderson as ally',
+    4: "Get the Janitor's Rolex",
+  },
+  main_act7: {
+    0: 'Ascend to the Penthouse',
+    1: "Defeat the CFO's Assistant",
+    2: 'Defeat the Regional Director',
+    3: 'Face The Algorithm',
+    4: 'Choose the fate of the Trust Department',
+  },
 };
 
 export class ExplorationState {
@@ -157,7 +186,7 @@ export class ExplorationState {
           this._showToast('The Board Room is now accessible from the executive floor.', 'objective');
         }
         if (key === 'act3_complete') {
-          this._showToast('Rachel has locked down the building. Rally the team!', 'objective');
+          this._showToast('Rachel has locked down the building. Rally Janet, Diane, and the Janitor!', 'objective');
         }
         if (key === 'act5_complete') {
           this._showToast('Rachel is defeated, but the board meets tomorrow. Prepare the team!', 'objective');
@@ -537,7 +566,7 @@ export class ExplorationState {
     });
   }
 
-  _autoSave(showToast = false) {
+  _autoSave(showToast = true) {
     SaveManager.save(this.player.serialize());
     if (showToast) this._showToast('Game saved.', 'info');
   }
@@ -1302,9 +1331,9 @@ export class ExplorationState {
       return 'Open the Vault and retrieve the 1947 charter';
     }
     if (this.player.getFlag('act3_complete')) {
-      const rallied = ['janet_rallied', 'diane_rallied', 'ross_rallied'].filter(f => this.player.getFlag(f)).length;
-      if (rallied < 3) return `Rally the team against Rachel (${rallied}/3)`;
-      return 'Talk to the Janitor about the charter';
+      const rallied = ['janet_rallied', 'diane_rallied', 'ross_rallied', 'janitor_rallied'].filter(f => this.player.getFlag(f)).length;
+      if (rallied < 4) return `Rally the team: Talk to Janet, Diane, Ross & the Janitor (${rallied}/4)`;
+      return 'Open the Vault and retrieve the 1947 charter';
     }
 
     // Act 3

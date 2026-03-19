@@ -337,6 +337,146 @@
   background: linear-gradient(90deg, #3355cc, #88aaff);
 }
 
+/* ── Mini-game overlays ─────────────────────────────────────────────────── */
+.minigame-overlay {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10, 15, 25, 0.97);
+  border: 2px solid #4488ff;
+  border-radius: 8px;
+  padding: 22px 30px;
+  z-index: 300;
+  min-width: 360px;
+  text-align: center;
+  font-family: 'VT323', monospace;
+  animation: tauntAppear 0.15s ease-out;
+}
+
+.minigame-title {
+  color: #88aaff;
+  font-size: 22px;
+  letter-spacing: 2px;
+  margin-bottom: 16px;
+}
+
+.minigame-hint {
+  color: #888;
+  font-size: 16px;
+  margin-top: 12px;
+}
+
+/* Brace timing bar */
+.minigame-bar-track {
+  position: relative;
+  width: 300px;
+  height: 30px;
+  margin: 0 auto;
+  border-radius: 4px;
+  border: 1px solid #334;
+  overflow: hidden;
+  background: linear-gradient(to right,
+    #3a1a1a 0%,   #3a1a1a 15%,
+    #1a3a20 15%,  #1a3a20 45%,
+    #0a5535 45%,  #0a5535 55%,
+    #1a3a20 55%,  #1a3a20 85%,
+    #3a1a1a 85%,  #3a1a1a 100%
+  );
+}
+
+.minigame-marker {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: #fff;
+  border-radius: 2px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px #fff;
+}
+
+/* Retaliate QTE */
+.minigame-sequence {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 4px 0 8px;
+}
+
+.qte-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: #1a2a3a;
+  border: 2px solid #4488ff;
+  border-radius: 6px;
+  font-size: 28px;
+  color: #88aaff;
+  transition: border-color 0.1s, color 0.1s;
+}
+
+.qte-key.correct {
+  border-color: #44ff88;
+  color: #44ff88;
+  background: #0a2a18;
+}
+
+.qte-key.wrong {
+  border-color: #ff4444;
+  color: #ff4444;
+  background: #2a0a0a;
+}
+
+/* Desperate Gamble */
+.gamble-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 8px 0;
+  text-align: left;
+}
+
+.gamble-option {
+  padding: 10px 14px;
+  border: 1px solid #334;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.gamble-option.selected,
+.gamble-option:hover {
+  background: #1a2535;
+  border-color: #4488ff;
+}
+
+.gamble-option-name {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.gamble-option-desc {
+  font-size: 15px;
+  color: #aaa;
+  margin-top: 2px;
+}
+
+/* Desperate Gamble main menu button */
+.combat-action-btn.desperate-btn {
+  background: rgba(180, 30, 60, 0.25);
+  border-color: #ff4466;
+  color: #ff8899;
+}
+
+.combat-action-btn.desperate-btn:hover,
+.combat-action-btn.desperate-btn.selected {
+  background: rgba(180, 30, 60, 0.45);
+  box-shadow: 0 0 10px rgba(255, 68, 102, 0.4);
+}
+
 /* Combat taunts */
 .combat-taunt {
   position: absolute;

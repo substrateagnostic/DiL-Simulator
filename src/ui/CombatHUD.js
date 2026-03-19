@@ -53,7 +53,7 @@ export class CombatHUD {
     this.showMainMenu();
   }
 
-  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false) {
+  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
     this.menuItems = [
@@ -63,12 +63,16 @@ export class CombatHUD {
       { label: 'Item', action: 'item' },
     ];
 
+    if (retaliateReady) {
+      this.menuItems.push({ label: '↩ Retaliate (Free)', action: 'retaliate', retaliateBtn: true });
+    }
+
     if (this.canFlee) {
       this.menuItems.push({ label: 'Flee', action: 'flee' });
     }
 
-    if (retaliateReady) {
-      this.menuItems.push({ label: '↩ Retaliate (Free)', action: 'retaliate', retaliateBtn: true });
+    if (lowHP) {
+      this.menuItems.push({ label: '🎲 Desperate Gamble', action: 'desperate_gamble', desperateBtn: true });
     }
 
     if (momentum >= 25 && momentum < 50) {
@@ -120,6 +124,7 @@ export class CombatHUD {
       if (item.braceActive) className += ' brace-active';
       if (item.retaliateBtn) className += ' retaliate-btn';
       if (item.momentumSpend) className += ' momentum-spend';
+      if (item.desperateBtn) className += ' desperate-btn';
       btn.className = className;
       btn.textContent = item.label;
       if (item.disabled) {
@@ -242,34 +247,6 @@ export class CombatHUD {
     if (!this.statsEl) return;
     const momentum = Math.round(stats.momentum || 0);
     const momentumReady = momentum >= 100;
-    const level = stats.level || 1;
-    const xp = stats.xp || 0;
-    const XP_TABLE = stats._xpTable;
-    let xpBarHtml = '';
-    if (XP_TABLE) {
-      if (level >= XP_TABLE.length) {
-        xpBarHtml = `
-          <div class="combat-stat-row">
-            <span class="combat-stat-label" style="color:#ffd700">Lv.${level}</span>
-            <div class="combat-stat-bar">
-              <div class="combat-stat-bar-fill xp" style="width:100%"></div>
-            </div>
-            <span class="combat-stat-value" style="color:#ffd700">MAX</span>
-          </div>`;
-      } else {
-        const prevXP = level > 1 ? XP_TABLE[level - 1] : 0;
-        const nextXP = XP_TABLE[level];
-        const pct = Math.min(100, Math.max(0, ((xp - prevXP) / (nextXP - prevXP)) * 100));
-        xpBarHtml = `
-          <div class="combat-stat-row">
-            <span class="combat-stat-label" style="color:#88aaff">Lv.${level}</span>
-            <div class="combat-stat-bar">
-              <div class="combat-stat-bar-fill xp" style="width:${pct}%"></div>
-            </div>
-            <span class="combat-stat-value" style="font-size:14px;color:#88aaff">${xp - prevXP}/${nextXP - prevXP}</span>
-          </div>`;
-      }
-    }
     this.statsEl.innerHTML = `
       <div class="combat-stats-name">${stats.name || 'Andrew'}</div>
       <div class="combat-stat-row">
@@ -293,7 +270,6 @@ export class CombatHUD {
         </div>
         <span class="combat-stat-value" style="color: ${momentumReady ? '#ffd700' : '#fff'}">${momentum}%${momentumReady ? ' ⚡' : ''}</span>
       </div>
-      ${xpBarHtml}
     `;
   }
 

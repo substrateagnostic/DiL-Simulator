@@ -3,7 +3,7 @@ import { AudioManager } from '../core/AudioManager.js';
 import { SaveManager } from '../core/SaveManager.js';
 import { EventBus } from '../core/EventBus.js';
 import { BESTIARY_DATA } from '../data/bestiary.js';
-import { ENEMY_STATS, PLAYER_ABILITIES } from '../data/stats.js';
+import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE } from '../data/stats.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 
@@ -13,13 +13,14 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Achievements', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Achievements', 'Stats', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
     this.achievementsOverlay = null;
     this.controlsOverlay = null;
     this.audioOverlay = null;
     this.bestiaryOverlay = null;
     this.abilitiesOverlay = null;
     this.cosmeticsOverlay = null;
+    this.statsOverlay = null;
     this.bestiarySelectedIndex = 0;
     this._abilitySelectedIndex = 0;
     this._cosmeticSelectedIndex = 0;
@@ -74,6 +75,7 @@ export class MenuState {
     this._closeAbilities();
     this._closeCosmetics();
     this._closeAchievements();
+    this._closeStats();
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -105,6 +107,9 @@ export class MenuState {
         break;
       case 'Achievements':
         this._showAchievements();
+        break;
+      case 'Stats':
+        this._showStats();
         break;
       case 'Save Game':
         this._saveGame();
@@ -674,6 +679,13 @@ export class MenuState {
       return;
     }
 
+    if (this.statsOverlay) {
+      if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
+        this._closeStats();
+      }
+      return;
+    }
+
     if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       this._updateSelection();
@@ -733,5 +745,86 @@ export class MenuState {
       this.achievementsOverlay.parentNode.removeChild(this.achievementsOverlay);
     }
     this.achievementsOverlay = null;
+  }
+
+  _showStats() {
+    const s = this.player.stats;
+    const level = s.level || 1;
+    const xp = s.xp || 0;
+    const isMaxLevel = level >= XP_TABLE.length;
+    const prevXP = level > 1 ? XP_TABLE[level - 1] : 0;
+    const nextXP = isMaxLevel ? xp : XP_TABLE[level];
+    const xpPct = isMaxLevel ? 100 : Math.min(100, Math.max(0, ((xp - prevXP) / (nextXP - prevXP)) * 100));
+    const xpLabel = isMaxLevel ? 'MAX' : `${xp - prevXP} / ${nextXP - prevXP}`;
+
+    const statRows = [
+      { label: 'Patience',              themeLabel: 'HP',      value: `${s.hp} / ${s.maxHP}`,   color: '#e94560', pct: (s.hp / s.maxHP) * 100 },
+      { label: 'Coffee',                themeLabel: 'MP',      value: `${s.mp} / ${s.maxMP}`,   color: '#53a8b6', pct: (s.mp / s.maxMP) * 100 },
+      { label: 'Assertiveness',         themeLabel: 'ATK',     value: s.atk,                    color: '#ff8844', pct: Math.min(100, (s.atk / 50) * 100) },
+      { label: 'Composure',             themeLabel: 'DEF',     value: s.def,                    color: '#44aaff', pct: Math.min(100, (s.def / 50) * 100) },
+      { label: 'Bureaucratic Efficiency', themeLabel: 'SPD',   value: s.spd,                    color: '#88ff88', pct: Math.min(100, (s.spd / 50) * 100) },
+    ];
+
+    const rowsHtml = statRows.map(r => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+          <span style="color:#aaa;font-size:17px">${r.label} <span style="color:#555;font-size:14px">(${r.themeLabel})</span></span>
+          <span style="color:#fff;font-size:17px">${r.value}</span>
+        </div>
+        <div style="height:10px;background:#1a1a2a;border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${r.pct}%;background:${r.color};border-radius:3px;transition:width 0.3s"></div>
+        </div>
+      </div>`).join('');
+
+    this.statsOverlay = document.createElement('div');
+    this.statsOverlay.style.cssText = `
+      position: absolute; inset: 0; background: rgba(0,0,0,0.88);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; font-family: 'VT323', monospace; color: #fff;
+    `;
+    this.statsOverlay.innerHTML = `
+      <div style="font-family:'Press Start 2P',cursive;font-size:14px;color:#e94560;margin-bottom:16px">CHARACTER STATS</div>
+      <div style="min-width:380px;max-width:480px;background:#0d1117;border:2px solid #0f3460;border-radius:8px;padding:20px 24px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #1a2a3a">
+          <span style="font-family:'Press Start 2P',cursive;font-size:13px;color:#fff">Andrew</span>
+          <span style="color:#88aaff;font-size:20px">Level ${level}</span>
+        </div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span style="color:#88aaff;font-size:17px">Experience</span>
+            <span style="color:#88aaff;font-size:17px">${xpLabel}</span>
+          </div>
+          <div style="height:10px;background:#1a1a2a;border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${xpPct}%;background:linear-gradient(90deg,#3355cc,#88aaff);border-radius:3px"></div>
+          </div>
+        </div>
+        ${rowsHtml}
+        <div style="border-top:1px solid #1a2a3a;margin-top:14px;padding-top:12px;display:flex;justify-content:space-between">
+          <span style="color:#ffd700;font-size:18px">AUM</span>
+          <span style="color:#ffd700;font-size:18px">$${(s.aum || 0).toLocaleString()}</span>
+        </div>
+        ${this.player.upgradePoints > 0 ? `<div style="margin-top:8px;display:flex;justify-content:space-between">
+          <span style="color:#ff8844;font-size:18px">Upgrade Points</span>
+          <span style="color:#ff8844;font-size:18px">${this.player.upgradePoints}</span>
+        </div>` : ''}
+        <div style="margin-top:8px;display:flex;justify-content:space-between">
+          <span style="color:#888;font-size:18px">Times Defeated</span>
+          <span style="color:#888;font-size:18px">${this.player.deaths || 0}</span>
+        </div>
+      </div>
+      <div style="margin-top:16px;color:#888;font-size:15px">Enter / Esc to close</div>
+    `;
+
+    this.statsOverlay.addEventListener('click', () => this._closeStats());
+    document.getElementById('ui-overlay').appendChild(this.statsOverlay);
+    if (this.element) this.element.style.display = 'none';
+  }
+
+  _closeStats() {
+    if (this.statsOverlay && this.statsOverlay.parentNode) {
+      this.statsOverlay.parentNode.removeChild(this.statsOverlay);
+    }
+    this.statsOverlay = null;
+    if (this.element) this.element.style.display = '';
   }
 }

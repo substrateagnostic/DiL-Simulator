@@ -21,6 +21,7 @@ export class Player {
     this.actIndex = 0;
     // Upgrade system
     this.upgradePoints = 0;
+    this.deaths = 0;
     this.unlockedAbilities = new Set(['file_motion', 'coffee_break']); // starters
     // Cosmetic equipment: { hat: null, glasses: null, badge: null, accessory: null }
     this.equipped = {};
@@ -242,6 +243,7 @@ export class Player {
       currentRoom: this.currentRoom,
       actIndex: this.actIndex,
       upgradePoints: this.upgradePoints,
+      deaths: this.deaths,
       unlockedAbilities: [...this.unlockedAbilities],
       equipped: { ...this.equipped },
     };
@@ -256,6 +258,7 @@ export class Player {
     this.currentRoom = data.currentRoom;
     this.actIndex = data.actIndex || 0;
     this.upgradePoints = data.upgradePoints || 0;
+    this.deaths = data.deaths || 0;
     if (data.stats?.aum !== undefined) this.stats.aum = data.stats.aum;
     this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break']);
     if (data.equipped) {

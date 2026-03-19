@@ -214,8 +214,8 @@ export const ROOMS = {
       { x: 0, z: 12, targetRoom: 'stairwell', spawnX: 2, spawnZ: 18 },
       { x: 0, z: 13, targetRoom: 'stairwell', spawnX: 2, spawnZ: 18 },
       // NE exit -> HR Department (x=19, z=2-3)
-      { x: 19, z: 2, targetRoom: 'hr_department', spawnX: 1, spawnZ: 8 },
-      { x: 19, z: 3, targetRoom: 'hr_department', spawnX: 1, spawnZ: 8 },
+      { x: 19, z: 2, targetRoom: 'hr_department', spawnX: 2, spawnZ: 4 },
+      { x: 19, z: 3, targetRoom: 'hr_department', spawnX: 2, spawnZ: 4 },
     ],
     interactables: [
       { x: 15, z: 12, type: 'water_cooler', dialogId: 'water_cooler' },
@@ -690,9 +690,8 @@ export const ROOMS = {
     npcs: [
       { id: 'regional', x: 8, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' } },
       { id: 'compliance', x: 13, z: 4, facing: Math.PI / 2, movement: { type: 'pace', distance: 1.5, axis: 'z' } },
-      // Grandma and Ross appear at conference table after Henderson decision
-      { id: 'grandma', x: 7, z: 8, facing: 0, sitting: true, condition: { flag: 'branch_chosen' } },
-      { id: 'ross', x: 9, z: 8, facing: 0, sitting: true, condition: { flag: 'branch_chosen' } },
+      // Ross appears at conference table after Henderson decision
+      { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -803,7 +802,11 @@ export const ROOMS = {
       { type: 'cobweb', x: 11.8, z: 9.8 },
     ],
     npcs: [
-      { id: 'janitor', x: 5, z: 7, facing: 0, movement: { type: 'pace', distance: 2, axis: 'x' } },  // paces among shelves
+      { id: 'security_guard', x: 5, z: 7, facing: 0, dialogId: 'security_guard_combat', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'security_guard_info' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'security_guard_info', notFlag: 'act3_complete' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied' } },
     ],
     exits: [
       // SOUTH exit -> Stairwell
@@ -820,7 +823,7 @@ export const ROOMS = {
   },
 
   // ----------------------------------------------------------
-  // 11. HR DEPARTMENT — 16x10, cubicle maze (Act 4+)
+  // 11. HR DEPARTMENT — 16x10, open-plan office (Act 4+)
   // ----------------------------------------------------------
   hr_department: {
     id: 'hr_department',
@@ -831,59 +834,64 @@ export const ROOMS = {
     floorPattern: 'carpet',
     walls: true,
     furniture: [
-      // Cubicle maze walls — outer perimeter
-      { type: 'cubicleWall', x: 2, z: 2, rotation: 0 },
-      { type: 'cubicleWall', x: 4, z: 2, rotation: 0 },
-      { type: 'cubicleWall', x: 6, z: 2, rotation: 0 },
-      { type: 'cubicleWall', x: 10, z: 2, rotation: 0 },
-      { type: 'cubicleWall', x: 12, z: 2, rotation: 0 },
-      // Inner maze walls
-      { type: 'cubicleWall', x: 4, z: 4, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 8, z: 3, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 8, z: 5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 12, z: 4, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 4, z: 6, rotation: 0 },
-      { type: 'cubicleWall', x: 6, z: 6, rotation: 0 },
-      { type: 'cubicleWall', x: 10, z: 6, rotation: 0 },
-      { type: 'cubicleWall', x: 12, z: 6, rotation: 0 },
-      // Desks inside cubicles
-      { type: 'desk', x: 3, z: 3, rotation: 0 },
-      { type: 'monitor', x: 3, z: 2.7 },
-      { type: 'chair', x: 3, z: 3.8, rotation: Math.PI },
-      { type: 'desk', x: 6, z: 3, rotation: 0 },
-      { type: 'monitor', x: 6, z: 2.7 },
-      { type: 'chair', x: 6, z: 3.8, rotation: Math.PI },
-      { type: 'desk', x: 11, z: 3, rotation: 0 },
-      { type: 'monitor', x: 11, z: 2.7 },
-      { type: 'chair', x: 11, z: 3.8, rotation: Math.PI },
-      { type: 'desk', x: 14, z: 3, rotation: 0 },
-      { type: 'monitor', x: 14, z: 2.7 },
-      { type: 'chair', x: 14, z: 3.8, rotation: Math.PI },
-      // File cabinets
+      // === North-wall file cabinets (HR records) ===
       { type: 'fileCabinet', x: 1, z: 1 },
       { type: 'fileCabinet', x: 14, z: 1 },
+
+      // === North cubicle row — 3 pods with wide aisles between them ===
+      // Pod A (west, x:2-4)
+      { type: 'cubicleWall', x: 2, z: 1, rotation: 0 },
+      { type: 'cubicleWall', x: 4, z: 1, rotation: 0 },
+      { type: 'cubicleWall', x: 2, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 5, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'desk', x: 3, z: 2, rotation: 0 },
+      { type: 'monitor', x: 3, z: 1.7 },
+      { type: 'chair', x: 3, z: 2.8, rotation: Math.PI },
+
+      // Pod B (center, x:7-9)
+      { type: 'cubicleWall', x: 7, z: 1, rotation: 0 },
+      { type: 'cubicleWall', x: 9, z: 1, rotation: 0 },
+      { type: 'cubicleWall', x: 7, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 10, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'desk', x: 8, z: 2, rotation: 0 },
+      { type: 'monitor', x: 8, z: 1.7 },
+      { type: 'chair', x: 8, z: 2.8, rotation: Math.PI },
+
+      // Pod C (east, x:11-13)
+      { type: 'cubicleWall', x: 11, z: 1, rotation: 0 },
+      { type: 'cubicleWall', x: 13, z: 1, rotation: 0 },
+      { type: 'cubicleWall', x: 11, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 14, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'desk', x: 12, z: 2, rotation: 0 },
+      { type: 'monitor', x: 12, z: 1.7 },
+      { type: 'chair', x: 12, z: 2.8, rotation: Math.PI },
+
+      // === South filing cabinets ===
       { type: 'fileCabinet', x: 3, z: 8, rotation: Math.PI },
       { type: 'fileCabinet', x: 14, z: 8, rotation: Math.PI },
-      // Suggestion box area
+
+      // === Suggestion box (south wall, clearly accessible from z:7) ===
       { type: 'fileCabinetLow', x: 10, z: 8, rotation: Math.PI },
-      // Motivational posters
+
+      // === Motivational posters ===
       { type: 'motivationalPoster', x: 8, z: 0.1, rotation: 0 },
       { type: 'motivationalPoster', x: 0.1, z: 5, rotation: Math.PI / 2 },
     ],
     npcs: [
-      { id: 'hr_rep', x: 10, z: 4, facing: Math.PI, movement: { type: 'wander', radius: 2.5 } },
+      { id: 'hr_rep', x: 10, z: 6, facing: Math.PI, dialogId: 'hr_rep_combat', movement: { type: 'wander', radius: 2.5 }, condition: { notFlag: 'defeated_hr_rep' } },
+      { id: 'hr_rep', x: 10, z: 6, facing: Math.PI, dialogId: 'hr_rep_defeated', condition: { flag: 'defeated_hr_rep' } },
     ],
     exits: [
-      // SOUTH exit -> Cubicle Farm
-      { x: 0, z: 8, targetRoom: 'cubicle_farm', spawnX: 18, spawnZ: 2 },
-      { x: 0, z: 9, targetRoom: 'cubicle_farm', spawnX: 18, spawnZ: 3 },
+      // WEST exit -> Cubicle Farm (single door, centered on west wall)
+      { x: 0, z: 4, targetRoom: 'cubicle_farm', spawnX: 18, spawnZ: 2 },
+      { x: 0, z: 5, targetRoom: 'cubicle_farm', spawnX: 18, spawnZ: 3 },
     ],
     interactables: [
       { x: 10, z: 8, type: 'suggestion_box', dialogId: 'suggestion_box' },
       { x: 1, z: 1, type: 'filing_cabinets', dialogId: 'hr_vault_code' },
       { x: 8, z: 0, type: 'poster', dialogId: 'poster_excellence' },
     ],
-    playerSpawn: { x: 1, z: 8 },
+    playerSpawn: { x: 2, z: 4 },
   },
 
   // ----------------------------------------------------------
