@@ -45,7 +45,7 @@ export const QUESTS = {
     name: 'The Trust Awakens',
     stages: [
       { id: 0, objective: 'Investigate the strange occurrences' },
-      { id: 1, objective: 'Rally the team against Rachel\'s lockdown' },
+      { id: 1, objective: 'Rally the team: Talk to Janet, Diane, and the Mysterious Janitor' },
       { id: 2, objective: 'Convince Ross to stand up for the department' },
       { id: 3, objective: 'Access the HR Department' },
       { id: 4, objective: 'Find the Vault behind the Archive' },

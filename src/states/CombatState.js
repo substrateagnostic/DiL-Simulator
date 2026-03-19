@@ -126,7 +126,8 @@ export class CombatState {
       this.engine.player.silencedThisTurn,
       this.engine.player.momentum,
       this.engine.player.bracing,
-      this.engine.player.retaliateReady
+      this.engine.player.retaliateReady,
+      this.engine.player.hp / this.engine.player.maxHP < 0.25
     );
     this.hud.updatePlayerStats({
       ...this.player.stats,
@@ -178,6 +179,10 @@ export class CombatState {
         break;
       case 'retaliate':
         this._executeRetaliate();
+        break;
+      case 'desperate_gamble':
+        this.inputEnabled = true;
+        this._showDesperateGamble();
         break;
     }
   }
@@ -757,8 +762,8 @@ export class CombatState {
       const xp = this.engine.getXPReward();
       setTimeout(() => {
         this.hud.showMessage(`Victory! +${xp} XP`);
-        this.player.stats.hp = this.engine.player.hp;
-        this.player.stats.mp = this.engine.player.mp;
+        this.player.stats.hp = this.player.stats.maxHP;
+        this.player.stats.mp = this.player.stats.maxMP;
         const levels = this.player.gainXP(xp);
         if (levels.length > 0) {
           AchievementManager.check(this.player, { event: 'level_up' });
@@ -771,6 +776,7 @@ export class CombatState {
       }, 1000);
     } else if (this.engine.result === 'defeat') {
       AudioManager.playSfx('defeat');
+      this.player.deaths = (this.player.deaths || 0) + 1;
       this.hud.showMessage('Your patience has run out...');
       setTimeout(() => this._endCombat('defeat'), 2500);
     }
@@ -829,19 +835,83 @@ export class CombatState {
   }
 
   _executeBrace() {
-    const result = this.engine.playerBrace();
-    if (!result) return;
+    this._showBraceMiniGame((quality) => {
+      const result = this.engine.playerBrace(quality);
+      if (!result) return;
 
-    this.phase = 'animating';
-    this.hud.disableInput();
+      this.phase = 'animating';
+      this.hud.disableInput();
 
-    this.hud.showMessage(`Bracing! DEF +${result.defBonus} for 2 turns.`);
-    AudioManager.playSfx('confirm');
-    this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0x4488ff, 2.5, 1.0);
-    this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 12, 0x88aaff, 1.0, 1.2);
+      const messages = {
+        perfect: `Perfect stance! DEF +${result.defBonus} for ${result.duration} turns.`,
+        good:    `Bracing! DEF +${result.defBonus} for ${result.duration} turns.`,
+        miss:    `Off guard! DEF +${result.defBonus} for ${result.duration} turn.`,
+      };
+      this.hud.showMessage(messages[quality]);
+      AudioManager.playSfx('confirm');
+      const color = quality === 'perfect' ? 0xffd700 : quality === 'good' ? 0x4488ff : 0x888888;
+      this.particles.burst({ x: 0, y: 1.2, z: 4 }, quality === 'perfect' ? 30 : 20, color, 2.5, 1.0);
+      if (quality !== 'miss') this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 12, 0x88aaff, 1.0, 1.2);
 
-    this._updateHUD();
-    setTimeout(() => this._startEnemyTurn(), 1200);
+      this._updateHUD();
+      setTimeout(() => this._startEnemyTurn(), 1200);
+    });
+  }
+
+  _showBraceMiniGame(onComplete) {
+    const TRACK_W = 300;
+    const overlay = document.createElement('div');
+    overlay.className = 'minigame-overlay';
+    overlay.innerHTML = `
+      <div class="minigame-title">Time your stance!</div>
+      <div class="minigame-bar-track">
+        <div class="minigame-marker" id="brace-marker"></div>
+      </div>
+      <div class="minigame-hint">Press SPACE or ENTER</div>
+    `;
+    document.getElementById('ui-overlay').appendChild(overlay);
+
+    const marker = overlay.querySelector('#brace-marker');
+    let pos = 0, dir = 1, done = false;
+    const speed = 260;
+    let last = performance.now();
+    let animId;
+
+    const tick = (now) => {
+      if (done) return;
+      const dt = (now - last) / 1000;
+      last = now;
+      pos += dir * speed * dt;
+      if (pos >= TRACK_W) { pos = TRACK_W; dir = -1; }
+      if (pos <= 0) { pos = 0; dir = 1; }
+      marker.style.left = `${pos}px`;
+      animId = requestAnimationFrame(tick);
+    };
+    animId = requestAnimationFrame(tick);
+
+    const resolve = () => {
+      if (done) return;
+      done = true;
+      cancelAnimationFrame(animId);
+      const center = TRACK_W / 2;
+      const pct = Math.abs(pos - center) / (TRACK_W / 2);
+      const quality = pct <= 0.10 ? 'perfect' : pct <= 0.35 ? 'good' : 'miss';
+      overlay.remove();
+      onComplete(quality);
+    };
+
+    const keyHandler = (e) => {
+      if (e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault();
+        document.removeEventListener('keydown', keyHandler);
+        resolve();
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+    overlay.addEventListener('click', () => {
+      document.removeEventListener('keydown', keyHandler);
+      resolve();
+    });
   }
 
   _executePowerMove() {
@@ -936,24 +1006,174 @@ export class CombatState {
   }
 
   _executeRetaliate() {
-    const result = this.engine.playerRetaliate();
+    this._showRetaliateQTE((multiplier) => {
+      const result = this.engine.playerRetaliate(multiplier);
+      if (!result) return;
+
+      this.phase = 'animating';
+      this.hud.disableInput();
+      const msg = multiplier >= 1.0 ? 'Perfect counter!' : multiplier >= 0.66 ? 'Counter-attack!' : 'Glancing counter...';
+      this.hud.showMessage(msg);
+      this._fireTaunt('retaliate');
+      AchievementManager.check(this.player, { event: 'retaliate_used' });
+      this.scene.playerAttackAnim();
+      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      this.particles.stream({ x: 0.1, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 16, 0x44ffaa, 0.25);
+      setTimeout(() => {
+        this.scene.enemyHurtAnim();
+        this.scene.shake(result.critical ? 0.8 : 0.4);
+        this.scene.flash(0x44ffaa, 0.12);
+        this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+        this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 28 : 18, 0x44ffaa, 3, 0.9);
+      }, 200);
+
+      this._checkPhaseChange();
+      this._updateHUD();
+      setTimeout(() => {
+        if (this.engine.isOver) {
+          this._handleResult();
+        } else {
+          this._startEnemyTurn();
+        }
+      }, 1300);
+    });
+  }
+
+  _showRetaliateQTE(onComplete) {
+    const KEYS = [
+      { code: 'ArrowUp',    label: '↑' },
+      { code: 'ArrowDown',  label: '↓' },
+      { code: 'ArrowLeft',  label: '←' },
+      { code: 'ArrowRight', label: '→' },
+    ];
+    const sequence = Array.from({ length: 3 }, () => KEYS[Math.floor(Math.random() * KEYS.length)]);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'minigame-overlay';
+    overlay.innerHTML = `
+      <div class="minigame-title">Counter sequence!</div>
+      <div class="minigame-sequence">
+        ${sequence.map((k, i) => `<span class="qte-key" data-i="${i}">${k.label}</span>`).join('')}
+      </div>
+      <div class="minigame-hint" id="qte-hint">Memorize...</div>
+    `;
+    document.getElementById('ui-overlay').appendChild(overlay);
+
+    const keyEls = overlay.querySelectorAll('.qte-key');
+    let inputIndex = 0, correct = 0, inputPhase = false, keyHandler, inputTimeout;
+
+    setTimeout(() => {
+      if (!overlay.parentNode) return;
+      overlay.querySelector('#qte-hint').textContent = 'Enter the sequence!';
+      keyEls.forEach(el => { el.textContent = '?'; });
+      inputPhase = true;
+
+      inputTimeout = setTimeout(() => {
+        if (!overlay.parentNode) return;
+        document.removeEventListener('keydown', keyHandler);
+        overlay.remove();
+        onComplete(correct / sequence.length);
+      }, 3000);
+
+      keyHandler = (e) => {
+        if (!inputPhase || inputIndex >= sequence.length) return;
+        const validCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+        if (!validCodes.includes(e.code)) return;
+        e.preventDefault();
+
+        const el = keyEls[inputIndex];
+        if (e.code === sequence[inputIndex].code) {
+          correct++;
+          el.textContent = sequence[inputIndex].label;
+          el.classList.add('correct');
+        } else {
+          el.textContent = '✗';
+          el.classList.add('wrong');
+        }
+        inputIndex++;
+
+        if (inputIndex >= sequence.length) {
+          clearTimeout(inputTimeout);
+          document.removeEventListener('keydown', keyHandler);
+          setTimeout(() => { overlay.remove(); onComplete(correct / sequence.length); }, 400);
+        }
+      };
+      document.addEventListener('keydown', keyHandler);
+    }, 1500);
+  }
+
+  _showDesperateGamble() {
+    const options = [
+      { risk: 'safe',   label: 'Safe Bet',  desc: 'Guaranteed hit at normal damage (1×)', color: '#88aaff' },
+      { risk: 'risky',  label: 'Risky Move', desc: '60% chance of 1.5× damage — or 0.5× on fail', color: '#ffaa44' },
+      { risk: 'all_in', label: 'All-In',     desc: '30% chance of 2.5× damage — or nothing', color: '#ff4466' },
+    ];
+
+    const overlay = document.createElement('div');
+    overlay.className = 'minigame-overlay';
+    overlay.innerHTML = `
+      <div class="minigame-title">Desperate Gamble</div>
+      <div class="gamble-options">
+        ${options.map((o, i) => `
+          <div class="gamble-option${i === 0 ? ' selected' : ''}" data-risk="${o.risk}" data-i="${i}">
+            <div class="gamble-option-name" style="color:${o.color}">${o.label}</div>
+            <div class="gamble-option-desc">${o.desc}</div>
+          </div>`).join('')}
+      </div>
+      <div class="minigame-hint">↑↓ navigate · ENTER confirm</div>
+    `;
+    document.getElementById('ui-overlay').appendChild(overlay);
+
+    let sel = 0;
+    const optEls = overlay.querySelectorAll('.gamble-option');
+
+    const updateSel = () => {
+      optEls.forEach((el, i) => el.classList.toggle('selected', i === sel));
+    };
+
+    const resolve = (risk) => {
+      document.removeEventListener('keydown', keyHandler);
+      overlay.remove();
+      this.inputEnabled = false;
+      this._executeDesperateGamble(risk);
+    };
+
+    optEls.forEach((el) => {
+      el.addEventListener('click', () => resolve(el.dataset.risk));
+    });
+
+    const keyHandler = (e) => {
+      if (e.code === 'ArrowUp')   { sel = Math.max(0, sel - 1); updateSel(); e.preventDefault(); }
+      if (e.code === 'ArrowDown') { sel = Math.min(options.length - 1, sel + 1); updateSel(); e.preventDefault(); }
+      if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); resolve(options[sel].risk); }
+      if (e.code === 'Escape') { document.removeEventListener('keydown', keyHandler); overlay.remove(); this._startPlayerTurn(); }
+    };
+    document.addEventListener('keydown', keyHandler);
+  }
+
+  _executeDesperateGamble(risk) {
+    const result = this.engine.playerDesperateGamble(risk);
     if (!result) return;
 
     this.phase = 'animating';
     this.hud.disableInput();
-    this.hud.showMessage('Counter-attack!');
-    this._fireTaunt('retaliate');
-    AchievementManager.check(this.player, { event: 'retaliate_used' });
-    this.scene.playerAttackAnim();
-    AudioManager.playSfx(result.critical ? 'critical' : 'hit');
-    this.particles.stream({ x: 0.1, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 16, 0x44ffaa, 0.25);
-    setTimeout(() => {
-      this.scene.enemyHurtAnim();
-      this.scene.shake(result.critical ? 0.8 : 0.4);
-      this.scene.flash(0x44ffaa, 0.12);
-      this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
-      this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 28 : 18, 0x44ffaa, 3, 0.9);
-    }, 200);
+
+    if (!result.success && risk === 'all_in') {
+      this.hud.showMessage('Total miss! Nothing...');
+      AudioManager.playSfx('confirm');
+    } else {
+      const label = risk === 'all_in' ? 'ALL IN pays off!' : risk === 'risky' ? (result.success ? 'Risky move pays off!' : 'Risky move backfires!') : 'Safe bet lands!';
+      this.hud.showMessage(label);
+      this.scene.playerAttackAnim();
+      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      setTimeout(() => {
+        this.scene.enemyHurtAnim();
+        this.scene.shake(result.critical ? 1.0 : 0.4);
+        this.scene.flash(result.critical ? 0xffd700 : 0xff4466, 0.15);
+        this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+        this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 35 : 18, 0xff4466, 3, 0.9);
+      }, 200);
+    }
 
     this._checkPhaseChange();
     this._updateHUD();
@@ -963,7 +1183,7 @@ export class CombatState {
       } else {
         this._startEnemyTurn();
       }
-    }, 1300);
+    }, 1400);
   }
 
   _checkPhaseChange() {

@@ -23,7 +23,7 @@ export class CombatEngine {
       retaliateReady: false,
     };
     this.telegraphedAbility = null;
-    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0 };
+    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0, confuseCooldown: 0 };
     this.enemyId = enemyId;
     this.turn = 'player';
     this.turnCount = 0;
@@ -350,6 +350,7 @@ export class CombatEngine {
         this.player.confused = Math.max(this.player.confused, ability.duration);
         // Enemy distracted while confusing — vulnerable window
         this.enemy.vulnerable = 1;
+        this.enemy.confuseCooldown = 3;
         break;
       }
       case 'stun': {
@@ -468,7 +469,9 @@ export class CombatEngine {
         if (Math.random() < debuffChance) {
           const debuffAbilities = abilities.filter((id) => {
             const a = ENEMY_ABILITIES[id];
-            return a && (a.type === 'debuff' || a.type === 'confuse');
+            if (!a) return false;
+            if (a.type === 'confuse' && (this.player.confused > 0 || this.enemy.confuseCooldown > 0)) return false;
+            return a.type === 'debuff' || a.type === 'confuse';
           });
           if (debuffAbilities.length > 0) {
             return debuffAbilities[Math.floor(Math.random() * debuffAbilities.length)];
@@ -526,7 +529,13 @@ export class CombatEngine {
         if (healAbility && Math.random() < 0.6) return healAbility;
       }
     }
-    return abilities[Math.floor(Math.random() * abilities.length)];
+    // Don't use confuse while player is already confused or cooldown is active
+    let pool = abilities;
+    if (this.player.confused > 0 || this.enemy.confuseCooldown > 0) {
+      const filtered = abilities.filter((id) => ENEMY_ABILITIES[id]?.type !== 'confuse');
+      if (filtered.length > 0) pool = filtered;
+    }
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   processTurnStart(who) {
@@ -571,6 +580,10 @@ export class CombatEngine {
       } else {
         entity.silencedThisTurn = false;
       }
+    }
+
+    if (who === 'enemy' && entity.confuseCooldown > 0) {
+      entity.confuseCooldown--;
     }
 
     // Decrement exposed/protected for both player and enemy
@@ -626,11 +639,16 @@ export class CombatEngine {
   }
 
   // Player chooses to brace — halves next incoming hit, adds DEF buff
-  playerBrace() {
-    this.player.bracing = true;
-    const defBonus = 5;
-    this.player.buffs.push({ stats: { def: defBonus }, duration: 2, name: 'Brace Stance' });
-    return { type: 'brace', defBonus };
+  // quality: 'perfect' | 'good' | 'miss'
+  playerBrace(quality = 'good') {
+    const cfg = {
+      perfect: { defBonus: 8, duration: 3, halve: true },
+      good:    { defBonus: 5, duration: 2, halve: true },
+      miss:    { defBonus: 2, duration: 1, halve: false },
+    }[quality] || { defBonus: 5, duration: 2, halve: true };
+    if (cfg.halve) this.player.bracing = true;
+    this.player.buffs.push({ stats: { def: cfg.defBonus }, duration: cfg.duration, name: 'Brace Stance' });
+    return { type: 'brace', defBonus: cfg.defBonus, duration: cfg.duration, quality };
   }
 
   // Spend full momentum bar for a powerful free attack
@@ -691,16 +709,41 @@ export class CombatEngine {
   }
 
   // Free counter-attack after a successful brace
-  playerRetaliate() {
+  // multiplier: 0.0–1.5 based on QTE score
+  playerRetaliate(multiplier = 1.0) {
     if (!this.player.retaliateReady) return null;
     this.player.retaliateReady = false;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
     const dmg = this._calcDamage(pStats.atk, 22, eStats.def, this.enemy);
-    this.enemy.hp = Math.max(0, this.enemy.hp - dmg.damage);
-    this._gainMomentum(15);
+    const finalDamage = Math.max(1, Math.floor(dmg.damage * multiplier));
+    this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
+    this._gainMomentum(Math.floor(15 * multiplier));
     this._checkVictory();
-    return { type: 'retaliate', damage: dmg.damage, critical: dmg.critical };
+    return { type: 'retaliate', damage: finalDamage, critical: dmg.critical && multiplier >= 1.0 };
+  }
+
+  // Risk gamble — available at <25% HP
+  playerDesperateGamble(risk) {
+    const pStats = this._getEffective(this.player);
+    const eStats = this._getEffective(this.enemy);
+    const dmg = this._calcDamage(pStats.atk, 15, eStats.def, this.enemy);
+    let multiplier = 1.0;
+    let success = true;
+    if (risk === 'risky') {
+      success = Math.random() < 0.6;
+      multiplier = success ? 1.5 : 0.5;
+    } else if (risk === 'all_in') {
+      success = Math.random() < 0.3;
+      multiplier = success ? 2.5 : 0;
+    }
+    const finalDamage = Math.max(success ? 1 : 0, Math.floor(dmg.damage * multiplier));
+    if (finalDamage > 0) {
+      this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
+      this._gainMomentum(10);
+    }
+    this._checkVictory();
+    return { type: 'desperate_gamble', damage: finalDamage, risk, success, critical: dmg.critical && success && multiplier >= 1.5 };
   }
 
   // Returns the index of the current phase (0-based), or -1 if no phases or in default phase

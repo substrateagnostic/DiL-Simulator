@@ -89,7 +89,8 @@ export class NPC {
     const parent = this.mesh.parent;
     if (parent) parent.remove(this.mesh);
 
-    this.mesh = buildCharacter({ ...config, name: this.id });
+    this.name = config.name || this.id;
+    this.mesh = buildCharacter(config);
     this.mesh.position.set(this.position.x, 0, this.position.z);
     this.animator = new CharacterAnimator(this.mesh);
     this.animator.setFacing(this.facingAngle);

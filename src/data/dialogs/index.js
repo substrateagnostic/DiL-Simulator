@@ -1392,8 +1392,8 @@ export const DIALOGS = {
     /* 11 */ { type: 'action', action: 'set_flag', flag: 'act3_complete', value: true, next: 12 },
     /* 12 */ { type: 'action', action: 'set_flag', flag: 'rachel_lockdown', value: true, next: 13 },
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Dissolve the— she can't DO that. Can she?" },
-    /* 14 */ { type: 'text', speaker: 'Andrew', text: "Not if we can prove what the Regional Manager has been doing. We need to rally everyone. Janet, Ross, Diane, Isaiah — everyone." },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "And the Janitor. Don't forget the Janitor. He's been waiting for this moment for twenty years." },
+    /* 14 */ { type: 'text', speaker: 'Andrew', text: "Not if we can prove what the Regional Manager has been doing. We need to rally the team — find Janet at her desk, Diane in reception, and the Mysterious Janitor in the Archive." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The Janitor's been waiting for this moment for twenty years. And once you have Janet and Diane on board, work on convincing Ross — he won't budge without the right words." },
     /* 16 */ { type: 'end' },
   ],
 
@@ -1417,9 +1417,8 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Diane', text: "This isn't a review, Andrew. This is a cover-up. She's here to bury the evidence before you can use it." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "The HR Department has the original employment records. If the Janitor was really SVP, there's a paper trail. Rachel can't delete paper." },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_rallied', value: true, next: 6 },
-    /* 6 */ { type: 'action', action: 'set_flag', flag: 'hr_accessible', value: true, next: 7 },
-    /* 7  */ { type: 'text', speaker: 'Diane', text: "I can get you into the HR Department. I still have my old access from when I covered for the HR coordinator. Use it wisely." },
-    /* 8  */ { type: 'end' },
+    /* 6  */ { type: 'text', speaker: 'Diane', text: "I can get you into the HR Department once the team is fully on board. Talk to the Janitor first — he knows more than any of us." },
+    /* 7  */ { type: 'end' },
   ],
 
   // Convince Ross puzzle — need to use his buzzwords correctly (4 choice points, need 3/4)
@@ -1483,11 +1482,13 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "...engraved on the back of this Rolex." },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "The Janitor removes his gold Rolex and turns it over. On the case back, tiny numbers are engraved: 47." },
     /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "47. For 1947. The year it all began." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'vault_code_1', value: true, next: 9 },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'vault_accessible', value: true, next: 10 },
-    /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Find the other two numbers. Open the Vault. Get the charter." },
-    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And when the time comes to confront Rachel... read it aloud. Every word. Trust me." },
-    /* 12 */ { type: 'end' },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janitor_rallied', value: true, next: 9 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'vault_code_1', value: true, next: 10 },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'vault_accessible', value: true, next: 11 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'hr_accessible', value: true, next: 12 },
+    /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Find the other two numbers. Open the Vault. Get the charter." },
+    /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And when the time comes to confront Rachel... read it aloud. Every word. Trust me." },
+    /* 14 */ { type: 'end' },
   ],
 
   // HR Department interaction
@@ -1510,6 +1511,16 @@ export const DIALOGS = {
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true, next: 5 },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'has_hr_evidence', value: true, next: 6 },
     /* 6  */ { type: 'end' },
+  ],
+
+  // HR filing cabinets — interactable in HR Department
+  hr_vault_code: [
+    /* 0 */ { type: 'condition', flag: 'has_hr_evidence', ifTrue: 3, ifFalse: 1 },
+    /* 1 */ { type: 'text', speaker: 'Narrator', text: "The filing cabinets are locked with a digital keypad. The HR Representative has the only access code." },
+    /* 2 */ { type: 'end' },
+    /* 3 */ { type: 'text', speaker: 'Narrator', text: "The Janitor's original employment record. Trust Officer, 1982. Promoted to Senior VP of Trust Administration, 1993. Voluntary reclassification to Facilities, 2005." },
+    /* 4 */ { type: 'text', speaker: 'Narrator', text: "The vault combination digit 19 is already noted. Three numbers: 47, 19, 82." },
+    /* 5 */ { type: 'end' },
   ],
 
   // Server room vault code
