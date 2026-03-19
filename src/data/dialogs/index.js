@@ -694,6 +694,52 @@ export const DIALOGS = {
   ],
 
   // ==========================================================================
+  // COMBAT RETRY DIALOGS -- short quip, straight to battle on rematch
+  // ==========================================================================
+
+  karen_retry: [
+    { type: 'text', speaker: 'Karen Henderson', text: "Oh, you're back. I still have the binder." },
+    { type: 'action', action: 'start_combat', encounter: 'karen' },
+    { type: 'end' },
+  ],
+
+  chad_retry: [
+    { type: 'text', speaker: 'Chad Henderson', text: "Bro. Round two? I respect the hustle. Not the strategy. But the hustle." },
+    { type: 'action', action: 'start_combat', encounter: 'chad' },
+    { type: 'end' },
+  ],
+
+  grandma_retry: [
+    { type: 'text', speaker: 'Grandma Henderson', text: "Back so soon, dear? I put away the cookies. You don't get cookies twice." },
+    { type: 'action', action: 'start_combat', encounter: 'grandma' },
+    { type: 'end' },
+  ],
+
+  ross_boss_retry: [
+    { type: 'text', speaker: 'Ross', text: "Andrew. Let's just skip to the part where I have a breakdown. We both know how this goes." },
+    { type: 'action', action: 'start_combat', encounter: 'ross_boss' },
+    { type: 'end' },
+  ],
+
+  compliance_retry: [
+    { type: 'text', speaker: 'Compliance Auditor', text: "Still here? I've already started a second file on you. It's thicker than the first." },
+    { type: 'action', action: 'start_combat', encounter: 'compliance' },
+    { type: 'end' },
+  ],
+
+  regional_retry: [
+    { type: 'text', speaker: 'Regional Manager', text: "You again. I'm billing this as a 'strategic re-engagement.' Don't test me." },
+    { type: 'action', action: 'start_combat', encounter: 'regional' },
+    { type: 'end' },
+  ],
+
+  intern_retry: [
+    { type: 'text', speaker: 'The Intern', text: "Oh hey. You're back. I Googled some new techniques." },
+    { type: 'action', action: 'start_combat', encounter: 'intern' },
+    { type: 'end' },
+  ],
+
+  // ==========================================================================
   // POST-COMBAT / RETURN DIALOGS
   // ==========================================================================
 

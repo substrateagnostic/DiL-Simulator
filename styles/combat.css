@@ -259,3 +259,117 @@
   margin-top: 6px;
   font-style: italic;
 }
+
+/* Telegraph (enemy intent) */
+.combat-telegraph {
+  margin-top: 8px;
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #ffcc44;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+  padding: 4px 10px;
+  background: rgba(255, 180, 0, 0.12);
+  border: 1px solid rgba(255, 180, 0, 0.35);
+  border-radius: 4px;
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* Momentum bar */
+.combat-stat-bar-fill.momentum {
+  background: linear-gradient(90deg, #cc8800, #ffdd00);
+}
+
+/* Assert Dominance power move button */
+.combat-action-btn.power-move {
+  background: rgba(255, 215, 0, 0.2);
+  border-color: #ffd700;
+  color: #ffd700;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.8);
+  grid-column: 1 / -1;
+}
+.combat-action-btn.power-move:hover,
+.combat-action-btn.power-move.selected {
+  background: rgba(255, 215, 0, 0.4);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+}
+
+/* Brace active state */
+.combat-action-btn.brace-active {
+  background: rgba(68, 136, 255, 0.25);
+  border-color: #4488ff;
+  color: #88bbff;
+}
+
+/* Retaliate button */
+.combat-action-btn.retaliate-btn {
+  background: rgba(68, 255, 170, 0.2);
+  border-color: #44ffaa;
+  color: #44ffaa;
+  text-shadow: 0 0 6px rgba(68, 255, 170, 0.7);
+  grid-column: 1 / -1;
+}
+.combat-action-btn.retaliate-btn:hover,
+.combat-action-btn.retaliate-btn.selected {
+  background: rgba(68, 255, 170, 0.35);
+  box-shadow: 0 0 12px rgba(68, 255, 170, 0.5);
+}
+
+/* Tiered momentum spend buttons */
+.combat-action-btn.momentum-spend {
+  background: rgba(170, 100, 255, 0.15);
+  border-color: rgba(170, 100, 255, 0.5);
+  color: #cc88ff;
+  grid-column: 1 / -1;
+  font-size: 18px;
+}
+.combat-action-btn.momentum-spend:hover,
+.combat-action-btn.momentum-spend.selected {
+  background: rgba(170, 100, 255, 0.3);
+  border-color: #aa66ff;
+  box-shadow: 0 0 10px rgba(170, 100, 255, 0.4);
+}
+
+/* XP bar */
+.combat-stat-bar-fill.xp {
+  background: linear-gradient(90deg, #3355cc, #88aaff);
+}
+
+/* Combat taunts */
+.combat-taunt {
+  position: absolute;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 28;
+  max-width: 260px;
+  text-align: center;
+  transition: opacity 0.5s ease;
+  opacity: 1;
+  animation: tauntAppear 0.25s ease-out;
+}
+
+.combat-taunt-player {
+  bottom: 220px;
+  left: 60px;
+  background: rgba(15, 52, 96, 0.85);
+  border: 1px solid #4488ff;
+  color: #aaccff;
+}
+
+.combat-taunt-enemy {
+  top: 120px;
+  right: 60px;
+  background: rgba(60, 10, 30, 0.85);
+  border: 1px solid #e94560;
+  color: #ffaaaa;
+}
+
+@keyframes tauntAppear {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

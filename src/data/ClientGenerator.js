@@ -1,13 +1,21 @@
 // Procedural client generation for the Reception roguelite system
 
-const FIRST_NAMES = [
-  'Robert', 'Patricia', 'James', 'Margaret', 'William', 'Dorothy',
-  'Richard', 'Susan', 'Charles', 'Barbara', 'Thomas', 'Linda',
-  'Harold', 'Nancy', 'George', 'Sandra', 'Edward', 'Carol',
-  'Michael', 'Elizabeth', 'Raymond', 'Sharon', 'Frank', 'Helen',
-  'Steven', 'Cheryl', 'Gregory', 'Ruth', 'Dennis', 'Deborah',
-  'Gerald', 'Kathleen', 'Walter', 'Virginia', 'Arthur', 'Beverly',
+import { COLORS } from '../utils/constants.js';
+
+const MALE_NAMES = [
+  'Robert', 'James', 'William', 'Richard', 'Charles', 'Thomas',
+  'Harold', 'George', 'Edward', 'Michael', 'Raymond', 'Frank',
+  'Steven', 'Gregory', 'Dennis', 'Gerald', 'Walter', 'Arthur',
 ];
+
+const FEMALE_NAMES = [
+  'Patricia', 'Margaret', 'Dorothy', 'Susan', 'Barbara', 'Linda',
+  'Nancy', 'Sandra', 'Carol', 'Elizabeth', 'Sharon', 'Helen',
+  'Cheryl', 'Ruth', 'Deborah', 'Kathleen', 'Virginia', 'Beverly',
+];
+
+const FIRST_NAMES = [...MALE_NAMES, ...FEMALE_NAMES];
+const MALE_NAME_SET = new Set(MALE_NAMES);
 
 const LAST_NAMES = [
   'Thompson', 'Chen', 'Williams', 'Mueller', 'Kowalski', 'Shapiro',
@@ -268,6 +276,46 @@ function shuffle(arr) {
   return a;
 }
 
+function generateVisualConfig(firstName, clientType) {
+  const isMale = MALE_NAME_SET.has(firstName);
+  const isRetiree = clientType === 'Retiree';
+
+  const skinColor = pick([COLORS.SKIN, COLORS.SKIN_DARK, 0xc68642, 0xe8b88a]);
+  const hairColor = isRetiree
+    ? pick([COLORS.HAIR_GRAY, COLORS.HAIR_WHITE])
+    : pick([COLORS.HAIR_BROWN, COLORS.HAIR_DARK, COLORS.HAIR_BLONDE, COLORS.HAIR_GRAY]);
+
+  let hairStyle, bodyColor, pantsColor, shirtColor, tieColor, accessories;
+
+  if (isMale) {
+    const isYoung = clientType === 'Trust Fund Heir' || clientType === 'Entrepreneur';
+    hairStyle = isYoung ? pick(['short', 'backwards_cap']) : 'short';
+    bodyColor = pick([COLORS.SUIT_BLUE, COLORS.SUIT_BLACK, 0x3a5a3a, 0x3a3a6a, COLORS.POLO_GREEN]);
+    pantsColor = pick([0x2a2a3a, COLORS.KHAKI, 0x333333]);
+    shirtColor = Math.random() > 0.35 ? COLORS.SHIRT_WHITE : null;
+    tieColor = shirtColor && Math.random() > 0.4
+      ? pick([COLORS.BLUE_TIE, COLORS.RED_TIE, 0x224422, 0xdaa520])
+      : null;
+    if (isRetiree)                            accessories = ['cane'];
+    else if (clientType === 'Entrepreneur')   accessories = [pick(['protein_shake', 'coffee_mug'])];
+    else if (clientType === 'Trust Fund Heir') accessories = ['sunglasses'];
+    else                                      accessories = Math.random() > 0.5 ? ['coffee_mug'] : [];
+  } else {
+    hairStyle = isRetiree ? pick(['shawl', 'bun']) : pick(['bun', 'karen', 'short']);
+    bodyColor = pick([COLORS.CARDIGAN, COLORS.BLAZER, 0xcc6688, 0x8866aa, 0x4a6a8a]);
+    pantsColor = pick([0x2a2a3a, 0x3a3a4a, 0x4a3a3a]);
+    shirtColor = Math.random() > 0.5 ? COLORS.SHIRT_WHITE : null;
+    tieColor = null;
+    if (isRetiree)                             accessories = pick([['cane'], ['cane', 'purse']]);
+    else if (clientType === 'Divorcee')        accessories = pick([['purse'], ['purse', 'wine_tumbler']]);
+    else if (clientType === 'Trust Fund Heir') accessories = ['purse', 'sunglasses'];
+    else if (clientType === 'Entrepreneur')    accessories = [pick(['clipboard', 'coffee_mug'])];
+    else                                       accessories = Math.random() > 0.5 ? ['purse'] : [];
+  }
+
+  return { bodyColor, pantsColor, shirtColor, tieColor, skinColor, hairColor, hairStyle, accessories };
+}
+
 function scaleEnemyStats(assets, playerLevel = 1) {
   const MAX_ASSET = 25_000_000; // raised for new high-AUM types
   const t = Math.min(1, assets / MAX_ASSET);
@@ -285,7 +333,8 @@ function scaleEnemyStats(assets, playerLevel = 1) {
 export function generateClient(overrideLastName, playerLevel = 1) {
   const typeDef = pick(CLIENT_TYPES);
   const lastName = overrideLastName || pick(LAST_NAMES);
-  const name = `${pick(FIRST_NAMES)} ${lastName}`;
+  const firstName = pick(FIRST_NAMES);
+  const name = `${firstName} ${lastName}`;
 
   let assets = randomInt(typeDef.assetMin, typeDef.assetMax);
   // Crypto clients get wider variance — could moon or crash
@@ -325,11 +374,13 @@ export function generateClient(overrideLastName, playerLevel = 1) {
     abilities: [...typeDef.abilities],
   };
 
+  const visualConfig = generateVisualConfig(firstName, typeDef.type);
+
   return {
     name,
     lastName,
     type: typeDef.type,
-    visualId: typeDef.visualId,
+    visualConfig,
     assets,
     feeRate,
     annualFees,

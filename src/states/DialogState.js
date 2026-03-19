@@ -249,7 +249,9 @@ export class DialogState {
    */
   _handleInput() {
     // Confirm / advance / skip
-    if (InputManager.isJustPressed('e') || InputManager.isJustPressed('enter') || InputManager.isJustPressed(' ')) {
+    // Space is blocked when choices are visible — player must use mouse or Enter
+    const spaceOk = !this.dialogBox.choicesVisible;
+    if (InputManager.isJustPressed('e') || InputManager.isJustPressed('enter') || (spaceOk && InputManager.isJustPressed(' '))) {
       this.dialogBox.handleConfirm();
       return;
     }
