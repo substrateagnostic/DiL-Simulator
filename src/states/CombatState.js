@@ -873,7 +873,7 @@ export class CombatState {
 
     const marker = overlay.querySelector('#brace-marker');
     let pos = 0, dir = 1, done = false;
-    const speed = 260;
+    const speed = 420;
     let last = performance.now();
     let animId;
 
@@ -1045,8 +1045,9 @@ export class CombatState {
       { code: 'ArrowDown',  label: '↓' },
       { code: 'ArrowLeft',  label: '←' },
       { code: 'ArrowRight', label: '→' },
+      { code: 'KeyF',       label: 'F' },
     ];
-    const sequence = Array.from({ length: 3 }, () => KEYS[Math.floor(Math.random() * KEYS.length)]);
+    const sequence = Array.from({ length: 4 }, () => KEYS[Math.floor(Math.random() * KEYS.length)]);
 
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay';
@@ -1077,7 +1078,7 @@ export class CombatState {
 
       keyHandler = (e) => {
         if (!inputPhase || inputIndex >= sequence.length) return;
-        const validCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+        const validCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyF'];
         if (!validCodes.includes(e.code)) return;
         e.preventDefault();
 

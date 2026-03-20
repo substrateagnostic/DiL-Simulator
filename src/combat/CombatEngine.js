@@ -119,7 +119,7 @@ export class CombatEngine {
 
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
-    const dmg = this._calcDamage(pStats.atk, 10, eStats.def, this.enemy);
+    const dmg = this._calcDamage(pStats.atk, 0, eStats.def, this.enemy);
 
     // Combo: bonus damage if enemy has active debuffs
     const combo = this._enemyHasDebuff();
@@ -133,7 +133,7 @@ export class CombatEngine {
 
     this.log.push({ type: 'attack', damage: finalDamage, critical: dmg.critical });
     this._checkVictory();
-    return { ...dmg, damage: finalDamage, combo, momentumGain };
+    return { ...dmg, type: 'attack', damage: finalDamage, combo, momentumGain };
   }
 
   playerAbility(abilityId) {

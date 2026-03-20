@@ -66,7 +66,7 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 - **Henderson phases**: Karen/Chad/Grandma each have 2 additional phases (triggered at 50% and 25% HP) with new abilities and `phaseMessages`. Phase transitions fire a screen effect, a message, and an enemy taunt.
 - **Combat taunts**: `ANDREW_TAUNTS` in `stats.js` maps event keys (`crit`, `weakness_hit`, `brace_success`, `power_move`, `enemy_crit`, `retaliate`, `confused`) to quip arrays. Enemy taunts come from `ENEMY_STATS[id].taunts`. `CombatHUD.showTaunt(text, side)` renders them as speech bubbles.
 
-**Damage formula**: `max(1, floor((atk + power) × 1.5 − def × 0.5 ± rand(3)))`, then weakness/resist multiplier, then vulnerability multiplier, then combo multiplier.
+**Damage formula**: `max(1, floor((atk + power) × 1.5 − def × 0.5 ± rand(3)))`, then weakness/resist multiplier, then vulnerability multiplier, then combo multiplier. Basic attack uses `power = 0`, so damage ≈ the displayed ATK stat. Abilities set their own `power` value.
 
 **`CombatHUD.showMainMenu` signature**: `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP)` — pass all five. Tiered momentum buttons, Retaliate, and Desperate Gamble are injected dynamically based on state. No XP bar in combat HUD — XP progress is only shown in the Stats tab of MenuState.
 
@@ -124,7 +124,10 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **Ability tags and weaknesses**: Karen = weak `legal`, resists `social`; Chad = weak `social`, resists `legal`; Grandma = weak `audit`, resists `social`. Tag the appropriate ability and the 1.5× bonus fires automatically.
 - **Stat theming**: HP = Patience, MP = Coffee, ATK = Assertiveness, DEF = Composure, SPD = Bureaucratic Efficiency. Player name hardcoded as `'Andrew'`.
 - **Dialog data gotchas**: `give_item` actions use `item` field (not `itemId`). Choice nodes use `prompt` field for the question text (not `text`).
+- **Dialog action nodes** (full list): `set_flag`, `start_combat`, `give_item`, `heal`, `quest_update`, `give_xp` (calls `player.gainXP(node.xp)`), `modify_stat` (increments `player.stats[node.stat]` by `node.amount`, min 1).
+- **One-time poster/side-quest pattern**: Add a `motivationalPoster` furniture entry + `{ type: 'poster', dialogId: 'quest_*' }` interactable to a room. The dialog tree starts with a `condition` node checking a done-flag (`ifTrue` → "already seen" text, `ifFalse` → reward path). The reward path: `set_flag` done → `give_xp` → `modify_stat` → text node with `next` pointing past the "already seen" text → `end`.
 
-## Session Notes
+## Reference Files
 
-`HANDOFF.md` in the project root tracks recent bug fixes and known issues. Check it at the start of a new session. The full expansion plan is at `.claude/plans/eager-nibbling-shannon.md`.
+- `HANDOFF.md` — recent bug fixes and known issues; check at session start.
+- `.claude/plans/eager-nibbling-shannon.md` — full expansion plan (Phases 1–9).

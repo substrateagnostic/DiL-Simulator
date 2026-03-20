@@ -188,6 +188,9 @@ export const ROOMS = {
       // East wall (face inward)
       { type: 'motivationalPoster', x: 18.9, z: 5,  rotation: -Math.PI / 2 },
       { type: 'motivationalPoster', x: 18.9, z: 10, rotation: -Math.PI / 2 },
+      // Side quest posters
+      { type: 'motivationalPoster', x: 18.9, z: 12, rotation: -Math.PI / 2 },
+      { type: 'motivationalPoster', x: 0.1,  z: 3,  rotation: Math.PI / 2 },
 
 
     ],
@@ -229,6 +232,9 @@ export const ROOMS = {
       { x: 0,  z: 10, type: 'poster', dialogId: 'poster_synergy' },
       { x: 19, z: 5,  type: 'poster', dialogId: 'poster_hustle' },
       { x: 19, z: 10, type: 'poster', dialogId: 'poster_teamwork' },
+      // Side quest interactables
+      { x: 19, z: 12, type: 'poster', dialogId: 'quest_atk_1' },
+      { x: 0,  z: 3,  type: 'poster', dialogId: 'quest_def_1' },
     ],
     playerSpawn: { x: 5, z: 12 },
   },
@@ -280,6 +286,9 @@ export const ROOMS = {
 
       // === Arcade cabinet ===
       { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
+      // Side quest posters
+      { type: 'motivationalPoster', x: 0.1, z: 5, rotation: Math.PI / 2 },
+      { type: 'motivationalPoster', x: 8.9, z: 6, rotation: -Math.PI / 2 },
     ],
     npcs: [
       { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 }, condition: { notFlag: 'chad_defeated' } },
@@ -298,6 +307,9 @@ export const ROOMS = {
       { x: 4, z: 1, type: 'microwave', dialogId: 'microwave' },
       { x: 5, z: 0, type: 'poster', dialogId: 'poster_excellence' },
       { x: 8, z: 6, type: 'arcade_cabinet', dialogId: 'arcade_intro' },
+      // Side quest interactables
+      { x: 0, z: 5, type: 'poster', dialogId: 'quest_atk_3' },
+      { x: 9, z: 6, type: 'poster', dialogId: 'quest_def_3' },
     ],
     playerSpawn: { x: 7, z: 2 },
   },
@@ -402,6 +414,9 @@ export const ROOMS = {
 
       // === Projector screen area — just a motivational poster placeholder ===
       { type: 'motivationalPoster', x: 3, z: 0.1, rotation: 0 },
+      // Side quest posters
+      { type: 'motivationalPoster', x: 10.9, z: 6, rotation: -Math.PI / 2 },
+      { type: 'motivationalPoster', x: 5,    z: 6.9, rotation: Math.PI },
 
 
     ],
@@ -419,6 +434,9 @@ export const ROOMS = {
     interactables: [
       { x: 6, z: 0, type: 'whiteboard', dialogId: 'conference_whiteboard' },
       { x: 3, z: 0, type: 'poster', dialogId: 'poster_excellence' },
+      // Side quest interactables
+      { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2' },
+      { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2' },
     ],
     playerSpawn: { x: 1, z: 4 },
   },
@@ -477,6 +495,9 @@ export const ROOMS = {
       // === Cable management / fire extinguisher feel ===
       { type: 'fileCabinet', x: 7, z: 1 },  // equipment shelf
       { type: 'fileCabinet', x: 7, z: 2 },
+      // Side quest posters
+      { type: 'motivationalPoster', x: 3,   z: 0.1, rotation: 0 },
+      { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
     ],
     npcs: [
       { id: 'alex_it', x: 6, z: 8, facing: 0, movement: { type: 'wander', radius: 3 } },  // wanders among servers
@@ -490,6 +511,9 @@ export const ROOMS = {
       { x: 1, z: 3, type: 'server_rack', dialogId: 'server_rack_inspect' },
       { x: 5, z: 3, type: 'server_rack', dialogId: 'server_vault_code' },
       { x: 6, z: 7, type: 'alex_it_desk', dialogId: 'alex_it_desk' },
+      // Side quest interactables
+      { x: 3, z: 0, type: 'poster', dialogId: 'quest_atk_4' },
+      { x: 0, z: 7, type: 'poster', dialogId: 'quest_def_4' },
     ],
     playerSpawn: { x: 2, z: 7 },
   },
@@ -534,6 +558,9 @@ export const ROOMS = {
 
       // === File cabinet next to reception desk (east side) ===
       { type: 'fileCabinet', x: 9, z: 3, rotation: Math.PI },
+      // Side quest posters
+      { type: 'motivationalPoster', x: 11,  z: 0.1, rotation: 0 },
+      { type: 'motivationalPoster', x: 0.1, z: 5,   rotation: Math.PI / 2 },
     ],
     npcs: [
       { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
@@ -553,6 +580,9 @@ export const ROOMS = {
     interactables: [
       { x: 13, z: 3, type: 'elevator', dialogId: 'elevator' },
       { x: 7, z: 2, type: 'reception_desk', dialogId: 'reception_desk' },
+      // Side quest interactables
+      { x: 11, z: 0, type: 'poster', dialogId: 'quest_atk_5' },
+      { x: 0,  z: 5, type: 'poster', dialogId: 'quest_def_5' },
     ],
     playerSpawn: { x: 7, z: 1 },
   },
@@ -726,19 +756,12 @@ export const ROOMS = {
     walls: true,
     slope: 0.0375,  // radians — tilts the whole room so north end (archive) is lower
     furniture: [
-      // Staircase at south end (going down toward cubicle_farm)
-      { type: 'staircase', x: 2, z: 17, rotation: 0 },
-      // Staircase at north end (going up toward archive)
-      { type: 'staircase', x: 2, z: 2, rotation: Math.PI },
-      // Cobwebs in corners
       { type: 'cobweb', x: 0.2, z: 0.2 },
       { type: 'cobweb', x: 3.8, z: 0.2 },
       { type: 'cobweb', x: 0.2, z: 19.8 },
       { type: 'cobweb', x: 3.8, z: 19.8 },
-      // Motivational poster on wall
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
     ],
-    npcs: [],
     exits: [
       // SOUTH exit -> Cubicle Farm
       { x: 1, z: 19, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 12 },

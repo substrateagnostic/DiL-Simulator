@@ -255,6 +255,7 @@ export class Room {
       mat.opacity = 1.0;
       mesh.material = mat;
     }
+
     // West wall (x = -0.5 in world)
     buildVWall(exitsByWall.west, -TILE_SIZE / 2 - wallThickness / 2);
     // East wall — capture meshes and clone material for transparency support
