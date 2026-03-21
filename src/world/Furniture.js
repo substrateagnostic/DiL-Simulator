@@ -1098,6 +1098,98 @@ export const Furniture = {
     return group;
   },
 
+  // Full descending staircase flight for the stairwell room
+  // Steps start raised (south/top) and descend to floor level (north/bottom)
+  stairFlight(stepCount = 16, totalWidth = 3.2, totalDepth = 14, totalDescent = 0.7) {
+    const group = new THREE.Group();
+    const stepMat = Materials.custom(0x8a8a8a);
+    const riseMat = Materials.custom(0x626262);
+    const railMat = Materials.metal();
+    const noseMat = Materials.custom(0xaaaaaa);
+
+    const stepDepth = totalDepth / stepCount;
+    const stepDrop = totalDescent / stepCount;
+    const treadThick = 0.10;
+
+    for (let i = 0; i < stepCount; i++) {
+      const z = -i * stepDepth;
+      // Start at totalDescent height and descend — all steps above floor
+      const y = totalDescent - i * stepDrop;
+
+      // Tread (horizontal surface)
+      const tread = new THREE.Mesh(
+        new THREE.BoxGeometry(totalWidth, treadThick, stepDepth * 0.92),
+        stepMat
+      );
+      tread.position.set(0, y, z);
+      tread.receiveShadow = true;
+      tread.castShadow = true;
+      group.add(tread);
+
+      // Nose edge (light stripe at front of each step for visual separation)
+      const nose = new THREE.Mesh(
+        new THREE.BoxGeometry(totalWidth + 0.02, treadThick + 0.02, 0.05),
+        noseMat
+      );
+      nose.position.set(0, y + 0.005, z + stepDepth * 0.45);
+      group.add(nose);
+
+      // Riser (vertical face between steps)
+      if (i > 0) {
+        const riser = new THREE.Mesh(
+          new THREE.BoxGeometry(totalWidth, stepDrop + treadThick, 0.04),
+          riseMat
+        );
+        riser.position.set(0, y + stepDrop * 0.5, z + stepDepth * 0.46);
+        riser.castShadow = true;
+        group.add(riser);
+      }
+
+      // Solid fill under each step (so you don't see through from below)
+      const fill = new THREE.Mesh(
+        new THREE.BoxGeometry(totalWidth, y + treadThick / 2, stepDepth * 0.92),
+        riseMat
+      );
+      fill.position.set(0, (y + treadThick / 2) / 2 - treadThick / 2, z);
+      group.add(fill);
+    }
+
+    // Side railings — posts + handrail
+    const railHeight = 0.8;
+    const postSpacing = 3; // post every N steps
+    const postCount = Math.ceil(stepCount / postSpacing);
+    for (const sx of [-totalWidth / 2 - 0.04, totalWidth / 2 + 0.04]) {
+      // Angled top handrail following the descent
+      const railLen = Math.sqrt(totalDepth * totalDepth + totalDescent * totalDescent);
+      const railAngle = -Math.atan2(totalDescent, totalDepth);
+      const rail = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.06, railLen),
+        railMat
+      );
+      rail.position.set(sx, totalDescent / 2 + railHeight, -totalDepth / 2);
+      rail.rotation.x = railAngle;
+      rail.castShadow = true;
+      group.add(rail);
+
+      // Vertical posts
+      for (let p = 0; p <= postCount; p++) {
+        const frac = p / postCount;
+        const pz = -frac * totalDepth;
+        const py = totalDescent * (1 - frac);
+        const postHeight = railHeight + 0.1;
+        const post = new THREE.Mesh(
+          new THREE.BoxGeometry(0.05, postHeight, 0.05),
+          railMat
+        );
+        post.position.set(sx, py + postHeight * 0.5, pz);
+        post.castShadow = true;
+        group.add(post);
+      }
+    }
+
+    return group;
+  },
+
   cobweb() {
     const group = new THREE.Group();
     const mat = new THREE.MeshStandardMaterial({

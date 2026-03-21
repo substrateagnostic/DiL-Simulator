@@ -722,19 +722,19 @@ export const ROOMS = {
     name: 'The Stairwell',
     width: 4,
     height: 20,
-    floorColor: 0x666666,
+    floorColor: 0x555555,
     walls: true,
-    slope: 0.0375,  // radians — tilts the whole room so north end (archive) is lower
+    slope: 0.04,  // radians — tilts the whole room so north end (archive) is lower
     furniture: [
-      // Staircase at south end (going down toward cubicle_farm)
-      { type: 'staircase', x: 2, z: 17, rotation: 0 },
-      // Staircase at north end (going up toward archive)
-      { type: 'staircase', x: 2, z: 2, rotation: Math.PI },
-      // Cobwebs in corners
+      // Full descending staircase spanning the corridor
+      { type: 'stairFlight', x: 2, z: 17 },
+      // Cobwebs in corners — stairwells are neglected
       { type: 'cobweb', x: 0.2, z: 0.2 },
       { type: 'cobweb', x: 3.8, z: 0.2 },
       { type: 'cobweb', x: 0.2, z: 19.8 },
       { type: 'cobweb', x: 3.8, z: 19.8 },
+      { type: 'cobweb', x: 0.2, z: 10 },
+      { type: 'cobweb', x: 3.8, z: 10 },
       // Motivational poster on wall
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
     ],
