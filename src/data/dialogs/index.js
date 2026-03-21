@@ -810,7 +810,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Compliance Auditor', text: "I'll file the Form 27B/6 as a 'learning experience.' It's still forty-seven pages, but I'll mark it as 'resolved.'" },
     /* 2  */ { type: 'text', speaker: 'Compliance Auditor', text: "Don't let it happen again. I'll be watching. I'm always watching." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor puts their sunglasses back on and walks away. You notice they leave no footprints.' },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'compliance_defeated', value: true },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'compliance_defeated', value: true, next: 6 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor walks away. You exhale for the first time in what feels like hours.' },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: 'Then the lights flicker. Not the normal "this building is old" flicker. Something else.' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'The printer in the corner starts up on its own. A single page emerges.' },
@@ -827,7 +827,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Andrew', text: 'Maybe. But the Henderson Trust will be handled correctly.' },
     /* 3  */ { type: 'text', speaker: 'Regional Manager', text: "Correctly. How quaint. Enjoy your moral victory. I'll be on the golf course." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager deploys their golden parachute -- metaphorically -- and exits the building. You never see them again.' },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'regional_defeated', value: true },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'regional_defeated', value: true, next: 7 },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager straightens his tie. His golden parachute remains undeployed. For now.' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'Then something strange happens. The elevator behind you dings. Nobody pressed it.' },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: 'The doors open to an empty car. The floor indicator scrolls through numbers that this building doesn\'t have.' },
@@ -1258,7 +1258,7 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The Archive has the original records. The 1947 charter. The proof of what this institution was SUPPOSED to be." },
     /* 14 */ { type: 'text', speaker: 'Mysterious Janitor', text: "I can get you in. Through the stairwell — north end. Use this keycard." },
     /* 15 */ { type: 'action', action: 'set_flag', flag: 'has_archive_key', value: true, next: 16 },
-    /* 16 */ { type: 'action', action: 'give_item', itemId: 'compliance_manual', quantity: 1, next: 17 },
+    /* 16 */ { type: 'action', action: 'give_item', item: 'compliance_manual', quantity: 1, next: 17 },
     /* 17 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Take my old compliance manual too. You'll need it where you're going." },
     /* 18 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And Andrew — be careful in the Archive. The building protects its secrets. Not everything down there wants to be found." },
     /* 19 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_act3', value: true, next: 20 },
@@ -1492,6 +1492,17 @@ export const DIALOGS = {
   ],
 
   // HR Department interaction
+  hr_rep_intro: [
+    /* 0  */ { type: 'condition', flag: 'defeated_hr_rep', ifTrue: 6, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'HR Representative', text: "Welcome to Human Resources! I'm here to help with any concerns. As long as those concerns are pre-approved on Form 27B/6." },
+    /* 2  */ { type: 'text', speaker: 'HR Representative', text: "Please note that entering this department constitutes implicit agreement to our 47-page conflict resolution policy." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "I just need to look at some personnel files." },
+    /* 4  */ { type: 'text', speaker: 'HR Representative', text: "Personnel files? Those are classified. And by 'classified' I mean I've literally sorted them into classes. A through F. Yours is... well." },
+    /* 5  */ { type: 'end' },
+    /* 6  */ { type: 'text', speaker: 'HR Representative', text: "...I'm still filing that incident report. In triplicate. The third copy is for my therapist." },
+    /* 7  */ { type: 'end' },
+  ],
+
   hr_rep_combat: [
     /* 0  */ { type: 'text', speaker: 'HR Representative', text: "I'm sorry, you can't be in here. This area is restricted during the departmental review." },
     /* 1  */ { type: 'text', speaker: 'Andrew', text: "I need to access the employment records. Historical personnel files." },
@@ -1513,14 +1524,17 @@ export const DIALOGS = {
     /* 6  */ { type: 'end' },
   ],
 
-  // HR filing cabinets — interactable in HR Department
+  // HR vault code (file cabinet in HR department)
   hr_vault_code: [
-    /* 0 */ { type: 'condition', flag: 'has_hr_evidence', ifTrue: 3, ifFalse: 1 },
-    /* 1 */ { type: 'text', speaker: 'Narrator', text: "The filing cabinets are locked with a digital keypad. The HR Representative has the only access code." },
-    /* 2 */ { type: 'end' },
-    /* 3 */ { type: 'text', speaker: 'Narrator', text: "The Janitor's original employment record. Trust Officer, 1982. Promoted to Senior VP of Trust Administration, 1993. Voluntary reclassification to Facilities, 2005." },
-    /* 4 */ { type: 'text', speaker: 'Narrator', text: "The vault combination digit 19 is already noted. Three numbers: 47, 19, 82." },
-    /* 5 */ { type: 'end' },
+    /* 0  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 7, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'defeated_hr_rep', ifTrue: 3, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Personnel files, meticulously organized. The drawer labeled 'HISTORICAL — CONFIDENTIAL' has a padlock. The HR Representative eyes you suspiciously." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "With the HR Rep out of commission, you rifle through the historical personnel files." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "'HIRED: 1982. POSITION: Trust Officer. PROMOTED: Senior VP, Trust Administration, 1993. VOLUNTARY RECLASSIFICATION: Facilities, 2005.'" },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Attached to the file is a sticky note with a number: 19. The second vault combination digit." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true, next: 7 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "You've already found what you need in these files. The Janitor's employment record — and the second vault code." },
+    /* 8  */ { type: 'end' },
   ],
 
   // Server room vault code
@@ -1757,7 +1771,7 @@ export const DIALOGS = {
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I think the building itself is sending this warning. Which is insane. But also... this building is insane." },
     /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Here. Take this. I overclocked a security badge to run at 3.47 GHz. It's technically a violation of several FCC regulations." },
     /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_anomaly_347_complete', value: true, next: 19 },
-    /* 19 */ { type: 'action', action: 'give_item', itemId: 'energy_drink', quantity: 2, next: 20 },
+    /* 19 */ { type: 'action', action: 'give_item', item: 'energy_drink', quantity: 2, next: 20 },
     /* 20 */ { type: 'text', speaker: 'Narrator', text: "The badge hums with a frequency that makes your teeth tingle. SPD +3 permanently." },
     /* 21 */ { type: 'end' },
   ],
@@ -1967,13 +1981,15 @@ export const DIALOGS = {
     /* 26 */ { type: 'text', speaker: 'Compliance Auditor', text: "Perfect score. I'm... impressed. That's the second time I've ever said that. The first was in a mirror." },
     /* 27 */ { type: 'text', speaker: 'Compliance Auditor', text: "The archive terminal password is: FIDUCIARY. All caps. No spaces. Because compliance doesn't believe in spaces." },
     /* 28 */ { type: 'action', action: 'set_flag', flag: 'compliance_crossword_done', value: true, next: 29 },
-    /* 29 */ { type: 'action', action: 'set_flag', flag: 'has_archive_password', value: true, next: 35 },
+    /* 29 */ { type: 'action', action: 'set_flag', flag: 'has_archive_password', value: true, next: 37 },
     /* 30 */ { type: 'text', speaker: 'Compliance Auditor', text: "Insufficient. Your regulatory knowledge has gaps. Like your department's internal controls." },
     /* 31 */ { type: 'text', speaker: 'Compliance Auditor', text: "Come back when you've studied. I recommend reading the entire CFR Title 12. It's only 40,000 pages." },
     /* 32 */ { type: 'action', action: 'set_flag', flag: 'crossword_1', value: false, next: 33 },
     /* 33 */ { type: 'action', action: 'set_flag', flag: 'crossword_2', value: false, next: 34 },
     /* 34 */ { type: 'action', action: 'set_flag', flag: 'crossword_3', value: false, next: 35 },
-    /* 35 */ { type: 'end' },
+    /* 35 */ { type: 'action', action: 'set_flag', flag: 'crossword_4', value: false, next: 36 },
+    /* 36 */ { type: 'action', action: 'set_flag', flag: 'crossword_5', value: false, next: 37 },
+    /* 37 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------

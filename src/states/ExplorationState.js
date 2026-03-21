@@ -277,8 +277,8 @@ export class ExplorationState {
         this._refreshStoryProgress(true);
         // Janitor riddles complete — +2 all stats
         if (key === 'janitor_riddle_3_done') {
+          this.player.stats.maxHP += 2;
           this.player.stats.hp += 2;
-          this.player.stats.maxHp += 2;
           this.player.stats.atk += 2;
           this.player.stats.def += 2;
           this.player.stats.spd += 2;

@@ -1223,7 +1223,7 @@ export class CombatState {
   }
 
   _getTelegraphHint(abilityId) {
-    if (!abilityId) return null;
+    if (!abilityId) return '';
     const ability = ENEMY_ABILITIES[abilityId];
     const name = this.engine.enemy.name;
     if (!ability) return `${name} is making a move...`;
