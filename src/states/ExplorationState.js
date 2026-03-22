@@ -277,8 +277,8 @@ export class ExplorationState {
         this._refreshStoryProgress(true);
         // Janitor riddles complete — +2 all stats
         if (key === 'janitor_riddle_3_done') {
+          this.player.stats.maxHP += 2;
           this.player.stats.hp += 2;
-          this.player.stats.maxHp += 2;
           this.player.stats.atk += 2;
           this.player.stats.def += 2;
           this.player.stats.spd += 2;
@@ -1553,7 +1553,7 @@ export class ExplorationState {
     // Slope the stairwell — player and camera descend together as they walk north
     if (this.player.currentRoom === 'stairwell') {
       const t = Math.max(0, Math.min(1, (18 - this.player.position.z) / 16));
-      const elevation = -0.6 * t;
+      const elevation = -0.7 * t;
       this.player.mesh.position.y = elevation;
       this.camera.follow(this.player.position.x, this.player.position.z, elevation);
     }

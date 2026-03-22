@@ -106,7 +106,8 @@ export class ShopState {
 
     const rows = this._items.map((item, i) => {
       const selected = i === this.selectedIndex;
-      const stock = item.category === 'consumable' ? this._getPlayerStock(item.id) : 0;
+      const stock = item.category === 'consumable' ? this._getPlayerStock(item.id)
+        : item.category === 'upgrade' ? (this.player.getFlag(`shop_${item.id}`) || 0) : 0;
       const maxed = item.maxStack && stock >= item.maxStack;
       const decored = item.flag && this.player.getFlag(item.flag);
       const canAfford = aum >= item.price;
@@ -166,9 +167,10 @@ export class ShopState {
       this._flash('Already owned!', '#e94560');
       return;
     }
-    if (item.category === 'consumable') {
-      const stock = this._getPlayerStock(item.id);
-      if (item.maxStack && stock >= item.maxStack) {
+    if (item.maxStack) {
+      const stock = item.category === 'consumable' ? this._getPlayerStock(item.id)
+        : item.category === 'upgrade' ? (this.player.getFlag(`shop_${item.id}`) || 0) : 0;
+      if (stock >= item.maxStack) {
         this._flash(`Max stack reached (${item.maxStack})`, '#e94560');
         return;
       }
