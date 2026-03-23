@@ -76,33 +76,35 @@ export const DIALOGS = {
   // ALEX FROM IT
   // --------------------------------------------------------------------------
   alex_it_intro: [
-    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: 'Yo. New guy. You touch any of the legacy systems yet?' },
-    /* 1  */ { type: 'text', speaker: 'Andrew', text: 'I just started tod--' },
-    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Good. Don't. The VPN's running on what I'm pretty sure is a modified TI-84 calculator from 2003." },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I'm Alex. IT department. Well, I AM the IT department. Had a team once. They all 'transferred.' That's corporate for 'fled.'" },
-    /* 4  */ { type: 'choice', speaker: 'Alex from IT', text: "So what's your deal? Trust officer? That's rough, man.", choices: [
-      { text: 'What happened to the IT team?', next: 5 },
-      { text: "What's in the server room?", next: 9 },
-      { text: 'Any tech I should know about?', next: 14 },
-      { text: "I'll let you get back to it.", next: 18 },
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. You must be the new trust officer. Andrew, right? Welcome to Wells — try not to let the building crush your will to live." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "I'm Alex. IT department. Well, I AM the IT department. Had a team once. They all 'transferred.' That's corporate for 'fled.'" },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Anyway — good to have you. The trust department could use someone who hasn't been here long enough to stop trying." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "One thing before we get into it. Have you touched any of the legacy systems yet?" },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: 'I just started tod--' },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Good. Don't. The VPN's running on what I'm pretty sure is a modified TI-84 calculator from 2003." },
+    /* 6  */ { type: 'choice', speaker: 'Alex from IT', text: "So. What do you want to know?", choices: [
+      { text: 'What happened to the IT team?', next: 7 },
+      { text: "What's in the server room?", next: 11 },
+      { text: 'Any tech I should know about?', next: 16 },
+      { text: "I'll let you get back to it.", next: 20 },
     ]},
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "They said it was 'restructuring.' I say it was the Server Room Incident of 2024." },
-    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "I'm not legally allowed to discuss it. NDA. Also a restraining order from the server rack in Row C." },
-    /* 7  */ { type: 'text', speaker: 'Andrew', text: 'A restraining order from a server rack?' },
-    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "It's a legal gray area. Like most things at this company.", next: 4 },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: 'The server room? Oh man...' },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Okay look. Officially, it houses our document management system and the trust accounting database. SSL certificates. Normal stuff." },
-    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "Unofficially... there's a partition I found that's been running since 2016. It's encrypted with something I've never seen before." },
-    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Every night at 3:47 AM it sends a packet to an IP address that traces back to a P.O. box in the Cayman Islands." },
-    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: 'But that\'s probably nothing. Right? ...Right?', next: 4 },
-    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "Your workstation password is 'password123.' I know because everyone's password is 'password123.'" },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The document management system crashes every Tuesday at 2 PM. Nobody knows why. I've stopped looking into it because every time I do, my access gets revoked for 24 hours." },
-    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "Also, the VOIP phones record everything. I mean, they're NOT supposed to. But the red light stays on even when you hang up." },
-    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "I unplugged mine in 2022. I communicate exclusively through Slack messages and aggressive eye contact.", next: 4 },
-    /* 18 */ { type: 'action', action: 'set_flag', flag: 'met_alex_it', value: true, next: 19 },
-    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "Anyway, if your computer does anything weird -- and it will -- just restart it three times, slap the left side of the monitor, and say 'please.' In that order." },
-    /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "The 'please' is important. These machines run on spite and desperation." },
-    /* 21 */ { type: 'end' },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "They said it was 'restructuring.' I say it was the Server Room Incident of 2024." },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "I'm not legally allowed to discuss it. NDA. Also a restraining order from the server rack in Row C." },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: 'A restraining order from a server rack?' },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "It's a legal gray area. Like most things at this company.", next: 6 },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: 'The server room? Oh man...' },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Okay look. Officially, it houses our document management system and the trust accounting database. SSL certificates. Normal stuff." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Unofficially... there's a partition I found that's been running since 2016. It's encrypted with something I've never seen before." },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "Every night at 3:47 AM it sends a packet to an IP address that traces back to a P.O. box in the Cayman Islands." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: 'But that\'s probably nothing. Right? ...Right?', next: 6 },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "Your workstation password is 'password123.' I know because everyone's password is 'password123.'" },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "The document management system crashes every Tuesday at 2 PM. Nobody knows why. I've stopped looking into it because every time I do, my access gets revoked for 24 hours." },
+    /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "Also, the VOIP phones record everything. I mean, they're NOT supposed to. But the red light stays on even when you hang up." },
+    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "I unplugged mine in 2022. I communicate exclusively through Slack messages and aggressive eye contact.", next: 6 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'met_alex_it', value: true, next: 21 },
+    /* 21 */ { type: 'text', speaker: 'Alex from IT', text: "Anyway, if your computer does anything weird -- and it will -- just restart it three times, slap the left side of the monitor, and say 'please.' In that order." },
+    /* 22 */ { type: 'text', speaker: 'Alex from IT', text: "The 'please' is important. These machines run on spite and desperation." },
+    /* 23 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -139,6 +141,14 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   // ROSS -- Your boss. The briefing.
   // --------------------------------------------------------------------------
+  ross_not_ready: [
+    /* 0 */ { type: 'text', speaker: 'Ross', text: "Andrew! My man. Before we get into the big stuff — have you met the team yet? Like, all of them?" },
+    /* 1 */ { type: 'text', speaker: 'Ross', text: "Janet runs the front desk. She knows everything and will tell you exactly half of it. The Intern does whatever we point him at. He's enthusiastic. That's his whole thing." },
+    /* 2 */ { type: 'text', speaker: 'Ross', text: "Then there's Isaiah and Alex from IT. Load-bearing walls, metaphorically. Isaiah knows where everything is filed. Alex knows why nothing works." },
+    /* 3 */ { type: 'text', speaker: 'Ross', text: "Go say hi to all four of them. Then come back and we'll talk Henderson. Big things, buddy. Big things. *finger guns*" },
+    /* 4 */ { type: 'end' },
+  ],
+
   ross_intro: [
     /* 0  */ { type: 'text', speaker: 'Ross', text: 'Andrew! My man! Come in, come in. Close the door. Actually, leave it open. Actually, close it halfway. Power move.' },
     /* 1  */ { type: 'text', speaker: 'Ross', text: "So. The Henderson Trust. This is the big one, buddy. This is our Super Bowl. Our moon landing. Our... what's that thing where they do the thing?" },
@@ -697,6 +707,22 @@ export const DIALOGS = {
   // COMBAT RETRY DIALOGS -- short quip, straight to battle on rematch
   // ==========================================================================
 
+  karen_first_loss_tutorial: [
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: "Karen Henderson dismantles you. Not metaphorically. The binder alone causes structural damage to the conference table." },
+    /* 1 */ { type: 'text', speaker: 'Ross', text: "Hey. Hey! You okay? What happened in there?" },
+    /* 2 */ { type: 'text', speaker: 'Andrew', text: "She had a binder." },
+    /* 3 */ { type: 'text', speaker: 'Ross', text: "Yeah, she always has the binder. Listen — Karen's been doing this for years. She knows every loophole, every pressure point, every trick." },
+    /* 4 */ { type: 'text', speaker: 'Ross', text: "You can't walk in there at your current level and expect to hold your ground. You need more experience. More Assertiveness. More Composure." },
+    /* 5 */ { type: 'text', speaker: 'Andrew', text: "How do I get that?" },
+    /* 6 */ { type: 'text', speaker: 'Ross', text: "The reception desk. Prospective clients come in all day. Handle their cases, win the fights, build up your skills." },
+    /* 7 */ { type: 'text', speaker: 'Narrator', text: "TIP: Go to the Reception area and interact with the desk to take on clients. Each win earns XP and AUM currency." },
+    /* 8 */ { type: 'text', speaker: 'Ross', text: "Handle 3 clients. Get yourself to Level 3. Then go back to Karen — at that level you'll actually have a fighting chance." },
+    /* 9 */ { type: 'text', speaker: 'Ross', text: "Oh — and check the motivational posters around the building. Sounds dumb, but they're actually worth reading. Trust me." },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "...She's coming back, isn't she." },
+    /* 11 */ { type: 'text', speaker: 'Ross', text: "She never left. She's in the conference room right now writing a Yelp review about the parking situation." },
+    /* 12 */ { type: 'end' },
+  ],
+
   karen_retry: [
     { type: 'text', speaker: 'Karen Henderson', text: "Oh, you're back. I still have the binder." },
     { type: 'action', action: 'start_combat', encounter: 'karen' },
@@ -909,35 +935,126 @@ export const DIALOGS = {
     { type: 'end' },
   ],
 
-  poster_synergy: [
-    { type: 'text', speaker: 'Narrator', text: '"SYNERGY" — printed over a stock photo of six people enthusiastically fist-bumping over a laptop.' },
-    { type: 'text', speaker: 'Narrator', text: 'A small sticker has been added: "This word has appeared in 6 consecutive quarterly reviews. We looked it up. No one agrees what it means."' },
-    { type: 'text', speaker: 'Narrator', text: 'Fine print at the bottom: "Wells Fargo is not responsible for any morale improvement, career advancement, or wellness that does or does not result from viewing this poster."' },
-    { type: 'text', speaker: 'Narrator', text: 'You feel 0% more synergized. Impressive.' },
+  // --- Cubicle Farm posters ---
+  poster_cf_1: [
+    { type: 'text', speaker: 'Narrator', text: '"SYNERGY" — printed over a stock photo of six people fist-bumping over a laptop. Nobody in this building has ever fist-bumped. Not once.' },
+    { type: 'text', speaker: 'Narrator', text: 'A sticker has been added: "This word has appeared in 6 consecutive quarterly reviews. We looked it up. No one agrees what it means."' },
+    { type: 'text', speaker: 'Andrew', text: 'I have already been here four hours and I feel less synergized than when I arrived.' },
+    { type: 'end' },
+  ],
+  poster_cf_2: [
+    { type: 'text', speaker: 'Narrator', text: '"RISE AND GRIND" — a man staring at a laptop at 2 AM surrounded by empty coffee cups. The stock graph behind him is going up. His posture is going down.' },
+    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "Sleep is a recovery mechanism. Recovery is for the inefficient."' },
+    { type: 'text', speaker: 'Andrew', text: 'Who approved this? Who looked at this and said: yes, this will help.' },
+    { type: 'end' },
+  ],
+  poster_cf_3: [
+    { type: 'text', speaker: 'Narrator', text: '"TOGETHER WE ACHIEVE MORE" — geese flying in a V formation at sunset.' },
+    { type: 'text', speaker: 'Narrator', text: 'Fine print: "The goose at the front does 47% more aerodynamic work. The geese at the back have never mentioned this. This is called professionalism."' },
+    { type: 'text', speaker: 'Andrew', text: 'I am the front goose. I have always been the front goose.' },
+    { type: 'end' },
+  ],
+  poster_cf_4: [
+    { type: 'text', speaker: 'Narrator', text: '"GOOD ENOUGH IS THE ENEMY OF GREAT" — an eagle soaring alone over a mountain range.' },
+    { type: 'text', speaker: 'Narrator', text: 'In red marker beneath: "What\'s the enemy of getting home before 8 PM? This poster."' },
+    { type: 'text', speaker: 'Narrator', text: 'In a second handwriting: "HR has been notified about the marker. - Facilities"' },
+    { type: 'text', speaker: 'Narrator', text: 'In a third handwriting: "HR IS the marker. - Anonymous"' },
+    { type: 'end' },
+  ],
+  poster_cf_5: [
+    { type: 'text', speaker: 'Narrator', text: '"COLLABORATE. INNOVATE. DISRUPT." — hands stacking on top of each other in a team huddle.' },
+    { type: 'text', speaker: 'Narrator', text: 'Small print: "Disruption is encouraged unless it disrupts the existing hierarchy, workflow, budget cycle, or Ross\'s standing lunch order."' },
+    { type: 'Andrew', speaker: 'Andrew', text: 'I\'m going to disrupt my way right out of this building.' },
+    { type: 'end' },
+  ],
+  poster_cf_6: [
+    { type: 'text', speaker: 'Narrator', text: '"YOUR ONLY COMPETITION IS WHO YOU WERE YESTERDAY" — a man sprinting alone on a track.' },
+    { type: 'text', speaker: 'Narrator', text: 'Someone has drawn an arrow pointing to the runner and written: "Yesterday-him also had dental. Think about that."' },
+    { type: 'text', speaker: 'Andrew', text: 'Yesterday-me did not know about the Henderson trust. Yesterday-me was thriving.' },
+    { type: 'end' },
+  ],
+  poster_cf_7: [
+    { type: 'text', speaker: 'Narrator', text: '"THERE IS NO \'I\' IN TEAM"' },
+    { type: 'text', speaker: 'Narrator', text: 'In neat handwriting below: "There is no \'I\' in team, but there IS an \'I\' in \'I didn\'t get credit for this.\' Just saying."' },
+    { type: 'text', speaker: 'Narrator', text: 'In a different handwriting: "There is also an \'I\' in \'individual performance review.\' - Janet"' },
     { type: 'end' },
   ],
 
-  poster_hustle: [
-    { type: 'text', speaker: 'Narrator', text: '"HUSTLE" — above a blurred photo of someone sprinting. It is unclear if they are running toward success or away from HR.' },
-    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "Hours are not capped. Neither is coffee. One of those is reimbursable."' },
-    { type: 'text', speaker: 'Narrator', text: 'A sticky note in familiar handwriting: "Does hustle cover doing HR\'s job for them? Asking for a friend. — A. Walker"' },
-    { type: 'text', speaker: 'Narrator', text: 'Below that, in different handwriting: "Please remove personal notes from company property. — Facilities"' },
-    { type: 'text', speaker: 'Narrator', text: 'Below THAT: "Facilities doesn\'t own me. — A. Walker"' },
+  // --- Break Room poster ---
+  poster_br_1: [
+    { type: 'text', speaker: 'Narrator', text: '"RECHARGE. REFUEL. RETURN." — a smiling woman holding a coffee mug, looking rested and purposeful.' },
+    { type: 'text', speaker: 'Narrator', text: 'The word RETURN is bolded. Underlined. Italicized. Someone added an asterisk. The asterisk says: "You have 14 minutes. The coffee takes 3."' },
+    { type: 'text', speaker: 'Andrew', text: 'This poster is not about wellness. This poster is about compliance.' },
     { type: 'end' },
   ],
 
-  poster_teamwork: [
-    { type: 'text', speaker: 'Narrator', text: '"TEAMWORK MAKES THE DREAM WORK"' },
-    { type: 'text', speaker: 'Narrator', text: 'Fine print: "Individual contributors are reminded that credit for team achievements belongs to the team, unless the team underperforms, in which case accountability is individual."' },
-    { type: 'text', speaker: 'Narrator', text: 'A sticky note signed "Janet": "I read the policy. This is actually just policy."' },
+  // --- Reception posters ---
+  poster_rec_1: [
+    { type: 'text', speaker: 'Narrator', text: '"FIRST IMPRESSIONS ARE PERMANENT" — a confident handshake silhouetted against a city skyline.' },
+    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "Smile. Even if you don\'t mean it. Especially if you don\'t mean it. The client can tell the difference, and they prefer the lie."' },
+    { type: 'text', speaker: 'Andrew', text: 'This is the most honest dishonest thing I have ever read.' },
+    { type: 'end' },
+  ],
+  poster_rec_2: [
+    { type: 'text', speaker: 'Narrator', text: '"SERVICE IS OUR PROMISE" — a woman beaming into a headset.' },
+    { type: 'text', speaker: 'Narrator', text: 'Fine print: "Our promise is subject to staffing levels, current hold times, and the emotional bandwidth of whoever happens to answer."' },
+    { type: 'text', speaker: 'Narrator', text: 'A sticky note from Diane: "Average hold time is currently 38 minutes. The promise is aspirational."' },
+    { type: 'end' },
+  ],
+  poster_rec_3: [
+    { type: 'text', speaker: 'Narrator', text: '"YOUR CLIENT IS NOT A NUMBER" — two people shaking hands warmly over a desk.' },
+    { type: 'text', speaker: 'Narrator', text: 'Fine print: "They are, however, a revenue event with associated compliance obligations, AML screening requirements, and a billable relationship tier. But not a number."' },
+    { type: 'text', speaker: 'Andrew', text: 'Client #4471 is waiting for me right now. I did not name them that. The system did.' },
     { type: 'end' },
   ],
 
-  poster_excellence: [
-    { type: 'text', speaker: 'Narrator', text: '"EXCELLENCE IS NOT A DESTINATION. IT\'S A JOURNEY."' },
-    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "So is the commute. Neither is compensated."' },
-    { type: 'text', speaker: 'Narrator', text: 'An HR approval stamp reads: "APPROVED — Annual Morale Initiative. Budget: $14.50 (includes frame)."' },
-    { type: 'text', speaker: 'Narrator', text: 'The frame is visibly from a dollar store. The glass is slightly crooked. It has been this way since 2019. No one has fixed it. No one will.' },
+  // --- Conference Room poster ---
+  poster_conf_1: [
+    { type: 'text', speaker: 'Narrator', text: '"ALIGNMENT IS NOT A DESTINATION. IT IS A PROCESS." — silhouettes around a boardroom table, all leaning slightly forward.' },
+    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "This process is estimated to take 4–6 working sessions, one sub-committee, a steering group debrief, and a retrospective on the debrief."' },
+    { type: 'text', speaker: 'Andrew', text: 'I have been in alignment meetings about the alignment meeting schedule. This poster understands me.' },
+    { type: 'end' },
+  ],
+
+  // --- Executive Floor posters ---
+  poster_exec_1: [
+    { type: 'text', speaker: 'Narrator', text: '"LEADERSHIP IS NOT A TITLE. IT IS A RESPONSIBILITY." — a lone eagle on a cliff at dawn, chrome-framed, museum-quality lighting.' },
+    { type: 'text', speaker: 'Narrator', text: 'Embossed gold text beneath: "Also a salary bracket. Primarily a salary bracket. The responsibility part is for the quarterly report."' },
+    { type: 'text', speaker: 'Andrew', text: 'This frame costs more than my monthly rent.' },
+    { type: 'end' },
+  ],
+  poster_exec_2: [
+    { type: 'text', speaker: 'Narrator', text: '"RESULTS SPEAK LOUDER THAN EFFORT" — a businessman standing triumphant at a summit, tie blowing in the wind.' },
+    { type: 'text', speaker: 'Narrator', text: 'Fine print, in the smallest font legally possible: "Effort is noted and appreciated in lieu of compensation adjustments for the current fiscal cycle."' },
+    { type: 'text', speaker: 'Andrew', text: 'There is a regional manager thirty feet from this poster. The irony is structural.' },
+    { type: 'end' },
+  ],
+  poster_exec_3: [
+    { type: 'text', speaker: 'Narrator', text: '"WE DON\'T HAVE EMPLOYEES. WE HAVE STAKEHOLDERS." — diverse hands around a boardroom table.' },
+    { type: 'text', speaker: 'Narrator', text: 'In small script at the bottom: "Stakeholders are not entitled to equity. The terminology is aspirational. This distinction was clarified in the 2019 handbook revision, section 4, paragraph 11."' },
+    { type: 'text', speaker: 'Andrew', text: 'I am a stakeholder with a frozen salary and a broken chair. I am staking nothing.' },
+    { type: 'end' },
+  ],
+  poster_exec_4: [
+    { type: 'text', speaker: 'Narrator', text: '"EXCELLENCE IS THE STANDARD. NOT THE CEILING." — a rocket launching against a twilight sky. The frame is gold. Real gold, probably.' },
+    { type: 'text', speaker: 'Narrator', text: 'The rocket in this photo cost $2.3 million to produce. It is a stock image. They paid $149 for the license.' },
+    { type: 'text', speaker: 'Andrew', text: 'My last raise was 1.2%. Before inflation. The rocket mocks me.' },
+    { type: 'end' },
+  ],
+
+  // --- Stairwell poster ---
+  poster_stair_1: [
+    { type: 'text', speaker: 'Narrator', text: '"SUCCESS IS A STAIRCASE, NOT AN ELEVATOR" — a winding staircase ascending into light.' },
+    { type: 'text', speaker: 'Narrator', text: 'Someone has added in permanent marker: "The elevator is also broken. This is not a metaphor. Maintenance has been notified since March. It is October."' },
+    { type: 'text', speaker: 'Andrew', text: 'I am literally on the stairs. The poster is right here. The irony is physical.' },
+    { type: 'end' },
+  ],
+
+  // --- HR Department poster ---
+  poster_hr_1: [
+    { type: 'text', speaker: 'Narrator', text: '"PEOPLE ARE OUR GREATEST ASSET" — a smiling, diverse team photo, soft lighting, everyone inexplicably happy to be at work.' },
+    { type: 'text', speaker: 'Narrator', text: 'Sub-heading: "Assets are subject to annual review, reallocation, write-downs, and depreciation over a standard amortization schedule."' },
+    { type: 'text', speaker: 'Andrew', text: 'This poster is hanging in the HR department. I don\'t know if that\'s a threat or an apology.' },
     { type: 'end' },
   ],
 
@@ -1539,12 +1656,13 @@ export const DIALOGS = {
 
   // Server room vault code
   server_vault_code: [
-    /* 0  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 5, ifFalse: 1 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "You check the server rack the Janitor mentioned. Behind the third-floor stairwell dead drop location." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Taped to the back of server rack C — the one with the restraining order — is a small card with the number: 82." },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'vault_code_3', value: true, next: 4 },
-    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The number 82. The year the Janitor was hired. Three numbers: 47, 19, 82." },
-    /* 5  */ { type: 'end' },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The year the Janitor was hired. That's the third code." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'vault_code_3', value: true, next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "You already noted the number on the card taped to server rack C." },
+    /* 6  */ { type: 'end' },
   ],
 
   // Vault interaction
@@ -2251,6 +2369,19 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "He retreats to the elevator. The lights pulse as the building guides him out." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_director_defeated', value: true, next: 5 },
     /* 5  */ { type: 'end' },
+  ],
+
+  // Ross — returned to office after Regional Director defeated
+  ross_returned: [
+    /* 0  */ { type: 'text', speaker: 'Ross', text: "Andrew. You actually did it. I had to come back when I heard the Regional Director was gone." },
+    /* 1  */ { type: 'text', speaker: 'Ross', text: "I'll be honest with you — when he showed up I thought it was over. But here you are." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Where does this leave us?" },
+    /* 3  */ { type: 'text', speaker: 'Ross', text: "The board is scrambling. The Algorithm is already running projections without him in the chain." },
+    /* 4  */ { type: 'text', speaker: 'Ross', text: "That's what we're up against next. It doesn't have feelings. It doesn't have bad hair days. It just... optimizes." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Then we optimize faster." },
+    /* 6  */ { type: 'text', speaker: 'Ross', text: "..." },
+    /* 7  */ { type: 'text', speaker: 'Ross', text: "That was actually kind of inspiring. Don't tell HR." },
+    /* 8  */ { type: 'end' },
   ],
 
   // The Algorithm — Final Boss pre-combat

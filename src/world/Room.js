@@ -17,6 +17,7 @@ import { TILE_SIZE } from '../utils/constants.js';
 // Items not listed here or in NO_BLOCK get default 1x1 blocking.
 const FURNITURE_FOOTPRINTS = {
   desk:               { w: 1, h: 1 },
+  grandDesk:          { w: 3, h: 2 },
   cubicleWall:        { w: 2, h: 1 },
   vendingMachine:     { w: 1, h: 1 },
   conferenceTable:    { w: 3, h: 1 },
@@ -35,6 +36,10 @@ const FURNITURE_FOOTPRINTS = {
   safeDepositBox:     { w: 1, h: 1 },
   sculpture:          { w: 1, h: 1 },
   puttingGreen:       { w: 3, h: 2 },
+  luxuryFridge:       { w: 2, h: 1 },
+  kitchenIsland:      { w: 2, h: 1 },
+  kitchenCounter:     { w: 1, h: 1 },
+  wineFridge:         { w: 1, h: 1 },
 };
 
 // Small/decorative items that should NOT block movement.
@@ -45,6 +50,7 @@ const NO_BLOCK = new Set([
   'whiteboard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
   'cobweb', 'oilPainting', 'staircase', 'stairFlight',
+  'rangeHood',
 ]);
 
 export class Room {
@@ -161,9 +167,9 @@ export class Room {
    */
   _buildFloor(w, h, color, floorPattern) {
     const geo = new THREE.PlaneGeometry(w * TILE_SIZE, h * TILE_SIZE);
-    const mat = floorPattern === 'carpet'
-      ? Materials.carpetPattern(w, h, color)
-      : Materials.custom(color);
+    const mat = floorPattern === 'carpet'   ? Materials.carpetPattern(w, h, color)
+              : floorPattern === 'hardwood' ? Materials.hardwoodPattern(w, h)
+              : Materials.custom(color);
     const floor = new THREE.Mesh(geo, mat);
 
     // PlaneGeometry faces +Y by default; rotate to be horizontal
@@ -520,7 +526,7 @@ export class Room {
    */
   _placeFurniture(furnitureList) {
     for (const item of furnitureList) {
-      const { type, x, z, rotation } = item;
+      const { type, x, z, rotation, variant } = item;
 
       // Look up factory method
       const factoryFn = Furniture[type];
@@ -529,9 +535,9 @@ export class Room {
         continue;
       }
 
-      // Create the Three.js object
-      const obj = factoryFn();
-      obj.position.set(x * TILE_SIZE, 0, z * TILE_SIZE);
+      // Create the Three.js object (pass optional variant for multi-variant furniture)
+      const obj = factoryFn(variant);
+      obj.position.set(x * TILE_SIZE, item.y || 0, z * TILE_SIZE);
 
       if (rotation !== undefined && rotation !== 0) {
         obj.rotation.y = rotation;

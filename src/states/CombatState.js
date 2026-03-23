@@ -11,11 +11,12 @@ import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
 
 export class CombatState {
-  constructor(stateManager, player, enemyId, onEnd) {
+  constructor(stateManager, player, enemyId, onEnd, enemyOverrides = {}) {
     this.stateManager = stateManager;
     this.player = player;
     this.enemyId = enemyId;
     this.onEnd = onEnd;
+    this.enemyOverrides = enemyOverrides;
     this.encounterConfig = ENCOUNTERS[enemyId] || {};
     this.canFlee = this.encounterConfig.canFlee !== false;
     this.scene = new CombatScene();
@@ -32,7 +33,7 @@ export class CombatState {
 
   enter() {
     this.scene.setEnemy(this.enemyId, this.player);
-    this.engine = new CombatEngine(this.player.getCombatStats(), this.enemyId);
+    this.engine = new CombatEngine(this.player.getCombatStats(), this.enemyId, this.enemyOverrides);
 
     const bgColors = {
       intern: [0x1a2a1a, 0x0a3a0a, 0x2a3a1a, 0x4a8a2a],
@@ -1012,7 +1013,7 @@ export class CombatState {
 
       this.phase = 'animating';
       this.hud.disableInput();
-      const msg = multiplier >= 1.0 ? 'Perfect counter!' : multiplier >= 0.66 ? 'Counter-attack!' : 'Glancing counter...';
+      const msg = multiplier >= 1.4 ? 'DEVASTATING COUNTER!' : multiplier >= 1.0 ? 'Direct Counter!' : multiplier >= 0.66 ? 'Counter-Attack!' : 'Glancing Counter...';
       this.hud.showMessage(msg);
       this._fireTaunt('retaliate');
       AchievementManager.check(this.player, { event: 'retaliate_used' });
@@ -1040,6 +1041,52 @@ export class CombatState {
   }
 
   _showRetaliateQTE(onComplete) {
+    const BASE_MULTIPLIERS = { 3: 0.75, 4: 1.0, 5: 1.25, 6: 1.5 };
+    const LENGTH_OPTIONS = [
+      { len: 3, label: '3 Keys',  desc: '0.75× base — minimum risk', color: '#88aaff' },
+      { len: 4, label: '4 Keys',  desc: '1.0× base — standard counter', color: '#88ffaa' },
+      { len: 5, label: '5 Keys',  desc: '1.25× base — aggressive counter', color: '#ffaa44' },
+      { len: 6, label: '6 Keys',  desc: '1.5× base — maximum damage', color: '#ff4466' },
+    ];
+
+    // Step 1: length selection screen
+    const selOverlay = document.createElement('div');
+    selOverlay.className = 'minigame-overlay';
+    selOverlay.innerHTML = `
+      <div class="minigame-title">Counter Sequence</div>
+      <div class="gamble-options">
+        ${LENGTH_OPTIONS.map((o, i) => `
+          <div class="gamble-option${i === 0 ? ' selected' : ''}" data-len="${o.len}" data-i="${i}">
+            <div class="gamble-option-name" style="color:${o.color}">${o.label}</div>
+            <div class="gamble-option-desc">${o.desc}</div>
+          </div>`).join('')}
+      </div>
+      <div class="minigame-hint">↑↓ navigate · ENTER confirm</div>
+    `;
+    document.getElementById('ui-overlay').appendChild(selOverlay);
+
+    let selIdx = 0;
+    const optEls = selOverlay.querySelectorAll('.gamble-option');
+
+    const updateSel = () => {
+      optEls.forEach((el, i) => el.classList.toggle('selected', i === selIdx));
+    };
+
+    const selHandler = (e) => {
+      if (e.code === 'ArrowUp')   { selIdx = Math.max(0, selIdx - 1); updateSel(); e.preventDefault(); }
+      if (e.code === 'ArrowDown') { selIdx = Math.min(LENGTH_OPTIONS.length - 1, selIdx + 1); updateSel(); e.preventDefault(); }
+      if (e.code === 'Enter' || e.code === 'Space') {
+        e.preventDefault();
+        document.removeEventListener('keydown', selHandler);
+        const chosenLen = LENGTH_OPTIONS[selIdx].len;
+        selOverlay.remove();
+        this._runRetaliateSequence(chosenLen, BASE_MULTIPLIERS[chosenLen], onComplete);
+      }
+    };
+    document.addEventListener('keydown', selHandler);
+  }
+
+  _runRetaliateSequence(seqLen, baseMultiplier, onComplete) {
     const KEYS = [
       { code: 'ArrowUp',    label: '↑' },
       { code: 'ArrowDown',  label: '↓' },
@@ -1047,7 +1094,7 @@ export class CombatState {
       { code: 'ArrowRight', label: '→' },
       { code: 'KeyF',       label: 'F' },
     ];
-    const sequence = Array.from({ length: 4 }, () => KEYS[Math.floor(Math.random() * KEYS.length)]);
+    const sequence = Array.from({ length: seqLen }, () => KEYS[Math.floor(Math.random() * KEYS.length)]);
 
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay';
@@ -1063,6 +1110,9 @@ export class CombatState {
     const keyEls = overlay.querySelectorAll('.qte-key');
     let inputIndex = 0, correct = 0, inputPhase = false, keyHandler, inputTimeout;
 
+    // Memorize window scales slightly with length
+    const memorizeMs = 1200 + seqLen * 150;
+
     setTimeout(() => {
       if (!overlay.parentNode) return;
       overlay.querySelector('#qte-hint').textContent = 'Enter the sequence!';
@@ -1073,7 +1123,7 @@ export class CombatState {
         if (!overlay.parentNode) return;
         document.removeEventListener('keydown', keyHandler);
         overlay.remove();
-        onComplete(correct / sequence.length);
+        onComplete(baseMultiplier * (correct / sequence.length));
       }, 3000);
 
       keyHandler = (e) => {
@@ -1096,11 +1146,11 @@ export class CombatState {
         if (inputIndex >= sequence.length) {
           clearTimeout(inputTimeout);
           document.removeEventListener('keydown', keyHandler);
-          setTimeout(() => { overlay.remove(); onComplete(correct / sequence.length); }, 400);
+          setTimeout(() => { overlay.remove(); onComplete(baseMultiplier * (correct / sequence.length)); }, 400);
         }
       };
       document.addEventListener('keydown', keyHandler);
-    }, 1500);
+    }, memorizeMs);
   }
 
   _showDesperateGamble() {

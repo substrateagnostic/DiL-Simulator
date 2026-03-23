@@ -101,6 +101,67 @@ export const Materials = {
   // Custom color toon material
   custom: (color, opts) => toon(color, opts),
 
+  // Hardwood plank pattern — light oak with grain lines and plank seams
+  hardwoodPattern(w, h) {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+
+    // Base oak colour
+    ctx.fillStyle = '#c8a96e';
+    ctx.fillRect(0, 0, size, size);
+
+    // Subtle grain streaks
+    ctx.strokeStyle = 'rgba(160,120,60,0.18)';
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < 28; i++) {
+      const x = Math.random() * size;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.bezierCurveTo(x + (Math.random() - 0.5) * 10, size / 3,
+                        x + (Math.random() - 0.5) * 10, (size * 2) / 3,
+                        x + (Math.random() - 0.5) * 8, size);
+      ctx.stroke();
+    }
+
+    // Plank seams — horizontal lines every ~32px (long-side of planks)
+    ctx.strokeStyle = 'rgba(100,70,30,0.35)';
+    ctx.lineWidth = 1.2;
+    for (let y = 32; y < size; y += 32) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(size, y);
+      ctx.stroke();
+    }
+
+    // Plank end joints — staggered vertical lines
+    ctx.strokeStyle = 'rgba(100,70,30,0.28)';
+    ctx.lineWidth = 0.9;
+    const offsets = [0, 48, 96, 16, 80];
+    for (let row = 0; row * 32 < size; row++) {
+      const xStart = offsets[row % offsets.length];
+      for (let x = xStart; x < size; x += 96) {
+        ctx.beginPath();
+        ctx.moveTo(x, row * 32);
+        ctx.lineTo(x, row * 32 + 32);
+        ctx.stroke();
+      }
+    }
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(w / 3, h / 3);
+
+    return new THREE.MeshToonMaterial({
+      map: texture,
+      color: new THREE.Color(0xd4aa72),
+      gradientMap: gradientMap3,
+    });
+  },
+
   // Carpet pattern — canvas texture with a repeating loop-pile grid
   carpetPattern(w, h, color) {
     const size = 128;

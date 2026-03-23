@@ -1,66 +1,56 @@
-# Session Handoff — March 10, 2026
+# Session Handoff — March 22, 2026
 
 ## What Was Done This Session
 
-### Bug Fixes (all committed & pushed to main)
+### Features & Changes
 
-1. **Coffee item "undefined" fix** — `src/data/dialogs/index.js` line 26: receptionist_intro `give_item` action used `itemId` field but DialogState reads `item`. Changed to `item: 'coffee_large'`.
+1. **Retaliate QTE redesign** — Player now selects sequence length (3–6 keys) before the QTE. Base multipliers: 3→0.75×, 4→1.0×, 5→1.25×, 6→1.5×. Final = base × (correct/total). Result messages: DEVASTATING COUNTER! (≥1.4×), Direct Counter! (≥1.0×), Counter-Attack! (≥0.66×), Glancing Counter... (<0.66×). Two methods: `_showRetaliateQTE()` handles selection, `_runRetaliateSequence()` handles the QTE.
 
-2. **Bestiary → Journal rename** — `src/states/MenuState.js`: renamed menu item text (line 14), switch case handler (line 86), and overlay title (line 138) from "Bestiary"/"BESTIARY" to "Journal"/"JOURNAL".
+2. **Enemy HP increases**
+   - `regional` (executive floor ending boss): 280 → 500
+   - `regional_director` (penthouse chain boss): 400 → 600
 
-3. **Boss fight not retriable after defeat** — `src/states/ExplorationState.js` line 491: `_handleDefeat()` now resets `ending_started` flag to `false` so the executive floor boss fight re-triggers when the player returns after dying.
+3. **Regional manager disappears after defeat** — Added `condition: { notFlag: 'defeated_regional' }` to the `regional` NPC on executive floor.
 
-4. **Reception client toast clarification** — `src/states/ExplorationState.js` line 518: toast now says "approach the reception desk" since the client NPC is intentionally non-interactable (combat starts via desk furniture, not the NPC).
+4. **Ross returns to his office after regional defeat** — Added new Ross entry in `ross_office` with `condition: { flag: 'defeated_regional' }` and `dialogId: 'ross_returned'`. Also added `notFlag: 'defeated_regional'` to Ross's executive floor entry so he leaves the conference table.
 
-5. **NE cubicle pod blocking HR door** — `src/data/rooms/index.js`: moved the NE cubicle pod from (x=14-18, z=2-4) to (x=12-16, z=4-6), shifted north wall file cabinets west to match (x=14-16 instead of x=16-18), relocated intern NPC to (13, 7).
+5. **Grand executive desk** — New `grandDesk` furniture type in `Furniture.js`. Features: two solid mahogany pedestals with 3 drawer facades each, thick overhanging desktop with gold edge trim, center modesty panel with gold rail. Dark mahogany palette (0x2c1508 / 0x3d1f0a / 0x5a2e10) with gold accents (0xc8960a). Replaces the two standard desks at the main boss position on the executive floor. Footprint `{ w: 3, h: 2 }` added to `FURNITURE_FOOTPRINTS` in `Room.js`.
 
-### Previous Session Fixes (already committed)
+6. **Executive chair** — New `executiveChair` furniture type. High-back leather chair with headrest, padded armrests, chrome gas cylinder and star base. Replaces standard `chair` behind the grand desk.
 
-- **Mobile touch controls** — `src/ui/TouchControls.js` + `styles/touch.css`: virtual d-pad and A/B buttons, landscape-optimized, injects into InputManager.keys
-- **Canvas sizing fix** — removed CSS width/height on `#game-canvas` that fought with Three.js `renderer.setSize()`
-- **Dialog branch cascading** — added `next` property support to text nodes in DialogState, fixed 6 NPC dialog trees (janet, alex_it, janitor, diane, ross, intern) with loop-back branching and exit options
-- **Diane interact radius vs exit door** — added per-NPC `interactRange` support, exit-tile-priority logic in ExplorationState
-- **Stairwell stairs blocking** — added `'staircase'` to `NO_BLOCK` set in Room.js
-- **Arcade blank dialog** — fixed choice nodes reading `prompt` field (DialogState was only reading `text`)
+7. **Furniture `y` offset support** — `Room.js` placement now reads `item.y || 0` so any furniture entry can specify a vertical offset. Used to raise the three executive monitors (`y: 0.06`) and keyboard above the grand desk's taller surface (0.78 vs standard 0.72).
+
+8. **Executive floor conference chairs** — Rearranged from loose 6-chair spread to a proper 8-chair conference setup: 3 along each long side (z:7.0 and z:9.0), 1 on each short end (x:1.9 and x:6.1).
+
+9. **CLAUDE.md improvements** — Added documentation for: `enemyOverrides` pattern, Retaliate two-phase QTE, furniture `y` offset, NPC condition single-flag limitation + `_refreshStoryProgress()` workaround, flag naming gotcha (`defeated_<encounterId>` auto-set vs post-dialog custom flags).
+
+### Bug Fixes
+
+- **Regional boss wrong enemy** — Previous session had boosted `regional_director` HP and used `defeated_regional_director` flag for NPC conditions. Both were wrong — the executive floor fight uses `regional` (encounter ID), auto-setting `defeated_regional` on victory. Corrected HP target and all flag references.
+- **Ross not leaving executive floor** — His executive floor NPC entry lacked `notFlag: 'defeated_regional'`, so he stayed even after the fight. Fixed.
 
 ## Current State
 
-- **Branch**: `main`, clean working tree, all pushed
 - **Build**: `npx vite build` passes clean (chunk size warning only)
-- **No test suite** exists
-- **Plan file** at `.claude/plans/eager-nibbling-shannon.md` has the full expansion plan (Phases 1-9). The overnight build (steps 1-9 of the original plan) was completed previously.
+- **No test suite** — verification is manual playtest
 
-## Architecture Quick Reference
+## Key Flag Reference (story progression)
 
-- Pure vanilla JS ES modules, Three.js + Vite, no framework
-- State stack: `GameStateManager` pushdown automaton — `TitleState`, `ExplorationState`, `CombatState`, `DialogState`, `ClientReviewState`, `MenuState`
-- All UI is DOM-based overlay on Three.js canvas
-- Dialog system: flat array of nodes (`text`, `choice`, `condition`, `action`, `end`). Text/choice nodes support `next` for arbitrary jumps. Choice nodes use `prompt` field for question text.
-- `give_item` actions use `item` field (not `itemId`)
-- NPC interact ranges: per-NPC via `interactRange` option, defaults to `PLAYER.INTERACT_RANGE` (1.8)
-- Exit tiles get priority over NPC interactions when player stands directly on them
-- Touch controls: `@media (pointer: coarse)` detection, writes into `InputManager.keys`
-- Stat theming: HP=Patience, MP=Coffee, ATK=Assertiveness, DEF=Composure, SPD=Bureaucratic Efficiency
-- Player name hardcoded as `'Andrew'`
-
-## Key Files Modified Recently
-
-| File | What changed |
-|------|-------------|
-| `src/data/dialogs/index.js` | Coffee item fix, 6 dialog trees restructured with loop-backs |
-| `src/data/rooms/index.js` | NE cubicle pod repositioned, Diane moved, intern relocated |
-| `src/states/ExplorationState.js` | Exit priority, boss retry fix, reception toast, touch-aware prompts |
-| `src/states/DialogState.js` | Text node `next` support, choice node `prompt` field |
-| `src/states/MenuState.js` | Bestiary → Journal rename |
-| `src/entities/NPC.js` | Per-NPC interactRange |
-| `src/entities/EntityManager.js` | Uses npc.interactRange |
-| `src/world/Room.js` | Staircase in NO_BLOCK |
-| `src/world/RoomManager.js` | Passes interactRange to NPC |
-| `src/ui/TouchControls.js` | NEW — mobile touch input |
-| `styles/touch.css` | NEW — touch control styles |
+| Flag | When set | Effect |
+|------|----------|--------|
+| `ready_for_ross` | Auto-derived in `_refreshStoryProgress()` when all 4 met_ flags set | Unlocks Ross dialog |
+| `branch_chosen` | After Henderson decision with Ross | Ross moves to exec floor conf table |
+| `defeated_regional` | Auto on combat victory vs `regional` encounter | Regional NPC hides; Ross returns to office |
+| `defeated_regional_director` | Auto on combat victory vs `regional_director` (penthouse) | Separate penthouse chain flag |
+| `regional_director_defeated` | Set by `regional_director_defeated` post-dialog action | Used by ExplorationState to trigger Algorithm fight |
+| `retry_karen` | On first Karen defeat | Enables roguelite tutorial phase |
+| `defeated_karen` | Auto on Karen victory | Ends roguelite tutorial |
 
 ## Known Issues / Future Work
 
-- **Staircase visual**: player walks through stairs rather than appearing to walk over/up them (cosmetic, low priority)
-- **Full expansion plan**: see `.claude/plans/eager-nibbling-shannon.md` for Phases 1-9 (character renames, combat enhancements, new rooms, story acts 3-7, puzzles, roguelike expansion, new enemies)
-- **No test suite**: verification is manual playtest + `npx vite build`
+- **Rachel SVP**: no character model; remove after defeat
+- **After defeating regional manager**: Ross dialog (`ross_returned`) written but not deeply integrated into story flow — may need expansion
+- **Vault room**: redesign with bomb door entrance, bank lockboxes
+- **Archive room**: more/taller file cabinets, fix monitor direction
+- **FBI invasion sequence**: triggers after trust charter retrieved
+- **Full expansion plan**: see `.claude/plans/eager-nibbling-shannon.md` for Phases 1–9

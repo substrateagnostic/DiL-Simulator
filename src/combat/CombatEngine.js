@@ -4,7 +4,7 @@ import { randomRange } from '../utils/math.js';
 import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
 
 export class CombatEngine {
-  constructor(playerStats, enemyId) {
+  constructor(playerStats, enemyId, enemyOverrides = {}) {
     this.player = {
       ...playerStats,
       buffs: [],
@@ -23,7 +23,7 @@ export class CombatEngine {
       retaliateReady: false,
     };
     this.telegraphedAbility = null;
-    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0, confuseCooldown: 0 };
+    this.enemy = { ...ENEMY_STATS[enemyId], ...enemyOverrides, buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0, confuseCooldown: 0 };
     this.enemyId = enemyId;
     this.turn = 'player';
     this.turnCount = 0;

@@ -38,6 +38,81 @@ export const Furniture = {
     return group;
   },
 
+  grandDesk() {
+    const group = new THREE.Group();
+    const W = 2.4, D = 1.0;
+
+    const mahogany      = Materials.custom(0x2c1508);
+    const mahoganyMid   = Materials.custom(0x3d1f0a);
+    const mahoganyLight = Materials.custom(0x5a2e10);
+    const gold          = Materials.custom(0xc8960a);
+
+    // === Desktop surface (thick, overhanging) ===
+    const topGeo = new THREE.BoxGeometry(W + 0.12, 0.06, D + 0.08);
+    const top = new THREE.Mesh(topGeo, mahoganyLight);
+    top.position.y = 0.78;
+    top.castShadow = true;
+    top.receiveShadow = true;
+    group.add(top);
+
+    // Gold front edge trim
+    const frontTrimGeo = new THREE.BoxGeometry(W + 0.12, 0.03, 0.03);
+    const frontTrim = new THREE.Mesh(frontTrimGeo, gold);
+    frontTrim.position.set(0, 0.765, (D + 0.08) / 2);
+    group.add(frontTrim);
+
+    // Gold left/right edge trim
+    const sideTrimGeo = new THREE.BoxGeometry(0.03, 0.03, D + 0.08);
+    [-1, 1].forEach(side => {
+      const t = new THREE.Mesh(sideTrimGeo, gold);
+      t.position.set(side * (W + 0.12) / 2, 0.765, 0);
+      group.add(t);
+    });
+
+    // === Left pedestal ===
+    const pedGeo = new THREE.BoxGeometry(0.52, 0.75, D - 0.06);
+    const pedLeft = new THREE.Mesh(pedGeo, mahogany);
+    pedLeft.position.set(-(W / 2 - 0.28), 0.375, 0);
+    pedLeft.castShadow = true;
+    pedLeft.receiveShadow = true;
+    group.add(pedLeft);
+
+    // === Right pedestal ===
+    const pedRight = new THREE.Mesh(pedGeo, mahogany);
+    pedRight.position.set((W / 2 - 0.28), 0.375, 0);
+    pedRight.castShadow = true;
+    pedRight.receiveShadow = true;
+    group.add(pedRight);
+
+    // Drawer facades on both pedestals (3 drawers each, facing front)
+    const drawerFaceGeo = new THREE.BoxGeometry(0.44, 0.14, 0.025);
+    const drawerHandleGeo = new THREE.BoxGeometry(0.14, 0.022, 0.03);
+    [-(W / 2 - 0.28), (W / 2 - 0.28)].forEach(px => {
+      for (let i = 0; i < 3; i++) {
+        const face = new THREE.Mesh(drawerFaceGeo, mahoganyMid);
+        face.position.set(px, 0.16 + i * 0.19, (D - 0.06) / 2 + 0.013);
+        group.add(face);
+        const handle = new THREE.Mesh(drawerHandleGeo, gold);
+        handle.position.set(px, 0.16 + i * 0.19, (D - 0.06) / 2 + 0.03);
+        group.add(handle);
+      }
+    });
+
+    // === Center modesty panel (between pedestals) ===
+    const modGeo = new THREE.BoxGeometry(W - 1.22, 0.6, 0.04);
+    const mod = new THREE.Mesh(modGeo, mahogany);
+    mod.position.set(0, 0.44, (D - 0.06) / 2 + 0.02);
+    group.add(mod);
+
+    // Gold trim along top of modesty panel
+    const modTrimGeo = new THREE.BoxGeometry(W - 1.22, 0.025, 0.05);
+    const modTrim = new THREE.Mesh(modTrimGeo, gold);
+    modTrim.position.set(0, 0.745, (D - 0.06) / 2 + 0.025);
+    group.add(modTrim);
+
+    return group;
+  },
+
   monitor() {
     const group = new THREE.Group();
     // Screen
@@ -92,6 +167,75 @@ export const Furniture = {
     // Base star (simplified as a disc)
     const baseGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.03, 5);
     const base = new THREE.Mesh(baseGeo, Materials.metal());
+    base.position.y = 0.015;
+    group.add(base);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  executiveChair() {
+    const group = new THREE.Group();
+    const leather   = Materials.custom(0x111118);
+    const leatherMid = Materials.custom(0x1e1e28);
+    const chrome    = Materials.custom(0xaaaaaa);
+
+    // Seat — wide, padded
+    const seatGeo = new THREE.BoxGeometry(0.58, 0.09, 0.52);
+    const seat = new THREE.Mesh(seatGeo, leather);
+    seat.position.y = 0.46;
+    group.add(seat);
+
+    // Seat cushion top (slightly lighter for depth)
+    const cushGeo = new THREE.BoxGeometry(0.5, 0.03, 0.44);
+    const cush = new THREE.Mesh(cushGeo, leatherMid);
+    cush.position.set(0, 0.515, 0.02);
+    group.add(cush);
+
+    // High back
+    const backGeo = new THREE.BoxGeometry(0.56, 0.88, 0.08);
+    const back = new THREE.Mesh(backGeo, leather);
+    back.position.set(0, 0.93, -0.23);
+    group.add(back);
+
+    // Back cushion panel (tufted look — slightly raised center)
+    const backCushGeo = new THREE.BoxGeometry(0.46, 0.76, 0.04);
+    const backCush = new THREE.Mesh(backCushGeo, leatherMid);
+    backCush.position.set(0, 0.93, -0.19);
+    group.add(backCush);
+
+    // Headrest
+    const headGeo = new THREE.BoxGeometry(0.4, 0.2, 0.09);
+    const head = new THREE.Mesh(headGeo, leather);
+    head.position.set(0, 1.42, -0.23);
+    group.add(head);
+
+    const headCushGeo = new THREE.BoxGeometry(0.32, 0.14, 0.04);
+    const headCush = new THREE.Mesh(headCushGeo, leatherMid);
+    headCush.position.set(0, 1.42, -0.19);
+    group.add(headCush);
+
+    // Armrests (left and right)
+    const armPostGeo = new THREE.BoxGeometry(0.04, 0.28, 0.04);
+    const armPadGeo  = new THREE.BoxGeometry(0.14, 0.04, 0.36);
+    [-1, 1].forEach(side => {
+      const armPost = new THREE.Mesh(armPostGeo, chrome);
+      armPost.position.set(side * 0.29, 0.59, -0.04);
+      group.add(armPost);
+      const armPad = new THREE.Mesh(armPadGeo, leather);
+      armPad.position.set(side * 0.29, 0.75, -0.04);
+      group.add(armPad);
+    });
+
+    // Gas cylinder post
+    const postGeo = new THREE.CylinderGeometry(0.03, 0.04, 0.44, 8);
+    const post = new THREE.Mesh(postGeo, chrome);
+    post.position.y = 0.22;
+    group.add(post);
+
+    // 5-point star base (slightly larger than standard)
+    const baseGeo = new THREE.CylinderGeometry(0.27, 0.27, 0.03, 5);
+    const base = new THREE.Mesh(baseGeo, chrome);
     base.position.y = 0.015;
     group.add(base);
 
@@ -1355,6 +1499,225 @@ export const Furniture = {
     const frame = new THREE.Mesh(frameGeo, Materials.custom(0x666666));
     frame.position.set(0, 1.2, -0.02);
     group.add(frame);
+    return group;
+  },
+
+  // ── Luxury kitchen furniture ────────────────────────────────────────────────
+
+  // Tall stainless-steel double-door refrigerator
+  luxuryFridge() {
+    const group = new THREE.Group();
+    const steel = Materials.custom(0xc8cdd0);
+    const steelDark = Materials.custom(0x8a9198);
+    const handleMat = Materials.custom(0xaab0b5);
+    // Main body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.9, 0.7), steel);
+    body.position.y = 0.95;
+    body.castShadow = true;
+    group.add(body);
+    // Center seam between doors
+    const seam = new THREE.Mesh(new THREE.BoxGeometry(0.02, 1.9, 0.02), steelDark);
+    seam.position.set(0, 0.95, 0.36);
+    group.add(seam);
+    // Left door panel (subtle inset)
+    const leftPanel = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.75, 0.02), steelDark);
+    leftPanel.position.set(-0.42, 0.95, 0.36);
+    group.add(leftPanel);
+    // Right door panel
+    const rightPanel = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.75, 0.02), steelDark);
+    rightPanel.position.set(0.42, 0.95, 0.36);
+    group.add(rightPanel);
+    // Left handle
+    const lHandle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.06), handleMat);
+    lHandle.position.set(-0.1, 1.1, 0.42);
+    group.add(lHandle);
+    // Right handle
+    const rHandle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.5, 0.06), handleMat);
+    rHandle.position.set(0.1, 1.1, 0.42);
+    group.add(rHandle);
+    // Top freezer strip
+    const freezer = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.36, 0.7), steelDark);
+    freezer.position.set(0, 1.72, 0);
+    group.add(freezer);
+    // Ice/water dispenser panel
+    const dispenser = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.02),
+      Materials.custom(0x334455, { emissive: 0x112233, emissiveIntensity: 0.3 }));
+    dispenser.position.set(-0.42, 0.6, 0.37);
+    group.add(dispenser);
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  // Sleek quartz-top kitchen island with dark-gloss base
+  kitchenIsland() {
+    const group = new THREE.Group();
+    const base = Materials.custom(0x1a1a1a);
+    const quartz = Materials.custom(0xe8e4e0);
+    const quartzVein = Materials.custom(0xc8c4c0);
+    // Cabinet base (2 wide, 1 deep)
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.88, 0.88), base);
+    body.position.y = 0.44;
+    body.castShadow = true;
+    group.add(body);
+    // Quartz countertop — slightly overhangs
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.04, 1.0), quartz);
+    top.position.y = 0.9;
+    top.receiveShadow = true;
+    group.add(top);
+    // Quartz veining (decorative strip)
+    const vein = new THREE.Mesh(new THREE.BoxGeometry(1.8, 0.042, 0.06), quartzVein);
+    vein.position.set(0.1, 0.9, 0.2);
+    group.add(vein);
+    // Cabinet door lines (front face detail)
+    const doorMat = Materials.custom(0x111111);
+    for (let i = -1; i <= 1; i += 2) {
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.75, 0.02), doorMat);
+      door.position.set(i * 0.5, 0.44, 0.46);
+      group.add(door);
+      // Recessed handle bar
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.03, 0.04), Materials.custom(0xaab0b5));
+      bar.position.set(i * 0.5, 0.62, 0.5);
+      group.add(bar);
+    }
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  // Wall counter section — dark gloss cabinet base + quartz top + integrated sink or cooktop
+  kitchenCounter(variant = 'plain') {
+    const group = new THREE.Group();
+    const cabinetMat = Materials.custom(0x111111);
+    const quartzMat  = Materials.custom(0xe8e4e0);
+    const steelMat   = Materials.custom(0xb0b8be);
+    // Cabinet body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.88, 0.6), cabinetMat);
+    body.position.y = 0.44;
+    body.castShadow = true;
+    group.add(body);
+    // Upper wall cabinet
+    const upper = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.56, 0.3), Materials.custom(0x0d0d0d));
+    upper.position.set(0, 1.58, -0.15);
+    group.add(upper);
+    // Upper cabinet door face
+    const upperDoor = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.44, 0.02), Materials.custom(0x1a1a1a));
+    upperDoor.position.set(0, 1.58, 0.01);
+    group.add(upperDoor);
+    // Upper cabinet handle — slim bar, lower third of door
+    const upperHandle = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.04, 0.05), Materials.custom(0xc8cdd0));
+    upperHandle.position.set(0, 1.36, 0.045);
+    group.add(upperHandle);
+    // Countertop
+    const top = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.04, 0.64), quartzMat);
+    top.position.y = 0.9;
+    group.add(top);
+    // Lower cabinet door
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.75, 0.02), Materials.custom(0x1a1a1a));
+    door.position.set(0, 0.44, 0.31);
+    group.add(door);
+    // Lower cabinet handle — prominent bar, upper third of door
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.05, 0.06), Materials.custom(0xc8cdd0));
+    handle.position.set(0, 0.68, 0.35);
+    group.add(handle);
+    if (variant === 'sink') {
+      // Undermount sink basin
+      const sink = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.06, 0.36), steelMat);
+      sink.position.set(0, 0.88, 0.05);
+      group.add(sink);
+      // Faucet neck
+      const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.22, 8), steelMat);
+      neck.position.set(0, 1.04, -0.06);
+      group.add(neck);
+      const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.18, 8), steelMat);
+      spout.rotation.x = Math.PI / 2;
+      spout.position.set(0, 1.14, 0.03);
+      group.add(spout);
+    } else if (variant === 'cooktop') {
+      // Induction cooktop
+      const cooktop = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.015, 0.44), Materials.custom(0x111111));
+      cooktop.position.set(0, 0.915, 0.06);
+      group.add(cooktop);
+      // Burner rings
+      const burnerMat = Materials.custom(0x222222);
+      const glowMat   = Materials.custom(0xff6622, { emissive: 0xff4400, emissiveIntensity: 0.4 });
+      [[-0.2, -0.08], [0.2, -0.08], [-0.2, 0.18], [0.2, 0.18]].forEach(([bx, bz]) => {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 16), glowMat);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.set(bx, 0.925, bz);
+        group.add(ring);
+      });
+    }
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  // Glass-front wine refrigerator
+  wineFridge() {
+    const group = new THREE.Group();
+    const bodyMat  = Materials.custom(0x0d0d0d);
+    const glassMat = Materials.custom(0x223344, { stops: 4 });
+    const steelMat = Materials.custom(0xaab0b5);
+    // Body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.2, 0.6), bodyMat);
+    body.position.y = 0.6;
+    group.add(body);
+    // Glass door
+    const door = new THREE.Mesh(new THREE.BoxGeometry(0.58, 1.05, 0.02), glassMat);
+    door.position.set(0, 0.62, 0.32);
+    group.add(door);
+    // Bottle shelves (dark horizontal bars visible through glass)
+    for (let i = 0; i < 4; i++) {
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.02, 0.4), Materials.custom(0x1a1a1a));
+      shelf.position.set(0, 0.22 + i * 0.25, 0.1);
+      group.add(shelf);
+      // Bottle silhouettes
+      for (let j = -1; j <= 1; j++) {
+        const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.2, 6), Materials.custom(0x112200));
+        bottle.rotation.z = Math.PI / 2;
+        bottle.position.set(j * 0.14, 0.3 + i * 0.25, 0.1);
+        group.add(bottle);
+      }
+    }
+    // Handle
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.28, 0.04), steelMat);
+    handle.position.set(0.22, 0.7, 0.35);
+    group.add(handle);
+    // Blue interior glow
+    const glow = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.9, 0.01),
+      new THREE.MeshBasicMaterial({ color: 0x001133, transparent: true, opacity: 0.25 }));
+    glow.position.set(0, 0.62, 0.31);
+    group.add(glow);
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  // Statement range hood — matte black with steel trim
+  rangeHood() {
+    const group = new THREE.Group();
+    // Hood body — tapers downward
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.4, 0.6), Materials.custom(0x1a1a1a));
+    hood.position.y = 1.7;
+    group.add(hood);
+    // Flue (duct going up)
+    const flue = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.5, 0.2), Materials.custom(0xaab0b5));
+    flue.position.y = 2.05;
+    group.add(flue);
+    // Underside grille
+    const grille = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.02, 0.56), Materials.custom(0x222222));
+    grille.position.y = 1.5;
+    group.add(grille);
+    // LED strip under hood
+    const led = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.02, 0.1),
+      new THREE.MeshBasicMaterial({ color: 0xfff5e0, transparent: true, opacity: 0.8 }));
+    led.position.set(0, 1.52, 0.2);
+    group.add(led);
+    // Steel trim edges
+    const trim = Materials.custom(0xb0b8be);
+    [[-0.44, 0], [0.44, 0]].forEach(([tx]) => {
+      const t = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.4, 0.6), trim);
+      t.position.set(tx, 1.7, 0);
+      group.add(t);
+    });
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
     return group;
   },
 

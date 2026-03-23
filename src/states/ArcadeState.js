@@ -537,9 +537,29 @@ export class ArcadeState {
       }
     }
 
+    // Stat bonuses: +1 ATK and +1 DEF per 100 distance, max +5/+5 at 500
+    const prevBest   = this.player.getFlag('arcade_best_distance') || 0;
+    const thisDist   = Math.floor(this.distance);
+    const newBest    = Math.max(prevBest, thisDist);
+    const prevTiers  = Math.min(5, Math.floor(prevBest / 100));
+    const newTiers   = Math.min(5, Math.floor(newBest / 100));
+    const tiersEarned = newTiers - prevTiers;
+
+    if (newBest > prevBest) {
+      this.player.setFlag('arcade_best_distance', newBest);
+    }
+    if (tiersEarned > 0) {
+      this.player.stats.atk = (this.player.stats.atk || 0) + tiersEarned;
+      this.player.stats.def = (this.player.stats.def || 0) + tiersEarned;
+    }
+
     const unlockHTML = newUnlocks.length > 0
       ? `<div class="arcade-unlocks">${newUnlocks.map(m => `<div class="arcade-unlock-item">★ ${m.label}</div>`).join('')}</div>`
       : '';
+
+    const statBonusHTML = tiersEarned > 0
+      ? `<div class="arcade-unlocks"><div class="arcade-unlock-item">⚡ NEW BEST DISTANCE! +${tiersEarned} Assertiveness, +${tiersEarned} Composure</div></div>`
+      : (newTiers >= 5 ? `<div class="arcade-unlocks"><div class="arcade-unlock-item">MAX STATS REACHED (500+ distance)</div></div>` : '');
 
     this.gameOverEl = document.createElement('div');
     this.gameOverEl.id = 'arcade-gameover';
@@ -548,10 +568,12 @@ export class ArcadeState {
       <div class="arcade-gameover-title">GAME OVER</div>
       <div class="arcade-gameover-subtitle">${isNewRecord ? '*** NEW HIGH SCORE! ***' : 'Better luck next time, partner.'}</div>
       ${unlockHTML}
+      ${statBonusHTML}
       <div class="arcade-gameover-stats">
         <div>FIDUCIARY POINTS: <span class="arcade-gold">${this.score}</span></div>
         <div>DISTANCE: <span class="arcade-gold">${Math.floor(this.distance)}</span></div>
         <div>HIGH SCORE: <span class="arcade-gold">${this.highScore}</span></div>
+        <div>BEST DISTANCE: <span class="arcade-gold">${newBest}</span></div>
       </div>
       <div class="arcade-gameover-prompt">
         <div>ENTER — Ride Again</div>
