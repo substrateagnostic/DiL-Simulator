@@ -1367,10 +1367,25 @@ export class ExplorationState {
     // Act 6
     if (this.player.getFlag('act5_complete')) {
       if (this.player.getFlag('has_rolex')) return 'Enter the Penthouse — you have the Janitor\'s Rolex';
-      const rallied = ['janet_rallied', 'diane_rallied', 'intern_rallied', 'ross_speech_ready'].filter(f => this.player.getFlag(f)).length;
-      const evidence = ['diane_evidence', 'isaiah_evidence'].filter(f => this.player.getFlag(f)).length;
+      const allyFlags = [
+        { flag: 'janet_act6_rallied',  label: 'Janet' },
+        { flag: 'diane_act6_rallied',  label: 'Diane' },
+        { flag: 'intern_rallied',      label: 'Intern' },
+        { flag: 'ross_speech_ready',   label: 'Ross' },
+      ];
+      const evidenceFlags = [
+        { flag: 'diane_evidence',  label: "Diane's documents" },
+        { flag: 'isaiah_evidence', label: "Isaiah's records" },
+      ];
+      const missingAllies   = allyFlags.filter(a => !this.player.getFlag(a.flag));
+      const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
+      const rallied = allyFlags.length - missingAllies.length;
+      const evidence = evidenceFlags.length - missingEvidence.length;
       if (rallied < 4 || evidence < 2) {
-        return `Prepare for the finale (${rallied}/4 allies, ${evidence}/2 evidence)`;
+        const lines = [`Prepare for the finale (${rallied}/4 allies, ${evidence}/2 evidence)`];
+        if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
+        if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
+        return lines.join('<br>');
       }
       return 'Get the Janitor\'s Rolex';
     }
@@ -1513,7 +1528,7 @@ export class ExplorationState {
     }
 
     if (changed && !silent) {
-      this._showToast(`Objective Updated: ${objective}`, 'objective');
+      this._showToast(`Objective Updated: ${objective.replace(/<br>/gi, ' ').replace(/<[^>]+>/g, '')}`, 'objective');
     }
   }
 

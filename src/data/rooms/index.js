@@ -288,7 +288,7 @@ export const ROOMS = {
       { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
       // Side quest posters
       { type: 'motivationalPoster', x: 0.1, z: 5, rotation: Math.PI / 2 },
-      { type: 'motivationalPoster', x: 8.9, z: 6, rotation: -Math.PI / 2 },
+      { type: 'motivationalPoster', x: 5, z: 6.9, rotation: Math.PI },
     ],
     npcs: [
       { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 }, condition: { notFlag: 'karen_defeated' } },
@@ -309,7 +309,7 @@ export const ROOMS = {
       { x: 8, z: 6, type: 'arcade_cabinet', dialogId: 'arcade_intro' },
       // Side quest interactables
       { x: 0, z: 5, type: 'poster', dialogId: 'quest_atk_3' },
-      { x: 9, z: 6, type: 'poster', dialogId: 'quest_def_3' },
+      { x: 5, z: 6.9, type: 'poster', dialogId: 'quest_def_3' },
     ],
     playerSpawn: { x: 7, z: 2 },
   },
@@ -357,7 +357,8 @@ export const ROOMS = {
     npcs: [
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'defeated_regional' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'defeated_regional', notFlag: 'act5_complete' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete' } },
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
@@ -731,8 +732,8 @@ export const ROOMS = {
       { x: 7, z: 11, targetRoom: 'reception', spawnX: 12, spawnZ: 4 },
       { x: 8, z: 11, targetRoom: 'reception', spawnX: 12, spawnZ: 4 },
       // NORTH exit -> Board Room (Act 5+)
-      { x: 7, z: 0, targetRoom: 'board_room', spawnX: 6, spawnZ: 8 },
-      { x: 8, z: 0, targetRoom: 'board_room', spawnX: 6, spawnZ: 8 },
+      { x: 7, z: 0, targetRoom: 'board_room', spawnX: 8, spawnZ: 10 },
+      { x: 8, z: 0, targetRoom: 'board_room', spawnX: 8, spawnZ: 10 },
     ],
     interactables: [
       { x: 8, z: 2, type: 'executive_desk', dialogId: 'executive_desk' },
@@ -838,7 +839,7 @@ export const ROOMS = {
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'security_guard_info', notFlag: 'act3_complete' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
     ],
     exits: [
       // SOUTH exit -> Stairwell
@@ -921,6 +922,7 @@ export const ROOMS = {
     interactables: [
       { x: 10, z: 8, type: 'suggestion_box', dialogId: 'suggestion_box' },
       { x: 1, z: 0.5, type: 'filing_cabinets', dialogId: 'hr_vault_code' },
+      { x: 14, z: 8, type: 'filing_cabinets', dialogId: 'diane_documents' },
       { x: 8, z: 0, type: 'poster', dialogId: 'poster_hr_1' },
     ],
     playerSpawn: { x: 2, z: 4 },
@@ -968,55 +970,81 @@ export const ROOMS = {
   },
 
   // ----------------------------------------------------------
-  // 13. THE BOARD ROOM — 12x10, Rachel's domain (Act 5+)
+  // 13. THE BOARD ROOM — 16x12, Rachel's domain (Act 5+)
   // ----------------------------------------------------------
   board_room: {
     id: 'board_room',
     name: 'The Board Room',
-    width: 12,
-    height: 10,
-    floorColor: 0x6b5335,
+    width: 16,
+    height: 12,
+    floorPattern: 'hardwood',
     walls: true,
     furniture: [
-      // Conference table (center)
-      { type: 'conferenceTable', x: 6, z: 5, rotation: 0 },
-      // Chairs around the table
-      { type: 'chair', x: 4, z: 4, rotation: Math.PI / 2 },
-      { type: 'chair', x: 4, z: 6, rotation: Math.PI / 2 },
-      { type: 'chair', x: 5, z: 4, rotation: 0 },
-      { type: 'chair', x: 6, z: 4, rotation: 0 },
-      { type: 'chair', x: 7, z: 4, rotation: 0 },
-      { type: 'chair', x: 5, z: 6, rotation: Math.PI },
-      { type: 'chair', x: 6, z: 6, rotation: Math.PI },
-      { type: 'chair', x: 7, z: 6, rotation: Math.PI },
-      { type: 'chair', x: 8, z: 4, rotation: -Math.PI / 2 },
-      { type: 'chair', x: 8, z: 6, rotation: -Math.PI / 2 },
-      // Oil paintings on walls
-      { type: 'oilPainting', x: 2, z: 0.1, rotation: 0 },
-      { type: 'oilPainting', x: 5, z: 0.1, rotation: 0 },
-      { type: 'oilPainting', x: 8, z: 0.1, rotation: 0 },
-      { type: 'oilPainting', x: 11, z: 0.1, rotation: 0 },
-      // Sculpture
-      { type: 'sculpture', x: 10, z: 1 },
-      // File cabinets / credenza
-      { type: 'fileCabinetLateral', x: 1, z: 1 },
-      { type: 'fileCabinetLateral', x: 10, z: 8, rotation: Math.PI },
+      // ── Grand boardroom table (left-edge at x:4, z:4 — spans x:4–12, z:4–6) ──
+      { type: 'boardroomTable', x: 4, z: 4 },
+
+      // Head chair — west end (chairman position)
+      { type: 'executiveChair', x: 3, z: 5, rotation: Math.PI / 2 },
+
+      // North-side chairs (z:3, facing south toward table)
+      { type: 'executiveChair', x: 5,  z: 3, rotation: 0 },
+      { type: 'executiveChair', x: 6,  z: 3, rotation: 0 },
+      { type: 'executiveChair', x: 7,  z: 3, rotation: 0 },
+      { type: 'executiveChair', x: 8,  z: 3, rotation: 0 },
+      { type: 'executiveChair', x: 9,  z: 3, rotation: 0 },
+      { type: 'executiveChair', x: 10, z: 3, rotation: 0 },
+      { type: 'executiveChair', x: 11, z: 3, rotation: 0 },
+
+      // South-side chairs (z:7, facing north toward table)
+      { type: 'executiveChair', x: 5,  z: 7, rotation: Math.PI },
+      { type: 'executiveChair', x: 6,  z: 7, rotation: Math.PI },
+      { type: 'executiveChair', x: 7,  z: 7, rotation: Math.PI },
+      { type: 'executiveChair', x: 8,  z: 7, rotation: Math.PI },
+      { type: 'executiveChair', x: 9,  z: 7, rotation: Math.PI },
+      { type: 'executiveChair', x: 10, z: 7, rotation: Math.PI },
+      { type: 'executiveChair', x: 11, z: 7, rotation: Math.PI },
+
+      // ── Grand paintings — north wall (flanking the penthouse door at x:7–8) ──
+      { type: 'grandPainting', x: 3,  z: 0.08 },
+      { type: 'grandPainting', x: 12, z: 0.08 },
+
+      // ── Sculptures — all four corners ──
+      { type: 'sculpture', x: 1,  z: 1  },
+      { type: 'sculpture', x: 14, z: 1  },
+      { type: 'sculpture', x: 1,  z: 10 },
+      { type: 'sculpture', x: 14, z: 10 },
+
+      // ── Tall plants flanking table ends ──
+      { type: 'plantTall', x: 2,  z: 5 },
+      { type: 'plantTall', x: 13, z: 5 },
+
+      // ── Credenzas along east wall ──
+      { type: 'fileCabinetLateral', x: 14, z: 3 },
+      { type: 'fileCabinetLateral', x: 14, z: 5 },
+      { type: 'fileCabinetLateral', x: 14, z: 7 },
+
+      // ── Credenzas along west wall ──
+      { type: 'fileCabinetLateral', x: 1, z: 3 },
+      { type: 'fileCabinetLateral', x: 1, z: 7 },
+
+      // ── Whiteboard on east wall (for presentations) ──
+      { type: 'whiteboard', x: 15, z: 5, rotation: -Math.PI / 2 },
     ],
     npcs: [
-      { id: 'rachel', x: 6, z: 3, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x', speed: 1.2 }, condition: { flag: 'act4_complete', notFlag: 'act5_complete' } },  // paces deliberately
+      { id: 'rachel', x: 8, z: 2, facing: Math.PI, movement: { type: 'pace', distance: 3, axis: 'x', speed: 1.2 }, condition: { flag: 'act4_complete', notFlag: 'act5_complete' } },
     ],
     exits: [
       // SOUTH exit -> Executive Floor
-      { x: 5, z: 9, targetRoom: 'executive_floor', spawnX: 7, spawnZ: 2 },
-      { x: 6, z: 9, targetRoom: 'executive_floor', spawnX: 8, spawnZ: 2 },
+      { x: 7, z: 11, targetRoom: 'executive_floor', spawnX: 7, spawnZ: 2 },
+      { x: 8, z: 11, targetRoom: 'executive_floor', spawnX: 8, spawnZ: 2 },
       // NORTH exit -> Penthouse (Act 7)
-      { x: 5, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },
-      { x: 6, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },
+      { x: 7, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },
+      { x: 8, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },
     ],
     interactables: [
-      { x: 6, z: 1, type: 'charter_plaque', dialogId: 'board_charter' },
+      { x: 8, z: 1, type: 'charter_plaque', dialogId: 'board_charter' },
     ],
-    playerSpawn: { x: 6, z: 8 },
+    playerSpawn: { x: 8, z: 10 },
   },
 
   // ----------------------------------------------------------
@@ -1120,8 +1148,8 @@ export const ROOMS = {
     npcs: [],
     exits: [
       // SOUTH exit -> Board Room
-      { x: 7, z: 11, targetRoom: 'board_room', spawnX: 5, spawnZ: 2 },
-      { x: 8, z: 11, targetRoom: 'board_room', spawnX: 6, spawnZ: 2 },
+      { x: 7, z: 11, targetRoom: 'board_room', spawnX: 8, spawnZ: 2 },
+      { x: 8, z: 11, targetRoom: 'board_room', spawnX: 8, spawnZ: 2 },
     ],
     interactables: [
       { x: 8, z: 2, type: 'algorithm_terminal', dialogId: 'algorithm_terminal' },

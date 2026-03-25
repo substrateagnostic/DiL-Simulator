@@ -326,7 +326,7 @@ function scaleEnemyStats(assets, playerLevel = 1) {
     atk:   Math.round((6  + t * 16)  * lvlScale),
     def:   Math.round((3  + t * 15)  * lvlScale),
     spd:   Math.round((4  + t * 10)  * lvlScale),
-    xpReward: Math.round((15 + t * 135) * lvlScale),
+    xpReward: Math.round(60 + t * 60),
   };
 }
 

@@ -658,6 +658,127 @@ export const Furniture = {
     return group;
   },
 
+  boardroomTable() {
+    const group = new THREE.Group();
+    // Geometry is left-edge aligned: local origin = front-left corner
+    // so placement coord matches blockRect (which blocks in +x, +z direction)
+    const W = 8.0, D = 2.0;
+    const cx = W / 2, cz = D / 2;  // center offsets
+
+    const mahogany     = Materials.custom(0x1e0700);
+    const mahoganyMid  = Materials.custom(0x3a0e00);
+    const mahoganyHi   = Materials.custom(0x52180a);
+    const gold         = Materials.custom(0xc9a84c);
+    const goldDark     = Materials.custom(0x8a6b1e);
+
+    // ── Tabletop ──────────────────────────────────────────────
+    const top = new THREE.Mesh(
+      new THREE.BoxGeometry(W, 0.09, D),
+      mahogany
+    );
+    top.position.set(cx, 0.78, cz);
+    group.add(top);
+
+    // Polished highlight panel (lighter strip running length of table)
+    const highlight = new THREE.Mesh(
+      new THREE.BoxGeometry(W - 0.6, 0.005, D - 0.6),
+      mahoganyHi
+    );
+    highlight.position.set(cx, 0.836, cz);
+    group.add(highlight);
+
+    // Central inlay panel (slightly lighter, recessed look)
+    const inlay = new THREE.Mesh(
+      new THREE.BoxGeometry(W - 1.4, 0.004, D - 1.0),
+      mahoganyMid
+    );
+    inlay.position.set(cx, 0.837, cz);
+    group.add(inlay);
+
+    // ── Gold trim band around table edge (vertical side strip) ─
+    const trimH = 0.055, trimT = 0.018;
+    // Long north/south sides
+    [[cz - D / 2 + trimT / 2], [cz + D / 2 - trimT / 2]].forEach(([z]) => {
+      const t = new THREE.Mesh(new THREE.BoxGeometry(W, trimH, trimT), gold);
+      t.position.set(cx, 0.752, z);
+      group.add(t);
+    });
+    // Short west/east ends
+    [[cx - W / 2 + trimT / 2], [cx + W / 2 - trimT / 2]].forEach(([x]) => {
+      const t = new THREE.Mesh(new THREE.BoxGeometry(trimT, trimH, D), gold);
+      t.position.set(x, 0.752, cz);
+      group.add(t);
+    });
+
+    // Gold inlay line on top surface (border)
+    const lineT = 0.03, lineH = 0.003;
+    [[cz - D / 2 + lineT], [cz + D / 2 - lineT]].forEach(([z]) => {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(W - lineT * 2, lineH, lineT), gold);
+      l.position.set(cx, 0.838, z);
+      group.add(l);
+    });
+    [[cx - W / 2 + lineT], [cx + W / 2 - lineT]].forEach(([x]) => {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(lineT, lineH, D - lineT * 2), gold);
+      l.position.set(x, 0.838, cz);
+      group.add(l);
+    });
+
+    // ── Ornate column legs (4 pairs — 8 legs total) ───────────
+    const legPositions = [
+      [cx - 3.4, cz - 0.75], [cx - 3.4, cz + 0.75],
+      [cx - 1.1, cz - 0.75], [cx - 1.1, cz + 0.75],
+      [cx + 1.1, cz - 0.75], [cx + 1.1, cz + 0.75],
+      [cx + 3.4, cz - 0.75], [cx + 3.4, cz + 0.75],
+    ];
+    legPositions.forEach(([x, z]) => {
+      // Leg body (tapered top-to-bottom via two boxes)
+      const upper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.44, 0.16), mahogany);
+      upper.position.set(x, 0.56, z);
+      group.add(upper);
+      const lower = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.30, 0.13), mahogany);
+      lower.position.set(x, 0.15, z);
+      group.add(lower);
+      // Gold capital (top cap)
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.21, 0.022, 0.21), gold);
+      cap.position.set(x, 0.772, z);
+      group.add(cap);
+      // Gold base foot
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.018, 0.18), goldDark);
+      foot.position.set(x, 0.009, z);
+      group.add(foot);
+    });
+
+    // ── Stretcher rails connecting leg pairs ──────────────────
+    [cz - 0.75, cz + 0.75].forEach(z => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(W - 0.8, 0.06, 0.07), mahogany);
+      rail.position.set(cx, 0.22, z);
+      group.add(rail);
+    });
+    // Cross-stretchers
+    [cx - 3.4, cx - 1.1, cx + 1.1, cx + 3.4].forEach(x => {
+      const xrail = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.06, D - 0.5), mahogany);
+      xrail.position.set(x, 0.22, cz);
+      group.add(xrail);
+    });
+
+    // ── Speakerphone centerpiece ──────────────────────────────
+    const spkBase = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.14, 0.16, 0.035, 6),
+      Materials.custom(0x1a1a1a)
+    );
+    spkBase.position.set(cx, 0.843, cz);
+    group.add(spkBase);
+    const spkBody = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.10, 0.12, 0.028, 6),
+      Materials.custom(0x2a2a2a)
+    );
+    spkBody.position.set(cx, 0.856, cz);
+    group.add(spkBody);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   conferenceTable() {
     const group = new THREE.Group();
     const topGeo = new THREE.BoxGeometry(3.0, 0.06, 1.2);
@@ -1379,6 +1500,82 @@ export const Furniture = {
     keyhole.position.set(0, 0.12, 0.26);
     group.add(keyhole);
     group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  grandPainting() {
+    const group = new THREE.Group();
+
+    const FW = 1.4,  FH = 1.1;   // outer frame dimensions
+    const CW = 1.06, CH = 0.78;  // canvas inner dimensions
+    const Y  = 1.80;             // center height on wall
+
+    const fBacking = Materials.custom(0x2a1604);
+    const fGold    = Materials.custom(0xa06c0c);
+    const fLight   = Materials.custom(0xd4a030);
+    const fLiner   = Materials.custom(0x080602);
+
+    // Helper: add a box mesh at (x, y, z) with given size and material
+    const add = (x, y, z, w, h, d, mat) => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      mesh.position.set(x, y, z);
+      group.add(mesh);
+    };
+
+    const BZ = 0.0175; // base z offset (half backing thickness)
+
+    // ── Backing plate ────────────────────────────────────────
+    add(0, Y, 0, FW, FH, 0.035, fBacking);
+
+    // ── Raised border strips ─────────────────────────────────
+    const BW = 0.135, BT = 0.068, BZc = BZ + BT / 2;
+    add(0,            Y + FH/2 - BW/2, BZc, FW,        BW,        BT, fGold); // top
+    add(0,            Y - FH/2 + BW/2, BZc, FW,        BW,        BT, fGold); // bottom
+    add(-FW/2 + BW/2, Y,               BZc, BW, FH - BW*2,        BT, fGold); // left
+    add( FW/2 - BW/2, Y,               BZc, BW, FH - BW*2,        BT, fGold); // right
+
+    // ── Corner ornaments (slightly proud of border strips) ───
+    const CRN = 0.148, CRNZ = BZc + 0.006;
+    [[-FW/2 + BW/2, Y + FH/2 - BW/2],
+     [ FW/2 - BW/2, Y + FH/2 - BW/2],
+     [-FW/2 + BW/2, Y - FH/2 + BW/2],
+     [ FW/2 - BW/2, Y - FH/2 + BW/2],
+    ].forEach(([x, y]) => add(x, y, CRNZ, CRN, CRN, BT + 0.012, fLight));
+
+    // ── Highlight line (bright thin edge inside border) ──────
+    const HL = 0.018, HZ = BZc + BT / 2 + 0.001;
+    const IW = CW + HL * 2 + 0.04, IH = CH + HL * 2 + 0.04;
+    add(0,          Y + IH/2 - HL/2, HZ, IW,  HL, 0.003, fLight); // top
+    add(0,          Y - IH/2 + HL/2, HZ, IW,  HL, 0.003, fLight); // bottom
+    add(-IW/2 + HL/2, Y,             HZ, HL,  IH, 0.003, fLight); // left
+    add( IW/2 - HL/2, Y,             HZ, HL,  IH, 0.003, fLight); // right
+
+    // ── Dark liner strip (between frame and canvas) ──────────
+    const LN = 0.016, LZ = HZ + 0.002;
+    add(0,            Y + CH/2 + LN/2, LZ, CW + LN*2, LN, 0.002, fLiner);
+    add(0,            Y - CH/2 - LN/2, LZ, CW + LN*2, LN, 0.002, fLiner);
+    add(-CW/2 - LN/2, Y,               LZ, LN,        CH, 0.002, fLiner);
+    add( CW/2 + LN/2, Y,               LZ, LN,        CH, 0.002, fLiner);
+
+    // ── Canvas — layered landscape composition ───────────────
+    const CZ = LZ + 0.003;
+    const layers = [
+      { h: 0.16, c: 0x120a02 },  // dark earth foreground
+      { h: 0.17, c: 0x6a4214 },  // warm amber midground
+      { h: 0.14, c: 0x3e682a },  // sunlit foliage
+      { h: 0.12, c: 0x3a5870 },  // distant hills / haze
+      { h: 0.11, c: 0xa05e28 },  // warm horizon glow
+      { h: 0.10, c: 0x3a5080 },  // lower sky
+      { h: 0.20, c: 0x1c2a58 },  // deep upper sky
+    ];
+    let yBot = Y - CH / 2;
+    for (const layer of layers) {
+      const lh = layer.h * CH;
+      add(0, yBot + lh / 2, CZ, CW - 0.006, lh - 0.004, 0.003, Materials.custom(layer.c));
+      yBot += lh;
+    }
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
     return group;
   },
 

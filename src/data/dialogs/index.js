@@ -2249,7 +2249,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Janet', text: "I've been at Wells Fargo since before it was 'strategic.' Back when we just... helped people." },
     /* 2  */ { type: 'text', speaker: 'Janet', text: "You tell that board: our clients aren't numbers. They're the Hendersons. The Thompsons. The people who trusted us with their futures." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "I'll cover the phones. Go save our department." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_rallied', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_act6_rallied', value: true, next: 5 },
     /* 5  */ { type: 'end' },
   ],
 
@@ -2258,8 +2258,18 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Diane', text: "That was the last straw. Metaphorically and literally, because they took the straws too." },
     /* 2  */ { type: 'text', speaker: 'Diane', text: "I've been doing something I probably shouldn't have. I copied Rachel's restructuring proposal." },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "It shows she's been inflating her department's numbers while deflating ours. Textbook fiduciary breach." },
-    /* 4  */ { type: 'text', speaker: 'Diane', text: "Use it. Save our jobs. And then maybe get us a new coffee machine." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_evidence', value: true, next: 6 },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "I left the copy in the cabinet at the back of the room. Grab it. Save our jobs. And then maybe get us a new coffee machine." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_act6_rallied', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  diane_documents: [
+    /* 0  */ { type: 'condition', flag: 'diane_act6_rallied', ifTrue: 1, ifFalse: 5 },
+    /* 1  */ { type: 'condition', flag: 'diane_evidence', ifTrue: 4, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Tucked between the folders — Diane's copy of Rachel's restructuring proposal. Numbers don't lie." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'diane_evidence', value: true, next: 6 },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "You've already retrieved Diane's documents.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Just standard HR filing records. Nothing of interest.", next: 6 },
     /* 6  */ { type: 'end' },
   ],
 
