@@ -1608,6 +1608,184 @@ export const Furniture = {
     return group;
   },
 
+  chargingBull() {
+    const group    = new THREE.Group();
+    const bronze     = new THREE.MeshStandardMaterial({ color: 0x9b6a3e, roughness: 0.42, metalness: 0.85 });
+    const darkBronze = new THREE.MeshStandardMaterial({ color: 0x5c3a1e, roughness: 0.55, metalness: 0.75 });
+    const highlight  = new THREE.MeshStandardMaterial({ color: 0xc8874a, roughness: 0.3,  metalness: 0.9  });
+    const yAxis      = new THREE.Vector3(0, 1, 0);
+
+    // Helper: place a cylinder precisely between two 3-D anchor points.
+    // setFromUnitVectors rotates the default Y-axis to the leg direction,
+    // guaranteeing the cylinder end-caps land exactly on both anchors.
+    function cylinder(rTop, rBot, from, to, mat) {
+      const dir = new THREE.Vector3().subVectors(to, from).normalize();
+      const len = from.distanceTo(to);
+      const mid = new THREE.Vector3().addVectors(from, to).multiplyScalar(0.5);
+      const segs = Math.max(8, Math.round(rTop * 200));
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBot, len, segs), mat);
+      m.quaternion.setFromUnitVectors(yAxis, dir);
+      m.position.copy(mid);
+      return m;
+    }
+
+    // ── Pedestal ──────────────────────────────────────────────────
+    const pedestalBase = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.10, 0.72), darkBronze);
+    pedestalBase.position.set(0, 0.05, 0);
+    pedestalBase.receiveShadow = true;
+    group.add(pedestalBase);
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.22, 0.60), darkBronze);
+    plinth.position.set(0, 0.21, 0);
+    group.add(plinth);
+
+    // All anatomy is built in absolute world-space coordinates.
+    // G  = plinth top surface (y = 0.32) — hooves rest here.
+    // BY = body centre, set high enough so body-bottom clears G by ~0.5 units,
+    //      leaving room for legs.  Body vertical radius = 0.44 × 0.88 = 0.387
+    //      → body bottom ≈ BY − 0.387 = 0.813.  Leg hip anchors sit at
+    //      BY − 0.30 = 0.90, which is 0.09 above the body bottom — visually
+    //      embedded inside the lower torso with no gap.
+    const G  = 0.32;
+    const BY = 1.2;
+    const hipY = BY - 0.30;   // 0.90 — leg-top anchor, inside lower body
+
+    // ── Body ──────────────────────────────────────────────────────
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.44, 20, 14), bronze);
+    body.scale.set(1.55, 0.88, 0.78);
+    body.position.set(0, BY, 0);
+    group.add(body);
+
+    const shoulder = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), bronze);
+    shoulder.scale.set(1.0, 0.9, 0.85);
+    shoulder.position.set(0.36, BY + 0.08, 0);
+    group.add(shoulder);
+
+    const rump = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 12), bronze);
+    rump.scale.set(0.85, 0.9, 0.88);
+    rump.position.set(-0.48, BY - 0.06, 0);
+    group.add(rump);
+
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 10), bronze);
+    belly.scale.set(1.3, 0.55, 0.7);
+    belly.position.set(0, BY - 0.22, 0);
+    group.add(belly);
+
+    const hump = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 12), bronze);
+    hump.scale.set(0.75, 1.25, 0.75);
+    hump.position.set(-0.12, BY + 0.32, 0);
+    group.add(hump);
+
+    // ── Neck ──────────────────────────────────────────────────────
+    // Anchor points → cylinder() does the math.
+    group.add(cylinder(0.14, 0.20,
+      new THREE.Vector3(0.44, BY + 0.18, 0),   // base (inside body)
+      new THREE.Vector3(0.82, BY + 0.02, 0),   // tip  (near head)
+      bronze));
+
+    const dewlap = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 10), bronze);
+    dewlap.scale.set(0.7, 1.4, 0.7);
+    dewlap.position.set(0.60, BY - 0.04, 0);
+    group.add(dewlap);
+
+    // ── Head ──────────────────────────────────────────────────────
+    const HX = 0.88, HY = BY + 0.08;
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.24, 18, 14), bronze);
+    head.scale.set(1.35, 0.92, 0.88);
+    head.position.set(HX, HY, 0);
+    group.add(head);
+
+    const forehead = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), bronze);
+    forehead.scale.set(0.9, 0.65, 1.1);
+    forehead.position.set(HX + 0.06, HY + 0.14, 0);
+    group.add(forehead);
+
+    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.16, 0.26), bronze);
+    snout.position.set(HX + 0.22, HY - 0.05, 0);
+    group.add(snout);
+
+    const noseTip = new THREE.Mesh(new THREE.SphereGeometry(0.10, 12, 10), bronze);
+    noseTip.scale.set(0.7, 0.65, 1.0);
+    noseTip.position.set(HX + 0.32, HY - 0.05, 0);
+    group.add(noseTip);
+
+    const nostrilL = new THREE.Mesh(new THREE.SphereGeometry(0.034, 8, 6), darkBronze);
+    nostrilL.position.set(HX + 0.35, HY - 0.03, -0.085);
+    group.add(nostrilL);
+    const nostrilR = nostrilL.clone();
+    nostrilR.position.set(HX + 0.35, HY - 0.03,  0.085);
+    group.add(nostrilR);
+
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.040, 8, 8), darkBronze);
+    eyeL.position.set(HX + 0.08, HY + 0.10, -0.19);
+    group.add(eyeL);
+    const eyeR = eyeL.clone();
+    eyeR.position.set(HX + 0.08, HY + 0.10,  0.19);
+    group.add(eyeR);
+
+    // ── Horns ─────────────────────────────────────────────────────
+    for (const zSign of [-1, 1]) {
+      group.add(cylinder(0.014, 0.05,
+        new THREE.Vector3(HX + 0.46, HY + 0.50, zSign * 0.30),  // tip (pointed end)
+        new THREE.Vector3(HX + 0.10, HY + 0.22, zSign * 0.18),  // base (wide end)
+        highlight));
+    }
+
+    const earL = new THREE.Mesh(new THREE.ConeGeometry(0.055, 0.18, 8), bronze);
+    earL.rotation.z = -Math.PI / 6;
+    earL.rotation.x =  Math.PI / 5;
+    earL.position.set(HX - 0.04, HY + 0.19, -0.22);
+    group.add(earL);
+    const earR = earL.clone();
+    earR.rotation.x = -Math.PI / 5;
+    earR.position.set(HX - 0.04, HY + 0.19,  0.22);
+    group.add(earR);
+
+    // ── Legs ──────────────────────────────────────────────────────
+    // Each leg is one cylinder drawn between two exact anchor points:
+    //   foot anchor = centre of the hoof on the plinth (y = G + 0.06)
+    //   hip  anchor = inside the lower-body geometry (y = hipY = 0.90)
+    // The hoof box bottom face lands on the plinth: centre at G + 0.06,
+    // box height 0.12, so bottom = G + 0.06 − 0.06 = G = 0.32 ✓
+    function makeLeg(footX, footZ, hipX, hipZ, footYIn) {
+      const fy   = (footYIn !== undefined) ? footYIn : (G + 0.06);
+      const foot = new THREE.Vector3(footX, fy,   footZ);
+      const hip  = new THREE.Vector3(hipX,  hipY, hipZ);
+      // Hoof
+      const hoofMesh = new THREE.Mesh(new THREE.BoxGeometry(0.20, 0.12, 0.18), darkBronze);
+      hoofMesh.position.set(footX, fy, footZ);
+      group.add(hoofMesh);
+      // Leg cylinder — runs exactly from hoof centre to hip anchor
+      group.add(cylinder(0.078, 0.095, foot, hip, bronze));
+    }
+
+    // Front-left  — lunging: hoof raised and thrust forward, 45° diagonal
+    makeLeg( 0.58, -0.26,  0.28, -0.22, G + 0.28);
+    // Front-right — planted: nearly vertical
+    makeLeg( 0.30,  0.26,  0.22,  0.22);
+    // Rear-left   — pushed back, powering the charge
+    makeLeg(-0.52, -0.26, -0.28, -0.22);
+    // Rear-right  — tucked slightly forward
+    makeLeg(-0.28,  0.26, -0.20,  0.22);
+
+    // ── Tail ──────────────────────────────────────────────────────
+    const tailPts = [
+      new THREE.Vector3(-0.68, BY + 0.02, 0),
+      new THREE.Vector3(-0.90, BY + 0.34, 0),
+      new THREE.Vector3(-1.06, BY + 0.58, 0),
+    ];
+    group.add(cylinder(0.038, 0.055, tailPts[0], tailPts[1], bronze));
+    group.add(cylinder(0.024, 0.038, tailPts[1], tailPts[2], bronze));
+
+    const tuft = new THREE.Mesh(new THREE.SphereGeometry(0.08, 10, 8), bronze);
+    tuft.scale.set(0.7, 1.3, 0.7);
+    tuft.position.copy(tailPts[2]);
+    group.add(tuft);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   sculpture() {
     const group = new THREE.Group();
     const matA = Materials.custom(0x888899);

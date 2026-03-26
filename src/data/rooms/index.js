@@ -1008,24 +1008,6 @@ export const ROOMS = {
       { type: 'grandPainting', x: 3,  z: 0.08 },
       { type: 'grandPainting', x: 12, z: 0.08 },
 
-      // ── Sculptures — all four corners ──
-      { type: 'sculpture', x: 1,  z: 1  },
-      { type: 'sculpture', x: 14, z: 1  },
-      { type: 'sculpture', x: 1,  z: 10 },
-      { type: 'sculpture', x: 14, z: 10 },
-
-      // ── Tall plants flanking table ends ──
-      { type: 'plantTall', x: 2,  z: 5 },
-      { type: 'plantTall', x: 13, z: 5 },
-
-      // ── Credenzas along east wall ──
-      { type: 'fileCabinetLateral', x: 14, z: 3 },
-      { type: 'fileCabinetLateral', x: 14, z: 5 },
-      { type: 'fileCabinetLateral', x: 14, z: 7 },
-
-      // ── Credenzas along west wall ──
-      { type: 'fileCabinetLateral', x: 1, z: 3 },
-      { type: 'fileCabinetLateral', x: 1, z: 7 },
 
       // ── Whiteboard on east wall (for presentations) ──
       { type: 'whiteboard', x: 15, z: 5, rotation: -Math.PI / 2 },

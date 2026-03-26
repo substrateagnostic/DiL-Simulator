@@ -36,6 +36,7 @@ const FURNITURE_FOOTPRINTS = {
   staircase:          { w: 2, h: 2 },
   safeDepositBox:     { w: 1, h: 1 },
   sculpture:          { w: 1, h: 1 },
+  chargingBull:       { w: 2, h: 1 },
   puttingGreen:       { w: 3, h: 2 },
   luxuryFridge:       { w: 2, h: 1 },
   kitchenIsland:      { w: 2, h: 1 },
