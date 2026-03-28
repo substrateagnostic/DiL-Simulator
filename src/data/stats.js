@@ -209,8 +209,8 @@ export const PLAYER_ABILITIES = {
 export const ENEMY_STATS = {
   intern: {
     name: 'The Intern',
-    maxHP: 40,
-    hp: 40,
+    maxHP: 120,
+    hp: 120,
     atk: 6,
     def: 4,
     spd: 5,
@@ -306,9 +306,9 @@ export const ENEMY_STATS = {
   },
   regional: {
     name: 'Regional Manager',
-    maxHP: 160,
-    hp: 160,
-    atk: 20,
+    maxHP: 500,
+    hp: 500,
+    atk: 17,
     def: 14,
     spd: 10,
     xpReward: 200,
@@ -342,8 +342,8 @@ export const ENEMY_STATS = {
   // Acts 3–5 enemies
   security_guard: {
     name: 'Security Guard',
-    maxHP: 90,
-    hp: 90,
+    maxHP: 270,
+    hp: 270,
     atk: 16,
     def: 14,
     spd: 8,
@@ -353,8 +353,8 @@ export const ENEMY_STATS = {
   },
   hr_rep: {
     name: 'HR Representative',
-    maxHP: 60,
-    hp: 60,
+    maxHP: 200,
+    hp: 200,
     atk: 10,
     def: 12,
     spd: 6,
@@ -413,8 +413,8 @@ export const ENEMY_STATS = {
   },
   cfos_assistant: {
     name: 'CFO\'s Assistant',
-    maxHP: 160,
-    hp: 160,
+    maxHP: 320,
+    hp: 320,
     atk: 18,
     def: 14,
     spd: 14,
@@ -424,8 +424,8 @@ export const ENEMY_STATS = {
   },
   regional_director: {
     name: 'Regional Director',
-    maxHP: 220,
-    hp: 220,
+    maxHP: 600,
+    hp: 600,
     atk: 24,
     def: 20,
     spd: 10,
@@ -440,8 +440,8 @@ export const ENEMY_STATS = {
   },
   algorithm: {
     name: 'The Algorithm',
-    maxHP: 300,
-    hp: 300,
+    maxHP: 550,
+    hp: 550,
     atk: 20,
     def: 22,
     spd: 16,

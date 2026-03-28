@@ -158,6 +158,12 @@ export class ExplorationState {
         if (key === 'briefing_complete' && !this.player.getFlag('defeated_intern')) {
           this._showToast('Optional: spar with the Intern for a quick combat tutorial.', 'item');
         }
+        if (key === 'defeated_intern' && this.player.stats.level < 2) {
+          const xpNeeded = XP_TABLE[1] - this.player.stats.xp;
+          if (xpNeeded > 0) this.player.gainXP(xpNeeded);
+          this._updateMiniStats();
+          this._showToast('Intern defeated! Gained enough experience to reach Level 2!', 'objective');
+        }
         if (key === 'branch_chosen') {
           this._showToast('The executive elevator is now unlocked.', 'objective');
           // Apply Henderson decision buff/debuff
@@ -332,6 +338,16 @@ export class ExplorationState {
           }
         }
 
+        // HR Department: HR rep blocks entry until defeated
+        if (roomId === 'hr_department' && !this.player.getFlag('defeated_hr_rep')) {
+          if (DIALOGS.hr_rep_combat) {
+            setTimeout(() => {
+              const dialogState = new DialogState(DIALOGS['hr_rep_combat'], this.player, this.stateManager, 'hr_rep_combat');
+              this.stateManager.push(dialogState);
+            }, 800);
+          }
+        }
+
         // Archive: first visit triggers security guard encounter
         if (roomId === 'archive' && !this.player.getFlag('visited_archive')) {
           this.player.setFlag('visited_archive');
@@ -343,8 +359,9 @@ export class ExplorationState {
           }
         }
 
-        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team
-        if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && !this.player.getFlag('act4_complete') && DIALOGS.act5_trigger) {
+        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team (one-time)
+        if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && !this.player.getFlag('act4_complete') && !this.player.getFlag('act5_triggered') && DIALOGS.act5_trigger) {
+          this.player.setFlag('act5_triggered');
           setTimeout(() => {
             const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
             this.stateManager.push(dialogState);
@@ -508,6 +525,13 @@ export class ExplorationState {
 
   _startCombat(encounterId) {
     this.paused = true;
+
+    // First Karen fight: scripted 3-shot loss — boost ATK so she hits visibly hard
+    const isFirstKaren = encounterId === 'karen'
+      && !this.player.getFlag('retry_karen')
+      && !this.player.getFlag('defeated_karen');
+    const enemyOverrides = isFirstKaren ? { atk: 999 } : {};
+
     this.transition.fadeOut(0.3).then(() => {
       const combatState = new CombatState(
         this.stateManager,
@@ -519,12 +543,41 @@ export class ExplorationState {
             this.paused = false;
           });
 
+          // First Karen fight always ends in defeat — scripted tutorial loss
+          if (isFirstKaren) {
+            this.player.setFlag('retry_karen', true);
+            this.player.rest();
+            this._loadRoom('cubicle_farm');
+            setTimeout(() => {
+              if (DIALOGS['karen_first_loss_tutorial']) {
+                const tutDialog = new DialogState(DIALOGS['karen_first_loss_tutorial'], this.player, this.stateManager, 'karen_first_loss_tutorial');
+                this.stateManager.push(tutDialog);
+              }
+            }, 1200);
+            return;
+          }
+
           if (result === 'victory') {
             this.player.setFlag('bestiary_' + encounterId, true);
             AchievementManager.check(this.player, { event: 'combat_victory', encounterId });
 
             if (encounterId === 'reception_client') {
               this._updateMiniStats();
+
+              // Tutorial: track wins toward level 3 after first Karen loss
+              if (this.player.getFlag('retry_karen') && !this.player.getFlag('defeated_karen')) {
+                const wins = (this.player.getFlag('roguelite_tutorial_wins') || 0) + 1;
+                this.player.setFlag('roguelite_tutorial_wins', wins);
+                if (wins >= 3 && this.player.stats.level < 3) {
+                  const xpNeeded = XP_TABLE[2] - this.player.stats.xp;
+                  if (xpNeeded > 0) this.player.gainXP(xpNeeded);
+                  this._updateMiniStats();
+                  this._showToast('3 clients handled — Level 3 reached! You\'re ready for Karen.', 'objective');
+                } else if (wins < 3) {
+                  this._showToast(`Client ${wins}/3 handled — keep building experience!`, 'objective');
+                }
+              }
+
               const clientRaw = this.player.getFlag('currentClient');
               if (clientRaw) {
                 let clientData;
@@ -559,7 +612,8 @@ export class ExplorationState {
             this.player.setFlag('retry_' + encounterId, true);
             this._handleDefeat();
           }
-        }
+        },
+        enemyOverrides
       );
       this.stateManager.push(combatState);
       this.transition.remove();
@@ -591,8 +645,17 @@ export class ExplorationState {
   // ── Reception roguelite system ──────────────────────────────────────────────
 
   _onReceptionEntered() {
-    // Don't spawn clients until after first story battle
-    if (!this.player.getFlag('defeated_karen')) return;
+    // Allow clients after first Karen fight (tutorial phase) or after defeating Karen
+    const tutorialPhase = this.player.getFlag('retry_karen') && !this.player.getFlag('defeated_karen');
+    if (!this.player.getFlag('defeated_karen') && !tutorialPhase) return;
+
+    // Reminder toast during tutorial phase
+    if (tutorialPhase) {
+      const wins = this.player.getFlag('roguelite_tutorial_wins') || 0;
+      if (wins < 3) {
+        setTimeout(() => this._showToast(`Level up by handling clients (${wins}/3) — then retry Karen.`, 'objective'), 800);
+      }
+    }
 
     const existing = this.player.getFlag('currentClient');
     if (existing) {
@@ -628,8 +691,8 @@ export class ExplorationState {
   }
 
   _handleReceptionDesk() {
-    // Roguelike not available until after the first story battle
-    if (!this.player.getFlag('defeated_karen')) {
+    const tutorialPhase = this.player.getFlag('retry_karen') && !this.player.getFlag('defeated_karen');
+    if (!this.player.getFlag('defeated_karen') && !tutorialPhase) {
       this._showToast('You need to handle the Henderson meetings first.', 'info');
       return;
     }
@@ -1304,10 +1367,25 @@ export class ExplorationState {
     // Act 6
     if (this.player.getFlag('act5_complete')) {
       if (this.player.getFlag('has_rolex')) return 'Enter the Penthouse — you have the Janitor\'s Rolex';
-      const rallied = ['janet_rallied', 'diane_rallied', 'intern_rallied', 'ross_speech_ready'].filter(f => this.player.getFlag(f)).length;
-      const evidence = ['diane_evidence', 'isaiah_evidence'].filter(f => this.player.getFlag(f)).length;
+      const allyFlags = [
+        { flag: 'janet_act6_rallied',  label: 'Janet' },
+        { flag: 'diane_act6_rallied',  label: 'Diane' },
+        { flag: 'intern_rallied',      label: 'Intern' },
+        { flag: 'ross_speech_ready',   label: 'Ross' },
+      ];
+      const evidenceFlags = [
+        { flag: 'diane_evidence',  label: "Diane's documents" },
+        { flag: 'isaiah_evidence', label: "Isaiah's records" },
+      ];
+      const missingAllies   = allyFlags.filter(a => !this.player.getFlag(a.flag));
+      const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
+      const rallied = allyFlags.length - missingAllies.length;
+      const evidence = evidenceFlags.length - missingEvidence.length;
       if (rallied < 4 || evidence < 2) {
-        return `Prepare for the finale (${rallied}/4 allies, ${evidence}/2 evidence)`;
+        const lines = [`Prepare for the finale (${rallied}/4 allies, ${evidence}/2 evidence)`];
+        if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
+        if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
+        return lines.join('<br>');
       }
       return 'Get the Janitor\'s Rolex';
     }
@@ -1327,7 +1405,12 @@ export class ExplorationState {
     if (this.player.getFlag('vault_accessible') && !this.player.getFlag('has_charter')) {
       const codes = [this.player.getFlag('vault_code_1'), this.player.getFlag('vault_code_2'), this.player.getFlag('vault_code_3')];
       const codeCount = codes.filter(Boolean).length;
-      if (codeCount < 3) return `Find the Vault combination (${codeCount}/3 codes found)`;
+      if (codeCount < 3) {
+        const hints = [];
+        if (!this.player.getFlag('vault_code_2')) hints.push('HR Dept filing cabinets');
+        if (!this.player.getFlag('vault_code_3')) hints.push('Server Room rack C');
+        return `Find the Vault combination (${codeCount}/3) — check: ${hints.join(', ')}`;
+      }
       return 'Open the Vault and retrieve the 1947 charter';
     }
     if (this.player.getFlag('act3_complete')) {
@@ -1382,20 +1465,32 @@ export class ExplorationState {
       return 'Meet Karen Henderson in the Conference Room';
     }
 
-    const metCoworkers = ['met_janet', 'met_alex_it', 'met_intern', 'met_diane']
-      .filter((flag) => this.player.getFlag(flag))
-      .length;
-
     if (!this.player.getFlag('checked_desk')) {
       return 'Find your cubicle and settle in';
     }
-    if (metCoworkers < 2) {
-      return 'Meet your coworkers';
+    if (!this.player.getFlag('ready_for_ross')) {
+      const missing = [];
+      if (!this.player.getFlag('met_janet'))   missing.push('Janet');
+      if (!this.player.getFlag('met_intern'))  missing.push('the Intern');
+      if (!this.player.getFlag('met_isaiah'))  missing.push('Isaiah');
+      if (!this.player.getFlag('met_alex_it')) missing.push('Alex from IT');
+      return `Meet your coworkers — find ${missing.join(', ')}`;
     }
     return 'Report to Ross for your assignment';
   }
 
   _refreshStoryProgress(silent = false) {
+    // Auto-gate Ross until all four coworkers have been met
+    if (
+      this.player.getFlag('met_janet') &&
+      this.player.getFlag('met_intern') &&
+      this.player.getFlag('met_isaiah') &&
+      this.player.getFlag('met_alex_it') &&
+      !this.player.getFlag('ready_for_ross')
+    ) {
+      this.player.setFlag('ready_for_ross', true);
+    }
+
     this._syncActFromFlags();
 
     let questId = 'main_act1';
@@ -1433,7 +1528,7 @@ export class ExplorationState {
     }
 
     if (changed && !silent) {
-      this._showToast(`Objective Updated: ${objective}`, 'objective');
+      this._showToast(`Objective Updated: ${objective.replace(/<br>/gi, ' ').replace(/<[^>]+>/g, '')}`, 'objective');
     }
   }
 
@@ -1441,7 +1536,35 @@ export class ExplorationState {
     const hints = [];
     const f = (flag) => this.player.getFlag(flag);
 
-    // Alex IT subquests — only show hints, no detailed steps
+    // Early optional: spar with the Intern
+    if (f('briefing_complete') && !f('defeated_intern')) {
+      hints.push('Optional: spar with the Intern for a combat tutorial');
+    }
+
+    // Janitor riddles — progressive
+    if (f('met_janitor')) {
+      if (!f('janitor_riddle_1_done')) {
+        hints.push('The Janitor has a riddle for you — find him in the Archive');
+      } else if (!f('janitor_riddle_2_done')) {
+        hints.push('The Janitor has a second riddle waiting');
+      } else if (!f('janitor_riddle_3_done')) {
+        hints.push('The Janitor has one final riddle');
+      }
+    }
+
+    // Motivational poster quests — only shown after Ross mentions them in the Karen loss tutorial
+    if (f('retry_karen')) {
+      const atkDone = ['quest_atk_1_done','quest_atk_2_done','quest_atk_3_done','quest_atk_4_done','quest_atk_5_done'].filter(f).length;
+      if (atkDone < 5) {
+        hints.push(`Find assertiveness posters for ATK bonuses (${atkDone}/5)`);
+      }
+      const defDone = ['quest_def_1_done','quest_def_2_done','quest_def_3_done','quest_def_4_done','quest_def_5_done'].filter(f).length;
+      if (defDone < 5) {
+        hints.push(`Find composure posters for DEF bonuses (${defDone}/5)`);
+      }
+    }
+
+    // Alex IT subquests
     if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
       hints.push('Alex mentioned a signal at 3:47 AM...');
     }
@@ -1451,22 +1574,14 @@ export class ExplorationState {
     if (f('network_started') && !f('quest_network_ghost_complete')) {
       hints.push('Something strange on the network — Alex is investigating');
     }
-    if (f('daves_legacy_started') && !f('quest_daves_legacy_complete')) {
-      hints.push('What happened to Alex\'s predecessor, Dave?');
+    if (f('dave_started') && !f('quest_daves_legacy_complete')) {
+      hints.push("What happened to Alex's predecessor, Dave?");
     }
     if (f('printer_quest_started') && !f('quest_printers_soul_complete')) {
       hints.push('The printer is acting stranger than usual...');
     }
-    if (f('quest_final_patch_started') && !f('quest_final_patch_complete')) {
+    if (f('final_patch_started') && !f('quest_final_patch_complete')) {
       hints.push('Alex has a plan for the charter and the server');
-    }
-
-    // Misc side quests
-    if (f('lunch_thief_started') && !f('lunch_thief_complete')) {
-      hints.push('Someone keeps stealing lunches from the fridge');
-    }
-    if (f('server_secret_started') && !f('knows_server_secret')) {
-      hints.push('There\'s something hidden in the server room');
     }
 
     return hints;

@@ -4,7 +4,7 @@ import { randomRange } from '../utils/math.js';
 import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
 
 export class CombatEngine {
-  constructor(playerStats, enemyId) {
+  constructor(playerStats, enemyId, enemyOverrides = {}) {
     this.player = {
       ...playerStats,
       buffs: [],
@@ -23,7 +23,7 @@ export class CombatEngine {
       retaliateReady: false,
     };
     this.telegraphedAbility = null;
-    this.enemy = { ...ENEMY_STATS[enemyId], buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0, confuseCooldown: 0 };
+    this.enemy = { ...ENEMY_STATS[enemyId], ...enemyOverrides, buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0, confuseCooldown: 0 };
     this.enemyId = enemyId;
     this.turn = 'player';
     this.turnCount = 0;
@@ -119,7 +119,7 @@ export class CombatEngine {
 
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
-    const dmg = this._calcDamage(pStats.atk, 10, eStats.def, this.enemy);
+    const dmg = this._calcDamage(pStats.atk, 0, eStats.def, this.enemy);
 
     // Combo: bonus damage if enemy has active debuffs
     const combo = this._enemyHasDebuff();
@@ -133,7 +133,7 @@ export class CombatEngine {
 
     this.log.push({ type: 'attack', damage: finalDamage, critical: dmg.critical });
     this._checkVictory();
-    return { ...dmg, damage: finalDamage, combo, momentumGain };
+    return { ...dmg, type: 'attack', damage: finalDamage, combo, momentumGain };
   }
 
   playerAbility(abilityId) {

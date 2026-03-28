@@ -188,6 +188,39 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: [],
   },
+  cfos_assistant: {
+    name: 'CFO\'s Assistant',
+    bodyColor: 0x1a3a5a, // Navy power suit
+    pantsColor: 0x1a2a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0xc0a020, // Gold tie
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_BROWN,
+    hairStyle: 'slick',
+    accessories: ['glasses'],
+  },
+  regional_director: {
+    name: 'Regional Director',
+    bodyColor: 0x2a1a4a, // Deep purple executive suit
+    pantsColor: 0x1a1a2a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0x8a0000, // Crimson tie
+    skinColor: COLORS.SKIN_DARK,
+    hairColor: COLORS.HAIR_DARK,
+    hairStyle: 'short',
+    accessories: [],
+  },
+  algorithm: {
+    name: 'The Algorithm',
+    bodyColor: 0x001a33, // Dark digital blue
+    pantsColor: 0x001020,
+    shirtColor: 0x00aaff, // Glowing blue
+    tieColor: null,
+    skinColor: 0x88ccff, // Pale digital skin
+    hairColor: 0x00ffff, // Cyan hair
+    hairStyle: 'short',
+    accessories: ['glasses'],
+  },
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
   reception_client: {
     name: 'Prospective Client',

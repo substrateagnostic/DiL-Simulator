@@ -176,4 +176,56 @@ export const QUESTS = {
       { id: 3, objective: 'The patch is deployed' },
     ],
   },
+  // ATK side quests
+  side_atk_1: {
+    id: 'side_atk_1',
+    name: 'Assertiveness Quotient',
+    stages: [{ id: 0, objective: 'Fill out the Assertiveness Quotient chart' }],
+  },
+  side_atk_2: {
+    id: 'side_atk_2',
+    name: 'Raise Your Voice',
+    stages: [{ id: 0, objective: 'Find the motivational plaque in the conference room' }],
+  },
+  side_atk_3: {
+    id: 'side_atk_3',
+    name: 'Coffee and Confrontation',
+    stages: [{ id: 0, objective: 'Read the break room bulletin' }],
+  },
+  side_atk_4: {
+    id: 'side_atk_4',
+    name: 'Uptime Mentality',
+    stages: [{ id: 0, objective: 'Review the server room performance poster' }],
+  },
+  side_atk_5: {
+    id: 'side_atk_5',
+    name: 'First Impressions',
+    stages: [{ id: 0, objective: 'Read the reception assertiveness display' }],
+  },
+  // DEF side quests
+  side_def_1: {
+    id: 'side_def_1',
+    name: 'Composure Under Pressure',
+    stages: [{ id: 0, objective: 'Find the composure checklist in the cubicle farm' }],
+  },
+  side_def_2: {
+    id: 'side_def_2',
+    name: 'Agenda Management',
+    stages: [{ id: 0, objective: 'Study the meeting agenda framework in the conference room' }],
+  },
+  side_def_3: {
+    id: 'side_def_3',
+    name: 'Emotional Bandwidth',
+    stages: [{ id: 0, objective: 'Review the stress management guide in the break room' }],
+  },
+  side_def_4: {
+    id: 'side_def_4',
+    name: 'Redundancy Protocol',
+    stages: [{ id: 0, objective: 'Read the redundancy protocol notice in the server room' }],
+  },
+  side_def_5: {
+    id: 'side_def_5',
+    name: 'The Waiting Game',
+    stages: [{ id: 0, objective: 'Study the waiting room etiquette poster in reception' }],
+  },
 };

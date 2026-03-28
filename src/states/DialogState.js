@@ -222,6 +222,20 @@ export class DialogState {
         EventBus.emit('quest-update', { quest: node.quest, objective: node.objective, status: node.status });
         break;
 
+      case 'give_xp': {
+        const levels = this.player.gainXP(node.xp || 0);
+        if (levels.length > 0) AudioManager.playSfx('levelup');
+        break;
+      }
+
+      case 'modify_stat': {
+        const { stat, amount = 0 } = node;
+        if (this.player.stats[stat] !== undefined) {
+          this.player.stats[stat] = Math.max(1, this.player.stats[stat] + amount);
+        }
+        break;
+      }
+
       default:
         console.warn(`DialogState: Unknown action "${node.action}" at index ${this.currentIndex}`);
         break;
