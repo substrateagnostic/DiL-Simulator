@@ -632,10 +632,22 @@ export class ExplorationState {
     this.player.setFlag('ending_started', false);
     this._loadRoom('cubicle_farm');
 
+    const DEATH_MESSAGES = [
+      'You wake up at your desk... Was it all a dream?',
+      'You come to face-down on your keyboard. There are 47 new emails.',
+      'You regain consciousness. The fluorescent light above you flickers in what feels like judgment.',
+      'You wake up. Someone has placed a sticky note on your forehead that says "DO NOT DISTURB." Nobody moved it.',
+      'You open your eyes at your desk. A coworker walks past without making eye contact. Normal Tuesday.',
+      'You wake up. Your coffee is cold. It was cold before, too.',
+      'You stir at your desk. The clock says 3:47 PM. It always says 3:47 PM.',
+      'Consciousness returns. You have 2 unread voicemails and a distinct sense of failure.',
+      'You wake up at your cubicle. Someone has printed a motivational poster and taped it to your monitor. It says HANG IN THERE.',
+      'You open your eyes. The building hums. It sounds almost sympathetic.',
+    ];
     const msg = document.createElement('div');
     msg.className = 'combat-message';
     msg.style.zIndex = '200';
-    msg.textContent = 'You wake up at your desk... Was it all a dream?';
+    msg.textContent = DEATH_MESSAGES[Math.floor(Math.random() * DEATH_MESSAGES.length)];
     document.getElementById('ui-overlay').appendChild(msg);
     setTimeout(() => {
       if (msg.parentNode) msg.parentNode.removeChild(msg);
@@ -738,12 +750,9 @@ export class ExplorationState {
 
     this.player.setFlag('currentClient', null);
 
-    // Track total clients seen for quarterly review
-    const totalSeen = (this.player.getFlag('totalClientsSeen') || 0) + 1;
-    this.player.setFlag('totalClientsSeen', totalSeen);
-
-    // Quarterly review every 3 clients
-    if (totalSeen > 0 && totalSeen % 3 === 0) {
+    // Quarterly review every 5 accepted clients
+    const portfolioCount = this.player.getFlag('portfolioClients') || 0;
+    if (portfolioCount > 0 && portfolioCount % 5 === 0) {
       setTimeout(() => this._showQuarterlyReview(), 800);
       return; // quarterly review will generate next client when dismissed
     }
@@ -807,7 +816,7 @@ export class ExplorationState {
     const aum     = this.player.getFlag('portfolioAUM')     || 0;
     const fees    = this.player.getFlag('portfolioFees')    || 0;
     const health  = calculatePortfolioHealth(clients, aum, fees);
-    const quarter = Math.ceil((this.player.getFlag('totalClientsSeen') || 0) / 3);
+    const quarter = Math.ceil(clients / 5);
 
     const fmt = (n) => '$' + n.toLocaleString();
 
@@ -830,18 +839,22 @@ export class ExplorationState {
     }
 
     // Reward or penalty based on grade
+    const XP_BY_GRADE = { 'A+': 150, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
+    const xpReward = XP_BY_GRADE[health.grade] ?? 0;
+    if (xpReward > 0) this.player.gainXP(xpReward);
+
     let rewardText = '';
     if (health.score >= 80) {
       this.player.stats.atk += 1;
       this.player.stats.def += 1;
       this._updateMiniStats();
-      rewardText = 'Ross is impressed. ATK +1, Composure +1.';
+      rewardText = `Ross is impressed. ATK +1, Composure +1. +${xpReward} XP`;
     } else if (health.score < 40) {
       const anger = Math.min(10, (this.player.getFlag('bossAnger') || 0) + 2);
       this.player.setFlag('bossAnger', anger);
-      rewardText = 'Ross is disappointed. Boss Anger +2.';
+      rewardText = `Ross is disappointed. Boss Anger +2.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
     } else {
-      rewardText = 'Ross gives a noncommittal nod. Acceptable performance.';
+      rewardText = `Ross gives a noncommittal nod. Acceptable performance.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
     }
 
     el.innerHTML = `

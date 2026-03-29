@@ -195,8 +195,13 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' } },    // NW pod, paces nervously
-      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 } },  // NE pod, wanders looking lost
+      // Janet — conditional entries covering lunch thief quest states
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_investigate' },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_resolved' },
+      // Intern — conditional entries covering lunch thief confrontation
+      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
+      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_culprit_revealed' }, dialogId: 'intern_lunch_thief_confrontation' },
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'karen_defeated' } }, // water cooler, paces
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
@@ -288,7 +293,7 @@ export const ROOMS = {
       { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
       // Side quest posters
       { type: 'motivationalPoster', x: 0.1, z: 5, rotation: Math.PI / 2 },
-      { type: 'motivationalPoster', x: 5, z: 6.9, rotation: Math.PI },
+      { type: 'motivationalPoster', x: 3, z: 6.9, rotation: Math.PI },
     ],
     npcs: [
       { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 }, condition: { notFlag: 'karen_defeated' } },
@@ -309,7 +314,7 @@ export const ROOMS = {
       { x: 8, z: 6, type: 'arcade_cabinet', dialogId: 'arcade_intro' },
       // Side quest interactables
       { x: 0, z: 5, type: 'poster', dialogId: 'quest_atk_3' },
-      { x: 5, z: 6.9, type: 'poster', dialogId: 'quest_def_3' },
+      { x: 3, z: 7, type: 'poster', dialogId: 'quest_def_3' },
     ],
     playerSpawn: { x: 7, z: 2 },
   },
@@ -503,7 +508,12 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
     ],
     npcs: [
-      { id: 'alex_it', x: 6, z: 8, facing: 0, movement: { type: 'wander', radius: 3 } },  // wanders among servers
+      // Default Alex (no server secret quest)
+      { id: 'alex_it', x: 6, z: 8, facing: 0, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'server_secret_started' } },
+      // Server Room Secrets: Alex has info about admin_legacy
+      { id: 'alex_it', x: 6, z: 8, facing: 0, movement: { type: 'wander', radius: 3 }, condition: { flag: 'server_secret_started', notFlag: 'server_secret_done' }, dialogId: 'alex_server_secret' },
+      // Server Room Secrets: done
+      { id: 'alex_it', x: 6, z: 8, facing: 0, movement: { type: 'wander', radius: 3 }, condition: { flag: 'server_secret_done' } },
     ],
     exits: [
       // WEST exit -> Cubicle Farm
@@ -1087,11 +1097,6 @@ export const ROOMS = {
       { type: 'sculpture', x: 1,  z: 10 },
       { type: 'sculpture', x: 14, z: 10 },
 
-      // ── Tall plants — grand interior pillars ──────────────────
-      { type: 'plantTall', x: 6,  z: 5 },
-      { type: 'plantTall', x: 11, z: 5 },
-      { type: 'plantTall', x: 3,  z: 9 },
-      { type: 'plantTall', x: 13, z: 9 },
 
       // ── Luxury Kitchen — NW corner, L-shaped ─────────────────
       // North wall run: cooktop → prep → sink → prep (z:1, x:2–5)
@@ -1127,7 +1132,10 @@ export const ROOMS = {
       { type: 'chair', x: 13, z: 6, rotation: -Math.PI / 2 },
       { type: 'chair', x: 13, z: 7, rotation: -Math.PI / 2 },
     ],
-    npcs: [],
+    npcs: [
+      { id: 'cfos_assistant', x: 8, z: 7, facing: Math.PI, condition: { notFlag: 'cfos_defeated' }, dialogId: 'cfos_assistant_combat' },
+      { id: 'regional_director', x: 8, z: 4, facing: Math.PI, condition: { flag: 'cfos_defeated', notFlag: 'regional_director_defeated' }, dialogId: 'regional_director_combat' },
+    ],
     exits: [
       // SOUTH exit -> Board Room
       { x: 7, z: 11, targetRoom: 'board_room', spawnX: 8, spawnZ: 2 },

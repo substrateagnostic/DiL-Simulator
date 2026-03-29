@@ -60,7 +60,7 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Janet', text: "Number two: if the printer starts making noises, just walk away. We've had three repair techs quit this year." },
     /* 10 */ { type: 'text', speaker: 'Janet', text: "Number three: Ross will use the word 'synergy' at least fourteen times before lunch. Don't drink every time or you'll end up like me." },
     /* 11 */ { type: 'text', speaker: 'Janet', text: "*looks at tumbler* ...Successful. You'll end up successful like me." },
-    /* 12 */ { type: 'text', speaker: 'Janet', text: "Oh, and someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means.", next: 3 },
+    /* 12 */ { type: 'text', speaker: 'Janet', text: "Oh, and someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means.", next: 22 },
     /* 13 */ { type: 'text', speaker: 'Janet', text: "Let's see... Ross is your boss. He's... enthusiastic. He once described a simple trust amendment as 'a paradigm-shifting leverage event.'" },
     /* 14 */ { type: 'text', speaker: 'Janet', text: "Alex from IT lives in the server room. I'm not sure he has a home. He speaks entirely in acronyms." },
     /* 15 */ { type: 'text', speaker: 'Janet', text: "The Intern... bless his heart. He's been here three months and still thinks fiduciary duty is a type of military service." },
@@ -70,6 +70,9 @@ export const DIALOGS = {
     /* 19 */ { type: 'text', speaker: 'Janet', text: "Anyway, good luck with the Henderson case. You're going to need it. Those people make Thanksgiving look like a contact sport." },
     /* 20 */ { type: 'text', speaker: 'Janet', text: '*sip*' },
     /* 21 */ { type: 'end' },
+    /* 22 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 3, ifFalse: 23 },
+    /* 23 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 1, next: 24 },
+    /* 24 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_started', value: true, next: 3 },
   ],
 
   // --------------------------------------------------------------------------
@@ -281,32 +284,60 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Fridge Note', text: 'FINAL WARNING: I have dusted my tupperware for fingerprints. Results are pending. -Janet' },
     /* 14 */ { type: 'text', speaker: 'Fridge Note', text: "P.S. The fingerprints came back. It was me. I ate my own lunch by accident on Tuesday and forgot. I am not apologizing because the principle still stands." },
     /* 15 */ { type: 'text', speaker: 'Narrator', text: "There are seventeen more notes underneath, each more unhinged than the last. You decide you've read enough." },
-    /* 16 */ { type: 'action', action: 'set_flag', flag: 'fridge_saga_complete', value: true, next: 17 },
+    /* 16 */ { type: 'action', action: 'set_flag', flag: 'fridge_saga_complete', value: true, next: 19 },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: 'You quietly close the fridge. The yogurt inside has been there so long it may have achieved sentience.' },
     /* 18 */ { type: 'end' },
+    /* 19 */ { type: 'condition', flag: 'lunch_thief_fridge_done', ifTrue: 17, ifFalse: 20 },
+    /* 20 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 21, ifFalse: 17 },
+    /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 2, next: 22 },
+    /* 22 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_fridge_done', value: true, next: 17 },
   ],
 
   // --------------------------------------------------------------------------
   // PRINTER -- Haunted
   // --------------------------------------------------------------------------
   printer_interact: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
-    /* 1  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
-    /* 2  */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK WHIRRRRR*' },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: 'A single sheet of paper emerges. It reads, in 72-point bold Comic Sans:' },
-    /* 4  */ { type: 'condition', flag: 'printer_visit_2', ifTrue: 10, ifFalse: 5 },
-    /* 5  */ { type: 'text', speaker: 'Printer', text: 'HELP ME' },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "You stare at the paper. The printer stares back. You're not sure how, but it does." },
-    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'REPLACE TONER SOUL.'" },
-    /* 8  */ { type: 'text', speaker: 'Andrew', text: "I'm going to pretend I didn't see that." },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'printer_visit_2', value: true, next: 16 },
-    /* 10 */ { type: 'text', speaker: 'Printer', text: 'I KNOW ABOUT THE HENDERSON FILES' },
-    /* 11 */ { type: 'text', speaker: 'Andrew', text: 'What?!' },
-    /* 12 */ { type: 'text', speaker: 'Narrator', text: "The printer prints another page. It's a detailed org chart of the Henderson Trust with one name circled three times in red." },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: 'But the toner runs out halfway through. The circled name is illegible.' },
-    /* 14 */ { type: 'text', speaker: 'Printer', text: '*sad beeping noises*' },
-    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The display reads: 'REPLACE TONER TO LEARN THE TRUTH.' You check. There is no replacement toner on this floor." },
-    /* 16 */ { type: 'end' },
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 37, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 25, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
+    /* 4  */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK WHIRRRRR*' },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'A single sheet of paper emerges. It reads, in 72-point bold Comic Sans:' },
+    /* 6  */ { type: 'condition', flag: 'printer_visit_2', ifTrue: 12, ifFalse: 7 },
+    /* 7  */ { type: 'text', speaker: 'Printer', text: 'HELP ME' },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "You stare at the paper. The printer stares back. You're not sure how, but it does." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'REPLACE TONER SOUL.'" },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "I'm going to pretend I didn't see that." },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'printer_visit_2', value: true, next: 24 },
+    /* 12 */ { type: 'text', speaker: 'Printer', text: 'I KNOW ABOUT THE HENDERSON FILES' },
+    /* 13 */ { type: 'text', speaker: 'Andrew', text: 'What?!' },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The printer prints another page. It's a detailed org chart of the Henderson Trust with one name circled three times in red." },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: 'But the toner runs out halfway through. The circled name is illegible.' },
+    /* 16 */ { type: 'text', speaker: 'Printer', text: '*sad beeping noises*' },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "The display reads: 'REPLACE TONER TO LEARN THE TRUTH.' You check. There is no replacement toner on this floor." },
+    /* 18 */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 24, ifFalse: 19 },
+    /* 19 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 1, next: 20 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true, next: 24 },
+    /* 21 */ { type: 'end' },  // (unused — kept as safety fallback)
+    /* 22 */ { type: 'end' },  // (unused)
+    /* 23 */ { type: 'end' },  // (unused)
+    /* 24 */ { type: 'end' },
+    // --- Toner installation flow (printer_toner_quest is set) ---
+    /* 25 */ { type: 'text', speaker: 'Narrator', text: "You install the old toner cartridge Alex set aside. The printer makes a sound like a sigh of relief." },
+    /* 26 */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK CHUNK WHIRRRRRR*' },
+    /* 27 */ { type: 'text', speaker: 'Narrator', text: "Three pages print. Slowly. Deliberately. The printer seems almost dignified about it." },
+    /* 28 */ { type: 'text', speaker: 'Narrator', text: "Page 1: An internal memo from 2016 authorizing the 'admin_legacy protocol.' Signed by the Regional Manager." },
+    /* 29 */ { type: 'text', speaker: 'Narrator', text: "Page 2: A list of Henderson Trust account adjustments — small enough to avoid audit flags, large enough to matter. Over eight years." },
+    /* 30 */ { type: 'text', speaker: 'Narrator', text: "Page 3: A single note in different ink: 'If anyone is reading this — check page 47 of the trust document. Original copy is in the Archive. — D.K.'" },
+    /* 31 */ { type: 'text', speaker: 'Andrew', text: "D.K. ...Dave Kowalski? Alex's predecessor?" },
+    /* 32 */ { type: 'text', speaker: 'Printer', text: '*one quiet beep*' },
+    /* 33 */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'THANK YOU.' Then the printer powers down completely. For the first time in years, it seems at peace." },
+    /* 34 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_done', value: true, next: 35 },
+    /* 35 */ { type: 'action', action: 'give_xp', xp: 350, next: 36 },
+    /* 36 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP.", next: 38 },
+    // --- Quest done — printer at peace ---
+    /* 37 */ { type: 'text', speaker: 'Narrator', text: "The printer sits in silence. Its display is dark. It has said everything it needed to say." },
+    /* 38 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -1075,20 +1106,36 @@ export const DIALOGS = {
   ],
 
   server_rack_inspect: [
-    { type: 'text', speaker: 'Narrator', text: 'Row upon row of blinking servers. The hum is almost hypnotic.' },
-    { type: 'text', speaker: 'Narrator', text: 'One server has a sticky note: "DO NOT UNPLUG — contains 73% of all trust account records. The other 27% is vibes."' },
-    { type: 'text', speaker: 'Narrator', text: 'Another note: "This one runs Doom. For stress testing purposes. — Alex"' },
-    { type: 'text', speaker: 'Narrator', text: 'A third note, much older: "admin_legacy — DO NOT DECOMMISSION — R.M."' },
-    { type: 'text', speaker: 'Narrator', text: 'The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.' },
-    { type: 'end' },
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: 'Row upon row of blinking servers. The hum is almost hypnotic.' },
+    /* 1 */ { type: 'text', speaker: 'Narrator', text: 'One server has a sticky note: "DO NOT UNPLUG — contains 73% of all trust account records. The other 27% is vibes."' },
+    /* 2 */ { type: 'text', speaker: 'Narrator', text: 'Another note: "This one runs Doom. For stress testing purposes. — Alex"' },
+    /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A third note, much older: "admin_legacy — DO NOT DECOMMISSION — R.M."' },
+    /* 4 */ { type: 'text', speaker: 'Narrator', text: 'The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.', next: 5 },
+    /* 5 */ { type: 'condition', flag: 'server_secret_started', ifTrue: 9, ifFalse: 6 },
+    /* 6 */ { type: 'condition', flag: 'met_alex_it', ifTrue: 7, ifFalse: 9 },
+    /* 7 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 1, next: 8 },
+    /* 8 */ { type: 'action', action: 'set_flag', flag: 'server_secret_started', value: true, next: 9 },
+    /* 9 */ { type: 'end' },
   ],
 
   alex_it_desk: [
-    { type: 'text', speaker: 'Narrator', text: 'Alex\'s desk is an archaeological dig of snack wrappers and energy drink cans. Stratigraphy suggests habitation since at least 2019.' },
-    { type: 'text', speaker: 'Narrator', text: 'Three monitors: server logs, a Reddit thread about cryptography, and what is unmistakably Minecraft.' },
-    { type: 'text', speaker: 'Narrator', text: 'A sticky note: "BROWSER HISTORY IS ENCRYPTED WITH AES-256. NICE TRY, ROSS."' },
-    { type: 'text', speaker: 'Narrator', text: 'In a drawer (unlocked, because Alex fears nothing), a USB drive labeled "EVIDENCE (BACKUP)" next to a bag of Doritos.' },
-    { type: 'end' },
+    /* 0 */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 5, ifFalse: 1 },
+    /* 1 */ { type: 'text', speaker: 'Narrator', text: 'Alex\'s desk is an archaeological dig of snack wrappers and energy drink cans. Stratigraphy suggests habitation since at least 2019.' },
+    /* 2 */ { type: 'text', speaker: 'Narrator', text: 'Three monitors: server logs, a Reddit thread about cryptography, and what is unmistakably Minecraft.' },
+    /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A sticky note: "BROWSER HISTORY IS ENCRYPTED WITH AES-256. NICE TRY, ROSS."' },
+    /* 4 */ { type: 'text', speaker: 'Narrator', text: 'In a drawer (unlocked, because Alex fears nothing), a USB drive labeled "EVIDENCE (BACKUP)" next to a bag of Doritos.', next: 15 },
+    // --- Printer quest: Alex explains the toner situation ---
+    /* 5 */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 14, ifFalse: 6 },
+    /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Oh. Oh no. It printed something for you, didn't it." },
+    /* 7 */ { type: 'text', speaker: 'Alex from IT', text: "Not a question. I've been watching that printer for three years. It's connected to a legacy subnet with read access to all document archives. Including the Henderson files." },
+    /* 8 */ { type: 'text', speaker: 'Alex from IT', text: "The toner runs out on purpose — firmware was modified to abort print jobs with certain keywords. Whoever did it didn't expect the printer to get opinions about that." },
+    /* 9 */ { type: 'text', speaker: 'Alex from IT', text: "I found old toner stock — pre-2016, before the firmware modification. I've already set it next to the printer. If you install it, the block won't apply and the full document will print." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Just go install it. I want to know what it's been trying to say as much as you do." },
+    /* 11 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2, next: 12 },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true, next: 13 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex slides a dusty toner cartridge across his desk. It has a Post-it note: 'PRE-2016 STOCK. DO NOT USE FOR REGULAR PRINTING.'" },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "Alex's desk. The toner cartridge Alex set aside is near the printer in the cubicle farm." },
+    /* 15 */ { type: 'end' },
   ],
 
   elevator: [
@@ -2369,7 +2416,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Regional Director', text: "I flew in from corporate. Do you know what that means? My time is worth $4,200 per hour." },
     /* 2  */ { type: 'text', speaker: 'Regional Director', text: "And you — an associate from a satellite office — are costing me time." },
     /* 3  */ { type: 'text', speaker: 'Regional Director', text: "Let me show you what 'corporate restructuring' really looks like." },
-    /* 4  */ { type: 'end' },
+    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'regional_director' },
   ],
 
   regional_director_defeated: [
@@ -2756,5 +2803,121 @@ export const DIALOGS = {
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Composure +1. +150 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Still waiting. Character: revealed." },
     /* 9 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // SIDE QUEST: THE LUNCH THIEF
+  // ==========================================================================
+
+  // Janet suspects the intern — triggered after fridge is read and quest is at stage 2
+  janet_lunch_thief_investigate: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "*extremely tense sip* Andrew. I'm glad you're here. We need to talk about the fridge situation." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "I have been keeping notes. A LOG, Andrew. I have a log." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "The thefts always happen between 12:05 and 12:20 PM. That's lunch window. That's when I'm at my desk, eating from my LABELED containers." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "But here's what I know: last Tuesday I found PROTEIN SHAKE residue on my tupperware. Organic chocolate flavor. Who in this office drinks organic chocolate protein shake?" },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: '...The Intern?' },
+    /* 5  */ { type: 'text', speaker: 'Janet', text: "The. Intern. Yes. I've seen him eyeing my Greek yogurt for WEEKS. He once said 'food is food' when I complained. That's not a philosophy, that's a confession." },
+    /* 6  */ { type: 'text', speaker: 'Janet', text: "I'd confront him myself but last time I confronted someone in this building I accidentally started a three-month HR investigation. Don't ask." },
+    /* 7  */ { type: 'text', speaker: 'Janet', text: "*sip* You're new. He'll be caught off guard. Go talk to him. He's over by his cubicle." },
+    /* 8  */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 3, next: 9 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_culprit_revealed', value: true, next: 10 },
+    /* 10 */ { type: 'end' },
+  ],
+
+  // After quest complete — Janet is vindicated and mellowed out
+  janet_lunch_thief_resolved: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "*victorious sip* Andrew. I heard. Justice was served, and it tasted better than my yogurt." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "The Intern replaced everything. EVERYTHING. I now have a Greek yogurt collection that would make a dairy farmer emotional." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "I still have the log, though. Just in case." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "*taps tumbler against yours* Good work, trust officer. This was fiduciary duty in its purest form." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  // Intern confesses — triggered when `lunch_thief_culprit_revealed` is set
+  intern_lunch_thief_confrontation: [
+    /* 0  */ { type: 'condition', flag: 'lunch_thief_complete', ifTrue: 9, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'The Intern', text: "Oh. Hey Andrew. You're— is this about the fridge?" },
+    /* 2  */ { type: 'text', speaker: 'The Intern', text: "Okay. Okay. I can explain." },
+    /* 3  */ { type: 'text', speaker: 'The Intern', text: "I didn't KNOW it was her stuff. At first. The first time I thought it was communal. Then I saw the labels and I... kept going. Which is worse. I know." },
+    /* 4  */ { type: 'text', speaker: 'The Intern', text: "Look — I don't get paid. Like, at all. And my stipend doesn't cover lunch. And Janet's Greek yogurt is really good." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "You need to apologize to Janet. And replace everything." },
+    /* 6  */ { type: 'text', speaker: 'The Intern', text: "Yeah. Yeah, I know. I'll go to the store on my lunch break." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "You don't get a lunch break. You said you don't get paid." },
+    /* 8  */ { type: 'text', speaker: 'The Intern', text: "...I'll go on my 'unpaid personal development period.' Which is what Ross calls my lunch break.", next: 10 },
+    /* 9  */ { type: 'text', speaker: 'The Intern', text: "I already said sorry to Janet. She was surprisingly gracious about it. Well, she said 'I will remember this forever, but I forgive you.' That's grace... right?" },
+    /* 10 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 3, next: 11 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_complete', value: true, next: 12 },
+    /* 12 */ { type: 'action', action: 'give_xp', xp: 250, next: 13 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Case closed. The break room fridge is safe. For now. +250 XP." },
+    /* 14 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // SIDE QUEST: THE PRINTER FROM HELL
+  // ==========================================================================
+
+  // Alex explains the printer situation — triggered after printer_quest_started
+  alex_printer_quest: [
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 16, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Oh. Oh no. It printed something for you, didn't it." },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Not a question. Statement. It's been doing this for three years and I'm the only one who ever noticed, apparently." },
+    /* 3  */ { type: 'choice', speaker: 'Alex from IT', text: "What exactly did it say to you?", choices: [
+      { text: "'REPLACE TONER TO LEARN THE TRUTH.' It mentioned the Henderson Files.", next: 4 },
+      { text: "It printed 'HELP ME' the first time. Then Henderson files.", next: 4 },
+    ]},
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Right. Okay. So. The printer — and I know how this sounds — is connected to a legacy subnet that was never properly decommissioned." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "That subnet still has read access to all document archives from 2003 onward. Including the Henderson Trust file history." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "The printer isn't haunted. It's just... accidentally plugged into institutional memory." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "So what's in the Henderson files that it's trying to print?" },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "That's the thing. The toner runs out on purpose. I've checked the firmware. Someone modified it to abort any print job containing certain keywords." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Whoever set this up didn't want the full document printed. But they didn't expect the printer to develop... opinions about that." },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "Printers don't have opinions." },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I have a server rack with a restraining order, a VPN running on a calculator, and a document system that crashes every Tuesday like clockwork. Please do not tell me what's normal in this building." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "I found a toner cartridge in the supply closet. Pre-2016 stock. The firmware block only applies to standard cartridges — this one might let the print job finish." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "I already set it next to the printer. Just install it and stand back." },
+    /* 14 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2, next: 15 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true, next: 16 },
+    /* 16 */ { type: 'end' },
+  ],
+
+  // (printer_toner_installed removed — toner installation is handled in printer_interact nodes 25-38)
+
+  // ==========================================================================
+  // SIDE QUEST: SERVER ROOM SECRETS
+  // ==========================================================================
+
+  // Alex explains his discovery after player reads the admin_legacy rack
+  alex_server_secret: [
+    /* 0  */ { type: 'condition', flag: 'server_secret_done', ifTrue: 22, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'server_secret_started', ifTrue: 2, ifFalse: 22 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. Close the door. Okay there's no door. Just — pretend we're having a normal conversation about server maintenance." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "You saw the admin_legacy note on the rack. Good. I put it there so someone would ask." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "admin_legacy is an account that's been running since 2006. It's not in any org chart. IT doesn't own it. HR doesn't know it exists. But it has READ/WRITE access to every trust account record in the system." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "That sounds... very bad." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "It IS very bad. And it gets worse." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "I've been logging its activity. Every night at 3:47 AM it runs a query against the Henderson Trust records. Has been doing this since 2016. Always the same query: a read on a specific clause — Page 47, Paragraph 3." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "Page 47? The Janitor mentioned page 47." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah, that's not a coincidence. I think admin_legacy was created to MONITOR whether anyone found that clause. Like a tripwire." },
+    /* 10 */ { type: 'choice', speaker: 'Alex from IT', text: "So. What do you want to do with this information?", choices: [
+      { text: 'Report it to Ross immediately.', next: 11 },
+      { text: "Keep it quiet for now — gather more evidence first.", next: 15 },
+      { text: "This is above my pay grade. Forget I heard it.", next: 19 },
+    ]},
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "Ross? I... okay. He might escalate it. Or he might panic and do something that tips off whoever controls admin_legacy." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "You know what — fine. Tell Ross. But be careful what you say. If the wrong people hear that we're onto this, my access gets revoked and the logs disappear." },
+    /* 13 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'report', next: 21 },
+    /* 14 */ { type: 'action', action: 'give_xp', xp: 100, next: 22 },  // placeholder, replaced by node 21
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "Smart. I've been doing that for three months and it's gotten me... more questions and less sleep. But at least I have documentation." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I'll keep collecting logs. You keep your eyes open — especially around the executive floor. Something about this traces up there." },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'investigate', next: 21 },
+    /* 18 */ { type: 'action', action: 'give_xp', xp: 100, next: 22 },  // placeholder
+    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "Above your pay grade? You're a TRUST OFFICER. YOUR ENTIRE JOB is a fiduciary obligation to the account holders. This is literally in your job description." },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'ignore', next: 21 },
+    /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 2, next: 23 },
+    /* 22 */ { type: 'end' },
+    /* 23 */ { type: 'action', action: 'set_flag', flag: 'server_secret_done', value: true, next: 24 },
+    /* 24 */ { type: 'action', action: 'give_xp', xp: 400, next: 25 },
+    /* 25 */ { type: 'text', speaker: 'Narrator', text: "The truth is out there. You've chosen what to do with it. +400 XP." },
+    /* 26 */ { type: 'end' },
   ],
 };
