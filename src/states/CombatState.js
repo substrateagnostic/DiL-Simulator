@@ -134,6 +134,8 @@ export class CombatState {
       ...this.player.stats,
       hp: this.engine.player.hp,
       mp: this.engine.player.mp,
+      maxHP: this.engine.player.maxHP,
+      maxMP: this.engine.player.maxMP,
       momentum: this.engine.player.momentum,
       name: 'Andrew',
       _xpTable: XP_TABLE,

@@ -196,8 +196,8 @@ export const ROOMS = {
     ],
     npcs: [
       // Janet — conditional entries covering lunch thief quest states
-      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
-      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_investigate' },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { notFlag: 'lunch_thief_fridge_done' } },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_fridge_done', notFlag: 'lunch_thief_culprit_revealed' }, dialogId: 'janet_lunch_thief_investigate' },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_resolved' },
       // Intern — conditional entries covering lunch thief confrontation
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
@@ -315,6 +315,8 @@ export const ROOMS = {
       // Side quest interactables
       { x: 0, z: 5, type: 'poster', dialogId: 'quest_atk_3' },
       { x: 3, z: 7, type: 'poster', dialogId: 'quest_def_3' },
+      // Network Ghost signal booster (east wall)
+      { x: 8, z: 3, type: 'poster', dialogId: 'network_booster_br' },
     ],
     playerSpawn: { x: 7, z: 2 },
   },
@@ -754,6 +756,8 @@ export const ROOMS = {
       { x: 6,  z: 0, type: 'poster', dialogId: 'poster_exec_2' },
       { x: 10, z: 0, type: 'poster', dialogId: 'poster_exec_3' },
       { x: 12, z: 0, type: 'poster', dialogId: 'poster_exec_4' },
+      // Network Ghost signal booster (east wall near printer)
+      { x: 15, z: 5, type: 'poster', dialogId: 'network_booster_exec' },
     ],
     playerSpawn: { x: 8, z: 10 },
   },
@@ -793,6 +797,8 @@ export const ROOMS = {
     interactables: [
       { x: 3, z: 10, type: 'graffiti', dialogId: 'stairwell_graffiti' },
       { x: 0, z: 10, type: 'poster', dialogId: 'poster_stair_1' },
+      // Network Ghost signal booster (inner wall, midpoint)
+      { x: 1, z: 10, type: 'poster', dialogId: 'network_booster_stairwell' },
     ],
     playerSpawn: { x: 2, z: 18 },
   },

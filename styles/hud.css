@@ -133,6 +133,42 @@
   font-style: normal;
 }
 
+/* Side quest tracker */
+.hud-side-quest-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  color: #53a8b6;
+  margin-bottom: 6px;
+}
+
+.hud-side-quest-entry {
+  margin-bottom: 6px;
+}
+
+.hud-side-quest-name {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #aaa;
+  padding-left: 12px;
+  position: relative;
+}
+
+.hud-side-quest-name::before {
+  content: '◆';
+  position: absolute;
+  left: 0;
+  color: #53a8b6;
+  font-size: 10px;
+}
+
+.hud-side-quest-objective {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: #777;
+  padding-left: 12px;
+  line-height: 1.2;
+}
+
 /* Interaction prompt */
 .interact-prompt {
   position: absolute;

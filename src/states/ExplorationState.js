@@ -262,7 +262,7 @@ export class ExplorationState {
           quest_legacy_admin_complete: 'legacy_admin',
           quest_network_ghost_complete: 'network_ghost',
           quest_daves_legacy_complete: 'daves_legacy',
-          quest_printers_soul_complete: 'printers_soul',
+          printer_quest_done: 'printers_soul',
           quest_final_patch_complete: 'final_patch',
         };
         if (questFlagMap[key]) {
@@ -274,6 +274,12 @@ export class ExplorationState {
           this.player.stats.spd += 3;
           this._updateMiniStats();
           this._showToast('SPD +3! The overclocked badge hums with power.', 'item');
+        }
+        // Network Ghost: derive all_boosters_placed when all 3 are set
+        if (key === 'booster_br_placed' || key === 'booster_stair_placed' || key === 'booster_exec_placed') {
+          if (this.player.getFlag('booster_br_placed') && this.player.getFlag('booster_stair_placed') && this.player.getFlag('booster_exec_placed')) {
+            this.player.setFlag('all_boosters_placed', true);
+          }
         }
         // Story thoughts triggered by flags
         if (STORY_THOUGHTS[key]) {
@@ -839,7 +845,7 @@ export class ExplorationState {
     }
 
     // Reward or penalty based on grade
-    const XP_BY_GRADE = { 'A+': 150, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
+    const XP_BY_GRADE = { 'A+': 200, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
     const xpReward = XP_BY_GRADE[health.grade] ?? 0;
     if (xpReward > 0) this.player.gainXP(xpReward);
 
@@ -1142,6 +1148,39 @@ export class ExplorationState {
 
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
       return npc.dialogId;
+    }
+
+    // Printer from Hell: route Alex to printer dialog while quest is active
+    if (
+      id === 'alex_it' &&
+      this.player.getFlag('printer_quest_started') &&
+      !this.player.getFlag('printer_quest_done')
+    ) {
+      return 'alex_it_quest_printer';
+    }
+
+    // Alex IT subquests: route to active quest dialog, or start next unstarted quest after intro
+    if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
+      const p = this.player;
+      // Active quests take priority (return player to ongoing quest dialog)
+      if (p.getFlag('anomaly_started') && !p.getFlag('quest_anomaly_347_complete')) return 'alex_it_quest_anomaly';
+      if (p.getFlag('legacy_started') && !p.getFlag('quest_legacy_admin_complete')) return 'alex_it_quest_legacy';
+      if (p.getFlag('network_started') && !p.getFlag('quest_network_ghost_complete')) return 'alex_it_quest_network';
+      if (p.getFlag('dave_started') && !p.getFlag('quest_daves_legacy_complete')) return 'alex_it_quest_dave';
+      if (p.getFlag('final_patch_started') && !p.getFlag('quest_final_patch_complete')) return 'alex_it_quest_final';
+      // Start next unstarted quest (sequential unlock after each completion)
+      if (!p.getFlag('anomaly_started')) return 'alex_it_quest_anomaly';
+      if (p.getFlag('quest_anomaly_347_complete') && !p.getFlag('legacy_started')) return 'alex_it_quest_legacy';
+      if (p.getFlag('quest_legacy_admin_complete') && !p.getFlag('network_started')) return 'alex_it_quest_network';
+      if (p.getFlag('quest_network_ghost_complete') && !p.getFlag('dave_started')) return 'alex_it_quest_dave';
+      if (p.getFlag('quest_daves_legacy_complete') && !p.getFlag('final_patch_started')) return 'alex_it_quest_final';
+    }
+
+    // Janitor subquest routing: legacy token and dave story
+    if (id === 'janitor') {
+      const p = this.player;
+      if (p.getFlag('legacy_started') && !p.getFlag('legacy_janitor_done')) return 'janitor_legacy_token';
+      if (p.getFlag('dave_started') && !p.getFlag('dave_janitor_done')) return 'janitor_dave';
     }
 
     if (
@@ -1530,13 +1569,21 @@ export class ExplorationState {
     if (this.questElement) {
       this.questElement.style.display = 'block';
       const sideHints = this._getActiveSideQuestHints();
-      const sideHTML = sideHints.map(h =>
+      const hintsHTML = sideHints.map(h =>
         `<div class="hud-quest-optional">${h}</div>`
+      ).join('');
+      const sideQuests = this._getActiveSideQuests();
+      const sideQuestsHTML = sideQuests.map(q =>
+        `<div class="hud-side-quest-entry">
+          <div class="hud-side-quest-name">${q.name}</div>
+          <div class="hud-side-quest-objective">${q.objective}</div>
+        </div>`
       ).join('');
       this.questElement.innerHTML = `
         <div class="hud-quest-title">OBJECTIVE</div>
         <div class="hud-quest-objective">${objective}</div>
-        ${sideHTML ? `<div class="hud-quest-divider"></div>${sideHTML}` : ''}
+        ${hintsHTML ? `<div class="hud-quest-divider"></div>${hintsHTML}` : ''}
+        ${sideQuestsHTML ? `<div class="hud-quest-divider"></div><div class="hud-side-quest-title">SIDE QUESTS</div>${sideQuestsHTML}` : ''}
       `;
     }
 
@@ -1565,39 +1612,62 @@ export class ExplorationState {
       }
     }
 
-    // Motivational poster quests — only shown after Ross mentions them in the Karen loss tutorial
+    return hints;
+  }
+
+  _getActiveSideQuests() {
+    const quests = [];
+    const f = (flag) => this.player.getFlag(flag);
+
+    // The Lunch Thief
+    if (f('lunch_thief_started') && !f('lunch_thief_complete')) {
+      let objective = 'Check the break room fridge';
+      if (f('lunch_thief_fridge_done') && !f('lunch_thief_culprit_revealed')) objective = 'Ask Janet about the thief';
+      else if (f('lunch_thief_culprit_revealed')) objective = 'Confront the culprit';
+      quests.push({ name: 'The Lunch Thief', objective });
+    }
+
+    // The Printer from Hell
+    if (f('printer_quest_started') && !f('printer_quest_done')) {
+      const objective = f('printer_toner_quest') ? "Find the printer's true purpose" : 'Ask Alex from IT about the printer';
+      quests.push({ name: 'The Printer from Hell', objective });
+    }
+
+    // Server Room Secrets
+    if (f('server_secret_started') && !f('server_secret_done')) {
+      quests.push({ name: 'Server Room Secrets', objective: 'Help Alex with his discovery' });
+    }
+
+    // Motivational poster quests — unlocked after losing to Karen
     if (f('retry_karen')) {
-      const atkDone = ['quest_atk_1_done','quest_atk_2_done','quest_atk_3_done','quest_atk_4_done','quest_atk_5_done'].filter(f).length;
-      if (atkDone < 5) {
-        hints.push(`Find assertiveness posters for ATK bonuses (${atkDone}/5)`);
-      }
-      const defDone = ['quest_def_1_done','quest_def_2_done','quest_def_3_done','quest_def_4_done','quest_def_5_done'].filter(f).length;
-      if (defDone < 5) {
-        hints.push(`Find composure posters for DEF bonuses (${defDone}/5)`);
-      }
+      const atkDone = ['quest_atk_1_done','quest_atk_2_done','quest_atk_3_done','quest_atk_4_done','quest_atk_5_done'].filter(fl => f(fl)).length;
+      if (atkDone < 5) quests.push({ name: 'Assertiveness Training', objective: `Find assertiveness posters (${atkDone}/5)` });
+      const defDone = ['quest_def_1_done','quest_def_2_done','quest_def_3_done','quest_def_4_done','quest_def_5_done'].filter(fl => f(fl)).length;
+      if (defDone < 5) quests.push({ name: 'Composure Training', objective: `Find composure posters (${defDone}/5)` });
     }
 
     // Alex IT subquests
     if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
-      hints.push('Alex mentioned a signal at 3:47 AM...');
+      quests.push({ name: 'The 3:47 AM Anomaly', objective: 'Return to Alex from IT' });
     }
     if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
-      hints.push('Alex needs help tracing an old admin account');
+      const legacyObj = f('legacy_janitor_done') ? 'Return to Alex from IT' : "Get the Janitor's USB token";
+      quests.push({ name: 'Legacy Admin Account', objective: legacyObj });
     }
     if (f('network_started') && !f('quest_network_ghost_complete')) {
-      hints.push('Something strange on the network — Alex is investigating');
+      const placed = (f('booster_br_placed') ? 1 : 0) + (f('booster_stair_placed') ? 1 : 0) + (f('booster_exec_placed') ? 1 : 0);
+      const netObj = placed >= 3 ? 'Return to Alex from IT' : `Place signal boosters (${placed}/3)`;
+      quests.push({ name: 'Network Ghost', objective: netObj });
     }
     if (f('dave_started') && !f('quest_daves_legacy_complete')) {
-      hints.push("What happened to Alex's predecessor, Dave?");
-    }
-    if (f('printer_quest_started') && !f('quest_printers_soul_complete')) {
-      hints.push('The printer is acting stranger than usual...');
+      const daveObj = f('dave_janitor_done') ? 'Return to Alex from IT' : 'Ask the Janitor about Dave';
+      quests.push({ name: "Dave's Legacy", objective: daveObj });
     }
     if (f('final_patch_started') && !f('quest_final_patch_complete')) {
-      hints.push('Alex has a plan for the charter and the server');
+      quests.push({ name: 'The Final Patch', objective: 'Return to Alex in the server room' });
     }
 
-    return hints;
+    return quests;
   }
 
   _updateQuest(questId, stage) {

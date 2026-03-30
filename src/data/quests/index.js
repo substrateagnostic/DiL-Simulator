@@ -156,16 +156,6 @@ export const QUESTS = {
       { id: 4, objective: 'Return to Alex with the full story' },
     ],
   },
-  printers_soul: {
-    id: 'printers_soul',
-    name: "Printer's Soul",
-    stages: [
-      { id: 0, objective: 'The printer is acting stranger than usual' },
-      { id: 1, objective: 'Find the original printer receipt in the Archive' },
-      { id: 2, objective: 'Connect the printer to Alex\'s network' },
-      { id: 3, objective: 'Return to Alex to free the printer\'s soul' },
-    ],
-  },
   final_patch: {
     id: 'final_patch',
     name: 'The Final Patch',
