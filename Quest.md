@@ -169,16 +169,15 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 
 ---
 
-### Legacy Admin Account
-*Track down the credentials for a 2006 admin account running shadow transactions.*
+### The Phantom Approver
+*An expense bot has been auto-approving disbursements under a ghost account since 2006. Find the workstation it runs on.*
 
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex |
-| 2 | Find the access request form in the Archive (2006 filing cabinets) |
-| 3 | Find the password hint in HR records |
-| 4 | Get the physical security token from the Janitor |
-| 5 | Return all three to Alex |
+| 2 | Find the HR paper trail *(HR Department, x:14 z:0.5)* |
+| 3 | Find the phantom workstation *(Cubicle Farm, x:16 z:6)* |
+| 4 | Return to Alex |
 
 **Reward:** Ability unlocked — **Root Access** *(Power 50, strips all enemy buffs)*
 
@@ -190,24 +189,24 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex |
-| 2 | Place signal booster in the Break Room |
-| 3 | Place signal booster in the Stairwell |
-| 4 | Place signal booster on the Executive Floor |
+| 2 | Place signal booster in the Break Room *(east wall, x:14 z:8)* |
+| 3 | Place signal booster in the Stairwell *(east wall, x:3 z:5)* |
+| 4 | Place signal booster in the Conference Room *(east wall, x:10 z:2)* |
 | 5 | Return to Alex |
 
 **Reward:** Ability unlocked — **Firewall** *(Blocks the next enemy ability entirely)*
 
 ---
 
-### Dave's Legacy
-*Find out what actually happened to Alex's predecessor.*
+### The Tuesday 2PM
+*Every Tuesday at 2PM, a recurring meeting room booking appears in the system — under a name no one recognizes. Find the three artifacts.*
 
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex |
-| 2 | Ask the Janitor about Dave |
-| 3 | Search the Archive for Dave's records |
-| 4 | Check HR for Dave's exit interview |
+| 2 | Find the sticky note *(Cubicle Farm, x:10 z:6)* |
+| 3 | Find the floppy disk *(Break Room, x:4 z:6)* |
+| 4 | Find the server tag *(Server Room, x:7 z:3)* |
 | 5 | Return to Alex |
 
 **Reward:** Ability unlocked — **Temporal Audit** *(Take two actions in one turn)*
@@ -215,27 +214,28 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 ---
 
 ### Printer's Soul
-*The printer is haunted. Help Alex communicate with it.*
+*The printer is haunted. Its firmware predates the building. Help Alex reach it.*
 
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex |
-| 2 | Find the printer's original receipt in the Archive |
-| 3 | Interact with the printer in the Cubicle Farm |
-| 4 | Return to Alex to connect it to the network |
+| 2 | Find the firmware disk *(Server Room, x:7 z:4)* |
+| 3 | Find the ethernet port on the printer *(Cubicle Farm, x:13 z:2)* |
+| 4 | Return to Alex |
 
 **Reward:** Ability unlocked — **Notarized Strike** *(Legally binding attack, Power 60)*
 
 ---
 
-### The Final Patch
-*Deploy the 1947 charter to the server. Defend Alex while he uploads.*
+### The Unauthorized Patch
+*Alex wants to push a patch that will shut down the ghost processes for good. It's not approved. Do it anyway.*
 
 | Step | What to do |
 |------|-----------|
-| 1 | Bring the charter to Alex in the Server Room |
-| 2 | Defend the server room during the upload |
-| 3 | Wait for the patch to deploy |
+| 1 | Talk to Alex |
+| 2 | Silence the monitoring terminal *(Server Room, x:5 z:6)* |
+| 3 | Defeat the security guard who shows up |
+| 4 | Wait for the patch to deploy |
 
 **Reward:** Ability unlocked — **Invoke Charter** *(Read the 1947 charter aloud, Power 100 — devastating to bad-faith enemies)*
 

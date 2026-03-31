@@ -210,8 +210,8 @@ export const ROOMS = {
       { x: 9, z: 0, targetRoom: 'ross_office', spawnX: 4, spawnZ: 6 },
       { x: 10, z: 0, targetRoom: 'ross_office', spawnX: 4, spawnZ: 6 },
       // WEST exit -> Break Room
-      { x: 0, z: 7, targetRoom: 'break_room', spawnX: 7, spawnZ: 3 },
-      { x: 0, z: 8, targetRoom: 'break_room', spawnX: 7, spawnZ: 3 },
+      { x: 0, z: 7, targetRoom: 'break_room', spawnX: 12, spawnZ: 5 },
+      { x: 0, z: 8, targetRoom: 'break_room', spawnX: 12, spawnZ: 5 },
       // EAST exit -> Server Room
       { x: 19, z: 7, targetRoom: 'server_room', spawnX: 2, spawnZ: 7 },
       { x: 19, z: 8, targetRoom: 'server_room', spawnX: 2, spawnZ: 7 },
@@ -240,85 +240,96 @@ export const ROOMS = {
       // Side quest interactables
       { x: 19, z: 12, type: 'poster', dialogId: 'quest_atk_1' },
       { x: 0,  z: 3,  type: 'poster', dialogId: 'quest_def_1' },
+      // Phantom Approver: source workstation
+      { x: 16, z: 6,  type: 'poster', dialogId: 'phantom_workstation_cf' },
+      // Tuesday 2PM: sticky note on a monitor
+      { x: 10, z: 6,  type: 'poster', dialogId: 'tuesday_sticky_note' },
+      // Printer's Soul: ethernet port on the wall near the printer
+      { x: 13, z: 2,  type: 'poster', dialogId: 'printer_ethernet_port' },
     ],
     playerSpawn: { x: 5, z: 12 },
   },
 
   // ----------------------------------------------------------
-  // 2. BREAK ROOM — 10x8
+  // 2. BREAK ROOM — 16x12
   // ----------------------------------------------------------
   break_room: {
     id: 'break_room',
     name: 'Break Room',
-    width: 10,
-    height: 8,
+    width: 16,
+    height: 12,
     floorColor: 0xd8d0c0,
     walls: true,
     furniture: [
       // === Kitchen counter along north wall ===
-      { type: 'desk', x: 3, z: 1, rotation: 0 },   // counter surface
-      { type: 'coffeeMachine', x: 2, z: 1 },
-      { type: 'microwave', x: 4, z: 1 },
-
-      // === Fridge in NW corner ===
       { type: 'fridge', x: 1, z: 0.5, rotation: 0 },
+      { type: 'waterCooler', x: 2.5, z: 1.5 },
+      { type: 'desk', x: 5, z: 1, rotation: 0 },
+      { type: 'coffeeMachine', x: 4, z: 1 },
+      { type: 'desk', x: 7, z: 1, rotation: 0 },
+      { type: 'microwave', x: 8, z: 1 },
+      { type: 'trashCan', x: 6.5, z: 1 },
 
-      // === Vending machine along east wall ===
-      { type: 'vendingMachine', x: 6, z: 0.5, rotation: 0 },
+      // === Vending machine (northeast corner) ===
+      { type: 'vendingMachine', x: 14, z: 1, rotation: 0 },
 
-      // === Table 1 (center-left) ===
-      { type: 'desk', x: 3, z: 4, rotation: 0 },  // break table
-      { type: 'chair', x: 2, z: 4, rotation: Math.PI / 2 },
-      { type: 'chair', x: 4, z: 4, rotation: -Math.PI / 2 },
-      { type: 'chair', x: 3, z: 3, rotation: 0 },
-      { type: 'chair', x: 3, z: 5, rotation: Math.PI },
+      // === Table 1 (west center) ===
+      { type: 'desk', x: 4, z: 6, rotation: 0 },
+      { type: 'chair', x: 3, z: 6, rotation: Math.PI / 2 },
+      { type: 'chair', x: 5, z: 6, rotation: -Math.PI / 2 },
+      { type: 'chair', x: 4, z: 5, rotation: 0 },
+      { type: 'chair', x: 4, z: 7, rotation: Math.PI },
 
-      // === Table 2 (center-right) ===
-      { type: 'desk', x: 6, z: 4, rotation: 0 },  // break table
-      { type: 'chair', x: 5, z: 4, rotation: Math.PI / 2 },
-      { type: 'chair', x: 7, z: 4, rotation: -Math.PI / 2 },
-      { type: 'chair', x: 6, z: 3, rotation: 0 },
-      { type: 'chair', x: 6, z: 5, rotation: Math.PI },
+      // === Table 2 (center) ===
+      { type: 'desk', x: 9, z: 6, rotation: 0 },
+      { type: 'chair', x: 8, z: 6, rotation: Math.PI / 2 },
+      { type: 'chair', x: 10, z: 6, rotation: -Math.PI / 2 },
+      { type: 'chair', x: 9, z: 5, rotation: 0 },
+      { type: 'chair', x: 9, z: 7, rotation: Math.PI },
 
-      // === Trash and misc ===
-      { type: 'trashCan', x: 4.5, z: 1 },
+      // === Table 3 (south center) ===
+      { type: 'desk', x: 6, z: 10, rotation: 0 },
+      { type: 'chair', x: 5, z: 10, rotation: Math.PI / 2 },
+      { type: 'chair', x: 7, z: 10, rotation: -Math.PI / 2 },
+      { type: 'chair', x: 6, z: 9, rotation: 0 },
+      { type: 'chair', x: 6, z: 11, rotation: Math.PI },
 
-      // === Motivational poster ===
-      { type: 'motivationalPoster', x: 5, z: 0.1, rotation: 0 },
+      // === Motivational poster on north wall ===
+      { type: 'motivationalPoster', x: 10, z: 0.1, rotation: 0 },
 
-      // === Water cooler ===
-      { type: 'waterCooler', x: 0.5, z: 1.5 },
+      // === Arcade cabinet (southeast) ===
+      { type: 'arcadeCabinet', x: 13, z: 10, rotation: Math.PI },
 
-      // === Arcade cabinet ===
-      { type: 'arcadeCabinet', x: 8, z: 6, rotation: Math.PI },
       // Side quest posters
-      { type: 'motivationalPoster', x: 0.1, z: 5, rotation: Math.PI / 2 },
-      { type: 'motivationalPoster', x: 3, z: 6.9, rotation: Math.PI },
+      { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
+      { type: 'motivationalPoster', x: 5,   z: 11.9, rotation: Math.PI },
     ],
     npcs: [
-      { id: 'chad', x: 4, z: 4, facing: -Math.PI / 2, movement: { type: 'wander', radius: 2 }, condition: { notFlag: 'karen_defeated' } },
-      { id: 'grandma', x: 6, z: 5, facing: Math.PI, condition: { flag: 'act5_complete' } },
+      { id: 'chad', x: 4, z: 6, facing: -Math.PI / 2, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'karen_defeated' } },
+      { id: 'grandma', x: 9, z: 6, facing: Math.PI, condition: { flag: 'act5_complete' } },
     ],
     exits: [
       // EAST exit -> Cubicle Farm
-      { x: 9, z: 3, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 6 },
-      { x: 9, z: 4, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 6 },
+      { x: 15, z: 5, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 6 },
+      { x: 15, z: 6, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 6 },
     ],
     interactables: [
-      { x: 2, z: 1, type: 'coffee_machine', dialogId: 'coffee_machine' },
-      { x: 1, z: 0, type: 'fridge', dialogId: 'fridge_notes' },
-      { x: 6, z: 1, type: 'vending_machine', dialogId: 'vending_machine' },
-      { x: 7, z: 1, type: 'supply_shop' },
-      { x: 4, z: 1, type: 'microwave', dialogId: 'microwave' },
-      { x: 5, z: 0, type: 'poster', dialogId: 'poster_br_1' },
-      { x: 8, z: 6, type: 'arcade_cabinet', dialogId: 'arcade_intro' },
+      { x: 4,  z: 1,  type: 'coffee_machine',  dialogId: 'coffee_machine' },
+      { x: 1,  z: 0,  type: 'fridge',           dialogId: 'fridge_notes' },
+      { x: 14, z: 1,  type: 'vending_machine',  dialogId: 'vending_machine' },
+      { x: 14, z: 2,  type: 'supply_shop' },
+      { x: 8,  z: 1,  type: 'microwave',        dialogId: 'microwave' },
+      { x: 10, z: 0,  type: 'poster',           dialogId: 'poster_br_1' },
+      { x: 13, z: 10, type: 'arcade_cabinet',   dialogId: 'arcade_intro' },
       // Side quest interactables
-      { x: 0, z: 5, type: 'poster', dialogId: 'quest_atk_3' },
-      { x: 3, z: 7, type: 'poster', dialogId: 'quest_def_3' },
+      { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3' },
+      { x: 5,  z: 11, type: 'poster', dialogId: 'quest_def_3' },
       // Network Ghost signal booster (east wall)
-      { x: 8, z: 3, type: 'poster', dialogId: 'network_booster_br' },
+      { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br' },
+      // Tuesday 2PM: old floppy disk on westmost table
+      { x: 4, z: 6, type: 'poster', dialogId: 'tuesday_floppy' },
     ],
-    playerSpawn: { x: 7, z: 2 },
+    playerSpawn: { x: 12, z: 5 },
   },
 
   // ----------------------------------------------------------
@@ -447,6 +458,8 @@ export const ROOMS = {
       // Side quest interactables
       { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2' },
       { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2' },
+      // Network Ghost signal booster (east wall)
+      { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf' },
     ],
     playerSpawn: { x: 1, z: 4 },
   },
@@ -529,6 +542,12 @@ export const ROOMS = {
       // Side quest interactables
       { x: 3, z: 0, type: 'poster', dialogId: 'quest_atk_4' },
       { x: 0, z: 7, type: 'poster', dialogId: 'quest_def_4' },
+      // Tuesday 2PM: decommissioned server tag on equipment shelf
+      { x: 7, z: 3, type: 'poster', dialogId: 'tuesday_server_tag' },
+      // Printer's Soul: firmware disk on equipment shelf
+      { x: 7, z: 4, type: 'poster', dialogId: 'printer_firmware_disk' },
+      // Unauthorized Patch: network monitoring terminal
+      { x: 5, z: 6, type: 'poster', dialogId: 'unauthorized_patch_monitor' },
     ],
     playerSpawn: { x: 2, z: 7 },
   },
@@ -756,8 +775,6 @@ export const ROOMS = {
       { x: 6,  z: 0, type: 'poster', dialogId: 'poster_exec_2' },
       { x: 10, z: 0, type: 'poster', dialogId: 'poster_exec_3' },
       { x: 12, z: 0, type: 'poster', dialogId: 'poster_exec_4' },
-      // Network Ghost signal booster (east wall near printer)
-      { x: 15, z: 5, type: 'poster', dialogId: 'network_booster_exec' },
     ],
     playerSpawn: { x: 8, z: 10 },
   },
@@ -785,6 +802,8 @@ export const ROOMS = {
       { type: 'cobweb', x: 3.8, z: 10 },
       // Motivational poster on wall
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
+      // Network Ghost signal booster mount (east wall, upper section)
+      { type: 'motivationalPoster', x: 3.9, z: 5, rotation: -Math.PI / 2 },
     ],
     exits: [
       // SOUTH exit -> Cubicle Farm
@@ -797,8 +816,8 @@ export const ROOMS = {
     interactables: [
       { x: 3, z: 10, type: 'graffiti', dialogId: 'stairwell_graffiti' },
       { x: 0, z: 10, type: 'poster', dialogId: 'poster_stair_1' },
-      // Network Ghost signal booster (inner wall, midpoint)
-      { x: 1, z: 10, type: 'poster', dialogId: 'network_booster_stairwell' },
+      // Network Ghost signal booster (east wall, upper section)
+      { x: 3, z: 5, type: 'poster', dialogId: 'network_booster_stairwell' },
     ],
     playerSpawn: { x: 2, z: 18 },
   },
@@ -940,6 +959,8 @@ export const ROOMS = {
       { x: 1, z: 0.5, type: 'filing_cabinets', dialogId: 'hr_vault_code' },
       { x: 14, z: 8, type: 'filing_cabinets', dialogId: 'diane_documents' },
       { x: 8, z: 0, type: 'poster', dialogId: 'poster_hr_1' },
+      // Phantom Approver: expense report paper trail
+      { x: 14, z: 0.5, type: 'filing_cabinets', dialogId: 'phantom_expense_hr' },
     ],
     playerSpawn: { x: 2, z: 4 },
   },

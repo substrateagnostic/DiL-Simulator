@@ -263,6 +263,7 @@ export class ExplorationState {
           quest_network_ghost_complete: 'network_ghost',
           quest_daves_legacy_complete: 'daves_legacy',
           printer_quest_done: 'printers_soul',
+          quest_printer_soul_complete: 'printers_soul',
           quest_final_patch_complete: 'final_patch',
         };
         if (questFlagMap[key]) {
@@ -276,9 +277,15 @@ export class ExplorationState {
           this._showToast('SPD +3! The overclocked badge hums with power.', 'item');
         }
         // Network Ghost: derive all_boosters_placed when all 3 are set
-        if (key === 'booster_br_placed' || key === 'booster_stair_placed' || key === 'booster_exec_placed') {
-          if (this.player.getFlag('booster_br_placed') && this.player.getFlag('booster_stair_placed') && this.player.getFlag('booster_exec_placed')) {
+        if (key === 'booster_br_placed' || key === 'booster_stair_placed' || key === 'booster_conf_placed') {
+          if (this.player.getFlag('booster_br_placed') && this.player.getFlag('booster_stair_placed') && this.player.getFlag('booster_conf_placed')) {
             this.player.setFlag('all_boosters_placed', true);
+          }
+        }
+        // Tuesday 2PM: derive tuesday_all_found when all 3 artifacts are collected
+        if (key === 'tuesday_floppy_found' || key === 'tuesday_tag_found' || key === 'tuesday_sticky_found') {
+          if (this.player.getFlag('tuesday_floppy_found') && this.player.getFlag('tuesday_tag_found') && this.player.getFlag('tuesday_sticky_found')) {
+            this.player.setFlag('tuesday_all_found', true);
           }
         }
         // Story thoughts triggered by flags
@@ -1150,13 +1157,9 @@ export class ExplorationState {
       return npc.dialogId;
     }
 
-    // Printer from Hell: route Alex to printer dialog while quest is active
-    if (
-      id === 'alex_it' &&
-      this.player.getFlag('printer_quest_started') &&
-      !this.player.getFlag('printer_quest_done')
-    ) {
-      return 'alex_it_quest_printer';
+    // Printer from Hell side quest: route Alex to explanation dialog while active
+    if (id === 'alex_it' && this.player.getFlag('printer_quest_started') && !this.player.getFlag('printer_quest_done')) {
+      return 'alex_printer_quest';
     }
 
     // Alex IT subquests: route to active quest dialog, or start next unstarted quest after intro
@@ -1167,20 +1170,15 @@ export class ExplorationState {
       if (p.getFlag('legacy_started') && !p.getFlag('quest_legacy_admin_complete')) return 'alex_it_quest_legacy';
       if (p.getFlag('network_started') && !p.getFlag('quest_network_ghost_complete')) return 'alex_it_quest_network';
       if (p.getFlag('dave_started') && !p.getFlag('quest_daves_legacy_complete')) return 'alex_it_quest_dave';
+      if (p.getFlag('printer_soul_started') && !p.getFlag('quest_printer_soul_complete')) return 'alex_it_quest_printer';
       if (p.getFlag('final_patch_started') && !p.getFlag('quest_final_patch_complete')) return 'alex_it_quest_final';
       // Start next unstarted quest (sequential unlock after each completion)
       if (!p.getFlag('anomaly_started')) return 'alex_it_quest_anomaly';
       if (p.getFlag('quest_anomaly_347_complete') && !p.getFlag('legacy_started')) return 'alex_it_quest_legacy';
       if (p.getFlag('quest_legacy_admin_complete') && !p.getFlag('network_started')) return 'alex_it_quest_network';
       if (p.getFlag('quest_network_ghost_complete') && !p.getFlag('dave_started')) return 'alex_it_quest_dave';
-      if (p.getFlag('quest_daves_legacy_complete') && !p.getFlag('final_patch_started')) return 'alex_it_quest_final';
-    }
-
-    // Janitor subquest routing: legacy token and dave story
-    if (id === 'janitor') {
-      const p = this.player;
-      if (p.getFlag('legacy_started') && !p.getFlag('legacy_janitor_done')) return 'janitor_legacy_token';
-      if (p.getFlag('dave_started') && !p.getFlag('dave_janitor_done')) return 'janitor_dave';
+      if (p.getFlag('quest_daves_legacy_complete') && !p.getFlag('printer_soul_started')) return 'alex_it_quest_printer';
+      if (p.getFlag('quest_printer_soul_complete') && !p.getFlag('final_patch_started')) return 'alex_it_quest_final';
     }
 
     if (
@@ -1651,20 +1649,47 @@ export class ExplorationState {
       quests.push({ name: 'The 3:47 AM Anomaly', objective: 'Return to Alex from IT' });
     }
     if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
-      const legacyObj = f('legacy_janitor_done') ? 'Return to Alex from IT' : "Get the Janitor's USB token";
-      quests.push({ name: 'Legacy Admin Account', objective: legacyObj });
+      const found = (f('phantom_hr_found') ? 1 : 0) + (f('phantom_workstation_found') ? 1 : 0);
+      const legacyObj = found >= 2 ? 'Return to Alex from IT' : `Investigate the Phantom Approver (${found}/2)`;
+      quests.push({ name: 'The Phantom Approver', objective: legacyObj });
     }
     if (f('network_started') && !f('quest_network_ghost_complete')) {
-      const placed = (f('booster_br_placed') ? 1 : 0) + (f('booster_stair_placed') ? 1 : 0) + (f('booster_exec_placed') ? 1 : 0);
-      const netObj = placed >= 3 ? 'Return to Alex from IT' : `Place signal boosters (${placed}/3)`;
+      const placed = (f('booster_br_placed') ? 1 : 0) + (f('booster_stair_placed') ? 1 : 0) + (f('booster_conf_placed') ? 1 : 0);
+      let netObj;
+      if (placed >= 3) {
+        netObj = 'Return to Alex from IT';
+      } else {
+        const remaining = [];
+        if (!f('booster_br_placed')) remaining.push('• Break Room');
+        if (!f('booster_stair_placed')) remaining.push('• Stairwell');
+        if (!f('booster_conf_placed')) remaining.push('• Conference Room');
+        netObj = `Place signal boosters (${placed}/3):<br>${remaining.join('<br>')}`;
+      }
       quests.push({ name: 'Network Ghost', objective: netObj });
     }
     if (f('dave_started') && !f('quest_daves_legacy_complete')) {
-      const daveObj = f('dave_janitor_done') ? 'Return to Alex from IT' : 'Ask the Janitor about Dave';
-      quests.push({ name: "Dave's Legacy", objective: daveObj });
+      const found = (f('tuesday_floppy_found') ? 1 : 0) + (f('tuesday_tag_found') ? 1 : 0) + (f('tuesday_sticky_found') ? 1 : 0);
+      let daveObj;
+      if (found >= 3) {
+        daveObj = 'Return to Alex from IT';
+      } else {
+        const remaining = [];
+        if (!f('tuesday_sticky_found')) remaining.push('• Sticky note — Cubicle Farm');
+        if (!f('tuesday_floppy_found')) remaining.push('• Floppy disk — Break Room');
+        if (!f('tuesday_tag_found')) remaining.push('• Server tag — Server Room');
+        daveObj = `Locate the artifacts (${found}/3):<br>${remaining.join('<br>')}`;
+      }
+      quests.push({ name: 'The Tuesday 2PM', objective: daveObj });
+    }
+    if (f('printer_soul_started') && !f('quest_printer_soul_complete')) {
+      let printerObj = 'Find the firmware disk (Server Room)';
+      if (f('printer_firmware_found')) printerObj = "Connect to the printer's ethernet port";
+      if (f('printer_soul_done')) printerObj = 'Return to Alex from IT';
+      quests.push({ name: "Printer's Soul", objective: printerObj });
     }
     if (f('final_patch_started') && !f('quest_final_patch_complete')) {
-      quests.push({ name: 'The Final Patch', objective: 'Return to Alex in the server room' });
+      const patchObj = f('patch_monitor_silenced') ? 'Return to Alex to defend the server room' : 'Silence the network monitoring terminal';
+      quests.push({ name: 'The Unauthorized Patch', objective: patchObj });
     }
 
     return quests;

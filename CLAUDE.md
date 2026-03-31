@@ -134,7 +134,25 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **Large furniture alignment**: `blockRect(tileX, tileZ, w, h)` blocks tiles starting at `(tileX, tileZ)` and extending in the +x/+z direction. For furniture wider than ~3 tiles, design the mesh with its origin at the left-front corner (not centered) and place it at the left-front tile coordinate so visual and collision match. Add footprint to `FURNITURE_FOOTPRINTS` in `Room.js`.
 - **Roguelite XP**: Fixed at 60–120 based on client wealth tier `t` (0–1 normalised against `MAX_ASSET`). Formula: `Math.round(60 + t * 60)` in `scaleEnemyStats()` in `ClientGenerator.js`. Not player-level scaled. Client data (including `xpReward`) is serialised into the `currentClient` player flag at generation time, so XP formula changes only affect newly generated clients.
 
+## Key Story Flags
+
+Critical flags that are easy to get wrong (not derivable from a single file):
+
+| Flag | When set | Effect |
+|------|----------|--------|
+| `ready_for_ross` | Auto-derived in `_refreshStoryProgress()` when all 4 `met_*` flags set | Unlocks Ross dialog |
+| `branch_chosen` | After Henderson decision with Ross | Ross moves to exec floor conf table |
+| `defeated_regional` | Auto on combat victory vs `regional` encounter | Regional NPC hides; Ross returns to office |
+| `defeated_regional_director` | Auto on combat victory vs `regional_director` (penthouse) | Separate penthouse chain flag |
+| `regional_director_defeated` | Set by `regional_director_defeated` post-dialog action | Used by ExplorationState to trigger Algorithm fight |
+| `retry_karen` | On first Karen defeat | Enables roguelite tutorial phase |
+| `defeated_karen` | Auto on Karen victory | Ends roguelite tutorial |
+| `act5_complete` | After Rachel defeated | Starts Act 6; hides archive janitor |
+| `janet_act6_rallied` | `janet_act6` dialog | Act 6 ally counter — NOT `janet_rallied` |
+| `diane_act6_rallied` | `diane_act6` dialog | Act 6 ally counter |
+| `diane_evidence` | `diane_documents` dialog (HR cabinet at x:14, z:8) | Act 6 evidence counter |
+
 ## Reference Files
 
 - `HANDOFF.md` — recent bug fixes and known issues; check at session start.
-- `.claude/plans/eager-nibbling-shannon.md` — full expansion plan (Phases 1–9).
+- `.claude/plans/` — expansion plans (Phases 1–9); may not exist if not yet created.
