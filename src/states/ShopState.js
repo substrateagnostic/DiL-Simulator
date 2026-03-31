@@ -88,6 +88,13 @@ export class ShopState {
     return entry ? entry.quantity : 0;
   }
 
+  // Upgrades cost more with each purchase: base × (1 + timesBought)
+  _getEffectivePrice(item) {
+    if (item.category !== 'upgrade') return item.price;
+    const bought = this.player.getFlag(`shop_${item.id}`) || 0;
+    return item.price * (1 + bought);
+  }
+
   _render() {
     if (!this.root) return;
     this._items = this._getFilteredItems();
@@ -110,13 +117,15 @@ export class ShopState {
         : item.category === 'upgrade' ? (this.player.getFlag(`shop_${item.id}`) || 0) : 0;
       const maxed = item.maxStack && stock >= item.maxStack;
       const decored = item.flag && this.player.getFlag(item.flag);
-      const canAfford = aum >= item.price;
+      const effectivePrice = this._getEffectivePrice(item);
+      const canAfford = aum >= effectivePrice;
       const unavailable = maxed || decored;
 
       let statusText = '';
       if (decored) statusText = ' [owned]';
       else if (maxed) statusText = ` [max ${item.maxStack}]`;
       else if (item.category === 'consumable') statusText = ` (x${stock})`;
+      else if (item.category === 'upgrade' && stock > 0) statusText = ` [${stock}/${item.maxStack}]`;
 
       return `<div style="
         display:flex; justify-content:space-between; align-items:center;
@@ -128,7 +137,7 @@ export class ShopState {
         font-size:20px;
       " onclick="window.__shopBuy(${i})">
         <span>${item.name}${statusText}</span>
-        <span style="color:${canAfford && !unavailable ? '#ffd700' : '#888'}">${item.price.toLocaleString()} AUM</span>
+        <span style="color:${canAfford && !unavailable ? '#ffd700' : '#888'}">${effectivePrice.toLocaleString()} AUM</span>
       </div>`;
     }).join('');
 
@@ -156,7 +165,8 @@ export class ShopState {
     if (!item) return;
 
     const aum = this.player.stats.aum || 0;
-    if (aum < item.price) {
+    const effectivePrice = this._getEffectivePrice(item);
+    if (aum < effectivePrice) {
       this._flash('Not enough AUM!', '#e94560');
       AudioManager.playSfx('cancel');
       return;
@@ -177,7 +187,7 @@ export class ShopState {
     }
 
     // Deduct AUM
-    this.player.stats.aum = aum - item.price;
+    this.player.stats.aum = aum - effectivePrice;
     AudioManager.playSfx('confirm');
 
     // Apply purchase
