@@ -36,6 +36,9 @@ const FURNITURE_FOOTPRINTS = {
   staircase:          { w: 2, h: 2 },
   safeDepositBox:     { w: 1, h: 1 },
   sculpture:          { w: 1, h: 1 },
+  credenza:           { w: 1, h: 3 },
+  credenzaEast:       { w: 1, h: 3 },
+  cornerBar:          { w: 2, h: 1 },
   chargingBull:       { w: 2, h: 1 },
   puttingGreen:       { w: 3, h: 2 },
   luxuryFridge:       { w: 2, h: 1 },
@@ -51,7 +54,7 @@ const NO_BLOCK = new Set([
   'coffeeMachine', 'microwave', 'waterCooler', 'printer',
   'whiteboard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
-  'cobweb', 'oilPainting', 'grandPainting', 'staircase', 'stairFlight',
+  'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'globeStand',
   'rangeHood',
 ]);
 

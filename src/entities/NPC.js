@@ -132,14 +132,20 @@ export class NPC {
 
     switch (type) {
       case 'wander': {
-        // Pick a random point within radius of home
+        // Pick a random point within radius of home, retrying if blocked
         const radius = this.movement.radius || 3;
-        const angle = Math.random() * Math.PI * 2;
-        const dist = _randomRange(WANDER_STEP_MIN, Math.min(WANDER_STEP_MAX, radius));
-        target = {
-          x: this.homePosition.x + Math.cos(angle) * dist,
-          z: this.homePosition.z + Math.sin(angle) * dist,
-        };
+        for (let attempt = 0; attempt < 8; attempt++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = _randomRange(WANDER_STEP_MIN, Math.min(WANDER_STEP_MAX, radius));
+          const candidate = {
+            x: this.homePosition.x + Math.cos(angle) * dist,
+            z: this.homePosition.z + Math.sin(angle) * dist,
+          };
+          if (!this.tileMap || this.tileMap.canMove(candidate.x, candidate.z, 0.25)) {
+            target = candidate;
+            break;
+          }
+        }
         break;
       }
 
@@ -232,8 +238,11 @@ export class NPC {
       } else if (canZ) {
         this.position.z = nz;
       } else {
-        // Completely blocked, give up on this target
-        this._arriveAtTarget();
+        // Completely blocked — pick a new target immediately
+        this._moveTarget = null;
+        this._moveState = 'idle';
+        this._idleTimer = 0;
+        this.animator.setWalking(false);
         return;
       }
     } else {

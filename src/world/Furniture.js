@@ -1608,6 +1608,95 @@ export const Furniture = {
     return group;
   },
 
+  abstractPainting() {
+    // Modern abstract — steel frame, Rothko-style horizontal colour fields
+    const group = new THREE.Group();
+    const FW = 1.2, FH = 0.95, Y = 1.78, BZ = 0.012;
+    const steel = new THREE.MeshStandardMaterial({ color: 0x888899, roughness: 0.3, metalness: 0.85 });
+    const BW = 0.06, BT = 0.04, BZc = BZ + BT / 2;
+
+    const add = (x, y, z, w, h, d, mat) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z);
+      group.add(m);
+    };
+
+    // Backing plate
+    add(0, Y, 0, FW, FH, BZ * 2, Materials.custom(0x111111));
+    // Thin steel frame strips
+    add(0,             Y + FH/2 - BW/2, BZc, FW,       BW,         BT, steel);
+    add(0,             Y - FH/2 + BW/2, BZc, FW,       BW,         BT, steel);
+    add(-FW/2 + BW/2,  Y,               BZc, BW, FH - BW*2,        BT, steel);
+    add( FW/2 - BW/2,  Y,               BZc, BW, FH - BW*2,        BT, steel);
+
+    // Canvas — horizontal colour field bands
+    const CW = FW - BW * 2 - 0.02;
+    const CH = FH - BW * 2 - 0.02;
+    const CZ = BZc + BT / 2 + 0.003;
+    const bands = [
+      { h: 0.30, c: 0x7a1515 },  // deep crimson
+      { h: 0.07, c: 0x1c1208 },  // dark divider
+      { h: 0.36, c: 0x111630 },  // deep indigo
+      { h: 0.07, c: 0x0e0e0e },  // dark divider
+      { h: 0.20, c: 0x3e2108 },  // burnt amber
+    ];
+    let yBot = Y - CH / 2;
+    for (const b of bands) {
+      const bh = b.h * CH;
+      add(0, yBot + bh / 2, CZ, CW, bh - 0.003, 0.004, Materials.custom(b.c));
+      yBot += bh;
+    }
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  portraitPainting() {
+    // Formal executive portrait — ornate dark walnut frame, implied figure on canvas
+    const group = new THREE.Group();
+    const FW = 0.95, FH = 1.25, Y = 1.88, BZ = 0.018;
+    const frameWood = Materials.custom(0x1a0e04);
+    const gold      = Materials.custom(0xc8960a);
+    const goldLight = Materials.custom(0xe0b030);
+    const BW = 0.115, BT = 0.07, BZc = BZ + BT / 2;
+
+    const add = (x, y, z, w, h, d, mat) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z);
+      group.add(m);
+    };
+
+    // Backing
+    add(0, Y, 0, FW, FH, BZ * 2, frameWood);
+    // Frame border strips
+    add(0,            Y + FH/2 - BW/2, BZc, FW,        BW,       BT, frameWood);
+    add(0,            Y - FH/2 + BW/2, BZc, FW,        BW,       BT, frameWood);
+    add(-FW/2 + BW/2, Y,               BZc, BW, FH - BW*2,       BT, frameWood);
+    add( FW/2 - BW/2, Y,               BZc, BW, FH - BW*2,       BT, frameWood);
+    // Gold corner ornaments
+    const COZ = BZc + 0.006;
+    [[-FW/2+BW/2, Y+FH/2-BW/2], [FW/2-BW/2, Y+FH/2-BW/2],
+     [-FW/2+BW/2, Y-FH/2+BW/2], [FW/2-BW/2, Y-FH/2+BW/2],
+    ].forEach(([cx, cy]) => add(cx, cy, COZ, 0.125, 0.125, BT + 0.01, gold));
+    // Gold inner highlight line
+    const CW = FW - BW*2 - 0.01, CH = FH - BW*2 - 0.01;
+    const HZ = BZc + BT/2 + 0.001, HL = 0.012;
+    add(0, Y + CH/2 + HL/2, HZ, CW + HL*2, HL, 0.002, goldLight);
+    add(0, Y - CH/2 - HL/2, HZ, CW + HL*2, HL, 0.002, goldLight);
+    add(-CW/2 - HL/2, Y, HZ, HL, CH, 0.002, goldLight);
+    add( CW/2 + HL/2, Y, HZ, HL, CH, 0.002, goldLight);
+    // Portrait canvas — dark background, implied suited figure + face
+    const CZ = HZ + 0.003;
+    add(0, Y, CZ, CW, CH, 0.003, Materials.custom(0x0c0905));         // background
+    add(0, Y - CH*0.12, CZ+0.002, CW*0.50, CH*0.58, 0.003, Materials.custom(0x171008)); // coat body
+    add(0, Y + CH*0.24, CZ+0.002, CW*0.19, CH*0.22, 0.003, Materials.custom(0x523620)); // face highlight
+    add(-CW*0.10, Y+CH*0.06, CZ+0.002, CW*0.13, CH*0.09, 0.003, Materials.custom(0x241a0e)); // shoulder L
+    add( CW*0.10, Y+CH*0.06, CZ+0.002, CW*0.13, CH*0.09, 0.003, Materials.custom(0x241a0e)); // shoulder R
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   chargingBull() {
     const group    = new THREE.Group();
     const bronze     = new THREE.MeshStandardMaterial({ color: 0x9b6a3e, roughness: 0.42, metalness: 0.85 });
@@ -2096,6 +2185,153 @@ export const Furniture = {
     return group;
   },
 
+  credenza() {
+    // Mahogany sideboard — 1×3 tile footprint, runs along Z axis, front faces +X (east)
+    // Origin = left-front corner (min-x, min-z). Place against west wall at x:1.
+    return _buildCredenza(+1);
+  },
+
+  credenzaEast() {
+    // Mirror of credenza — front faces -X (west). Place against east wall at x:14.
+    return _buildCredenza(-1);
+  },
+
+  globeStand() {
+    // Executive globe on mahogany pedestal
+    const group = new THREE.Group();
+    const wood   = Materials.custom(0x3a1e08);
+    const brass  = new THREE.MeshStandardMaterial({ color: 0xb5882a, roughness: 0.35, metalness: 0.75 });
+    const ocean  = new THREE.MeshStandardMaterial({ color: 0x1a4a80, roughness: 0.55, metalness: 0.1 });
+    const land   = Materials.custom(0x2a5c24);
+
+    // Pedestal base plate
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.04, 0.30), wood);
+    base.position.y = 0.02;
+    group.add(base);
+    // Column
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.055, 0.52, 8), wood);
+    col.position.y = 0.28;
+    group.add(col);
+    // Brass cap on top of column
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.048, 0.04, 8), brass);
+    cup.position.y = 0.56;
+    group.add(cup);
+
+    // Meridian ring (vertical)
+    const meridian = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.011, 8, 28), brass);
+    meridian.position.y = 0.80;
+    group.add(meridian);
+    // Equatorial ring (horizontal)
+    const equator = new THREE.Mesh(new THREE.TorusGeometry(0.215, 0.008, 6, 28), brass);
+    equator.position.y = 0.80;
+    equator.rotation.x = Math.PI / 2;
+    group.add(equator);
+
+    // Globe sphere
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(0.20, 16, 12), ocean);
+    globe.position.y = 0.80;
+    group.add(globe);
+
+    // Impressionistic land masses
+    [[0.4, 0.9], [1.1, 1.1], [2.2, 0.8], [-0.6, 1.3], [3.5, 1.5], [1.8, 0.4]].forEach(([theta, phi]) => {
+      const patch = new THREE.Mesh(new THREE.SphereGeometry(0.058, 4, 4), land);
+      patch.position.set(
+        0.196 * Math.sin(phi) * Math.cos(theta),
+        0.80 + 0.196 * Math.cos(phi),
+        0.196 * Math.sin(phi) * Math.sin(theta)
+      );
+      patch.scale.set(1.5, 0.22, 1.0);
+      group.add(patch);
+    });
+
+    // Brass axis pins (north / south poles)
+    [-1, 1].forEach(dir => {
+      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.009, 0.055, 6), brass);
+      pin.position.set(0, 0.80 + dir * 0.213, 0);
+      group.add(pin);
+    });
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  cornerBar() {
+    // Executive wet bar — 2×1 tile footprint, origin = left-front corner
+    const group = new THREE.Group();
+    const W = 1.82, H = 0.96, D = 0.60;
+    const cx = W / 2, cz = D / 2;
+
+    const darkWood  = Materials.custom(0x1a0e05);
+    const midWood   = Materials.custom(0x2e1808);
+    const counter   = Materials.custom(0xd0cac2);
+    const gold      = Materials.custom(0xb8860b);
+    const glassMat  = new THREE.MeshStandardMaterial({ color: 0x88aacc, roughness: 0.05, metalness: 0.05, transparent: true, opacity: 0.32 });
+    const bottle1   = Materials.custom(0x1a3820);
+    const bottle2   = Materials.custom(0x4a1a06);
+    const wineGlass = new THREE.MeshStandardMaterial({ color: 0xddeeff, roughness: 0.05, transparent: true, opacity: 0.38 });
+
+    const add = (x, y, z, w, h, d, mat) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      m.position.set(x, y, z);
+      group.add(m);
+    };
+
+    // Cabinet body
+    add(cx, H / 2, cz, W, H, D, darkWood);
+    // Marble-style counter top
+    add(cx, H + 0.016, cz, W + 0.06, 0.032, D + 0.06, counter);
+    // Gold counter front trim
+    add(cx, H + 0.004, cz + (D + 0.06) / 2 - 0.008, W + 0.06, 0.024, 0.016, gold);
+    // Gold base strip
+    add(cx, 0.018, cz, W + 0.02, 0.036, D + 0.02, gold);
+
+    const lH = H * 0.40;               // lower solid cabinet height
+    const fz = cz + D / 2 + 0.012;    // front face z
+
+    // Lower solid door + handle
+    add(cx, lH / 2,         fz,         W * 0.90, lH - 0.06, 0.020, midWood);
+    add(cx, lH / 2,         fz + 0.013, 0.08,     0.013,     0.016, gold);
+
+    // Upper glass door
+    const uBot = lH + 0.02;
+    const uH   = H - uBot - 0.02;
+    add(cx, uBot + uH / 2, fz, W * 0.90, uH, 0.022, glassMat);
+
+    // Glass door frame
+    const fw = W * 0.90 + 0.04;
+    add(cx,                  uBot,           fz - 0.002, fw,    0.020, 0.028, gold);
+    add(cx,                  H - 0.01,       fz - 0.002, fw,    0.020, 0.028, gold);
+    add(cx - fw / 2 + 0.012, uBot + uH / 2, fz - 0.002, 0.024, uH,   0.028, gold);
+    add(cx + fw / 2 - 0.012, uBot + uH / 2, fz - 0.002, 0.024, uH,   0.028, gold);
+
+    // Bottles visible through glass
+    [cx - 0.32, cx, cx + 0.32].forEach((bx, i) => {
+      const mat = i % 2 === 0 ? bottle1 : bottle2;
+      const bH  = uH * 0.68;
+      const bb  = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.044, bH, 6), mat);
+      bb.position.set(bx, uBot + bH / 2 + 0.03, cz - 0.08);
+      group.add(bb);
+      const bn = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.032, bH * 0.28, 6), mat);
+      bn.position.set(bx, uBot + bH + bH * 0.14 + 0.03, cz - 0.08);
+      group.add(bn);
+    });
+
+    // Wine glasses on counter
+    [cx - 0.38, cx, cx + 0.38].forEach(gx => {
+      const gy = H + 0.032, gz = cz - 0.12;
+      const gCup  = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.014, 0.09, 8), wineGlass);
+      const gStem = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.065, 6), wineGlass);
+      const gFoot = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.007, 8), wineGlass);
+      gCup.position.set(gx,  gy + 0.045, gz);
+      gStem.position.set(gx, gy,         gz);
+      gFoot.position.set(gx, gy - 0.032, gz);
+      [gCup, gStem, gFoot].forEach(m => group.add(m));
+    });
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   arcadeCabinet() {
     const group = new THREE.Group();
     // Main body
@@ -2152,3 +2388,69 @@ export const Furniture = {
     return group;
   },
 };
+
+// ── Shared builder for credenza / credenzaEast ───────────────────────────────
+// facing = +1 → front face at +x (west-wall variant)
+// facing = -1 → front face at -x (east-wall variant)
+function _buildCredenza(facing) {
+  const group = new THREE.Group();
+  // Dimensions: W = depth (x), D = length along wall (z)
+  const W = 0.58, H = 0.72, D = 2.8;
+  const cx = W / 2;        // 0.29 — body centre x
+  const cz = D / 2;        // 1.4  — body centre z
+
+  const mahogany      = Materials.custom(0x2c1508);
+  const mahoganyMid   = Materials.custom(0x3d1f0a);
+  const mahoganyLight = Materials.custom(0x5a2e10);
+  const gold          = Materials.custom(0xc8960a);
+
+  const add = (x, y, z, w, h, d, mat) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    m.position.set(x, y, z);
+    group.add(m);
+  };
+
+  // Cabinet body
+  add(cx, H / 2, cz, W, H, D, mahogany);
+  // Top slab (slightly overhanging)
+  add(cx, H + 0.022, cz, W + 0.06, 0.044, D + 0.10, mahoganyLight);
+  // Gold base strip
+  add(cx, 0.02, cz, W + 0.04, 0.04, D + 0.04, gold);
+
+  // Gold top front-edge trim (follows facing direction)
+  const trimX = facing > 0
+    ? cx + (W + 0.06) / 2 - 0.012   // +x face
+    : cx - (W + 0.06) / 2 + 0.012;  // -x face
+  add(trimX, H + 0.036, cz, 0.024, 0.015, D + 0.10, gold);
+
+  // Section dividers (3 equal sections along z)
+  const sD = D / 3;  // 0.933 per section
+  [sD, sD * 2].forEach(z => add(cx, H / 2, z, W, H + 0.01, 0.025, mahoganyMid));
+
+  // Doors + handles (2 per section, on the facing side)
+  const fx = facing > 0
+    ? cx + W / 2 + 0.012    // doors proud of +x face
+    : cx - W / 2 - 0.012;   // doors proud of -x face
+  const hx = facing > 0 ? fx + 0.013 : fx - 0.013;
+
+  for (let i = 0; i < 3; i++) {
+    const sz = i * sD + sD / 2;
+    [-0.22, 0.22].forEach(oz => {
+      add(fx, H / 2, sz + oz,         0.020, H - 0.10, sD * 0.43, mahoganyMid);
+      add(hx, H / 2, sz + oz * 0.46,  0.017, 0.013,    0.05,       gold);
+    });
+  }
+
+  // Decorative vase on top (offset slightly away from front face)
+  const vx = facing > 0 ? cx - 0.06 : cx + 0.06;
+  const vaseMat = Materials.custom(0x1e3f6e);
+  const vBody = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.068, 0.20, 8), vaseMat);
+  vBody.position.set(vx, H + 0.044 + 0.10, cz);
+  group.add(vBody);
+  const vNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.030, 0.052, 0.08, 8), vaseMat);
+  vNeck.position.set(vx, H + 0.044 + 0.24, cz);
+  group.add(vNeck);
+
+  group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+  return group;
+}

@@ -687,18 +687,18 @@ export const ROOMS = {
     walls: true,
     furniture: [
       // === Grand executive desk (north-center, imposing) ===
-      { type: 'grandDesk', x: 8, z: 2, rotation: Math.PI },
-      { type: 'monitor', x: 8, z: 2.3, y: 0.06, rotation: Math.PI },
-      { type: 'monitor', x: 7.2, z: 2.3, y: 0.06, rotation: Math.PI },
-      { type: 'monitor', x: 8.8, z: 2.3, y: 0.06, rotation: Math.PI },  // triple monitors, face boss
-      { type: 'keyboard', x: 8, z: 1.85, y: 0.06 },
-      { type: 'executiveChair', x: 8, z: 1, rotation: 0 },  // big boss chair
+      { type: 'grandDesk', x: 8, z: 3, rotation: Math.PI },
+      { type: 'monitor', x: 8, z: 3.3, y: 0.1, rotation: Math.PI },
+      { type: 'monitor', x: 7.2, z: 3.3, y: 0.1, rotation: Math.PI },
+      { type: 'monitor', x: 8.8, z: 3.3, y: 0.1, rotation: Math.PI },  // triple monitors, face boss
+      { type: 'keyboard', x: 8, z: 2.85, y: 0.06 },
+      { type: 'executiveChair', x: 8, z: 2, rotation: 0 },  // big boss chair
 
       // === Power seating area (visitor chairs, facing desk) ===
-      { type: 'chair', x: 6.8, z: 3.3, rotation: Math.PI },
-      { type: 'chair', x: 7.6, z: 3.3, rotation: Math.PI },
-      { type: 'chair', x: 8.4, z: 3.3, rotation: Math.PI },
-      { type: 'chair', x: 9.2, z: 3.3, rotation: Math.PI },
+      { type: 'chair', x: 6.8, z: 4.3, rotation: Math.PI },
+      { type: 'chair', x: 7.6, z: 4.3, rotation: Math.PI },
+      { type: 'chair', x: 8.4, z: 4.3, rotation: Math.PI },
+      { type: 'chair', x: 9.2, z: 4.3, rotation: Math.PI },
 
       // === Secondary executive desk (west side, faces east) ===
       { type: 'desk', x: 3, z: 3, rotation: Math.PI / 2 },
@@ -753,8 +753,8 @@ export const ROOMS = {
       { type: 'waterCooler', x: 1, z: 8 },
     ],
     npcs: [
-      { id: 'regional', x: 8, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'defeated_regional' } },
-      { id: 'compliance', x: 13, z: 4, facing: Math.PI / 2, movement: { type: 'pace', distance: 1.5, axis: 'z' }, condition: { notFlag: 'compliance_defeated' } },
+      { id: 'regional', x: 8, z: 2.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'defeated_regional' } },
+      { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { notFlag: 'compliance_defeated' } },
       // Ross appears at conference table after Henderson decision
       { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'defeated_regional' } },
     ],
@@ -767,7 +767,7 @@ export const ROOMS = {
       { x: 8, z: 0, targetRoom: 'board_room', spawnX: 8, spawnZ: 10 },
     ],
     interactables: [
-      { x: 8, z: 2, type: 'executive_desk', dialogId: 'executive_desk' },
+      { x: 8, z: 3, type: 'executive_desk', dialogId: 'executive_desk' },
       { x: 1, z: 8, type: 'water_cooler', dialogId: 'executive_water_cooler' },
       { x: 8, z: 11, type: 'elevator', dialogId: 'elevator_executive' },
       // Motivational posters
@@ -858,6 +858,14 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 10, z: 3, rotation: 0 },
       { type: 'fileCabinet', x: 7, z: 5, rotation: 0 },
       { type: 'fileCabinet', x: 8, z: 5, rotation: 0 },
+      // West cluster — south extension (NPC paces x:3-7, so x:1-2 safe)
+      { type: 'fileCabinet', x: 1, z: 7, rotation: 0 },
+      { type: 'fileCabinet', x: 2, z: 7, rotation: 0 },
+      // South wall — west side (facing north into room)
+      { type: 'fileCabinet', x: 1, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', x: 2, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', x: 3, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', x: 4, z: 8, rotation: Math.PI },
       // Desk with terminal in far corner
       { type: 'desk', x: 10, z: 7, rotation: -Math.PI / 2 },
       { type: 'monitor', x: 10.3, z: 7 },
@@ -902,9 +910,6 @@ export const ROOMS = {
     floorPattern: 'carpet',
     walls: true,
     furniture: [
-      // === North-wall file cabinets (HR records) ===
-      { type: 'fileCabinet', x: 1, z: 0.5 },
-      { type: 'fileCabinet', x: 14, z: 0.5 },
 
       // === North cubicle row — 3 pods with wide aisles between them ===
       // Pod A (west, x:2-4)
@@ -934,13 +939,15 @@ export const ROOMS = {
       { type: 'monitor', x: 12, z: 1.7 },
       { type: 'chair', x: 12, z: 2.8, rotation: Math.PI },
 
-      // === South filing cabinets ===
-      { type: 'fileCabinet', x: 3, z: 8, rotation: Math.PI },
-      { type: 'fileCabinet', x: 14, z: 8, rotation: Math.PI },
+      // === South-wall filing cabinets (all HR records) ===
+      { type: 'fileCabinet', x: 2,  z: 9, rotation: Math.PI },
+      { type: 'fileCabinet', x: 6,  z: 9, rotation: Math.PI },
+      { type: 'fileCabinet', x: 11, z: 9, rotation: Math.PI },
+      { type: 'fileCabinet', x: 14, z: 9, rotation: Math.PI },
 
       // === Suggestion box on desk (south area) ===
-      { type: 'desk', x: 10, z: 8, rotation: Math.PI },
-      { type: 'fileCabinetLow', x: 10, z: 8, rotation: Math.PI },
+      { type: 'desk', x: 9, z: 9, rotation: Math.PI },
+      { type: 'fileCabinetLow', x: 9, z: 9, y: 0.72, rotation: Math.PI },
 
       // === Motivational posters ===
       { type: 'motivationalPoster', x: 8, z: 0.1, rotation: 0 },
@@ -955,12 +962,11 @@ export const ROOMS = {
       { x: 0, z: 5, targetRoom: 'cubicle_farm', spawnX: 18, spawnZ: 3 },
     ],
     interactables: [
-      { x: 10, z: 8, type: 'suggestion_box', dialogId: 'suggestion_box' },
-      { x: 1, z: 0.5, type: 'filing_cabinets', dialogId: 'hr_vault_code' },
-      { x: 14, z: 8, type: 'filing_cabinets', dialogId: 'diane_documents' },
-      { x: 8, z: 0, type: 'poster', dialogId: 'poster_hr_1' },
-      // Phantom Approver: expense report paper trail
-      { x: 14, z: 0.5, type: 'filing_cabinets', dialogId: 'phantom_expense_hr' },
+      { x: 9, z: 9, type: 'suggestion_box', dialogId: 'suggestion_box' },
+      { x: 2,  z: 9, type: 'filing_cabinets', dialogId: 'hr_vault_code' },
+      { x: 14, z: 9, type: 'filing_cabinets', dialogId: 'diane_documents' },
+      { x: 8,  z: 0, type: 'poster',          dialogId: 'poster_hr_1' },
+      { x: 11, z: 9, type: 'filing_cabinets', dialogId: 'phantom_expense_hr' },
     ],
     playerSpawn: { x: 2, z: 4 },
   },
@@ -1045,6 +1051,15 @@ export const ROOMS = {
       { type: 'grandPainting', x: 3,  z: 0.08 },
       { type: 'grandPainting', x: 12, z: 0.08 },
 
+      // ── Credenzas — butted against west and east walls, drawers face inward ──
+      { type: 'credenza',     x: 0,  z: 4 },   // west wall, front faces east (+x)
+      { type: 'credenzaEast', x: 14, z: 4 },   // east wall, front faces west (-x)
+
+      // ── Executive globe — NE corner ──
+      { type: 'globeStand', x: 14, z: 2 },
+
+      // ── Corner bar — behind globe in NE corner ──
+      { type: 'cornerBar', x: 13, z: 0 },
 
       // ── Whiteboard on east wall (for presentations) ──
       { type: 'whiteboard', x: 15, z: 5, rotation: -Math.PI / 2 },
@@ -1085,8 +1100,8 @@ export const ROOMS = {
       { type: 'point', color: 0x8844ff, intensity: 0.7, x: 12, y: 2.5, z: 8, distance: 9  },
       // Warm gold accents — wealth, power
       { type: 'point', color: 0xffaa22, intensity: 0.5, x: 8,  y: 3,   z: 6, distance: 14 },
-      { type: 'point', color: 0xffd700, intensity: 0.4, x: 2,  y: 2,   z: 2, distance: 6  },
-      { type: 'point', color: 0xffd700, intensity: 0.4, x: 14, y: 2,   z: 2, distance: 6  },
+      { type: 'point', color: 0xffd700, intensity: 0.1, x: 2,  y: 2,   z: 2, distance: 6  },
+      { type: 'point', color: 0xffd700, intensity: 0.1, x: 14, y: 2,   z: 2, distance: 6  },
       // Warm pendant over kitchen island
       { type: 'point', color: 0xffeedd, intensity: 0.6, x: 3,  y: 2,   z: 5, distance: 5  },
     ],
@@ -1106,23 +1121,6 @@ export const ROOMS = {
       { type: 'serverRack', x: 12, z: 1 },
       { type: 'serverRack', x: 13, z: 1 },
 
-      // ── Oil paintings — north wall ─────────────────────────────
-      { type: 'oilPainting', x: 3,  z: 0.1, rotation: 0 },
-      { type: 'oilPainting', x: 6,  z: 0.1, rotation: 0 },
-      { type: 'oilPainting', x: 11, z: 0.1, rotation: 0 },
-
-      // ── Oil paintings — east wall ──────────────────────────────
-      { type: 'oilPainting', x: 15.5, z: 3, rotation:  Math.PI / 2 },
-      { type: 'oilPainting', x: 15.5, z: 6, rotation:  Math.PI / 2 },
-      { type: 'oilPainting', x: 15.5, z: 9, rotation:  Math.PI / 2 },
-
-      // ── Oil paintings — west wall (above kitchen appliances) ──
-      { type: 'oilPainting', x: 0.5, z: 9, rotation: -Math.PI / 2 },
-
-      // ── Sculptures ────────────────────────────────────────────
-      { type: 'sculpture', x: 14, z: 1  },
-      { type: 'sculpture', x: 1,  z: 10 },
-      { type: 'sculpture', x: 14, z: 10 },
 
 
       // ── Luxury Kitchen — NW corner, L-shaped ─────────────────
@@ -1142,10 +1140,6 @@ export const ROOMS = {
       { type: 'chair', x: 3.5, z: 4.2, rotation: Math.PI },
       { type: 'chair', x: 4.6, z: 3,   rotation: Math.PI / 2 },
 
-      // ── Vault wall — safe deposit boxes (east) ────────────────
-      { type: 'safeDepositBox', x: 14, z: 3 },
-      { type: 'safeDepositBox', x: 14, z: 4 },
-      { type: 'safeDepositBox', x: 14, z: 5 },
 
       // ── Putting green ─────────────────────────────────────────
       { type: 'puttingGreen', x: 2, z: 7, rotation: 0 },
