@@ -126,12 +126,12 @@ export const QUESTS = {
   },
   legacy_admin: {
     id: 'legacy_admin',
-    name: 'Legacy Admin Account',
+    name: 'The Phantom Approver',
     stages: [
-      { id: 0, objective: 'Help Alex trace the admin_legacy account' },
-      { id: 1, objective: 'Find the access logs in the Archive' },
-      { id: 2, objective: 'Find the password hint in HR records' },
-      { id: 3, objective: 'Bring Alex the evidence to crack the account' },
+      { id: 0, objective: 'Help Alex investigate the phantom expense account' },
+      { id: 1, objective: 'Find the paper expense trail in HR' },
+      { id: 2, objective: 'Trace the source workstation in the Cubicle Farm' },
+      { id: 3, objective: 'Return to Alex from IT' },
     ],
   },
   network_ghost: {
@@ -147,33 +147,23 @@ export const QUESTS = {
   },
   daves_legacy: {
     id: 'daves_legacy',
-    name: "Dave's Legacy",
+    name: 'The Tuesday 2PM',
     stages: [
-      { id: 0, objective: 'Alex tells you about his predecessor Dave' },
-      { id: 1, objective: 'Ask the Janitor about Dave' },
-      { id: 2, objective: 'Search the Archive for Dave\'s records' },
-      { id: 3, objective: 'Check HR for Dave\'s exit interview' },
-      { id: 4, objective: 'Return to Alex with the full story' },
-    ],
-  },
-  printers_soul: {
-    id: 'printers_soul',
-    name: "Printer's Soul",
-    stages: [
-      { id: 0, objective: 'The printer is acting stranger than usual' },
-      { id: 1, objective: 'Find the original printer receipt in the Archive' },
-      { id: 2, objective: 'Connect the printer to Alex\'s network' },
-      { id: 3, objective: 'Return to Alex to free the printer\'s soul' },
+      { id: 0, objective: 'Help Alex identify the mystery scheduled task' },
+      { id: 1, objective: 'Find the floppy disk in the Break Room' },
+      { id: 2, objective: 'Find the decommissioned server tag in the Server Room' },
+      { id: 3, objective: 'Find the sticky note in the Cubicle Farm' },
+      { id: 4, objective: 'Return to Alex with all three artifacts' },
     ],
   },
   final_patch: {
     id: 'final_patch',
-    name: 'The Final Patch',
+    name: 'The Unauthorized Patch',
     stages: [
-      { id: 0, objective: 'Alex needs to deploy the charter to the server' },
-      { id: 1, objective: 'Bring the charter to Alex in the server room' },
-      { id: 2, objective: 'Defend the server room during the upload' },
-      { id: 3, objective: 'The patch is deployed' },
+      { id: 0, objective: 'Help Alex deploy his long-overdue security patch' },
+      { id: 1, objective: 'Silence the network monitoring terminal' },
+      { id: 2, objective: 'Defend the server room during the deploy' },
+      { id: 3, objective: 'Patch deployed' },
     ],
   },
   // ATK side quests

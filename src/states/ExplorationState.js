@@ -262,7 +262,8 @@ export class ExplorationState {
           quest_legacy_admin_complete: 'legacy_admin',
           quest_network_ghost_complete: 'network_ghost',
           quest_daves_legacy_complete: 'daves_legacy',
-          quest_printers_soul_complete: 'printers_soul',
+          printer_quest_done: 'printers_soul',
+          quest_printer_soul_complete: 'printers_soul',
           quest_final_patch_complete: 'final_patch',
         };
         if (questFlagMap[key]) {
@@ -274,6 +275,18 @@ export class ExplorationState {
           this.player.stats.spd += 3;
           this._updateMiniStats();
           this._showToast('SPD +3! The overclocked badge hums with power.', 'item');
+        }
+        // Network Ghost: derive all_boosters_placed when all 3 are set
+        if (key === 'booster_br_placed' || key === 'booster_stair_placed' || key === 'booster_conf_placed') {
+          if (this.player.getFlag('booster_br_placed') && this.player.getFlag('booster_stair_placed') && this.player.getFlag('booster_conf_placed')) {
+            this.player.setFlag('all_boosters_placed', true);
+          }
+        }
+        // Tuesday 2PM: derive tuesday_all_found when all 3 artifacts are collected
+        if (key === 'tuesday_floppy_found' || key === 'tuesday_tag_found' || key === 'tuesday_sticky_found') {
+          if (this.player.getFlag('tuesday_floppy_found') && this.player.getFlag('tuesday_tag_found') && this.player.getFlag('tuesday_sticky_found')) {
+            this.player.setFlag('tuesday_all_found', true);
+          }
         }
         // Story thoughts triggered by flags
         if (STORY_THOUGHTS[key]) {
@@ -632,10 +645,22 @@ export class ExplorationState {
     this.player.setFlag('ending_started', false);
     this._loadRoom('cubicle_farm');
 
+    const DEATH_MESSAGES = [
+      'You wake up at your desk... Was it all a dream?',
+      'You come to face-down on your keyboard. There are 47 new emails.',
+      'You regain consciousness. The fluorescent light above you flickers in what feels like judgment.',
+      'You wake up. Someone has placed a sticky note on your forehead that says "DO NOT DISTURB." Nobody moved it.',
+      'You open your eyes at your desk. A coworker walks past without making eye contact. Normal Tuesday.',
+      'You wake up. Your coffee is cold. It was cold before, too.',
+      'You stir at your desk. The clock says 3:47 PM. It always says 3:47 PM.',
+      'Consciousness returns. You have 2 unread voicemails and a distinct sense of failure.',
+      'You wake up at your cubicle. Someone has printed a motivational poster and taped it to your monitor. It says HANG IN THERE.',
+      'You open your eyes. The building hums. It sounds almost sympathetic.',
+    ];
     const msg = document.createElement('div');
     msg.className = 'combat-message';
     msg.style.zIndex = '200';
-    msg.textContent = 'You wake up at your desk... Was it all a dream?';
+    msg.textContent = DEATH_MESSAGES[Math.floor(Math.random() * DEATH_MESSAGES.length)];
     document.getElementById('ui-overlay').appendChild(msg);
     setTimeout(() => {
       if (msg.parentNode) msg.parentNode.removeChild(msg);
@@ -738,12 +763,9 @@ export class ExplorationState {
 
     this.player.setFlag('currentClient', null);
 
-    // Track total clients seen for quarterly review
-    const totalSeen = (this.player.getFlag('totalClientsSeen') || 0) + 1;
-    this.player.setFlag('totalClientsSeen', totalSeen);
-
-    // Quarterly review every 3 clients
-    if (totalSeen > 0 && totalSeen % 3 === 0) {
+    // Quarterly review every 5 accepted clients
+    const portfolioCount = this.player.getFlag('portfolioClients') || 0;
+    if (portfolioCount > 0 && portfolioCount % 5 === 0) {
       setTimeout(() => this._showQuarterlyReview(), 800);
       return; // quarterly review will generate next client when dismissed
     }
@@ -807,7 +829,7 @@ export class ExplorationState {
     const aum     = this.player.getFlag('portfolioAUM')     || 0;
     const fees    = this.player.getFlag('portfolioFees')    || 0;
     const health  = calculatePortfolioHealth(clients, aum, fees);
-    const quarter = Math.ceil((this.player.getFlag('totalClientsSeen') || 0) / 3);
+    const quarter = Math.ceil(clients / 5);
 
     const fmt = (n) => '$' + n.toLocaleString();
 
@@ -830,18 +852,22 @@ export class ExplorationState {
     }
 
     // Reward or penalty based on grade
+    const XP_BY_GRADE = { 'A+': 200, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
+    const xpReward = XP_BY_GRADE[health.grade] ?? 0;
+    if (xpReward > 0) this.player.gainXP(xpReward);
+
     let rewardText = '';
     if (health.score >= 80) {
       this.player.stats.atk += 1;
       this.player.stats.def += 1;
       this._updateMiniStats();
-      rewardText = 'Ross is impressed. ATK +1, Composure +1.';
+      rewardText = `Ross is impressed. ATK +1, Composure +1. +${xpReward} XP`;
     } else if (health.score < 40) {
       const anger = Math.min(10, (this.player.getFlag('bossAnger') || 0) + 2);
       this.player.setFlag('bossAnger', anger);
-      rewardText = 'Ross is disappointed. Boss Anger +2.';
+      rewardText = `Ross is disappointed. Boss Anger +2.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
     } else {
-      rewardText = 'Ross gives a noncommittal nod. Acceptable performance.';
+      rewardText = `Ross gives a noncommittal nod. Acceptable performance.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
     }
 
     el.innerHTML = `
@@ -1129,6 +1155,30 @@ export class ExplorationState {
 
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
       return npc.dialogId;
+    }
+
+    // Printer from Hell side quest: route Alex to explanation dialog while active
+    if (id === 'alex_it' && this.player.getFlag('printer_quest_started') && !this.player.getFlag('printer_quest_done')) {
+      return 'alex_printer_quest';
+    }
+
+    // Alex IT subquests: route to active quest dialog, or start next unstarted quest after intro
+    if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
+      const p = this.player;
+      // Active quests take priority (return player to ongoing quest dialog)
+      if (p.getFlag('anomaly_started') && !p.getFlag('quest_anomaly_347_complete')) return 'alex_it_quest_anomaly';
+      if (p.getFlag('legacy_started') && !p.getFlag('quest_legacy_admin_complete')) return 'alex_it_quest_legacy';
+      if (p.getFlag('network_started') && !p.getFlag('quest_network_ghost_complete')) return 'alex_it_quest_network';
+      if (p.getFlag('dave_started') && !p.getFlag('quest_daves_legacy_complete')) return 'alex_it_quest_dave';
+      if (p.getFlag('printer_soul_started') && !p.getFlag('quest_printer_soul_complete')) return 'alex_it_quest_printer';
+      if (p.getFlag('final_patch_started') && !p.getFlag('quest_final_patch_complete')) return 'alex_it_quest_final';
+      // Start next unstarted quest (sequential unlock after each completion)
+      if (!p.getFlag('anomaly_started')) return 'alex_it_quest_anomaly';
+      if (p.getFlag('quest_anomaly_347_complete') && !p.getFlag('legacy_started')) return 'alex_it_quest_legacy';
+      if (p.getFlag('quest_legacy_admin_complete') && !p.getFlag('network_started')) return 'alex_it_quest_network';
+      if (p.getFlag('quest_network_ghost_complete') && !p.getFlag('dave_started')) return 'alex_it_quest_dave';
+      if (p.getFlag('quest_daves_legacy_complete') && !p.getFlag('printer_soul_started')) return 'alex_it_quest_printer';
+      if (p.getFlag('quest_printer_soul_complete') && !p.getFlag('final_patch_started')) return 'alex_it_quest_final';
     }
 
     if (
@@ -1517,13 +1567,21 @@ export class ExplorationState {
     if (this.questElement) {
       this.questElement.style.display = 'block';
       const sideHints = this._getActiveSideQuestHints();
-      const sideHTML = sideHints.map(h =>
+      const hintsHTML = sideHints.map(h =>
         `<div class="hud-quest-optional">${h}</div>`
+      ).join('');
+      const sideQuests = this._getActiveSideQuests();
+      const sideQuestsHTML = sideQuests.map(q =>
+        `<div class="hud-side-quest-entry">
+          <div class="hud-side-quest-name">${q.name}</div>
+          <div class="hud-side-quest-objective">${q.objective}</div>
+        </div>`
       ).join('');
       this.questElement.innerHTML = `
         <div class="hud-quest-title">OBJECTIVE</div>
         <div class="hud-quest-objective">${objective}</div>
-        ${sideHTML ? `<div class="hud-quest-divider"></div>${sideHTML}` : ''}
+        ${hintsHTML ? `<div class="hud-quest-divider"></div>${hintsHTML}` : ''}
+        ${sideQuestsHTML ? `<div class="hud-quest-divider"></div><div class="hud-side-quest-title">SIDE QUESTS</div>${sideQuestsHTML}` : ''}
       `;
     }
 
@@ -1552,39 +1610,89 @@ export class ExplorationState {
       }
     }
 
-    // Motivational poster quests — only shown after Ross mentions them in the Karen loss tutorial
+    return hints;
+  }
+
+  _getActiveSideQuests() {
+    const quests = [];
+    const f = (flag) => this.player.getFlag(flag);
+
+    // The Lunch Thief
+    if (f('lunch_thief_started') && !f('lunch_thief_complete')) {
+      let objective = 'Check the break room fridge';
+      if (f('lunch_thief_fridge_done') && !f('lunch_thief_culprit_revealed')) objective = 'Ask Janet about the thief';
+      else if (f('lunch_thief_culprit_revealed')) objective = 'Confront the culprit';
+      quests.push({ name: 'The Lunch Thief', objective });
+    }
+
+    // The Printer from Hell
+    if (f('printer_quest_started') && !f('printer_quest_done')) {
+      const objective = f('printer_toner_quest') ? "Find the printer's true purpose" : 'Ask Alex from IT about the printer';
+      quests.push({ name: 'The Printer from Hell', objective });
+    }
+
+    // Server Room Secrets
+    if (f('server_secret_started') && !f('server_secret_done')) {
+      quests.push({ name: 'Server Room Secrets', objective: 'Help Alex with his discovery' });
+    }
+
+    // Motivational poster quests — unlocked after losing to Karen
     if (f('retry_karen')) {
-      const atkDone = ['quest_atk_1_done','quest_atk_2_done','quest_atk_3_done','quest_atk_4_done','quest_atk_5_done'].filter(f).length;
-      if (atkDone < 5) {
-        hints.push(`Find assertiveness posters for ATK bonuses (${atkDone}/5)`);
-      }
-      const defDone = ['quest_def_1_done','quest_def_2_done','quest_def_3_done','quest_def_4_done','quest_def_5_done'].filter(f).length;
-      if (defDone < 5) {
-        hints.push(`Find composure posters for DEF bonuses (${defDone}/5)`);
-      }
+      const atkDone = ['quest_atk_1_done','quest_atk_2_done','quest_atk_3_done','quest_atk_4_done','quest_atk_5_done'].filter(fl => f(fl)).length;
+      if (atkDone < 5) quests.push({ name: 'Assertiveness Training', objective: `Find assertiveness posters (${atkDone}/5)` });
+      const defDone = ['quest_def_1_done','quest_def_2_done','quest_def_3_done','quest_def_4_done','quest_def_5_done'].filter(fl => f(fl)).length;
+      if (defDone < 5) quests.push({ name: 'Composure Training', objective: `Find composure posters (${defDone}/5)` });
     }
 
     // Alex IT subquests
     if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
-      hints.push('Alex mentioned a signal at 3:47 AM...');
+      quests.push({ name: 'The 3:47 AM Anomaly', objective: 'Return to Alex from IT' });
     }
     if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
-      hints.push('Alex needs help tracing an old admin account');
+      const found = (f('phantom_hr_found') ? 1 : 0) + (f('phantom_workstation_found') ? 1 : 0);
+      const legacyObj = found >= 2 ? 'Return to Alex from IT' : `Investigate the Phantom Approver (${found}/2)`;
+      quests.push({ name: 'The Phantom Approver', objective: legacyObj });
     }
     if (f('network_started') && !f('quest_network_ghost_complete')) {
-      hints.push('Something strange on the network — Alex is investigating');
+      const placed = (f('booster_br_placed') ? 1 : 0) + (f('booster_stair_placed') ? 1 : 0) + (f('booster_conf_placed') ? 1 : 0);
+      let netObj;
+      if (placed >= 3) {
+        netObj = 'Return to Alex from IT';
+      } else {
+        const remaining = [];
+        if (!f('booster_br_placed')) remaining.push('• Break Room');
+        if (!f('booster_stair_placed')) remaining.push('• Stairwell');
+        if (!f('booster_conf_placed')) remaining.push('• Conference Room');
+        netObj = `Place signal boosters (${placed}/3):<br>${remaining.join('<br>')}`;
+      }
+      quests.push({ name: 'Network Ghost', objective: netObj });
     }
     if (f('dave_started') && !f('quest_daves_legacy_complete')) {
-      hints.push("What happened to Alex's predecessor, Dave?");
+      const found = (f('tuesday_floppy_found') ? 1 : 0) + (f('tuesday_tag_found') ? 1 : 0) + (f('tuesday_sticky_found') ? 1 : 0);
+      let daveObj;
+      if (found >= 3) {
+        daveObj = 'Return to Alex from IT';
+      } else {
+        const remaining = [];
+        if (!f('tuesday_sticky_found')) remaining.push('• Sticky note — Cubicle Farm');
+        if (!f('tuesday_floppy_found')) remaining.push('• Floppy disk — Break Room');
+        if (!f('tuesday_tag_found')) remaining.push('• Server tag — Server Room');
+        daveObj = `Locate the artifacts (${found}/3):<br>${remaining.join('<br>')}`;
+      }
+      quests.push({ name: 'The Tuesday 2PM', objective: daveObj });
     }
-    if (f('printer_quest_started') && !f('quest_printers_soul_complete')) {
-      hints.push('The printer is acting stranger than usual...');
+    if (f('printer_soul_started') && !f('quest_printer_soul_complete')) {
+      let printerObj = 'Find the firmware disk (Server Room)';
+      if (f('printer_firmware_found')) printerObj = "Connect to the printer's ethernet port";
+      if (f('printer_soul_done')) printerObj = 'Return to Alex from IT';
+      quests.push({ name: "Printer's Soul", objective: printerObj });
     }
     if (f('final_patch_started') && !f('quest_final_patch_complete')) {
-      hints.push('Alex has a plan for the charter and the server');
+      const patchObj = f('patch_monitor_silenced') ? 'Return to Alex to defend the server room' : 'Silence the network monitoring terminal';
+      quests.push({ name: 'The Unauthorized Patch', objective: patchObj });
     }
 
-    return hints;
+    return quests;
   }
 
   _updateQuest(questId, stage) {

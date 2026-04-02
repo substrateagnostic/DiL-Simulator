@@ -103,4 +103,10 @@ export const ENCOUNTERS = {
     postDialogId: 'algorithm_defeated',
     canFlee: false,
   },
+  patch_defense: {
+    enemyId: 'security_guard',
+    preDialogId: null,
+    postDialogId: 'patch_defense_defeated',
+    canFlee: false,
+  },
 };

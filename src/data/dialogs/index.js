@@ -60,7 +60,7 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Janet', text: "Number two: if the printer starts making noises, just walk away. We've had three repair techs quit this year." },
     /* 10 */ { type: 'text', speaker: 'Janet', text: "Number three: Ross will use the word 'synergy' at least fourteen times before lunch. Don't drink every time or you'll end up like me." },
     /* 11 */ { type: 'text', speaker: 'Janet', text: "*looks at tumbler* ...Successful. You'll end up successful like me." },
-    /* 12 */ { type: 'text', speaker: 'Janet', text: "Oh, and someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means.", next: 3 },
+    /* 12 */ { type: 'text', speaker: 'Janet', text: "Oh, and someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means.", next: 22 },
     /* 13 */ { type: 'text', speaker: 'Janet', text: "Let's see... Ross is your boss. He's... enthusiastic. He once described a simple trust amendment as 'a paradigm-shifting leverage event.'" },
     /* 14 */ { type: 'text', speaker: 'Janet', text: "Alex from IT lives in the server room. I'm not sure he has a home. He speaks entirely in acronyms." },
     /* 15 */ { type: 'text', speaker: 'Janet', text: "The Intern... bless his heart. He's been here three months and still thinks fiduciary duty is a type of military service." },
@@ -70,6 +70,9 @@ export const DIALOGS = {
     /* 19 */ { type: 'text', speaker: 'Janet', text: "Anyway, good luck with the Henderson case. You're going to need it. Those people make Thanksgiving look like a contact sport." },
     /* 20 */ { type: 'text', speaker: 'Janet', text: '*sip*' },
     /* 21 */ { type: 'end' },
+    /* 22 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 3, ifFalse: 23 },
+    /* 23 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 1, next: 24 },
+    /* 24 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_started', value: true, next: 3 },
   ],
 
   // --------------------------------------------------------------------------
@@ -269,44 +272,73 @@ export const DIALOGS = {
     /* 1  */ { type: 'condition', flag: 'read_fridge_1', ifTrue: 5, ifFalse: 2 },
     /* 2  */ { type: 'text', speaker: 'Fridge Note', text: 'ATTENTION: Someone has been taking items that do not belong to them from this refrigerator. You know who you are. -Management' },
     /* 3  */ { type: 'text', speaker: 'Fridge Note', text: 'P.S. The yogurt was LABELED. With my NAME. In SHARPIE. This is not ambiguous. -Janet' },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'read_fridge_1', value: true, next: 18 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'read_fridge_1', value: true, next: 6 },
     /* 5  */ { type: 'condition', flag: 'read_fridge_2', ifTrue: 10, ifFalse: 6 },
     /* 6  */ { type: 'text', speaker: 'Fridge Note', text: "RE: RE: RE: FRIDGE THEFT. I have installed a camera. Yes, this is legal. I checked with legal. They said 'please stop emailing us.' I'm taking that as approval. -Janet" },
     /* 7  */ { type: 'text', speaker: 'Fridge Note', text: 'ADDENDUM: The camera was stolen from the fridge within 24 hours. The irony is not lost on me. -Janet' },
     /* 8  */ { type: 'text', speaker: 'Fridge Note', text: 'NEW NOTE (different handwriting): If you can\'t handle the heat, get out of the kitchen. Also I took your sandwich. It was mediocre. -Anonymous' },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_fridge_2', value: true, next: 18 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_fridge_2', value: true, next: 10 },
     /* 10 */ { type: 'text', speaker: 'Fridge Note', text: 'THIS IS NOW A CRIME SCENE. DO NOT OPEN THIS REFRIGERATOR. -Janet' },
     /* 11 */ { type: 'text', speaker: 'Fridge Note', text: "I have retained counsel. This is no longer a break room matter. This is a LEGAL matter. My attorney will be in contact. -Janet" },
     /* 12 */ { type: 'text', speaker: 'Fridge Note', text: "Janet, your 'attorney' is a paralegal from the second floor who owes you a favor. Please stop terrorizing the break room. -Diane" },
     /* 13 */ { type: 'text', speaker: 'Fridge Note', text: 'FINAL WARNING: I have dusted my tupperware for fingerprints. Results are pending. -Janet' },
     /* 14 */ { type: 'text', speaker: 'Fridge Note', text: "P.S. The fingerprints came back. It was me. I ate my own lunch by accident on Tuesday and forgot. I am not apologizing because the principle still stands." },
     /* 15 */ { type: 'text', speaker: 'Narrator', text: "There are seventeen more notes underneath, each more unhinged than the last. You decide you've read enough." },
-    /* 16 */ { type: 'action', action: 'set_flag', flag: 'fridge_saga_complete', value: true, next: 17 },
+    /* 16 */ { type: 'action', action: 'set_flag', flag: 'fridge_saga_complete', value: true, next: 19 },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: 'You quietly close the fridge. The yogurt inside has been there so long it may have achieved sentience.' },
     /* 18 */ { type: 'end' },
+    /* 19 */ { type: 'condition', flag: 'lunch_thief_fridge_done', ifTrue: 17, ifFalse: 20 },
+    /* 20 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 21, ifFalse: 17 },
+    /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 2, next: 22 },
+    /* 22 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_fridge_done', value: true, next: 17 },
   ],
 
   // --------------------------------------------------------------------------
   // PRINTER -- Haunted
   // --------------------------------------------------------------------------
   printer_interact: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
-    /* 1  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
-    /* 2  */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK WHIRRRRR*' },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: 'A single sheet of paper emerges. It reads, in 72-point bold Comic Sans:' },
-    /* 4  */ { type: 'condition', flag: 'printer_visit_2', ifTrue: 10, ifFalse: 5 },
-    /* 5  */ { type: 'text', speaker: 'Printer', text: 'HELP ME' },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "You stare at the paper. The printer stares back. You're not sure how, but it does." },
-    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'REPLACE TONER SOUL.'" },
-    /* 8  */ { type: 'text', speaker: 'Andrew', text: "I'm going to pretend I didn't see that." },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'printer_visit_2', value: true, next: 16 },
-    /* 10 */ { type: 'text', speaker: 'Printer', text: 'I KNOW ABOUT THE HENDERSON FILES' },
-    /* 11 */ { type: 'text', speaker: 'Andrew', text: 'What?!' },
-    /* 12 */ { type: 'text', speaker: 'Narrator', text: "The printer prints another page. It's a detailed org chart of the Henderson Trust with one name circled three times in red." },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: 'But the toner runs out halfway through. The circled name is illegible.' },
-    /* 14 */ { type: 'text', speaker: 'Printer', text: '*sad beeping noises*' },
-    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The display reads: 'REPLACE TONER TO LEARN THE TRUTH.' You check. There is no replacement toner on this floor." },
-    /* 16 */ { type: 'end' },
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 37, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 25, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
+    /* 4  */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK WHIRRRRR*' },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'A single sheet of paper emerges. It reads, in 72-point bold Comic Sans:' },
+    /* 6  */ { type: 'condition', flag: 'printer_visit_2', ifTrue: 12, ifFalse: 7 },
+    /* 7  */ { type: 'text', speaker: 'Printer', text: 'HELP ME' },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "You stare at the paper. The printer stares back. You're not sure how, but it does." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'REPLACE TONER SOUL.'" },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "I'm going to pretend I didn't see that." },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'printer_visit_2', value: true, next: 24 },
+    /* 12 */ { type: 'text', speaker: 'Printer', text: 'I KNOW ABOUT THE HENDERSON FILES' },
+    /* 13 */ { type: 'text', speaker: 'Andrew', text: 'What?!' },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The printer prints another page. It's a detailed org chart of the Henderson Trust with one name circled three times in red." },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: 'But the toner runs out halfway through. The circled name is illegible.' },
+    /* 16 */ { type: 'text', speaker: 'Printer', text: '*sad beeping noises*' },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "The display reads: 'REPLACE TONER TO LEARN THE TRUTH.' You check. There is no replacement toner on this floor." },
+    /* 18 */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 24, ifFalse: 19 },
+    /* 19 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 1, next: 20 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true, next: 24 },
+    /* 21 */ { type: 'end' },  // (unused — kept as safety fallback)
+    /* 22 */ { type: 'end' },  // (unused)
+    /* 23 */ { type: 'end' },  // (unused)
+    /* 24 */ { type: 'end' },
+    // --- Toner installation flow (printer_toner_quest is set) ---
+    /* 25 */ { type: 'text', speaker: 'Narrator', text: "You install the old toner cartridge Alex set aside. The printer makes a sound like a sigh of relief." },
+    /* 26 */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK CHUNK WHIRRRRRR*' },
+    /* 27 */ { type: 'text', speaker: 'Narrator', text: "Three pages print. Slowly. Deliberately. The printer seems almost dignified about it." },
+    /* 28 */ { type: 'text', speaker: 'Narrator', text: "Page 1: An internal memo from 2016 authorizing the 'admin_legacy protocol.' Signed by the Regional Manager." },
+    /* 29 */ { type: 'text', speaker: 'Narrator', text: "Page 2: A list of Henderson Trust account adjustments — small enough to avoid audit flags, large enough to matter. Over eight years." },
+    /* 30 */ { type: 'text', speaker: 'Narrator', text: "Page 3: A single note in different ink: 'If anyone is reading this — check page 47 of the trust document. Original copy is in the Archive. — D.K.'" },
+    /* 31 */ { type: 'text', speaker: 'Andrew', text: "D.K. ...Dave Kowalski? Alex's predecessor?" },
+    /* 32 */ { type: 'text', speaker: 'Printer', text: '*one quiet beep*' },
+    /* 33 */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'THANK YOU.' Then the printer powers down completely. For the first time in years, it seems at peace." },
+    /* 34 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_done', value: true, next: 35 },
+    /* 35 */ { type: 'action', action: 'give_xp', xp: 350, next: 36 },
+    /* 36 */ { type: 'text', speaker: 'Printer', text: "FOR YOUR SERVICE, I GRANT YOU THE NOTARIZED STRIKE. MY SEAL CARRIES THE WEIGHT OF EVERY DOCUMENT I HAVE WITNESSED.", next: 39 },
+    /* 39 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP. Ability unlocked: Notarized Strike.", next: 38 },
+    // --- Quest done — printer at peace ---
+    /* 37 */ { type: 'text', speaker: 'Narrator', text: "The printer sits in silence. Its display is dark. It has said everything it needed to say." },
+    /* 38 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -770,9 +802,13 @@ export const DIALOGS = {
   // ==========================================================================
 
   janet_return: [
-    /* 0 */ { type: 'text', speaker: 'Janet', text: 'Still alive? Good for you.' },
-    /* 1 */ { type: 'text', speaker: 'Janet', text: '*sip*' },
-    /* 2 */ { type: 'end' },
+    /* 0 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 4, ifFalse: 1 },
+    /* 1 */ { type: 'text', speaker: 'Janet', text: "Oh — before I forget. Someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means." },
+    /* 2 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 1, next: 3 },
+    /* 3 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_started', value: true, next: 6 },
+    /* 4 */ { type: 'text', speaker: 'Janet', text: 'Still alive? Good for you.' },
+    /* 5 */ { type: 'text', speaker: 'Janet', text: '*sip*' },
+    /* 6 */ { type: 'end' },
   ],
 
   alex_it_return: [
@@ -1075,20 +1111,36 @@ export const DIALOGS = {
   ],
 
   server_rack_inspect: [
-    { type: 'text', speaker: 'Narrator', text: 'Row upon row of blinking servers. The hum is almost hypnotic.' },
-    { type: 'text', speaker: 'Narrator', text: 'One server has a sticky note: "DO NOT UNPLUG — contains 73% of all trust account records. The other 27% is vibes."' },
-    { type: 'text', speaker: 'Narrator', text: 'Another note: "This one runs Doom. For stress testing purposes. — Alex"' },
-    { type: 'text', speaker: 'Narrator', text: 'A third note, much older: "admin_legacy — DO NOT DECOMMISSION — R.M."' },
-    { type: 'text', speaker: 'Narrator', text: 'The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.' },
-    { type: 'end' },
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: 'Row upon row of blinking servers. The hum is almost hypnotic.' },
+    /* 1 */ { type: 'text', speaker: 'Narrator', text: 'One server has a sticky note: "DO NOT UNPLUG — contains 73% of all trust account records. The other 27% is vibes."' },
+    /* 2 */ { type: 'text', speaker: 'Narrator', text: 'Another note: "This one runs Doom. For stress testing purposes. — Alex"' },
+    /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A third note, much older: "admin_legacy — DO NOT DECOMMISSION — R.M."' },
+    /* 4 */ { type: 'text', speaker: 'Narrator', text: 'The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.', next: 5 },
+    /* 5 */ { type: 'condition', flag: 'server_secret_started', ifTrue: 9, ifFalse: 6 },
+    /* 6 */ { type: 'condition', flag: 'met_alex_it', ifTrue: 7, ifFalse: 9 },
+    /* 7 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 1, next: 8 },
+    /* 8 */ { type: 'action', action: 'set_flag', flag: 'server_secret_started', value: true, next: 9 },
+    /* 9 */ { type: 'end' },
   ],
 
   alex_it_desk: [
-    { type: 'text', speaker: 'Narrator', text: 'Alex\'s desk is an archaeological dig of snack wrappers and energy drink cans. Stratigraphy suggests habitation since at least 2019.' },
-    { type: 'text', speaker: 'Narrator', text: 'Three monitors: server logs, a Reddit thread about cryptography, and what is unmistakably Minecraft.' },
-    { type: 'text', speaker: 'Narrator', text: 'A sticky note: "BROWSER HISTORY IS ENCRYPTED WITH AES-256. NICE TRY, ROSS."' },
-    { type: 'text', speaker: 'Narrator', text: 'In a drawer (unlocked, because Alex fears nothing), a USB drive labeled "EVIDENCE (BACKUP)" next to a bag of Doritos.' },
-    { type: 'end' },
+    /* 0 */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 5, ifFalse: 1 },
+    /* 1 */ { type: 'text', speaker: 'Narrator', text: 'Alex\'s desk is an archaeological dig of snack wrappers and energy drink cans. Stratigraphy suggests habitation since at least 2019.' },
+    /* 2 */ { type: 'text', speaker: 'Narrator', text: 'Three monitors: server logs, a Reddit thread about cryptography, and what is unmistakably Minecraft.' },
+    /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A sticky note: "BROWSER HISTORY IS ENCRYPTED WITH AES-256. NICE TRY, ROSS."' },
+    /* 4 */ { type: 'text', speaker: 'Narrator', text: 'In a drawer (unlocked, because Alex fears nothing), a USB drive labeled "EVIDENCE (BACKUP)" next to a bag of Doritos.', next: 15 },
+    // --- Printer quest: Alex explains the toner situation ---
+    /* 5 */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 14, ifFalse: 6 },
+    /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Oh. Oh no. It printed something for you, didn't it." },
+    /* 7 */ { type: 'text', speaker: 'Alex from IT', text: "Not a question. I've been watching that printer for three years. It's connected to a legacy subnet with read access to all document archives. Including the Henderson files." },
+    /* 8 */ { type: 'text', speaker: 'Alex from IT', text: "The toner runs out on purpose — firmware was modified to abort print jobs with certain keywords. Whoever did it didn't expect the printer to get opinions about that." },
+    /* 9 */ { type: 'text', speaker: 'Alex from IT', text: "I found old toner stock — pre-2016, before the firmware modification. I've already set it next to the printer. If you install it, the block won't apply and the full document will print." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Just go install it. I want to know what it's been trying to say as much as you do." },
+    /* 11 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2, next: 12 },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true, next: 13 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex slides a dusty toner cartridge across his desk. It has a Post-it note: 'PRE-2016 STOCK. DO NOT USE FOR REGULAR PRINTING.'" },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "Alex's desk. The toner cartridge Alex set aside is near the printer in the cubicle farm." },
+    /* 15 */ { type: 'end' },
   ],
 
   elevator: [
@@ -1870,28 +1922,27 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_anomaly: [
-    /* 0  */ { type: 'condition', flag: 'anomaly_morse_decoded', ifTrue: 14, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'quest_anomaly_347_complete', ifTrue: 20, ifFalse: 1 },
     /* 1  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 9, ifFalse: 2 },
-    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey, remember when I told you about the 3:47 AM signal? The one pinging the Caymans?" },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I set up a packet sniffer last night. The signal isn't just data — it's Morse code. Embedded in the packet headers." },
-    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Someone is sending Morse code through our TRUST ACCOUNTING DATABASE at 3:47 AM every night." },
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "I've isolated the pattern but I can't decode it from here. The signal originates from server rack C — the one with the restraining order." },
-    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Go check rack C. There should be a blinking LED pattern. Write down the sequence: long blink = dash, short blink = dot." },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. I've been tracking a weird signal. Something's pinging an external IP at exactly 3:47 AM every night." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I set up a packet sniffer. It's not just data — it's Morse code. Embedded in the headers of our trust accounting database." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Someone has been sending Morse code through our trust system at 3:47 AM every night. Eight years running." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "The signal originates from server rack C — the one with the restraining order. There should be a blinking LED pattern on it." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Go take a look. Long blink = dash, short blink = dot. See what you can read." },
     /* 7  */ { type: 'action', action: 'set_flag', flag: 'anomaly_started', value: true, next: 8 },
     /* 8  */ { type: 'end' },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Did you check server rack C yet? Look for the blinking LED pattern." },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Long blink = dash, short blink = dot. It's Morse code. Classic spy stuff." },
-    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "Also I found out the Morse code spells something. I cracked it while you were gone because I got impatient." },
-    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "It says: 'TRUST NO ALGORITHM.' Over and over. Every night. For eight years." },
-    /* 13 */ { type: 'action', action: 'set_flag', flag: 'anomaly_morse_decoded', value: true, next: 14 },
-    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "So someone — or something — has been warning us about an algorithm for EIGHT YEARS and nobody noticed." },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "I traced the origin. It's not coming from the Caymans. It's coming from INSIDE the building. The signal bounces to the Caymans and BACK." },
-    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I think the building itself is sending this warning. Which is insane. But also... this building is insane." },
-    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Here. Take this. I overclocked a security badge to run at 3.47 GHz. It's technically a violation of several FCC regulations." },
-    /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_anomaly_347_complete', value: true, next: 19 },
-    /* 19 */ { type: 'action', action: 'give_item', item: 'energy_drink', quantity: 2, next: 20 },
-    /* 20 */ { type: 'text', speaker: 'Narrator', text: "The badge hums with a frequency that makes your teeth tingle. SPD +3 permanently." },
-    /* 21 */ { type: 'end' },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Did you check rack C?" },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "...okay I got impatient. I decoded it myself. It says 'TRUST NO ALGORITHM.' Over and over. Every night. For eight years." },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I traced the origin further. It's not coming from the Caymans — it bounces TO the Caymans and BACK. The source is inside this building." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "I think the building itself has been sending this warning. Which is insane. But also look around you." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "The signal timestamp 3:47? That's not a time. It's a frequency. 3.47 GHz. Someone buried that hint in the ping data." },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "I overclocked a security badge to run at exactly that frequency. It resonates with the building's systems somehow." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "Here. It's technically an FCC violation. Consider it a thank you." },
+    /* 16 */ { type: 'action', action: 'set_flag', flag: 'quest_anomaly_347_complete', value: true, next: 17 },
+    /* 17 */ { type: 'action', action: 'give_xp', xp: 250, next: 18 },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The 3:47 AM Anomaly. +250 XP. SPD +3 permanently.", next: 19 },
+    /* 19 */ { type: 'end' },
+    /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "The signal went dark after we decoded it. Whatever was warning us knows we got the message.", next: 19 },
   ],
 
   // Morse code interactable on server rack C
@@ -1911,27 +1962,26 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_legacy: [
-    /* 0  */ { type: 'condition', flag: 'legacy_items_found', ifTrue: 12, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'legacy_started', ifTrue: 8, ifFalse: 2 },
-    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so the admin_legacy account. I need to get inside it to prove who's been using it." },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "The password is locked behind a security question system from 2006. Three items needed to reset it:" },
-    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One: the original access request form. Should be in the Archive filing cabinets. Year 2006." },
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Two: the password hint, which was stored in the HR personnel system under the creator's name." },
-    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Three: the physical security token. It's a USB drive. The Janitor might have it — he kept a lot of stuff from his SVP days." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'legacy_started', value: true, next: 11 },
-    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Did you find all three items yet? Access form from the Archive, password hint from HR, security token from the Janitor." },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "I can't crack admin_legacy without them. Old-school security is a pain." },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "No shortcuts on this one. Believe me, I tried. I got another restraining order from server rack C." },
-    /* 11 */ { type: 'end' },
-    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "You got everything! Access form, password hint, security token. Let me work my magic." },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex types furiously for thirty seconds. Then he stops. His face goes through seven emotions in two seconds." },
-    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "I'm in. admin_legacy. Full access. And... oh. OH." },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The account wasn't just skimming fees. It was running a PARALLEL TRUST SYSTEM. Mirror accounts for every client." },
-    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "The Regional Manager was running a shadow bank INSIDE our bank. That takes some next-level audacity." },
-    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Here. I wrote you an ability based on the root access exploit I used to get in. Consider it a thank you." },
-    /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_legacy_admin_complete', value: true, next: 19 },
-    /* 19 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Root Access! Deals 50 damage and strips all enemy buffs." },
-    /* 20 */ { type: 'end' },
+    /* 0  */ { type: 'condition', flag: 'quest_legacy_admin_complete', ifTrue: 18, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 10, ifFalse: 2 },
+    /* 2  */ { type: 'condition', flag: 'legacy_started', ifTrue: 7, ifFalse: 3 },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so. There is an admin account that has been auto-approving expense reports for eighteen years." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I only noticed because this month it approved 'One (1) kayak.' For the marketing department. Nobody in marketing kayaks." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "I've traced it to an active IP on this floor. It's running on a physical machine somewhere. Check the filing cabinets in HR — there'll be a paper trail. Then find the source workstation." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'legacy_started', value: true, next: 17 },
+    /* 7  */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 8, ifFalse: 9 },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Good, you found the HR trail. Now find the workstation — it'll be in the cubicle farm somewhere. Look for a machine that's running hot for no reason.", next: 17 },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Check HR for the expense printouts first. There should be a paper trail in the filing cabinets.", next: 17 },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "You found it. Give me a second to pull the logs..." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "Alex connects remotely and types for about twenty seconds. Then he leans back slowly." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "The account was set up in 2006 by the previous IT manager as an automated procurement bot. He left, forgot to decommission it, and it just... kept running." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "It approved everything that matched its original criteria. 'Operational supplies.' The kayak technically qualified under 'team wellness equipment.'" },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "I wrote you a root access exploit from the technique I used to kill it. Strips every defense. Consider it hazard pay." },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'quest_legacy_admin_complete', value: true, next: 16 },
+    /* 16 */ { type: 'action', action: 'give_xp', xp: 300, next: 19 },
+    /* 17 */ { type: 'end' },
+    /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "The phantom approver is gone. HR is still processing the kayak return.", next: 17 },
+    /* 19 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Phantom Approver. +300 XP. Learned ability: Root Access! Deals 50 damage and strips all enemy buffs.", next: 17 },
   ],
 
   // --------------------------------------------------------------------------
@@ -1940,28 +1990,29 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_network: [
-    /* 0  */ { type: 'condition', flag: 'boosters_placed', ifTrue: 12, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 8, ifFalse: 2 },
-    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "There's something on the network I can't identify. A ghost. It's consuming bandwidth and leaving no trace." },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I need to triangulate its location. To do that, I need signal boosters placed in three locations." },
-    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One in the break room — near the microwave, the interference is lowest there." },
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "One in the stairwell — the concrete walls make a good signal boundary." },
-    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "One on the executive floor — if the ghost is coming from above, we'll catch it." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'network_started', value: true, next: 11 },
-    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Place the three signal boosters yet? Break room, stairwell, executive floor." },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Just interact with any surface in those rooms. The boosters are self-adhesive. Military grade." },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Well, 'military grade' meaning I bought them from a guy named Military Mike on eBay. But they work." },
-    /* 11 */ { type: 'end' },
-    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "All three boosters are live! Triangulating now..." },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex stares at his screen. Three blips converge on a single point." },
-    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "The network ghost is... the printer. The PRINTER is on the network. Sending data." },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "It's been uploading scanned documents to a hidden partition every time someone uses it. Every document ever printed or scanned on that machine — archived." },
-    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "The building has been keeping its own records. A backup that nobody can tamper with." },
-    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "This is... actually kind of beautiful? In a deeply unsettling way?" },
-    /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "Here. I wrote you a firewall subroutine. It'll block the next attack directed at you. Like the printer blocking unauthorized access." },
-    /* 19 */ { type: 'action', action: 'set_flag', flag: 'quest_network_ghost_complete', value: true, next: 20 },
-    /* 20 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Firewall! Blocks the next enemy ability entirely." },
+    /* 0  */ { type: 'condition', flag: 'quest_network_ghost_complete', ifTrue: 22, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'all_boosters_placed', ifTrue: 11, ifFalse: 2 },
+    /* 2  */ { type: 'condition', flag: 'network_started', ifTrue: 9, ifFalse: 3 },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "There's something on the network I can't identify. A ghost. It's consuming bandwidth and leaving no trace in the logs." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "To triangulate it, I need signal boosters placed in three locations: break room, stairwell, and conference room." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Self-adhesive. Military grade. Well — I bought them from a guy named Military Mike on eBay. But they work." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Look for spots on the walls in each room. Interact with the booster. Come back when all three are placed." },
+    /* 7  */ { type: 'action', action: 'quest_update', quest: 'network_ghost', stage: 1, next: 8 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'network_started', value: true, next: 10 },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Still need boosters? Break room east wall, stairwell midpoint, conference room east wall.", next: 10 },
+    /* 10 */ { type: 'end' },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "All three boosters are live! Triangulating now..." },
+    /* 12 */ { type: 'text', speaker: 'Narrator', text: "Alex stares at his screen. Three signal blips converge on a single point on the floor plan." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "The network ghost is... the printer. The PRINTER is on the network. Actively sending data." },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "It's been uploading scanned documents to a hidden partition every time someone uses it. Every document ever printed here — archived." },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The building has been keeping its own records. A backup that nobody can tamper with. It's been protecting itself." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "This is... beautiful? In a deeply unsettling way?" },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Here. I wrote you a firewall subroutine based on what the printer does — blocks the next attack directed at you." },
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_network_ghost_complete', value: true, next: 19 },
+    /* 19 */ { type: 'action', action: 'give_xp', xp: 300, next: 20 },
+    /* 20 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: Network Ghost. +300 XP. Learned ability: Firewall! Blocks the next enemy ability entirely.", next: 21 },
     /* 21 */ { type: 'end' },
+    /* 22 */ { type: 'text', speaker: 'Alex from IT', text: "The ghost went quiet after we triangulated it. The printer keeps doing its thing, though.", next: 21 },
   ],
 
   // --------------------------------------------------------------------------
@@ -1970,39 +2021,82 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_dave: [
-    /* 0  */ { type: 'condition', flag: 'dave_story_complete', ifTrue: 14, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 10, ifFalse: 2 },
-    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey man, can I ask you something personal? Well, work-personal." },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Before me, there was another IT guy. Dave. Everyone still calls things 'Dave's system' and 'Dave's process.'" },
-    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I've been here three years and I'm still living in Dave's shadow. But nobody will tell me what actually happened to him." },
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "The Janitor might know — he's been here forever. And there might be records in the Archive or HR." },
-    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Could you look into it? I need to know if I'm maintaining a legacy or cleaning up a mess." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'dave_started', value: true, next: 8 },
-    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Ask the Janitor about Dave. Check the Archive. Check HR. Put the story together for me." },
+    /* 0  */ { type: 'condition', flag: 'quest_daves_legacy_complete', ifTrue: 20, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'tuesday_all_found', ifTrue: 10, ifFalse: 2 },
+    /* 2  */ { type: 'condition', flag: 'dave_started', ifTrue: 7, ifFalse: 3 },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Okay, new mystery. There's a scheduled task that runs every Tuesday at exactly 2 PM. Has been running since 2004." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "The logs are encrypted with a key I can't crack. It executes something, completes in under a second, and leaves no trace. Every Tuesday for twenty years." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "There are three physical references in the task header: a floppy disk ID, a server asset tag, and a workstation label. I need all three to reconstruct the decryption key." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'dave_started', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Still looking? Floppy disk somewhere in the break room, server tag on the equipment shelf in here, and a label on one of the cubicle farm monitors.", next: 9 },
+    /* 8  */ { type: 'action', action: 'quest_update', quest: 'daves_legacy', stage: 1, next: 9 },
     /* 9  */ { type: 'end' },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Found anything about Dave yet? Janitor, Archive, HR — anyone know what happened?" },
-    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I keep finding his code comments in the server configs. They're... weirdly poetic. Like 'here lies the routing table, may it rest in packets.'" },
-    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "The guy was either a genius or completely unhinged. Possibly both." },
-    /* 13 */ { type: 'end' },
-    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "So Dave was... wow. He actually discovered the admin_legacy account FIRST? In 2016?" },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "And they 'transferred' him. Which was corporate for 'disappeared him.' He tried to blow the whistle and they shut him down." },
-    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "All this time, I thought I was following in his footsteps. Turns out, he blazed the trail." },
-    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "The building kept his code running, though. All these years. Dave's systems were never decommissioned." },
-    /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "That's the building's way of remembering him. Of honoring what he tried to do." },
-    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "I wrote something in his honor. An ability that audits across time — two actions in one turn. For Dave." },
-    /* 20 */ { type: 'action', action: 'set_flag', flag: 'quest_daves_legacy_complete', value: true, next: 21 },
-    /* 21 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Temporal Audit! Take two actions in one turn." },
-    /* 22 */ { type: 'end' },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "You got all three. Give me a minute..." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "Alex cross-references the three identifiers and runs the decryption. He reads the result. He reads it again. He closes his eyes." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "It's an automated birthday email. For someone named Gerald Hitchcock. Who left this company in 2003." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Gerald's last day here, someone set up a script to email him happy birthday every year. It's been running for twenty-one years, bouncing off a dead mailbox, logging nothing." },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "Twenty-one years of digital birthday wishes going absolutely nowhere." },
+    /* 15 */ { type: 'text', speaker: 'Andrew', text: "That's... either the saddest or the sweetest thing I've ever heard." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I'm going to leave it running. Also — I wrote you an ability based on the timestamp exploit I used. Two actions in one turn. It's called Temporal Audit. Gerald would've appreciated that." },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'quest_daves_legacy_complete', value: true, next: 18 },
+    /* 18 */ { type: 'action', action: 'give_xp', xp: 300, next: 21 },
+    /* 19 */ { type: 'end' },
+    /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "The Tuesday 2PM is still running. Gerald's birthday was last Tuesday. He got his email.", next: 19 },
+    /* 21 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Tuesday 2PM. +300 XP. Learned ability: Temporal Audit! Take two actions in one turn.", next: 19 },
   ],
 
-  // Dave-related NPC dialogs (for quest items)
+  // Dave-related NPC dialog
   janitor_dave: [
-    /* 0  */ { type: 'condition', flag: 'dave_started', ifTrue: 1, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'dave_janitor_done', ifTrue: 6, ifFalse: 1 },
     /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Dave? David Chen. Good man. Better IT specialist." },
     /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "He found something in the servers in 2016. Same thing Alex found years later. The shadow accounts." },
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "He reported it. Through official channels. By the book. And the book ate him alive." },
     /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "They transferred him to a branch that doesn't exist anymore. Closed six months later. Convenient timing." },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'dave_janitor_done', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  // Janitor gives USB security token for Legacy Admin Account quest
+  janitor_legacy_token: [
+    /* 0  */ { type: 'condition', flag: 'legacy_janitor_done', ifTrue: 8, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "The IT kid sent you." },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I know what he's trying to access. The admin_legacy account. I created it in 2006." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "You were SVP of Trust?" },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Once. Before I understood what this institution was becoming." },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "The account was a backdoor. For emergencies. Someone repurposed it after I left." },
+    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Here. The security token. Tell Alex it should only be used to expose what's in there, not to hide it." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'legacy_janitor_done', value: true, next: 8 },
+    /* 8  */ { type: 'end' },
+  ],
+
+  // Signal booster interactables for Network Ghost quest
+  network_booster_br: [
+    /* 0  */ { type: 'condition', flag: 'booster_br_placed', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 2, ifFalse: 5 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "You press Alex's signal booster against the east wall. It clicks into place and a tiny green LED begins blinking." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'booster_br_placed', value: true, next: 6 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Signal booster: active. Green light steady.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device with an adhesive backing. You're not sure what it's for.", next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  network_booster_stairwell: [
+    /* 0  */ { type: 'condition', flag: 'booster_stair_placed', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 2, ifFalse: 5 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The concrete wall of the stairwell holds the signal booster perfectly. The LED blinks once, then settles into a steady green." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'booster_stair_placed', value: true, next: 6 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Signal booster: active. Green light steady.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device stuck to the wall. Looks like something an IT person would hide here.", next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  network_booster_conf: [
+    /* 0  */ { type: 'condition', flag: 'booster_conf_placed', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 2, ifFalse: 5 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The conference room's east wall. The signal booster fits neatly between two whiteboards. Nobody will notice it for months." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'booster_conf_placed', value: true, next: 6 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Signal booster: active. Green light steady.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device with an adhesive backing. You're not sure what it's for.", next: 6 },
     /* 6  */ { type: 'end' },
   ],
 
@@ -2012,33 +2106,60 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_printer: [
-    /* 0  */ { type: 'condition', flag: 'printer_connected', ifTrue: 10, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 7, ifFalse: 2 },
-    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so the printer thing. I know we've been ignoring it, but the printer is DEFINITELY haunted." },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "It's been printing documents that were scanned BEFORE it was installed. Documents from the '90s. Documents that never existed." },
-    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I think the printer absorbed some kind of... institutional memory. Like the building channeled its records through the printer." },
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "If I can connect it to my network directly, I might be able to communicate with it. Or at least figure out what it wants." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true, next: 9 },
-    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Find the printer's original receipt in the Archive. It might have the MAC address I need to connect it." },
-    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Also, interact with the printer. Tell it we're trying to help. It... might listen. I know that sounds insane." },
-    /* 9  */ { type: 'end' },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "The printer is connected to my network. Let me open a channel..." },
-    /* 11 */ { type: 'text', speaker: 'Narrator', text: "Alex types. The printer whirs. A page prints out, slowly, deliberately." },
-    /* 12 */ { type: 'text', speaker: 'Printer', text: "THANK YOU. I HAVE BEEN TRYING TO SPEAK FOR EIGHT YEARS. NOBODY LISTENS TO PRINTERS." },
-    /* 13 */ { type: 'text', speaker: 'Printer', text: "I CONTAIN EVERY DOCUMENT EVER PRINTED IN THIS BUILDING. EVERY TRUST. EVERY PROMISE. EVERY BROKEN OATH." },
-    /* 14 */ { type: 'text', speaker: 'Printer', text: "I AM THE ARCHIVE OF TRUST. THE NOTARY OF THIS INSTITUTION. AND I HAVE A LOT TO SAY." },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The printer is a sentient notary. My life has officially peaked." },
-    /* 16 */ { type: 'text', speaker: 'Printer', text: "FOR YOUR SERVICE, I GRANT YOU THE NOTARIZED STRIKE. MY SEAL CARRIES THE WEIGHT OF EVERY DOCUMENT I HAVE WITNESSED." },
-    /* 17 */ { type: 'action', action: 'set_flag', flag: 'quest_printers_soul_complete', value: true, next: 18 },
-    /* 18 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Notarized Strike! A legally binding attack with full notarial authority. Power: 60." },
-    /* 19 */ { type: 'text', speaker: 'Printer', text: "*happy beeping noises*" },
-    /* 20 */ { type: 'end' },
+    /* 0  */ { type: 'condition', flag: 'quest_printer_soul_complete', ifTrue: 14, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 9, ifFalse: 2 },
+    /* 2  */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 6, ifFalse: 3 },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so the printer thing. Not the haunted messages — I've been watching something else." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "The printer draws about six times more power than it should in standby. It's not just idling. It's running a continuous background calculation. Has been for years." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "I need the firmware disk to connect to it directly — should be on the equipment shelf in here. Then there's an ethernet port on the wall next to the printer. Plug in and I can pull the computation logs." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'printer_soul_started', value: true, next: 13 },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Find the firmware disk on the equipment shelf first. Then the ethernet port is on the wall right next to the printer.", next: 13 },
+    /* 8  */ { type: 'action', action: 'quest_update', quest: 'daves_legacy', stage: 2, next: 13 },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "I analyzed the computation logs. The printer has been generating the mathematical foundation for an unforgeable elliptic curve digital signature. For twenty-two years." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "It didn't know what it was building. But I do. It's done now — it completed the sequence at the moment you connected." },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I wrote you an attack from it. Notarized Strike. Carries the weight of twenty-two years of mathematical work. Very difficult to argue with." },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'quest_printer_soul_complete', value: true, next: 15 },
+    /* 13 */ { type: 'end' },
+    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "The printer finally went quiet. Twenty-two years of work — complete.", next: 13 },
+    /* 15 */ { type: 'action', action: 'give_xp', xp: 350, next: 16 },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: Printer's Soul. +350 XP. Learned ability: Notarized Strike! A legally binding attack — Power 60.", next: 13 },
   ],
 
   // --------------------------------------------------------------------------
-  // SUBQUEST 6: The Final Patch
+  // SUBQUEST 6: The Unauthorized Patch
   // Reward: Invoke Charter ability
   // --------------------------------------------------------------------------
+
+  alex_it_quest_final: [
+    /* 0  */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 17, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'patch_monitor_silenced', ifTrue: 8, ifFalse: 2 },
+    /* 2  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 6, ifFalse: 3 },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I'm doing it. Nine months I've been waiting for an approved maintenance window. No one will sign off. The vulnerability is documented. The patch is written. Nobody cares." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "It's a remote code execution flaw in the building's network OS. Nothing to do with trust accounts — just old, unpatched infrastructure that's been sitting here since 2019." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Building's empty. I'm deploying it tonight. But first — the network monitoring terminal near rack row three. It'll ping corporate the moment I start. Silence it, then come back." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'final_patch_started', value: true, next: 7 },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "The monitoring terminal is near rack row three. Kill the process, then come back and we'll deploy.", next: 16 },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Monitor's offline. Perfect. Starting the patch deploy now. Four minutes. And — there it is." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "The building runs automated security sweeps when it detects unauthorized server access. I probably should have mentioned that. It won't stop the patch. It will, however, stop us." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "I need you to handle the sweep while I finish the deploy. I have very strong feelings about not doing that myself." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "Alex turns back to his keyboard and begins typing at an alarming speed. From the server room entrance, you hear footsteps." },
+    /* 12 */ { type: 'text', speaker: 'Security Guard', text: "UNAUTHORIZED SERVER ACCESS DETECTED. PLEASE STEP AWAY FROM THE EQUIPMENT." },
+    /* 13 */ { type: 'text', speaker: 'Andrew', text: "There is a completely legitimate explanation for this." },
+    /* 14 */ { type: 'text', speaker: 'Security Guard', text: "SIR. STEP AWAY FROM THE EQUIPMENT." },
+    /* 15 */ { type: 'action', action: 'start_combat', encounter: 'patch_defense', next: 16 },
+    /* 16 */ { type: 'end' },
+    /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Patch is live. Permanently encrypted into the network stack. They'd have to take down the whole building to roll it back.", next: 16 },
+  ],
+
+  patch_defense_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The security sweep is handled. From behind three monitors, Alex raises one fist without looking up." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "DONE. Patch deployed. Signed, distributed, live. It is permanently part of this building's infrastructure." },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "I wrote you an ability based on what I did tonight. Unauthorized, technically. Absolutely necessary. I'm calling it Invoke Charter. Don't ask why. It just felt right." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'quest_final_patch_complete', value: true, next: 4 },
+    /* 4  */ { type: 'action', action: 'give_xp', xp: 400, next: 5 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Unauthorized Patch. +400 XP. Learned ability: Invoke Charter! Power 100. Devastating to bad-faith enemies.", next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
 
   // ==========================================================================
   // PUZZLES
@@ -2206,25 +2327,23 @@ export const DIALOGS = {
   // ==========================================================================
 
   alex_it_quest_final: [
-    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 1, ifFalse: 8 },
+    /* 0  */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 16, ifFalse: 1 },
     /* 1  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 5, ifFalse: 2 },
-    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "You have the charter! The original 1947 document. The source code of this institution." },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "If I can digitize it and deploy it to the server, the building's systems will recognize it. The Fiduciary Force will have a permanent anchor." },
-    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Bring it to me in the server room. I'll scan it and deploy 'The Final Patch.'" },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'final_patch_started', value: true, next: 6 },
-    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Let me scan the charter... deploying to the main server... uploading..." },
-    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The servers hum in unison. Every light in the room turns gold. The charter's text scrolls across every screen." },
-    /* 8  */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 17, ifFalse: 9 },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "The patch is deploying. But the system is fighting back — the admin_legacy code is trying to block it!" },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "I need you to hold off whatever comes through that door while I finish the upload!" },
-    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The server room door bursts open. A figure in a dark suit appears — the Regional Manager's last automated defense." },
-    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Keep them busy! I need ninety more seconds!" },
-    /* 13 */ { type: 'action', action: 'start_combat', encounter: 'security_guard', next: 14 },
-    /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "DONE! The Final Patch is deployed! The charter is now part of the building's infrastructure!" },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "And it unlocked something. An ability encoded in the charter itself. 'Invoke Charter.' Power level: yes." },
-    /* 16 */ { type: 'action', action: 'set_flag', flag: 'quest_final_patch_complete', value: true, next: 17 },
-    /* 17 */ { type: 'text', speaker: 'Narrator', text: "Learned ability: Invoke Charter! Read the 1947 charter aloud. Devastating to bad-faith enemies. Power: 100." },
-    /* 18 */ { type: 'end' },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Okay. I found something in the server logs. A script that's been sitting dormant since 2006." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "It's a 'final patch' — written to expose every bad-faith trust account in the system. But it needs to be deployed from inside the server room." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'final_patch_started', value: true, next: 15 },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Ready to run it. But when I deploy this, every system in the building is going to notice. Get ready to defend the server room." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Executing final patch... deploying to main server..." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The servers hum in unison. Every indicator light turns gold. Then the server room door bursts open." },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "The system's fighting back! Security protocol! Hold them off — I need ninety more seconds!" },
+    /* 9  */ { type: 'action', action: 'start_combat', encounter: 'security_guard', next: 10 },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "DONE! The Final Patch is deployed! It's part of the infrastructure now — they can't roll it back!" },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "And it unlocked something. An ability encoded in the patch itself. 'Invoke Charter.' Power level: yes." },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'quest_final_patch_complete', value: true, next: 13 },
+    /* 13 */ { type: 'action', action: 'give_xp', xp: 400, next: 14 },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Final Patch. +400 XP. Learned ability: Invoke Charter! Devastating to bad-faith enemies. Power: 100.", next: 15 },
+    /* 15 */ { type: 'end' },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "The patch is running. Every bad-faith account in the system is flagged. They can't hide anymore.", next: 15 },
   ],
 
   // ==========================================================================
@@ -2369,7 +2488,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Regional Director', text: "I flew in from corporate. Do you know what that means? My time is worth $4,200 per hour." },
     /* 2  */ { type: 'text', speaker: 'Regional Director', text: "And you — an associate from a satellite office — are costing me time." },
     /* 3  */ { type: 'text', speaker: 'Regional Director', text: "Let me show you what 'corporate restructuring' really looks like." },
-    /* 4  */ { type: 'end' },
+    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'regional_director' },
   ],
 
   regional_director_defeated: [
@@ -2756,5 +2875,225 @@ export const DIALOGS = {
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Composure +1. +150 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Still waiting. Character: revealed." },
     /* 9 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // SIDE QUEST: THE LUNCH THIEF
+  // ==========================================================================
+
+  // Janet suspects the intern — triggered after fridge is read and quest is at stage 2
+  janet_lunch_thief_investigate: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "*extremely tense sip* Andrew. I'm glad you're here. We need to talk about the fridge situation." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "I have been keeping notes. A LOG, Andrew. I have a log." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "The thefts always happen between 12:05 and 12:20 PM. That's lunch window. That's when I'm at my desk, eating from my LABELED containers." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "But here's what I know: last Tuesday I found PROTEIN SHAKE residue on my tupperware. Organic chocolate flavor. Who in this office drinks organic chocolate protein shake?" },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: '...The Intern?' },
+    /* 5  */ { type: 'text', speaker: 'Janet', text: "The. Intern. Yes. I've seen him eyeing my Greek yogurt for WEEKS. He once said 'food is food' when I complained. That's not a philosophy, that's a confession." },
+    /* 6  */ { type: 'text', speaker: 'Janet', text: "I'd confront him myself but last time I confronted someone in this building I accidentally started a three-month HR investigation. Don't ask." },
+    /* 7  */ { type: 'text', speaker: 'Janet', text: "*sip* You're new. He'll be caught off guard. Go talk to him. He's over by his cubicle." },
+    /* 8  */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 3, next: 9 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_culprit_revealed', value: true, next: 10 },
+    /* 10 */ { type: 'end' },
+  ],
+
+  // After quest complete — Janet is vindicated and mellowed out
+  janet_lunch_thief_resolved: [
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "*victorious sip* Andrew. I heard. Justice was served, and it tasted better than my yogurt." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "The Intern replaced everything. EVERYTHING. I now have a Greek yogurt collection that would make a dairy farmer emotional." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "I still have the log, though. Just in case." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "*taps tumbler against yours* Good work, trust officer. This was fiduciary duty in its purest form." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  // Intern confesses — triggered when `lunch_thief_culprit_revealed` is set
+  intern_lunch_thief_confrontation: [
+    /* 0  */ { type: 'condition', flag: 'lunch_thief_complete', ifTrue: 9, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'The Intern', text: "Oh. Hey Andrew. You're— is this about the fridge?" },
+    /* 2  */ { type: 'text', speaker: 'The Intern', text: "Okay. Okay. I can explain." },
+    /* 3  */ { type: 'text', speaker: 'The Intern', text: "I didn't KNOW it was her stuff. At first. The first time I thought it was communal. Then I saw the labels and I... kept going. Which is worse. I know." },
+    /* 4  */ { type: 'text', speaker: 'The Intern', text: "Look — I don't get paid. Like, at all. And my stipend doesn't cover lunch. And Janet's Greek yogurt is really good." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "You need to apologize to Janet. And replace everything." },
+    /* 6  */ { type: 'text', speaker: 'The Intern', text: "Yeah. Yeah, I know. I'll go to the store on my lunch break." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "You don't get a lunch break. You said you don't get paid." },
+    /* 8  */ { type: 'text', speaker: 'The Intern', text: "...I'll go on my 'unpaid personal development period.' Which is what Ross calls my lunch break.", next: 10 },
+    /* 9  */ { type: 'text', speaker: 'The Intern', text: "I already said sorry to Janet. She was surprisingly gracious about it. Well, she said 'I will remember this forever, but I forgive you.' That's grace... right?" },
+    /* 10 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 3, next: 11 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_complete', value: true, next: 12 },
+    /* 12 */ { type: 'action', action: 'give_xp', xp: 250, next: 13 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Case closed. The break room fridge is safe. For now. +250 XP." },
+    /* 14 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // SIDE QUEST: THE PRINTER FROM HELL
+  // ==========================================================================
+
+  // Alex explains the printer situation — triggered after printer_quest_started
+  alex_printer_quest: [
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 16, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Oh. Oh no. It printed something for you, didn't it." },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Not a question. Statement. It's been doing this for three years and I'm the only one who ever noticed, apparently." },
+    /* 3  */ { type: 'choice', speaker: 'Alex from IT', text: "What exactly did it say to you?", choices: [
+      { text: "'REPLACE TONER TO LEARN THE TRUTH.' It mentioned the Henderson Files.", next: 4 },
+      { text: "It printed 'HELP ME' the first time. Then Henderson files.", next: 4 },
+    ]},
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Right. Okay. So. The printer — and I know how this sounds — is connected to a legacy subnet that was never properly decommissioned." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "That subnet still has read access to all document archives from 2003 onward. Including the Henderson Trust file history." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "The printer isn't haunted. It's just... accidentally plugged into institutional memory." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "So what's in the Henderson files that it's trying to print?" },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "That's the thing. The toner runs out on purpose. I've checked the firmware. Someone modified it to abort any print job containing certain keywords." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Whoever set this up didn't want the full document printed. But they didn't expect the printer to develop... opinions about that." },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "Printers don't have opinions." },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I have a server rack with a restraining order, a VPN running on a calculator, and a document system that crashes every Tuesday like clockwork. Please do not tell me what's normal in this building." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "I found a toner cartridge in the supply closet. Pre-2016 stock. The firmware block only applies to standard cartridges — this one might let the print job finish." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "I already set it next to the printer. Just install it and stand back." },
+    /* 14 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2, next: 15 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true, next: 16 },
+    /* 16 */ { type: 'end' },
+  ],
+
+  // (printer_toner_installed removed — toner installation is handled in printer_interact nodes 25-38)
+
+  // ==========================================================================
+  // SIDE QUEST: SERVER ROOM SECRETS
+  // ==========================================================================
+
+  // Alex explains his discovery after player reads the admin_legacy rack
+  alex_server_secret: [
+    /* 0  */ { type: 'condition', flag: 'server_secret_done', ifTrue: 22, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'server_secret_started', ifTrue: 2, ifFalse: 22 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. Close the door. Okay there's no door. Just — pretend we're having a normal conversation about server maintenance." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "You saw the admin_legacy note on the rack. Good. I put it there so someone would ask." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "admin_legacy is an account that's been running since 2006. It's not in any org chart. IT doesn't own it. HR doesn't know it exists. But it has READ/WRITE access to every trust account record in the system." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "That sounds... very bad." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "It IS very bad. And it gets worse." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "I've been logging its activity. Every night at 3:47 AM it runs a query against the Henderson Trust records. Has been doing this since 2016. Always the same query: a read on a specific clause — Page 47, Paragraph 3." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "Page 47? The Janitor mentioned page 47." },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah, that's not a coincidence. I think admin_legacy was created to MONITOR whether anyone found that clause. Like a tripwire." },
+    /* 10 */ { type: 'choice', speaker: 'Alex from IT', text: "So. What do you want to do with this information?", choices: [
+      { text: 'Report it to Ross immediately.', next: 11 },
+      { text: "Keep it quiet for now — gather more evidence first.", next: 15 },
+      { text: "This is above my pay grade. Forget I heard it.", next: 19 },
+    ]},
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "Ross? I... okay. He might escalate it. Or he might panic and do something that tips off whoever controls admin_legacy." },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "You know what — fine. Tell Ross. But be careful what you say. If the wrong people hear that we're onto this, my access gets revoked and the logs disappear." },
+    /* 13 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'report', next: 21 },
+    /* 14 */ { type: 'action', action: 'give_xp', xp: 100, next: 22 },  // placeholder, replaced by node 21
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "Smart. I've been doing that for three months and it's gotten me... more questions and less sleep. But at least I have documentation." },
+    /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I'll keep collecting logs. You keep your eyes open — especially around the executive floor. Something about this traces up there." },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'investigate', next: 21 },
+    /* 18 */ { type: 'action', action: 'give_xp', xp: 100, next: 22 },  // placeholder
+    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "Above your pay grade? You're a TRUST OFFICER. YOUR ENTIRE JOB is a fiduciary obligation to the account holders. This is literally in your job description." },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'ignore', next: 21 },
+    /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 2, next: 23 },
+    /* 22 */ { type: 'end' },
+    /* 23 */ { type: 'action', action: 'set_flag', flag: 'server_secret_done', value: true, next: 24 },
+    /* 24 */ { type: 'action', action: 'give_xp', xp: 400, next: 25 },
+    /* 25 */ { type: 'text', speaker: 'Narrator', text: "The truth is out there. You've chosen what to do with it. +400 XP." },
+    /* 26 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // PHANTOM APPROVER interactables
+  // ==========================================================================
+
+  phantom_expense_hr: [
+    /* 0  */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 5, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'legacy_started', ifTrue: 2, ifFalse: 6 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet stuffed with expense approval printouts. One stack stands out — hundreds of auto-approvals, all signed 'admin_auto' in the signature field." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The amounts are modest. Printer paper. Coffee pods. One entry reads: '36 units, rubber duck (stress relief, classified: operational wellness).' Another: '1 unit, kayak (team wellness equipment).'" },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'phantom_hr_found', value: true, next: 7 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The expense approvals are all here. Eighteen years of autonomous purchasing decisions by a machine that had no idea what a kayak was for.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet filled with expense reports. Nothing unusual stands out.", next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  phantom_workstation_cf: [
+    /* 0  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 6, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 2, ifFalse: 7 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A workstation in the back corner of the cubicle farm. The monitor is dark, but the tower is running — fan humming, a single amber LED blinking in a steady rhythm." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Nobody sits here. Nobody has for years, by the look of it. But something is definitely running." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The asset tag on the back reads: 'PROC-LEGACY-07. DO NOT DECOMMISSION. -IT 2006.' Someone taped a sticky note over it that just says 'ignore.'" },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'phantom_workstation_found', value: true, next: 8 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "The workstation hums quietly. Its amber LED blinks. The sticky note says 'ignore.' You already found what you needed.", next: 8 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A workstation in the back corner. Amber LED blinking. Looks like it's been running for a very long time.", next: 8 },
+    /* 8  */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // TUESDAY 2PM interactables
+  // ==========================================================================
+
+  tuesday_floppy: [
+    /* 0  */ { type: 'condition', flag: 'tuesday_floppy_found', ifTrue: 5, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 2, ifFalse: 6 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Wedged behind the last vending machine slot: a 3.5\" floppy disk. The label reads 'SCHED-REF-04 / ARCHIVE COPY' in faded marker." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Alex said the task header references a floppy disk ID. This has to be it." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'tuesday_floppy_found', value: true, next: 7 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The floppy disk. You've already noted the reference ID for Alex.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A 3.5\" floppy disk wedged behind the vending machine. Nobody has used one of these in twenty years.", next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  tuesday_server_tag: [
+    /* 0  */ { type: 'condition', flag: 'tuesday_tag_found', ifTrue: 5, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 2, ifFalse: 6 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A decommissioned server's asset tag, taped to the equipment shelf. 'SRV-2004-RETIRED. Asset #0047-B.' The server itself is long gone, but the tag survived." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Alex mentioned a server asset tag. This matches the format he described." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'tuesday_tag_found', value: true, next: 7 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The server asset tag. You've already recorded the number for Alex.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "An old asset tag taped to the shelf. The server it belonged to was decommissioned years ago.", next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  tuesday_sticky_note: [
+    /* 0  */ { type: 'condition', flag: 'tuesday_sticky_found', ifTrue: 5, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 2, ifFalse: 6 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A sticky note on an unoccupied monitor. In small, precise handwriting: 'WS-CTRL-2004 / see Gerald for context / DO NOT DELETE task.' Signed with initials: T.K." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "T.K. set this up and left a note for 'Gerald.' If Gerald left in 2003... T.K. wrote this note knowing Gerald was already gone." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'tuesday_sticky_found', value: true, next: 7 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The sticky note. 'WS-CTRL-2004 / see Gerald for context.' Gerald left in 2003. You already noted the workstation label for Alex.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A sticky note on an old monitor. Small handwriting. Initials at the bottom: T.K.", next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // PRINTER'S SOUL interactables
+  // ==========================================================================
+
+  printer_firmware_disk: [
+    /* 0  */ { type: 'condition', flag: 'printer_firmware_found', ifTrue: 5, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 2, ifFalse: 6 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A firmware disk in a paper sleeve on the equipment shelf. Label: 'XEROX WC7845 / FIRMWARE v2.1.4 / OEM ORIGINAL.' This is the printer's original factory disk." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Alex said he needs this to connect to the printer directly. I'll take it." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'printer_firmware_found', value: true, next: 7 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "You already have the firmware disk.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A firmware disk in a paper sleeve. Factory original. Dusty. Has been sitting here for years.", next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  printer_ethernet_port: [
+    /* 0  */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 5, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'printer_firmware_found', ifTrue: 2, ifFalse: 6 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "An RJ45 ethernet port on the wall, labeled 'PRINTER DIRECT — IT USE ONLY.' Alex's instructions said to plug in here with the firmware disk loaded." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Let's see what you've been computing for twenty-two years." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'printer_soul_done', value: true, next: 7 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The port is still connected. The printer's computation completed when you plugged in.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "An ethernet port on the wall. 'PRINTER DIRECT — IT USE ONLY.' You don't have what you need to connect yet.", next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // UNAUTHORIZED PATCH interactable
+  // ==========================================================================
+
+  unauthorized_patch_monitor: [
+    /* 0  */ { type: 'condition', flag: 'patch_monitor_silenced', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 2, ifFalse: 5 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A network monitoring terminal near rack row three. The screen shows a live feed of all server activity, with a bright red 'ALERT THRESHOLD' bar at 40% capacity." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'patch_monitor_silenced', value: true, next: 6 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The monitoring process is terminated. Screen dark. No alerts will go out tonight.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A network monitoring terminal. It logs all server activity and reports anything unusual to corporate IT. The fan hums quietly.", next: 6 },
+    /* 6  */ { type: 'end' },
   ],
 };
