@@ -462,33 +462,34 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Grandma Henderson', text: "My Harold -- God rest his soul -- he was a good man but a terrible communicator. He told everyone what they wanted to hear. Which is how we ended up here." },
     /* 4  */ { type: 'choice', speaker: 'Grandma Henderson', text: 'Cookie, dear?', choices: [
       { text: 'Thank you, Mrs. Henderson. (Take a cookie)', next: 5 },
-      { text: "Let's talk about the trust distribution.", next: 9 },
+      { text: "Let's talk about the trust distribution.", next: 10 },
     ]},
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'You take a cookie. It\'s the best cookie you\'ve ever had. You feel your resolve weakening.' },
-    /* 6  */ { type: 'action', action: 'heal', next: 7 },
-    /* 7  */ { type: 'text', speaker: 'Grandma Henderson', text: "Good, aren't they? Harold's mother's recipe. She was a terrible person but an excellent baker. Funny how that works." },
-    /* 8  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Now then. The trust.' },
-    /* 9  */ { type: 'text', speaker: 'Grandma Henderson', text: "I know what Karen wants. I know what Chad wants. Karen wants the lake house because she thinks it validates her childhood. Chad wants the money because he doesn't understand what money is." },
-    /* 10 */ { type: 'text', speaker: 'Grandma Henderson', text: "What none of them seem to remember is that I helped Harold build that trust. Every asset. Every provision. I was in the room when the documents were drafted." },
-    /* 11 */ { type: 'text', speaker: 'Andrew', text: 'You were involved in the original trust creation?' },
-    /* 12 */ { type: 'text', speaker: 'Grandma Henderson', text: "Dear, I used to WORK in this office. Trust administration. Twenty years before that young man in the server room was even born." },
-    /* 13 */ { type: 'text', speaker: 'Grandma Henderson', text: "I know things about this company that would make your compliance department weep. But that's not why I'm here." },
-    /* 14 */ { type: 'text', speaker: 'Grandma Henderson', text: "I'm here because Harold put a clause in the trust. Page 47, paragraph 3. The one nobody reads." },
-    /* 15 */ { type: 'text', speaker: 'Andrew', text: 'What clause?' },
-    /* 16 */ { type: 'text', speaker: 'Grandma Henderson', text: 'The one that says the surviving spouse has discretionary authority over the entire corpus, subject to a standard of good faith and family welfare.' },
-    /* 17 */ { type: 'text', speaker: 'Grandma Henderson', text: 'In other words, dear...' },
-    /* 18 */ { type: 'text', speaker: 'Grandma Henderson', text: "It's ALL mine. Every penny. The lake house, the portfolio, the savings, the vintage car collection, and the timeshare in Branson that nobody wants but everybody fights about." },
-    /* 19 */ { type: 'text', speaker: 'Grandma Henderson', text: "I've been letting them argue for six months because, frankly, watching Karen make binders is the most entertainment I've had since Harold passed." },
-    /* 20 */ { type: 'text', speaker: 'Grandma Henderson', text: "But now I'm bored. And my stories are on at 3. So let's wrap this up." },
-    /* 21 */ { type: 'text', speaker: 'Andrew', text: 'Mrs. Henderson, I... this changes everything about the distribution plan.' },
-    /* 22 */ { type: 'text', speaker: 'Grandma Henderson', text: "Oh sweetie. I know. That's the point." },
-    /* 23 */ { type: 'text', speaker: 'Grandma Henderson', text: "Now. I'm going to make you an offer. You seem like a nice young man. Better than the last four, at least. The third one DEFINITELY cried." },
-    /* 24 */ { type: 'text', speaker: 'Grandma Henderson', text: "But nice only gets you so far. Let me see what you're really made of." },
-    /* 25 */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson's eyes sharpen. The kindly grandmother facade drops like a curtain. Behind it is forty years of financial expertise and zero patience for nonsense." },
-    /* 26 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Consider this your performance review, dear. The cookies were the easy part.' },
-    /* 27 */ { type: 'action', action: 'set_flag', flag: 'grandma_met', value: true, next: 28 },
-    /* 28 */ { type: 'action', action: 'start_combat', encounter: 'grandma', next: 29 },
-    /* 29 */ { type: 'end' },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'You take a cookie. It\'s the best cookie you\'ve ever had. You feel your resolve weakening. (-5 Assertiveness, -2 Composure for this fight!)' },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'took_grandma_cookie', value: true, next: 7 },
+    /* 7  */ { type: 'action', action: 'heal', next: 8 },
+    /* 8  */ { type: 'text', speaker: 'Grandma Henderson', text: "Good, aren't they? Harold's mother's recipe. She was a terrible person but an excellent baker. Funny how that works." },
+    /* 9  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Now then. The trust.' },
+    /* 10 */ { type: 'text', speaker: 'Grandma Henderson', text: "I know what Karen wants. I know what Chad wants. Karen wants the lake house because she thinks it validates her childhood. Chad wants the money because he doesn't understand what money is." },
+    /* 11 */ { type: 'text', speaker: 'Grandma Henderson', text: "What none of them seem to remember is that I helped Harold build that trust. Every asset. Every provision. I was in the room when the documents were drafted." },
+    /* 12 */ { type: 'text', speaker: 'Andrew', text: 'You were involved in the original trust creation?' },
+    /* 13 */ { type: 'text', speaker: 'Grandma Henderson', text: "Dear, I used to WORK in this office. Trust administration. Twenty years before that young man in the server room was even born." },
+    /* 14 */ { type: 'text', speaker: 'Grandma Henderson', text: "I know things about this company that would make your compliance department weep. But that's not why I'm here." },
+    /* 15 */ { type: 'text', speaker: 'Grandma Henderson', text: "I'm here because Harold put a clause in the trust. Page 47, paragraph 3. The one nobody reads." },
+    /* 16 */ { type: 'text', speaker: 'Andrew', text: 'What clause?' },
+    /* 17 */ { type: 'text', speaker: 'Grandma Henderson', text: 'The one that says the surviving spouse has discretionary authority over the entire corpus, subject to a standard of good faith and family welfare.' },
+    /* 18 */ { type: 'text', speaker: 'Grandma Henderson', text: 'In other words, dear...' },
+    /* 19 */ { type: 'text', speaker: 'Grandma Henderson', text: "It's ALL mine. Every penny. The lake house, the portfolio, the savings, the vintage car collection, and the timeshare in Branson that nobody wants but everybody fights about." },
+    /* 20 */ { type: 'text', speaker: 'Grandma Henderson', text: "I've been letting them argue for six months because, frankly, watching Karen make binders is the most entertainment I've had since Harold passed." },
+    /* 21 */ { type: 'text', speaker: 'Grandma Henderson', text: "But now I'm bored. And my stories are on at 3. So let's wrap this up." },
+    /* 22 */ { type: 'text', speaker: 'Andrew', text: 'Mrs. Henderson, I... this changes everything about the distribution plan.' },
+    /* 23 */ { type: 'text', speaker: 'Grandma Henderson', text: "Oh sweetie. I know. That's the point." },
+    /* 24 */ { type: 'text', speaker: 'Grandma Henderson', text: "Now. I'm going to make you an offer. You seem like a nice young man. Better than the last four, at least. The third one DEFINITELY cried." },
+    /* 25 */ { type: 'text', speaker: 'Grandma Henderson', text: "But nice only gets you so far. Let me see what you're really made of." },
+    /* 26 */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson's eyes sharpen. The kindly grandmother facade drops like a curtain. Behind it is forty years of financial expertise and zero patience for nonsense." },
+    /* 27 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Consider this your performance review, dear. The cookies were the easy part.' },
+    /* 28 */ { type: 'action', action: 'set_flag', flag: 'grandma_met', value: true, next: 29 },
+    /* 29 */ { type: 'action', action: 'start_combat', encounter: 'grandma', next: 30 },
+    /* 30 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -542,6 +543,41 @@ export const DIALOGS = {
   ],
 
   // --------------------------------------------------------------------------
+  // ALEX IT SIDE ROUTER -- lets player choose between side quest and regular chat
+  // --------------------------------------------------------------------------
+  alex_it_side_router: [
+    /* 0 */ { type: 'text', speaker: 'Alex from IT', text: "Hey. What's up?" },
+    /* 1 */ { type: 'choice', speaker: 'Alex from IT', prompt: "What do you need?", choices: [
+      { text: "What about that IT project you mentioned?", next: 2 },
+      { text: "What's going on with the main investigation?", next: 5 },
+      { text: "Just checking in.", next: 7 },
+    ]},
+    /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_side_chosen', value: true, next: 3 },
+    /* 3 */ { type: 'text', speaker: 'Alex from IT', text: "Right, yeah. Here's the situation..." },
+    /* 4 */ { type: 'end' },
+    /* 5 */ { type: 'action', action: 'set_flag', flag: 'alex_main_chosen', value: true, next: 6 },
+    /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Yeah, let me catch you up on the big picture..." },
+    /* 7 */ { type: 'action', action: 'set_flag', flag: 'alex_side_deferred', value: true, next: 8 },
+    /* 8 */ { type: 'text', speaker: 'Alex from IT', text: "Same old chaos. You know where to find me." },
+    /* 9 */ { type: 'end' },
+  ],
+
+  // ALEX IT ROUTER -- lets player choose between story and side quests
+  // --------------------------------------------------------------------------
+  alex_it_router: [
+    /* 0 */ { type: 'text', speaker: 'Alex from IT', text: "Hey. I've got a couple things going on. What do you want to talk about?" },
+    /* 1 */ { type: 'choice', speaker: 'Alex from IT', prompt: "What's on your mind?", choices: [
+      { text: 'The encrypted partition. What did you find?', next: 2 },
+      { text: 'Got any IT jobs for me?', next: 5 },
+    ]},
+    /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_story_chosen', value: true, next: 3 },
+    /* 3 */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. Yeah, you're gonna want to hear this. Close the door." },
+    /* 4 */ { type: 'end' },
+    /* 5 */ { type: 'action', action: 'set_flag', flag: 'alex_story_deferred', value: true, next: 6 },
+    /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Always. The infrastructure in this building is held together by prayers and zip ties. Let me tell you what's broken now..." },
+    /* 7 */ { type: 'end' },
+  ],
+
   // ALEX IT ACT 2 -- Server room revelation
   // --------------------------------------------------------------------------
   alex_it_act2: [
@@ -582,7 +618,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'choice', speaker: 'Narrator', text: "This is it. The decision that defines the rest of Andrew's career at Wells Fargo.", choices: [
       { text: 'Follow the letter of the law. Honor the trust document exactly.', next: 7, flag: 'path_legal' },
       { text: 'Bend the rules. Find a creative interpretation that keeps everyone happy.', next: 12, flag: 'path_bro' },
-      { text: "Follow Grandma Henderson's lead. She knows something we don't.", next: 17, flag: 'path_grandma' },
+      { text: "Grandma cited page 47, paragraph 3. Nobody reads that clause unless they wrote it. She knows something.", next: 17, flag: 'path_grandma' },
     ]},
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'You choose the straight path. The trust document is clear. The law is the law.' },
     /* 8  */ { type: 'text', speaker: 'Andrew', text: "Ross, the trust language favors the surviving spouse. Karen and Chad will need to accept a smaller distribution. That's the law." },
@@ -749,10 +785,15 @@ export const DIALOGS = {
     /* 6 */ { type: 'text', speaker: 'Ross', text: "The reception desk. Prospective clients come in all day. Handle their cases, win the fights, build up your skills." },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "TIP: Go to the Reception area and interact with the desk to take on clients. Each win earns XP and AUM currency." },
     /* 8 */ { type: 'text', speaker: 'Ross', text: "Handle 3 clients. Get yourself to Level 3. Then go back to Karen — at that level you'll actually have a fighting chance." },
-    /* 9 */ { type: 'text', speaker: 'Ross', text: "Oh — and check the motivational posters around the building. Sounds dumb, but they're actually worth reading. Trust me." },
-    /* 10 */ { type: 'text', speaker: 'Andrew', text: "...She's coming back, isn't she." },
-    /* 11 */ { type: 'text', speaker: 'Ross', text: "She never left. She's in the conference room right now writing a Yelp review about the parking situation." },
-    /* 12 */ { type: 'end' },
+    /* 9  */ { type: 'text', speaker: 'Ross', text: "Oh — and check the motivational posters around the building. Sounds dumb, but they're actually worth reading. Trust me." },
+    /* 10 */ { type: 'text', speaker: 'Ross', text: "Also, there's an old Stagecoach Stampede cabinet in the break room. Don't laugh — if you can hit 500 distance, that thing gives you +5 Composure and +5 Assertiveness. Permanent." },
+    /* 11 */ { type: 'text', speaker: 'Ross', text: "One more thing. I've dealt with the Hendersons before. Let me save you some pain." },
+    /* 12 */ { type: 'text', speaker: 'Ross', text: "Karen? Don't try to schmooze her. She's immune to that stuff. But cite actual case law — legal arguments — and she folds like a cheap suit." },
+    /* 13 */ { type: 'text', speaker: 'Ross', text: "Chad's the opposite. He name-drops lawyers constantly but he's never read a legal document in his life. Legal tactics bounce right off him. But call him out publicly — social pressure — and he completely crumbles." },
+    /* 14 */ { type: 'text', speaker: 'Ross', text: "And Grandma... don't underestimate her. She ran this office for twenty years. Sweet talk won't work — she invented sweet talk. But she's never had her own books audited. An audit approach will catch her off guard." },
+    /* 15 */ { type: 'text', speaker: 'Andrew', text: "...She's coming back, isn't she." },
+    /* 16 */ { type: 'text', speaker: 'Ross', text: "She never left. She's in the conference room right now writing a Yelp review about the parking situation." },
+    /* 17 */ { type: 'end' },
   ],
 
   karen_retry: [
@@ -842,8 +883,10 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Karen Henderson', text: "And I'm leaving a review. On EVERY platform. Yelp. Google. TripAdvisor. I don't care that this isn't a hotel." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "That's... fine, Mrs. Henderson." },
     /* 3  */ { type: 'text', speaker: 'Karen Henderson', text: "It's MS. Henderson. And this isn't over. *picks up binder fragments and storms out*" },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'karen_defeated', value: true, next: 5 },
-    /* 5  */ { type: 'end' },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The conference room is silent. Binder tabs litter the floor like confetti at the world's worst party. You exhale for what feels like the first time in an hour." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Your phone buzzes. Text from Ross: 'Heard you survived Karen. Get up here when you can. We need to talk about Chad. Bring aspirin.'" },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'karen_defeated', value: true, next: 7 },
+    /* 7  */ { type: 'end' },
   ],
 
   chad_defeated: [
@@ -865,6 +908,21 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Grandma Henderson', text: "And take this stress ball. Lord knows you'll need it with this family." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'grandma_defeated', value: true, next: 7 },
     /* 7  */ { type: 'end' },
+  ],
+
+  // Ambient NPC dialogs — Henderson family in common areas before their meetings
+  chad_breakroom_idle: [
+    /* 0 */ { type: 'text', speaker: 'Chad Henderson', text: "Bro! You the new trust guy? I'm Chad. We'll talk later — I'm carb-loading right now." },
+    /* 1 */ { type: 'text', speaker: 'Chad Henderson', text: "Gotta keep the macros tight before a big meeting, you know? Protein shake o'clock." },
+    /* 2 */ { type: 'text', speaker: 'Chad Henderson', text: "*flexes unnecessarily* See you in the conference room, dude." },
+    /* 3 */ { type: 'end' },
+  ],
+
+  grandma_reception_idle: [
+    /* 0 */ { type: 'text', speaker: 'Grandma Henderson', text: "Oh, hello dear. I'm just waiting for my appointment. Don't mind me." },
+    /* 1 */ { type: 'text', speaker: 'Grandma Henderson', text: "I brought cookies for the office. There should be some left in the conference room. If Chad hasn't eaten them all." },
+    /* 2 */ { type: 'text', speaker: 'Grandma Henderson', text: "We'll talk when it's my turn, dear. No need to rush. *knits calmly*" },
+    /* 3 */ { type: 'end' },
   ],
 
   compliance_defeated: [
@@ -939,11 +997,6 @@ export const DIALOGS = {
   ],
 
   // Triggered when all Henderson meetings are done — redirect to branch decision
-  andrews_desk_branch: [
-    { type: 'condition', flag: 'branch_chosen', ifTrue: 2, ifFalse: 1 },
-    /* 1 */ { type: 'text', speaker: 'Narrator', text: 'The Henderson file sits on your desk. All three meetings are done. It\'s time to make your recommendation.' },
-    /* 2 */ { type: 'end' },
-  ],
 
   coffee_machine: [
     { type: 'text', speaker: 'Narrator', text: 'The coffee machine was manufactured during an era when "ergonomic" meant "won\'t explode."' },

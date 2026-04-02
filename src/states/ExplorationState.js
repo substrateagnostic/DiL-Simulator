@@ -155,6 +155,31 @@ export class ExplorationState {
       }),
       EventBus.on('flag-set', ({ key }) => {
         this._refreshStoryProgress();
+        // Alex IT router: chain into the chosen dialog after router ends
+        if (key === 'alex_story_chosen') {
+          const hasAct2 = this.player.getFlag('briefing_complete') && !this.player.getFlag('knows_server_secret');
+          this._pendingDialog = hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
+        }
+        if (key === 'alex_story_deferred') {
+          this._pendingDialog = this._getAlexSideQuestDialog();
+        }
+        if (key === 'alex_side_chosen') {
+          this._pendingDialog = this._getAlexSideQuestDialog();
+        }
+        if (key === 'alex_main_chosen') {
+          // Find the appropriate act-based dialog for Alex
+          const act = this.player.actIndex || 0;
+          const actDialogs = ['alex_it_act7', 'alex_it_act6', 'alex_it_act4', 'alex_it_act3'];
+          const actThresholds = [7, 6, 4, 3];
+          let mainDialog = 'alex_it_return';
+          for (let i = 0; i < actDialogs.length; i++) {
+            if (act >= actThresholds[i] && DIALOGS[actDialogs[i]]) {
+              mainDialog = actDialogs[i];
+              break;
+            }
+          }
+          this._pendingDialog = mainDialog;
+        }
         if (key === 'briefing_complete' && !this.player.getFlag('defeated_intern')) {
           this._showToast('Optional: spar with the Intern for a quick combat tutorial.', 'item');
         }
@@ -545,12 +570,28 @@ export class ExplorationState {
       && !this.player.getFlag('defeated_karen');
     const enemyOverrides = isFirstKaren ? { atk: 999 } : {};
 
+    // Grandma's cookies debuff: -5 ATK, -2 DEF for this fight only
+    const cookieDebuff = encounterId === 'grandma' && this.player.getFlag('took_grandma_cookie');
+    let savedAtk, savedDef;
+    if (cookieDebuff) {
+      savedAtk = this.player.stats.atk;
+      savedDef = this.player.stats.def;
+      this.player.stats.atk = Math.max(1, this.player.stats.atk - 5);
+      this.player.stats.def = Math.max(1, this.player.stats.def - 2);
+    }
+
     this.transition.fadeOut(0.3).then(() => {
       const combatState = new CombatState(
         this.stateManager,
         this.player,
         encounterId,
         (result) => {
+          // Restore cookie debuff stats
+          if (cookieDebuff) {
+            this.player.stats.atk = savedAtk;
+            this.player.stats.def = savedDef;
+          }
+
           this.transition.remove();
           this.transition.fadeIn(0.3).then(() => {
             this.paused = false;
@@ -610,11 +651,17 @@ export class ExplorationState {
             }
 
             this.player.setFlag(`defeated_${encounterId}`);
+            const encounter = ENCOUNTERS[encounterId];
+            // Safety net: also set <enemyId>_defeated for story bosses
+            // so progression doesn't depend solely on post-dialog set_flag
+            const storyBossFlags = { karen: 'karen_defeated', chad: 'chad_defeated', grandma: 'grandma_defeated' };
+            if (encounter && storyBossFlags[encounter.enemyId]) {
+              this.player.setFlag(storyBossFlags[encounter.enemyId], true);
+            }
             EventBus.emit('combat-won', encounterId);
             this._updateMiniStats();
             this._autoSave(true);
 
-            const encounter = ENCOUNTERS[encounterId];
             if (encounter && encounter.postDialogId && DIALOGS[encounter.postDialogId]) {
               setTimeout(() => {
                 const postDialog = new DialogState(DIALOGS[encounter.postDialogId], this.player, this.stateManager, encounter.postDialogId);
@@ -1162,23 +1209,40 @@ export class ExplorationState {
       return 'alex_printer_quest';
     }
 
-    // Alex IT subquests: route to active quest dialog, or start next unstarted quest after intro
+    // Alex IT: when story beat is available, offer choice between story and side quests
     if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
-      const p = this.player;
-      // Active quests take priority (return player to ongoing quest dialog)
-      if (p.getFlag('anomaly_started') && !p.getFlag('quest_anomaly_347_complete')) return 'alex_it_quest_anomaly';
-      if (p.getFlag('legacy_started') && !p.getFlag('quest_legacy_admin_complete')) return 'alex_it_quest_legacy';
-      if (p.getFlag('network_started') && !p.getFlag('quest_network_ghost_complete')) return 'alex_it_quest_network';
-      if (p.getFlag('dave_started') && !p.getFlag('quest_daves_legacy_complete')) return 'alex_it_quest_dave';
-      if (p.getFlag('printer_soul_started') && !p.getFlag('quest_printer_soul_complete')) return 'alex_it_quest_printer';
-      if (p.getFlag('final_patch_started') && !p.getFlag('quest_final_patch_complete')) return 'alex_it_quest_final';
-      // Start next unstarted quest (sequential unlock after each completion)
-      if (!p.getFlag('anomaly_started')) return 'alex_it_quest_anomaly';
-      if (p.getFlag('quest_anomaly_347_complete') && !p.getFlag('legacy_started')) return 'alex_it_quest_legacy';
-      if (p.getFlag('quest_legacy_admin_complete') && !p.getFlag('network_started')) return 'alex_it_quest_network';
-      if (p.getFlag('quest_network_ghost_complete') && !p.getFlag('dave_started')) return 'alex_it_quest_dave';
-      if (p.getFlag('quest_daves_legacy_complete') && !p.getFlag('printer_soul_started')) return 'alex_it_quest_printer';
-      if (p.getFlag('quest_printer_soul_complete') && !p.getFlag('final_patch_started')) return 'alex_it_quest_final';
+      const hasAct2 = this.player.getFlag('briefing_complete') && !this.player.getFlag('knows_server_secret') && DIALOGS.alex_it_act2;
+      const hasAct3 = this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done') && DIALOGS.alex_it_act3;
+
+      // Player chose story from the router — go straight to the story dialog
+      if ((hasAct2 || hasAct3) && this.player.getFlag('alex_story_chosen')) {
+        this.player.setFlag('alex_story_chosen', false);
+        return hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
+      }
+      // Show router when story is available and not deferred
+      if ((hasAct2 || hasAct3) && !this.player.getFlag('alex_story_deferred')) {
+        if (DIALOGS.alex_it_router) return 'alex_it_router';
+        return hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
+      }
+      // Clear deferred flag after one side quest interaction so router shows again next time
+      if (this.player.getFlag('alex_story_deferred')) {
+        this.player.setFlag('alex_story_deferred', false);
+      }
+    }
+
+    // Alex IT subquests: only route to side quest if player hasn't deferred
+    if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
+      const sideQuest = this._getAlexSideQuestDialog();
+      if (sideQuest && sideQuest !== 'alex_it_return') {
+        // If player deferred side quests, skip to regular dialog
+        if (this.player.getFlag('alex_side_deferred')) {
+          this.player.setFlag('alex_side_deferred', false);
+        } else if (DIALOGS.alex_it_side_router) {
+          return 'alex_it_side_router';
+        } else {
+          return sideQuest;
+        }
+      }
     }
 
     if (
@@ -1401,6 +1465,25 @@ export class ExplorationState {
     this.player.actIndex = act;
   }
 
+  _getAlexSideQuestDialog() {
+    const p = this.player;
+    // Active quests take priority
+    if (p.getFlag('anomaly_started') && !p.getFlag('quest_anomaly_347_complete')) return 'alex_it_quest_anomaly';
+    if (p.getFlag('legacy_started') && !p.getFlag('quest_legacy_admin_complete')) return 'alex_it_quest_legacy';
+    if (p.getFlag('network_started') && !p.getFlag('quest_network_ghost_complete')) return 'alex_it_quest_network';
+    if (p.getFlag('dave_started') && !p.getFlag('quest_daves_legacy_complete')) return 'alex_it_quest_dave';
+    if (p.getFlag('printer_soul_started') && !p.getFlag('quest_printer_soul_complete')) return 'alex_it_quest_printer';
+    if (p.getFlag('final_patch_started') && !p.getFlag('quest_final_patch_complete')) return 'alex_it_quest_final';
+    // Start next unstarted quest
+    if (!p.getFlag('anomaly_started')) return 'alex_it_quest_anomaly';
+    if (p.getFlag('quest_anomaly_347_complete') && !p.getFlag('legacy_started')) return 'alex_it_quest_legacy';
+    if (p.getFlag('quest_legacy_admin_complete') && !p.getFlag('network_started')) return 'alex_it_quest_network';
+    if (p.getFlag('quest_network_ghost_complete') && !p.getFlag('dave_started')) return 'alex_it_quest_dave';
+    if (p.getFlag('quest_daves_legacy_complete') && !p.getFlag('printer_soul_started')) return 'alex_it_quest_printer';
+    if (p.getFlag('quest_printer_soul_complete') && !p.getFlag('final_patch_started')) return 'alex_it_quest_final';
+    return 'alex_it_return';
+  }
+
   _getStoryObjective() {
     // Game complete
     if (this.player.getFlag('algorithm_defeated')) {
@@ -1479,14 +1562,15 @@ export class ExplorationState {
     if (this.player.getFlag('archive_accessible') && !this.player.getFlag('visited_archive')) {
       return 'Find the Archive through the stairwell';
     }
-    if (this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done')) {
+    if (this.player.getFlag('act2_complete') && !this.player.getFlag('knows_server_secret')) {
       return 'Talk to Alex from IT about the encrypted partition';
     }
 
-    // Act 2 finale
-    if (
-      this.player.getFlag('act2_complete')
-    ) {
+    // Act 2 finale — after partition reveal, point back to Alex for act3 beat
+    if (this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done')) {
+      return 'Talk to Alex from IT — the partition decrypted itself';
+    }
+    if (this.player.getFlag('act2_complete')) {
       return 'Something strange is happening. Investigate.';
     }
     if (

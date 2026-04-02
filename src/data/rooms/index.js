@@ -198,6 +198,7 @@ export const ROOMS = {
       // Janet — conditional entries covering lunch thief quest states
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { notFlag: 'lunch_thief_fridge_done' } },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_fridge_done', notFlag: 'lunch_thief_culprit_revealed' }, dialogId: 'janet_lunch_thief_investigate' },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_resolved' },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_resolved' },
       // Intern — conditional entries covering lunch thief confrontation
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
@@ -302,10 +303,10 @@ export const ROOMS = {
 
       // Side quest posters
       { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
-      { type: 'motivationalPoster', x: 5,   z: 11.9, rotation: Math.PI },
+      { type: 'motivationalPoster', x: 2,   z: 10.9, rotation: Math.PI },
     ],
     npcs: [
-      { id: 'chad', x: 4, z: 6, facing: -Math.PI / 2, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'karen_defeated' } },
+      { id: 'chad', x: 4, z: 6, facing: -Math.PI / 2, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'karen_defeated' }, dialogId: 'chad_breakroom_idle' },
       { id: 'grandma', x: 9, z: 6, facing: Math.PI, condition: { flag: 'act5_complete' } },
     ],
     exits: [
@@ -323,7 +324,7 @@ export const ROOMS = {
       { x: 13, z: 10, type: 'arcade_cabinet',   dialogId: 'arcade_intro' },
       // Side quest interactables
       { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3' },
-      { x: 5,  z: 11, type: 'poster', dialogId: 'quest_def_3' },
+      { x: 2,  z: 11, type: 'poster', dialogId: 'quest_def_3' },
       // Network Ghost signal booster (east wall)
       { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br' },
       // Tuesday 2PM: old floppy disk on westmost table
@@ -598,7 +599,7 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
-      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { notFlag: 'grandma_defeated' } },
+      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { flag: 'chad_defeated', notFlag: 'grandma_defeated' }, dialogId: 'grandma_reception_idle' },
       { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: true, sitting: true },
     ],
     exits: [
@@ -753,10 +754,16 @@ export const ROOMS = {
       { type: 'waterCooler', x: 1, z: 8 },
     ],
     npcs: [
-      { id: 'regional', x: 8, z: 2.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'defeated_regional' } },
+      // Regional Manager — only for legal/bro paths, not grandma path. Moved off desk.
+      { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_legal', notFlag: 'defeated_regional' } },
+      { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_bro', notFlag: 'defeated_regional' } },
+      // Regional also shows before branch is chosen (ambient presence)
+      { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'branch_chosen' } },
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { notFlag: 'compliance_defeated' } },
       // Ross appears at conference table after Henderson decision
       { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'defeated_regional' } },
+      // Grandma appears on executive floor for the secret path
+      { id: 'grandma', x: 4, z: 8, facing: -Math.PI / 2, condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
     ],
     exits: [
       // SOUTH elevator -> Reception

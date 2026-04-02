@@ -97,6 +97,7 @@ export class CombatHUD {
       cost: ability.cost,
       id: ability.id,
       description: ability.description,
+      tag: ability.tag || null,
       disabled: playerMP < ability.cost,
     }));
     this.menuItems.push({ label: 'Back', action: 'back' });
@@ -152,6 +153,15 @@ export class CombatHUD {
       el.className = `combat-submenu-item${i === this.selectedIndex ? ' selected' : ''}${item.disabled ? ' disabled' : ''}`;
       const nameSpan = document.createElement('span');
       nameSpan.textContent = item.label;
+      if (item.tag) {
+        const tagColors = { legal: '#ff9966', social: '#66bbff', audit: '#66ff99', technical: '#cc88ff' };
+        const tagSpan = document.createElement('span');
+        tagSpan.style.color = tagColors[item.tag] || '#aaa';
+        tagSpan.style.fontSize = '13px';
+        tagSpan.style.marginLeft = '6px';
+        tagSpan.textContent = `[${item.tag}]`;
+        nameSpan.appendChild(tagSpan);
+      }
       el.appendChild(nameSpan);
       if (item.cost !== undefined) {
         const costSpan = document.createElement('span');
@@ -174,7 +184,9 @@ export class CombatHUD {
     if (selected && selected.description) {
       this._tooltip = document.createElement('div');
       this._tooltip.className = 'combat-ability-tooltip';
-      this._tooltip.textContent = selected.description;
+      this._tooltip.textContent = selected.tag
+        ? `${selected.description} (${selected.tag})`
+        : selected.description;
       this.menuEl.appendChild(this._tooltip);
     }
   }

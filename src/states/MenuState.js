@@ -192,6 +192,10 @@ export class MenuState {
             <span>DEF: ${stats.def}</span>
             <span>SPD: ${stats.spd}</span>
           </div>
+          <div class="bestiary-stats">
+            <span style="color:#ff6666">Weak: ${stats.weakness || 'none'}</span>
+            <span style="color:#6688ff">Resist: ${stats.resistance || 'none'}</span>
+          </div>
           <div class="bestiary-quip">"${entry.quip}"</div>
         `;
       } else {

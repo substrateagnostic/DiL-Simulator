@@ -123,6 +123,17 @@ export const PLAYER_ABILITIES = {
     requires: 'cite_precedent',
     upgradePointCost: 2,
   },
+  forensic_audit: {
+    name: 'Forensic Audit',
+    description: 'Uncover discrepancies with a thorough financial review',
+    cost: 35,
+    power: 55,
+    type: 'attack',
+    tag: 'audit',
+    tier: 2,
+    requires: 'due_diligence',
+    upgradePointCost: 2,
+  },
   fiduciary_shield: {
     name: 'Fiduciary Shield',
     description: 'Invoke fiduciary duty for a protective barrier',
@@ -211,7 +222,7 @@ export const ENEMY_STATS = {
     name: 'The Intern',
     maxHP: 120,
     hp: 120,
-    atk: 6,
+    atk: 1,
     def: 4,
     spd: 5,
     xpReward: 25,
@@ -245,9 +256,9 @@ export const ENEMY_STATS = {
   },
   chad: {
     name: 'Chad Henderson',
-    maxHP: 220,
-    hp: 220,
-    atk: 26,
+    maxHP: 350,
+    hp: 350,
+    atk: 18,
     def: 14,
     spd: 20,
     xpReward: 200,
@@ -464,12 +475,12 @@ export function pickMessage(msg) {
 // Enemy ability definitions
 export const ENEMY_ABILITIES = {
   // Intern
-  paper_jam: { name: 'Paper Jam', power: 8, type: 'attack', messages: [
+  paper_jam: { name: 'Paper Jam', power: 4, type: 'attack', messages: [
     'The Intern caused a paper jam!!',
     'The Intern jams the copier. Paper flies everywhere!',
     'The Intern accidentally prints 500 copies of their lunch order!',
   ]},
-  confused_filing: { name: 'Confused Filing', power: 12, type: 'attack', messages: [
+  confused_filing: { name: 'Confused Filing', power: 4, type: 'attack', messages: [
     'The Intern filed your documents in the shredder!',
     'The Intern alphabetized your files... by the second letter.',
     'The Intern stapled your lunch to a Form W-2!',
@@ -499,7 +510,7 @@ export const ENEMY_ABILITIES = {
     '"You don\'t even LIFT, bro!" Chad attacks!',
     'Chad does a power clean and hurls the barbell at you!',
   ]},
-  my_lawyer_says: { name: '"My Lawyer Says..."', power: 0, type: 'confuse', duration: 2, messages: [
+  my_lawyer_says: { name: '"My Lawyer Says..."', power: 0, type: 'confuse', duration: 1, messages: [
     '"My lawyer says vibes are legally binding, bro."',
     '"My lawyer is like, super smart dude. He went to online law school."',
     '"My lawyer says I can sue for emotional damages from this meeting."',
@@ -512,7 +523,7 @@ export const ENEMY_ABILITIES = {
   ]},
 
   // Karen phase abilities
-  demand_corporate: { name: 'Demand Corporate', power: 0, type: 'buff', buff: { atk: 8, def: 6 }, duration: 2, messages: [
+  demand_corporate: { name: 'Demand Corporate', power: 0, type: 'buff', buff: { atk: 8, def: 6 }, duration: 1, messages: [
     '"I am DEMANDING to speak with your entire corporate chain of command!"',
     'Karen pulls out a laminated list of demands. Each one is legally dubious.',
     '"I have RIGHTS. I have READ them. ALL of them." Karen steels herself.',
@@ -588,7 +599,7 @@ export const ENEMY_ABILITIES = {
     '"Let\'s leverage our core competencies!" A beam of pure buzzwords hits you!',
     '"SYNERGY! DISRUPTION! PARADIGM SHIFT!" The words deal physical damage!',
   ]},
-  corporate_restructure: { name: 'Corporate Restructure', power: 0, type: 'debuff', debuff: { atk: -5, def: -5, spd: -3 }, duration: 2, messages: [
+  corporate_restructure: { name: 'Corporate Restructure', power: 0, type: 'debuff', debuff: { atk: -5, def: -5, spd: -3 }, duration: 1, messages: [
     '"We\'re restructuring your department."',
     '"Going forward, your role has been... redefined."',
     '"The org chart changed overnight. You report to a committee now."',
@@ -623,7 +634,7 @@ export const ENEMY_ABILITIES = {
     '"I saw on CNBC that everyone else is making money!" The client attacks!',
     '"My brother-in-law\'s advisor gets him 30% returns!" Panic ensues!',
   ]},
-  demand_guarantees: { name: 'Demand Guarantees', power: 0, type: 'confuse', duration: 2, messages: [
+  demand_guarantees: { name: 'Demand Guarantees', power: 0, type: 'confuse', duration: 1, messages: [
     '"I need guaranteed 20% returns! Is that so hard?!"',
     '"Just put it all in something SAFE that also grows 25% a year."',
     '"My last advisor PROMISED me no losses!" (They didn\'t.)',
@@ -669,7 +680,7 @@ export const ENEMY_ABILITIES = {
     '"This will go on your record." The words echo ominously.',
     'A yellow post-it appears on your file: "SEE ME." The bureaucracy wounds.',
   ]},
-  sensitivity_seminar: { name: 'Sensitivity Seminar', power: 0, type: 'debuff', debuff: { atk: -3, spd: -3 }, duration: 2, messages: [
+  sensitivity_seminar: { name: 'Sensitivity Seminar', power: 0, type: 'debuff', debuff: { atk: -3, spd: -3 }, duration: 1, messages: [
     '"Perhaps we should discuss your communication style." You feel vaguely guilty.',
     '"Let\'s unpack your behavior in that last meeting." Your confidence shrinks.',
   ]},
@@ -680,7 +691,7 @@ export const ENEMY_ABILITIES = {
     '"We\'re optimizing headcount." The analyst highlights your name on a list.',
     '"The data suggests your role is... redundant."',
   ]},
-  efficiency_report: { name: 'Efficiency Report', power: 0, type: 'debuff', debuff: { def: -4, spd: -4 }, duration: 2, messages: [
+  efficiency_report: { name: 'Efficiency Report', power: 0, type: 'debuff', debuff: { def: -4, spd: -4 }, duration: 1, messages: [
     'The analyst shows you a graph where your productivity is a flatline.',
     '"Your KPIs are... concerning." A spreadsheet materializes.',
     'The analyst taps a pie chart. Your slice is labeled "waste."',
@@ -692,7 +703,7 @@ export const ENEMY_ABILITIES = {
   ]},
 
   // Brand Consultant
-  rebrand: { name: 'Rebrand', power: 0, type: 'confuse', duration: 2, messages: [
+  rebrand: { name: 'Rebrand', power: 0, type: 'confuse', duration: 1, messages: [
     '"We\'re pivoting your identity to align with our new brand architecture." You forget who you are.',
     '"Your personal brand needs work. Let me show you a mood board."',
     '"Have you considered that your name doesn\'t test well in focus groups?"',
@@ -713,7 +724,7 @@ export const ENEMY_ABILITIES = {
     '"My client demands you stop. Immediately. I have paperwork." You\'re paralyzed.',
     'A cease and desist letter materializes from thin air. You can\'t move.',
   ]},
-  legal_jargon: { name: 'Legal Jargon', power: 0, type: 'confuse', duration: 2, messages: [
+  legal_jargon: { name: 'Legal Jargon', power: 0, type: 'confuse', duration: 1, messages: [
     '"Pursuant to Section 14(a)(2)(iii) of the aforementioned..." Your brain shuts down.',
     '"The party of the first part, notwithstanding..." Your eyes glaze over.',
     '"Under the doctrine of respondeat superior, vis-à-vis..." Nothing makes sense anymore.',
@@ -730,7 +741,7 @@ export const ENEMY_ABILITIES = {
     '"We\'re going in a new direction. You\'re not invited."',
     '"Strategic realignment requires... sacrifices." Rachel strikes!',
   ]},
-  performance_review: { name: 'Performance Review', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 2, messages: [
+  performance_review: { name: 'Performance Review', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 1, messages: [
     'Rachel reads your performance review aloud. Every word is a scalpel.',
     '"Let me share some \'constructive feedback.\'" Rachel\'s smile doesn\'t reach her eyes.',
     '"I\'ve prepared a 360-degree assessment. It\'s mostly degrees of disappointment."',
@@ -768,7 +779,7 @@ export const ENEMY_ABILITIES = {
     '"Your department budget has been reduced by 40%."',
     '"We\'re implementing a spending freeze. Effective now."',
   ]},
-  cfo_call: { name: 'CFO on Line One', power: 0, type: 'buff', buff: { atk: 6, def: 6 }, duration: 2, messages: [
+  cfo_call: { name: 'CFO on Line One', power: 0, type: 'buff', buff: { atk: 6, def: 6 }, duration: 1, messages: [
     '"The CFO is backing me on this." The assistant grows more confident.',
     'The assistant holds up their phone. "The CFO says hi." Power radiates from the screen.',
   ]},
@@ -796,12 +807,12 @@ export const ENEMY_ABILITIES = {
     'The Algorithm processes your entire work history in 0.003 seconds. It\'s not impressed.',
     'Every email you\'ve ever sent is analyzed. The Algorithm attacks with your own words.',
   ]},
-  pattern_recognition: { name: 'Pattern Recognition', power: 0, type: 'debuff', debuff: { def: -6 }, duration: 2, messages: [
+  pattern_recognition: { name: 'Pattern Recognition', power: 0, type: 'debuff', debuff: { def: -6 }, duration: 1, messages: [
     '"I have identified 47 inefficiencies in your workflow." Your defenses crumble.',
     '"Your behavioral patterns are... predictable." The Algorithm adapts.',
     '"Anomaly detected: human error rate 94.7%." Your guard drops.',
   ]},
-  risk_assessment: { name: 'Risk Assessment', power: 0, type: 'confuse', duration: 2, messages: [
+  risk_assessment: { name: 'Risk Assessment', power: 0, type: 'confuse', duration: 1, messages: [
     '"Probability of your success: 3.7%." The numbers swirl around you.',
     '"Running Monte Carlo simulation... all outcomes unfavorable."',
     '"Risk assessment complete. Recommendation: surrender."',
