@@ -1074,15 +1074,23 @@ export class CombatState {
       optEls.forEach((el, i) => el.classList.toggle('selected', i === selIdx));
     };
 
+    const confirmSelection = () => {
+      document.removeEventListener('keydown', selHandler);
+      const chosenLen = LENGTH_OPTIONS[selIdx].len;
+      selOverlay.remove();
+      this._runRetaliateSequence(chosenLen, BASE_MULTIPLIERS[chosenLen], onComplete);
+    };
+
+    optEls.forEach((el, i) => {
+      el.addEventListener('click', () => { selIdx = i; updateSel(); confirmSelection(); });
+    });
+
     const selHandler = (e) => {
       if (e.code === 'ArrowUp')   { selIdx = Math.max(0, selIdx - 1); updateSel(); e.preventDefault(); }
       if (e.code === 'ArrowDown') { selIdx = Math.min(LENGTH_OPTIONS.length - 1, selIdx + 1); updateSel(); e.preventDefault(); }
       if (e.code === 'Enter' || e.code === 'Space') {
         e.preventDefault();
-        document.removeEventListener('keydown', selHandler);
-        const chosenLen = LENGTH_OPTIONS[selIdx].len;
-        selOverlay.remove();
-        this._runRetaliateSequence(chosenLen, BASE_MULTIPLIERS[chosenLen], onComplete);
+        confirmSelection();
       }
     };
     document.addEventListener('keydown', selHandler);
