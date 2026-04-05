@@ -58,19 +58,21 @@ class Game {
   }
 
   _showTitle() {
-    const titleState = new TitleState(this.stateManager, (mode) => {
+    const titleState = new TitleState(this.stateManager, (mode, slot) => {
       this.stateManager.pop(); // Remove title
-      this._startGame(mode);
+      this._startGame(mode, slot);
     });
     this.stateManager.push(titleState);
   }
 
-  _startGame(mode) {
+  _startGame(mode, slot = 1) {
+    SaveManager.setActiveSlot(slot);
+
     this.explorationState = new ExplorationState(this.stateManager);
     this.stateManager.push(this.explorationState);
 
     if (mode === 'continue') {
-      const saveData = SaveManager.load();
+      const saveData = SaveManager.load(slot);
       if (saveData) {
         this.explorationState.player.deserialize(saveData);
         // Reload the room the player was in

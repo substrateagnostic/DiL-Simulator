@@ -205,7 +205,7 @@ export class ExplorationState {
           this._showToast('Something is stirring in the building...', 'objective');
         }
         if (key === 'archive_accessible') {
-          this._showToast('The Archive is now accessible from the stairwell.', 'objective');
+          this._showToast('The Archive is now accessible from the back corridor.', 'objective');
         }
         if (key === 'hr_accessible') {
           this._showToast('The HR Department is now accessible.', 'objective');
@@ -1278,6 +1278,11 @@ export class ExplorationState {
       return 'compliance_crossword';
     }
 
+    // Ross post-Karen debrief: required before Chad fight
+    if (id === 'ross' && this.player.getFlag('karen_defeated') && !this.player.getFlag('ross_post_karen')) {
+      return 'ross_post_karen';
+    }
+
     // Social engineering chain (act 4+): Isaiah → Diane → Intern
     if (act >= 4 && !this.player.getFlag('social_eng_complete')) {
       if (id === 'isaiah' && !this.player.getFlag('social_eng_started') && DIALOGS.social_engineering_1) return 'social_engineering_1';
@@ -1422,7 +1427,7 @@ export class ExplorationState {
       reception: 'Reception',
       parking_garage: 'Parking Garage',
       executive_floor: 'Executive Floor',
-      stairwell: 'The Stairwell',
+      stairwell: 'Back Corridor',
       archive: 'The Archive',
       hr_department: 'HR Department',
       vault: 'The Vault',
@@ -1467,6 +1472,8 @@ export class ExplorationState {
 
   _getAlexSideQuestDialog() {
     const p = this.player;
+    // Side quests only available after Henderson Trust arc is resolved
+    if (!p.getFlag('act2_complete')) return 'alex_it_return';
     // Active quests take priority
     if (p.getFlag('anomaly_started') && !p.getFlag('quest_anomaly_347_complete')) return 'alex_it_quest_anomaly';
     if (p.getFlag('legacy_started') && !p.getFlag('quest_legacy_admin_complete')) return 'alex_it_quest_legacy';
@@ -1560,7 +1567,7 @@ export class ExplorationState {
       return 'Search the Archive for evidence';
     }
     if (this.player.getFlag('archive_accessible') && !this.player.getFlag('visited_archive')) {
-      return 'Find the Archive through the stairwell';
+      return 'Find the Archive through the back corridor';
     }
     if (this.player.getFlag('act2_complete') && !this.player.getFlag('knows_server_secret')) {
       return 'Talk to Alex from IT about the encrypted partition';
@@ -1592,8 +1599,16 @@ export class ExplorationState {
     if (this.player.getFlag('chad_defeated')) {
       return 'Meet Grandma Henderson in the Conference Room';
     }
-    if (this.player.getFlag('karen_defeated')) {
+    if (this.player.getFlag('karen_defeated') && this.player.getFlag('ross_post_karen')) {
       return 'Meet Chad Henderson in the Conference Room';
+    }
+    if (this.player.getFlag('karen_defeated')) {
+      return "Talk to Ross in his office";
+    }
+    if (this.player.getFlag('retry_karen')) {
+      const wins = this.player.getFlag('roguelite_tutorial_wins') || 0;
+      if (wins >= 3) return "You're ready — retry Karen in the Conference Room";
+      return `Handle reception clients to build experience (${wins}/3)`;
     }
     if (this.player.getFlag('briefing_complete')) {
       return 'Meet Karen Henderson in the Conference Room';
@@ -1745,7 +1760,7 @@ export class ExplorationState {
       } else {
         const remaining = [];
         if (!f('booster_br_placed')) remaining.push('• Break Room');
-        if (!f('booster_stair_placed')) remaining.push('• Stairwell');
+        if (!f('booster_stair_placed')) remaining.push('• Back Corridor');
         if (!f('booster_conf_placed')) remaining.push('• Conference Room');
         netObj = `Place signal boosters (${placed}/3):<br>${remaining.join('<br>')}`;
       }
@@ -1857,14 +1872,6 @@ export class ExplorationState {
     this.player.move(x, z, dt, this.tileMap);
     this.player.update(dt);
 
-    // Slope the stairwell — player and camera descend together as they walk north
-    if (this.player.currentRoom === 'stairwell') {
-      const t = Math.max(0, Math.min(1, (18 - this.player.position.z) / 16));
-      const elevation = -0.7 * t;
-      this.player.mesh.position.y = elevation;
-      this.camera.follow(this.player.position.x, this.player.position.z, elevation);
-    }
-
     // Fade south wall when player gets close to it
     const southWallMeshes = this.roomManager.currentRoom?.getSouthWallMeshes() ?? [];
     if (southWallMeshes.length > 0 && this.tileMap) {
@@ -1889,9 +1896,7 @@ export class ExplorationState {
       }
     }
 
-    if (this.player.currentRoom !== 'stairwell') {
-      this.camera.follow(this.player.position.x, this.player.position.z, 0);
-    }
+    this.camera.follow(this.player.position.x, this.player.position.z, 0);
     this.camera.update(dt);
 
     this.roomManager.update(dt, this.player.flags, this.paused);

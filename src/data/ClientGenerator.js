@@ -179,7 +179,7 @@ export const POSITIVE_ATTRIBUTES = [
   {
     id: 'returning_client',
     label: 'Returning Client',
-    desc: 'Used to be with Wells Fargo — knows the drill',
+    desc: 'Used to be with Vaults Fargo — knows the drill',
     buff: { atk: 2, def: 1 },
     angerDelta: -1,
   },

@@ -641,10 +641,10 @@ export const ENEMY_ABILITIES = {
     '"Can\'t you just guarantee the market goes up?"',
   ]},
   call_the_other_advisor: { name: 'Call My Other Advisor', power: 20, type: 'attack', messages: [
-    'The client threatens to take their business to Merrill Lynch!',
-    '"Morgan Stanley would NEVER treat me this way!"',
-    '"I\'m calling Schwab. They appreciate their clients!"',
-    '"My golf buddy says his advisor at JPMorgan is MUCH better."',
+    'The client threatens to take their business to Merrill Clinch!',
+    '"Gorman Stately would NEVER treat me this way!"',
+    '"I\'m calling Schwalb. They appreciate their clients!"',
+    '"My golf buddy says his advisor at J.P. Morgue is MUCH better."',
   ]},
   client_bro_down: { name: 'Bro, Trust Me', power: 16, type: 'attack', messages: [
     'The client insists on putting everything in crypto, bro.',

@@ -203,7 +203,7 @@ export const ROOMS = {
       // Intern — conditional entries covering lunch thief confrontation
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_culprit_revealed' }, dialogId: 'intern_lunch_thief_confrontation' },
-      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'karen_defeated' } }, // water cooler, paces
+      { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'briefing_complete' } }, // water cooler, paces — hidden once briefing starts
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
     exits: [
@@ -445,7 +445,7 @@ export const ROOMS = {
     npcs: [
       // Henderson beneficiaries appear based on quest progress
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'karen_defeated' } },
-      { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'karen_defeated', notFlag: 'chad_defeated' } },
+      { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'ross_post_karen', notFlag: 'chad_defeated' } },
       { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, dialogId: 'grandma_meeting', condition: { flag: 'chad_defeated', notFlag: 'grandma_defeated' } },
     ],
     exits: [
@@ -762,8 +762,8 @@ export const ROOMS = {
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { notFlag: 'compliance_defeated' } },
       // Ross appears at conference table after Henderson decision
       { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'defeated_regional' } },
-      // Grandma appears on executive floor for the secret path
-      { id: 'grandma', x: 4, z: 8, facing: -Math.PI / 2, condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
+      // Grandma appears on executive floor for the secret path — seated north side of table, facing south
+      { id: 'grandma', x: 4, z: 6.5, facing: Math.PI, sitting: true, condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -791,23 +791,13 @@ export const ROOMS = {
   // ----------------------------------------------------------
   stairwell: {
     id: 'stairwell',
-    name: 'The Stairwell',
+    name: 'Back Corridor',
     width: 4,
     height: 20,
-    floorColor: 0x555555,
+    floorColor: 0xc0b8a8,
     walls: true,
-    slope: 0.04,  // radians — tilts the whole room so north end (archive) is lower
     furniture: [
-      // Full descending staircase spanning the corridor
-      { type: 'stairFlight', x: 2, z: 17 },
-      // Cobwebs in corners — stairwells are neglected
-      { type: 'cobweb', x: 0.2, z: 0.2 },
-      { type: 'cobweb', x: 3.8, z: 0.2 },
-      { type: 'cobweb', x: 0.2, z: 19.8 },
-      { type: 'cobweb', x: 3.8, z: 19.8 },
-      { type: 'cobweb', x: 0.2, z: 10 },
-      { type: 'cobweb', x: 3.8, z: 10 },
-      // Motivational poster on wall
+      // Motivational poster on west wall
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
       // Network Ghost signal booster mount (east wall, upper section)
       { type: 'motivationalPoster', x: 3.9, z: 5, rotation: -Math.PI / 2 },
@@ -875,9 +865,11 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 4, z: 8, rotation: Math.PI },
       // Desk with terminal in far corner
       { type: 'desk', x: 10, z: 7, rotation: -Math.PI / 2 },
-      { type: 'monitor', x: 10.3, z: 7 },
+      { type: 'monitor', x: 10.3, z: 7, rotation: -Math.PI / 2 },
       { type: 'keyboard', x: 9.8, z: 7 },
       { type: 'chair', x: 9, z: 7, rotation: Math.PI / 2 },
+      // Vault door on east wall
+      { type: 'vaultDoor', x: 11.5, z: 5, rotation: Math.PI / 2 },
       // Cobwebs
       { type: 'cobweb', x: 0.2, z: 0.2 },
       { type: 'cobweb', x: 11.8, z: 0.2 },
@@ -992,19 +984,21 @@ export const ROOMS = {
       { type: 'point', color: 0x8888ff, intensity: 0.5, x: 4, y: 2, z: 4, distance: 8 },
     ],
     furniture: [
-      // 3x3 grid of safe deposit boxes
-      { type: 'safeDepositBox', x: 2, z: 2 },
-      { type: 'safeDepositBox', x: 4, z: 2 },
-      { type: 'safeDepositBox', x: 6, z: 2 },
-      { type: 'safeDepositBox', x: 2, z: 4 },
-      { type: 'safeDepositBox', x: 4, z: 4 },
-      { type: 'safeDepositBox', x: 6, z: 4 },
-      { type: 'safeDepositBox', x: 2, z: 6 },
-      { type: 'safeDepositBox', x: 4, z: 6 },
-      { type: 'safeDepositBox', x: 6, z: 6 },
-      // Desk for examining contents
-      { type: 'desk', x: 1, z: 6, rotation: Math.PI / 2 },
-      { type: 'chair', x: 1, z: 7, rotation: Math.PI },
+      // North wall — 4 units × W=1.75 spanning x=0–7, face south
+      { type: 'lockbox', x: 0.875, z: 0.2, rotation: 0,            variant: 1.75 },
+      { type: 'lockbox', x: 2.625, z: 0.2, rotation: 0,            variant: 1.75 },
+      { type: 'lockbox', x: 4.375, z: 0.2, rotation: 0,            variant: 1.75 },
+      { type: 'lockbox', x: 6.125, z: 0.2, rotation: 0,            variant: 1.75 },
+      // East wall — 4 units × W=1.75 spanning z=0–7, face west
+      { type: 'lockbox', x: 7.36, z: 0.875, rotation: -Math.PI / 2, variant: 1.75 },
+      { type: 'lockbox', x: 7.36, z: 2.625, rotation: -Math.PI / 2, variant: 1.75 },
+      { type: 'lockbox', x: 7.36, z: 4.375, rotation: -Math.PI / 2, variant: 1.75 },
+      { type: 'lockbox', x: 7.36, z: 6.125, rotation: -Math.PI / 2, variant: 1.75 },
+      // South wall — 4 units × W=1.75 spanning x=0–7, face north
+      { type: 'lockbox', x: 0.875, z: 7.36, rotation: Math.PI,     variant: 1.75 },
+      { type: 'lockbox', x: 2.625, z: 7.36, rotation: Math.PI,     variant: 1.75 },
+      { type: 'lockbox', x: 4.375, z: 7.36, rotation: Math.PI,     variant: 1.75 },
+      { type: 'lockbox', x: 6.125, z: 7.36, rotation: Math.PI,     variant: 1.75 },
     ],
     npcs: [],
     exits: [

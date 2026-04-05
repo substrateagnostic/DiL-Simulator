@@ -32,7 +32,7 @@ export const ROOM_THOUGHTS = {
   ],
   parking_garage: [
     "Concrete and fluorescent lights. The building's subconscious.",
-    "Someone left a Wells Fargo bumper sticker on a Porsche. Peak irony.",
+    "Someone left a Vaults Fargo bumper sticker on a Porsche. Peak irony.",
   ],
   stairwell: [
     "The graffiti changes every time I look. Or maybe I'm just paying attention now.",
