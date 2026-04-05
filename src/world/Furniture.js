@@ -2387,6 +2387,149 @@ export const Furniture = {
     group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
     return group;
   },
+
+  // ── Bank-vault lockbox wall unit — tall cabinet with 3×4 grid of individual box doors ──
+  lockbox(width = 0.9) {
+    const group = new THREE.Group();
+    const steel      = Materials.custom(0x8a9198);
+    const steelDark  = Materials.custom(0x4a5158);
+    const steelLight = Materials.custom(0xb8bec4);
+    const chrome     = Materials.custom(0xd4d8db);
+    const dark       = Materials.custom(0x1a1a20);
+
+    const W = width, H = 1.3, D = 0.28;
+
+    // Cabinet body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(W, H, D), steelDark);
+    body.position.set(0, H / 2, 0);
+    group.add(body);
+
+    // Face plate
+    const face = new THREE.Mesh(new THREE.BoxGeometry(W - 0.04, H - 0.04, 0.02), steel);
+    face.position.set(0, H / 2, D / 2 + 0.005);
+    group.add(face);
+
+    // Scale columns with width: ~3 cols per 0.9 units
+    const cols = width < 1.5 ? 3 : 4, rows = 4;
+    const boxW = (W - 0.08) / cols;
+    const boxH = (H - 0.08) / rows;
+    const startX = -(W / 2) + 0.04 + boxW / 2;
+    const startY = 0.04 + boxH / 2;
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const bx = startX + c * boxW;
+        const by = startY + r * boxH;
+        const bz = D / 2 + 0.015;
+
+        // Door panel
+        const door = new THREE.Mesh(new THREE.BoxGeometry(boxW - 0.02, boxH - 0.02, 0.015), steelLight);
+        door.position.set(bx, by, bz);
+        group.add(door);
+
+        // Two keyholes (bank key + customer key)
+        const kOff = boxW * 0.22;
+        [-kOff, kOff].forEach(ox => {
+          const keyhole = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.02, 6), dark);
+          keyhole.rotation.x = Math.PI / 2;
+          keyhole.position.set(bx + ox, by, bz + 0.012);
+          group.add(keyhole);
+        });
+
+        // Handle bar
+        const handle = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.015, 0.015), chrome);
+        handle.position.set(bx, by - boxH / 2 + 0.04, bz + 0.012);
+        group.add(handle);
+      }
+    }
+
+    // Top cap
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.03, D + 0.04), steelDark);
+    cap.position.set(0, H + 0.015, 0);
+    group.add(cap);
+
+    // Base plinth
+    const base = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.05, D + 0.04), steelDark);
+    base.position.set(0, 0.025, 0);
+    group.add(base);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  // ── Bank vault door — sits in east wall of Archive, player walks through exit tile ──
+  vaultDoor() {
+    const group = new THREE.Group();
+    const steel      = Materials.custom(0x8a9198);
+    const steelDark  = Materials.custom(0x4a5158);
+    const steelLight = Materials.custom(0xb8bec4);
+    const gold       = Materials.custom(0xc8960a);
+    const chrome     = Materials.custom(0xd4d8db);
+
+    const frameW = 2.0, frameH = 2.4, frameD = 0.15;
+
+    // Wall surround
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(frameW, frameH, frameD), steelDark);
+    frame.position.set(0, frameH / 2, 0);
+    group.add(frame);
+
+    // Circular door body
+    const doorR = 0.82;
+    const door = new THREE.Mesh(new THREE.CylinderGeometry(doorR, doorR, 0.14, 32), steel);
+    door.rotation.x = Math.PI / 2;
+    door.position.set(0, frameH / 2, frameD / 2 + 0.07);
+    group.add(door);
+
+    // Face plate (lighter shade)
+    const plate = new THREE.Mesh(new THREE.CylinderGeometry(doorR - 0.08, doorR - 0.08, 0.02, 32), steelLight);
+    plate.rotation.x = Math.PI / 2;
+    plate.position.set(0, frameH / 2, frameD / 2 + 0.15);
+    group.add(plate);
+
+    // 8 locking bolts around circumference
+    for (let i = 0; i < 8; i++) {
+      const angle = (i / 8) * Math.PI * 2;
+      const bx = Math.cos(angle) * (doorR - 0.12);
+      const by = Math.sin(angle) * (doorR - 0.12);
+      const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.18, 8), chrome);
+      bolt.rotation.x = Math.PI / 2;
+      bolt.position.set(bx, frameH / 2 + by, frameD / 2 + 0.16);
+      group.add(bolt);
+    }
+
+    // Wheel ring
+    const wheelRing = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.04, 8, 24), chrome);
+    wheelRing.rotation.x = Math.PI / 2;
+    wheelRing.position.set(0, frameH / 2, frameD / 2 + 0.20);
+    group.add(wheelRing);
+
+    // 6 wheel spokes
+    for (let i = 0; i < 6; i++) {
+      const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.56, 0.04), chrome);
+      spoke.rotation.z = (i / 6) * Math.PI * 2;
+      spoke.position.set(0, frameH / 2, frameD / 2 + 0.20);
+      group.add(spoke);
+    }
+
+    // Center hub
+    const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.06, 12), gold);
+    hub.rotation.x = Math.PI / 2;
+    hub.position.set(0, frameH / 2, frameD / 2 + 0.22);
+    group.add(hub);
+
+    // Hinge bar on left side
+    const hinge = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.4, 0.08), steelDark);
+    hinge.position.set(-doorR + 0.04, frameH / 2, frameD / 2 + 0.10);
+    group.add(hinge);
+
+    // Gold plaque below wheel
+    const plaque = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.12, 0.02), gold);
+    plaque.position.set(0, frameH / 2 - doorR + 0.22, frameD / 2 + 0.16);
+    group.add(plaque);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
 };
 
 // ── Shared builder for credenza / credenzaEast ───────────────────────────────
