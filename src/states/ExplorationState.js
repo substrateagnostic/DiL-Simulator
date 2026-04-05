@@ -397,11 +397,38 @@ export class ExplorationState {
           }
         }
 
-        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team (one-time)
+        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team cutscene (one-time)
         if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && !this.player.getFlag('act4_complete') && !this.player.getFlag('act5_triggered') && DIALOGS.act5_trigger) {
           this.player.setFlag('act5_triggered');
           setTimeout(() => {
             const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
+            this.stateManager.push(dialogState);
+          }, 800);
+        }
+
+        // Gauntlet fight 1: Brand Consultant — cubicle farm, first contact after act5 cutscene
+        if (roomId === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
+          this.player.setFlag('brand_consultant_fight_started');
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['brand_consultant_combat'], this.player, this.stateManager, 'brand_consultant_combat');
+            this.stateManager.push(dialogState);
+          }, 1200);
+        }
+
+        // Gauntlet fight 3: Corporate Lawyer — reception, blocks the elevator
+        if (roomId === 'reception' && this.player.getFlag('restructuring_defeated') && !this.player.getFlag('corporate_lawyer_fight_started') && DIALOGS.corporate_lawyer_combat) {
+          this.player.setFlag('corporate_lawyer_fight_started');
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['corporate_lawyer_combat'], this.player, this.stateManager, 'corporate_lawyer_combat');
+            this.stateManager.push(dialogState);
+          }, 800);
+        }
+
+        // Gauntlet fight 4: Data Analytics Lead — executive floor, first gatekeeper
+        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_combat) {
+          this.player.setFlag('data_lead_fight_started');
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['data_analytics_combat'], this.player, this.stateManager, 'data_analytics_combat');
             this.stateManager.push(dialogState);
           }, 800);
         }
@@ -1200,6 +1227,23 @@ export class ExplorationState {
       return `${retryEncId}_retry`;
     }
 
+    // Janitor riddles take priority over hardcoded dialogId (available act 3+, after meeting janitor)
+    if (id === 'janitor' && this.player.actIndex >= 3 && this.player.getFlag('met_janitor')) {
+      if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) return 'janitor_riddle_1';
+      if (this.player.getFlag('janitor_riddle_1_done') && !this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) return 'janitor_riddle_2';
+      if (this.player.getFlag('janitor_riddle_2_done') && !this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) return 'janitor_riddle_3';
+    }
+
+    // Janitor: skip re-running the intro after first meeting — use short return dialog instead
+    if (id === 'janitor' && this.player.getFlag('met_janitor') && npc.dialogId === 'janitor_intro' && DIALOGS.janitor_return) {
+      return 'janitor_return';
+    }
+
+    // Janet act4 rally takes priority over lunch thief dialogId overrides
+    if (id === 'janet' && act >= 4 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
+      return 'janet_act4';
+    }
+
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
       return npc.dialogId;
     }
@@ -1207,6 +1251,28 @@ export class ExplorationState {
     // Printer from Hell side quest: route Alex to explanation dialog while active
     if (id === 'alex_it' && this.player.getFlag('printer_quest_started') && !this.player.getFlag('printer_quest_done')) {
       return 'alex_printer_quest';
+    }
+
+    // Special: Alex from IT + archive evidence = Act 4 trigger (must be before general routing)
+    if (
+      id === 'alex_it' &&
+      this.player.getFlag('has_archive_evidence') &&
+      !this.player.getFlag('act3_complete') &&
+      DIALOGS.act4_trigger
+    ) {
+      return 'act4_trigger';
+    }
+
+    // Phantom Approver: both locations found — skip router and go straight to completion
+    if (
+      id === 'alex_it' &&
+      this.player.getFlag('legacy_started') &&
+      this.player.getFlag('phantom_hr_found') &&
+      this.player.getFlag('phantom_workstation_found') &&
+      !this.player.getFlag('quest_legacy_admin_complete') &&
+      DIALOGS.alex_it_quest_legacy
+    ) {
+      return 'alex_it_quest_legacy';
     }
 
     // Alex IT: when story beat is available, offer choice between story and side quests
@@ -1254,23 +1320,6 @@ export class ExplorationState {
     ) {
       if (this.player.getFlag('retry_intern') && DIALOGS.intern_retry) return 'intern_retry';
       return 'intern_combat_intro';
-    }
-
-    // Special: Alex from IT + archive evidence = Act 4 trigger
-    if (
-      id === 'alex_it' &&
-      this.player.getFlag('has_archive_evidence') &&
-      !this.player.getFlag('act3_complete') &&
-      DIALOGS.act4_trigger
-    ) {
-      return 'act4_trigger';
-    }
-
-    // Janitor riddle progression (available from act 3+)
-    if (id === 'janitor' && act >= 3) {
-      if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) return 'janitor_riddle_1';
-      if (this.player.getFlag('janitor_riddle_1_done') && !this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) return 'janitor_riddle_2';
-      if (this.player.getFlag('janitor_riddle_2_done') && !this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) return 'janitor_riddle_3';
     }
 
     // Compliance crossword (available when act >= 3 and compliance NPC is on exec floor)
@@ -1534,6 +1583,18 @@ export class ExplorationState {
     if (this.player.getFlag('rachel_fight_started')) {
       return 'Defeat Rachel in the Board Room';
     }
+    if (this.player.getFlag('chief_restructuring_defeated')) {
+      return 'Confront Rachel in the Board Room';
+    }
+    if (this.player.getFlag('data_lead_defeated')) {
+      return 'Clear the executive floor';
+    }
+    if (this.player.getFlag('corporate_lawyer_defeated')) {
+      return 'Get to the executive floor';
+    }
+    if (this.player.getFlag('restructuring_defeated')) {
+      return 'Push through to reception';
+    }
     if (this.player.getFlag('act4_complete')) {
       return 'Fight through the Restructuring Team to reach the Board Room';
     }
@@ -1749,7 +1810,15 @@ export class ExplorationState {
     }
     if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
       const found = (f('phantom_hr_found') ? 1 : 0) + (f('phantom_workstation_found') ? 1 : 0);
-      const legacyObj = found >= 2 ? 'Return to Alex from IT' : `Investigate the Phantom Approver (${found}/2)`;
+      let legacyObj;
+      if (found >= 2) {
+        legacyObj = 'Return to Alex from IT';
+      } else {
+        const remaining = [];
+        if (!f('phantom_hr_found')) remaining.push('• HR filing cabinets');
+        if (!f('phantom_workstation_found')) remaining.push('• Workstation in cubicle farm');
+        legacyObj = `Investigate the Phantom Approver (${found}/2):<br>${remaining.join('<br>')}`;
+      }
       quests.push({ name: 'The Phantom Approver', objective: legacyObj });
     }
     if (f('network_started') && !f('quest_network_ghost_complete')) {
@@ -1867,6 +1936,24 @@ export class ExplorationState {
 
   update(dt) {
     if (this.paused) return;
+
+    // Gauntlet fight 2: Restructuring Analyst chains immediately after Brand Consultant is defeated
+    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('brand_consultant_defeated') && !this.player.getFlag('restructuring_fight_started') && DIALOGS.restructuring_combat) {
+      this.player.setFlag('restructuring_fight_started');
+      setTimeout(() => {
+        const dialogState = new DialogState(DIALOGS['restructuring_combat'], this.player, this.stateManager, 'restructuring_combat');
+        this.stateManager.push(dialogState);
+      }, 2000);
+    }
+
+    // Gauntlet fight 5: Chief of Restructuring chains after Data Analytics Lead is defeated
+    if (this.player.currentRoom === 'executive_floor' && this.player.getFlag('data_lead_defeated') && !this.player.getFlag('chief_fight_started') && DIALOGS.chief_restructuring_combat) {
+      this.player.setFlag('chief_fight_started');
+      setTimeout(() => {
+        const dialogState = new DialogState(DIALOGS['chief_restructuring_combat'], this.player, this.stateManager, 'chief_restructuring_combat');
+        this.stateManager.push(dialogState);
+      }, 2000);
+    }
 
     const { x, z } = InputManager.getMovementVector();
     this.player.move(x, z, dt, this.tileMap);

@@ -50,11 +50,11 @@ const FURNITURE_FOOTPRINTS = {
 // Small/decorative items that should NOT block movement.
 // Players can clip through these slightly for smoother pathing.
 const NO_BLOCK = new Set([
-  'monitor', 'keyboard', 'chair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan',
+  'monitor', 'keyboard', 'chair', 'executiveChair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan',
   'coffeeMachine', 'microwave', 'waterCooler', 'printer',
   'whiteboard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
-  'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'globeStand',
+  'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'globeStand', 'vaultDoor',
   'rangeHood',
 ]);
 

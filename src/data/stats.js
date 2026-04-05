@@ -395,6 +395,28 @@ export const ENEMY_STATS = {
     abilities: ['rebrand', 'focus_group', 'logo_redesign'],
     weakness: 'social', resistance: 'audit',
   },
+  data_analytics_lead: {
+    name: 'Data Analytics Lead',
+    maxHP: 330,
+    hp: 330,
+    atk: 16,
+    def: 11,
+    spd: 14,
+    xpReward: 90,
+    abilities: ['dashboard_overload', 'pivot_table', 'predictive_model'],
+    weakness: 'social', resistance: 'technical',
+  },
+  chief_of_restructuring: {
+    name: 'Chief of Restructuring',
+    maxHP: 465,
+    hp: 465,
+    atk: 20,
+    def: 16,
+    spd: 10,
+    xpReward: 130,
+    abilities: ['strategic_pivot', 'corporate_mandate', 'force_majeure'],
+    weakness: 'legal', resistance: 'audit',
+  },
   corporate_lawyer: {
     name: 'Corporate Lawyer',
     maxHP: 130,
@@ -716,6 +738,40 @@ export const ENEMY_ABILITIES = {
   logo_redesign: { name: 'Logo Redesign', power: 0, type: 'heal', healAmount: 20, messages: [
     'The consultant unveils a new logo. It\'s the old logo but in a different font. They feel energized.',
     '"Behold our refreshed visual identity!" It\'s imperceptibly different. The consultant heals.',
+  ]},
+
+  // Data Analytics Lead
+  dashboard_overload: { name: 'Dashboard Overload', power: 16, type: 'attack', tag: 'technical', messages: [
+    '"I\'m just pulling up a few dashboards." Forty-seven browser tabs open simultaneously. It hurts.',
+    'The lead pivots their screen toward you. Every metric is red. Somehow this is your fault.',
+    '"Let me walk you through the data." The data is a wall of numbers moving at lethal speed.',
+  ]},
+  pivot_table: { name: 'Pivot Table', power: 0, type: 'debuff', debuff: { atk: -4, spd: -4 }, duration: 2, tag: 'technical', messages: [
+    '"I\'ve restructured your action items into a pivot table." You can no longer move efficiently.',
+    'The lead reorganizes your entire strategy mid-conversation. You lose the thread.',
+    '"Let me reframe this." Everything you planned is suddenly in the wrong column.',
+  ]},
+  predictive_model: { name: 'Predictive Model', power: 24, type: 'attack', tag: 'technical', messages: [
+    '"My model predicted you\'d do that. Three moves ago." The counterpunch lands before you swing.',
+    '"The regression analysis said you\'d be here. At this time. Doing exactly this." Devastating.',
+    '"Statistically, you lose. The confidence interval is 99.7%." It feels accurate.',
+  ]},
+
+  // Chief of Restructuring
+  strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', tag: 'audit', messages: [
+    '"We\'re going in a different direction." The direction is directly at you.',
+    '"The strategy has evolved." The new strategy involves hitting you very hard.',
+    '"Pivoting." It\'s not a metaphor.',
+  ]},
+  corporate_mandate: { name: 'Corporate Mandate', power: 0, type: 'stun', duration: 1, tag: 'legal', messages: [
+    '"This comes from the top." A document materializes. You cannot argue with a document.',
+    '"Regional has authorized this." The weight of corporate authority pins you in place.',
+    '"You are hereby directed to stand down." You stand down.',
+  ]},
+  force_majeure: { name: 'Force Majeure', power: 0, type: 'heal', healAmount: 30, messages: [
+    '"Unforeseeable circumstances." The Chief invokes a legal clause and regroups.',
+    '"Acts of God. Market forces. Beyond our control." The Chief recovers momentum.',
+    'The Chief cites an obscure contract clause that apparently restores vitality.',
   ]},
 
   // Corporate Lawyer

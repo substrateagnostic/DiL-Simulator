@@ -74,6 +74,10 @@ export const ROOMS = {
       { type: 'trashCan', x: 6.5, z: 4 },
 
       // --- NE pod — 2 cubicles (x=13, 15) --- shifted west to clear HR door at (19,2-3)
+      // Phantom Approver workstation — tucked in northeast corner, running hot
+      { type: 'desk', x: 17, z: 5, rotation: 0 },
+      { type: 'monitor', x: 17, z: 4.7 },
+      { type: 'chair', x: 17, z: 5.8, rotation: Math.PI },
       // Back walls
       { type: 'cubicleWall', x: 12, z: 4, rotation: 0 },
       { type: 'cubicleWall', x: 14, z: 4, rotation: 0 },
@@ -241,8 +245,8 @@ export const ROOMS = {
       // Side quest interactables
       { x: 19, z: 12, type: 'poster', dialogId: 'quest_atk_1' },
       { x: 0,  z: 3,  type: 'poster', dialogId: 'quest_def_1' },
-      // Phantom Approver: source workstation
-      { x: 16, z: 6,  type: 'poster', dialogId: 'phantom_workstation_cf' },
+      // Phantom Approver: source workstation — on the desk tile, same pattern as andrews_desk
+      { x: 17, z: 5,  type: 'monitor', dialogId: 'phantom_workstation_cf' },
       // Tuesday 2PM: sticky note on a monitor
       { x: 10, z: 6,  type: 'poster', dialogId: 'tuesday_sticky_note' },
       // Printer's Soul: ethernet port on the wall near the printer
@@ -1007,8 +1011,7 @@ export const ROOMS = {
       { x: 0, z: 4, targetRoom: 'archive', spawnX: 10, spawnZ: 5 },
     ],
     interactables: [
-      { x: 4, z: 4, type: 'safe_deposit_boxes', dialogId: 'vault_boxes' },
-      { x: 6, z: 2, type: 'charter_display', dialogId: 'vault_charter' },
+      { x: 4, z: 1, type: 'safe_deposit_boxes', dialogId: 'vault_boxes' },
     ],
     playerSpawn: { x: 1, z: 4 },
   },
@@ -1070,8 +1073,8 @@ export const ROOMS = {
     ],
     exits: [
       // SOUTH exit -> Executive Floor
-      { x: 7, z: 11, targetRoom: 'executive_floor', spawnX: 7, spawnZ: 2 },
-      { x: 8, z: 11, targetRoom: 'executive_floor', spawnX: 8, spawnZ: 2 },
+      { x: 7, z: 11, targetRoom: 'executive_floor', spawnX: 7, spawnZ: 6 },
+      { x: 8, z: 11, targetRoom: 'executive_floor', spawnX: 8, spawnZ: 6 },
       // NORTH exit -> Penthouse (Act 7)
       { x: 7, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },
       { x: 8, z: 0, targetRoom: 'penthouse', spawnX: 8, spawnZ: 10 },

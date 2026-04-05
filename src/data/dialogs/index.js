@@ -895,9 +895,17 @@ export const DIALOGS = {
   ],
 
   janitor_return: [
-    /* 0 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Page 47. Don't forget." },
-    /* 1 */ { type: 'text', speaker: 'Narrator', text: 'He resumes mopping in a way that suggests the conversation is over.' },
-    /* 2 */ { type: 'end' },
+    /* 0 */ { type: 'condition', flag: 'janitor_return_2', ifTrue: 6, ifFalse: 1 },
+    /* 1 */ { type: 'condition', flag: 'janitor_return_1', ifTrue: 4, ifFalse: 2 },
+    /* 2 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Page 47. Don't forget." },
+    /* 3 */ { type: 'action', action: 'set_flag', flag: 'janitor_return_1', value: true, next: 9 },
+    /* 4 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The floors remember everything. So do I." },
+    /* 5 */ { type: 'action', action: 'set_flag', flag: 'janitor_return_2', value: true, next: 9 },
+    /* 6 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Still here. Still watching. Keep going." },
+    /* 7 */ { type: 'text', speaker: 'Narrator', text: 'He gestures vaguely at the hallway with his mop.' },
+    /* 8 */ { type: 'end' },
+    /* 9 */ { type: 'text', speaker: 'Narrator', text: 'He resumes mopping. The Rolex catches the light.' },
+    /* 10 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -1797,7 +1805,7 @@ export const DIALOGS = {
 
   // Vault interaction
   vault_boxes: [
-    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 14, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 15, ifFalse: 1 },
     /* 1  */ { type: 'condition', flag: 'vault_code_1', ifTrue: 2, ifFalse: 12 },
     /* 2  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 3, ifFalse: 12 },
     /* 3  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 12 },
@@ -1809,10 +1817,11 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Andrew', text: "I can feel it. The weight of every promise ever made in this building." },
     /* 10 */ { type: 'action', action: 'set_flag', flag: 'has_charter', value: true, next: 11 },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force surges through the charter. You feel stronger. More certain. The building is with you." },
-    /* 12 */ { type: 'text', speaker: 'Narrator', text: "The safe is locked. A three-dial combination. You don't have all the numbers yet." },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: "The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room." },
-    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The safe is open. Empty now. The charter is with you. Where it belongs." },
-    /* 15 */ { type: 'end' },
+    /* 12 */ { type: 'text', speaker: 'Andrew', text: "I need to get back to the cubicle farm. The team is waiting.", next: 15 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "The safe is locked. A three-dial combination. You don't have all the numbers yet." },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room.", next: 15 },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The safe is open. Empty now. The charter is with you. Where it belongs.", next: 16 },
+    /* 16 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -1865,6 +1874,49 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Brand Consultant retreats, clutching their mood board. The sunset looks dimmer somehow." },
     /* 2  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true, next: 3 },
     /* 3  */ { type: 'end' },
+  ],
+
+  data_analytics_combat: [
+    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "Hold on. Before you go anywhere, I need to walk you through some numbers." },
+    /* 1  */ { type: 'text', speaker: 'Data Analytics Lead', text: "Your department's trust resolution rate is down 12% quarter-over-quarter. Client satisfaction is in the third percentile. Overhead per FTE is — and I cannot stress this enough — alarming." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Those metrics don't capture what we actually do." },
+    /* 3  */ { type: 'text', speaker: 'Data Analytics Lead', text: "Everything that matters can be measured. Everything that can be measured can be optimized. Everything that can be optimized has already been scheduled for elimination." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "Who authorized you to be in this building?" },
+    /* 5  */ { type: 'text', speaker: 'Data Analytics Lead', text: "I don't see that question on my intake form. I do see, however, that your continued presence here represents a 94% drag on projected synergies." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "The lead opens a laptop. The screen is a spreadsheet so dense it's practically a weapon." },
+    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'data_analytics_lead', next: 8 },
+    /* 8  */ { type: 'end' },
+  ],
+
+  data_analytics_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "This is... statistically anomalous. My model had you at a 3% win probability." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "What does your model say now?" },
+    /* 2  */ { type: 'text', speaker: 'Data Analytics Lead', text: "It's... refusing to run. I think you broke my confidence interval." },
+    /* 3  */ { type: 'text', speaker: 'Data Analytics Lead', text: "For what it's worth — the Chief is still up here. He doesn't have a model. He doesn't need one. He's been doing this for twenty years." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The lead closes their laptop and walks toward the elevator, muttering about outliers." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  chief_restructuring_combat: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "He's at the far end of the executive floor. No laptop. No clipboard. Just a suit that costs more than your annual salary and an expression that has never once entertained doubt." },
+    /* 1  */ { type: 'text', speaker: 'Chief of Restructuring', text: "Andrew. I've eliminated twelve departments across nine companies. Your file came across my desk on day one." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Then you know I have the charter. I have the evidence. This restructuring has no legal basis." },
+    /* 3  */ { type: 'text', speaker: 'Chief of Restructuring', text: "Legal basis. Sentiment is not a KPI, Andrew. Neither is loyalty. Neither, frankly, is you." },
+    /* 4  */ { type: 'text', speaker: 'Chief of Restructuring', text: "I've broken harder people than you. With less paperwork." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Good. I hate paperwork." },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'chief_of_restructuring', next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  chief_restructuring_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Chief of Restructuring', text: "I don't... this doesn't happen." },
+    /* 1  */ { type: 'text', speaker: 'Chief of Restructuring', text: "You want to know something? Rachel didn't call us last week. She called us six weeks ago. Before you ever found the archive. Before the charter. She knew you'd get this far." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Then she knows what's coming." },
+    /* 3  */ { type: 'text', speaker: 'Chief of Restructuring', text: "She's in the Board Room. She's been there all morning. She has the full board on a call. Andrew — whatever you're planning, you have maybe ten minutes before the vote passes." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Chief straightens his tie. Steps aside. For the first time in twenty years, he gets out of someone's way." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'chief_restructuring_defeated', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
   ],
 
   corporate_lawyer_combat: [
@@ -3064,7 +3116,7 @@ export const DIALOGS = {
 
   phantom_workstation_cf: [
     /* 0  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 6, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 2, ifFalse: 7 },
+    /* 1  */ { type: 'condition', flag: 'legacy_started', ifTrue: 2, ifFalse: 7 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A workstation in the back corner of the cubicle farm. The monitor is dark, but the tower is running — fan humming, a single amber LED blinking in a steady rhythm." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Nobody sits here. Nobody has for years, by the look of it. But something is definitely running." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The asset tag on the back reads: 'PROC-LEGACY-07. DO NOT DECOMMISSION. -IT 2006.' Someone taped a sticky note over it that just says 'ignore.'" },
