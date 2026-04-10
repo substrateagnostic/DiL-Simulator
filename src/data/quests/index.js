@@ -141,7 +141,7 @@ export const QUESTS = {
       { id: 0, objective: 'Investigate network outages with Alex' },
       { id: 1, objective: 'Place signal booster in the break room' },
       { id: 2, objective: 'Place signal booster in the stairwell' },
-      { id: 3, objective: 'Place signal booster in the executive floor' },
+      { id: 3, objective: 'Place signal booster in the Conference Room' },
       { id: 4, objective: 'Return to Alex to triangulate the signal' },
     ],
   },

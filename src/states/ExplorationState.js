@@ -42,9 +42,16 @@ const QUEST_OBJECTIVES = {
     2: 'Meet Grandma Henderson in the Conference Room',
     3: 'Make your recommendation on the Henderson Trust',
   },
-  main_act3: {
+  main_act2_finale: {
     0: 'Head to the Executive Floor',
     1: 'Face the consequences',
+  },
+  main_act3: {
+    0: 'Talk to Alex from IT about the encrypted partition',
+    1: 'Find the Archive through the stairwell',
+    2: 'Search the Archive for Henderson records',
+    3: 'Confront the Janitor about his past',
+    4: 'Return to Alex with the evidence',
   },
   henderson_trust: {
     briefing: 'Meet Karen Henderson in the Conference Room',
@@ -654,7 +661,9 @@ export class ExplorationState {
                   if (xpNeeded > 0) this.player.gainXP(xpNeeded);
                   this._updateMiniStats();
                   this._showToast('3 clients handled — Level 3 reached! You\'re ready for Karen.', 'objective');
-                } else if (wins < 3) {
+                } else if (wins >= 3) {
+                  this._showToast("3 clients handled — you're ready to retry Karen!", 'objective');
+                } else {
                   this._showToast(`Client ${wins}/3 handled — keep building experience!`, 'objective');
                 }
               }
@@ -1227,8 +1236,8 @@ export class ExplorationState {
       return `${retryEncId}_retry`;
     }
 
-    // Janitor riddles take priority over hardcoded dialogId (available act 3+, after meeting janitor)
-    if (id === 'janitor' && this.player.actIndex >= 3 && this.player.getFlag('met_janitor')) {
+    // Janitor riddles take priority over hardcoded dialogId (available act 3+, after meeting janitor AND after act3 confrontation)
+    if (id === 'janitor' && this.player.actIndex >= 3 && this.player.getFlag('met_janitor') && this.player.getFlag('read_janitor_act3')) {
       if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) return 'janitor_riddle_1';
       if (this.player.getFlag('janitor_riddle_1_done') && !this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) return 'janitor_riddle_2';
       if (this.player.getFlag('janitor_riddle_2_done') && !this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) return 'janitor_riddle_3';
@@ -1624,6 +1633,9 @@ export class ExplorationState {
     if (this.player.getFlag('has_archive_evidence') && !this.player.getFlag('act3_complete')) {
       return 'Return the Archive evidence to Alex from IT';
     }
+    if (this.player.getFlag('security_guard_info') && !this.player.getFlag('read_janitor_act3')) {
+      return 'Find the Janitor in the Archive — he knows what happened here';
+    }
     if (this.player.getFlag('visited_archive') && !this.player.getFlag('has_archive_evidence')) {
       return 'Search the Archive for evidence';
     }
@@ -1675,7 +1687,7 @@ export class ExplorationState {
       return 'Meet Karen Henderson in the Conference Room';
     }
 
-    if (!this.player.getFlag('checked_desk')) {
+    if (!this.player.getFlag('checked_desk') && !this.player.getFlag('ready_for_ross')) {
       return 'Find your cubicle and settle in';
     }
     if (!this.player.getFlag('ready_for_ross')) {

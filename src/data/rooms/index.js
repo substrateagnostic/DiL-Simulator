@@ -380,7 +380,7 @@ export const ROOMS = {
     npcs: [
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'defeated_regional', notFlag: 'act5_complete' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete' } },
     ],
     exits: [
@@ -761,13 +761,11 @@ export const ROOMS = {
       // Regional Manager — only for legal/bro paths, not grandma path. Moved off desk.
       { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_legal', notFlag: 'defeated_regional' } },
       { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_bro', notFlag: 'defeated_regional' } },
-      // Regional also shows before branch is chosen (ambient presence)
-      { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'branch_chosen' } },
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { notFlag: 'compliance_defeated' } },
       // Ross appears at conference table after Henderson decision
-      { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'defeated_regional' } },
+      { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'act2_complete' } },
       // Grandma appears on executive floor for the secret path — seated north side of table, facing south
-      { id: 'grandma', x: 4, z: 6.5, facing: Math.PI, sitting: true, condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
+      { id: 'grandma', x: 4, z: 6.5, facing: Math.PI, sitting: true, dialogId: 'grandma_exec_idle', condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -882,10 +880,11 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'security_guard', x: 5, z: 7, facing: 0, dialogId: 'security_guard_combat', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'security_guard_info' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'security_guard_info', notFlag: 'act3_complete' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act3', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'security_guard_info', notFlag: 'read_janitor_act3' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'read_janitor_act3', notFlag: 'act3_complete' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_intro', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
     ],
     exits: [
       // SOUTH exit -> Stairwell

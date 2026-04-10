@@ -84,17 +84,28 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 All game data is plain JS objects/exports:
 - `stats.js` — `PLAYER_BASE_STATS` (includes `aum: 0`), `XP_TABLE` (15 levels, exponential), `LEVEL_GROWTH`, `PLAYER_ABILITIES` (with `tag` fields), `ENEMY_STATS` (with `weakness`/`resistance`/`phases`/`phaseMessages`/`taunts` on Hendersons), `ENEMY_ABILITIES`, `ANDREW_TAUNTS`, `ITEMS`, `pickMessage()`
 - `shop.js` — `SHOP_ITEMS` (consumables, upgrades, decor) and `SHOP_CATEGORIES`
+- `items.js` — Re-exports `ITEMS` from `stats.js` for convenience + exports `STARTING_INVENTORY` (starting loadout: 2× large coffee, 1× antacid).
+- `bestiary.js` — `BESTIARY_DATA`: maps every enemy `id` to `{ name, category, quip }`. Displayed in the Journal tab of MenuState. Add an entry here whenever a new enemy is added to `ENEMY_STATS`.
+- `thoughts.js` — `ROOM_THOUGHTS`: maps room IDs to arrays of Andrew inner-monologue strings that fire on first visit. Add new strings here to flesh out new rooms without touching ExplorationState.
 - `characters.js` — NPC visual configs
 - `cosmetics.js` — Unlockable cosmetics with unlock conditions
 - `ClientGenerator.js` — Procedurally generates Reception-room clients. `give_item` actions use the `item` field (not `itemId`). Roguelite enemy HP scales as `Math.round((100 + tier * 160) * levelMultiplier)`.
 - `rooms/index.js` — All room definitions. NPC entries support `condition: { flag, notFlag }` for conditional spawning. Break room has `type: 'supply_shop'` furniture that triggers `ShopState`.
 - `dialogs/index.js`, `quests/index.js`, `encounters/index.js` — dialog trees, quests, encounter configs
 
+### Effects (`src/effects/`)
+
+- **`MaterialLibrary.js`** — Cached toon material factory. `Materials.toon(color, opts)` and `Materials.custom(color)` return `THREE.MeshToonMaterial` instances (3-stop gradient by default, 4-stop with `opts.stops = 4`). Also exports named shortcuts: `Materials.floor()`, `Materials.wall()`, `Materials.desk()`, `Materials.shoes()`, etc. Results are cached by key — never mutate returned materials.
+- **`ParticleSystem.js`** — `burst(position, count, color, speed, lifetime)` for omnidirectional explosions; `stream(from, to, count, color, lifetime)` for directed particle trails. Call `update(dt)` each frame.
+- **`PostProcessing.js`** — CSS-based vignette overlay (avoids Three.js EffectComposer). `init()` appends the element; `setVignetteIntensity(0–1)` adjusts it; `dispose()` removes it.
+
 ### Entities (`src/entities/`)
 
 - **`Player`** — Holds `stats` (including `aum`), `inventory`, `flags`, `questStates`, `position`, `currentRoom`, `actIndex`, `upgradePoints`, `unlockedAbilities`, `deaths`. Key methods: `gainXP()`, `rest()`, `addItem()/useItem()`, `setFlag()/getFlag()`, `serialize()/deserialize()`. Emits `flag-set` on EventBus. `gainXP()` caps at `XP_TABLE.length` (15).
 - **`NPC`** — Per-NPC `interactRange` option (defaults to `PLAYER.INTERACT_RANGE`). `conditionFn` toggled each frame by `EntityManager`. `rebuild(config)` uses `config.name` directly — do NOT spread `{ ...config, name: this.id }` or the display name breaks.
 - **`EntityManager`** — `update(dt, flags, paused)` evaluates `conditionFn` for every NPC every frame.
+- **`CharacterBuilder.js`** — `buildCharacter(config, options)` builds a Three.js character group from box/sphere primitives using `Materials` from MaterialLibrary. `config` holds color fields (`pantsColor`, `bodyColor`, `shirtColor`, `hairColor`, etc.). `options.detailed = true` doubles sphere/capsule segments for combat close-ups. Returns a group with named refs: `group.leftLeg`, `group.rightLeg`, `group.body`, `group.head`, `group.leftArm`, `group.rightArm`.
+- **`CharacterAnimator.js`** — Drives walking/idle/sitting animations on a character group. `setWalking(bool)`, `setSitting(bool)`, `setFacing(angle)`, `update(dt)`. Sitting raises hips to `SEAT_Y` and bends legs; walking drives limb swing via sine.
 
 ### UI (`src/ui/`)
 
@@ -103,6 +114,8 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **`DialogBox`** — `onAdvance` / `onChoice` callbacks; `skipToEnd()` / `isComplete()`. Space blocked on choice nodes (only Enter/click).
 - **`TransitionOverlay`** — `fadeOut/fadeIn`, `wipeDownOut/wipeDownIn` (descend), `wipeUpOut/wipeUpIn` (ascend).
 - **`TouchControls`** — Injects into `InputManager.keys`; activates only on touch devices.
+- **`UIManager`** — Master exploration HUD controller. Creates and owns: location indicator (top-left), quest tracker panel (top-right), mini stats bar, interact prompt (bottom-center), and notification toast. `show()/hide()` control the entire HUD; `setLocation(name)`, `setQuest(text)`, `setMiniStats(hp, mp)`, `showInteractPrompt(text)`, `notify(text)`.
+- **`FloatingText`** — DOM-based floating damage/heal numbers. `spawn(text, x, y, type)` where `type` is `'damage'`, `'heal'`, etc. `spawnAt3DPosition(text, worldPos, camera, renderer, type)` projects a 3D world position to screen coordinates automatically.
 
 ### Constants & Utilities (`src/utils/`)
 
@@ -155,4 +168,5 @@ Critical flags that are easy to get wrong (not derivable from a single file):
 ## Reference Files
 
 - `HANDOFF.md` — recent bug fixes and known issues; check at session start.
-- `.claude/plans/` — expansion plans (Phases 1–9); may not exist if not yet created.
+- `Quest.md` — full quest list with objectives, XP rewards, and item reference. Authoritative source for story structure and side quest steps.
+- `.claude/plans/eager-nibbling-shannon.md` — expansion plans (Phases 1–9). Create `.claude/plans/` if it doesn't exist yet.

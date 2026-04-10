@@ -17,7 +17,12 @@ All quests, objectives, and rewards.
 | 4 | Handle the Henderson Trust meetings |
 | 5 | Meet Karen Henderson in the Conference Room |
 
-**Reward:** Story progression. Diane gives you a **Large Coffee** (restores 30 Coffee) at the reception desk.
+**Combat reward:**
+| Enemy | XP | Notes |
+|-------|----|-------|
+| The Intern | **25 XP** | Tutorial fight; triggered after briefing. Can flee. |
+
+**Story reward:** Diane gives you a **Large Coffee** (restores 30 Coffee) at the reception desk.
 
 ---
 
@@ -103,12 +108,14 @@ All quests, objectives, and rewards.
 | 4 | Access the Board Room |
 | 5 | Confront Rachel in the Board Room |
 
-**Combat rewards:**
-| Enemy | XP | Notes |
-|-------|----|-------|
-| Restructuring Analyst | **70 XP** | Can flee: no |
-| Brand Consultant | **65 XP** | Can flee: yes |
-| Corporate Lawyer | **120 XP** | Can flee: no |
+**Combat rewards** (in order):
+| Enemy | XP | HP | Notes |
+|-------|----|----|-------|
+| Restructuring Analyst | **70 XP** | 80 | Can flee: no |
+| Brand Consultant | **65 XP** | 70 | Can flee: yes |
+| Corporate Lawyer | **120 XP** | 130 | Can flee: no |
+| Data Analytics Lead | **90 XP** | 330 | Can flee: no. Triggers on executive floor after Corporate Lawyer defeated. |
+| Chief of Restructuring | **130 XP** | 465 | Can flee: no. Triggers on executive floor after Data Analytics Lead defeated. |
 
 ---
 
@@ -301,7 +308,7 @@ Each poster gives a stat boost (+1 ATK or +1 DEF) and XP on first read. Andrew h
 
 Talk to the reception desk to start a client encounter. Win the combat, then accept or decline the client.
 
-- **Win combat:** ~65 XP (scales slightly with client tier)
+- **Win combat:** 60–120 XP (scales with client wealth tier: `Math.round(60 + t * 60)` where t = 0–1)
 - **Accept client:** AUM = max(50, floor(client assets × 1%))
 - **Decline client:** No AUM, no penalty
 
