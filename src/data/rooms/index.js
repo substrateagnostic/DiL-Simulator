@@ -882,7 +882,7 @@ export const ROOMS = {
       { id: 'security_guard', x: 5, z: 7, facing: 0, dialogId: 'security_guard_combat', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'security_guard_info' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act3', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'security_guard_info', notFlag: 'read_janitor_act3' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'read_janitor_act3', notFlag: 'act3_complete' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_needs_ross', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
     ],

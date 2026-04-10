@@ -1723,9 +1723,14 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Intern produces a crumpled sheet of paper that has been reassembled with scotch tape, band-aids, and what appears to be a Fruit Roll-Up wrapper." },
     /* 5  */ { type: 'text', speaker: 'The Intern', text: "It's a memo from the Regional Manager to Rachel. From THREE MONTHS AGO. Before she was supposedly 'assigned' to review us." },
     /* 6  */ { type: 'text', speaker: 'The Intern', text: "It says 'Re: Archive Containment' and then there's a bunch of words I don't understand but 'destroy records' seems pretty clear." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'has_intern_evidence', value: true, next: 8 },
-    /* 8  */ { type: 'text', speaker: 'The Intern', text: "Did I do good? I feel like I did good. This is the best day of my unpaid career!" },
-    /* 9  */ { type: 'end' },
+    /* 7  */ { type: 'text', speaker: 'The Intern', text: "Did I do good? I feel like I did good. This is the best day of my unpaid career!" },
+    /* 8  */ { type: 'end' },
+  ],
+
+  janitor_needs_ross: [
+    /* 0 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not yet, Andrew. There's one more person who needs to decide where they stand." },
+    /* 1 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Talk to Ross. He needs to choose: the buzzwords or the truth. Until he chooses, I have nothing more to give." },
+    /* 2 */ { type: 'end' },
   ],
 
   janitor_act4: [
@@ -1775,8 +1780,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "'HIRED: 1982. POSITION: Trust Officer. PROMOTED: Senior VP, Trust Administration, 1993. VOLUNTARY RECLASSIFICATION: Facilities, 2005.'" },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Attached to the file is a sticky note with a number: 19. The second vault combination digit." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true, next: 5 },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'has_hr_evidence', value: true, next: 6 },
-    /* 6  */ { type: 'end' },
+    /* 5  */ { type: 'end' },
   ],
 
   // HR vault code (file cabinet in HR department)
@@ -1806,9 +1810,9 @@ export const DIALOGS = {
   // Vault interaction
   vault_boxes: [
     /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 15, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'vault_code_1', ifTrue: 2, ifFalse: 12 },
-    /* 2  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 3, ifFalse: 12 },
-    /* 3  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 12 },
+    /* 1  */ { type: 'condition', flag: 'vault_code_1', ifTrue: 2, ifFalse: 13 },
+    /* 2  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 3, ifFalse: 13 },
+    /* 3  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 13 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "A heavy safe deposit box. Three-dial combination lock. You enter the numbers: 47-19-82." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "*CLUNK*. The lock turns. The door swings open." },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "Inside is a single document. Thick parchment. Gold-embossed letterhead. The ink has a warmth to it, like sunlight trapped in amber." },
@@ -1817,9 +1821,9 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Andrew', text: "I can feel it. The weight of every promise ever made in this building." },
     /* 10 */ { type: 'action', action: 'set_flag', flag: 'has_charter', value: true, next: 11 },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force surges through the charter. You feel stronger. More certain. The building is with you." },
-    /* 12 */ { type: 'text', speaker: 'Andrew', text: "I need to get back to the cubicle farm. The team is waiting.", next: 15 },
+    /* 12 */ { type: 'text', speaker: 'Andrew', text: "I need to get back to the cubicle farm. The team is waiting.", next: 16 },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "The safe is locked. A three-dial combination. You don't have all the numbers yet." },
-    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room.", next: 15 },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room.", next: 16 },
     /* 15 */ { type: 'text', speaker: 'Narrator', text: "The safe is open. Empty now. The charter is with you. Where it belongs.", next: 16 },
     /* 16 */ { type: 'end' },
   ],

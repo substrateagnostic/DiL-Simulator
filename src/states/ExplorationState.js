@@ -1625,8 +1625,7 @@ export class ExplorationState {
     }
     if (this.player.getFlag('act3_complete')) {
       const rallied = ['janet_rallied', 'diane_rallied', 'ross_rallied', 'janitor_rallied'].filter(f => this.player.getFlag(f)).length;
-      if (rallied < 4) return `Rally the team: Talk to Janet, Diane, Ross & the Janitor (${rallied}/4)`;
-      return 'Open the Vault and retrieve the 1947 charter';
+      return `Rally the team: Talk to Janet, Diane, Ross & the Janitor (${rallied}/4)`;
     }
 
     // Act 3
