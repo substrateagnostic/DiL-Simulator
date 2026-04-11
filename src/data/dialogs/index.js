@@ -579,7 +579,7 @@ export const DIALOGS = {
     /* 3 */ { type: 'text', speaker: 'Alex from IT', text: "Right, yeah. Here's the situation..." },
     /* 4 */ { type: 'end' },
     /* 5 */ { type: 'action', action: 'set_flag', flag: 'alex_main_chosen', value: true, next: 6 },
-    /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Yeah, let me catch you up on the big picture..." },
+    /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Yeah, let me catch you up on the big picture...", next: 9 },
     /* 7 */ { type: 'action', action: 'set_flag', flag: 'alex_side_deferred', value: true, next: 8 },
     /* 8 */ { type: 'text', speaker: 'Alex from IT', text: "Same old chaos. You know where to find me." },
     /* 9 */ { type: 'end' },

@@ -160,20 +160,25 @@ export class ExplorationState {
       EventBus.on('abilities-viewed', () => {
         this._dismissUpgradeTooltip();
       }),
-      EventBus.on('flag-set', ({ key }) => {
+      EventBus.on('flag-set', ({ key, value }) => {
         this._refreshStoryProgress();
         // Alex IT router: chain into the chosen dialog after router ends
-        if (key === 'alex_story_chosen') {
+        // Only queue pending dialogs when flags are set to truthy values — not when cleared
+        if (key === 'alex_story_chosen' && value) {
           const hasAct2 = this.player.getFlag('briefing_complete') && !this.player.getFlag('knows_server_secret');
           this._pendingDialog = hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
+          // Reset immediately so the flag can fire again for future story acts
+          this.player.setFlag('alex_story_chosen', false);
         }
-        if (key === 'alex_story_deferred') {
+        if (key === 'alex_story_deferred' && value) {
           this._pendingDialog = this._getAlexSideQuestDialog();
         }
-        if (key === 'alex_side_chosen') {
+        if (key === 'alex_side_chosen' && value) {
           this._pendingDialog = this._getAlexSideQuestDialog();
+          // Reset immediately so the flag can fire again next time the side router is used
+          this.player.setFlag('alex_side_chosen', false);
         }
-        if (key === 'alex_main_chosen') {
+        if (key === 'alex_main_chosen' && value) {
           // Find the appropriate act-based dialog for Alex
           const act = this.player.actIndex || 0;
           const actDialogs = ['alex_it_act7', 'alex_it_act6', 'alex_it_act4', 'alex_it_act3'];
@@ -186,6 +191,8 @@ export class ExplorationState {
             }
           }
           this._pendingDialog = mainDialog;
+          // Reset immediately so the flag can fire again next time the side router is used
+          this.player.setFlag('alex_main_chosen', false);
         }
         if (key === 'briefing_complete' && !this.player.getFlag('defeated_intern')) {
           this._showToast('Optional: spar with the Intern for a quick combat tutorial.', 'item');
