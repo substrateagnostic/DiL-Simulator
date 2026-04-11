@@ -65,8 +65,8 @@ const QUEST_OBJECTIVES = {
     5: 'Retrieve the 1947 charter from the Vault',
   },
   main_act5: {
-    0: 'Defend the department from the Restructuring Team',
-    1: 'Defeat the Brand Consultant',
+    0: 'Defeat the Brand Consultant',
+    1: 'Defeat the Restructuring Analyst',
     2: 'Defeat the Corporate Lawyer',
     3: 'Access the Board Room',
     4: 'Confront Rachel in the Board Room',
@@ -274,13 +274,13 @@ export class ExplorationState {
         }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
         if (key === 'penthouse_entered') {
-          setTimeout(() => this._startCombat('cfos_assistant'), 2000);
+          this._pendingDialog = 'cfos_assistant_combat';
         }
         if (key === 'cfos_defeated') {
-          setTimeout(() => this._startCombat('regional_director'), 1500);
+          this._pendingDialog = 'regional_director_combat';
         }
         if (key === 'regional_director_defeated') {
-          setTimeout(() => this._startCombat('algorithm'), 1500);
+          this._pendingDialog = 'algorithm_combat';
         }
         // Act 6 → 7 transition: all allies rallied + rolex = penthouse unlocks
         if (key === 'has_rolex') {
@@ -294,7 +294,6 @@ export class ExplorationState {
           quest_legacy_admin_complete: 'legacy_admin',
           quest_network_ghost_complete: 'network_ghost',
           quest_daves_legacy_complete: 'daves_legacy',
-          printer_quest_done: 'printers_soul',
           quest_printer_soul_complete: 'printers_soul',
           quest_final_patch_complete: 'final_patch',
         };
@@ -1341,8 +1340,8 @@ export class ExplorationState {
       return 'ross_post_karen';
     }
 
-    // Social engineering chain (act 4+): Isaiah → Diane → Intern
-    if (act >= 4 && !this.player.getFlag('social_eng_complete')) {
+    // Social engineering chain (act 4–5 only): Isaiah → Diane → Intern
+    if (act >= 4 && act < 6 && !this.player.getFlag('social_eng_complete')) {
       if (id === 'isaiah' && !this.player.getFlag('social_eng_started') && DIALOGS.social_engineering_1) return 'social_engineering_1';
       if (id === 'diane' && this.player.getFlag('social_eng_started') && !this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_2) return 'social_engineering_2';
       if (id === 'intern' && this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_3) return 'social_engineering_3';
@@ -1352,6 +1351,11 @@ export class ExplorationState {
     if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
     if (act >= 3 && DIALOGS[`${id}_act3`] && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
+    // ross_act2 and janet_act2 both reference the Karen binder incident — hold them until Karen is defeated
+    if (act >= 1 && (id === 'ross' || id === 'janet') && !this.player.getFlag('karen_defeated') && !this.player.getFlag(`read_${id}_act2`)) {
+      if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
+      if (DIALOGS[`${id}_return`]) return `${id}_return`;
+    }
     if (act >= 1 && DIALOGS[`${id}_act2`] && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
@@ -1559,6 +1563,7 @@ export class ExplorationState {
     if (this.player.getFlag('act6_complete')) {
       if (this.player.getFlag('regional_director_defeated')) return 'Face The Algorithm in the Penthouse';
       if (this.player.getFlag('cfos_defeated')) return 'Defeat the Regional Director';
+      if (this.player.getFlag('penthouse_entered')) return "Defeat the CFO's Assistant";
       return 'Ascend to the Penthouse and face The Algorithm';
     }
 
@@ -1568,8 +1573,9 @@ export class ExplorationState {
       const allyFlags = [
         { flag: 'janet_act6_rallied',  label: 'Janet' },
         { flag: 'diane_act6_rallied',  label: 'Diane' },
-        { flag: 'intern_rallied',      label: 'Intern' },
+        { flag: 'intern_act6_rallied', label: 'Intern' },
         { flag: 'ross_speech_ready',   label: 'Ross' },
+        { flag: 'grandma_ally',        label: 'Grandma Henderson' },
       ];
       const evidenceFlags = [
         { flag: 'diane_evidence',  label: "Diane's documents" },
@@ -1579,8 +1585,8 @@ export class ExplorationState {
       const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
       const rallied = allyFlags.length - missingAllies.length;
       const evidence = evidenceFlags.length - missingEvidence.length;
-      if (rallied < 4 || evidence < 2) {
-        const lines = [`Prepare for the finale (${rallied}/4 allies, ${evidence}/2 evidence)`];
+      if (rallied < 5 || evidence < 2) {
+        const lines = [`Prepare for the finale (${rallied}/5 allies, ${evidence}/2 evidence)`];
         if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
         if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
         return lines.join('<br>');
@@ -1817,7 +1823,8 @@ export class ExplorationState {
 
     // Alex IT subquests
     if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
-      quests.push({ name: 'The 3:47 AM Anomaly', objective: 'Return to Alex from IT' });
+      const anomalyObj = f('morse_decoded') ? 'Return to Alex from IT' : 'Find the Morse code pattern in server rack C';
+      quests.push({ name: 'The 3:47 AM Anomaly', objective: anomalyObj });
     }
     if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
       const found = (f('phantom_hr_found') ? 1 : 0) + (f('phantom_workstation_found') ? 1 : 0);

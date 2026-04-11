@@ -10,6 +10,8 @@ export const BESTIARY_DATA = {
   hr_rep: { name: 'HR Representative', category: 'Corporate', quip: 'I completed that sensitivity training. Didn\'t help.' },
   restructuring_analyst: { name: 'Restructuring Analyst', category: 'Corporate', quip: 'Tried to replace me with a SaaS platform. I\'m worth at least two SaaS platforms.' },
   brand_consultant: { name: 'Brand Consultant', category: 'Corporate', quip: 'The new logo was genuinely worse.' },
+  data_analytics_lead: { name: 'Data Analytics Lead', category: 'Corporate', quip: 'My win probability was apparently not 3%.' },
+  chief_of_restructuring: { name: 'Chief of Restructuring', category: 'Boss', quip: 'First time in twenty years he got out of someone\'s way.' },
   corporate_lawyer: { name: 'Corporate Lawyer', category: 'Corporate', quip: 'Billed me $450/hour for the privilege of being attacked.' },
   rachel_boss: { name: 'Rachel, SVP', category: 'Boss', quip: 'Reassigned to Fargo. ACTUAL Fargo.' },
   cfos_assistant: { name: "CFO's Assistant", category: 'Boss', quip: 'Had my severance pre-drafted. Efficient, I\'ll give them that.' },

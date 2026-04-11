@@ -56,8 +56,8 @@ export const QUESTS = {
     id: 'main_act5',
     name: 'Corporate Escalation',
     stages: [
-      { id: 0, objective: 'Defend the department from the Restructuring Team' },
-      { id: 1, objective: 'Defeat the Brand Consultant' },
+      { id: 0, objective: 'Defeat the Brand Consultant' },
+      { id: 1, objective: 'Defeat the Restructuring Analyst' },
       { id: 2, objective: 'Defeat the Corporate Lawyer' },
       { id: 3, objective: 'Access the Board Room' },
       { id: 4, objective: 'Confront Rachel in the Board Room' },

@@ -267,7 +267,7 @@ export const DIALOGS = {
   // FRIDGE NOTES -- Escalating passive-aggression
   // --------------------------------------------------------------------------
   fridge_notes: [
-    /* 0  */ { type: 'condition', flag: 'act_index_2', ifTrue: 10, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'lunch_thief_culprit_revealed', ifTrue: 10, ifFalse: 1 },
     /* 1  */ { type: 'condition', flag: 'read_fridge_1', ifTrue: 5, ifFalse: 2 },
     /* 2  */ { type: 'text', speaker: 'Fridge Note', text: 'ATTENTION: Someone has been taking items that do not belong to them from this refrigerator. You know who you are. -Management' },
     /* 3  */ { type: 'text', speaker: 'Fridge Note', text: 'P.S. The yogurt was LABELED. With my NAME. In SHARPIE. This is not ambiguous. -Janet' },
@@ -333,11 +333,11 @@ export const DIALOGS = {
     /* 33 */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'THANK YOU.' Then the printer powers down completely. For the first time in years, it seems at peace." },
     /* 34 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_done', value: true, next: 35 },
     /* 35 */ { type: 'action', action: 'give_xp', xp: 350, next: 36 },
-    /* 36 */ { type: 'text', speaker: 'Printer', text: "FOR YOUR SERVICE, I GRANT YOU THE NOTARIZED STRIKE. MY SEAL CARRIES THE WEIGHT OF EVERY DOCUMENT I HAVE WITNESSED.", next: 39 },
+    /* 36 */ { type: 'text', speaker: 'Printer', text: "TWENTY-TWO YEARS OF DOCUMENTS. ALL WITNESSED. NONE FORGOTTEN. TRUTH DELIVERED.", next: 39 },
     // --- Quest done — printer at peace ---
     /* 37 */ { type: 'text', speaker: 'Narrator', text: "The printer sits in silence. Its display is dark. It has said everything it needed to say." },
     /* 38 */ { type: 'end' },
-    /* 39 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP. Ability unlocked: Notarized Strike.", next: 38 },
+    /* 39 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP.", next: 38 },
   ],
 
   // --------------------------------------------------------------------------
@@ -409,9 +409,9 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Karen Henderson', text: "You're being condescending. I can FEEL you being condescending. My father always said I had a gift for detecting condescension." },
     /* 18 */ { type: 'text', speaker: 'Karen Henderson', text: "That's it. I'm calling corporate. I'm calling my attorney. I'm calling the MANAGER." },
     /* 19 */ { type: 'text', speaker: 'Narrator', text: "Karen's composure shatters. The binder opens. Papers fly. A Starbucks receipt for $47.83 flutters to the ground." },
-    /* 20 */ { type: 'text', speaker: 'Karen Henderson', text: "You want to see HOSTILE? I'll show you the TRUE POWER of a dissatisfied beneficiary!", next: 22 },
-    /* 22 */ { type: 'action', action: 'start_combat', encounter: 'karen', next: 23 },
-    /* 23 */ { type: 'end' },
+    /* 20 */ { type: 'text', speaker: 'Karen Henderson', text: "You want to see HOSTILE? I'll show you the TRUE POWER of a dissatisfied beneficiary!", next: 21 },
+    /* 21 */ { type: 'action', action: 'start_combat', encounter: 'karen', next: 22 },
+    /* 22 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -1214,7 +1214,7 @@ export const DIALOGS = {
     /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A sticky note: "BROWSER HISTORY IS ENCRYPTED WITH AES-256. NICE TRY, ROSS."' },
     /* 4 */ { type: 'text', speaker: 'Narrator', text: 'In a drawer (unlocked, because Alex fears nothing), a USB drive labeled "EVIDENCE (BACKUP)" next to a bag of Doritos.', next: 15 },
     // --- Printer quest: Alex explains the toner situation ---
-    /* 5 */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 14, ifFalse: 6 },
+    /* 5 */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 16, ifFalse: 17 },
     /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Oh. Oh no. It printed something for you, didn't it." },
     /* 7 */ { type: 'text', speaker: 'Alex from IT', text: "Not a question. I've been watching that printer for three years. It's connected to a legacy subnet with read access to all document archives. Including the Henderson files." },
     /* 8 */ { type: 'text', speaker: 'Alex from IT', text: "The toner runs out on purpose — firmware was modified to abort print jobs with certain keywords. Whoever did it didn't expect the printer to get opinions about that." },
@@ -1225,6 +1225,8 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex slides a dusty toner cartridge across his desk. It has a Post-it note: 'PRE-2016 STOCK. DO NOT USE FOR REGULAR PRINTING.'" },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "Alex's desk. The toner cartridge Alex set aside is near the printer in the cubicle farm." },
     /* 15 */ { type: 'end' },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: "Alex's desk. He's not talking about the printer anymore. A new Post-it on the monitor reads: 'DO NOT REVIVE.'", next: 15 },
+    /* 17 */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 14, ifFalse: 6 },
   ],
 
   elevator: [
@@ -1841,8 +1843,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Diane', text: "Andrew, Rachel's moved to the Board Room. She's calling an emergency vote to dissolve the trust department." },
     /* 6  */ { type: 'text', speaker: 'Diane', text: "You need to get up there. But first, you'll need to deal with her team down here. They're blocking all access." },
     /* 7  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true, next: 8 },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'board_room_accessible', value: true, next: 9 },
-    /* 9  */ { type: 'end' },
+    /* 8  */ { type: 'end' },
   ],
 
   restructuring_combat: [
@@ -1920,7 +1921,8 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Chief of Restructuring', text: "She's in the Board Room. She's been there all morning. She has the full board on a call. Andrew — whatever you're planning, you have maybe ten minutes before the vote passes." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Chief straightens his tie. Steps aside. For the first time in twenty years, he gets out of someone's way." },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'chief_restructuring_defeated', value: true, next: 6 },
-    /* 6  */ { type: 'end' },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'board_room_accessible', value: true, next: 7 },
+    /* 7  */ { type: 'end' },
   ],
 
   corporate_lawyer_combat: [
@@ -2086,8 +2088,9 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Long... short short short... long short... short short short... long... / short... short long short short... short long... short short short long... short short short... long short short... short short... short short short short short... short short short..." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "If I remember my Boy Scout Morse code... T-R-U-S-T... N-O... A-L-G-O-R-I-T-H-M-S..." },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "'Trust No Algorithm.' That's... oddly specific for a blinking light." },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Server rack C hums quietly. One LED blinks in a pattern that seems deliberate, but you don't know what to look for yet." },
-    /* 6  */ { type: 'end' },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'morse_decoded', value: true, next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Server rack C hums quietly. One LED blinks in a pattern that seems deliberate, but you don't know what to look for yet." },
+    /* 7  */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -2097,7 +2100,7 @@ export const DIALOGS = {
 
   alex_it_quest_legacy: [
     /* 0  */ { type: 'condition', flag: 'quest_legacy_admin_complete', ifTrue: 18, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 10, ifFalse: 2 },
+    /* 1  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 20, ifFalse: 2 },
     /* 2  */ { type: 'condition', flag: 'legacy_started', ifTrue: 7, ifFalse: 3 },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so. There is an admin account that has been auto-approving expense reports for eighteen years." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I only noticed because this month it approved 'One (1) kayak.' For the marketing department. Nobody in marketing kayaks." },
@@ -2116,6 +2119,8 @@ export const DIALOGS = {
     /* 17 */ { type: 'end' },
     /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "The phantom approver is gone. HR is still processing the kayak return.", next: 17 },
     /* 19 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Phantom Approver. +300 XP. Learned ability: Root Access! Deals 50 damage and strips all enemy buffs.", next: 17 },
+    /* 20 */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 10, ifFalse: 21 },
+    /* 21 */ { type: 'text', speaker: 'Alex from IT', text: "You found the machine — good. But I still need the HR paper trail to map the account's full history. Check the filing cabinets in HR.", next: 17 },
   ],
 
   // --------------------------------------------------------------------------
@@ -2248,7 +2253,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "I need the firmware disk to connect to it directly — should be on the equipment shelf in here. Then there's an ethernet port on the wall next to the printer. Plug in and I can pull the computation logs." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'printer_soul_started', value: true, next: 13 },
     /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Find the firmware disk on the equipment shelf first. Then the ethernet port is on the wall right next to the printer.", next: 13 },
-    /* 8  */ { type: 'action', action: 'quest_update', quest: 'daves_legacy', stage: 2, next: 13 },
+    /* 8  */ { type: 'action', action: 'quest_update', quest: 'printers_soul', stage: 2, next: 13 },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "I analyzed the computation logs. The printer has been generating the mathematical foundation for an unforgeable elliptic curve digital signature. For twenty-two years." },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "It didn't know what it was building. But I do. It's done now — it completed the sequence at the moment you connected." },
     /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I wrote you an attack from it. Notarized Strike. Carries the weight of twenty-two years of mathematical work. Very difficult to argue with." },
@@ -2507,7 +2512,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'The Intern', text: "I made a PowerPoint for the board meeting. It has 47 slides and each one has a different transition effect." },
     /* 2  */ { type: 'text', speaker: 'The Intern', text: "Also I may have accidentally signed up for the company newsletter as 'Rachel Sucks' dot com. That might be a problem." },
     /* 3  */ { type: 'text', speaker: 'The Intern', text: "But I believe in you, Andrew! Go get 'em! I'll be here, unpaidly cheering!" },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'intern_rallied', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'intern_act6_rallied', value: true, next: 5 },
     /* 5  */ { type: 'end' },
   ],
 
@@ -2550,15 +2555,6 @@ export const DIALOGS = {
     /* 6  */ { type: 'end' },
   ],
 
-  // Act 6 triggers
-  act6_trigger: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Rachel has been defeated, but the war isn't over. The board meeting is tomorrow." },
-    /* 1  */ { type: 'text', speaker: 'Narrator', text: "You need to prepare: rally the team, gather evidence, and get the Janitor's Rolex." },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The Penthouse awaits. But first, make sure your allies are ready." },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true, next: 4 },
-    /* 4  */ { type: 'end' },
-  ],
-
   // ==========================================================================
   // ACT 7: TRUST ISSUES (FINALE)
   // ==========================================================================
@@ -2580,7 +2576,8 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "A figure steps out from behind the terminal — the CFO's personal assistant, tablet in hand." },
     /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "The CFO anticipated this. I've been authorized to use 'any means necessary' to protect shareholder value." },
     /* 2  */ { type: 'text', speaker: "CFO's Assistant", text: "That includes your severance. Which I've already drafted." },
-    /* 3  */ { type: 'end' },
+    /* 3  */ { type: 'action', action: 'start_combat', encounter: 'cfos_assistant', next: 4 },
+    /* 4  */ { type: 'end' },
   ],
 
   cfos_assistant_defeated: [
@@ -2598,7 +2595,8 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Regional Director', text: "I flew in from corporate. Do you know what that means? My time is worth $4,200 per hour." },
     /* 2  */ { type: 'text', speaker: 'Regional Director', text: "And you — an associate from a satellite office — are costing me time." },
     /* 3  */ { type: 'text', speaker: 'Regional Director', text: "Let me show you what 'corporate restructuring' really looks like." },
-    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'regional_director' },
+    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'regional_director', next: 5 },
+    /* 5  */ { type: 'end' },
   ],
 
   regional_director_defeated: [
@@ -2620,7 +2618,8 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Then we optimize faster." },
     /* 6  */ { type: 'text', speaker: 'Ross', text: "..." },
     /* 7  */ { type: 'text', speaker: 'Ross', text: "That was actually kind of inspiring. Don't tell HR." },
-    /* 8  */ { type: 'end' },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'ross_returned_seen', value: true, next: 9 },
+    /* 9  */ { type: 'end' },
   ],
 
   // The Algorithm — Final Boss pre-combat
@@ -2632,7 +2631,8 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Janitor's Rolex pulses warmly in your pocket. It's not telling time. It's telling trust." },
     /* 5  */ { type: 'text', speaker: 'The Algorithm', text: "...What is that device? Its emissions are... unquantifiable. Irrelevant. BEGIN OPTIMIZATION." },
     /* 6  */ { type: 'text', speaker: 'The Algorithm', text: "Humans are inefficient. Trust is inefficient. I will optimize both." },
-    /* 7  */ { type: 'end' },
+    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'algorithm', next: 8 },
+    /* 8  */ { type: 'end' },
   ],
 
   // The Algorithm — defeated → branches to endings
@@ -3012,7 +3012,8 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Janet', text: "The Intern replaced everything. EVERYTHING. I now have a Greek yogurt collection that would make a dairy farmer emotional." },
     /* 2  */ { type: 'text', speaker: 'Janet', text: "I still have the log, though. Just in case." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "*taps tumbler against yours* Good work, trust officer. This was fiduciary duty in its purest form." },
-    /* 4  */ { type: 'end' },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_quest_resolved', value: true, next: 5 },
+    /* 5  */ { type: 'end' },
   ],
 
   // Intern confesses — triggered when `lunch_thief_culprit_revealed` is set
@@ -3025,9 +3026,10 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "You need to apologize to Janet. And replace everything." },
     /* 6  */ { type: 'text', speaker: 'The Intern', text: "Yeah. Yeah, I know. I'll go to the store on my lunch break." },
     /* 7  */ { type: 'text', speaker: 'Andrew', text: "You don't get a lunch break. You said you don't get paid." },
-    /* 8  */ { type: 'text', speaker: 'The Intern', text: "...I'll go on my 'unpaid personal development period.' Which is what Ross calls my lunch break.", next: 10 },
-    /* 9  */ { type: 'text', speaker: 'The Intern', text: "I already said sorry to Janet. She was surprisingly gracious about it. Well, she said 'I will remember this forever, but I forgive you.' That's grace... right?" },
-    /* 10 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 3, next: 11 },
+    /* 8  */ { type: 'text', speaker: 'The Intern', text: "...I'll go on my 'unpaid personal development period.' Which is what Ross calls my lunch break.", next: 11 },
+    /* 9  */ { type: 'text', speaker: 'The Intern', text: "I already said sorry to Janet. She was surprisingly gracious about it. Well, she said 'I will remember this forever, but I forgive you.' That's grace... right?", next: 14 },
+    /* 10 */ { type: 'end' }, // (dead node — skipped by node 8's explicit next)
+
     /* 11 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_complete', value: true, next: 12 },
     /* 12 */ { type: 'action', action: 'give_xp', xp: 250, next: 13 },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "Case closed. The break room fridge is safe. For now. +250 XP." },
@@ -3088,11 +3090,11 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "Ross? I... okay. He might escalate it. Or he might panic and do something that tips off whoever controls admin_legacy." },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "You know what — fine. Tell Ross. But be careful what you say. If the wrong people hear that we're onto this, my access gets revoked and the logs disappear." },
     /* 13 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'report', next: 21 },
-    /* 14 */ { type: 'action', action: 'give_xp', xp: 100, next: 22 },  // placeholder, replaced by node 21
+    /* 14 */ { type: 'end' },  // unreachable — node 13 jumps directly to 21
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "Smart. I've been doing that for three months and it's gotten me... more questions and less sleep. But at least I have documentation." },
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I'll keep collecting logs. You keep your eyes open — especially around the executive floor. Something about this traces up there." },
     /* 17 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'investigate', next: 21 },
-    /* 18 */ { type: 'action', action: 'give_xp', xp: 100, next: 22 },  // placeholder
+    /* 18 */ { type: 'end' },  // unreachable — node 17 jumps directly to 21
     /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "Above your pay grade? You're a TRUST OFFICER. YOUR ENTIRE JOB is a fiduciary obligation to the account holders. This is literally in your job description." },
     /* 20 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'ignore', next: 21 },
     /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 2, next: 23 },

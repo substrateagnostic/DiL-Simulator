@@ -202,11 +202,13 @@ export const ROOMS = {
       // Janet — conditional entries covering lunch thief quest states
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { notFlag: 'lunch_thief_fridge_done' } },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_fridge_done', notFlag: 'lunch_thief_culprit_revealed' }, dialogId: 'janet_lunch_thief_investigate' },
-      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_resolved' },
-      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_resolved' },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_investigate' },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_complete', notFlag: 'janet_quest_resolved' }, dialogId: 'janet_lunch_thief_resolved' },
+      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'janet_quest_resolved' } },
       // Intern — conditional entries covering lunch thief confrontation
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
-      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_culprit_revealed' }, dialogId: 'intern_lunch_thief_confrontation' },
+      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'intern_lunch_thief_confrontation' },
+      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_complete' } },
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'briefing_complete' } }, // water cooler, paces — hidden once briefing starts
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
@@ -330,6 +332,7 @@ export const ROOMS = {
       { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3' },
       { x: 2,  z: 11, type: 'poster', dialogId: 'quest_def_3' },
       // Network Ghost signal booster (east wall)
+      { type: 'motivationalPoster', x: 14.9, z: 8, rotation: -Math.PI / 2 },
       { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br' },
       // Tuesday 2PM: old floppy disk on westmost table
       { x: 4, z: 6, type: 'poster', dialogId: 'tuesday_floppy' },
@@ -380,7 +383,8 @@ export const ROOMS = {
     npcs: [
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'act2_complete', notFlag: 'ross_returned_seen' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen', notFlag: 'act5_complete' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete' } },
     ],
     exits: [
@@ -464,6 +468,7 @@ export const ROOMS = {
       { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2' },
       { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2' },
       // Network Ghost signal booster (east wall)
+      { type: 'motivationalPoster', x: 10.9, z: 2, rotation: -Math.PI / 2 },
       { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf' },
     ],
     playerSpawn: { x: 1, z: 4 },
@@ -523,6 +528,7 @@ export const ROOMS = {
       // === Cable management / fire extinguisher feel ===
       { type: 'fileCabinet', x: 7, z: 1 },  // equipment shelf
       { type: 'fileCabinet', x: 7, z: 2 },
+      { type: 'fileCabinet', x: 7, z: 4 },
       // Side quest posters
       { type: 'motivationalPoster', x: 3,   z: 0.1, rotation: 0 },
       { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
@@ -542,6 +548,7 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 1, z: 3, type: 'server_rack', dialogId: 'server_rack_inspect' },
+      { x: 3, z: 3, type: 'server_rack', dialogId: 'morse_code_rack' },
       { x: 5, z: 3, type: 'server_rack', dialogId: 'server_vault_code' },
       { x: 6, z: 7, type: 'alex_it_desk', dialogId: 'alex_it_desk' },
       // Side quest interactables
@@ -552,6 +559,7 @@ export const ROOMS = {
       // Printer's Soul: firmware disk on equipment shelf
       { x: 7, z: 4, type: 'poster', dialogId: 'printer_firmware_disk' },
       // Unauthorized Patch: network monitoring terminal
+      { type: 'monitor', x: 5, z: 6 },
       { x: 5, z: 6, type: 'poster', dialogId: 'unauthorized_patch_monitor' },
     ],
     playerSpawn: { x: 2, z: 7 },
@@ -885,6 +893,7 @@ export const ROOMS = {
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_needs_ross', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act6',  movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete', notFlag: 'has_rolex' } },
     ],
     exits: [
       // SOUTH exit -> Stairwell

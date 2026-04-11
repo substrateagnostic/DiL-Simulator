@@ -403,7 +403,7 @@ export const ENEMY_STATS = {
     def: 11,
     spd: 14,
     xpReward: 90,
-    abilities: ['dashboard_overload', 'pivot_table', 'predictive_model'],
+    abilities: ['dashboard_overload', 'pivot_table', 'data_predictive_model'],
     weakness: 'social', resistance: 'technical',
   },
   chief_of_restructuring: {
@@ -414,7 +414,7 @@ export const ENEMY_STATS = {
     def: 16,
     spd: 10,
     xpReward: 130,
-    abilities: ['strategic_pivot', 'corporate_mandate', 'force_majeure'],
+    abilities: ['chief_strategic_pivot', 'chief_corporate_mandate', 'force_majeure'],
     weakness: 'legal', resistance: 'audit',
   },
   corporate_lawyer: {
@@ -751,19 +751,19 @@ export const ENEMY_ABILITIES = {
     'The lead reorganizes your entire strategy mid-conversation. You lose the thread.',
     '"Let me reframe this." Everything you planned is suddenly in the wrong column.',
   ]},
-  predictive_model: { name: 'Predictive Model', power: 24, type: 'attack', tag: 'technical', messages: [
+  data_predictive_model: { name: 'Predictive Model', power: 24, type: 'attack', tag: 'technical', messages: [
     '"My model predicted you\'d do that. Three moves ago." The counterpunch lands before you swing.',
     '"The regression analysis said you\'d be here. At this time. Doing exactly this." Devastating.',
     '"Statistically, you lose. The confidence interval is 99.7%." It feels accurate.',
   ]},
 
   // Chief of Restructuring
-  strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', tag: 'audit', messages: [
+  chief_strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', tag: 'audit', messages: [
     '"We\'re going in a different direction." The direction is directly at you.',
     '"The strategy has evolved." The new strategy involves hitting you very hard.',
     '"Pivoting." It\'s not a metaphor.',
   ]},
-  corporate_mandate: { name: 'Corporate Mandate', power: 0, type: 'stun', duration: 1, tag: 'legal', messages: [
+  chief_corporate_mandate: { name: 'Corporate Mandate', power: 0, type: 'stun', duration: 1, tag: 'legal', messages: [
     '"This comes from the top." A document materializes. You cannot argue with a document.',
     '"Regional has authorized this." The weight of corporate authority pins you in place.',
     '"You are hereby directed to stand down." You stand down.',

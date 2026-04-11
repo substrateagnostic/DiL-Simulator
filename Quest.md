@@ -102,8 +102,8 @@ All quests, objectives, and rewards.
 
 | # | Objective |
 |---|-----------|
-| 1 | Defend the department from the Restructuring Team |
-| 2 | Defeat the Brand Consultant |
+| 1 | Defeat the Brand Consultant |
+| 2 | Defeat the Restructuring Analyst |
 | 3 | Defeat the Corporate Lawyer |
 | 4 | Access the Board Room |
 | 5 | Confront Rachel in the Board Room |
@@ -169,7 +169,7 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex in the Server Room |
-| 2 | Examine Server Rack C in the Server Room |
+| 2 | Examine Server Rack C in the Server Room *(x:3, z:3)* |
 | 3 | Return to Alex |
 
 **Reward:** 2× Energy Drink (restores 20 Coffee + SPD +3 for 3 turns). Permanent **SPD +3**.
@@ -182,8 +182,8 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex |
-| 2 | Find the HR paper trail *(HR Department, x:14 z:0.5)* |
-| 3 | Find the phantom workstation *(Cubicle Farm, x:16 z:6)* |
+| 2 | Find the HR paper trail *(HR Department, x:11 z:9)* |
+| 3 | Find the phantom workstation *(Cubicle Farm, x:17 z:5)* |
 | 4 | Return to Alex |
 
 **Reward:** Ability unlocked — **Root Access** *(Power 50, strips all enemy buffs)*
@@ -270,6 +270,8 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | 1 | Investigate the haunted printer |
 | 2 | Ask Alex from IT about the printer |
 | 3 | Find the printer's true purpose |
+
+**Reward:** 350 XP. *(Note: the Notarized Strike ability comes from the Printer's Soul subquest, not this one.)*
 
 ---
 
