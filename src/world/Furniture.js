@@ -626,6 +626,105 @@ export const Furniture = {
     return group;
   },
 
+  supplyShop() {
+    const group = new THREE.Group();
+    const wood = Materials.custom(0x8b6914);
+    const woodLight = Materials.custom(0xb8860b);
+    const signMat = Materials.custom(0xf5f0e8);
+    const signStripe = Materials.custom(0x2a7a6a);
+
+    // Counter base
+    const base = new THREE.Mesh(
+      new THREE.BoxGeometry(0.8, 0.82, 0.55),
+      wood
+    );
+    base.position.set(0, 0.41, 0);
+    group.add(base);
+
+    // Counter top surface (slightly lighter)
+    const top = new THREE.Mesh(
+      new THREE.BoxGeometry(0.82, 0.04, 0.57),
+      woodLight
+    );
+    top.position.set(0, 0.84, 0);
+    group.add(top);
+
+    // Display shelf back panel
+    const shelfBack = new THREE.Mesh(
+      new THREE.BoxGeometry(0.72, 0.38, 0.04),
+      wood
+    );
+    shelfBack.position.set(0, 1.1, -0.22);
+    group.add(shelfBack);
+
+    // Display shelf floor
+    const shelfFloor = new THREE.Mesh(
+      new THREE.BoxGeometry(0.72, 0.03, 0.26),
+      woodLight
+    );
+    shelfFloor.position.set(0, 0.92, -0.09);
+    group.add(shelfFloor);
+
+    // Display shelf left side panel
+    const shelfLeft = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.38, 0.26),
+      wood
+    );
+    shelfLeft.position.set(-0.345, 1.1, -0.09);
+    group.add(shelfLeft);
+
+    // Display shelf right side panel
+    const shelfRight = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 0.38, 0.26),
+      wood
+    );
+    shelfRight.position.set(0.345, 1.1, -0.09);
+    group.add(shelfRight);
+
+    // Shelf item: blue bottle (left)
+    const bottle1 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.045, 0.045, 0.18, 6),
+      Materials.custom(0x2255cc)
+    );
+    bottle1.position.set(-0.18, 1.02, -0.09);
+    group.add(bottle1);
+
+    // Shelf item: red box (center)
+    const box1 = new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.14, 0.08),
+      Materials.custom(0xcc3322)
+    );
+    box1.position.set(0, 1.01, -0.1);
+    group.add(box1);
+
+    // Shelf item: yellow canister (right)
+    const can1 = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.05, 0.05, 0.15, 6),
+      Materials.custom(0xddaa00)
+    );
+    can1.position.set(0.18, 1.0, -0.09);
+    group.add(can1);
+
+    // Front sign panel
+    const sign = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.1, 0.02),
+      signMat
+    );
+    sign.position.set(0, 0.58, 0.285);
+    group.add(sign);
+
+    // Sign teal stripe
+    const stripe = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.035, 0.022),
+      signStripe
+    );
+    stripe.position.set(0, 0.565, 0.285);
+    group.add(stripe);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   speakerphone() {
     const group = new THREE.Group();
     const tableTop = 0.74;

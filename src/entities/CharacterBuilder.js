@@ -15,13 +15,14 @@ export function buildCharacter(config, options = {}) {
   const legGeo = new THREE.BoxGeometry(CHAR.LEG_WIDTH, CHAR.LEG_HEIGHT, CHAR.LEG_WIDTH);
   const legMat = Materials.custom(config.pantsColor || 0x2a2a3a);
   const shoeMat = Materials.shoes();
+  const shoeS = config.shoeSize || 1.0;
 
   const leftLeg = new THREE.Group();
   const leftLegMesh = new THREE.Mesh(legGeo, legMat);
   leftLegMesh.position.y = CHAR.LEG_HEIGHT / 2;
   leftLeg.add(leftLegMesh);
   // Shoes
-  const shoeGeo = new THREE.BoxGeometry(CHAR.LEG_WIDTH + 0.02, 0.06, CHAR.LEG_WIDTH + 0.04);
+  const shoeGeo = new THREE.BoxGeometry((CHAR.LEG_WIDTH + 0.02) * shoeS, 0.06, (CHAR.LEG_WIDTH + 0.04) * shoeS);
   const leftShoe = new THREE.Mesh(shoeGeo, shoeMat);
   leftShoe.position.set(0, 0.03, 0.02);
   leftLeg.add(leftShoe);

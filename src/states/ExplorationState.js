@@ -236,6 +236,9 @@ export class ExplorationState {
         if (key === 'act5_complete') {
           this._showToast('Rachel is defeated, but the board meets tomorrow. Prepare the team!', 'objective');
         }
+        if (key === 'diane_act6_rallied') {
+          this._showToast("Diane rallied! Her documents are in the HR filing cabinet.", 'objective');
+        }
         if (key === 'act6_complete') {
           this._showToast('The Penthouse awaits. Face The Algorithm.', 'objective');
         }
@@ -420,7 +423,7 @@ export class ExplorationState {
         }
 
         // Gauntlet fight 1: Brand Consultant — cubicle farm, first contact after act5 cutscene
-        if (roomId === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
+        if (roomId === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
           this.player.setFlag('brand_consultant_fight_started');
           setTimeout(() => {
             const dialogState = new DialogState(DIALOGS['brand_consultant_combat'], this.player, this.stateManager, 'brand_consultant_combat');
@@ -429,7 +432,7 @@ export class ExplorationState {
         }
 
         // Gauntlet fight 3: Corporate Lawyer — reception, blocks the elevator
-        if (roomId === 'reception' && this.player.getFlag('restructuring_defeated') && !this.player.getFlag('corporate_lawyer_fight_started') && DIALOGS.corporate_lawyer_combat) {
+        if (roomId === 'reception' && this.player.getFlag('restructuring_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('corporate_lawyer_fight_started') && DIALOGS.corporate_lawyer_combat) {
           this.player.setFlag('corporate_lawyer_fight_started');
           setTimeout(() => {
             const dialogState = new DialogState(DIALOGS['corporate_lawyer_combat'], this.player, this.stateManager, 'corporate_lawyer_combat');
@@ -438,7 +441,7 @@ export class ExplorationState {
         }
 
         // Gauntlet fight 4: Data Analytics Lead — executive floor, first gatekeeper
-        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_combat) {
+        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_combat) {
           this.player.setFlag('data_lead_fight_started');
           setTimeout(() => {
             const dialogState = new DialogState(DIALOGS['data_analytics_combat'], this.player, this.stateManager, 'data_analytics_combat');
@@ -1347,6 +1350,11 @@ export class ExplorationState {
       return 'ross_post_karen';
     }
 
+    // Ross post-Chad debrief: required before Grandma fight
+    if (id === 'ross' && this.player.getFlag('chad_defeated') && !this.player.getFlag('ross_post_chad')) {
+      return 'ross_post_chad';
+    }
+
     // Social engineering chain (act 4–5 only): Isaiah → Diane → Intern
     if (act >= 4 && act < 6 && !this.player.getFlag('social_eng_complete')) {
       if (id === 'isaiah' && !this.player.getFlag('social_eng_started') && DIALOGS.social_engineering_1) return 'social_engineering_1';
@@ -1648,6 +1656,9 @@ export class ExplorationState {
     if (this.player.getFlag('security_guard_info') && !this.player.getFlag('read_janitor_act3')) {
       return 'Find the Janitor in the Archive — he knows what happened here';
     }
+    if (this.player.getFlag('visited_archive') && !this.player.getFlag('has_archive_password')) {
+      return 'Get the archive access code from the Compliance Auditor (Executive Floor)';
+    }
     if (this.player.getFlag('visited_archive') && !this.player.getFlag('has_archive_evidence')) {
       return 'Search the Archive for evidence';
     }
@@ -1681,8 +1692,11 @@ export class ExplorationState {
     if (this.player.getFlag('grandma_defeated')) {
       return 'Review the Henderson file at your desk';
     }
-    if (this.player.getFlag('chad_defeated')) {
+    if (this.player.getFlag('chad_defeated') && this.player.getFlag('ross_post_chad')) {
       return 'Meet Grandma Henderson in the Conference Room';
+    }
+    if (this.player.getFlag('chad_defeated')) {
+      return "Talk to Ross in his office";
     }
     if (this.player.getFlag('karen_defeated') && this.player.getFlag('ross_post_karen')) {
       return 'Meet Chad Henderson in the Conference Room';

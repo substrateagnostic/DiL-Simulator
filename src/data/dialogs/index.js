@@ -926,8 +926,32 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Chad Henderson', text: 'Can we just... do whatever the normal thing is? With the trust?' },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "That's called 'following the trust document,' Chad." },
     /* 4  */ { type: 'text', speaker: 'Chad Henderson', text: "Sick. Let's do that. Also, you should check out PumpCoin. It's coming back. The dog on the logo just got sunglasses." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'chad_defeated', value: true, next: 6 },
-    /* 6  */ { type: 'end' },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Chad shuffles out, already typing on his phone. You hear him say 'yeah bro, he's actually legit' to someone before the door closes." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Your phone buzzes. Text from Ross: 'Two down. Get to my office before the next one. Trust me on this. TRUST. Me.' He added a fist bump emoji. Then deleted it. Then sent it again." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'chad_defeated', value: true, next: 8 },
+    /* 8  */ { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
+  // ROSS POST-CHAD DEBRIEF -- Required conversation before Grandma fight
+  // --------------------------------------------------------------------------
+  ross_post_chad: [
+    /* 0  */ { type: 'text', speaker: 'Ross', text: "Close the door. Both locks. Yes, there are two locks. I had them installed after the Henderson file came across my desk." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "Ross, it's just an elderly woman—" },
+    /* 2  */ { type: 'text', speaker: 'Ross', text: "She is NOT 'just' anything, Andrew. Karen was a complaint form with legs. Chad was a protein shake with a LinkedIn. Grandma Henderson is a DIFFERENT CATEGORY." },
+    /* 3  */ { type: 'text', speaker: 'Ross', text: "I had a senior consultant go in there in 2019. He came out speaking only in passive-aggressive non-answers. He's currently our VP of Compliance." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "What does she actually want?" },
+    /* 5  */ { type: 'text', speaker: 'Ross', text: "Everything. In writing. Notarized. With a follow-up call. She will offer you a cookie. Do NOT comment on the cookie." },
+    /* 6  */ { type: 'text', speaker: 'Andrew', text: "What's wrong with the cookie?" },
+    /* 7  */ { type: 'text', speaker: 'Ross', text: "Nobody knows. Three people have asked. They all transferred to the Omaha office voluntarily. On the same day. We don't talk about it." },
+    /* 8  */ { type: 'text', speaker: 'Ross', text: "Your only move is to stay calm, keep your documentation airtight, and under no circumstances let her redirect you with a story about her late husband Gerald." },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: "Was Gerald—" },
+    /* 10 */ { type: 'text', speaker: 'Ross', text: "She will redirect you with a story about Gerald. Just nod. Set a mental timer for four minutes. After four minutes it loops back around to the trust. That's your window." },
+    /* 11 */ { type: 'text', speaker: 'Ross', text: "She's waiting in the conference room. I'll be monitoring the situation remotely." },
+    /* 12 */ { type: 'text', speaker: 'Andrew', text: "Monitoring how?" },
+    /* 13 */ { type: 'text', speaker: 'Ross', text: "From home. With the door locked. Both locks." },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'ross_post_chad', value: true, next: 15 },
+    /* 15 */ { type: 'end' },
   ],
 
   grandma_defeated: [

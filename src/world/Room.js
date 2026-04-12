@@ -20,6 +20,7 @@ const FURNITURE_FOOTPRINTS = {
   grandDesk:          { w: 3, h: 2 },
   cubicleWall:        { w: 2, h: 1 },
   vendingMachine:     { w: 1, h: 1 },
+  supplyShop:         { w: 1, h: 1 },
   boardroomTable:     { w: 8, h: 2 },
   conferenceTable:    { w: 3, h: 1 },
   serverRack:         { w: 1, h: 1 },

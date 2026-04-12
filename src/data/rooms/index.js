@@ -277,8 +277,9 @@ export const ROOMS = {
       { type: 'microwave', x: 8, z: 1 },
       { type: 'trashCan', x: 6.5, z: 1 },
 
-      // === Vending machine (northeast corner) ===
+      // === Vending machine + supply shop counter (northeast corner) ===
       { type: 'vendingMachine', x: 14, z: 1, rotation: 0 },
+      { type: 'supplyShop',     x: 14, z: 2, rotation: 0 },
 
       // === Table 1 (west center) ===
       { type: 'desk', x: 4, z: 6, rotation: 0 },
@@ -454,7 +455,7 @@ export const ROOMS = {
       // Henderson beneficiaries appear based on quest progress
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'karen_defeated' } },
       { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'ross_post_karen', notFlag: 'chad_defeated' } },
-      { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, dialogId: 'grandma_meeting', condition: { flag: 'chad_defeated', notFlag: 'grandma_defeated' } },
+      { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, dialogId: 'grandma_meeting', condition: { flag: 'ross_post_chad', notFlag: 'grandma_defeated' } },
     ],
     exits: [
       // WEST exit -> Alex's Office
@@ -770,6 +771,8 @@ export const ROOMS = {
       { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_legal', notFlag: 'defeated_regional' } },
       { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_bro', notFlag: 'defeated_regional' } },
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { notFlag: 'compliance_defeated' } },
+      // Re-appears in Act 3+ for bro-path players who defeated him — needed to issue archive crossword password
+      { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { flag: 'compliance_defeated', notFlag: 'compliance_crossword_done' } },
       // Ross appears at conference table after Henderson decision
       { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'act2_complete' } },
       // Grandma appears on executive floor for the secret path — seated north side of table, facing south
