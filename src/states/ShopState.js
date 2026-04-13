@@ -212,6 +212,7 @@ export class ShopState {
       this._flash(`${item.name} installed!`, '#88aaff');
     }
 
+    this.player.setFlag(`bought_category_${item.category}`, true);
     AchievementManager.check(this.player, { event: 'shop_purchase' });
     this._render();
   }

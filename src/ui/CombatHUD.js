@@ -53,7 +53,7 @@ export class CombatHUD {
     this.showMainMenu();
   }
 
-  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false) {
+  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false, pressAdvantageCost = 25) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
     this.menuItems = [
@@ -75,10 +75,10 @@ export class CombatHUD {
       this.menuItems.push({ label: '🎲 Desperate Gamble', action: 'desperate_gamble', desperateBtn: true });
     }
 
-    if (momentum >= 25 && momentum < 50) {
-      this.menuItems.push({ label: `▶ Press Advantage (25%)`, action: 'press_advantage', momentumSpend: true });
+    if (momentum >= pressAdvantageCost && momentum < 50) {
+      this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
     } else if (momentum >= 50 && momentum < 100) {
-      this.menuItems.push({ label: `▶ Press Advantage (25%)`, action: 'press_advantage', momentumSpend: true });
+      this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
       this.menuItems.push({ label: `★ Second Wind (50%)`, action: 'second_wind', momentumSpend: true });
     }
 

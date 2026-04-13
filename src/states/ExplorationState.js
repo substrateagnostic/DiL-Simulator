@@ -146,6 +146,14 @@ export class ExplorationState {
           this._pendingDialog = null;
           if (DIALOGS[dialogId]) {
             setTimeout(() => {
+              // If the fight was already started via the terminal, don't re-push the intro dialog
+              if (dialogId === 'algorithm_combat' && this.player.getFlag('defeated_algorithm')) return;
+              // If the menu is open, defer the dialog until resume() fires after it closes
+              const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+              if (menuOpen) {
+                this._pendingDialog = dialogId;
+                return;
+              }
               const dialogState = new DialogState(DIALOGS[dialogId], this.player, this.stateManager, dialogId);
               this.stateManager.push(dialogState);
             }, 500);
@@ -295,6 +303,11 @@ export class ExplorationState {
         // Act 6 → 7 transition: all allies rallied + rolex = penthouse unlocks
         if (key === 'has_rolex') {
           this.player.setFlag('act6_complete', true);
+          // Reward for completing all Act 6 prep (allies + evidence + rolex)
+          const levels = this.player.gainXP(500);
+          this._updateMiniStats();
+          this._showToast('Team assembled, evidence secured. +500 XP', 'objective');
+          if (levels.length > 0) AudioManager.playSfx('levelup');
         }
         if (key === 'has_charter') {
           this._showToast('You have the 1947 Charter! Its power resonates through the building.', 'item');
@@ -333,6 +346,14 @@ export class ExplorationState {
         if (STORY_THOUGHTS[key]) {
           setTimeout(() => this._showMonologue(STORY_THOUGHTS[key]), 2000);
         }
+        // Act completion achievements — fire immediately when the act-end flag lands
+        const ACT_ACHIEVEMENT_FLAGS = [
+          'briefing_complete', 'act2_complete', 'act3_complete',
+          'act4_complete', 'act5_complete', 'act6_complete', 'algorithm_defeated',
+        ];
+        if (ACT_ACHIEVEMENT_FLAGS.includes(key)) {
+          AchievementManager.check(this.player, {});
+        }
         // Refresh quest tracker on any flag change (picks up side quest starts/completions)
         this._refreshStoryProgress(true);
         // Janitor riddles complete — +2 all stats
@@ -365,6 +386,11 @@ export class ExplorationState {
 
         if (roomId === 'reception') {
           this._onReceptionEntered();
+        }
+
+        // Executive floor: track first visit for cosmetic unlock
+        if (roomId === 'executive_floor' && !this.player.getFlag('executive_floor_visited')) {
+          this.player.setFlag('executive_floor_visited');
         }
 
         // Ending dialog re-triggers on every executive floor visit until the boss is defeated
@@ -405,6 +431,7 @@ export class ExplorationState {
         // Archive: first visit triggers security guard encounter
         if (roomId === 'archive' && !this.player.getFlag('visited_archive')) {
           this.player.setFlag('visited_archive');
+          this.player.setFlag('archive_found');
           if (DIALOGS.security_guard_combat) {
             setTimeout(() => {
               const dialogState = new DialogState(DIALOGS['security_guard_combat'], this.player, this.stateManager, 'security_guard_combat');
@@ -418,24 +445,6 @@ export class ExplorationState {
           this.player.setFlag('act5_triggered');
           setTimeout(() => {
             const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
-            this.stateManager.push(dialogState);
-          }, 800);
-        }
-
-        // Gauntlet fight 1: Brand Consultant — cubicle farm, first contact after act5 cutscene
-        if (roomId === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
-          this.player.setFlag('brand_consultant_fight_started');
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['brand_consultant_combat'], this.player, this.stateManager, 'brand_consultant_combat');
-            this.stateManager.push(dialogState);
-          }, 1200);
-        }
-
-        // Gauntlet fight 3: Corporate Lawyer — reception, blocks the elevator
-        if (roomId === 'reception' && this.player.getFlag('restructuring_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('corporate_lawyer_fight_started') && DIALOGS.corporate_lawyer_combat) {
-          this.player.setFlag('corporate_lawyer_fight_started');
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['corporate_lawyer_combat'], this.player, this.stateManager, 'corporate_lawyer_combat');
             this.stateManager.push(dialogState);
           }, 800);
         }
@@ -497,6 +506,24 @@ export class ExplorationState {
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
     // Check for upgrade points tooltip
     this._checkUpgradeTooltip();
+    // Flush any dialog that was deferred because the menu was open during the push window
+    if (this._pendingDialog) {
+      const dialogId = this._pendingDialog;
+      this._pendingDialog = null;
+      if (DIALOGS[dialogId]) {
+        setTimeout(() => {
+          // If the fight was already started via the terminal, don't re-push the intro dialog
+          if (dialogId === 'algorithm_combat' && this.player.getFlag('defeated_algorithm')) return;
+          const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+          if (menuOpen) {
+            this._pendingDialog = dialogId;
+            return;
+          }
+          const dialogState = new DialogState(DIALOGS[dialogId], this.player, this.stateManager, dialogId);
+          this.stateManager.push(dialogState);
+        }, 500);
+      }
+    }
   }
 
   _getMusicForRoom(roomId) {
@@ -524,7 +551,7 @@ export class ExplorationState {
   }
 
   _loadRoom(roomId, spawnX, spawnZ) {
-    const result = this.roomManager.loadRoom(roomId, spawnX, spawnZ);
+    const result = this.roomManager.loadRoom(roomId, spawnX, spawnZ, this.player.flags);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
@@ -571,7 +598,7 @@ export class ExplorationState {
     Engine.scene.remove(this.player.mesh);
     this.roomManager._clearCurrentRoom();
 
-    const result = this.roomManager.loadRoom(targetRoom, spawnX, spawnZ);
+    const result = this.roomManager.loadRoom(targetRoom, spawnX, spawnZ, this.player.flags);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
@@ -735,6 +762,21 @@ export class ExplorationState {
     this._resetClientSystem();
     // Reset ending gate so boss fights can be retried
     this.player.setFlag('ending_started', false);
+
+    // Reset whichever gauntlet fight-started flag is in progress but not yet won,
+    // so the fight retriggers after the player respawns.
+    const gauntletFlags = [
+      { started: 'brand_consultant_fight_started',  defeated: 'brand_consultant_defeated' },
+      { started: 'restructuring_fight_started',     defeated: 'restructuring_defeated' },
+      { started: 'data_lead_fight_started',         defeated: 'data_lead_defeated' },
+      { started: 'chief_fight_started',             defeated: 'chief_restructuring_defeated' },
+    ];
+    for (const { started, defeated } of gauntletFlags) {
+      if (this.player.getFlag(started) && !this.player.getFlag(defeated)) {
+        this.player.setFlag(started, false);
+      }
+    }
+
     this._loadRoom('cubicle_farm');
 
     const DEATH_MESSAGES = [
@@ -840,7 +882,7 @@ export class ExplorationState {
       const aumEarned = Math.max(50, Math.floor(clientData.assets * 0.01));
       this.player.stats.aum = (this.player.stats.aum || 0) + aumEarned;
       this._updateMiniStats();
-      AchievementManager.check(this.player, { event: 'client_accepted' });
+      AchievementManager.check(this.player, { event: 'client_accepted', assets: clientData.assets, attributes: clientData.attributes });
       this._autoSave(false);
 
       this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned.`, 'item');
@@ -850,6 +892,7 @@ export class ExplorationState {
       const declineDelta = clientData.netAngerDelta > 0 ? -1 : 1;
       const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + declineDelta));
       this.player.setFlag('bossAnger', anger);
+      AchievementManager.check(this.player, { event: 'client_declined' });
       this._showToast(`Client declined.`, 'info');
     }
 
@@ -1975,6 +2018,15 @@ export class ExplorationState {
 
   update(dt) {
     if (this.paused) return;
+
+    // Gauntlet fight 1: Brand Consultant — fires once act4_complete is set (set by act5_trigger dialog)
+    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
+      this.player.setFlag('brand_consultant_fight_started');
+      setTimeout(() => {
+        const dialogState = new DialogState(DIALOGS['brand_consultant_combat'], this.player, this.stateManager, 'brand_consultant_combat');
+        this.stateManager.push(dialogState);
+      }, 1200);
+    }
 
     // Gauntlet fight 2: Restructuring Analyst chains immediately after Brand Consultant is defeated
     if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('brand_consultant_defeated') && !this.player.getFlag('restructuring_fight_started') && DIALOGS.restructuring_combat) {

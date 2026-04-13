@@ -296,7 +296,7 @@ export const DIALOGS = {
   // PRINTER -- Haunted
   // --------------------------------------------------------------------------
   printer_interact: [
-    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 37, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 40, ifFalse: 1 },
     /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 25, ifFalse: 2 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
@@ -338,6 +338,10 @@ export const DIALOGS = {
     /* 37 */ { type: 'text', speaker: 'Narrator', text: "The printer sits in silence. Its display is dark. It has said everything it needed to say." },
     /* 38 */ { type: 'end' },
     /* 39 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP.", next: 38 },
+    // --- Soul quest gate: redirect to ethernet port if still pending ---
+    /* 40 */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 37, ifFalse: 41 },
+    /* 41 */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 42, ifFalse: 37 },
+    /* 42 */ { type: 'text', speaker: 'Narrator', text: "The printer is still, its display dark. But Alex mentioned an ethernet port on the wall right beside it — labeled 'PRINTER DIRECT.' That's what you need.", next: 38 },
   ],
 
   // --------------------------------------------------------------------------
@@ -1539,8 +1543,9 @@ export const DIALOGS = {
     /* 16 */ { type: 'action', action: 'give_item', item: 'compliance_manual', quantity: 1, next: 17 },
     /* 17 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Take my old compliance manual too. You'll need it where you're going." },
     /* 18 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And Andrew — be careful in the Archive. The building protects its secrets. Not everything down there wants to be found." },
-    /* 19 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_act3', value: true, next: 20 },
-    /* 20 */ { type: 'end' },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'janitor_confronted', value: true, next: 20 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_act3', value: true, next: 21 },
+    /* 21 */ { type: 'end' },
   ],
 
   isaiah_act3: [
@@ -1824,13 +1829,12 @@ export const DIALOGS = {
 
   // Server room vault code
   server_vault_code: [
-    /* 0  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 5, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 1 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "You check the server rack the Janitor mentioned. Behind the third-floor stairwell dead drop location." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Taped to the back of server rack C — the one with the restraining order — is a small card with the number: 82." },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The year the Janitor was hired. That's the third code." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'vault_code_3', value: true, next: 6 },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "You already noted the number on the card taped to server rack C." },
-    /* 6  */ { type: 'end' },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'vault_code_3', value: true, next: 5 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "You already noted the number on the card taped to server rack C." },
+    /* 5  */ { type: 'end' },
   ],
 
   // Vault interaction
@@ -2064,12 +2068,26 @@ export const DIALOGS = {
   ],
 
   algorithm_terminal: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A sleek terminal unlike anything else in the building. Modern. Minimalist. Cold." },
-    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The screen displays cascading numbers. Portfolio values. Trust balances. Client assets. All flowing in real-time." },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A cursor blinks: 'THE ALGORITHM SEES ALL. THE ALGORITHM OPTIMIZES ALL. THE ALGORITHM IS ALL.'" },
-    /* 3  */ { type: 'text', speaker: 'Andrew', text: "That's... ominous. Even for a bank." },
-    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The screen flickers. For a moment, you think you see a face in the numbers. Then it's gone." },
-    /* 5  */ { type: 'end' },
+    /* 0  */ { type: 'condition', flag: 'regional_director_defeated', ifTrue: 1, ifFalse: 7 },
+    /* 1  */ { type: 'condition', flag: 'defeated_algorithm', ifTrue: 13, ifFalse: 2 },
+    // Fight path — player came to the terminal instead of waiting for the cutscene
+    /* 2  */ { type: 'text', speaker: 'The Algorithm', text: "Initiating direct interface. Interesting choice." },
+    /* 3  */ { type: 'text', speaker: 'The Algorithm', text: "You chose confrontation over ceremony. Efficiency rating: acceptable." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "Let's skip the rest of the speech." },
+    /* 5  */ { type: 'text', speaker: 'The Algorithm', text: "Agreed. COMMENCING OPTIMIZATION." },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'algorithm', next: 16 },
+    // Pre-fight flavor (Regional Director not yet beaten — terminal is just scenery)
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A sleek terminal unlike anything else in the building. Modern. Minimalist. Cold." },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The screen displays cascading numbers. Portfolio values. Trust balances. Client assets. All flowing in real-time." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "A cursor blinks: 'THE ALGORITHM SEES ALL. THE ALGORITHM OPTIMIZES ALL. THE ALGORITHM IS ALL.'" },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "That's... ominous. Even for a bank." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The screen flickers. For a moment, you think you see a face in the numbers. Then it's gone." },
+    /* 12 */ { type: 'end' },
+    // Post-defeat flavor
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "The terminal is dark. Where cascading numbers once flowed, only a blinking cursor remains." },
+    /* 14 */ { type: 'text', speaker: 'Andrew', text: "Just a computer now." },
+    /* 15 */ { type: 'end' },
+    /* 16 */ { type: 'end' },
   ],
 
   // ==========================================================================
@@ -2399,52 +2417,58 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   janitor_riddle_1: [
-    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Ah, Andrew. Looking for wisdom? I have a riddle for you." },
-    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I am owed by many but owned by none. I am earned by actions, not by transactions. What am I?" },
-    /* 2  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Take your time.", choices: [
-      { text: "Trust.", next: 3 },
-      { text: "Money.", next: 6 },
-      { text: "Respect.", next: 6 },
+    /* 0  */ { type: 'condition', flag: 'riddle_1_attempted', ifTrue: 3, ifFalse: 1 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_1_attempted', value: true, next: 2 },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Ah, Andrew. Looking for wisdom? I have a riddle for you." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I am owed by many but owned by none. I am earned by actions, not by transactions. What am I?" },
+    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Take your time.", choices: [
+      { text: "Trust.", next: 5 },
+      { text: "Money.", next: 8 },
+      { text: "Respect.", next: 8 },
     ]},
-    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Trust. Correct. The very thing this building was built to protect." },
-    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Here's something for your trouble. Come back — I have more riddles." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_1_done', value: true, next: 8 },
-    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not quite. Think about what this place is supposed to protect. What people give us when they walk through those doors." },
-    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back when you've thought about it." },
-    /* 8  */ { type: 'end' },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Trust. Correct. The very thing this building was built to protect." },
+    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back — I have more riddles." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_1_done', value: true, next: 10 },
+    /* 8  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not quite. Think about what this place is supposed to protect. What people give us when they walk through those doors." },
+    /* 9  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back when you've thought about it." },
+    /* 10 */ { type: 'end' },
   ],
 
   janitor_riddle_2: [
-    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Back for more? Good. Second riddle." },
-    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I grow stronger when tested, weaker when assumed. I am the foundation of every contract but written in no clause. What am I?" },
-    /* 2  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Think carefully.", choices: [
-      { text: "Good faith.", next: 3 },
-      { text: "Power.", next: 6 },
-      { text: "Obligation.", next: 6 },
+    /* 0  */ { type: 'condition', flag: 'riddle_2_attempted', ifTrue: 3, ifFalse: 1 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_2_attempted', value: true, next: 2 },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Back for more? Good. Second riddle." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I grow stronger when tested, weaker when assumed. I am the foundation of every contract but written in no clause. What am I?" },
+    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Think carefully.", choices: [
+      { text: "Good faith.", next: 5 },
+      { text: "Power.", next: 8 },
+      { text: "Obligation.", next: 8 },
     ]},
-    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Good faith. The implied covenant. Every contract assumes it, but no one can define it." },
-    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Two for two. One more to go." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_2_done', value: true, next: 8 },
-    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Close, but no. Think about what holds a contract together even when the words fail." },
-    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back and try again." },
-    /* 8  */ { type: 'end' },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Good faith. The implied covenant. Every contract assumes it, but no one can define it." },
+    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Two for two. One more to go." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_2_done', value: true, next: 10 },
+    /* 8  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Close, but no. Think about what holds a contract together even when the words fail." },
+    /* 9  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back and try again." },
+    /* 10 */ { type: 'end' },
   ],
 
   janitor_riddle_3: [
-    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "The final riddle. The hardest one." },
-    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I was here before the building. I will be here after it falls. I am not in the charter, but the charter is in me. What am I?" },
-    /* 2  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Last chance.", choices: [
-      { text: "Duty.", next: 3 },
-      { text: "The building.", next: 7 },
-      { text: "Memory.", next: 7 },
+    /* 0  */ { type: 'condition', flag: 'riddle_3_attempted', ifTrue: 3, ifFalse: 1 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_3_attempted', value: true, next: 2 },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "The final riddle. The hardest one." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I was here before the building. I will be here after it falls. I am not in the charter, but the charter is in me. What am I?" },
+    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Last chance.", choices: [
+      { text: "Duty.", next: 5 },
+      { text: "The building.", next: 9 },
+      { text: "Memory.", next: 9 },
     ]},
-    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Duty. Not the legal kind. The human kind. The obligation we feel to each other, written in no law but felt in every bone." },
-    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Three for three. You remind me of someone I used to be." },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "The Janitor's Rolex glows briefly. You feel stronger. Wiser. More... composed." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_3_done', value: true, next: 9 },
-    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not quite. Duty predates every institution. It's what makes us build them in the first place." },
-    /* 8  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back when you've considered what brought you to this building." },
-    /* 9  */ { type: 'end' },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Duty. Not the legal kind. The human kind. The obligation we feel to each other, written in no law but felt in every bone." },
+    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Three for three. You remind me of someone I used to be." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The Janitor's Rolex glows briefly. You feel stronger. Wiser. More... composed." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_3_done', value: true, next: 11 },
+    /* 9  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not quite. Duty predates every institution. It's what makes us build them in the first place." },
+    /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Come back when you've considered what brought you to this building." },
+    /* 11 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------

@@ -306,25 +306,4 @@ Each poster gives a stat boost (+1 ATK or +1 DEF) and XP on first read. Andrew h
 
 ---
 
-## Repeatable: Reception Roguelite
-
-Talk to the reception desk to start a client encounter. Win the combat, then accept or decline the client.
-
-- **Win combat:** 60–120 XP (scales with client wealth tier: `Math.round(60 + t * 60)` where t = 0–1)
-- **Accept client:** AUM = max(50, floor(client assets × 1%))
-- **Decline client:** No AUM, no penalty
-
-AUM is the shop currency. Spend it at the **Supply Shop** in the Break Room (interact with the vending machine area).
-
----
-
-## Item Reference
-
-| Item | Effect | How to get |
-|------|--------|-----------|
-| Large Coffee | Restores 30 Coffee | Diane (reception desk), Break Room coffee machine |
-| Antacid | Restores 40 Patience | Diane's desk drawer, Janitor (Act 4) |
-| Energy Drink | Restores 20 Coffee + SPD +3 for 3 turns | Anomaly subquest reward |
-| Stress Ball | Restores 60 Patience | Compliance Auditor (post-combat) |
-| Compliance Manual | DEF +5 for entire battle | Compliance Auditor (mid-story) |
-| Vending Fortune | Restores 10 Patience | Break Room vending machine |
+*See **Gameplay.md** for the roguelite loop, item reference, achievements, cosmetics, and combat attributes.*

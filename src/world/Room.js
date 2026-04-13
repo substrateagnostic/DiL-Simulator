@@ -56,7 +56,7 @@ const NO_BLOCK = new Set([
   'whiteboard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
   'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'globeStand', 'vaultDoor',
-  'rangeHood',
+  'rangeHood', 'boosterMount',
 ]);
 
 export class Room {
@@ -74,7 +74,7 @@ export class Room {
   // ----------------------------------------------------------
   // Primary build — call once, returns THREE.Group
   // ----------------------------------------------------------
-  build() {
+  build(flags = {}) {
     const { width, height, floorColor, floorPattern, walls, furniture, exits, interactables } = this.data;
 
     this.scene = new THREE.Group();
@@ -93,7 +93,7 @@ export class Room {
 
     // 3. Furniture
     if (furniture && furniture.length > 0) {
-      this._placeFurniture(furniture);
+      this._placeFurniture(furniture, flags);
     }
 
     // 4. Register exits on the TileMap
@@ -106,6 +106,11 @@ export class Room {
     // 5. Register interactables on the TileMap
     if (interactables && interactables.length > 0) {
       for (const ia of interactables) {
+        if (ia.condition) {
+          const c = ia.condition;
+          if (c.flag && !flags[c.flag]) continue;
+          if (c.notFlag && flags[c.notFlag]) continue;
+        }
         this.tileMap.setInteractable(ia.x, ia.z, {
           type: ia.type,
           dialogId: ia.dialogId,
@@ -530,8 +535,13 @@ export class Room {
   /**
    * Instantiate all furniture pieces and block their tiles.
    */
-  _placeFurniture(furnitureList) {
+  _placeFurniture(furnitureList, flags = {}) {
     for (const item of furnitureList) {
+      if (item.condition) {
+        const c = item.condition;
+        if (c.flag && !flags[c.flag]) continue;
+        if (c.notFlag && flags[c.notFlag]) continue;
+      }
       const { type, x, z, rotation, variant } = item;
 
       // Look up factory method

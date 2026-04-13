@@ -2629,6 +2629,31 @@ export const Furniture = {
     group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
     return group;
   },
+
+  boosterMount() {
+    const group = new THREE.Group();
+    // Flat backing plate (dark charcoal, mounts flush to the wall)
+    const plateMat = Materials.custom(0x1a1a2e);
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.03), plateMat);
+    plate.position.set(0, 1.4, 0);
+    group.add(plate);
+
+    // Orange triangle arrow pointing up — signals "place booster here"
+    const arrowMat = Materials.custom(0xff6b00);
+    const arrowGeo = new THREE.ConeGeometry(0.07, 0.14, 3);
+    const arrow = new THREE.Mesh(arrowGeo, arrowMat);
+    arrow.position.set(0, 1.42, 0.022);
+    group.add(arrow);
+
+    // Small pulsing-look LED dot (bright yellow-green)
+    const ledMat = Materials.custom(0x39ff14);
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), ledMat);
+    led.position.set(0, 1.28, 0.022);
+    group.add(led);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = false; } });
+    return group;
+  },
 };
 
 // ── Shared builder for credenza / credenzaEast ───────────────────────────────

@@ -122,6 +122,6 @@ export const COSMETICS = {
     slot: 'accessory',
     stats: { atk: 3, maxMP: 5 },
     visual: { type: 'calculator', color: 0xdaa520 },
-    unlock: { flag: 'algorithm_defeated' },
+    unlock: { flag: 'regional_director_defeated' },
   },
 };

@@ -3,17 +3,28 @@ const ACHIEVEMENT_KEY = 'trust_issues_achievements';
 // Achievement definitions
 const ACHIEVEMENTS = [
   // Story milestones
-  { id: 'first_blood',       name: 'First Blood',          desc: 'Win your first combat',                    icon: '⚔',  check: (p, ctx) => ctx.event === 'combat_victory' },
-  { id: 'karen_slayer',      name: 'Speak to MY Manager',  desc: 'Defeat Karen Henderson',                   icon: '📋', check: (p) => !!p.getFlag('defeated_karen') },
-  { id: 'chad_bested',       name: 'Not Your Bro',         desc: 'Defeat Chad Henderson',                    icon: '💪', check: (p) => !!p.getFlag('defeated_chad') },
-  { id: 'grandma_survived',  name: 'Legacy of Grief',      desc: 'Defeat Grandma Henderson',                 icon: '🧶', check: (p) => !!p.getFlag('defeated_grandma') },
-  { id: 'hendersons_done',   name: 'Family Meeting Over',  desc: 'Defeat all three Hendersons',              icon: '🏆', check: (p) => !!p.getFlag('defeated_karen') && !!p.getFlag('defeated_chad') && !!p.getFlag('defeated_grandma') },
+  { id: 'first_blood',       name: 'First Blood',          desc: 'Win your first combat',                                       icon: '⚔',  check: (p, ctx) => ctx.event === 'combat_victory' },
+  { id: 'hendersons_done',   name: 'Family Meeting Over',  desc: 'Defeat all three Hendersons',                                 icon: '🏆', check: (p) => !!p.getFlag('defeated_karen') && !!p.getFlag('defeated_chad') && !!p.getFlag('defeated_grandma') },
+
+  // Act completions
+  { id: 'act1_complete',     name: 'First Day Jitters',    desc: 'Survive your first day in the Trust Department',              icon: '📎', check: (p) => !!p.getFlag('briefing_complete') },
+  { id: 'act2_complete',     name: 'The Bill Comes Due',   desc: 'Survive the reckoning on the Executive Floor',               icon: '⚖',  check: (p) => !!p.getFlag('act2_complete') },
+  { id: 'act3_complete',     name: 'Follow the Money',     desc: 'Uncover the truth in the Archive',                           icon: '🗂',  check: (p) => !!p.getFlag('act3_complete') },
+  { id: 'act4_complete',     name: 'The Building Has Spoken', desc: 'Retrieve the 1947 charter from the Vault',               icon: '📜', check: (p) => !!p.getFlag('act4_complete') },
+  { id: 'act5_complete',     name: 'Hostile Takeover Blocked', desc: 'Drive out the restructuring team',                      icon: '🏢', check: (p) => !!p.getFlag('act5_complete') },
+  { id: 'act6_complete',     name: 'United We Stand',      desc: 'Rally the team and secure the evidence',                     icon: '🤝', check: (p) => !!p.getFlag('act6_complete') },
+  { id: 'act7_complete',     name: 'Trust Issues Resolved', desc: 'Defeat The Algorithm',                                      icon: '💻', check: (p) => !!p.getFlag('algorithm_defeated') },
 
   // Combat mastery
   { id: 'assert_dominance',  name: 'Assert Dominance',     desc: 'Use Assert Dominance in combat',           icon: '⚡', check: (p, ctx) => ctx.event === 'power_move_used' },
   { id: 'brace_master',      name: 'Brace for Impact',     desc: 'Successfully brace an attack',             icon: '🛡', check: (p, ctx) => ctx.event === 'brace_success' },
   { id: 'counter_punch',     name: 'Counter-Offer',        desc: 'Retaliate after a successful brace',       icon: '↩', check: (p, ctx) => ctx.event === 'retaliate_used' },
   { id: 'weakness_exploit',  name: 'Due Diligence',        desc: 'Hit an enemy weakness',                    icon: '🎯', check: (p, ctx) => ctx.event === 'weakness_hit' },
+  { id: 'second_opinion',    name: 'Second Opinion',       desc: 'Use Second Wind in combat',                icon: '🌀', check: (p, ctx) => ctx.event === 'second_wind_used' },
+  { id: 'nothing_to_lose',   name: 'Nothing to Lose',      desc: 'Use Desperate Gamble',                     icon: '🎲', check: (p, ctx) => ctx.event === 'desperate_gamble_used' },
+  { id: 'all_in',            name: 'All In',               desc: 'Choose All In on Desperate Gamble',        icon: '💀', check: (p, ctx) => ctx.event === 'all_in_used' },
+  { id: 'follow_through',    name: 'Follow Through',       desc: 'Land a Follow Through combo hit',          icon: '🔗', check: (p, ctx) => ctx.event === 'combo_hit' },
+  { id: 'perfect_form',      name: 'Perfect Form',         desc: 'Get a Perfect on the Brace QTE',           icon: '✋', check: (p, ctx) => ctx.event === 'perfect_brace' },
 
   // Leveling
   { id: 'level_5',           name: 'Mid-Level Associate',  desc: 'Reach level 5',                            icon: '📈', check: (p) => (p.stats?.level || 1) >= 5 },
@@ -21,10 +32,15 @@ const ACHIEVEMENTS = [
   { id: 'level_15',          name: 'Trust Officer',        desc: 'Reach the maximum level',                  icon: '👔', check: (p) => (p.stats?.level || 1) >= 15 },
 
   // Roguelite
-  { id: 'first_client',      name: 'First AUM',            desc: 'Accept your first reception client',       icon: '💼', check: (p, ctx) => ctx.event === 'client_accepted' },
-  { id: 'ten_clients',       name: 'Growing Portfolio',    desc: 'Accept 10 reception clients',              icon: '📁', check: (p) => (p.getFlag('portfolioClients') || 0) >= 10 },
-  { id: 'big_spender',       name: 'Retail Therapy',       desc: 'Spend AUM at the supply shop',             icon: '🛒', check: (p, ctx) => ctx.event === 'shop_purchase' },
-  { id: 'millionaire',       name: 'AUM Millionaire',      desc: 'Accumulate 1,000,000 AUM',                 icon: '💰', check: (p) => (p.getFlag('portfolioAUM') || 0) >= 1000000 },
+  { id: 'first_client',      name: 'First AUM',            desc: 'Accept your first reception client',                    icon: '💼', check: (p, ctx) => ctx.event === 'client_accepted' },
+  { id: 'ten_clients',       name: 'Growing Portfolio',    desc: 'Accept 10 reception clients',                           icon: '📁', check: (p) => (p.getFlag('portfolioClients') || 0) >= 10 },
+  { id: 'dedicated',         name: 'Dedicated',            desc: 'Accept 25 reception clients',                           icon: '📋', check: (p) => (p.getFlag('portfolioClients') || 0) >= 25 },
+  { id: 'big_spender',       name: 'Retail Therapy',       desc: 'Spend AUM at the supply shop',                          icon: '🛒', check: (p, ctx) => ctx.event === 'shop_purchase' },
+  { id: 'supply_run',        name: 'Supply Run',           desc: 'Buy from all three shop categories',                    icon: '🛍', check: (p) => !!p.getFlag('bought_category_consumable') && !!p.getFlag('bought_category_upgrade') && !!p.getFlag('bought_category_decor') },
+  { id: 'millionaire',       name: 'AUM Millionaire',      desc: 'Accumulate 1,000,000 AUM',                              icon: '💰', check: (p) => (p.getFlag('portfolioAUM') || 0) >= 1000000 },
+  { id: 'hard_pass',         name: 'Hard Pass',            desc: 'Decline a client after winning combat',                 icon: '🚪', check: (p, ctx) => ctx.event === 'client_declined' },
+  { id: 'dream_client',      name: 'Dream Client',         desc: 'Accept a client with no negative attributes',           icon: '⭐', check: (p, ctx) => ctx.event === 'client_accepted' && ctx.attributes && ctx.attributes.every(a => a.positive) },
+  { id: 'high_roller',       name: 'High Roller',          desc: 'Accept a client with 5,000,000 or more in assets',      icon: '💸', check: (p, ctx) => ctx.event === 'client_accepted' && ctx.assets >= 5_000_000 },
 ];
 
 class AchievementManagerClass {

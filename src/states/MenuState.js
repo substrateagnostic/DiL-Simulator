@@ -30,31 +30,88 @@ export class MenuState {
   enter() {
     const overlay = document.getElementById('ui-overlay');
 
+    // Tag definitions per menu item
+    const itemMeta = {
+      'Resume':         { tag: '[SYS]',      tagColor: '#53a8b6', section: 'SYSTEM' },
+      'Abilities':      { tag: '[PROFILE]',  tagColor: '#ffcc33', section: 'CHARACTER' },
+      'Cosmetics':      { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
+      'Journal':        { tag: '[DATABASE]', tagColor: '#53a8b6', section: null },
+      'Achievements':   { tag: '[RECORDS]',  tagColor: '#53a8b6', section: null },
+      'Stats':          { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
+      'Save Game':      { tag: '[SYS]',      tagColor: '#44cc88', section: 'SETTINGS' },
+      'Controls':       { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
+      'Audio Settings': { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
+      'Quit to Title':  { tag: '[EXIT]',     tagColor: '#e94560', section: null },
+    };
+
     this.element = document.createElement('div');
     this.element.className = 'menu-overlay';
 
     const panel = document.createElement('div');
     panel.className = 'menu-panel';
 
-    const title = document.createElement('div');
-    title.className = 'menu-title';
-    title.textContent = 'PAUSED';
-    panel.appendChild(title);
-
-    const stats = document.createElement('div');
-    stats.style.cssText = 'color: #aaa; font-family: "VT323", monospace; font-size: 18px; margin-bottom: 16px; text-align: center;';
-    stats.innerHTML = `
-      Lv.${this.player.stats.level} - HP: ${this.player.stats.hp}/${this.player.stats.maxHP} - Coffee: ${this.player.stats.mp}/${this.player.stats.maxMP}
+    // ── Portal header bar ──
+    const header = document.createElement('div');
+    header.className = 'menu-portal-header';
+    header.innerHTML = `
+      <span class="menu-portal-name">EMPLOYEE PORTAL</span>
+      <span class="menu-portal-status">⚠ SESSION PAUSED</span>
     `;
-    panel.appendChild(stats);
+    panel.appendChild(header);
 
+    // ── Employee badge ──
+    const s = this.player.stats;
+    const badge = document.createElement('div');
+    badge.className = 'menu-employee-badge';
+    badge.innerHTML = `
+      <div class="menu-employee-id">
+        <span class="menu-employee-id-label">LVL</span>
+        <span class="menu-employee-id-value">${s.level}</span>
+      </div>
+      <div class="menu-employee-info">
+        <div class="menu-employee-name">ANDREW</div>
+        <div class="menu-employee-role">TRUST OFFICER · DEPT. 7</div>
+        <div class="menu-employee-fields">
+          <div class="menu-employee-field">
+            <span class="menu-employee-field-label">HP</span>
+            <span class="menu-employee-field-value">${s.hp}/${s.maxHP}</span>
+          </div>
+          <div class="menu-employee-field">
+            <span class="menu-employee-field-label">☕</span>
+            <span class="menu-employee-field-value">${s.mp}/${s.maxMP}</span>
+          </div>
+          <div class="menu-employee-field">
+            <span class="menu-employee-field-label">AUM</span>
+            <span class="menu-employee-field-value">$${(s.aum || 0).toLocaleString()}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    panel.appendChild(badge);
+
+    // ── Nav items ──
     const items = document.createElement('div');
     items.className = 'menu-items';
 
+    let lastSection = null;
     this.menuItems.forEach((label, i) => {
+      const meta = itemMeta[label] || { tag: '[SYS]', tagColor: '#888', section: null };
+
+      // Section divider
+      if (meta.section && meta.section !== lastSection) {
+        const divider = document.createElement('div');
+        divider.className = 'menu-nav-divider';
+        divider.textContent = meta.section;
+        items.appendChild(divider);
+        lastSection = meta.section;
+      }
+
       const item = document.createElement('div');
       item.className = `menu-item${i === this.selectedIndex ? ' selected' : ''}`;
-      item.textContent = label;
+      item.innerHTML = `
+        <span class="menu-item-label">${label}</span>
+        <span class="menu-item-arrow">▶</span>
+      `;
       item.addEventListener('click', () => {
         if (this.controlsOverlay) return;
         this.selectedIndex = i;
@@ -64,6 +121,13 @@ export class MenuState {
     });
 
     panel.appendChild(items);
+
+    // ── Footer ──
+    const footer = document.createElement('div');
+    footer.className = 'menu-portal-footer';
+    footer.textContent = 'UNAUTHORIZED ACCESS IS PROHIBITED · HR-PORTAL v2.4.1';
+    panel.appendChild(footer);
+
     this.element.appendChild(panel);
     overlay.appendChild(this.element);
   }
@@ -243,22 +307,42 @@ export class MenuState {
   _showControls() {
     if (this.controlsOverlay) return;
 
+    const row = (keys, action) => {
+      const badges = keys.map(k => `<span class="controls-key">${k}</span>`).join('<span class="controls-sep">/</span>');
+      return `<div class="controls-row"><div class="controls-keys">${badges}</div><span class="controls-action">${action}</span></div>`;
+    };
+
     this.controlsOverlay = document.createElement('div');
     this.controlsOverlay.className = 'menu-overlay';
     this.controlsOverlay.style.zIndex = '60';
     this.controlsOverlay.innerHTML = `
-      <div class="menu-panel">
+      <div class="menu-panel controls-panel">
         <div class="menu-title">CONTROLS</div>
-        <div style="color: #ddd; font-family: 'VT323', monospace; font-size: 22px; line-height: 1.8;">
-          <div><span style="color: #e94560;">WASD / Arrows</span> - Move</div>
-          <div><span style="color: #e94560;">E / Enter</span> - Interact / Confirm</div>
-          <div><span style="color: #e94560;">ESC</span> - Back / Pause Menu</div>
-          <div><span style="color: #e94560;">Space</span> - Advance Dialog</div>
+        <div class="controls-body">
+          <div class="controls-section-header">Exploration</div>
+          ${row(['W A S D', '↑ ↓ ← →'], 'Move')}
+          ${row(['E', 'Enter'], 'Interact')}
+          ${row(['Esc'], 'Open Pause Menu')}
+
+          <div class="controls-section-header">Combat</div>
+          ${row(['↑ ↓'], 'Navigate actions')}
+          ${row(['Enter'], 'Confirm selection')}
+          ${row(['Esc'], 'Cancel / Back')}
+
+          <div class="controls-section-header">Dialog &amp; Menus</div>
+          ${row(['Space', 'E', 'Enter'], 'Advance dialog')}
+          ${row(['↑ ↓'], 'Navigate')}
+          ${row(['← →'], 'Change category / tab')}
+          ${row(['Esc'], 'Close / Back')}
         </div>
-        <div class="menu-item" style="margin-top: 20px;" id="menu-controls-back">Back</div>
+        <div class="menu-item" id="menu-controls-back">
+          <span class="menu-item-label">Back</span>
+          <span class="menu-item-arrow">▶</span>
+        </div>
       </div>
     `;
     document.getElementById('ui-overlay').appendChild(this.controlsOverlay);
+    if (this.element) this.element.style.display = 'none';
     document.getElementById('menu-controls-back').addEventListener('click', () => {
       this._closeControls();
     });
@@ -269,6 +353,7 @@ export class MenuState {
       this.controlsOverlay.parentNode.removeChild(this.controlsOverlay);
     }
     this.controlsOverlay = null;
+    if (this.element) this.element.style.display = '';
   }
 
   _showAudioSettings() {

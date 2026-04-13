@@ -279,7 +279,7 @@ export const ROOMS = {
 
       // === Vending machine + supply shop counter (northeast corner) ===
       { type: 'vendingMachine', x: 14, z: 1, rotation: 0 },
-      { type: 'supplyShop',     x: 14, z: 2, rotation: 0 },
+      { type: 'supplyShop',     x: 10, z: 1, rotation: 0 },
 
       // === Table 1 (west center) ===
       { type: 'desk', x: 4, z: 6, rotation: 0 },
@@ -325,7 +325,7 @@ export const ROOMS = {
       { x: 4,  z: 1,  type: 'coffee_machine',  dialogId: 'coffee_machine' },
       { x: 1,  z: 0,  type: 'fridge',           dialogId: 'fridge_notes' },
       { x: 14, z: 1,  type: 'vending_machine',  dialogId: 'vending_machine' },
-      { x: 14, z: 2,  type: 'supply_shop' },
+      { x: 10, z: 1,  type: 'supply_shop' },
       { x: 8,  z: 1,  type: 'microwave',        dialogId: 'microwave' },
       { x: 10, z: 0,  type: 'poster',           dialogId: 'poster_br_1' },
       { x: 13, z: 10, type: 'arcade_cabinet',   dialogId: 'arcade_intro' },
@@ -333,8 +333,8 @@ export const ROOMS = {
       { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3' },
       { x: 2,  z: 11, type: 'poster', dialogId: 'quest_def_3' },
       // Network Ghost signal booster (east wall)
-      { type: 'motivationalPoster', x: 14.9, z: 8, rotation: -Math.PI / 2 },
-      { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br' },
+      { type: 'boosterMount', x: 14.9, z: 8, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
+      { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br', condition: { notFlag: 'quest_network_ghost_complete' } },
       // Tuesday 2PM: old floppy disk on westmost table
       { x: 4, z: 6, type: 'poster', dialogId: 'tuesday_floppy' },
     ],
@@ -469,8 +469,8 @@ export const ROOMS = {
       { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2' },
       { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2' },
       // Network Ghost signal booster (east wall)
-      { type: 'motivationalPoster', x: 10.9, z: 2, rotation: -Math.PI / 2 },
-      { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf' },
+      { type: 'boosterMount', x: 10.9, z: 2, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
+      { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     playerSpawn: { x: 1, z: 4 },
   },
@@ -530,6 +530,8 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 7, z: 1 },  // equipment shelf
       { type: 'fileCabinet', x: 7, z: 2 },
       { type: 'fileCabinet', x: 7, z: 4 },
+      // Unauthorized Patch: standalone network monitoring terminal in the aisle
+      { type: 'monitor', x: 5, z: 6 },
       // Side quest posters
       { type: 'motivationalPoster', x: 3,   z: 0.1, rotation: 0 },
       { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
@@ -560,7 +562,6 @@ export const ROOMS = {
       // Printer's Soul: firmware disk on equipment shelf
       { x: 7, z: 4, type: 'poster', dialogId: 'printer_firmware_disk' },
       // Unauthorized Patch: network monitoring terminal
-      { type: 'monitor', x: 5, z: 6 },
       { x: 5, z: 6, type: 'poster', dialogId: 'unauthorized_patch_monitor' },
     ],
     playerSpawn: { x: 2, z: 7 },
@@ -614,6 +615,8 @@ export const ROOMS = {
       { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
       { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { flag: 'chad_defeated', notFlag: 'grandma_defeated' }, dialogId: 'grandma_reception_idle' },
       { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: true, sitting: true },
+      // Corporate Lawyer blocks elevator until defeated — player initiates on their own terms
+      { id: 'corporate_lawyer', x: 11, z: 4, facing: -Math.PI / 2, condition: { flag: 'restructuring_defeated', notFlag: 'corporate_lawyer_defeated' }, dialogId: 'corporate_lawyer_combat' },
     ],
     exits: [
       // NORTH exits -> Cubicle Farm
@@ -813,7 +816,7 @@ export const ROOMS = {
       // Motivational poster on west wall
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
       // Network Ghost signal booster mount (east wall, upper section)
-      { type: 'motivationalPoster', x: 3.9, z: 5, rotation: -Math.PI / 2 },
+      { type: 'boosterMount', x: 3.9, z: 5, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     exits: [
       // SOUTH exit -> Cubicle Farm
@@ -827,7 +830,7 @@ export const ROOMS = {
       { x: 3, z: 10, type: 'graffiti', dialogId: 'stairwell_graffiti' },
       { x: 0, z: 10, type: 'poster', dialogId: 'poster_stair_1' },
       // Network Ghost signal booster (east wall, upper section)
-      { x: 3, z: 5, type: 'poster', dialogId: 'network_booster_stairwell' },
+      { x: 3, z: 5, type: 'poster', dialogId: 'network_booster_stairwell', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     playerSpawn: { x: 2, z: 18 },
   },

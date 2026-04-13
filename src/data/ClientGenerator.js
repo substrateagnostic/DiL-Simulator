@@ -131,7 +131,7 @@ export const POSITIVE_ATTRIBUTES = [
     label: 'High Growth Potential',
     desc: 'Strong earning prospects, great for metrics',
     buff: { atk: 1, spd: 1 },
-    angerDelta: 0,
+    angerDelta: -1,
   },
   {
     id: 'low_maintenance',
@@ -145,7 +145,7 @@ export const POSITIVE_ATTRIBUTES = [
     label: 'Large Estate',
     desc: 'Significant AUM boosts your book of business',
     buff: { atk: 3 },
-    angerDelta: 0,
+    angerDelta: -1,
   },
   // ── Phase 7: New positive attributes ────────────────────────────────────
   {
@@ -191,7 +191,7 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'Litigious History',
     desc: 'Has sued 3 previous advisors for "bad advice"',
     debuff: { def: -3 },
-    angerDelta: 3,
+    angerDelta: 2,
   },
   {
     id: 'demanding',
@@ -212,7 +212,7 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'Nightmare Tax Situation',
     desc: '7 states, 2 offshore accounts, 3 shell LLCs',
     debuff: { def: -2 },
-    angerDelta: 1,
+    angerDelta: 2,
   },
   {
     id: 'fomo',
@@ -234,14 +234,14 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'Family Feud',
     desc: 'Three siblings, three lawyers, zero agreement',
     debuff: { def: -2, atk: -1 },
-    angerDelta: 3,
+    angerDelta: 2,
   },
   {
     id: 'social_media',
     label: 'Social Media Complainant',
     desc: 'Live-tweets every meeting, 200K followers',
     debuff: { def: -3 },
-    angerDelta: 3,
+    angerDelta: 2,
   },
   {
     id: 'day_trader',

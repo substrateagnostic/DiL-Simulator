@@ -57,13 +57,13 @@ export const ENEMY_AI_PATTERNS = {
     // Random with self-heal tendency
     pattern: 'tactical',
     healThreshold: 0.6,
-    debuffChance: 0.4,
+    debuffChance: 0.2,
   },
   corporate_lawyer: {
-    // Stun then heavy attack
-    pattern: 'escalating',
-    sequence: ['cease_desist', 'legal_jargon', 'billable_assault'],
-    randomAfter: true,
+    // Opens with one stun, then cycles mostly attacks with occasional confuse
+    pattern: 'strategic',
+    phase1: ['cease_desist'],
+    phase2: ['billable_assault', 'billable_assault', 'legal_jargon'],
   },
   rachel_boss: {
     // 3-phase boss - handled by phase system in CombatEngine

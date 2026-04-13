@@ -1,6 +1,77 @@
-# Session Handoff — April 10, 2026
+# Session Handoff — April 12, 2026
 
 ## What Was Done This Session
+
+Achievement system expansion, momentum rebalance, cosmetic unlock fixes, roguelite balance pass, and documentation reorganisation.
+
+---
+
+### Cosmetic Unlock Fixes
+
+1. **Three cosmetics permanently unobtainable** — `tin_foil_hat`, `executives_fedora`, and `janitors_keyring` referenced flags (`archive_found`, `executive_floor_visited`, `janitor_confronted`) that were never set anywhere in the codebase. Fixed:
+   - `archive_found` — set alongside `visited_archive` in ExplorationState room-entry block for `archive`.
+   - `executive_floor_visited` — new block added to `_changeRoom()` that sets the flag on first entry to `executive_floor`.
+   - `janitor_confronted` — added `set_flag` action node at position 19 in `janitor_act3` dialog (all subsequent node indices in that dialog shifted +1).
+
+2. **Golden Calculator unlock too late** — was gated on `algorithm_defeated` (post-final boss). Changed to `regional_director_defeated` (penthouse mid-chain) in `cosmetics.js` so it's obtainable before the final fight.
+
+---
+
+### Roguelite Anger Ratio Rebalance
+
+3. **Negative client attributes averaged +2.2 anger delta vs positives at −1.0** — net anger per accepted client was +1.2, making the meter punishing over time. Targeted fix in `ClientGenerator.js`:
+   - `litigious` angerDelta: 3 → 2
+   - `family_feud` angerDelta: 3 → 2
+   - `social_media` angerDelta: 3 → 2
+   - `complex_tax` angerDelta: 1 → 2
+   - `high_growth` angerDelta: 0 → −1
+   - `large_estate` angerDelta: 0 → −1
+
+---
+
+### Janitor Riddle Dead-End Fix
+
+4. **Wrong answer ended dialog with no retry path** — on re-entry the full intro replayed, and if the node list drifted the retry could silently fall to `end`. All three janitor riddles now use a `riddle_X_attempted` condition gate at node 0:
+   - Node 0: condition — `ifTrue` jumps to the riddle question, `ifFalse` continues to node 1.
+   - Node 1: `set_flag riddle_X_attempted`, falls through to node 2 (intro text).
+   - Node 2: intro text → node 3 (riddle question).
+   - Wrong-answer paths end without setting the `janitor_riddle_X_done` flag, so re-entry retries cleanly.
+
+---
+
+### Momentum (Confidence Bar) Rebalance
+
+5. **Assert Dominance nearly unreachable** — base gain of +5 required ~20 hits and players were spending at 25%/50%, resetting progress. Two changes in `CombatEngine.js`:
+   - Base gain per hit: `5 +` → `10 +` (formula: `10 + (crit?10:0) + (super?10:0) + (combo?5:0)`).
+   - Removed all momentum drain from incoming damage and stuns (three `_loseMomentum(10)` calls removed). Momentum now only decreases when a spending move is used.
+
+---
+
+### Achievement System Expansion
+
+6. **Removed 3 individual Henderson achievements** — `karen_slayer`, `chad_bested`, `grandma_survived` removed from `AchievementManager.js`. Only `hendersons_done` (all three defeated) remains as the Henderson milestone.
+
+7. **Added 7 act-completion achievements** — one per act (`act1_complete` through `act7_complete` / `algorithm_defeated` flags), fired from `ACT_ACHIEVEMENT_FLAGS` listener in ExplorationState.
+
+8. **Added 5 combat mastery achievements** — `second_opinion` (Second Wind used), `nothing_to_lose` (Desperate Gamble used), `all_in` (All In chosen), `follow_through` (combo hit), `perfect_form` (perfect Brace QTE). Achievement checks added in `CombatState.js`.
+
+9. **Added 5 roguelite achievements** — `dedicated` (25 clients accepted), `supply_run` (all three shop categories purchased), `hard_pass` (decline after winning), `dream_client` (no negative attributes), `high_roller` (5M+ in assets). `client_accepted` ctx now carries `assets` and `attributes`; `client_declined` event added in ExplorationState.
+
+10. **Shop category tracking** — `ShopState._purchase()` now sets `bought_category_<consumable|upgrade|decor>` flag before calling `AchievementManager.check()`. Required for Supply Run achievement.
+
+11. **Total achievements: 28** — Story (2), Act Completions (7), Combat Mastery (9), Leveling (3), Roguelite (7).
+
+---
+
+### Documentation Reorganisation
+
+12. **Created `Gameplay.md`** — moved Repeatable Reception Roguelite, Item Reference, Achievements, Cosmetics, and Attributes sections out of `Quest.md` into new `Gameplay.md` at project root. `Quest.md` now ends with a pointer to `Gameplay.md`.
+
+13. **`CLAUDE.md` updated** — AchievementManager event list, momentum no-drain rule, 6-param `showMainMenu` signature, shop category flags, janitor riddle retry pattern, `Gameplay.md` added to Reference Files.
+
+---
+
+## Previous Session (April 10, 2026)
 
 Full audit and bug-fix pass on Acts 5–7 and all six Alex IT subquests, plus the three standalone side quests.
 

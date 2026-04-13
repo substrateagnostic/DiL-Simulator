@@ -30,7 +30,7 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 - **`InputManager`** — Keyboard state tracker. Use `isJustPressed()` / `isConfirmPressed()` / `isCancelPressed()`.
 - **`AudioManager`** — Music and SFX playback.
 - **`SaveManager`** — localStorage persistence. Auto-save fires after every room transition and every story combat victory. Toast notification is shown on every save.
-- **`AchievementManager`** — Checks and unlocks achievements stored in a separate localStorage key. Call `AchievementManager.check(player, { event: 'event_name' })` after key game events. Shows a toast on unlock.
+- **`AchievementManager`** — Checks and unlocks achievements stored in a separate localStorage key. Call `AchievementManager.check(player, { event: 'event_name' })` after key game events. Shows a toast on unlock. Event strings in use: `combat_victory`, `power_move_used`, `brace_success`, `retaliate_used`, `weakness_hit`, `second_wind_used`, `desperate_gamble_used`, `all_in_used`, `combo_hit`, `perfect_brace`, `shop_purchase`, `client_accepted`, `client_declined`.
 
 ### State Stack (`src/states/`)
 
@@ -55,9 +55,10 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 - **Vulnerability window**: enemy is `vulnerable = 1` after using Heal or Confuse. The next player hit deals 1.5× and clears the flag. Decrements in `processTurnStart('enemy')` if not consumed.
 - **Follow Through combo**: if the enemy has any active debuff (negative stat buff) when the player attacks, damage is ×1.25 and `result.combo = true`.
 - **Momentum/Confidence bar** (0–100): gains from hits, crits, weakness hits, combos; loses from big incoming hits and stuns.
-  - At 25+: `playerPressAdvantage()` — moderate attack + DEF debuff on enemy, costs 25 momentum.
+  - At `pressAdvantageCost`+: `playerPressAdvantage()` — moderate attack + DEF debuff on enemy. Cost scales with SPD: `max(15, 25 − floor((spd − 8) × 0.5))`. Use `CombatEngine.getPressAdvantageCost()` to read the current cost; never hardcode 25. Pass the result as the sixth arg to `CombatHUD.showMainMenu` so the button label stays in sync.
   - At 50+: `playerSecondWind()` — restore 25% HP, clear one status, costs 50 momentum.
   - At 100: `playerPowerMove()` ("Assert Dominance") — ignores 75% DEF, resets bar to 0.
+  - Base gain is `10 + (crit?10:0) + (super?10:0) + (combo?5:0)` per hit. Momentum does **not** drain from incoming damage or stuns — only from spending moves.
 - **Brace** (QTE): `CombatState._showBraceMiniGame()` runs a timed bar mini-game before calling `playerBrace(quality)`. Quality is `'perfect'`/`'good'`/`'miss'` — each gives different DEF bonus and duration. A successful brace halves the next incoming hit and sets `player.retaliateReady = true`.
 - **Retaliate** (QTE): `CombatState._showRetaliateQTE()` first shows a length-selection screen (3–6 keys, styled like Desperate Gamble). The chosen length sets a base multiplier (3→0.75×, 4→1.0×, 5→1.25×, 6→1.5×). `_runRetaliateSequence()` then runs the memorize/input loop; final multiplier = `base × (correct/total)`. Calls `playerRetaliate(multiplier)` (22 base power, +15 momentum). Only available when `retaliateReady` is true.
 - **Desperate Gamble**: Available when player HP < 25%. `CombatState._showDesperateGamble()` presents a risk menu (`safe`/`risky`/`all_in`). Calls `playerDesperateGamble(risk)` — damage scales with risk but `all_in` can backfire.
@@ -70,7 +71,7 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 
 - **`enemyOverrides`**: `CombatState` accepts an optional fourth constructor argument `enemyOverrides = {}` which is spread over `ENEMY_STATS[id]` after copying, allowing per-fight stat injection without mutating global data. Use this for scripted fights (e.g., one-shot tutorial: `enemyOverrides: { atk: 999 }`). Pass it through `_startCombat()` → `new CombatState(..., enemyOverrides)` → `new CombatEngine(..., enemyOverrides)`.
 
-**`CombatHUD.showMainMenu` signature**: `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP)` — pass all five. Tiered momentum buttons, Retaliate, and Desperate Gamble are injected dynamically based on state. No XP bar in combat HUD — XP progress is only shown in the Stats tab of MenuState.
+**`CombatHUD.showMainMenu` signature**: `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP, pressAdvantageCost = 25)` — pass all six. The sixth argument controls the Press Advantage threshold and button label; get it from `this.engine.getPressAdvantageCost()` in `CombatState`. Tiered momentum buttons, Retaliate, and Desperate Gamble are injected dynamically based on state. No XP bar in combat HUD — XP progress is only shown in the Stats tab of MenuState.
 
 ### World (`src/world/`)
 
@@ -110,7 +111,7 @@ All game data is plain JS objects/exports:
 ### UI (`src/ui/`)
 
 All UI is DOM-based HTML/CSS overlaid on the canvas:
-- **`CombatHUD`** — `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP)`. Renders Brace, Retaliate (when ready), Desperate Gamble (when lowHP), tiered momentum buttons (25/50/100), telegraph row, and Confidence bar. `updateTelegraph(hint)` sets the enemy intent text. `showTaunt(text, side)` renders speech bubbles on `'player'` or `'enemy'` side.
+- **`CombatHUD`** — `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP, pressAdvantageCost = 25)`. Renders Brace, Retaliate (when ready), Desperate Gamble (when lowHP), tiered momentum buttons (25/50/100), telegraph row, and Confidence bar. `updateTelegraph(hint)` sets the enemy intent text. `showTaunt(text, side)` renders speech bubbles on `'player'` or `'enemy'` side.
 - **`DialogBox`** — `onAdvance` / `onChoice` callbacks; `skipToEnd()` / `isComplete()`. Space blocked on choice nodes (only Enter/click).
 - **`TransitionOverlay`** — `fadeOut/fadeIn`, `wipeDownOut/wipeDownIn` (descend), `wipeUpOut/wipeUpIn` (ascend).
 - **`TouchControls`** — Injects into `InputManager.keys`; activates only on touch devices.
@@ -131,7 +132,9 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **NPC conditional spawning**: set `condition: { flag: 'x' }` or `condition: { notFlag: 'x' }` in the room data NPC entry. NPCs with any condition initialize hidden; no extra code needed. Multiple entries with the same `id` but different conditions are used for state-dependent dialogs (e.g., the Archive janitor has 5 conditional entries covering each quest stage). **Limitation**: a single condition object supports exactly one `flag` AND/OR one `notFlag`. For compound conditions (e.g., "all 4 coworkers met"), derive a synthetic flag in `ExplorationState._refreshStoryProgress()` and gate on that instead.
 - **Reception roguelite loop**: `ClientGenerator` procedurally generates enemies. After victory, `ClientReviewState` is pushed. `bossAnger` player flag drives branching. On client acceptance: AUM earned = max(50, floor(assets × 0.01)). Beneficiary chains: use `generateBeneficiaryChain()` + `applyChainModifiers()`.
 - **AUM currency**: stored in `player.stats.aum`. Earned from accepted reception clients. Spent in `ShopState`. Permanent stat upgrades from the shop modify `player.stats` directly.
-- **Achievements**: `AchievementManager.check(player, ctx)` is called after combat victories, level-ups, brace successes, weakness hits, power moves, retaliation, and client acceptances. The `ctx.event` string is matched against each achievement's `check` function.
+- **Achievements**: `AchievementManager.check(player, ctx)` is called after key game events. The `ctx.event` string is matched against each achievement's `check` function. For `client_accepted`, ctx must also carry `assets` (number) and `attributes` (array with `.positive` booleans) for the Dream Client / High Roller checks. `client_declined` fires in the decline branch of the reception loop. Act-completion achievements fire from the `flag-set` EventBus listener in ExplorationState via the `ACT_ACHIEVEMENT_FLAGS` array — no explicit event string needed, just call `check(player, {})` when any of those flags is set.
+- **Shop category flags**: `ShopState` sets `bought_category_consumable`, `bought_category_upgrade`, and `bought_category_decor` on `player` after each successful purchase. These drive the Supply Run achievement.
+- **Janitor riddle retry pattern**: Each riddle dialog starts with a `condition` node checking `riddle_X_attempted`. On first entry (`ifFalse`) it sets that flag then falls through to the intro text. On retry (`ifTrue`) it jumps directly to the riddle question, skipping the intro. Wrong-answer paths end without setting the `janitor_riddle_X_done` flag, so the player can re-enter and try again. When adding new riddle dialogs, always insert this two-node gate at positions 0 and 1.
 - **Auto-save**: `ExplorationState._autoSave()` calls `SaveManager.save(player.serialize())` and shows a toast every time. Fires on every room transition and every story combat victory.
 - **Quest objective display**: The HUD objective text comes from `_getStoryObjective()` in `ExplorationState` (flag-based hardcoded strings), **not** from `quests/index.js` or `QUEST_OBJECTIVES`. Edit `_getStoryObjective()` to change what the player sees.
 - **Leveling**: 15 levels, exponential XP curve. Level 1→2 costs 325 XP (~5 reception fights at 65 XP each). Story bosses alone yield ~835 XP max, landing the player around level 4. Levels 5–10 require roguelite grinding; 11–15 are completionist.
@@ -184,5 +187,6 @@ Critical flags that are easy to get wrong (not derivable from a single file):
 ## Reference Files
 
 - `HANDOFF.md` — recent bug fixes and known issues; check at session start.
-- `Quest.md` — full quest list with objectives, XP rewards, and item reference. Authoritative source for story structure and side quest steps.
+- `Quest.md` — full quest list with objectives and XP rewards. Authoritative source for story structure and side quest steps.
+- `Gameplay.md` — roguelite loop, item reference, achievements, cosmetics, and combat attributes. Authoritative source for those systems.
 - `.claude/plans/eager-nibbling-shannon.md` — expansion plans (Phases 1–9). Create `.claude/plans/` if it doesn't exist yet.

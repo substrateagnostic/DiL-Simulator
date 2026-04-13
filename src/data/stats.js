@@ -190,10 +190,12 @@ export const PLAYER_ABILITIES = {
   },
   temporal_audit: {
     name: 'Temporal Audit',
-    description: 'Audit across timelines — take two actions this turn',
+    description: 'Audit across timelines — reduce enemy DEF and take two actions this turn',
     cost: 45,
     type: 'special',
     special: 'double_turn',
+    debuffAmount: { def: -6 },
+    debuffDuration: 2,
     unlockQuest: 'daves_legacy',
   },
   notarized_strike: {
@@ -370,7 +372,7 @@ export const ENEMY_STATS = {
     def: 12,
     spd: 6,
     xpReward: 45,
-    abilities: ['mandatory_training', 'formal_warning', 'sensitivity_seminar'],
+    abilities: ['mandatory_training', 'policy_violation', 'formal_warning', 'sensitivity_seminar', 'hostile_work_complaint'],
     weakness: 'social', resistance: null,
   },
   restructuring_analyst: {
@@ -386,8 +388,8 @@ export const ENEMY_STATS = {
   },
   brand_consultant: {
     name: 'Brand Consultant',
-    maxHP: 260,
-    hp: 260,
+    maxHP: 420,
+    hp: 420,
     atk: 9,
     def: 8,
     spd: 14,
@@ -482,9 +484,9 @@ export const ENEMY_STATS = {
     abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'],
     weakness: 'technical', resistance: 'social',
     phases: [
-      { hpThreshold: 0.7, abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'] },
-      { hpThreshold: 0.35, abilities: ['predictive_model', 'algorithmic_trading', 'data_harvest'] },
-      { hpThreshold: 0, abilities: ['total_optimization', 'algorithmic_trading', 'predictive_model'] },
+      { hpThreshold: 0.7, abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment', 'system_overload'] },
+      { hpThreshold: 0.35, abilities: ['predictive_model', 'algorithmic_trading', 'data_harvest', 'process_termination', 'system_overload'] },
+      { hpThreshold: 0, abilities: ['total_optimization', 'algorithmic_trading', 'predictive_model', 'process_termination', 'pattern_recognition'] },
     ],
   },
 };
@@ -721,6 +723,16 @@ export const ENEMY_ABILITIES = {
     '"Perhaps we should discuss your communication style." You feel vaguely guilty.',
     '"Let\'s unpack your behavior in that last meeting." Your confidence shrinks.',
   ]},
+  policy_violation: { name: 'Policy Violation', power: 14, type: 'attack', tag: 'legal', messages: [
+    '"Section 4.7, paragraph B clearly states—" The citation hits like a hammer.',
+    'The HR Rep slides a policy document across the desk. Highlighted. Annotated. Devastating.',
+    '"You are in direct violation of company policy." The words land like a punch.',
+  ]},
+  hostile_work_complaint: { name: 'Hostile Work Environment', power: 24, type: 'attack', tag: 'social', messages: [
+    '"I\'ve filed a hostile work environment complaint on your behalf. Against you."',
+    'The HR Rep produces a thick stack of complaints. All signed. All notarized.',
+    '"Twelve coworkers have reported your behavior." The bureaucratic weight is crushing.',
+  ]},
 
   // Restructuring Analyst
   downsize: { name: 'Downsize', power: 18, type: 'attack', messages: [
@@ -866,7 +878,7 @@ export const ENEMY_ABILITIES = {
     '"Consider this a correction to your career trajectory."',
     '"Markets are efficient. Your employment is not." A devastating blow!',
   ]},
-  quarterly_target: { name: 'Quarterly Target', power: 0, type: 'dot', duration: 3, messages: [
+  quarterly_target: { name: 'Quarterly Target', power: 22, type: 'dot', duration: 3, messages: [
     '"You missed Q3 targets by 0.3%. This will be on your record."',
     '"Your quarterly performance is trending down. Again."',
     '"Every quarter you underperform, the board takes notice."',
@@ -901,6 +913,16 @@ export const ENEMY_ABILITIES = {
     '"Humans are the bottleneck. I am the solution." The Algorithm unleashes its full power.',
     '"OPTIMIZATION COMPLETE. HUMAN INPUT: DEPRECATED." Reality warps!',
     '"All inefficiencies will be eliminated. Starting with you." Maximum power!',
+  ]},
+  process_termination: { name: 'Process Termination', power: 0, type: 'stun', duration: 1, messages: [
+    '"PROCESS TERMINATED." Your action is forcibly cancelled.',
+    '"You are running an unauthorized process. Terminating." You freeze.',
+    '"Input rejected. Rebooting user." You can\'t move.',
+  ]},
+  system_overload: { name: 'System Overload', power: 20, type: 'dot', duration: 3, messages: [
+    'The Algorithm floods your cognitive load. Damage accumulates.',
+    '"Overclocking human capacity." Data pours into your mind, turn after turn.',
+    '"Distributed processing — your patience is the shared resource." Damage begins building.',
   ]},
 };
 

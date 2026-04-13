@@ -309,30 +309,50 @@ export class TitleState {
   _showControls() {
     if (this.controlsOverlay) return;
 
+    const row = (keys, action) => {
+      const badges = keys.map(k => `<span class="controls-key">${k}</span>`).join('<span class="controls-sep">/</span>');
+      return `<div class="controls-row"><div class="controls-keys">${badges}</div><span class="controls-action">${action}</span></div>`;
+    };
+
+    const touchSection = 'ontouchstart' in window ? `
+      <div class="controls-section-header">Touch</div>
+      ${row(['D-Pad'], 'Move')}
+      ${row(['A'], 'Interact / Confirm')}
+      ${row(['B'], 'Back / Menu')}
+      ${row(['Tap dialog'], 'Advance text')}
+    ` : '';
+
     this.controlsOverlay = document.createElement('div');
     this.controlsOverlay.className = 'menu-overlay';
     this.controlsOverlay.innerHTML = `
-      <div class="menu-panel">
+      <div class="menu-panel controls-panel">
         <div class="menu-title">CONTROLS</div>
-        <div style="color: #ddd; font-family: 'VT323', monospace; font-size: 22px; line-height: 1.8;">
-          <div><span style="color: #e94560;">WASD / Arrows</span> - Move</div>
-          <div><span style="color: #e94560;">E / Enter</span> - Interact / Confirm</div>
-          <div><span style="color: #e94560;">ESC</span> - Back / Menu</div>
-          <div><span style="color: #e94560;">Space</span> - Advance Dialog</div>
-          ${'ontouchstart' in window ? `
-          <div style="margin-top: 12px; border-top: 1px solid #333; padding-top: 12px;">
-            <div style="color: #53a8b6; font-size: 18px; margin-bottom: 6px;">TOUCH CONTROLS</div>
-            <div><span style="color: #e94560;">D-Pad</span> - Move</div>
-            <div><span style="color: #64dc64;">A Button</span> - Interact / Confirm</div>
-            <div><span style="color: #dc6464;">B Button</span> - Back / Menu</div>
-            <div><span style="color: #e94560;">Tap Dialog</span> - Advance Text</div>
-          </div>
-          ` : ''}
-          <div style="margin-top: 16px; color: #888; font-size: 18px;">
-            "Your patience is your HP.<br>Your coffee is your mana.<br>Welcome to corporate America."
-          </div>
+        <div class="controls-body">
+          <div class="controls-section-header">Exploration</div>
+          ${row(['W A S D', '↑ ↓ ← →'], 'Move')}
+          ${row(['E', 'Enter'], 'Interact')}
+          ${row(['Esc'], 'Open Pause Menu')}
+
+          <div class="controls-section-header">Combat</div>
+          ${row(['↑ ↓'], 'Navigate actions')}
+          ${row(['Enter'], 'Confirm selection')}
+          ${row(['Esc'], 'Cancel / Back')}
+
+          <div class="controls-section-header">Dialog &amp; Menus</div>
+          ${row(['Space', 'E', 'Enter'], 'Advance dialog')}
+          ${row(['↑ ↓'], 'Navigate')}
+          ${row(['← →'], 'Change category / tab')}
+          ${row(['Esc'], 'Close / Back')}
+
+          ${touchSection}
         </div>
-        <div class="menu-item" style="margin-top: 20px;" id="controls-back">Back</div>
+        <div class="controls-flavor">
+          "Your patience is your HP. Your coffee is your mana.<br>Welcome to corporate America."
+        </div>
+        <div class="menu-item" id="controls-back">
+          <span class="menu-item-label">Back</span>
+          <span class="menu-item-arrow">▶</span>
+        </div>
       </div>
     `;
     document.getElementById('ui-overlay').appendChild(this.controlsOverlay);
