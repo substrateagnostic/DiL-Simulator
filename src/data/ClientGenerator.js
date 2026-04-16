@@ -103,6 +103,46 @@ const CLIENT_TYPES = [
   },
 ];
 
+// ── Post-Game Tier 5 Client Types ────────────────────────────────────────────
+// Unlocked after defeating The Algorithm. Assets 20M–100M, XP 200–350.
+const POST_GAME_CLIENT_TYPES = [
+  {
+    type: 'UHNWI',
+    visualId: 'karen',
+    assetMin: 30_000_000,
+    assetMax: 100_000_000,
+    abilities: ['speak_to_manager', 'demand_guarantees', 'call_the_other_advisor'],
+  },
+  {
+    type: 'Sovereign Wealth Consultant',
+    visualId: 'chad',
+    assetMin: 50_000_000,
+    assetMax: 100_000_000,
+    abilities: ['demand_guarantees', 'portfolio_panic', 'trust_fund_tantrum'],
+  },
+  {
+    type: 'Offshore Dynasty',
+    visualId: 'grandma',
+    assetMin: 25_000_000,
+    assetMax: 80_000_000,
+    abilities: ['call_the_other_advisor', 'speak_to_manager', 'demand_guarantees'],
+  },
+  {
+    type: 'Corporate Pension Fund',
+    visualId: 'intern',
+    assetMin: 40_000_000,
+    assetMax: 100_000_000,
+    abilities: ['portfolio_panic', 'demand_guarantees', 'speak_to_manager'],
+  },
+  {
+    type: 'Tech Billionaire Exit',
+    visualId: 'chad',
+    assetMin: 20_000_000,
+    assetMax: 75_000_000,
+    abilities: ['client_bro_down', 'trust_fund_tantrum', 'call_the_other_advisor'],
+  },
+];
+
 const RISK_PROFILES = [
   'Very Conservative',
   'Conservative',
@@ -316,22 +356,26 @@ function generateVisualConfig(firstName, clientType) {
   return { bodyColor, pantsColor, shirtColor, tieColor, skinColor, hairColor, hairStyle, accessories };
 }
 
-function scaleEnemyStats(assets, playerLevel = 1) {
-  const MAX_ASSET = 25_000_000; // raised for new high-AUM types
+function scaleEnemyStats(assets, playerLevel = 1, postGame = false) {
+  const MAX_ASSET = postGame ? 100_000_000 : 25_000_000;
   const t = Math.min(1, assets / MAX_ASSET);
   // Level scaling: each player level adds ~8% to base stats
   const lvlScale = 1 + (playerLevel - 1) * 0.08;
+  const xpReward = postGame
+    ? Math.round(200 + t * 150)   // 200–350 post-game
+    : Math.round(60 + t * 60);    // 60–120 normal
   return {
     maxHP: Math.round((100 + t * 160) * lvlScale),
     atk:   Math.round((6  + t * 16)  * lvlScale),
     def:   Math.round((3  + t * 15)  * lvlScale),
     spd:   Math.round((4  + t * 10)  * lvlScale),
-    xpReward: Math.round(60 + t * 60),
+    xpReward,
   };
 }
 
-export function generateClient(overrideLastName, playerLevel = 1) {
-  const typeDef = pick(CLIENT_TYPES);
+export function generateClient(overrideLastName, playerLevel = 1, postGame = false) {
+  const pool = postGame ? POST_GAME_CLIENT_TYPES : CLIENT_TYPES;
+  const typeDef = pick(pool);
   const lastName = overrideLastName || pick(LAST_NAMES);
   const firstName = pick(FIRST_NAMES);
   const name = `${firstName} ${lastName}`;
@@ -362,7 +406,7 @@ export function generateClient(overrideLastName, playerLevel = 1) {
   const attributes = [...posAttrs, ...negAttrs];
   const netAngerDelta = attributes.reduce((sum, a) => sum + a.angerDelta, 0);
 
-  const scaled = scaleEnemyStats(assets, playerLevel);
+  const scaled = scaleEnemyStats(assets, playerLevel, postGame);
   const enemyStats = {
     name,
     maxHP: scaled.maxHP,

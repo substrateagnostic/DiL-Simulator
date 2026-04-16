@@ -14,6 +14,16 @@ Talk to the reception desk to start a client encounter. Win the combat, then acc
 
 AUM is the shop currency. Spend it at the **Supply Shop** in the Break Room (interact with the vending machine area).
 
+### Post-Game Tier 5 (after defeating The Algorithm)
+
+Once The Algorithm is defeated, the reception roster upgrades to elite clients. Diane will let you know.
+
+- **Client pool:** UHNWI, Sovereign Wealth Consultant, Offshore Dynasty, Corporate Pension Fund, Tech Billionaire Exit (assets 20M–100M)
+- **Win combat:** 200–350 XP (formula: `Math.round(200 + t * 150)` against a 100M asset ceiling)
+- **Accept/Decline:** Same rules as normal reception
+
+This is the intended path to level 15.
+
 ---
 
 ## Item Reference

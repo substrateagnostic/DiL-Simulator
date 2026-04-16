@@ -173,7 +173,7 @@ export class ExplorationState {
         // Alex IT router: chain into the chosen dialog after router ends
         // Only queue pending dialogs when flags are set to truthy values — not when cleared
         if (key === 'alex_story_chosen' && value) {
-          const hasAct2 = this.player.getFlag('briefing_complete') && !this.player.getFlag('knows_server_secret');
+          const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret');
           this._pendingDialog = hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
           // Reset immediately so the flag can fire again for future story acts
           this.player.setFlag('alex_story_chosen', false);
@@ -816,6 +816,17 @@ export class ExplorationState {
       }
     }
 
+    const postGame = !!this.player.getFlag('algorithm_defeated');
+
+    // One-time unlock toast on first post-game reception entry
+    if (postGame && !this.player.getFlag('postGameReceptionUnlocked')) {
+      this.player.setFlag('postGameReceptionUnlocked', true);
+      setTimeout(() => this._showToast(
+        'Diane: "Word got out. The clients you\'re seeing now are in a different league entirely."',
+        'info'
+      ), 400);
+    }
+
     const existing = this.player.getFlag('currentClient');
     if (existing) {
       let client;
@@ -824,7 +835,7 @@ export class ExplorationState {
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
-      const client = generateClient(null, this.player.stats.level);
+      const client = generateClient(null, this.player.stats.level, postGame);
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
@@ -947,7 +958,8 @@ export class ExplorationState {
       return lead;
     }
 
-    return generateClient(null, this.player.stats.level);
+    const postGame = !!this.player.getFlag('algorithm_defeated');
+    return generateClient(null, this.player.stats.level, postGame);
   }
 
   _updateChainState(clientData, accepted) {
@@ -1338,7 +1350,7 @@ export class ExplorationState {
 
     // Alex IT: when story beat is available, offer choice between story and side quests
     if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
-      const hasAct2 = this.player.getFlag('briefing_complete') && !this.player.getFlag('knows_server_secret') && DIALOGS.alex_it_act2;
+      const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret') && DIALOGS.alex_it_act2;
       const hasAct3 = this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done') && DIALOGS.alex_it_act3;
 
       // Player chose story from the router — go straight to the story dialog
@@ -1370,6 +1382,11 @@ export class ExplorationState {
           return sideQuest;
         }
       }
+    }
+
+    // Block generic act routing from firing alex_it_act2 before karen is defeated
+    if (id === 'alex_it' && !this.player.getFlag('karen_defeated') && !this.player.getFlag('read_alex_it_act2')) {
+      if (DIALOGS.alex_it_return) return 'alex_it_return';
     }
 
     if (

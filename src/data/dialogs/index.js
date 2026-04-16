@@ -189,29 +189,28 @@ export const DIALOGS = {
   // DIANE -- Reception, actually competent
   // --------------------------------------------------------------------------
   diane_intro: [
-    /* 0  */ { type: 'text', speaker: 'Diane', text: "New trust officer? I saw your onboarding paperwork. Well, what was left of it after the Intern got to it." },
-    /* 1  */ { type: 'text', speaker: 'Diane', text: "I'm Diane. I run reception, which actually means I run this entire office while everyone else runs in circles." },
-    /* 2  */ { type: 'choice', speaker: 'Diane', text: 'What do you need?', choices: [
-      { text: 'How does this place actually work?', next: 3 },
-      { text: 'What should I know about the Henderson case?', next: 8 },
-      { text: "I think I'm good, thanks.", next: 14 },
+    /* 0  */ { type: 'text', speaker: 'Diane', text: "I'm Diane. I run reception, which actually means I run this entire office while everyone else runs in circles." },
+    /* 1  */ { type: 'choice', speaker: 'Diane', text: 'What do you need?', choices: [
+      { text: 'How does this place actually work?', next: 2 },
+      { text: 'What should I know about the Henderson case?', next: 7 },
+      { text: "I think I'm good, thanks.", next: 13 },
     ]},
-    /* 3  */ { type: 'text', speaker: 'Diane', text: 'How does it work? Hah. Okay. Honestly?' },
-    /* 4  */ { type: 'text', speaker: 'Diane', text: "Ross makes decisions based on whatever business book he read that morning. The Intern executes those decisions incorrectly. Janet handles the fallout. I document everything." },
-    /* 5  */ { type: 'text', speaker: 'Diane', text: "Alex maintains the systems that are held together with duct tape and optimism. And the Janitor... well, the Janitor knows things." },
-    /* 6  */ { type: 'text', speaker: 'Diane', text: "My advice? Keep your head down, document EVERYTHING, and never CC Ross on an email unless you want a 45-minute reply about 'synergistic client engagement strategies.'" },
-    /* 7  */ { type: 'text', speaker: 'Diane', text: "Also, I keep a stash of antacids in my desk drawer. You're going to need them.", next: 2 },
-    /* 8  */ { type: 'text', speaker: 'Diane', text: 'The Henderson Trust? Oh boy.' },
-    /* 9  */ { type: 'text', speaker: 'Diane', text: "I've seen three trust officers try to mediate this family. The first one quit. The second one cried in the bathroom for forty minutes and then quit. The third one is the one who had the 'parking garage incident.'" },
-    /* 10 */ { type: 'text', speaker: 'Diane', text: "Here's what you need to know: Karen is aggressive but predictable. She'll demand to speak to a manager within four minutes of any conversation." },
-    /* 11 */ { type: 'text', speaker: 'Diane', text: "Chad is... Chad. He'll try to bro his way through fiduciary law. It won't work, but he'll be very confident about it." },
-    /* 12 */ { type: 'text', speaker: 'Diane', text: "Grandma Henderson is the one to watch. She seems sweet, but she's been managing her own investments since 1987 and she's sharper than everyone in this building combined." },
-    /* 13 */ { type: 'text', speaker: 'Diane', text: "Also -- and I probably shouldn't tell you this -- she used to work here. A long time ago. Ask the Janitor if you want to know more.", next: 2 },
-    /* 14 */ { type: 'text', speaker: 'Diane', text: "Well, good luck. And seriously -- my desk, bottom drawer, antacids. Anytime you need them." },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'met_diane', value: true, next: 16 },
-    /* 16 */ { type: 'action', action: 'give_item', item: 'antacid', quantity: 1, next: 17 },
-    /* 17 */ { type: 'text', speaker: 'Diane', text: 'Here, take one now. Consider it a welcome gift.' },
-    /* 18 */ { type: 'end' },
+    /* 2  */ { type: 'text', speaker: 'Diane', text: 'How does it work? Hah. Okay. Honestly?' },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "Ross makes decisions based on whatever business book he read that morning. The Intern executes those decisions incorrectly. Janet handles the fallout. I document everything." },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "Alex maintains the systems that are held together with duct tape and optimism. And the Janitor... well, the Janitor knows things." },
+    /* 5  */ { type: 'text', speaker: 'Diane', text: "My advice? Keep your head down, document EVERYTHING, and never CC Ross on an email unless you want a 45-minute reply about 'synergistic client engagement strategies.'" },
+    /* 6  */ { type: 'text', speaker: 'Diane', text: "Also, I keep a stash of antacids in my desk drawer. You're going to need them.", next: 1 },
+    /* 7  */ { type: 'text', speaker: 'Diane', text: 'The Henderson Trust? Oh boy.' },
+    /* 8  */ { type: 'text', speaker: 'Diane', text: "I've seen three trust officers try to mediate this family. The first one quit. The second one cried in the bathroom for forty minutes and then quit. The third one is the one who had the 'parking garage incident.'" },
+    /* 9  */ { type: 'text', speaker: 'Diane', text: "Here's what you need to know: Karen is aggressive but predictable. She'll demand to speak to a manager within four minutes of any conversation." },
+    /* 10 */ { type: 'text', speaker: 'Diane', text: "Chad is... Chad. He'll try to bro his way through fiduciary law. It won't work, but he'll be very confident about it." },
+    /* 11 */ { type: 'text', speaker: 'Diane', text: "Grandma Henderson is the one to watch. She seems sweet, but she's been managing her own investments since 1987 and she's sharper than everyone in this building combined." },
+    /* 12 */ { type: 'text', speaker: 'Diane', text: "Also -- and I probably shouldn't tell you this -- she used to work here. A long time ago. Ask the Janitor if you want to know more.", next: 1 },
+    /* 13 */ { type: 'text', speaker: 'Diane', text: "Well, good luck. And seriously -- my desk, bottom drawer, antacids. Anytime you need them." },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'met_diane', value: true, next: 15 },
+    /* 15 */ { type: 'action', action: 'give_item', item: 'antacid', quantity: 1, next: 16 },
+    /* 16 */ { type: 'text', speaker: 'Diane', text: 'Here, take one now. Consider it a welcome gift.' },
+    /* 17 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -296,52 +295,51 @@ export const DIALOGS = {
   // PRINTER -- Haunted
   // --------------------------------------------------------------------------
   printer_interact: [
-    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 40, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 25, ifFalse: 2 },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
-    /* 4  */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK WHIRRRRR*' },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'A single sheet of paper emerges. It reads, in 72-point bold Comic Sans:' },
-    /* 6  */ { type: 'condition', flag: 'printer_visit_2', ifTrue: 12, ifFalse: 7 },
-    /* 7  */ { type: 'text', speaker: 'Printer', text: 'HELP ME' },
-    /* 8  */ { type: 'text', speaker: 'Narrator', text: "You stare at the paper. The printer stares back. You're not sure how, but it does." },
-    /* 9  */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'REPLACE TONER SOUL.'" },
-    /* 10 */ { type: 'text', speaker: 'Andrew', text: "I'm going to pretend I didn't see that." },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'printer_visit_2', value: true, next: 24 },
+    // Gate: quest already done
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 34, ifFalse: 1 },
+    // Gate: toner installation stage
+    /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 21, ifFalse: 2 },
+    // Gate: requires Ross briefing — no Henderson spoilers before then
+    /* 2  */ { type: 'condition', flag: 'briefing_complete', ifTrue: 4, ifFalse: 3 },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.' It's just a printer.", next: 20 },
+    // Gate: quest already started (waiting on Alex)
+    /* 4  */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 20, ifFalse: 5 },
+    // Main encounter
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
+    /* 7  */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK WHIRRRRR*' },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: 'A single sheet of paper emerges. It reads, in 72-point bold Comic Sans:' },
+    /* 9  */ { type: 'text', speaker: 'Printer', text: 'HELP ME' },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "You stare at the paper. The printer stares back. You're not sure how, but it does." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'REPLACE TONER SOUL.' Then, before you can process that:" },
     /* 12 */ { type: 'text', speaker: 'Printer', text: 'I KNOW ABOUT THE HENDERSON FILES' },
     /* 13 */ { type: 'text', speaker: 'Andrew', text: 'What?!' },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "The printer prints another page. It's a detailed org chart of the Henderson Trust with one name circled three times in red." },
     /* 15 */ { type: 'text', speaker: 'Narrator', text: 'But the toner runs out halfway through. The circled name is illegible.' },
     /* 16 */ { type: 'text', speaker: 'Printer', text: '*sad beeping noises*' },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "The display reads: 'REPLACE TONER TO LEARN THE TRUTH.' You check. There is no replacement toner on this floor." },
-    /* 18 */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 24, ifFalse: 19 },
-    /* 19 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 1, next: 20 },
-    /* 20 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true, next: 24 },
-    /* 21 */ { type: 'end' },  // (unused — kept as safety fallback)
-    /* 22 */ { type: 'end' },  // (unused)
-    /* 23 */ { type: 'end' },  // (unused)
-    /* 24 */ { type: 'end' },
-    // --- Toner installation flow (printer_toner_quest is set) ---
-    /* 25 */ { type: 'text', speaker: 'Narrator', text: "You install the old toner cartridge Alex set aside. The printer makes a sound like a sigh of relief." },
-    /* 26 */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK CHUNK WHIRRRRRR*' },
-    /* 27 */ { type: 'text', speaker: 'Narrator', text: "Three pages print. Slowly. Deliberately. The printer seems almost dignified about it." },
-    /* 28 */ { type: 'text', speaker: 'Narrator', text: "Page 1: An internal memo from 2016 authorizing the 'admin_legacy protocol.' Signed by the Regional Manager." },
-    /* 29 */ { type: 'text', speaker: 'Narrator', text: "Page 2: A list of Henderson Trust account adjustments — small enough to avoid audit flags, large enough to matter. Over eight years." },
-    /* 30 */ { type: 'text', speaker: 'Narrator', text: "Page 3: A single note in different ink: 'If anyone is reading this — check page 47 of the trust document. Original copy is in the Archive. — D.K.'" },
-    /* 31 */ { type: 'text', speaker: 'Andrew', text: "D.K. ...Dave Kowalski? Alex's predecessor?" },
-    /* 32 */ { type: 'text', speaker: 'Printer', text: '*one quiet beep*' },
-    /* 33 */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'THANK YOU.' Then the printer powers down completely. For the first time in years, it seems at peace." },
-    /* 34 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_done', value: true, next: 35 },
-    /* 35 */ { type: 'action', action: 'give_xp', xp: 350, next: 36 },
-    /* 36 */ { type: 'text', speaker: 'Printer', text: "TWENTY-TWO YEARS OF DOCUMENTS. ALL WITNESSED. NONE FORGOTTEN. TRUTH DELIVERED.", next: 39 },
-    // --- Quest done — printer at peace ---
-    /* 37 */ { type: 'text', speaker: 'Narrator', text: "The printer sits in silence. Its display is dark. It has said everything it needed to say." },
-    /* 38 */ { type: 'end' },
-    /* 39 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP.", next: 38 },
-    // --- Soul quest gate: redirect to ethernet port if still pending ---
-    /* 40 */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 37, ifFalse: 41 },
-    /* 41 */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 42, ifFalse: 37 },
-    /* 42 */ { type: 'text', speaker: 'Narrator', text: "The printer is still, its display dark. But Alex mentioned an ethernet port on the wall right beside it — labeled 'PRINTER DIRECT.' That's what you need.", next: 38 },
+    /* 18 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 1, next: 19 },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true, next: 20 },
+    /* 20 */ { type: 'end' },
+    // Toner installation flow
+    /* 21 */ { type: 'text', speaker: 'Narrator', text: "You install the old toner cartridge Alex set aside. The printer makes a sound like a sigh of relief." },
+    /* 22 */ { type: 'text', speaker: 'Printer', text: '*CHUNK CHUNK CHUNK WHIRRRRRR*' },
+    /* 23 */ { type: 'text', speaker: 'Narrator', text: "Three pages print. Slowly. Deliberately. The printer seems almost dignified about it." },
+    /* 24 */ { type: 'text', speaker: 'Narrator', text: "Page 1: An internal memo from 2016 authorizing the 'admin_legacy protocol.' Signed by the Regional Manager." },
+    /* 25 */ { type: 'text', speaker: 'Narrator', text: "Page 2: A list of Henderson Trust account adjustments — small enough to avoid audit flags, large enough to matter. Over eight years." },
+    /* 26 */ { type: 'text', speaker: 'Narrator', text: "Page 3: A single note in different ink: 'If anyone is reading this — check page 47 of the trust document. Original copy is in the Archive. — D.K.'" },
+    /* 27 */ { type: 'text', speaker: 'Andrew', text: "D.K. ...Dave Kowalski? Alex's predecessor?" },
+    /* 28 */ { type: 'text', speaker: 'Printer', text: '*one quiet beep*' },
+    /* 29 */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'THANK YOU.' Then the printer powers down completely. For the first time in years, it seems at peace." },
+    /* 30 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_done', value: true, next: 31 },
+    /* 31 */ { type: 'action', action: 'give_xp', xp: 350, next: 32 },
+    /* 32 */ { type: 'text', speaker: 'Printer', text: "TWENTY-TWO YEARS OF DOCUMENTS. ALL WITNESSED. NONE FORGOTTEN. TRUTH DELIVERED.", next: 33 },
+    /* 33 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP.", next: 20 },
+    // Quest done state
+    /* 34 */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 37, ifFalse: 35 },
+    /* 35 */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 36, ifFalse: 37 },
+    /* 36 */ { type: 'text', speaker: 'Narrator', text: "The printer is still, its display dark. But Alex mentioned an ethernet port on the wall right beside it — labeled 'PRINTER DIRECT.' That's what you need.", next: 20 },
+    /* 37 */ { type: 'text', speaker: 'Narrator', text: "The printer sits in silence. Its display is dark. It has said everything it needed to say.", next: 20 },
   ],
 
   // --------------------------------------------------------------------------
@@ -594,7 +592,7 @@ export const DIALOGS = {
   alex_it_router: [
     /* 0 */ { type: 'text', speaker: 'Alex from IT', text: "Hey. I've got a couple things going on. What do you want to talk about?" },
     /* 1 */ { type: 'choice', speaker: 'Alex from IT', prompt: "What's on your mind?", choices: [
-      { text: 'The encrypted partition. What did you find?', next: 2 },
+      { text: "You look like you're about to combust. What is it?", next: 2 },
       { text: 'Got any IT jobs for me?', next: 5 },
     ]},
     /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_story_chosen', value: true, next: 3 },
@@ -609,9 +607,9 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   alex_it_act2: [
     /* 0  */ { type: 'text', speaker: 'Alex from IT', text: 'Dude. DUDE. You need to see this.' },
-    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Remember that encrypted partition I told you about? The one pinging the Caymans?" },
-    /* 2  */ { type: 'text', speaker: 'Andrew', text: "The one that was 'probably nothing'?" },
-    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. It's not nothing. I got past the first layer of encryption. Took me three Red Bulls and a flashback to my CompTIA cert exam, but I did it." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "I found an encrypted partition buried in the server. Someone hid it deep — it only shows up if you know exactly where to look. And it's been pinging servers in the Cayman Islands every night since 2016." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "...pinging the Caymans? From a trust department server?" },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. I cracked the first layer of encryption. Took me three Red Bulls and a flashback to my CompTIA cert exam, but I got through." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "It's a database. Of trust account modifications. Going back to 2016. None of them are in our official records." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "And here's the thing -- every single modification is on Henderson family accounts." },
     /* 6  */ { type: 'choice', speaker: 'Alex from IT', text: "Someone's been making unauthorized changes to the Henderson Trust for EIGHT YEARS, bro.", choices: [

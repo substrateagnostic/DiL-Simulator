@@ -265,11 +265,13 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 ### The Printer from Hell
 *Something is wrong with the office printer. More wrong than usual.*
 
+> **Unlocks after:** Speaking to Ross and receiving the Henderson briefing (`briefing_complete`).
+
 | Step | What to do |
 |------|-----------|
-| 1 | Investigate the haunted printer |
+| 1 | Interact with the printer in the Cubicle Farm — it prints on its own and mentions the Henderson files |
 | 2 | Ask Alex from IT about the printer |
-| 3 | Find the printer's true purpose |
+| 3 | Find and install the toner to learn the truth |
 
 **Reward:** 350 XP. *(Note: the Notarized Strike ability comes from the Printer's Soul subquest, not this one.)*
 
@@ -278,10 +280,12 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 ### Server Room Secrets
 *The server room holds more than servers.*
 
+> **Unlocks after:** Meeting Alex from IT (`met_alex_it`), then inspecting the server rack at x:1, z:3 in the Server Room.
+
 | Step | What to do |
 |------|-----------|
-| 1 | Explore the server room |
-| 2 | Help Alex with his discovery |
+| 1 | Inspect the server rack in the Server Room (left row) — spot the `admin_legacy` note |
+| 2 | Talk to Alex about what you found |
 | 3 | Decide what to do with the evidence |
 
 ---

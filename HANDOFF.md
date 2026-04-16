@@ -1,6 +1,48 @@
-# Session Handoff — April 12, 2026
+# Session Handoff — April 15, 2026
 
 ## What Was Done This Session
+
+Dialog fixes, quest gating for early-game spoiler prevention, and post-game Tier 5 reception clients.
+
+---
+
+### Post-Game Tier 5 Reception Clients
+
+6. **No XP path to level 15 after completing the game** — After defeating The Algorithm, the reception roguelite still used the standard 60–120 XP pool, making level 15 grindy and unengaging. Added a post-game tier:
+   - Added `POST_GAME_CLIENT_TYPES` in `ClientGenerator.js` (5 elite types: UHNWI, Sovereign Wealth Consultant, Offshore Dynasty, Corporate Pension Fund, Tech Billionaire Exit — assets 20M–100M).
+   - `scaleEnemyStats` now accepts a `postGame` flag: when true, `MAX_ASSET = 100_000_000` and XP formula shifts to `Math.round(200 + t * 150)` (200–350 range).
+   - `generateClient` now accepts a `postGame` flag: when true, draws from `POST_GAME_CLIENT_TYPES`.
+   - `ExplorationState._onReceptionEntered()` and `_getNextClient()` both check `algorithm_defeated` and pass `postGame` to `generateClient`.
+   - One-time unlock toast on first post-game reception entry: Diane says "Word got out. The clients you're seeing now are in a different league entirely." (gated on `postGameReceptionUnlocked` flag).
+
+---
+
+### Diane Intro Dialog
+
+1. **Diane re-introduced herself on every visit** — The opening line "New trust officer? I saw your onboarding paperwork..." played again on repeat visits. Removed node 0 from `diane_intro` (the "New trust officer?" line). All subsequent `next` indices in the dialog shifted down by 1 and were corrected. Dialog now opens with her self-introduction ("I'm Diane. I run reception...").
+
+---
+
+### Printer from Hell — Merged Interaction & Spoiler Gate
+
+2. **Quest required two separate printer interactions to start** — First visit set `printer_visit_2`; second visit started the quest. Merged both beats into a single interaction so the full sequence (HELP ME → HENDERSON FILES → toner runs out → quest starts) plays in one sitting. `printer_visit_2` flag removed.
+
+3. **Printer interaction revealed Henderson plot before Ross briefing** — The printer mentioned the Henderson files even on a fresh game before the player knew about the case. Added `briefing_complete` gate (node 2): if the briefing hasn't happened, the printer shows a single "it's just a printer" line and exits. The full spooky sequence only plays after the briefing is done.
+
+---
+
+### Alex IT Act 2 — Spoiler Gate
+
+4. **`alex_it_act2` (encrypted partition / Caymans) fired immediately after briefing in Act 1** — Three separate routing paths all allowed this dialog too early:
+   - The special Alex story routing block gated on `briefing_complete` → changed to `karen_defeated`.
+   - The `flag-set` listener's `alex_story_chosen` path had the same `briefing_complete` gate → also changed to `karen_defeated`.
+   - The **generic act routing** (`act >= 1 && DIALOGS[alex_it_act2]`) bypassed both special gates entirely → added an explicit guard after the side quest routing block: if `karen_defeated` is not set and `alex_it_act2` hasn't been read, return `alex_it_return` to prevent the generic routing from firing it.
+
+5. **`alex_it_act2` dialog opened as a follow-up to a conversation that never happened** — Node 1 said "Remember that encrypted partition I told you about?" and node 2 had Andrew say "The one that was 'probably nothing'?" — referencing prior dialogue that doesn't exist. Rewritten so Alex introduces the partition fresh: "I found an encrypted partition buried in the server..." Andrew reacts with surprise. Router option also changed from "The encrypted partition. What did you find?" to "You look like you're about to combust. What is it?"
+
+---
+
+## Previous Session (April 12, 2026)
 
 Achievement system expansion, momentum rebalance, cosmetic unlock fixes, roguelite balance pass, and documentation reorganisation.
 
