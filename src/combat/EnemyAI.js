@@ -20,7 +20,8 @@ export const ENEMY_AI_PATTERNS = {
   grandma: {
     // Grandma alternates between guilt and cookies
     pattern: 'tactical',
-    healThreshold: 0.5, // heals at 50% instead of 30%
+    healThreshold: 0.35, // only starts actively healing at 35% HP
+    healChance: 0.35,    // reduced from 0.6 so she doesn't heal every turn
     debuffChance: 0.3,
   },
   compliance: {

@@ -108,10 +108,11 @@ export const SHOP_ITEMS = [
     id: 'decor_motivational_poster',
     category: 'decor',
     name: '"Hang in There" Poster',
-    description: 'Survive at 1 HP once per battle.',
+    description: 'Survive a killing blow at 1 HP once per battle.',
     price: 90_000,
     maxStack: 1,
     flag: 'decor_motivational_poster',
+    combatBonus: { posterActive: true },
   },
 ];
 

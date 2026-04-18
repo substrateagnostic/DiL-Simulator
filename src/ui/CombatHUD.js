@@ -79,7 +79,7 @@ export class CombatHUD {
       this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
     } else if (momentum >= 50 && momentum < 100) {
       this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
-      this.menuItems.push({ label: `★ Second Wind (50%)`, action: 'second_wind', momentumSpend: true });
+      this.menuItems.push({ label: `★ Second Wind (+75 HP)`, action: 'second_wind', momentumSpend: true });
     }
 
     if (momentum >= 100) {

@@ -203,7 +203,7 @@ export class ExplorationState {
           this.player.setFlag('alex_main_chosen', false);
         }
         if (key === 'briefing_complete' && !this.player.getFlag('defeated_intern')) {
-          this._showToast('Optional: spar with the Intern for a quick combat tutorial.', 'item');
+          this._showToast('Spar with the Intern before meeting Karen — you\'ll need the practice.', 'objective');
         }
         if (key === 'defeated_intern' && this.player.stats.level < 2) {
           const xpNeeded = XP_TABLE[1] - this.player.stats.xp;
@@ -574,6 +574,14 @@ export class ExplorationState {
       board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
       penthouse: { flag: 'act6_complete', message: "The staircase to the Penthouse is sealed. You need the Janitor's Rolex." },
     };
+
+    // Block executive floor while the corporate lawyer is active and undefeated
+    if (targetRoom === 'executive_floor'
+      && this.player.getFlag('restructuring_defeated')
+      && !this.player.getFlag('corporate_lawyer_defeated')) {
+      this._showToast("The elevator won't open. Someone's waiting for you in the lobby.", 'info');
+      return;
+    }
     const gate = gatedRooms[targetRoom];
     if (gate && !this.player.getFlag(gate.flag)) {
       this._showToast(gate.message, 'info');
@@ -696,8 +704,10 @@ export class ExplorationState {
                   const xpNeeded = XP_TABLE[2] - this.player.stats.xp;
                   if (xpNeeded > 0) this.player.gainXP(xpNeeded);
                   this._updateMiniStats();
+                  this.player.setFlag('karen_retry_ready', true);
                   this._showToast('3 clients handled — Level 3 reached! You\'re ready for Karen.', 'objective');
                 } else if (wins >= 3) {
+                  this.player.setFlag('karen_retry_ready', true);
                   this._showToast("3 clients handled — you're ready to retry Karen!", 'objective');
                 } else {
                   this._showToast(`Client ${wins}/3 handled — keep building experience!`, 'objective');
@@ -1297,7 +1307,16 @@ export class ExplorationState {
     // Combat retry check runs first — overrides hardcoded dialogId on NPC
     const retryEncId = { ross: 'ross_boss' }[id] || id;
     if (DIALOGS[`${retryEncId}_retry`] && this.player.getFlag(`retry_${retryEncId}`) && !this.player.getFlag(`defeated_${retryEncId}`)) {
+      // Block Karen retry until 3 tutorial clients are handled
+      if (id === 'karen' && !this.player.getFlag('karen_retry_ready')) {
+        return 'karen_not_ready';
+      }
       return `${retryEncId}_retry`;
+    }
+
+    // Block Karen until the intern spar is complete (required combat tutorial)
+    if (id === 'karen' && !this.player.getFlag('defeated_intern')) {
+      return 'karen_intern_first';
     }
 
     // Janitor riddles take priority over hardcoded dialogId (available act 3+, after meeting janitor AND after act3 confrontation)
@@ -1385,7 +1404,8 @@ export class ExplorationState {
     }
 
     // Block generic act routing from firing alex_it_act2 before karen is defeated
-    if (id === 'alex_it' && !this.player.getFlag('karen_defeated') && !this.player.getFlag('read_alex_it_act2')) {
+    // Only applies after the intro has been read — don't intercept the first meeting
+    if (id === 'alex_it' && this.player.getFlag('met_alex_it') && !this.player.getFlag('karen_defeated') && !this.player.getFlag('read_alex_it_act2')) {
       if (DIALOGS.alex_it_return) return 'alex_it_return';
     }
 
@@ -1432,6 +1452,11 @@ export class ExplorationState {
       if (DIALOGS[`${id}_return`]) return `${id}_return`;
     }
     if (act >= 1 && DIALOGS[`${id}_act2`] && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
+    // Gate team intros until the player has checked their desk
+    const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
+    if (PRE_DESK_TEAM.includes(id) && !this.player.getFlag('checked_desk') && !this.player.getFlag(`read_${id}_intro`)) {
+      return 'team_pre_intro';
+    }
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
     if (act >= 7 && DIALOGS[`${id}_act7`]) return `${id}_act7`;
@@ -1769,6 +1794,9 @@ export class ExplorationState {
       if (wins >= 3) return "You're ready — retry Karen in the Conference Room";
       return `Handle reception clients to build experience (${wins}/3)`;
     }
+    if (this.player.getFlag('briefing_complete') && !this.player.getFlag('defeated_intern')) {
+      return 'Spar with the Intern to prepare for the Henderson meetings';
+    }
     if (this.player.getFlag('briefing_complete')) {
       return 'Meet Karen Henderson in the Conference Room';
     }
@@ -1851,11 +1879,6 @@ export class ExplorationState {
   _getActiveSideQuestHints() {
     const hints = [];
     const f = (flag) => this.player.getFlag(flag);
-
-    // Early optional: spar with the Intern
-    if (f('briefing_complete') && !f('defeated_intern')) {
-      hints.push('Optional: spar with the Intern for a combat tutorial');
-    }
 
     // Janitor riddles — progressive
     if (f('met_janitor')) {

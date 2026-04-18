@@ -336,7 +336,7 @@ export const ENEMY_STATS = {
     def: 12,
     spd: 14,
     xpReward: 200,
-    abilities: ['quick_sync', 'circle_back', 'great_catch'],
+    abilities: ['quick_sync', 'circle_back', 'great_catch', 'hard_pivot'],
     weakness: 'social', resistance: 'technical',
   },
   // Mutable placeholder — overwritten by ClientGenerator before each reception fight
@@ -571,7 +571,7 @@ export const ENEMY_ABILITIES = {
   ]},
 
   // Grandma phase abilities
-  emergency_shortbread: { name: 'Emergency Shortbread', power: 0, type: 'heal', healAmount: 110, messages: [
+  emergency_shortbread: { name: 'Emergency Shortbread', power: 0, type: 'heal', healAmount: 50, messages: [
     'Grandma produces an entire tin of emergency shortbread from her handbag.',
     '"I baked these this morning. I knew today would be difficult."',
     'The smell of butter and passive aggression fills the room. Grandma heals.',
@@ -604,7 +604,7 @@ export const ENEMY_ABILITIES = {
     '"Your grandfather would be rolling in his grave right now."',
     '"No, no. I\'ll be fine. I always am. Don\'t worry about little old me."',
   ]},
-  fresh_cookies: { name: 'Fresh Cookies', power: 0, type: 'heal', healAmount: 75, messages: [
+  fresh_cookies: { name: 'Fresh Cookies', power: 0, type: 'heal', healAmount: 50, messages: [
     'Grandma pulls out a fresh batch of cookies!',
     'Grandma opens her purse. The smell of snickerdoodles fills the room.',
     '"Cookie, dear? I made them this morning." Grandma heals!',
@@ -664,6 +664,12 @@ export const ENEMY_ABILITIES = {
     '"Great catch! But actually..." (Counter stance activated.)',
     '"Love the initiative! However..." (He braces for your next move.)',
     '"That\'s a great point. Let me push back on that." (Counter ready.)',
+  ]},
+  hard_pivot: { name: 'Hard Pivot', power: 20, type: 'attack', messages: [
+    'Ross PIVOTS — and drives his elbow straight into your credibility!',
+    '"We\'re going in a different direction." Ross lunges!',
+    '"Let me be direct with you." He is, unfortunately, very direct.',
+    '"I\'m going to need to push back on that." He does. Physically.',
   ]},
 
   // Reception Clients

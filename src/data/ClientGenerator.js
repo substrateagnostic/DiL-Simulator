@@ -364,8 +364,10 @@ function scaleEnemyStats(assets, playerLevel = 1, postGame = false) {
   const xpReward = postGame
     ? Math.round(200 + t * 150)   // 200–350 post-game
     : Math.round(60 + t * 60);    // 60–120 normal
+  // HP variance: ±30% so clients at similar wealth tiers still feel distinct
+  const hpVariance = 0.70 + Math.random() * 0.60; // 0.70–1.30
   return {
-    maxHP: Math.round((100 + t * 160) * lvlScale),
+    maxHP: Math.round((100 + t * 160) * lvlScale * hpVariance),
     atk:   Math.round((6  + t * 16)  * lvlScale),
     def:   Math.round((3  + t * 15)  * lvlScale),
     spd:   Math.round((4  + t * 10)  * lvlScale),
@@ -374,15 +376,24 @@ function scaleEnemyStats(assets, playerLevel = 1, postGame = false) {
 }
 
 export function generateClient(overrideLastName, playerLevel = 1, postGame = false) {
-  const pool = postGame ? POST_GAME_CLIENT_TYPES : CLIENT_TYPES;
-  const typeDef = pick(pool);
+  let pool = postGame ? POST_GAME_CLIENT_TYPES : CLIENT_TYPES;
+  let typeDef = pick(pool);
   const lastName = overrideLastName || pick(LAST_NAMES);
   const firstName = pick(FIRST_NAMES);
   const name = `${firstName} ${lastName}`;
 
-  let assets = randomInt(typeDef.assetMin, typeDef.assetMax);
+  // 5% chance of a pre-algorithm whale client (100M+ AUM) — rare big fish
+  let isWhale = false;
+  if (!postGame && Math.random() < 0.05) {
+    isWhale = true;
+    typeDef = pick(POST_GAME_CLIENT_TYPES);
+  }
+
+  let assets = isWhale
+    ? randomInt(100_000_000, 250_000_000)
+    : randomInt(typeDef.assetMin, typeDef.assetMax);
   // Crypto clients get wider variance — could moon or crash
-  if (typeDef.volatileAssets) {
+  if (!isWhale && typeDef.volatileAssets) {
     const swing = Math.random();
     if (swing > 0.85) assets = Math.round(assets * 2.5); // to the moon
     else if (swing < 0.15) assets = Math.round(assets * 0.3); // rug pull
@@ -406,7 +417,7 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
   const attributes = [...posAttrs, ...negAttrs];
   const netAngerDelta = attributes.reduce((sum, a) => sum + a.angerDelta, 0);
 
-  const scaled = scaleEnemyStats(assets, playerLevel, postGame);
+  const scaled = scaleEnemyStats(assets, playerLevel, postGame || isWhale);
   const enemyStats = {
     name,
     maxHP: scaled.maxHP,

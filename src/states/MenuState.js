@@ -837,7 +837,7 @@ export class MenuState {
   }
 
   _showStats() {
-    const s = this.player.stats;
+    const s = this.player.getCombatStats();
     const level = s.level || 1;
     const xp = s.xp || 0;
     const isMaxLevel = level >= XP_TABLE.length;

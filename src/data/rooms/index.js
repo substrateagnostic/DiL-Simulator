@@ -311,6 +311,9 @@ export const ROOMS = {
       // Side quest posters
       { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
       { type: 'motivationalPoster', x: 2,   z: 10.9, rotation: Math.PI },
+
+      // Network Ghost signal booster mount (east wall)
+      { type: 'boosterMount', x: 14.9, z: 8, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     npcs: [
       { id: 'chad', x: 4, z: 6, facing: -Math.PI / 2, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'karen_defeated' }, dialogId: 'chad_breakroom_idle' },
@@ -333,7 +336,6 @@ export const ROOMS = {
       { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3' },
       { x: 2,  z: 11, type: 'poster', dialogId: 'quest_def_3' },
       // Network Ghost signal booster (east wall)
-      { type: 'boosterMount', x: 14.9, z: 8, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
       { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br', condition: { notFlag: 'quest_network_ghost_complete' } },
       // Tuesday 2PM: old floppy disk on westmost table
       { x: 4, z: 6, type: 'poster', dialogId: 'tuesday_floppy' },
@@ -449,11 +451,14 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 10.9, z: 6, rotation: -Math.PI / 2 },
       { type: 'motivationalPoster', x: 5,    z: 6.9, rotation: Math.PI },
 
-
+      // Network Ghost signal booster mount (east wall)
+      { type: 'boosterMount', x: 10.9, z: 2, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     npcs: [
       // Henderson beneficiaries appear based on quest progress
-      { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'karen_defeated' } },
+      { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'retry_karen' } },
+      { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_not_ready', condition: { flag: 'retry_karen', notFlag: 'karen_retry_ready' } },
+      { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'karen_retry_ready', notFlag: 'karen_defeated' } },
       { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'ross_post_karen', notFlag: 'chad_defeated' } },
       { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, dialogId: 'grandma_meeting', condition: { flag: 'ross_post_chad', notFlag: 'grandma_defeated' } },
     ],
@@ -469,7 +474,6 @@ export const ROOMS = {
       { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2' },
       { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2' },
       // Network Ghost signal booster (east wall)
-      { type: 'boosterMount', x: 10.9, z: 2, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
       { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     playerSpawn: { x: 1, z: 4 },
@@ -529,6 +533,7 @@ export const ROOMS = {
       // === Cable management / fire extinguisher feel ===
       { type: 'fileCabinet', x: 7, z: 1 },  // equipment shelf
       { type: 'fileCabinet', x: 7, z: 2 },
+      { type: 'fileCabinet', x: 7, z: 3 },  // shelf for tuesday_server_tag interactable
       { type: 'fileCabinet', x: 7, z: 4 },
       // Unauthorized Patch: standalone network monitoring terminal in the aisle
       { type: 'monitor', x: 5, z: 6 },

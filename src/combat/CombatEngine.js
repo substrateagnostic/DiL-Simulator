@@ -21,7 +21,9 @@ export class CombatEngine {
       momentum: 0,
       bracing: false,
       retaliateReady: false,
+      posterUsed: false,
     };
+    this.posterJustTriggered = false;
     this.telegraphedAbility = null;
     this.enemy = { ...ENEMY_STATS[enemyId], ...enemyOverrides, buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0, confuseCooldown: 0 };
     this.enemyId = enemyId;
@@ -466,9 +468,10 @@ export class CombatEngine {
       case 'tactical': {
         const hpPercent = this.enemy.hp / this.enemy.maxHP;
         const healThreshold = pattern.healThreshold || 0.5;
+        const healChance = pattern.healChance ?? 0.6;
         if (hpPercent < healThreshold) {
           const healAbility = abilities.find((id) => ENEMY_ABILITIES[id]?.type === 'heal');
-          if (healAbility && Math.random() < 0.6) return healAbility;
+          if (healAbility && Math.random() < healChance) return healAbility;
         }
         const debuffChance = pattern.debuffChance || 0.3;
         if (Math.random() < debuffChance) {
@@ -637,6 +640,12 @@ export class CombatEngine {
 
   _checkDefeat() {
     if (this.player.hp <= 0) {
+      if (this.player.posterActive && !this.player.posterUsed) {
+        this.player.hp = 1;
+        this.player.posterUsed = true;
+        this.posterJustTriggered = true;
+        return;
+      }
       this.isOver = true;
       this.result = 'defeat';
     }
@@ -666,9 +675,8 @@ export class CombatEngine {
     if (this.player.momentum < 100) return null;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
-    const baseDmg = (pStats.atk + 30) * COMBAT.BASE_DAMAGE_MULTIPLIER;
-    const defense = eStats.def * COMBAT.DEFENSE_FACTOR * 0.25;
-    const damage = Math.max(10, Math.floor(baseDmg - defense + randomRange(-5, 5)));
+    const baseDmg = (pStats.atk + 75) * COMBAT.BASE_DAMAGE_MULTIPLIER;
+    const damage = Math.max(10, Math.floor(baseDmg + randomRange(-5, 5)));
     this.enemy.hp = Math.max(0, this.enemy.hp - damage);
     this.player.momentum = 0;
     this._checkVictory();
@@ -715,7 +723,7 @@ export class CombatEngine {
   // Spend 50 momentum — recover 25% HP and clear a stun/confuse
   playerSecondWind() {
     if (this.player.momentum < 50) return null;
-    const healAmt = Math.floor(this.player.maxHP * 0.25);
+    const healAmt = 75;
     this.player.hp = Math.min(this.player.maxHP, this.player.hp + healAmt);
     // Clear one negative status
     let clearedStatus = null;

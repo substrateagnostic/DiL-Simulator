@@ -741,6 +741,14 @@ export class CombatState {
           AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
           this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'player');
           this._updateHUD();
+          if (this.engine.posterJustTriggered) {
+            this.engine.posterJustTriggered = false;
+            setTimeout(() => {
+              this.scene.flash(0xffdd00, 0.4);
+              this.particles.burst({ x: 0, y: 1.2, z: 4 }, 25, 0xffdd00, 3, 1.0);
+              this.hud.showMessage('HANG IN THERE! Survived at 1 HP!');
+            }, 300);
+          }
         }, 200);
       } else if (result.healAmount) {
         AudioManager.playSfx('heal');

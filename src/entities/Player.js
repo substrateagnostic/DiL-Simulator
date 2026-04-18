@@ -117,6 +117,13 @@ export class Player {
         if (base[stat] !== undefined) base[stat] += val;
       }
     }
+    // Apply decor combat bonuses
+    if (this.getFlag('decor_coffee_machine')) {
+      base.mp = Math.min(base.maxMP, base.mp + 5);
+    }
+    if (this.getFlag('decor_motivational_poster')) {
+      base.posterActive = true;
+    }
     // Ensure hp/mp don't exceed boosted max
     if (base.hp > base.maxHP) base.hp = base.maxHP;
     if (base.mp > base.maxMP) base.mp = base.maxMP;

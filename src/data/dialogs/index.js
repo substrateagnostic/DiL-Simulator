@@ -39,6 +39,12 @@ export const DIALOGS = {
   // ACT 1 -- INTRODUCTION NPCs
   // ==========================================================================
 
+  // Shown to all team members before the player has checked their desk
+  team_pre_intro: [
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: "You're still hovering awkwardly in the doorway. Maybe settle in at your desk first before introducing yourself around the office." },
+    /* 1 */ { type: 'end' },
+  ],
+
   // --------------------------------------------------------------------------
   // JANET -- The wine-tumbler-wielding trust officer
   // --------------------------------------------------------------------------
@@ -382,6 +388,24 @@ export const DIALOGS = {
   // ==========================================================================
   // ACT 2 -- HENDERSON FAMILY ENCOUNTERS
   // ==========================================================================
+
+  // --------------------------------------------------------------------------
+  // KAREN HENDERSON -- Tutorial gate (retry_karen set, tutorial not complete)
+  // --------------------------------------------------------------------------
+  karen_not_ready: [
+    /* 0 */ { type: 'text', speaker: 'Karen Henderson', text: "You again. Are you ready to admit defeat, or have you come to waste MORE of my time?" },
+    /* 1 */ { type: 'text', speaker: 'Andrew', text: "I need a bit more experience before I'm ready for this, Mrs. Henderson." },
+    /* 2 */ { type: 'text', speaker: 'Karen Henderson', text: "Experience. How CUTE. Come back when you've actually handled some real clients. I'll be waiting. I'm VERY good at waiting. I have a binder about it." },
+    /* 3 */ { type: 'end' },
+  ],
+
+  // Shown when player approaches Karen before completing the intern spar
+  karen_intern_first: [
+    /* 0 */ { type: 'text', speaker: 'Karen Henderson', text: "You're not ready. I can TELL you're not ready. You have the look of someone who has never handled a difficult client in their life." },
+    /* 1 */ { type: 'text', speaker: 'Andrew', text: "I just need a moment to--" },
+    /* 2 */ { type: 'text', speaker: 'Karen Henderson', text: "Go practice on the Intern. He's useless but at least he won't bill us for the trauma. Come back when you've broken a sweat." },
+    /* 3 */ { type: 'end' },
+  ],
 
   // --------------------------------------------------------------------------
   // KAREN HENDERSON -- Pre-combat
@@ -2123,7 +2147,7 @@ export const DIALOGS = {
 
   // Morse code interactable on server rack C
   morse_code_rack: [
-    /* 0  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 1, ifFalse: 5 },
+    /* 0  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 1, ifFalse: 6 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Server rack C. The restraining order is taped to the side. But behind it, a single LED blinks in a distinct pattern." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Long... short short short... long short... short short short... long... / short... short long short short... short long... short short short long... short short short... long short short... short short... short short short short short... short short short..." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "If I remember my Boy Scout Morse code... T-R-U-S-T... N-O... A-L-G-O-R-I-T-H-M-S..." },
