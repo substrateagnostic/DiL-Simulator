@@ -1353,32 +1353,30 @@ export const ROOMS = {
       { type: 'chair', x: 3.5, z: 4.2, rotation: Math.PI },
       { type: 'chair', x: 4.6, z: 3,   rotation: Math.PI / 2 },
 
-      // ── Executive desk — centre-north ────────────────────────────
-      { type: 'desk',     x: 9,  z: 2, rotation: Math.PI },
-      { type: 'desk',     x: 10, z: 2, rotation: Math.PI },
-      { type: 'desk',     x: 11, z: 2, rotation: Math.PI },
-      { type: 'monitor',  x: 9.3,  z: 2.3, rotation: Math.PI },
-      { type: 'monitor',  x: 10,   z: 2.3, rotation: Math.PI },
-      { type: 'monitor',  x: 10.7, z: 2.3, rotation: Math.PI },
-      { type: 'keyboard', x: 10,   z: 1.8 },
-      { type: 'chair',    x: 10,   z: 1, rotation: 0 },
+      // ── Executive desk — near server racks ───────────────────────
+      { type: 'desk',     x: 13, z: 2, rotation: Math.PI },
+      { type: 'desk',     x: 14, z: 2, rotation: Math.PI },
+      { type: 'desk',     x: 15, z: 2, rotation: Math.PI },
+      { type: 'monitor',  x: 13.3, z: 2.3, rotation: Math.PI },
+      { type: 'monitor',  x: 14,   z: 2.3, rotation: Math.PI },
+      { type: 'monitor',  x: 14.7, z: 2.3, rotation: Math.PI },
+      { type: 'keyboard', x: 14,   z: 1.8 },
+      { type: 'chair',    x: 14,   z: 1, rotation: 0 },
 
       // ── Server rack cluster — NE corner ─────────────────────────
       { type: 'serverRack', x: 16, z: 1 },
       { type: 'serverRack', x: 17, z: 1 },
       { type: 'serverRack', x: 18, z: 1 },
 
-      // ── Putting green — SW area ──────────────────────────────────
-      { type: 'puttingGreen', x: 2, z: 10, rotation: 0 },
 
       // ── Conference area — SE area ────────────────────────────────
       { type: 'conferenceTable', x: 17, z: 9, rotation: Math.PI / 2 },
-      { type: 'chair', x: 15, z: 8,  rotation:  Math.PI / 2 },
-      { type: 'chair', x: 15, z: 9,  rotation:  Math.PI / 2 },
-      { type: 'chair', x: 15, z: 10, rotation:  Math.PI / 2 },
-      { type: 'chair', x: 19, z: 8,  rotation: -Math.PI / 2 },
-      { type: 'chair', x: 19, z: 9,  rotation: -Math.PI / 2 },
-      { type: 'chair', x: 19, z: 10, rotation: -Math.PI / 2 },
+      { type: 'chair', x: 16, z: 8,  rotation:  Math.PI / 2 },
+      { type: 'chair', x: 16, z: 9,  rotation:  Math.PI / 2 },
+      { type: 'chair', x: 16, z: 10, rotation:  Math.PI / 2 },
+      { type: 'chair', x: 18, z: 8,  rotation: -Math.PI / 2 },
+      { type: 'chair', x: 18, z: 9,  rotation: -Math.PI / 2 },
+      { type: 'chair', x: 18, z: 10, rotation: -Math.PI / 2 },
     ],
     npcs: [
       { id: 'cfos_assistant',   x: 11, z: 10, facing: Math.PI, condition: { notFlag: 'cfos_defeated' },                                    dialogId: 'cfos_assistant_combat'   },
@@ -1395,11 +1393,11 @@ export const ROOMS = {
       { x: 21, z: 7,  targetRoom: 'penthouse_aquarium',  spawnX: 1,  spawnZ: 4  },
       { x: 21, z: 8,  targetRoom: 'penthouse_aquarium',  spawnX: 1,  spawnZ: 5  },
       // WEST → Private Lounge
-      { x: 0,  z: 10, targetRoom: 'penthouse_bar',       spawnX: 12, spawnZ: 4  },
-      { x: 0,  z: 11, targetRoom: 'penthouse_bar',       spawnX: 12, spawnZ: 5  },
+      { x: 0,  z: 10, targetRoom: 'penthouse_bar',       spawnX: 16, spawnZ: 5  },
+      { x: 0,  z: 11, targetRoom: 'penthouse_bar',       spawnX: 16, spawnZ: 6  },
     ],
     interactables: [
-      { x: 10, z: 2, type: 'algorithm_terminal', dialogId: 'algorithm_terminal' },
+      { x: 14, z: 2, type: 'algorithm_terminal', dialogId: 'algorithm_terminal' },
     ],
     playerSpawn: { x: 11, z: 13 },
   },
@@ -1409,7 +1407,7 @@ export const ROOMS = {
   // ----------------------------------------------------------
   penthouse_aquarium: {
     id: 'penthouse_aquarium',
-    name: 'Aquarium Suite',
+    name: 'The Reef & Reel',
     width: 16,
     height: 8,
     floorColor: 0x04081a,
@@ -1417,7 +1415,7 @@ export const ROOMS = {
     walls: true,
     lights: [
       { type: 'point', color: 0x0055cc, intensity: 0.9, x: 2,  y: 2.5, z: 4, distance: 8 },
-      { type: 'point', color: 0x0077dd, intensity: 0.8, x: 8,  y: 2.5, z: 4, distance: 8 },
+      { type: 'point', color: 0xffeedd, intensity: 0.5, x: 8,  y: 2.5, z: 4, distance: 8 },
       { type: 'point', color: 0x0055cc, intensity: 0.9, x: 13, y: 2.5, z: 4, distance: 8 },
       { type: 'point', color: 0x002266, intensity: 0.4, x: 8,  y: 1.5, z: 6, distance: 10 },
       { type: 'point', color: 0xffcc44, intensity: 0.3, x: 14, y: 1.5, z: 6, distance: 5  },
@@ -1425,7 +1423,7 @@ export const ROOMS = {
     furniture: [
       // Three aquarium panels spanning the north wall (fit in 16-wide room)
       { type: 'aquariumWall', x: 2,  z: 0.1 },
-      { type: 'aquariumWall', x: 7,  z: 0.1 },
+      { type: 'movieScreen',  x: 7,  z: 0.1 },
       { type: 'aquariumWall', x: 12, z: 0.1 },
       // Two couches facing the aquarium (back toward south, seat faces north)
       { type: 'couch', x: 5,  z: 5 },
@@ -1455,24 +1453,30 @@ export const ROOMS = {
     floorPattern: 'hardwood',
     walls: true,
     lights: [
-      { type: 'point', color: 0x6622ff, intensity: 0.7, x: 3,  y: 2.5, z: 4, distance: 8 },
-      { type: 'point', color: 0x4400cc, intensity: 0.6, x: 7,  y: 2.5, z: 4, distance: 8 },
-      { type: 'point', color: 0x6622ff, intensity: 0.7, x: 11, y: 2.5, z: 4, distance: 8 },
-      { type: 'point', color: 0x00ff88, intensity: 0.15, x: 7, y: 1.5, z: 2, distance: 6 },
+      { type: 'point', color: 0x6622ff, intensity: 0.6, x: 3,  y: 2.5, z: 4, distance: 8 },
+      { type: 'point', color: 0x1133aa, intensity: 0.7, x: 7,  y: 3.0, z: 4, distance: 10 },
+      { type: 'point', color: 0x6622ff, intensity: 0.6, x: 11, y: 2.5, z: 4, distance: 8 },
+      { type: 'point', color: 0x00ff88, intensity: 0.2, x: 7,  y: 1.5, z: 2, distance: 7 },
+      { type: 'point', color: 0x002244, intensity: 0.5, x: 7,  y: 2.0, z: 3.5, distance: 6 },
     ],
     furniture: [
-      // Three data viz panels on the north wall, facing south
-      { type: 'dataVizPanel', x: 2,  z: 0.1 },
-      { type: 'dataVizPanel', x: 7,  z: 0.1 },
-      { type: 'dataVizPanel', x: 12, z: 0.1 },
-      // Analyst desk — center of room
-      { type: 'desk',    x: 6, z: 4, rotation: Math.PI },
-      { type: 'desk',    x: 7, z: 4, rotation: Math.PI },
-      { type: 'monitor', x: 6.3, z: 4.3, rotation: Math.PI },
-      { type: 'monitor', x: 7,   z: 4.3, rotation: Math.PI },
-      { type: 'monitor', x: 7.7, z: 4.3, rotation: Math.PI },
-      { type: 'keyboard', x: 7, z: 3.8 },
-      { type: 'chair',   x: 7, z: 3, rotation: 0 },
+      // Mega screen spanning the north wall
+      { type: 'megaAnalyticsScreen', x: 7, z: 0.1 },
+
+      // ── Mission Control Arc — 5 stations ─────────────────────────
+      // Even 2-unit x-spacing, gentle z-curve, all face north (rotation 0)
+      { type: 'missionControlDesk', x:  3.0, z: 3.2 },
+      { type: 'missionControlDesk', x:  5.0, z: 3.6 },
+      { type: 'missionControlDesk', x:  7.0, z: 3.8 },
+      { type: 'missionControlDesk', x:  9.0, z: 3.6 },
+      { type: 'missionControlDesk', x: 11.0, z: 3.2 },
+
+      // ── Operator chairs — directly behind each station ────────────
+      { type: 'operatorChair', x:  3.0, z: 4.4 },
+      { type: 'operatorChair', x:  5.0, z: 4.8 },
+      { type: 'operatorChair', x:  7.0, z: 5.0 },
+      { type: 'operatorChair', x:  9.0, z: 4.8 },
+      { type: 'operatorChair', x: 11.0, z: 4.4 },
     ],
     npcs: [],
     exits: [
@@ -1485,40 +1489,73 @@ export const ROOMS = {
   },
 
   // ----------------------------------------------------------
-  // 18. PENTHOUSE — PRIVATE LOUNGE (14×8, west wing)
+  // 18. PENTHOUSE — PRIVATE LOUNGE (18×12, west wing)
   // ----------------------------------------------------------
   penthouse_bar: {
     id: 'penthouse_bar',
     name: 'Private Lounge',
-    width: 14,
-    height: 8,
-    floorColor: 0x100814,
+    width: 18,
+    height: 12,
+    floorColor: 0x0c0610,
     floorPattern: 'hardwood',
     walls: true,
     lights: [
-      { type: 'point', color: 0xaa44ff, intensity: 0.6, x: 7, y: 2.5, z: 2, distance: 8  },
-      { type: 'point', color: 0xff8822, intensity: 0.5, x: 7, y: 2,   z: 4, distance: 10 },
-      { type: 'point', color: 0xaa44ff, intensity: 0.4, x: 3, y: 2,   z: 5, distance: 6  },
-      { type: 'point', color: 0xaa44ff, intensity: 0.4, x: 11, y: 2,  z: 5, distance: 6  },
+      // Deep purple wash over bar
+      { type: 'point', color: 0x7700cc, intensity: 0.9, x: 9,  y: 2.5, z: 2,  distance: 9  },
+      // Neon sign pink halos
+      { type: 'point', color: 0xff0088, intensity: 0.6, x: 3,  y: 2.4, z: 1.5, distance: 5 },
+      { type: 'point', color: 0xff0088, intensity: 0.6, x: 15, y: 2.4, z: 1.5, distance: 5 },
+      // Pool table green fill
+      { type: 'point', color: 0x33bb44, intensity: 0.4, x: 9,  y: 3,   z: 6,  distance: 6  },
+      // Cigar lounge — warm amber glow
+      { type: 'point', color: 0xff8833, intensity: 0.6, x: 2.0, y: 2.2, z: 2.2, distance: 5 },
+      // Poker table — cool overhead
+      { type: 'point', color: 0x99ddaa, intensity: 0.5, x: 15,  y: 2.8, z: 1.8, distance: 6 },
+      // West VIP booth — warm amber
+      { type: 'point', color: 0xff7722, intensity: 0.55, x: 3, y: 2,   z: 10, distance: 6  },
+      // East VIP booth — warm amber
+      { type: 'point', color: 0xff7722, intensity: 0.55, x: 15, y: 2,  z: 10, distance: 6  },
+      // General dark fill
+      { type: 'point', color: 0x180022, intensity: 0.4, x: 9,  y: 1.5, z: 6,  distance: 18 },
     ],
     furniture: [
-      // Lounge bar on north wall, facing south
-      { type: 'loungeBar', x: 7, z: 0.6 },
-      // Seating — chairs facing the bar
-      { type: 'executiveChair', x: 4,  z: 3, rotation: Math.PI },
-      { type: 'executiveChair', x: 7,  z: 3, rotation: Math.PI },
-      { type: 'executiveChair', x: 10, z: 3, rotation: Math.PI },
-      // Low table between seating and bar
-      { type: 'speakerphone', x: 7, z: 2.2 },
+      // ── Bar — north wall, centered ──────────────────────────
+      { type: 'loungeBar', x: 9, z: 0.6 },
+
+      // ── Neon signs flanking bar ─────────────────────────────
+      { type: 'neonSign', x: 3,  z: 0.05 },
+      { type: 'neonSign', x: 15, z: 0.05 },
+
+      // ── Cigar lounge — NW corner ────────────────────────────
+      { type: 'humidor',          x: 0.6, z: 2.2, rotation:  Math.PI / 2 },
+      { type: 'leatherArmchair',  x: 2.5, z: 1.2, rotation: Math.PI },
+      { type: 'leatherArmchair',  x: 2.5, z: 3.2, rotation: 0       },
+      { type: 'coffeeTable',      x: 2.0, z: 2.2 },
+
+      // ── Poker table — NE corner ──────────────────────────────
+      { type: 'pokerTable', x: 15, z: 1.8 },
+
+      // ── Pool table — centre room ────────────────────────────
+      { type: 'poolTable', x: 9, z: 6 },
+
+      // ── West VIP booth — L-shape in SW corner ───────────────
+      { type: 'couch', x: 1,   z: 9,    rotation: -Math.PI / 2 }, // west wall, faces east
+      { type: 'couch', x: 3,   z: 11                            }, // south wall, faces north
+      { type: 'coffeeTable', x: 3,   z: 9.2  },
+
+      // ── East VIP booth — L-shape in SE corner ───────────────
+      { type: 'couch', x: 15,  z: 9,    rotation:  Math.PI / 2 }, // east wall, faces west
+      { type: 'couch', x: 13,  z: 11                            }, // south wall, faces north
+      { type: 'coffeeTable', x: 13,   z: 9.2  },
     ],
     npcs: [],
     exits: [
       // EAST → back to Penthouse
-      { x: 13, z: 3, targetRoom: 'penthouse', spawnX: 1, spawnZ: 10 },
-      { x: 13, z: 4, targetRoom: 'penthouse', spawnX: 1, spawnZ: 11 },
+      { x: 17, z: 5, targetRoom: 'penthouse', spawnX: 1, spawnZ: 10 },
+      { x: 17, z: 6, targetRoom: 'penthouse', spawnX: 1, spawnZ: 11 },
     ],
     interactables: [],
-    playerSpawn: { x: 2, z: 4 },
+    playerSpawn: { x: 15, z: 6 },
   },
 };
 

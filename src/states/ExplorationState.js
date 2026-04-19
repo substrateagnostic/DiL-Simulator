@@ -1625,6 +1625,10 @@ export class ExplorationState {
       vault: 'The Vault',
       board_room: 'The Board Room',
       penthouse: 'The Penthouse',
+      penthouse_expanded: 'Penthouse',
+      penthouse_aquarium: 'The Reef & Reel',
+      penthouse_analytics: 'Analytics Suite',
+      penthouse_bar: 'Private Lounge',
     };
     if (this.locationElement) {
       this.locationElement.textContent = names[roomId] || roomId;
