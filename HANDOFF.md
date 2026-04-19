@@ -257,7 +257,7 @@ Achievement system expansion, momentum rebalance, cosmetic unlock fixes, rogueli
 
 10. **Shop category tracking** — `ShopState._purchase()` now sets `bought_category_<consumable|upgrade|decor>` flag before calling `AchievementManager.check()`. Required for Supply Run achievement.
 
-11. **Total achievements: 28** — Story (2), Act Completions (7), Combat Mastery (9), Leveling (3), Roguelite (7).
+11. **Total achievements: 31** — Story (2), Act Completions (7), Combat Mastery (9), Leveling (3), Roguelite (10).
 
 ---
 
@@ -394,9 +394,7 @@ Full audit and bug-fix pass on Acts 5–7 and all six Alex IT subquests, plus th
 
 ## Known Issues / Future Work
 
-- **Rachel SVP**: no character model; not removed after defeat
 - **Ross post-regional dialog** (`ross_returned`) written but not deeply integrated into story flow
 - **Vault room**: needs redesign with bomb door entrance, bank lockboxes
 - **Archive room**: more/taller file cabinets, fix monitor direction
-- **FBI invasion sequence**: triggers after trust charter retrieved (not yet implemented)
 - **Full expansion plan**: see `.claude/plans/eager-nibbling-shannon.md` for Phases 1–9 (create `.claude/plans/` directory first)
