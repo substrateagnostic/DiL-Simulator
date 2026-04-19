@@ -1,5 +1,7 @@
 node_modules/
 dist/
+electron/
+release/
 .DS_Store
 *.local
 .claude/SESSION_STATE.md
