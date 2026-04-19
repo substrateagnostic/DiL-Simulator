@@ -372,6 +372,12 @@ export class CombatState {
       return 1000;
     }
 
+    if (result.type === 'stall') {
+      AudioManager.playSfx('confirm');
+      this.hud.showMessage(`Stall! +${result.momentumGain} Confidence — enemy loses their turn!`);
+      return 800;
+    }
+
     if (result.type === 'special') {
       AudioManager.playSfx('confirm');
       this.hud.showMessage(`${result.abilityName}!`);
@@ -793,7 +799,9 @@ export class CombatState {
       }, 1000);
     } else if (this.engine.result === 'defeat') {
       AudioManager.playSfx('defeat');
-      this.player.deaths = (this.player.deaths || 0) + 1;
+      // Don't count the scripted first-Karen one-shot as a real defeat
+      const scriptedKarenLoss = this.enemyId === 'karen' && !this.player.getFlag('retry_karen');
+      if (!scriptedKarenLoss) this.player.deaths = (this.player.deaths || 0) + 1;
       this.hud.showMessage('Your patience has run out...');
       setTimeout(() => this._endCombat('defeat'), 2500);
     }

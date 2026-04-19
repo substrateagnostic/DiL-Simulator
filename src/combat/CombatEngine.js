@@ -205,6 +205,11 @@ export class CombatEngine {
         result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration };
         break;
       }
+      case 'stall': {
+        this._gainMomentum(ability.momentumGain || 25);
+        result = { ...result, momentumGain: ability.momentumGain || 25, skipsTurn: true };
+        break;
+      }
       case 'special': {
         if (ability.special === 'double_turn') {
           result.doubleTurn = true;

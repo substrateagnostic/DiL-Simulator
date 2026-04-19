@@ -238,7 +238,7 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'High Maintenance',
     desc: 'Calls 4x daily, CC\'s Alex on every email',
     debuff: { spd: -2 },
-    angerDelta: 2,
+    angerDelta: 1,
   },
   {
     id: 'unrealistic',
@@ -259,7 +259,7 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'FOMO Trader',
     desc: 'Constantly demands exposure to meme stocks',
     debuff: { atk: -1, spd: -1 },
-    angerDelta: 2,
+    angerDelta: 1,
   },
   // ── Phase 7: New negative attributes ────────────────────────────────────
   {
@@ -288,7 +288,7 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'Day Trader',
     desc: 'Calls at market open demanding 47 trades before lunch',
     debuff: { spd: -3 },
-    angerDelta: 2,
+    angerDelta: 1,
   },
   {
     id: 'conspiracy',
@@ -403,16 +403,12 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
   const annualFees = Math.round(assets * feeRate);
   const riskProfile = pick(RISK_PROFILES);
 
-  // 0–2 positive, 0–2 negative; guarantee at least one attribute
-  const numPos = randomInt(0, 2);
-  const numNeg = randomInt(0, 2);
+  // 1–3 positive, 0–1 negative — guarantee at least one positive per client
+  // Expected anger delta: ~-0.7 per client so anger trends down over time with room for bad streaks
+  const numPos = randomInt(1, 3);
+  const numNeg = randomInt(0, 1);
   const posAttrs = shuffle(POSITIVE_ATTRIBUTES).slice(0, numPos).map(a => ({ ...a, positive: true }));
   const negAttrs = shuffle(NEGATIVE_ATTRIBUTES).slice(0, numNeg).map(a => ({ ...a, positive: false }));
-
-  if (posAttrs.length === 0 && negAttrs.length === 0) {
-    if (Math.random() < 0.5) posAttrs.push({ ...pick(POSITIVE_ATTRIBUTES), positive: true });
-    else negAttrs.push({ ...pick(NEGATIVE_ATTRIBUTES), positive: false });
-  }
 
   const attributes = [...posAttrs, ...negAttrs];
   const netAngerDelta = attributes.reduce((sum, a) => sum + a.angerDelta, 0);
@@ -444,6 +440,7 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
     netAngerDelta,
     enemyStats,
     chainEligible: !!typeDef.chainEligible,
+    isPostGame: postGame || isWhale,
   };
 }
 

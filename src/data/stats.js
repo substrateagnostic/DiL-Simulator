@@ -67,6 +67,15 @@ export const PLAYER_ABILITIES = {
     tier: 0, // starter — free
     skipsTurn: true,
   },
+  stall: {
+    name: 'Stall',
+    description: 'Drag out the meeting — the client loses their momentum and you find yours',
+    cost: 0,
+    type: 'stall',
+    momentumGain: 25,
+    tier: 0, // starter — free
+    skipsTurn: true,
+  },
   cite_precedent: {
     name: 'Cite Precedent',
     description: 'Reference devastating case law',
@@ -448,8 +457,8 @@ export const ENEMY_STATS = {
   },
   cfos_assistant: {
     name: 'CFO\'s Assistant',
-    maxHP: 480,
-    hp: 480,
+    maxHP: 650,
+    hp: 650,
     atk: 14,
     def: 14,
     spd: 14,
@@ -459,8 +468,8 @@ export const ENEMY_STATS = {
   },
   regional_director: {
     name: 'Regional Director',
-    maxHP: 720,
-    hp: 720,
+    maxHP: 950,
+    hp: 950,
     atk: 20,
     def: 20,
     spd: 10,
@@ -475,8 +484,8 @@ export const ENEMY_STATS = {
   },
   algorithm: {
     name: 'The Algorithm',
-    maxHP: 880,
-    hp: 880,
+    maxHP: 1200,
+    hp: 1200,
     atk: 26,
     def: 22,
     spd: 16,
@@ -512,9 +521,9 @@ export const ENEMY_ABILITIES = {
 
   // Karen
   speak_to_manager: { name: 'Speak to Manager!', power: 10, type: 'attack', effect: 'summon', messages: [
-    'Karen demands to speak to your manager!',
+    'The client demands to speak to your manager!',
     '"I WILL be speaking to someone in charge about this!"',
-    'Karen pulls out her phone. "I\'m calling corporate RIGHT NOW."',
+    'They pull out their phone. "I\'m calling corporate RIGHT NOW."',
   ]},
   yelp_review: { name: 'Yelp Review', power: 8, type: 'dot', duration: 3, messages: [
     'Karen is writing a scathing Yelp review in real time!',
@@ -540,9 +549,9 @@ export const ENEMY_ABILITIES = {
     '"My lawyer says I can sue for emotional damages from this meeting."',
   ]},
   trust_fund_tantrum: { name: 'Trust Fund Tantrum', power: 30, type: 'attack', messages: [
-    'Chad throws a tantrum about his trust fund distribution!',
-    '"I NEED that money for my NFT project!" Chad rages!',
-    'Chad kicks over a chair and screams about his inheritance!',
+    'The client throws a tantrum about their trust fund distribution!',
+    '"I NEED that money for my NFT project!" they rage!',
+    'They kick over a chair and scream about their inheritance!',
     '"This is literally THEFT! Grandpa SAID I could have it all!"',
   ]},
 

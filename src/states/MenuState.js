@@ -563,6 +563,27 @@ export class MenuState {
 
     panel.appendChild(grid);
 
+    // Sell last upgrade point — only when every ability is already learned
+    const allUpgradeUnlocked = Object.entries(PLAYER_ABILITIES)
+      .filter(([, a]) => a.upgradePointCost)
+      .every(([id]) => this.player.unlockedAbilities.has(id));
+    const allQuestUnlocked = Object.entries(PLAYER_ABILITIES)
+      .filter(([, a]) => a.unlockQuest)
+      .every(([, a]) => this.player.questStates[a.unlockQuest] === 'complete');
+    if (allUpgradeUnlocked && allQuestUnlocked && this.player.upgradePoints === 1) {
+      const sellBtn = document.createElement('div');
+      sellBtn.className = 'menu-item';
+      sellBtn.style.cssText = 'margin-top:12px;color:#ffd700;border:1px solid #ffd700;padding:6px 12px;border-radius:4px;cursor:pointer;text-align:center;';
+      sellBtn.textContent = 'Liquidate Final Point  (+5,000,000 AUM)';
+      sellBtn.addEventListener('click', () => {
+        this.player.upgradePoints -= 1;
+        this.player.stats.aum = (this.player.stats.aum || 0) + 5_000_000;
+        AudioManager.playSfx('confirm');
+        this._rerenderAbilities();
+      });
+      panel.appendChild(sellBtn);
+    }
+
     const back = document.createElement('div');
     back.className = 'menu-item';
     back.style.marginTop = '16px';
@@ -804,16 +825,35 @@ export class MenuState {
       z-index: 200; font-family: 'VT323', monospace; color: #fff;
     `;
 
-    const rows = achievements.map(a => {
-      const color = a.unlocked ? '#ffd700' : '#444';
-      const nameColor = a.unlocked ? '#fff' : '#555';
-      return `<div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
-        <span style="font-size:22px;filter:${a.unlocked ? 'none' : 'grayscale(1) opacity(0.3)'}">${a.icon}</span>
-        <div>
-          <div style="color:${nameColor};font-size:18px">${a.unlocked ? a.name : '???'}</div>
-          <div style="color:${color};font-size:15px">${a.unlocked ? a.desc : 'Locked'}</div>
-        </div>
+    const CATEGORY_ORDER = ['Story', 'Act Completions', 'Combat Mastery', 'Leveling', 'Roguelite'];
+    const grouped = {};
+    for (const cat of CATEGORY_ORDER) grouped[cat] = [];
+    for (const a of achievements) {
+      const cat = a.category || 'Other';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(a);
+    }
+
+    const rows = CATEGORY_ORDER.map(cat => {
+      const items = grouped[cat];
+      if (!items || items.length === 0) return '';
+      const unlockedInCat = items.filter(a => a.unlocked).length;
+      const header = `<div style="margin:14px 0 6px;padding:4px 8px;background:rgba(233,69,96,0.15);border-left:3px solid #e94560;font-family:'Press Start 2P',cursive;font-size:9px;color:#e94560;letter-spacing:1px;display:flex;justify-content:space-between;align-items:center">
+        <span>${cat.toUpperCase()}</span>
+        <span style="color:#666;font-size:8px">${unlockedInCat}/${items.length}</span>
       </div>`;
+      const entries = items.map(a => {
+        const color = a.unlocked ? '#ffd700' : '#444';
+        const nameColor = a.unlocked ? '#fff' : '#555';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+          <span style="font-size:22px;filter:${a.unlocked ? 'none' : 'grayscale(1) opacity(0.3)'}">${a.icon}</span>
+          <div>
+            <div style="color:${nameColor};font-size:18px">${a.unlocked ? a.name : '???'}</div>
+            <div style="color:${color};font-size:15px">${a.unlocked ? a.desc : 'Locked'}</div>
+          </div>
+        </div>`;
+      }).join('');
+      return header + entries;
     }).join('');
 
     this.achievementsOverlay.innerHTML = `
