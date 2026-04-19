@@ -26,6 +26,33 @@ This is the intended path to level 15.
 
 ---
 
+## Office Renovations (Post-Game)
+
+After defeating The Algorithm, a **Renovations** tab appears in the Supply Shop. Renovations are one-time purchases that permanently alter specific rooms with new furniture. Each costs **5,000,000 AUM** (except the Penthouse upgrade at **10,000,000 AUM**) and grants **+2,000 XP**.
+
+| ID | Room | Name | Description |
+|----|------|------|-------------|
+| `renovation_espresso_bar` | Break Room | Espresso Bar | Professional barista station |
+| `renovation_catering_fridge` | Break Room | Executive Catering Wall | Premium fridge and snack shelving |
+| `renovation_ergonomic_workstations` | Cubicle Farm | Ergonomic Workstations | Plants and ergonomic additions |
+| `renovation_marble_counter` | Reception | Marble Reception Counter | Premium planters and stonework |
+| `renovation_lobby_sculpture` | Reception | Lobby Sculptures | Commissioned bronze pieces |
+| `renovation_projection_wall` | Conference Room | Smart Projection Wall | Full AV display wall |
+| `renovation_corner_office` | Ross's Office | Corner Office Renovation | Grand paintings and executive furnishings |
+| `renovation_trophy_wall` | The Board Room | Victory Trophy Wall | Trophy cases, stock ticker, whiskey wall |
+| `renovation_penthouse` | The Penthouse | Executive Suite Upgrade | **10M AUM** — unlocks three wing rooms: Aquarium Suite, Analytics Suite, Cocktail Bar |
+
+### Penthouse Expansion
+
+Purchasing `renovation_penthouse` transforms the penthouse into a four-room hub:
+
+- **Main Hub** (penthouse_expanded, 22×16): Executive space with kitchen, desk, putting green, server racks, and exits to all three wings.
+- **Aquarium Suite** (penthouse_aquarium): Three floor-to-ceiling aquarium walls with clownfish, blue tang, and goldfish canvas sprites. Two couches face the tanks. Popcorn popper in the corner.
+- **Analytics Suite** (penthouse_analytics): Three live data visualization panels showing TRUST DEPT stats. Analyst workstation.
+- **Cocktail Bar** (penthouse_bar): Full bar counter with marble top, purple-backlit liquor wall, and three leather bar stools.
+
+---
+
 ## Item Reference
 
 | Item | Effect | How to get |

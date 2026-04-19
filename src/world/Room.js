@@ -24,7 +24,8 @@ const FURNITURE_FOOTPRINTS = {
   boardroomTable:     { w: 8, h: 2 },
   conferenceTable:    { w: 3, h: 1 },
   serverRack:         { w: 1, h: 1 },
-  receptionDesk:      { w: 2, h: 1 },
+  receptionDesk:       { w: 2, h: 1 },
+  receptionDeskMarble: { w: 2, h: 1 },
   elevatorDoors:      { w: 2, h: 1 },
   fridge:             { w: 1, h: 1 },
   fileCabinet:        { w: 1, h: 1 },
@@ -51,12 +52,15 @@ const FURNITURE_FOOTPRINTS = {
 // Small/decorative items that should NOT block movement.
 // Players can clip through these slightly for smoother pathing.
 const NO_BLOCK = new Set([
-  'monitor', 'keyboard', 'chair', 'executiveChair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan',
-  'coffeeMachine', 'microwave', 'waterCooler', 'printer',
-  'whiteboard', 'motivationalPoster', 'parkingSpot',
+  'monitor', 'keyboard', 'chair', 'executiveChair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan', 'marblePlanter', 'marbleStatue', 'trophyCase',
+  'coffeeMachine', 'espressoMachine', 'microwave', 'waterCooler', 'printer',
+  'whiteboard', 'smartBoard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
   'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'globeStand', 'vaultDoor',
   'rangeHood', 'boosterMount',
+  'stockTicker', 'scaledModel', 'whiskeyWall',
+  'aquariumWall', 'dataVizPanel', 'loungeBar',
+  'couch', 'popcornPopper',
 ]);
 
 export class Room {

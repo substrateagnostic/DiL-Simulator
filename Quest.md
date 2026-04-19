@@ -151,9 +151,9 @@ All quests, objectives, and rewards.
 **Combat rewards:**
 | Boss | XP | Notes | HP |
 |------|-----|-------|----|
-| CFO's Assistant | **180 XP** | Can flee: no | 320 |
-| Regional Director | **350 XP** | Can flee: no | 600 |
-| The Algorithm | **500 XP** | Can flee: no. Final boss. | 550 |
+| CFO's Assistant | **180 XP** | Can flee: no | 650 |
+| Regional Director | **350 XP** | Can flee: no | 950 |
+| The Algorithm | **500 XP** | Can flee: no. Final boss. | 1200 |
 
 ---
 

@@ -1,6 +1,162 @@
-# Session Handoff — April 15, 2026
+# Session Handoff — April 18, 2026
 
-## What Was Done This Session
+## What Was Done This Session (Session 2)
+
+Post-game office renovations: Board Room Trophy Wall build-out, Penthouse renovation replacement (helipad → Executive Suite), and expansion of the penthouse into four interconnected wing rooms.
+
+---
+
+### Board Room — Trophy Wall Renovation Assets
+
+Added three new furniture assets and six trophy cases when `renovation_trophy_wall` flag is set:
+
+- **`stockTicker()`** — Canvas-texture screen (640×128, `LinearFilter`, no mipmaps) showing fake companies (TRST / HNDRS / ALGM) with green/amber/red ticker rows. Placed on north wall left of penthouse door (`x:5.5, z:0.1`).
+- **`whiskeyWall()`** — Dark wood frame with amber emissive backlit panel, 3 shelves, and detailed bottles (body + shoulder + neck + cap + label layers). Placed on north wall right of penthouse door (`x:10, z:0.1`).
+- **`trophyCase()`** (redesigned) — Dark wood cabinet (0x4a2e10, h:1.1), bright glass panel (0xcceeff, emissive 0.25), 4 dark wood corner pillars, blue-emissive lit base, large gold trophy (cup + forked handles torus + knot sphere + orb finial), and a front name plaque. Six cases placed on the west wall.
+- **`smartBoard()`** — Added as conditional (`condition: { flag: 'renovation_trophy_wall' }`); whiteboard gets `condition: { notFlag: 'renovation_trophy_wall' }` so they swap cleanly.
+- Scaled model removed from board room.
+- All new board room assets added to `NO_BLOCK` in `Room.js`.
+
+---
+
+### Penthouse Renovation — Helipad → Executive Suite Upgrade
+
+Replaced `renovation_helipad` (doesn't make sense in a room) with `renovation_penthouse`:
+
+- **`shop.js`** — New item: `renovation_penthouse`, name "Executive Suite Upgrade", price **10,000,000 AUM**, description includes aquarium wall, live analytics displays, and private cocktail lounge.
+- **`AchievementManager.js`** — `total_renovation` flag check updated: `renovation_helipad` → `renovation_penthouse`.
+
+---
+
+### Penthouse Expansion — Four-Room Layout
+
+On purchase of `renovation_penthouse`, `_resolveRoomId()` in `ExplorationState` routes `penthouse` → `penthouse_expanded` (same canonical room ID, same save/music behavior — mirrors the `ross_office` → `ross_office_large` pattern).
+
+**`penthouse_expanded`** (22×16): Hub room. Kitchen NW, desk, server racks, putting green, conference table. NPCs: CFOs (x:11 z:10), regional_director (x:11 z:6). Four exits: SOUTH→board_room, NORTH→penthouse_analytics, EAST→penthouse_aquarium, WEST→penthouse_bar.
+
+**`penthouse_aquarium`** (16×8): Dark navy (0x04081a). Three `aquariumWall` panels on north face. Two north-facing couches (`couch()`, rotation:0). Popcorn popper in SE corner. Exit WEST→penthouse_expanded.
+
+**`penthouse_analytics`** (14×8): Three `dataVizPanel` screens on north face. Analyst desk + monitors + chair. Exit SOUTH→penthouse_expanded.
+
+**`penthouse_bar`** (14×8): `loungeBar()` on north wall facing south. Three executive chairs. Speakerphone. Exit EAST→penthouse_expanded.
+
+Wing rooms are gated in `gatedRooms` table requiring `renovation_penthouse` flag with message "The suite wing is unfinished. Fund the renovation first."
+
+---
+
+### New Furniture Assets
+
+All added to `Furniture.js` and registered in `NO_BLOCK` in `Room.js`:
+
+- **`aquariumWall()`** — Dark metal frame (3.5×2.0), blue emissive water volume (0x062244), glass front panel, sand bed, rocks, coral, seagrass, and canvas-sprite fish at `z:0.22` (in front of glass) using `PlaneGeometry` + transparent `MeshBasicMaterial`. Three species drawn via Canvas 2D API: clownfish (orange/white bars), blue tang (blue body/yellow tail/black stripe), goldfish (orange/fan tail). 7 fish per panel with varied positions; some `scale.x = -1` for mirror flip.
+- **`dataVizPanel()`** — Dark bezel, 480×420 canvas screen showing "TRUST DEPT — LIVE ANALYTICS" header, bar chart (10 bars, purple gradient), line graph (green), and data readout lines.
+- **`loungeBar()`** — Dark counter body, marble top (0xe8e0f4), purple-backlit liquor shelf (0x6622cc, emissive 0.55), 2 shelf planks, 4×2 bottles, 3 purple leather bar stools with foot rings.
+- **`couch()`** — Dark navy (0x1a2440) base+arms+back, cushion segments (0x243355), back rest at +Z (rotation:0 faces north toward aquarium), armrest top pads, 4 corner legs.
+- **`popcornPopper()`** — Red cart body (0xcc1111), gold trim strips, 4 wheels, transparent glass case, yellow emissive popcorn pile (scaled SphereGeometry), scattered kernel spheres, warm interior glow, red top cap, gold finial.
+
+---
+
+### Fish Visibility Fix
+
+Fish sprites must be at `z:0.22` (in front of glass at z:0.2). The opaque water volume (BoxGeometry centered at z:0.06, half-depth 0.14) spans z:-0.08 to z:0.20 and occludes anything behind or at z:0.20. Using `PlaneGeometry` + `THREE.DoubleSide` transparent material places sprites in front of the glass where they're always visible.
+
+---
+
+## What Was Done This Session (Session 1)
+
+Ross attack fix, boosterMount visuals, whale client pre-algorithm roll, executive floor Act 5 gate, and cosmetic stats display fix.
+
+---
+
+### Rachel Retry Softlock Fix
+
+0. **Dying to Rachel left no way to restart the fight** — The board room auto-trigger was gated on `!rachel_fight_started`. `rachel_fight_started` is set (and auto-saved via `_changeRoom`) on first entry, so after a loss the stale save always blocked the retrigger — clearing the flag in `_handleDefeat()` was lost on reload since `_handleDefeat` called `_loadRoom` (no auto-save) not `_changeRoom`. Fixed: removed `!rachel_fight_started` from the trigger condition entirely. `act5_complete` (set only on Rachel victory) is the only reliable completion gate. Added `_autoSave(false)` at the end of `_handleDefeat()` so gauntlet flag resets persist through reloads (fixes same latent bug for all gauntlet fights).
+
+---
+
+### Stall Ability
+
+-6. **Added `stall` ability** — Tier 0 starter (always unlocked alongside `file_motion` and `coffee_break`). Cost: 0 Coffee. Effect: +25 Confidence, enemy skips their turn. Handled as a new `'stall'` type in `CombatEngine.playerAbility()` via `_gainMomentum(25)` + `skipsTurn: true`. CombatState displays "Stall! +25 Confidence — enemy loses their turn!" and returns 800ms delay. Added `'stall'` to `Player.unlockedAbilities` default set in both constructor and `deserialize` fallback.
+
+---
+
+### MaxHP Cosmetic Bonus Not Applied to Current HP
+
+-5. **Cosmetics with `maxHP` bonus didn't increase starting HP** — `getCombatStats()` added the cosmetic's `maxHP` bonus to `base.maxHP` but never touched `base.hp`. The engine started combat with e.g. `hp: 100, maxHP: 105` — the extra 5 buffer existed but was never filled, so the bonus was invisible unless the player healed past their base max. Fixed: after the cosmetic loop, the difference between old and new `maxHP`/`maxMP` is computed and added to `hp`/`mp` (capped at the new max). Same fix applied to `maxMP` cosmetics for consistency.
+
+---
+
+### Roguelite Ability Messages Using Story Character Names
+
+-4. **"Chad" and "Karen" appeared in roguelite combat messages** — `trust_fund_tantrum` and `speak_to_manager` are shared between the Henderson story fights and roguelite client ability pools. Their messages hardcoded "Chad throws a tantrum..." and "Karen demands to speak to your manager!" Fixed: both abilities' messages rewritten to use generic "the client" / "they" phrasing. Story fights (Karen/Chad) use the same ability entries and are unaffected since the names were never necessary for them to work.
+
+---
+
+### Penthouse Chain HP Increases
+
+-3. **Penthouse bosses too low health** — CFO's Assistant 480→650, Regional Director 720→950, The Algorithm 880→1200. Quest.md HP column updated to match.
+
+---
+
+### Roguelite Anger Balance Pass
+
+-2. **Too many anger-increasing clients** — All 10 negative attributes were delta +2, positives averaged −1.2. With `randomInt(0,2)` for both rolls, expected anger per accepted client was `+0.8` — always trending up. Two changes: (1) Roll distribution changed to `numPos = randomInt(1, 3)` (was 0–2, guarantees ≥1 positive) and `numNeg = randomInt(0, 1)` (was 0–2, caps at 1 negative). Zero-zero tie-break removed (unreachable). (2) Three minor negatives reduced from delta 2 → 1: `demanding`, `fomo`, `day_trader` (annoyances, not deal-breakers — the serious ones like `litigious`, `family_feud`, `social_media` stay at 2). New expected anger per client: `E[numNeg=0.5] × avg(1.7) − E[numPos=2] × avg(1.2) ≈ −0.7`. Anger now trends down on average with room for bad streaks.
+
+---
+
+### Post-Game Clients Serving Stale Pre-Game Cache
+
+-1. **Post-game reception gave low-XP pre-algorithm clients** — `_onReceptionEntered()` checks `currentClient` in player flags and loads the cached client if one exists, without verifying it was generated with `postGame = true`. A client generated before The Algorithm was defeated could persist in the cache and be served post-game (e.g. 10M assets, 85 XP instead of 20M–100M, 200–350 XP). Fixed: added `isPostGame` boolean to the `generateClient()` return object; `_onReceptionEntered()` now discards the cached client if `postGame` is true but `client.isPostGame` is false, then regenerates from the post-game pool.
+
+---
+
+### Ross Attack Fix
+
+1. **Ross never attacked the player** — `ross_act2` enemy had no attack ability; fights could drag indefinitely as he only used debuffs. Added `hard_pivot` to `ENEMY_ABILITIES` (Power 20, attack type, four quip lines) and added `'hard_pivot'` to Ross's `abilities` array in `ENEMY_STATS`.
+
+---
+
+### Network Ghost BoosterMount Visuals
+
+2. **Signal booster furniture invisible in break room and conference room** — The booster mounts were listed as interactables rather than furniture, so no 3D mesh rendered. Moved both to the `furniture` array in `rooms/index.js` as `{ type: 'boosterMount', ... }` with `condition: { notFlag: 'quest_network_ghost_complete' }` so they disappear after the quest ends. Coordinates unchanged: `x:14.9, z:8` (break room) and `x:10.9, z:2` (conference room).
+
+---
+
+### Morse Code Rack Dialog Fix
+
+3. **`morse_code_rack` dialog node 0 `ifFalse` jumped too early** — `ifFalse: 5` skipped the flavor text nodes (5 is the skip-past target, not a flavor node). Changed to `ifFalse: 6` so the "don't know what to look for" path plays through the flavor text before arriving at the exit node.
+
+---
+
+### Pre-Algorithm Whale Client Roll
+
+4. **No rare high-value client surprise before end-game** — `generateClient()` now rolls 5% chance (`Math.random() < 0.05`) on every non-post-game reception visit to spawn a whale client: picks a `POST_GAME_CLIENT_TYPES` entry, forces assets to `randomInt(100_000_000, 250_000_000)`, and calls `scaleEnemyStats(..., true)` for proper post-game HP/XP scaling. Crypto volatility swing is suppressed for whale rolls. XP from a whale fight can reach ~350 — same ceiling as post-game Tier 5.
+
+---
+
+### Executive Floor Gate (Act 5)
+
+5. **Player could access the executive floor mid-Act-5 and skip the gauntlet** — `_changeRoom()` now blocks the `executive_floor` entry when `restructuring_defeated` is set but `corporate_lawyer_defeated` is not, showing toast "The elevator won't open. Someone's waiting for you in the lobby." The gate clears automatically once the corporate lawyer fight is done.
+
+---
+
+### MenuState Cosmetic Stats Display Fix
+
+6. **Stats tab showed raw `player.stats`, ignoring cosmetic bonuses** — Equipped cosmetics (e.g. Golden Calculator +3 ATK) were invisible in the Stats tab. Changed MenuState to call `player.getCombatStats()` instead of reading `player.stats` directly. No logic change — `getCombatStats()` already existed and applied cosmetic modifiers correctly; the display just wasn't using it.
+
+---
+
+### Additional Changes
+
+- **HP variance for roguelite clients** — `scaleEnemyStats()` now multiplies `maxHP` by a `0.70–1.30` random factor so clients at similar wealth tiers feel distinct rather than identically scaled.
+- **Karen NPC split into three conditional entries** — `briefing_complete+!retry_karen` → `karen_meeting`; `retry_karen+!karen_retry_ready` → `karen_not_ready` (new dialog: Karen mocks the player for returning too soon); `karen_retry_ready+!karen_defeated` → `karen_meeting`.
+- **`karen_intern_first` dialog** (new) — fires when `_getDialogId()` detects the player approaches Karen before `defeated_intern` is set. Karen tells them to spar the intern first.
+- **`team_pre_intro` dialog** (new) — `_getDialogId()` returns this for `janet`, `intern`, `isaiah`, and `alex_it` if `checked_desk` is not set and the NPC's intro hasn't been read. Narrator nudges player to settle at their desk first.
+- **HUD objective** — when `briefing_complete` is set and `defeated_intern` is not, `_getStoryObjective()` returns `"Spar with the Intern to prepare for the Henderson meetings"`.
+
+---
+
+## Previous Session (April 15, 2026)
 
 Dialog fixes, quest gating for early-game spoiler prevention, and post-game Tier 5 reception clients.
 

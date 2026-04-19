@@ -552,6 +552,112 @@ export const Furniture = {
     return group;
   },
 
+  espressoMachine() {
+    const group = new THREE.Group();
+
+    const steel   = Materials.custom(0xe8edf0);
+    const steelDk = Materials.custom(0xb0bcc4);
+    const black   = Materials.custom(0x111111);
+    const gold    = Materials.custom(0xc8960a);
+
+    const add = (geo, mat, x, y, z) => {
+      const m = new THREE.Mesh(geo, mat);
+      m.position.set(x, y, z);
+      m.castShadow = true;
+      m.receiveShadow = true;
+      group.add(m);
+      return m;
+    };
+
+    // ── Counter base (same pattern as coffeeMachine) ─────────────────
+    add(new THREE.BoxGeometry(0.76, 0.70, 0.40), steelDk, 0, 0.35,  0);
+    add(new THREE.BoxGeometry(0.79, 0.03, 0.43), steel,   0, 0.715, 0);
+
+    // ── Main body — two stacked sections give La Marzocco silhouette ─
+    add(new THREE.BoxGeometry(0.70, 0.30, 0.36), steel,   0, 0.865, 0);  // lower boiler section
+    add(new THREE.BoxGeometry(0.63, 0.14, 0.33), steel,   0, 1.045, 0);  // upper narrowed section
+    add(new THREE.BoxGeometry(0.65, 0.04, 0.35), steelDk, 0, 1.135, 0);  // top cap
+
+    // ── Brand plate on top ───────────────────────────────────────────
+    add(new THREE.BoxGeometry(0.26, 0.018, 0.06), gold, 0, 1.157, -0.05);
+
+    // ── Front face panel (dark inset) ───────────────────────────────
+    add(new THREE.BoxGeometry(0.66, 0.26, 0.014), black, 0, 0.845, 0.195);
+
+    // ── Group heads (2) — ring housing + spout + portafilter stub ───
+    [-0.20, 0.20].forEach(xOff => {
+      // Chrome ring
+      const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.054, 0.054, 0.022, 14), steelDk);
+      ring.rotation.x = Math.PI / 2;
+      ring.position.set(xOff, 0.800, 0.200);
+      ring.castShadow = true;
+      group.add(ring);
+      // Spout cylinder
+      const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.040, 0.040, 0.065, 12), steelDk);
+      spout.rotation.x = Math.PI / 2;
+      spout.position.set(xOff, 0.800, 0.231);
+      spout.castShadow = true;
+      group.add(spout);
+      // Portafilter handle stub
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.012, 0.055), black);
+      handle.position.set(xOff, 0.768, 0.218);
+      handle.castShadow = true;
+      group.add(handle);
+    });
+
+    // ── Drip tray shelf + grate ──────────────────────────────────────
+    add(new THREE.BoxGeometry(0.67, 0.022, 0.14), steelDk, 0, 0.734, 0.125);
+    add(new THREE.BoxGeometry(0.62, 0.014, 0.10), steel,   0, 0.748, 0.125);
+
+    // ── Steam wands (left and right) ─────────────────────────────────
+    [-1, 1].forEach(side => {
+      const xBase = side * 0.355;
+      const xTip  = side * 0.445;
+      // Upper angled arm
+      const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.25, 8), steel);
+      arm.rotation.z = side * (Math.PI / 5.5);
+      arm.position.set(xBase + side * 0.03, 0.93, 0.01);
+      arm.castShadow = true;
+      group.add(arm);
+      // Lower vertical drop
+      const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.010, 0.010, 0.16, 8), steel);
+      lower.position.set(xTip, 0.815, 0.01);
+      lower.castShadow = true;
+      group.add(lower);
+      // Nozzle tip
+      const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.010, 0.028, 8), black);
+      tip.position.set(xTip, 0.730, 0.01);
+      group.add(tip);
+    });
+
+    // ── Pressure gauge (front center) ───────────────────────────────
+    const bezel = new THREE.Mesh(new THREE.CylinderGeometry(0.037, 0.037, 0.018, 14), steelDk);
+    bezel.rotation.x = Math.PI / 2;
+    bezel.position.set(0, 0.935, 0.200);
+    bezel.castShadow = true;
+    group.add(bezel);
+    const gaugeFace = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.027, 0.010, 14), Materials.custom(0xf5f5f5));
+    gaugeFace.rotation.x = Math.PI / 2;
+    gaugeFace.position.set(0, 0.935, 0.212);
+    group.add(gaugeFace);
+
+    // ── Ready LED (green emissive) ───────────────────────────────────
+    const led = new THREE.Mesh(
+      new THREE.SphereGeometry(0.012, 8, 8),
+      Materials.custom(0x00ee55)
+    );
+    led.position.set(0.26, 0.995, 0.207);
+    group.add(led);
+
+    // ── Side panel detail strips ─────────────────────────────────────
+    [-1, 1].forEach(side => {
+      add(new THREE.BoxGeometry(0.014, 0.24, 0.30), steelDk, side * 0.352, 0.855, 0);
+    });
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   fridge() {
     const group = new THREE.Group();
     const body = new THREE.Mesh(
@@ -931,6 +1037,61 @@ export const Furniture = {
     return group;
   },
 
+  smartBoard() {
+    const group = new THREE.Group();
+    const bezel  = Materials.custom(0x111118);
+    const screen = Materials.custom(0x0a1520, { emissive: 0x0d3a6e, emissiveIntensity: 0.55 });
+    const uiBar  = Materials.custom(0x1a3a6a, { emissive: 0x2255aa, emissiveIntensity: 0.4 });
+    const uiLine = Materials.custom(0x2266cc, { emissive: 0x4488ee, emissiveIntensity: 0.6 });
+    const led    = Materials.custom(0x00ff88, { emissive: 0x00ff88, emissiveIntensity: 1.0 });
+
+    // Outer bezel
+    const bezelPanel = new THREE.Mesh(new THREE.BoxGeometry(1.86, 1.12, 0.05), bezel);
+    bezelPanel.position.y = 1.4;
+    group.add(bezelPanel);
+
+    // Screen surface
+    const screenPanel = new THREE.Mesh(new THREE.BoxGeometry(1.76, 1.02, 0.02), screen);
+    screenPanel.position.set(0, 1.4, 0.03);
+    group.add(screenPanel);
+
+    // UI taskbar strip at bottom of screen
+    const taskbar = new THREE.Mesh(new THREE.BoxGeometry(1.76, 0.1, 0.022), uiBar);
+    taskbar.position.set(0, 0.91, 0.031);
+    group.add(taskbar);
+
+    // Horizontal data lines across screen (simulated UI content)
+    const lineGeo = new THREE.BoxGeometry(1.2, 0.025, 0.022);
+    [-0.1, 0.05, 0.2, 0.35].forEach((yOff, i) => {
+      const ln = new THREE.Mesh(lineGeo, uiLine);
+      ln.position.set(i % 2 === 0 ? -0.1 : 0.1, 1.4 + yOff, 0.032);
+      group.add(ln);
+    });
+
+    // Vertical sidebar block (right side — chart/graph area)
+    const sidebar = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.7, 0.022), uiBar);
+    sidebar.position.set(0.72, 1.45, 0.031);
+    group.add(sidebar);
+
+    // Bottom control bar below bezel
+    const controlBar = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.06, 0.06), bezel);
+    controlBar.position.set(0, 0.81, 0.01);
+    group.add(controlBar);
+
+    // Status LED (bottom-right of bezel)
+    const ledDot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 6, 6), led);
+    ledDot.position.set(0.88, 0.815, 0.04);
+    group.add(ledDot);
+
+    // Slim wall-mount bracket
+    const mount = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.5, 0.04), Materials.metal());
+    mount.position.set(0, 1.2, -0.03);
+    group.add(mount);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
   motivationalPoster(text = 'SYNERGY') {
     const group = new THREE.Group();
     // Pick a random accent color from a set of bold corporate shades
@@ -1093,6 +1254,40 @@ export const Furniture = {
     const right = new THREE.Mesh(sideGeo, sideMat);
     right.position.set(1.25, 0.55, 0);
     group.add(right);
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  receptionDeskMarble() {
+    const group = new THREE.Group();
+    const marbleWhite = Materials.custom(0xf0ede6);
+    const marbleGrey  = Materials.custom(0xd8d3c8);
+    const gold        = Materials.custom(0xc8a840);
+
+    // Front panel — white marble
+    const front = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1.1, 0.1), marbleWhite);
+    front.position.set(0, 0.55, 0.35);
+    group.add(front);
+
+    // Gold accent strip across front panel
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.06, 0.12), gold);
+    strip.position.set(0, 0.9, 0.35);
+    group.add(strip);
+
+    // Work surface — grey marble
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.04, 0.7), marbleGrey);
+    top.position.y = 0.72;
+    group.add(top);
+
+    // Side panels — white marble
+    const sideGeo = new THREE.BoxGeometry(0.06, 1.1, 0.7);
+    const left = new THREE.Mesh(sideGeo, marbleWhite);
+    left.position.set(-1.25, 0.55, 0);
+    group.add(left);
+    const right = new THREE.Mesh(sideGeo, marbleWhite);
+    right.position.set(1.25, 0.55, 0);
+    group.add(right);
+
     group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
     return group;
   },
@@ -2001,6 +2196,822 @@ export const Furniture = {
     );
     top.position.y = 1.05;
     group.add(top);
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  marblePlanter() {
+    const group = new THREE.Group();
+    const white  = Materials.custom(0xf0ede6);
+    const cream  = Materials.custom(0xd8d3c8);
+    const green  = Materials.plant();
+    const dark   = Materials.custom(0x2d5a2d);
+    const soil   = Materials.custom(0x4a3520);
+
+    // Pedestal base slab
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.08, 0.46), cream);
+    base.position.y = 0.04;
+    group.add(base);
+
+    // Column shaft
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.65, 8), white);
+    shaft.position.y = 0.41;
+    group.add(shaft);
+
+    // Planter bowl
+    const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.15, 0.22, 10), white);
+    bowl.position.y = 0.84;
+    group.add(bowl);
+
+    // Soil surface
+    const soilTop = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.03, 10), soil);
+    soilTop.position.y = 0.96;
+    group.add(soilTop);
+
+    // Main foliage
+    const foliage = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), green);
+    foliage.scale.y = 1.4;
+    foliage.position.y = 1.32;
+    group.add(foliage);
+
+    // Accent cluster
+    const accent = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), dark);
+    accent.position.set(0.13, 1.46, 0.07);
+    group.add(accent);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  marbleStatue() {
+    const group = new THREE.Group();
+    const marble     = Materials.custom(0xf0ede6);
+    const marbleDark = Materials.custom(0xd8d3c8);
+    const gold       = Materials.custom(0xc8a840);
+    const goldDark   = Materials.custom(0xa08820);
+
+    // Platform slab
+    const platform = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.08, 0.56), marbleDark);
+    platform.position.y = 0.04;
+    group.add(platform);
+
+    // Pedestal column
+    const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.22, 0.9, 8), marble);
+    pedestal.position.y = 0.49;
+    group.add(pedestal);
+
+    // Capital cap
+    const capital = new THREE.Mesh(new THREE.BoxGeometry(0.37, 0.07, 0.37), marbleDark);
+    capital.position.y = 0.97;
+    group.add(capital);
+
+    // Figure — lower body
+    const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.09, 0.35, 8), gold);
+    lower.position.y = 1.19;
+    group.add(lower);
+
+    // Figure — torso
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.28, 0.07), gold);
+    torso.position.y = 1.49;
+    torso.rotation.y = Math.PI / 6;
+    group.add(torso);
+
+    // Figure — left arm (raised)
+    const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.24, 0.05), goldDark);
+    leftArm.position.set(-0.1, 1.63, 0);
+    leftArm.rotation.z = -0.55;
+    group.add(leftArm);
+
+    // Figure — right arm (extended)
+    const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.21, 0.05), goldDark);
+    rightArm.position.set(0.1, 1.59, 0);
+    rightArm.rotation.z = 0.7;
+    group.add(rightArm);
+
+    // Figure — head
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.09, 10, 8), gold);
+    head.position.y = 1.79;
+    group.add(head);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  trophyCase() {
+    const group = new THREE.Group();
+    const wood      = Materials.custom(0x4a2e10);
+    const woodDark  = Materials.custom(0x2e1a08);
+    const glass     = Materials.custom(0xcceeff, { emissive: 0x5599bb, emissiveIntensity: 0.25 });
+    const gold      = Materials.custom(0xf0c030, { emissive: 0xc89000, emissiveIntensity: 0.2 });
+    const goldDark  = Materials.custom(0xb88800);
+    const plaque    = Materials.custom(0xf5e8c0);
+    const litBase   = Materials.custom(0x112233, { emissive: 0x2255aa, emissiveIntensity: 0.5 });
+
+    // Plinth (bottom)
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.09, 0.4), woodDark);
+    plinth.position.y = 0.045;
+    group.add(plinth);
+
+    // Cabinet body
+    const cabinet = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.1, 0.34), wood);
+    cabinet.position.y = 0.59;
+    group.add(cabinet);
+
+    // Top cap
+    const topCap = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.08, 0.4), woodDark);
+    topCap.position.y = 1.18;
+    group.add(topCap);
+
+    // Glass front panel
+    const glassFront = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.96, 0.03), glass);
+    glassFront.position.set(0, 0.59, 0.195);
+    group.add(glassFront);
+
+    // Corner pillars framing the glass
+    [-0.33, 0.33].forEach(x => {
+      const pillar = new THREE.Mesh(new THREE.BoxGeometry(0.045, 1.0, 0.045), woodDark);
+      pillar.position.set(x, 0.59, 0.195);
+      group.add(pillar);
+    });
+
+    // Lit display base inside
+    const displayBase = new THREE.Mesh(new THREE.BoxGeometry(0.54, 0.04, 0.2), litBase);
+    displayBase.position.set(0, 0.13, 0.07);
+    group.add(displayBase);
+
+    // --- Trophy ---
+    const tY = 0.17;
+
+    // Base disc
+    const tBase = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.13, 0.04, 12), gold);
+    tBase.position.set(0, tY, 0.07);
+    group.add(tBase);
+
+    // Lower stem (tapered)
+    const stemLow = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.055, 0.11, 10), goldDark);
+    stemLow.position.set(0, tY + 0.095, 0.07);
+    group.add(stemLow);
+
+    // Mid knot
+    const knot = new THREE.Mesh(new THREE.SphereGeometry(0.042, 10, 8), gold);
+    knot.position.set(0, tY + 0.19, 0.07);
+    group.add(knot);
+
+    // Upper stem
+    const stemUp = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.1, 10), goldDark);
+    stemUp.position.set(0, tY + 0.3, 0.07);
+    group.add(stemUp);
+
+    // Cup body (wide, classic)
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.055, 0.32, 12), gold);
+    cup.position.set(0, tY + 0.515, 0.07);
+    group.add(cup);
+
+    // Cup rim flare
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.165, 0.15, 0.03, 12), gold);
+    rim.position.set(0, tY + 0.69, 0.07);
+    group.add(rim);
+
+    // Handles — large and prominent
+    [-1, 1].forEach(side => {
+      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.065, 0.018, 8, 14, Math.PI), goldDark);
+      handle.rotation.z = side * Math.PI / 2;
+      handle.position.set(side * 0.205, tY + 0.53, 0.07);
+      group.add(handle);
+    });
+
+    // Finial orb on top
+    const orb = new THREE.Mesh(new THREE.SphereGeometry(0.032, 8, 8), gold);
+    orb.position.set(0, tY + 0.735, 0.07);
+    group.add(orb);
+
+    // Name plaque on front
+    const nameplate = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.065, 0.02), plaque);
+    nameplate.position.set(0, 0.93, 0.212);
+    group.add(nameplate);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  stockTicker() {
+    const group = new THREE.Group();
+    const housing = Materials.custom(0x0d0d14);
+    const ledMat  = Materials.custom(0x00ff88, { emissive: 0x00ff88, emissiveIntensity: 1.0 });
+    const bracket = Materials.custom(0x1a1a1a);
+
+    // Canvas texture — three rows of fake ticker data (high-res for crisp text)
+    const canvas = document.createElement('canvas');
+    canvas.width  = 640;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#050f05';
+    ctx.fillRect(0, 0, 640, 128);
+
+    const rows = [
+      { text: 'TRST     $142.67   \u25b2 +2.34  (+1.67%)', color: '#00dd44' },
+      { text: 'HNDRS      $8.12   \u25bc -0.55  (-6.35%)', color: '#ffaa00' },
+      { text: 'ALGM       $0.01   \u25bc -99.9%          ', color: '#ff3322' },
+    ];
+    ctx.font = 'bold 30px monospace';
+    rows.forEach((r, i) => {
+      ctx.fillStyle = r.color;
+      ctx.fillText(r.text, 12, 36 + i * 38);
+    });
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.generateMipmaps = false;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    const screenMat = new THREE.MeshBasicMaterial({ map: tex });
+
+    // Main panel housing
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.58, 0.12), housing);
+    panel.position.y = 1.15;
+    group.add(panel);
+
+    // Screen face with canvas texture
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.44, 0.02), screenMat);
+    screen.position.set(0, 1.15, 0.065);
+    group.add(screen);
+
+    // Corner status LEDs
+    [-1.12, 1.12].forEach(x => {
+      const led = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.012), ledMat);
+      led.position.set(x, 1.15, 0.072);
+      group.add(led);
+    });
+
+    // Wall bracket
+    const bkt = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.22, 0.1), bracket);
+    bkt.position.set(0, 0.93, -0.04);
+    group.add(bkt);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  scaledModel() {
+    const group = new THREE.Group();
+    const marble     = Materials.custom(0xf0ede6);
+    const marbleDark = Materials.custom(0xd8d3c8);
+    const concrete   = Materials.custom(0x8a8a8a);
+    const glassWin   = Materials.custom(0x8aaabb, { emissive: 0x224466, emissiveIntensity: 0.3 });
+    const gold       = Materials.custom(0xd4a820);
+
+    // Pedestal
+    const base = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.9, 0.7), marble);
+    base.position.y = 0.45;
+    group.add(base);
+
+    const capMesh = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.05, 0.74), marbleDark);
+    capMesh.position.y = 0.925;
+    group.add(capMesh);
+
+    // Building floors — stacked, narrowing
+    const floors = [
+      { w: 0.50, h: 0.18, d: 0.50 },
+      { w: 0.42, h: 0.14, d: 0.42 },
+      { w: 0.34, h: 0.14, d: 0.34 },
+      { w: 0.26, h: 0.12, d: 0.26 },
+      { w: 0.18, h: 0.12, d: 0.18 },
+    ];
+    let y = 0.95;
+    floors.forEach((f, i) => {
+      const mat = i % 2 === 0 ? concrete : glassWin;
+      const fl = new THREE.Mesh(new THREE.BoxGeometry(f.w, f.h, f.d), mat);
+      fl.position.y = y + f.h / 2;
+      y += f.h;
+      group.add(fl);
+    });
+
+    // Antenna
+    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.2, 6), gold);
+    ant.position.y = y + 0.1;
+    group.add(ant);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  whiskeyWall() {
+    const group = new THREE.Group();
+    const wood       = Materials.custom(0x3d2410);
+    const woodMid    = Materials.custom(0x5c3a1e);
+    const backlight  = Materials.custom(0xb85210, { emissive: 0xb85210, emissiveIntensity: 0.5 });
+    const bottleAmb  = Materials.custom(0xcc6600, { emissive: 0xaa4400, emissiveIntensity: 0.3 });
+    const bottleDark = Materials.custom(0x1a1000);
+
+    // Back frame
+    const back = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.8, 0.08), wood);
+    back.position.y = 1.1;
+    group.add(back);
+
+    // Amber backlit panel
+    const amber = new THREE.Mesh(new THREE.BoxGeometry(1.44, 1.64, 0.025), backlight);
+    amber.position.set(0, 1.1, 0.05);
+    group.add(amber);
+
+    // Side frame
+    [-0.82, 0.82].forEach(x => {
+      const side = new THREE.Mesh(new THREE.BoxGeometry(0.08, 1.8, 0.28), wood);
+      side.position.set(x, 1.1, 0.1);
+      group.add(side);
+    });
+
+    // Shelves
+    [0.55, 0.95, 1.38].forEach(sy => {
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.04, 0.22), woodMid);
+      shelf.position.set(0, sy, 0.1);
+      group.add(shelf);
+    });
+
+    // Bottles — 4 per shelf, with body / shoulder / neck / cap layers
+    const capMat  = Materials.custom(0x222222);
+    const labelA  = Materials.custom(0xd4b88a);
+    const labelB  = Materials.custom(0xc8c8c8);
+    [0.62, 1.02, 1.45].forEach(sy => {
+      [-0.52, -0.18, 0.18, 0.52].forEach((bx, i) => {
+        const bMat  = i % 2 === 0 ? bottleAmb : bottleDark;
+        const lMat  = i % 2 === 0 ? labelA : labelB;
+        const base  = sy;
+        // Body
+        const body  = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.052, 0.26, 10), bMat);
+        body.position.set(bx, base + 0.14, 0.1);
+        group.add(body);
+        // Label strip on body
+        const label = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.1, 10), lMat);
+        label.position.set(bx, base + 0.13, 0.1);
+        group.add(label);
+        // Shoulder (taper from body to neck)
+        const shoulder = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.048, 0.07, 10), bMat);
+        shoulder.position.set(bx, base + 0.305, 0.1);
+        group.add(shoulder);
+        // Neck
+        const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.024, 0.12, 10), bMat);
+        neck.position.set(bx, base + 0.41, 0.1);
+        group.add(neck);
+        // Cap / cork
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.022, 8), capMat);
+        cap.position.set(bx, base + 0.482, 0.1);
+        group.add(cap);
+      });
+    });
+
+    // Top cap
+    const top = new THREE.Mesh(new THREE.BoxGeometry(1.64, 0.06, 0.32), wood);
+    top.position.set(0, 2.02, 0.1);
+    group.add(top);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  aquariumWall() {
+    const group = new THREE.Group();
+    const frame      = Materials.custom(0x080812);
+    const water      = Materials.custom(0x062244, { emissive: 0x0044bb, emissiveIntensity: 0.55 });
+    const glassPane  = Materials.custom(0x88ccee, { emissive: 0x3377aa, emissiveIntensity: 0.18 });
+    const sand       = Materials.custom(0xc8b47a);
+    const rock       = Materials.custom(0x4a5a6a);
+    const rockLight  = Materials.custom(0x6a7a8a);
+    const coral      = Materials.custom(0xff5522, { emissive: 0xcc2200, emissiveIntensity: 0.2 });
+    const coralPink  = Materials.custom(0xff88bb, { emissive: 0xcc3366, emissiveIntensity: 0.2 });
+    const seagrass   = Materials.custom(0x1a6633);
+    // Outer frame
+    const outerFrame = new THREE.Mesh(new THREE.BoxGeometry(3.5, 2.0, 0.4), frame);
+    outerFrame.position.y = 1.2;
+    group.add(outerFrame);
+
+    // Water volume (interior glow)
+    const waterVol = new THREE.Mesh(new THREE.BoxGeometry(3.3, 1.82, 0.28), water);
+    waterVol.position.set(0, 1.21, 0.06);
+    group.add(waterVol);
+
+    // Glass front face
+    const glassFront = new THREE.Mesh(new THREE.BoxGeometry(3.3, 1.82, 0.025), glassPane);
+    glassFront.position.set(0, 1.21, 0.2);
+    group.add(glassFront);
+
+    // Sand bed
+    const sandBed = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.07, 0.24), sand);
+    sandBed.position.set(0, 0.34, 0.06);
+    group.add(sandBed);
+
+    // Rocks (fixed positions)
+    [[-1.3, 0.42], [-0.6, 0.46], [0.1, 0.41], [0.85, 0.45], [1.4, 0.43]].forEach(([x, y]) => {
+      const r = new THREE.Mesh(new THREE.SphereGeometry(0.1, 7, 6), rock);
+      r.position.set(x, y, 0.06);
+      group.add(r);
+      const rSmall = new THREE.Mesh(new THREE.SphereGeometry(0.065, 6, 5), rockLight);
+      rSmall.position.set(x + 0.1, y + 0.06, 0.1);
+      group.add(rSmall);
+    });
+
+    // Coral stalks
+    [[-0.9, 0.5], [0.3, 0.52], [1.15, 0.49]].forEach(([x, base]) => {
+      const stalk = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.032, 0.24, 7), coral);
+      stalk.position.set(x, base + 0.12, 0.07);
+      group.add(stalk);
+      const top = new THREE.Mesh(new THREE.SphereGeometry(0.052, 7, 6), coralPink);
+      top.position.set(x, base + 0.27, 0.07);
+      group.add(top);
+    });
+
+    // Seagrass blades
+    [-1.4, -1.15, -0.55, 0.6, 1.25, 1.48].forEach(x => {
+      const blade = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.012, 0.3, 5), seagrass);
+      blade.position.set(x, 0.52, 0.07);
+      group.add(blade);
+    });
+
+    // Canvas-sprite fish — transparent planes in front of the glass
+    const _fish = (() => {
+      function draw(W, H, fn) {
+        const c = document.createElement('canvas');
+        c.width = W; c.height = H;
+        const x = c.getContext('2d');
+        x.clearRect(0, 0, W, H);
+        fn(x, W, H);
+        const t = new THREE.CanvasTexture(c);
+        t.generateMipmaps = false;
+        t.minFilter = THREE.LinearFilter;
+        return new THREE.MeshBasicMaterial({ map: t, transparent: true, alphaTest: 0.05, side: THREE.DoubleSide });
+      }
+
+      // Clownfish — orange body, two white vertical bars, black outlines, forked tail
+      const clown = draw(192, 128, (c) => {
+        // Body
+        c.fillStyle = '#ff6010'; c.strokeStyle = '#1a0000'; c.lineWidth = 3;
+        c.beginPath(); c.ellipse(100, 64, 52, 30, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Forked tail — two lobes left side
+        c.fillStyle = '#ff6010';
+        [[48, 64, 8, 33], [48, 64, 8, 95]].forEach(([fx, fy, tx, ty]) => {
+          c.beginPath(); c.moveTo(fx, fy); c.lineTo(tx, ty); c.lineTo((fx + tx) / 2, (fy + ty) / 2 + (ty > fy ? -8 : 8)); c.closePath(); c.fill(); c.stroke();
+        });
+        // White bars
+        c.fillStyle = '#ffffff'; c.strokeStyle = '#000000'; c.lineWidth = 2;
+        [[82, 37, 13, 54], [105, 38, 12, 52]].forEach(([bx, by, bw, bh]) => {
+          c.fillRect(bx, by, bw, bh); c.strokeRect(bx, by, bw, bh);
+        });
+        // Dorsal fin
+        c.fillStyle = '#cc3300';
+        c.beginPath(); c.moveTo(78, 34); c.lineTo(108, 16); c.lineTo(138, 34); c.closePath(); c.fill();
+        // Eye
+        c.fillStyle = '#111'; c.beginPath(); c.arc(146, 56, 8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(148, 54, 3, 0, Math.PI * 2); c.fill();
+      });
+
+      // Blue tang — royal blue oval, yellow forked tail, long dorsal, black lateral stripe
+      const tang = draw(192, 128, (c) => {
+        c.fillStyle = '#1155cc'; c.strokeStyle = '#000033'; c.lineWidth = 3;
+        c.beginPath(); c.ellipse(100, 64, 54, 28, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Yellow forked tail
+        c.fillStyle = '#ffcc00'; c.strokeStyle = '#775500'; c.lineWidth = 2;
+        [[44, 64, 8, 34], [44, 64, 8, 94]].forEach(([fx, fy, tx, ty]) => {
+          c.beginPath(); c.moveTo(fx, fy); c.lineTo(tx, ty); c.lineTo(fx - 10, fy); c.closePath(); c.fill(); c.stroke();
+        });
+        // Black horizontal stripe
+        c.fillStyle = '#001133';
+        c.beginPath(); c.ellipse(96, 64, 42, 8, 0, 0, Math.PI * 2); c.fill();
+        // Dorsal fin
+        c.fillStyle = '#2266ee'; c.strokeStyle = '#000033'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(52, 36); c.lineTo(78, 12); c.lineTo(134, 16); c.lineTo(146, 36); c.closePath(); c.fill(); c.stroke();
+        // Anal fin
+        c.beginPath(); c.moveTo(72, 90); c.lineTo(88, 116); c.lineTo(136, 90); c.closePath(); c.fill(); c.stroke();
+        // Eye
+        c.fillStyle = '#111'; c.beginPath(); c.arc(148, 58, 7, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(150, 56, 2.5, 0, Math.PI * 2); c.fill();
+      });
+
+      // Goldfish — round orange/gold body, flowing fan tail, top fin
+      const gold = draw(192, 128, (c) => {
+        c.fillStyle = '#ff9922'; c.strokeStyle = '#441100'; c.lineWidth = 3;
+        c.beginPath(); c.ellipse(104, 64, 46, 32, 0, 0, Math.PI * 2); c.fill(); c.stroke();
+        // Flowing fan tail — wide spread
+        c.fillStyle = '#ffbb44'; c.strokeStyle = '#441100'; c.lineWidth = 2;
+        [[58, 64, 14, 28], [58, 64, 14, 100], [58, 64, 8, 64]].forEach(([fx, fy, tx, ty]) => {
+          c.beginPath(); c.moveTo(fx, fy); c.quadraticCurveTo(tx + 10, (fy + ty) / 2, tx, ty); c.lineTo(fx - 8, fy); c.closePath(); c.fill(); c.stroke();
+        });
+        // Dorsal fin
+        c.fillStyle = '#ff8800';
+        c.beginPath(); c.moveTo(85, 32); c.lineTo(104, 10); c.lineTo(132, 32); c.closePath(); c.fill(); c.stroke();
+        // Pectoral fin
+        c.fillStyle = '#ffcc66';
+        c.beginPath(); c.ellipse(124, 72, 12, 8, 0.5, 0, Math.PI * 2); c.fill();
+        // Scales hint (two arcs)
+        c.strokeStyle = '#cc6600'; c.lineWidth = 1.5;
+        [[96, 60, 14], [110, 55, 12]].forEach(([sx, sy, sr]) => {
+          c.beginPath(); c.arc(sx, sy, sr, 0.3, Math.PI - 0.3); c.stroke();
+        });
+        // Eye
+        c.fillStyle = '#111'; c.beginPath(); c.arc(144, 56, 8, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#fff'; c.beginPath(); c.arc(146, 54, 3, 0, Math.PI * 2); c.fill();
+      });
+
+      return { clown, tang, gold };
+    })();
+
+    const fishSpecs = [
+      { x: -1.1, y: 1.1,  mat: _fish.clown, w: 0.32, h: 0.21, flip: false },
+      { x:  0.1, y: 1.35, mat: _fish.tang,  w: 0.30, h: 0.19, flip: true  },
+      { x:  0.9, y: 0.92, mat: _fish.gold,  w: 0.28, h: 0.20, flip: false },
+      { x: -0.4, y: 1.55, mat: _fish.clown, w: 0.26, h: 0.17, flip: true  },
+      { x:  1.2, y: 1.18, mat: _fish.tang,  w: 0.28, h: 0.18, flip: false },
+      { x: -0.9, y: 0.82, mat: _fish.gold,  w: 0.24, h: 0.17, flip: true  },
+      { x:  0.5, y: 1.6,  mat: _fish.clown, w: 0.22, h: 0.15, flip: false },
+    ];
+    fishSpecs.forEach(({ x, y, mat, w, h, flip }) => {
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+      plane.position.set(x, y, 0.22);
+      if (flip) plane.scale.x = -1;
+      group.add(plane);
+    });
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  dataVizPanel() {
+    const group = new THREE.Group();
+    const bezel = Materials.custom(0x08080f);
+
+    const canvas = document.createElement('canvas');
+    canvas.width  = 480;
+    canvas.height = 420;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#04040e';
+    ctx.fillRect(0, 0, 480, 420);
+
+    // Header
+    ctx.fillStyle = '#9955ff';
+    ctx.font = 'bold 17px monospace';
+    ctx.fillText('TRUST DEPT — LIVE ANALYTICS', 12, 24);
+    ctx.fillStyle = '#4422aa';
+    ctx.fillRect(0, 32, 480, 1);
+
+    // Bar chart
+    const barVals = [0.32, 0.68, 0.51, 0.89, 0.44, 0.77, 0.63, 0.94, 0.72, 0.84];
+    barVals.forEach((h, i) => {
+      const bh = Math.round(h * 110);
+      ctx.fillStyle = `hsl(${265 + i * 7}, 65%, ${38 + h * 28}%)`;
+      ctx.fillRect(12 + i * 46, 185 - bh, 36, bh);
+    });
+    ctx.fillStyle = '#5533aa';
+    ctx.font = '11px monospace';
+    ctx.fillText('Q1  Q2  Q3  Q4  Q5  Q6  Q7  Q8  Q9 Q10', 12, 200);
+
+    // Divider
+    ctx.fillStyle = '#2a1866';
+    ctx.fillRect(0, 208, 480, 1);
+
+    // Line graph
+    ctx.strokeStyle = '#00ee77';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    [0.22, 0.41, 0.38, 0.58, 0.53, 0.69, 0.66, 0.81, 0.78, 0.91].forEach((v, i) => {
+      const px = 12 + i * 46 + 18;
+      const py = 310 - Math.round(v * 80);
+      i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+
+    // Data readouts
+    ctx.font = 'bold 15px monospace';
+    ctx.fillStyle = '#00cc44';
+    ctx.fillText('AUM FLOW  +$2.4B   \u25b2 12.3%', 12, 348);
+    ctx.fillStyle = '#ff4422';
+    ctx.fillText('RISK IDX   HIGH    OVERRIDE', 12, 372);
+    ctx.fillStyle = '#ffaa00';
+    ctx.fillText('ALGO VER   v9.1.3  ACTIVE', 12, 396);
+    ctx.fillStyle = '#7744ff';
+    ctx.fillText('UPTIME     99.97%  NOMINAL', 12, 420);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.generateMipmaps = false;
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.LinearFilter;
+    const screenMat = new THREE.MeshBasicMaterial({ map: tex });
+
+    // Bezel panel
+    const bezelPanel = new THREE.Mesh(new THREE.BoxGeometry(1.68, 1.48, 0.06), bezel);
+    bezelPanel.position.y = 1.4;
+    group.add(bezelPanel);
+
+    // Screen
+    const screen = new THREE.Mesh(new THREE.BoxGeometry(1.58, 1.38, 0.02), screenMat);
+    screen.position.set(0, 1.4, 0.04);
+    group.add(screen);
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  loungeBar() {
+    const group = new THREE.Group();
+    const counter   = Materials.custom(0x14081e);
+    const marbleTop = Materials.custom(0xe8e0f4);
+    const wood      = Materials.custom(0x2a1408);
+    const backlit   = Materials.custom(0x6622cc, { emissive: 0x5511bb, emissiveIntensity: 0.55 });
+    const bottleA   = Materials.custom(0xcc5500, { emissive: 0x882200, emissiveIntensity: 0.25 });
+    const bottleB   = Materials.custom(0x1a4422, { emissive: 0x0a2211, emissiveIntensity: 0.15 });
+    const capMat    = Materials.custom(0x111111);
+    const stoolBase = Materials.custom(0x1a0a28);
+    const leather   = Materials.custom(0x7744aa);
+
+    // Bar body
+    const body = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.02, 0.52), counter);
+    body.position.set(0, 0.51, 0);
+    group.add(body);
+
+    // Marble top
+    const top = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.06, 0.64), marbleTop);
+    top.position.set(0, 1.05, 0.06);
+    group.add(top);
+
+    // Top edge trim
+    const trim = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.035, 0.04), Materials.custom(0xc8b8e0));
+    trim.position.set(0, 1.065, 0.38);
+    group.add(trim);
+
+    // Backlit shelf frame on rear wall
+    const shelfBack = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.92, 0.06), backlit);
+    shelfBack.position.set(0, 1.52, -0.27);
+    group.add(shelfBack);
+
+    // Shelf planks (two rows)
+    [1.12, 1.56].forEach(y => {
+      const plank = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.03, 0.2), wood);
+      plank.position.set(0, y, -0.18);
+      group.add(plank);
+    });
+
+    // Bottles — 4 per shelf, 2 rows
+    const bottleXs = [-0.72, -0.24, 0.24, 0.72];
+    [1.2, 1.64].forEach((sy, ri) => {
+      bottleXs.forEach((bx, bi) => {
+        const bMat = (ri + bi) % 2 === 0 ? bottleA : bottleB;
+        const bBody = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.044, 0.24, 9), bMat);
+        bBody.position.set(bx, sy + 0.12, -0.18);
+        group.add(bBody);
+        const bShoulder = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.038, 0.06, 9), bMat);
+        bShoulder.position.set(bx, sy + 0.27, -0.18);
+        group.add(bShoulder);
+        const bNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.08, 8), bMat);
+        bNeck.position.set(bx, sy + 0.34, -0.18);
+        group.add(bNeck);
+        const bCap = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.02, 8), capMat);
+        bCap.position.set(bx, sy + 0.39, -0.18);
+        group.add(bCap);
+      });
+    });
+
+    // Bar stools — 3, on the front (positive z) side
+    [-0.72, 0, 0.72].forEach(x => {
+      const sBase = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.1, 0.72, 8), stoolBase);
+      sBase.position.set(x, 0.36, 0.56);
+      group.add(sBase);
+      const footRing = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.012, 6, 10), stoolBase);
+      footRing.position.set(x, 0.28, 0.56);
+      group.add(footRing);
+      const seat = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.13, 0.045, 10), leather);
+      seat.position.set(x, 0.745, 0.56);
+      group.add(seat);
+    });
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  couch() {
+    const group = new THREE.Group();
+    const body    = Materials.custom(0x1a2440);
+    const cushion = Materials.custom(0x243355);
+    const trim    = Materials.custom(0x141e30);
+    const leg     = Materials.custom(0x0d0d0d);
+
+    // Base frame
+    const base = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.42, 0.78), body);
+    base.position.set(0, 0.21, 0);
+    group.add(base);
+
+    // Seat cushions (two side by side, +Z = back of couch)
+    [-0.53, 0.53].forEach(x => {
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.14, 0.62), cushion);
+      seat.position.set(x, 0.49, -0.05);
+      group.add(seat);
+      // Cushion crease line
+      const crease = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.015, 0.015), trim);
+      crease.position.set(x, 0.56, 0.12);
+      group.add(crease);
+    });
+
+    // Back rest
+    const back = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.56, 0.16), body);
+    back.position.set(0, 0.72, 0.31);
+    group.add(back);
+
+    // Back cushions
+    [-0.53, 0.53].forEach(x => {
+      const bc = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.48, 0.1), cushion);
+      bc.position.set(x, 0.72, 0.27);
+      group.add(bc);
+    });
+
+    // Armrests
+    [-1.07, 1.07].forEach(x => {
+      const arm = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.42, 0.78), body);
+      arm.position.set(x, 0.54, 0);
+      group.add(arm);
+      // Arm top pad
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.06, 0.82), cushion);
+      pad.position.set(x, 0.78, 0);
+      group.add(pad);
+    });
+
+    // Legs (4 corners)
+    [[-0.9, -0.32], [0.9, -0.32], [-0.9, 0.32], [0.9, 0.32]].forEach(([x, z]) => {
+      const l = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.1, 0.07), leg);
+      l.position.set(x, 0.05, z);
+      group.add(l);
+    });
+
+    group.traverse(c => { if (c.isMesh) c.castShadow = true; });
+    return group;
+  },
+
+  popcornPopper() {
+    const group = new THREE.Group();
+    const red      = Materials.custom(0xcc1111);
+    const redDark  = Materials.custom(0x991111);
+    const gold     = Materials.custom(0xd4a820);
+    const glass    = Materials.custom(0xaaddee, { emissive: 0x445566, emissiveIntensity: 0.2 });
+    const popcorn  = Materials.custom(0xffe866, { emissive: 0xffaa00, emissiveIntensity: 0.35 });
+    const pcWhite  = Materials.custom(0xfff5cc);
+    const wheel    = Materials.custom(0x222222);
+    const warmGlow = Materials.custom(0xffcc44, { emissive: 0xffaa00, emissiveIntensity: 0.9 });
+
+    // Cart body
+    const cartBody = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.65, 0.42), red);
+    cartBody.position.y = 0.38;
+    group.add(cartBody);
+
+    // Cart panel details
+    [-0.24, 0.24].forEach(x => {
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.45, 0.34), redDark);
+      panel.position.set(x, 0.38, 0);
+      group.add(panel);
+    });
+
+    // Gold trim strips
+    [0.71, 0.06].forEach(y => {
+      const strip = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.03, 0.46), gold);
+      strip.position.y = y;
+      group.add(strip);
+    });
+
+    // Wheels (4 small)
+    [[-0.22, -0.18], [0.22, -0.18], [-0.22, 0.18], [0.22, 0.18]].forEach(([x, z]) => {
+      const w = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 8), wheel);
+      w.rotation.z = Math.PI / 2;
+      w.position.set(x, 0.05, z);
+      group.add(w);
+    });
+
+    // Glass case
+    const glassCase = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.54, 0.36), glass);
+    glassCase.position.y = 1.0;
+    group.add(glassCase);
+
+    // Popcorn pile inside
+    const pile = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), popcorn);
+    pile.scale.set(1.2, 0.7, 0.8);
+    pile.position.y = 0.96;
+    group.add(pile);
+
+    // Popcorn kernels scattered
+    [[-0.08, 0.88], [0.1, 0.94], [-0.04, 1.08], [0.08, 1.02]].forEach(([x, y]) => {
+      const k = new THREE.Mesh(new THREE.SphereGeometry(0.04, 5, 4), pcWhite);
+      k.position.set(x, y, 0.04);
+      group.add(k);
+    });
+
+    // Warm interior glow light dome
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(0.055, 6, 5), warmGlow);
+    glow.position.set(0, 0.75, 0);
+    group.add(glow);
+
+    // Top cap
+    const topCap = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.05, 0.42), red);
+    topCap.position.y = 1.3;
+    group.add(topCap);
+
+    // Top gold finial
+    const finial = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.04, 0.1, 8), gold);
+    finial.position.y = 1.38;
+    group.add(finial);
+
     group.traverse(c => { if (c.isMesh) c.castShadow = true; });
     return group;
   },

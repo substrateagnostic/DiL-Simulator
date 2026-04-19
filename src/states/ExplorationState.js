@@ -371,6 +371,10 @@ export class ExplorationState {
         const prefix = quantity > 1 ? `${quantity}x ` : '';
         this._showToast(`Received ${prefix}${name}`, 'item');
       }),
+      EventBus.on('renovation-purchased', () => {
+        // Rebuild the current room so new furniture appears immediately
+        this._loadRoom(this.player.currentRoom, this.player.position.x, this.player.position.z);
+      }),
       EventBus.on('room-entered', (roomId) => {
         this._updateLocationDisplay(roomId);
         this._refreshStoryProgress(true);
@@ -458,8 +462,11 @@ export class ExplorationState {
           }, 800);
         }
 
-        // Board Room: first visit with act5 triggers Rachel boss
-        if (roomId === 'board_room' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('rachel_fight_started')) {
+        // Board Room: trigger Rachel fight on every entry until act5 is complete
+        // (act5_complete is the only reliable "fight won" gate — rachel_fight_started
+        //  cannot be used here because it gets saved on first entry and permanently
+        //  blocks re-entry after a loss)
+        if (roomId === 'board_room' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete')) {
           this.player.setFlag('rachel_fight_started');
           if (DIALOGS.rachel_boss_combat) {
             setTimeout(() => {
@@ -550,15 +557,26 @@ export class ExplorationState {
     this._updateLocationDisplay(this.player.currentRoom);
   }
 
+  _resolveRoomId(roomId) {
+    if (roomId === 'ross_office' && this.player.getFlag('renovation_corner_office')) {
+      return 'ross_office_large';
+    }
+    if (roomId === 'penthouse' && this.player.getFlag('renovation_penthouse')) {
+      return 'penthouse_expanded';
+    }
+    return roomId;
+  }
+
   _loadRoom(roomId, spawnX, spawnZ) {
-    const result = this.roomManager.loadRoom(roomId, spawnX, spawnZ, this.player.flags);
+    const actualId = this._resolveRoomId(roomId);
+    const result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
       this.player.currentRoom = roomId;
       this.camera.snapTo(result.spawnX, result.spawnZ);
 
-      const roomData = this.roomManager.getRoomData(roomId);
+      const roomData = this.roomManager.getRoomData(actualId);
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
       }
@@ -573,6 +591,9 @@ export class ExplorationState {
       vault: { flag: 'vault_accessible', message: "The vault door is sealed shut. You need more information." },
       board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
       penthouse: { flag: 'act6_complete', message: "The staircase to the Penthouse is sealed. You need the Janitor's Rolex." },
+      penthouse_aquarium: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
+      penthouse_analytics: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
+      penthouse_bar: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
     };
 
     // Block executive floor while the corporate lawyer is active and undefeated
@@ -606,7 +627,8 @@ export class ExplorationState {
     Engine.scene.remove(this.player.mesh);
     this.roomManager._clearCurrentRoom();
 
-    const result = this.roomManager.loadRoom(targetRoom, spawnX, spawnZ, this.player.flags);
+    const actualRoom = this._resolveRoomId(targetRoom);
+    const result = this.roomManager.loadRoom(actualRoom, spawnX, spawnZ, this.player.flags);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
@@ -614,7 +636,7 @@ export class ExplorationState {
       Engine.scene.add(this.player.mesh);
       this.camera.snapTo(result.spawnX, result.spawnZ);
 
-      const roomData = this.roomManager.getRoomData(targetRoom);
+      const roomData = this.roomManager.getRoomData(actualRoom);
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
       }
@@ -780,6 +802,7 @@ export class ExplorationState {
       { started: 'restructuring_fight_started',     defeated: 'restructuring_defeated' },
       { started: 'data_lead_fight_started',         defeated: 'data_lead_defeated' },
       { started: 'chief_fight_started',             defeated: 'chief_restructuring_defeated' },
+      { started: 'rachel_fight_started',            defeated: 'act5_complete' },
     ];
     for (const { started, defeated } of gauntletFlags) {
       if (this.player.getFlag(started) && !this.player.getFlag(defeated)) {
@@ -788,6 +811,7 @@ export class ExplorationState {
     }
 
     this._loadRoom('cubicle_farm');
+    this._autoSave(false);
 
     const DEATH_MESSAGES = [
       'You wake up at your desk... Was it all a dream?',
@@ -838,14 +862,17 @@ export class ExplorationState {
     }
 
     const existing = this.player.getFlag('currentClient');
+    let client = null;
     if (existing) {
-      let client;
       try { client = JSON.parse(existing); } catch { client = null; }
-      if (!client) { this.player.setFlag('currentClient', null); return; }
+      // Discard a cached pre-game client if we're now in post-game
+      if (client && postGame && !client.isPostGame) client = null;
+    }
+    if (client) {
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
-      const client = generateClient(null, this.player.stats.level, postGame);
+      client = generateClient(null, this.player.stats.level, postGame);
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
@@ -1009,7 +1036,10 @@ export class ExplorationState {
     }
 
     // Reward or penalty based on grade
-    const XP_BY_GRADE = { 'A+': 200, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
+    const postGame = !!this.player.getFlag('algorithm_defeated');
+    const XP_BY_GRADE = postGame
+      ? { 'A+': 1500, 'A': 1000, 'B': 600, 'C': 300, 'D': 100, 'F': 0 }
+      : { 'A+': 200, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
     const xpReward = XP_BY_GRADE[health.grade] ?? 0;
     if (xpReward > 0) this.player.gainXP(xpReward);
 

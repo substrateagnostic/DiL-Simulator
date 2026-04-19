@@ -114,10 +114,22 @@ export const SHOP_ITEMS = [
     flag: 'decor_motivational_poster',
     combatBonus: { posterActive: true },
   },
+
+  // ── Renovations (post-game only, 5M AUM each, +2000 XP) ──────────────────
+  { id: 'renovation_espresso_bar',           category: 'renovation', area: 'Break Room',       name: 'Espresso Bar',              description: 'A professional barista station for the break room.',                   price: 5_000_000, maxStack: 1, flag: 'renovation_espresso_bar' },
+  { id: 'renovation_catering_fridge',        category: 'renovation', area: 'Break Room',       name: 'Executive Catering Wall',   description: 'Premium fridge and snack shelving for the break room.',                price: 5_000_000, maxStack: 1, flag: 'renovation_catering_fridge' },
+  { id: 'renovation_ergonomic_workstations', category: 'renovation', area: 'Cubicle Farm',     name: 'Ergonomic Workstations',    description: 'Refresh the cubicle farm with plants and ergonomic additions.',         price: 5_000_000, maxStack: 1, flag: 'renovation_ergonomic_workstations' },
+  { id: 'renovation_marble_counter',         category: 'renovation', area: 'Reception',        name: 'Marble Reception Counter',  description: 'Premium planters and stonework framing the reception desk.',            price: 5_000_000, maxStack: 1, flag: 'renovation_marble_counter' },
+  { id: 'renovation_lobby_sculpture',        category: 'renovation', area: 'Reception',        name: 'Lobby Sculptures',          description: 'Commissioned bronze pieces in the reception lobby.',                   price: 5_000_000, maxStack: 1, flag: 'renovation_lobby_sculpture' },
+  { id: 'renovation_projection_wall',        category: 'renovation', area: 'Conference Room',  name: 'Smart Projection Wall',     description: 'A full AV display wall across the conference room north end.',         price: 5_000_000, maxStack: 1, flag: 'renovation_projection_wall' },
+  { id: 'renovation_corner_office',          category: 'renovation', area: "Ross's Office",    name: 'Corner Office Renovation',  description: "Grand paintings and executive furnishings for Ross's office.",         price: 5_000_000, maxStack: 1, flag: 'renovation_corner_office' },
+  { id: 'renovation_trophy_wall',            category: 'renovation', area: 'The Board Room',   name: 'Victory Trophy Wall',       description: 'Display cases commemorating your wins along the board room walls.',   price: 5_000_000, maxStack: 1, flag: 'renovation_trophy_wall' },
+  { id: 'renovation_penthouse',              category: 'renovation', area: 'The Penthouse',    name: 'Executive Suite Upgrade',   description: 'A floor-to-ceiling aquarium wall, live analytics displays, and a private cocktail lounge.', price: 10_000_000, maxStack: 1, flag: 'renovation_penthouse' },
 ];
 
 export const SHOP_CATEGORIES = {
   consumable: 'Consumables',
   upgrade: 'Permanent Upgrades',
   decor: 'Office Decor',
+  renovation: 'Renovations',
 };
