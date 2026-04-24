@@ -14,10 +14,12 @@ export class CombatState {
   constructor(stateManager, player, enemyId, onEnd, enemyOverrides = {}) {
     this.stateManager = stateManager;
     this.player = player;
-    this.enemyId = enemyId;
+    this.enemyId = enemyId; // encounter ID — used for flags, encounter config lookup
     this.onEnd = onEnd;
     this.enemyOverrides = enemyOverrides;
     this.encounterConfig = ENCOUNTERS[enemyId] || {};
+    // Resolve the actual enemy stats/model ID — encounters can use a different name than their enemy
+    this.actualEnemyId = this.encounterConfig.enemyId || enemyId;
     this.canFlee = this.encounterConfig.canFlee !== false;
     this.scene = new CombatScene();
     this.engine = null;
@@ -32,8 +34,8 @@ export class CombatState {
   }
 
   enter() {
-    this.scene.setEnemy(this.enemyId, this.player);
-    this.engine = new CombatEngine(this.player.getCombatStats(), this.enemyId, this.enemyOverrides);
+    this.scene.setEnemy(this.actualEnemyId, this.player);
+    this.engine = new CombatEngine(this.player.getCombatStats(), this.actualEnemyId, this.enemyOverrides);
 
     const bgColors = {
       intern: [0x1a2a1a, 0x0a3a0a, 0x2a3a1a, 0x4a8a2a],
@@ -54,7 +56,7 @@ export class CombatState {
       regional_director: [0x0a1628, 0x1a2638, 0x0a0a18, 0x4488cc],
       algorithm: [0x000000, 0x0a0a0a, 0x000000, 0xff0000],
     };
-    const colors = bgColors[this.enemyId] || [0x1a0533, 0x0a2463, 0x3e1f47, 0xe94560];
+    const colors = bgColors[this.actualEnemyId] || [0x1a0533, 0x0a2463, 0x3e1f47, 0xe94560];
     this.scene.setBackgroundColors(...colors);
 
     this.hud.show(
@@ -128,7 +130,8 @@ export class CombatState {
       this.engine.player.momentum,
       this.engine.player.bracing,
       this.engine.player.retaliateReady,
-      this.engine.player.hp / this.engine.player.maxHP < 0.25
+      this.engine.player.hp / this.engine.player.maxHP < 0.25,
+      this.engine.getPressAdvantageCost()
     );
     this.hud.updatePlayerStats({
       ...this.player.stats,
@@ -206,14 +209,16 @@ export class CombatState {
     const delay = this._playPlayerActionResult(result, abilityId);
 
     if (result.critical) this._fireTaunt('crit');
-    if (result.effective === 'super') this._fireTaunt('weakness_hit');
+    if (result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
+    if (result.combo) AchievementManager.check(this.player, { event: 'combo_hit' });
     this._checkPhaseChange();
     this._updateHUD();
     setTimeout(() => {
       if (this.engine.isOver) {
         this._handleResult();
       } else if (result.doubleTurn) {
-        this.hud.showMessage('Double turn!');
+        const msg = result.debuffAmount ? 'Enemy DEF reduced! Double turn!' : 'Double turn!';
+        this.hud.showMessage(msg);
         setTimeout(() => this._startPlayerTurn(), 600);
       } else {
         this._startEnemyTurn();
@@ -256,6 +261,7 @@ export class CombatState {
 
     if (result && result.critical) this._fireTaunt('crit');
     if (result && result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
+    if (result && result.combo) AchievementManager.check(this.player, { event: 'combo_hit' });
     this._checkPhaseChange();
     this._updateHUD();
     setTimeout(() => {
@@ -364,6 +370,12 @@ export class CombatState {
       AudioManager.playSfx('confirm');
       this.hud.showMessage(`${result.abilityName}! Enemy weakened for ${result.duration} turns!`);
       return 1000;
+    }
+
+    if (result.type === 'stall') {
+      AudioManager.playSfx('confirm');
+      this.hud.showMessage(`Stall! +${result.momentumGain} Confidence — enemy loses their turn!`);
+      return 800;
     }
 
     if (result.type === 'special') {
@@ -735,6 +747,14 @@ export class CombatState {
           AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
           this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'player');
           this._updateHUD();
+          if (this.engine.posterJustTriggered) {
+            this.engine.posterJustTriggered = false;
+            setTimeout(() => {
+              this.scene.flash(0xffdd00, 0.4);
+              this.particles.burst({ x: 0, y: 1.2, z: 4 }, 25, 0xffdd00, 3, 1.0);
+              this.hud.showMessage('HANG IN THERE! Survived at 1 HP!');
+            }, 300);
+          }
         }, 200);
       } else if (result.healAmount) {
         AudioManager.playSfx('heal');
@@ -779,7 +799,9 @@ export class CombatState {
       }, 1000);
     } else if (this.engine.result === 'defeat') {
       AudioManager.playSfx('defeat');
-      this.player.deaths = (this.player.deaths || 0) + 1;
+      // Don't count the scripted first-Karen one-shot as a real defeat
+      const scriptedKarenLoss = this.enemyId === 'karen' && !this.player.getFlag('retry_karen');
+      if (!scriptedKarenLoss) this.player.deaths = (this.player.deaths || 0) + 1;
       this.hud.showMessage('Your patience has run out...');
       setTimeout(() => this._endCombat('defeat'), 2500);
     }
@@ -855,6 +877,7 @@ export class CombatState {
       const color = quality === 'perfect' ? 0xffd700 : quality === 'good' ? 0x4488ff : 0x888888;
       this.particles.burst({ x: 0, y: 1.2, z: 4 }, quality === 'perfect' ? 30 : 20, color, 2.5, 1.0);
       if (quality !== 'miss') this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 12, 0x88aaff, 1.0, 1.2);
+      if (quality === 'perfect') AchievementManager.check(this.player, { event: 'perfect_brace' });
 
       this._updateHUD();
       setTimeout(() => this._startEnemyTurn(), 1200);
@@ -992,6 +1015,7 @@ export class CombatState {
     let msg = `Second Wind! +${result.healAmount} HP`;
     if (result.clearedStatus) msg += ` | ${result.clearedStatus} cleared!`;
     this.hud.showMessage(msg);
+    AchievementManager.check(this.player, { event: 'second_wind_used' });
     AudioManager.playSfx('heal');
     this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
     this.scene.flash(0x44aaff, 0.12);
@@ -1218,6 +1242,8 @@ export class CombatState {
 
     this.phase = 'animating';
     this.hud.disableInput();
+    AchievementManager.check(this.player, { event: 'desperate_gamble_used' });
+    if (risk === 'all_in') AchievementManager.check(this.player, { event: 'all_in_used' });
 
     if (!result.success && risk === 'all_in') {
       this.hud.showMessage('Total miss! Nothing...');
@@ -1248,7 +1274,7 @@ export class CombatState {
   }
 
   _checkPhaseChange() {
-    const enemyData = ENEMY_STATS[this.enemyId];
+    const enemyData = ENEMY_STATS[this.actualEnemyId];
     if (!enemyData || !enemyData.phases) return;
     const currentPhase = this.engine.getActivePhaseIndex();
     if (currentPhase > this._lastPhaseIndex) {
@@ -1277,7 +1303,7 @@ export class CombatState {
   }
 
   _pickTaunt(side) {
-    const enemyData = ENEMY_STATS[this.enemyId];
+    const enemyData = ENEMY_STATS[this.actualEnemyId];
     if (!enemyData || !enemyData.taunts) return null;
     const taunts = enemyData.taunts;
     return taunts[Math.floor(Math.random() * taunts.length)];

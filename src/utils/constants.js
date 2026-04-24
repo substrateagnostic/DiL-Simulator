@@ -56,7 +56,7 @@ export const CAMERA = {
 
 // Player
 export const PLAYER = {
-  SPEED: 4,
+  SPEED: 5,
   INTERACT_RANGE: 1.8,
 };
 

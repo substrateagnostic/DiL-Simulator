@@ -103,6 +103,46 @@ const CLIENT_TYPES = [
   },
 ];
 
+// ── Post-Game Tier 5 Client Types ────────────────────────────────────────────
+// Unlocked after defeating The Algorithm. Assets 20M–100M, XP 200–350.
+const POST_GAME_CLIENT_TYPES = [
+  {
+    type: 'UHNWI',
+    visualId: 'karen',
+    assetMin: 30_000_000,
+    assetMax: 100_000_000,
+    abilities: ['speak_to_manager', 'demand_guarantees', 'call_the_other_advisor'],
+  },
+  {
+    type: 'Sovereign Wealth Consultant',
+    visualId: 'chad',
+    assetMin: 50_000_000,
+    assetMax: 100_000_000,
+    abilities: ['demand_guarantees', 'portfolio_panic', 'trust_fund_tantrum'],
+  },
+  {
+    type: 'Offshore Dynasty',
+    visualId: 'grandma',
+    assetMin: 25_000_000,
+    assetMax: 80_000_000,
+    abilities: ['call_the_other_advisor', 'speak_to_manager', 'demand_guarantees'],
+  },
+  {
+    type: 'Corporate Pension Fund',
+    visualId: 'intern',
+    assetMin: 40_000_000,
+    assetMax: 100_000_000,
+    abilities: ['portfolio_panic', 'demand_guarantees', 'speak_to_manager'],
+  },
+  {
+    type: 'Tech Billionaire Exit',
+    visualId: 'chad',
+    assetMin: 20_000_000,
+    assetMax: 75_000_000,
+    abilities: ['client_bro_down', 'trust_fund_tantrum', 'call_the_other_advisor'],
+  },
+];
+
 const RISK_PROFILES = [
   'Very Conservative',
   'Conservative',
@@ -131,7 +171,7 @@ export const POSITIVE_ATTRIBUTES = [
     label: 'High Growth Potential',
     desc: 'Strong earning prospects, great for metrics',
     buff: { atk: 1, spd: 1 },
-    angerDelta: 0,
+    angerDelta: -1,
   },
   {
     id: 'low_maintenance',
@@ -145,7 +185,7 @@ export const POSITIVE_ATTRIBUTES = [
     label: 'Large Estate',
     desc: 'Significant AUM boosts your book of business',
     buff: { atk: 3 },
-    angerDelta: 0,
+    angerDelta: -1,
   },
   // ── Phase 7: New positive attributes ────────────────────────────────────
   {
@@ -179,7 +219,7 @@ export const POSITIVE_ATTRIBUTES = [
   {
     id: 'returning_client',
     label: 'Returning Client',
-    desc: 'Used to be with Wells Fargo — knows the drill',
+    desc: 'Used to be with Vaults Fargo — knows the drill',
     buff: { atk: 2, def: 1 },
     angerDelta: -1,
   },
@@ -191,14 +231,14 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'Litigious History',
     desc: 'Has sued 3 previous advisors for "bad advice"',
     debuff: { def: -3 },
-    angerDelta: 3,
+    angerDelta: 2,
   },
   {
     id: 'demanding',
     label: 'High Maintenance',
     desc: 'Calls 4x daily, CC\'s Alex on every email',
     debuff: { spd: -2 },
-    angerDelta: 2,
+    angerDelta: 1,
   },
   {
     id: 'unrealistic',
@@ -212,14 +252,14 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'Nightmare Tax Situation',
     desc: '7 states, 2 offshore accounts, 3 shell LLCs',
     debuff: { def: -2 },
-    angerDelta: 1,
+    angerDelta: 2,
   },
   {
     id: 'fomo',
     label: 'FOMO Trader',
     desc: 'Constantly demands exposure to meme stocks',
     debuff: { atk: -1, spd: -1 },
-    angerDelta: 2,
+    angerDelta: 1,
   },
   // ── Phase 7: New negative attributes ────────────────────────────────────
   {
@@ -234,21 +274,21 @@ export const NEGATIVE_ATTRIBUTES = [
     label: 'Family Feud',
     desc: 'Three siblings, three lawyers, zero agreement',
     debuff: { def: -2, atk: -1 },
-    angerDelta: 3,
+    angerDelta: 2,
   },
   {
     id: 'social_media',
     label: 'Social Media Complainant',
     desc: 'Live-tweets every meeting, 200K followers',
     debuff: { def: -3 },
-    angerDelta: 3,
+    angerDelta: 2,
   },
   {
     id: 'day_trader',
     label: 'Day Trader',
     desc: 'Calls at market open demanding 47 trades before lunch',
     debuff: { spd: -3 },
-    angerDelta: 2,
+    angerDelta: 1,
   },
   {
     id: 'conspiracy',
@@ -316,29 +356,44 @@ function generateVisualConfig(firstName, clientType) {
   return { bodyColor, pantsColor, shirtColor, tieColor, skinColor, hairColor, hairStyle, accessories };
 }
 
-function scaleEnemyStats(assets, playerLevel = 1) {
-  const MAX_ASSET = 25_000_000; // raised for new high-AUM types
+function scaleEnemyStats(assets, playerLevel = 1, postGame = false) {
+  const MAX_ASSET = postGame ? 100_000_000 : 25_000_000;
   const t = Math.min(1, assets / MAX_ASSET);
   // Level scaling: each player level adds ~8% to base stats
   const lvlScale = 1 + (playerLevel - 1) * 0.08;
+  const xpReward = postGame
+    ? Math.round(200 + t * 150)   // 200–350 post-game
+    : Math.round(60 + t * 60);    // 60–120 normal
+  // HP variance: ±30% so clients at similar wealth tiers still feel distinct
+  const hpVariance = 0.70 + Math.random() * 0.60; // 0.70–1.30
   return {
-    maxHP: Math.round((100 + t * 160) * lvlScale),
+    maxHP: Math.round((100 + t * 160) * lvlScale * hpVariance),
     atk:   Math.round((6  + t * 16)  * lvlScale),
     def:   Math.round((3  + t * 15)  * lvlScale),
     spd:   Math.round((4  + t * 10)  * lvlScale),
-    xpReward: Math.round(60 + t * 60),
+    xpReward,
   };
 }
 
-export function generateClient(overrideLastName, playerLevel = 1) {
-  const typeDef = pick(CLIENT_TYPES);
+export function generateClient(overrideLastName, playerLevel = 1, postGame = false) {
+  let pool = postGame ? POST_GAME_CLIENT_TYPES : CLIENT_TYPES;
+  let typeDef = pick(pool);
   const lastName = overrideLastName || pick(LAST_NAMES);
   const firstName = pick(FIRST_NAMES);
   const name = `${firstName} ${lastName}`;
 
-  let assets = randomInt(typeDef.assetMin, typeDef.assetMax);
+  // 5% chance of a pre-algorithm whale client (100M+ AUM) — rare big fish
+  let isWhale = false;
+  if (!postGame && Math.random() < 0.05) {
+    isWhale = true;
+    typeDef = pick(POST_GAME_CLIENT_TYPES);
+  }
+
+  let assets = isWhale
+    ? randomInt(100_000_000, 250_000_000)
+    : randomInt(typeDef.assetMin, typeDef.assetMax);
   // Crypto clients get wider variance — could moon or crash
-  if (typeDef.volatileAssets) {
+  if (!isWhale && typeDef.volatileAssets) {
     const swing = Math.random();
     if (swing > 0.85) assets = Math.round(assets * 2.5); // to the moon
     else if (swing < 0.15) assets = Math.round(assets * 0.3); // rug pull
@@ -348,21 +403,17 @@ export function generateClient(overrideLastName, playerLevel = 1) {
   const annualFees = Math.round(assets * feeRate);
   const riskProfile = pick(RISK_PROFILES);
 
-  // 0–2 positive, 0–2 negative; guarantee at least one attribute
-  const numPos = randomInt(0, 2);
-  const numNeg = randomInt(0, 2);
+  // 1–3 positive, 0–1 negative — guarantee at least one positive per client
+  // Expected anger delta: ~-0.7 per client so anger trends down over time with room for bad streaks
+  const numPos = randomInt(1, 3);
+  const numNeg = randomInt(0, 1);
   const posAttrs = shuffle(POSITIVE_ATTRIBUTES).slice(0, numPos).map(a => ({ ...a, positive: true }));
   const negAttrs = shuffle(NEGATIVE_ATTRIBUTES).slice(0, numNeg).map(a => ({ ...a, positive: false }));
-
-  if (posAttrs.length === 0 && negAttrs.length === 0) {
-    if (Math.random() < 0.5) posAttrs.push({ ...pick(POSITIVE_ATTRIBUTES), positive: true });
-    else negAttrs.push({ ...pick(NEGATIVE_ATTRIBUTES), positive: false });
-  }
 
   const attributes = [...posAttrs, ...negAttrs];
   const netAngerDelta = attributes.reduce((sum, a) => sum + a.angerDelta, 0);
 
-  const scaled = scaleEnemyStats(assets, playerLevel);
+  const scaled = scaleEnemyStats(assets, playerLevel, postGame || isWhale);
   const enemyStats = {
     name,
     maxHP: scaled.maxHP,
@@ -389,6 +440,7 @@ export function generateClient(overrideLastName, playerLevel = 1) {
     netAngerDelta,
     enemyStats,
     chainEligible: !!typeDef.chainEligible,
+    isPostGame: postGame || isWhale,
   };
 }
 

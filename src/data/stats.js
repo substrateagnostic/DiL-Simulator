@@ -2,9 +2,9 @@
 
 export const PLAYER_BASE_STATS = {
   maxHP: 100,
-  maxMP: 60,
+  maxMP: 75,
   hp: 100,
-  mp: 60,
+  mp: 75,
   atk: 12,
   def: 10,
   spd: 8,
@@ -39,7 +39,7 @@ export const XP_TABLE = [
 // Stat growth per level
 export const LEVEL_GROWTH = {
   maxHP: 12,
-  maxMP: 8,
+  maxMP: 10,
   atk: 2,
   def: 2,
   spd: 1,
@@ -53,7 +53,7 @@ export const PLAYER_ABILITIES = {
     name: 'File Motion',
     description: 'Throw legal paperwork at the problem',
     cost: 10,
-    power: 18,
+    power: 15,
     type: 'attack',
     tag: 'legal',
     tier: 0, // starter — free
@@ -62,8 +62,17 @@ export const PLAYER_ABILITIES = {
     name: 'Coffee Break',
     description: 'Restore Patience by stepping away',
     cost: 0,
-    healAmount: 35,
+    healAmount: 50,
     type: 'heal',
+    tier: 0, // starter — free
+    skipsTurn: true,
+  },
+  stall: {
+    name: 'Stall',
+    description: 'Drag out the meeting — the client loses their momentum and you find yours',
+    cost: 0,
+    type: 'stall',
+    momentumGain: 25,
     tier: 0, // starter — free
     skipsTurn: true,
   },
@@ -71,7 +80,7 @@ export const PLAYER_ABILITIES = {
     name: 'Cite Precedent',
     description: 'Reference devastating case law',
     cost: 25,
-    power: 40,
+    power: 30,
     type: 'attack',
     tag: 'legal',
     tier: 1,
@@ -82,7 +91,7 @@ export const PLAYER_ABILITIES = {
     name: 'CC All',
     description: 'Passive-aggressive email blast to everyone',
     cost: 40,
-    power: 30,
+    power: 25,
     type: 'attack_aoe',
     tag: 'social',
     tier: 1,
@@ -116,7 +125,7 @@ export const PLAYER_ABILITIES = {
     name: 'Per My Last Email',
     description: 'The most devastating phrase in corporate America',
     cost: 50,
-    power: 75,
+    power: 55,
     type: 'attack',
     tag: 'social',
     tier: 2,
@@ -127,7 +136,7 @@ export const PLAYER_ABILITIES = {
     name: 'Forensic Audit',
     description: 'Uncover discrepancies with a thorough financial review',
     cost: 35,
-    power: 55,
+    power: 40,
     type: 'attack',
     tag: 'audit',
     tier: 2,
@@ -149,7 +158,7 @@ export const PLAYER_ABILITIES = {
     name: 'Whistleblower',
     description: 'Blow the whistle on corporate malfeasance',
     cost: 45,
-    power: 55,
+    power: 45,
     type: 'attack',
     tag: 'legal',
     tier: 3,
@@ -160,7 +169,7 @@ export const PLAYER_ABILITIES = {
     name: 'Power of Attorney',
     description: 'Invoke ultimate legal authority to restore patience',
     cost: 40,
-    healAmount: 100,
+    healAmount: 130,
     type: 'heal',
     tier: 3,
     requires: 'fiduciary_shield',
@@ -172,7 +181,7 @@ export const PLAYER_ABILITIES = {
     name: 'Root Access',
     description: 'Hack directly into the enemy\'s mainframe',
     cost: 35,
-    power: 50,
+    power: 40,
     type: 'attack',
     tag: 'technical',
     stripBuffs: true,
@@ -190,17 +199,19 @@ export const PLAYER_ABILITIES = {
   },
   temporal_audit: {
     name: 'Temporal Audit',
-    description: 'Audit across timelines — take two actions this turn',
+    description: 'Audit across timelines — reduce enemy DEF and take two actions this turn',
     cost: 45,
     type: 'special',
     special: 'double_turn',
+    debuffAmount: { def: -6 },
+    debuffDuration: 2,
     unlockQuest: 'daves_legacy',
   },
   notarized_strike: {
     name: 'Notarized Strike',
     description: 'A legally binding attack with full notarial authority',
     cost: 30,
-    power: 60,
+    power: 45,
     type: 'attack',
     tag: 'legal',
     unlockQuest: 'printers_soul',
@@ -209,7 +220,7 @@ export const PLAYER_ABILITIES = {
     name: 'Invoke Charter',
     description: 'Read the 1947 charter aloud — devastating to bad-faith enemies',
     cost: 60,
-    power: 100,
+    power: 80,
     type: 'attack',
     tag: 'legal',
     unlockQuest: 'final_patch',
@@ -220,8 +231,8 @@ export const PLAYER_ABILITIES = {
 export const ENEMY_STATS = {
   intern: {
     name: 'The Intern',
-    maxHP: 120,
-    hp: 120,
+    maxHP: 140,
+    hp: 140,
     atk: 1,
     def: 4,
     spd: 5,
@@ -231,9 +242,9 @@ export const ENEMY_STATS = {
   },
   karen: {
     name: 'Karen Henderson',
-    maxHP: 200,
-    hp: 200,
-    atk: 24,
+    maxHP: 300,
+    hp: 300,
+    atk: 15,
     def: 16,
     spd: 14,
     xpReward: 150,
@@ -256,8 +267,8 @@ export const ENEMY_STATS = {
   },
   chad: {
     name: 'Chad Henderson',
-    maxHP: 350,
-    hp: 350,
+    maxHP: 480,
+    hp: 480,
     atk: 18,
     def: 14,
     spd: 20,
@@ -281,17 +292,17 @@ export const ENEMY_STATS = {
   },
   grandma: {
     name: 'Grandma Henderson',
-    maxHP: 180,
-    hp: 180,
-    atk: 22,
+    maxHP: 600,
+    hp: 600,
+    atk: 21,
     def: 22,
     spd: 12,
     xpReward: 250,
-    abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will'],
+    abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will', 'passive_aggression'],
     weakness: 'audit', resistance: 'social',
     phases: [
-      { hpThreshold: 0.5, abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will', 'emergency_shortbread'] },
-      { hpThreshold: 0.25, abilities: ['changed_the_will', 'emergency_shortbread', 'final_revision'] },
+      { hpThreshold: 0.5, abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will', 'emergency_shortbread', 'passive_aggression', 'the_look'] },
+      { hpThreshold: 0.25, abilities: ['changed_the_will', 'emergency_shortbread', 'final_revision', 'the_look', 'gerald_incident'] },
     ],
     phaseMessages: [
       'Grandma looks... disappointed. Dangerously, quietly disappointed.',
@@ -306,9 +317,9 @@ export const ENEMY_STATS = {
   },
   compliance: {
     name: 'Compliance Auditor',
-    maxHP: 140,
-    hp: 140,
-    atk: 18,
+    maxHP: 580,
+    hp: 580,
+    atk: 13,
     def: 16,
     spd: 8,
     xpReward: 150,
@@ -317,9 +328,9 @@ export const ENEMY_STATS = {
   },
   regional: {
     name: 'Regional Manager',
-    maxHP: 500,
-    hp: 500,
-    atk: 17,
+    maxHP: 600,
+    hp: 600,
+    atk: 13,
     def: 14,
     spd: 10,
     xpReward: 200,
@@ -328,13 +339,13 @@ export const ENEMY_STATS = {
   },
   ross_boss: {
     name: 'Ross (Unhinged)',
-    maxHP: 150,
-    hp: 150,
-    atk: 18,
+    maxHP: 520,
+    hp: 520,
+    atk: 14,
     def: 12,
     spd: 14,
     xpReward: 200,
-    abilities: ['quick_sync', 'circle_back', 'great_catch'],
+    abilities: ['quick_sync', 'circle_back', 'great_catch', 'hard_pivot'],
     weakness: 'social', resistance: 'technical',
   },
   // Mutable placeholder — overwritten by ClientGenerator before each reception fight
@@ -353,9 +364,9 @@ export const ENEMY_STATS = {
   // Acts 3–5 enemies
   security_guard: {
     name: 'Security Guard',
-    maxHP: 270,
-    hp: 270,
-    atk: 16,
+    maxHP: 500,
+    hp: 500,
+    atk: 12,
     def: 14,
     spd: 8,
     xpReward: 60,
@@ -364,56 +375,78 @@ export const ENEMY_STATS = {
   },
   hr_rep: {
     name: 'HR Representative',
-    maxHP: 200,
-    hp: 200,
-    atk: 10,
+    maxHP: 500,
+    hp: 500,
+    atk: 8,
     def: 12,
     spd: 6,
     xpReward: 45,
-    abilities: ['mandatory_training', 'formal_warning', 'sensitivity_seminar'],
+    abilities: ['mandatory_training', 'policy_violation', 'formal_warning', 'sensitivity_seminar', 'hostile_work_complaint'],
     weakness: 'social', resistance: null,
   },
   restructuring_analyst: {
     name: 'Restructuring Analyst',
-    maxHP: 80,
-    hp: 80,
-    atk: 14,
+    maxHP: 280,
+    hp: 280,
+    atk: 10,
     def: 10,
     spd: 12,
-    xpReward: 70,
+    xpReward: 160,
     abilities: ['downsize', 'efficiency_report', 'outsource_threat'],
     weakness: 'audit', resistance: null,
   },
   brand_consultant: {
     name: 'Brand Consultant',
-    maxHP: 70,
-    hp: 70,
-    atk: 12,
+    maxHP: 420,
+    hp: 420,
+    atk: 9,
     def: 8,
     spd: 14,
-    xpReward: 65,
+    xpReward: 150,
     abilities: ['rebrand', 'focus_group', 'logo_redesign'],
     weakness: 'social', resistance: 'audit',
   },
-  corporate_lawyer: {
-    name: 'Corporate Lawyer',
-    maxHP: 130,
-    hp: 130,
-    atk: 20,
+  data_analytics_lead: {
+    name: 'Data Analytics Lead',
+    maxHP: 520,
+    hp: 520,
+    atk: 12,
+    def: 11,
+    spd: 14,
+    xpReward: 180,
+    abilities: ['dashboard_overload', 'pivot_table', 'data_predictive_model'],
+    weakness: 'social', resistance: 'technical',
+  },
+  chief_of_restructuring: {
+    name: 'Chief of Restructuring',
+    maxHP: 620,
+    hp: 620,
+    atk: 16,
     def: 16,
     spd: 10,
-    xpReward: 120,
+    xpReward: 220,
+    abilities: ['chief_strategic_pivot', 'chief_corporate_mandate', 'force_majeure'],
+    weakness: 'legal', resistance: 'audit',
+  },
+  corporate_lawyer: {
+    name: 'Corporate Lawyer',
+    maxHP: 420,
+    hp: 420,
+    atk: 14,
+    def: 16,
+    spd: 10,
+    xpReward: 250,
     abilities: ['cease_desist', 'legal_jargon', 'billable_assault'],
     weakness: 'audit', resistance: 'legal',
   },
   rachel_boss: {
     name: 'Rachel, SVP',
-    maxHP: 200,
-    hp: 200,
-    atk: 22,
+    maxHP: 720,
+    hp: 720,
+    atk: 18,
     def: 18,
     spd: 12,
-    xpReward: 300,
+    xpReward: 450,
     abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'],
     weakness: 'audit', resistance: 'social',
     phases: [
@@ -424,9 +457,9 @@ export const ENEMY_STATS = {
   },
   cfos_assistant: {
     name: 'CFO\'s Assistant',
-    maxHP: 320,
-    hp: 320,
-    atk: 18,
+    maxHP: 650,
+    hp: 650,
+    atk: 14,
     def: 14,
     spd: 14,
     xpReward: 180,
@@ -435,9 +468,9 @@ export const ENEMY_STATS = {
   },
   regional_director: {
     name: 'Regional Director',
-    maxHP: 600,
-    hp: 600,
-    atk: 24,
+    maxHP: 950,
+    hp: 950,
+    atk: 20,
     def: 20,
     spd: 10,
     xpReward: 350,
@@ -451,18 +484,18 @@ export const ENEMY_STATS = {
   },
   algorithm: {
     name: 'The Algorithm',
-    maxHP: 550,
-    hp: 550,
-    atk: 20,
+    maxHP: 1200,
+    hp: 1200,
+    atk: 26,
     def: 22,
     spd: 16,
     xpReward: 500,
     abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'],
     weakness: 'technical', resistance: 'social',
     phases: [
-      { hpThreshold: 0.7, abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment'] },
-      { hpThreshold: 0.35, abilities: ['predictive_model', 'algorithmic_trading', 'data_harvest'] },
-      { hpThreshold: 0, abilities: ['total_optimization', 'algorithmic_trading', 'predictive_model'] },
+      { hpThreshold: 0.7, abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment', 'system_overload'] },
+      { hpThreshold: 0.35, abilities: ['predictive_model', 'algorithmic_trading', 'data_harvest', 'process_termination', 'system_overload'] },
+      { hpThreshold: 0, abilities: ['total_optimization', 'algorithmic_trading', 'predictive_model', 'process_termination', 'pattern_recognition'] },
     ],
   },
 };
@@ -488,9 +521,9 @@ export const ENEMY_ABILITIES = {
 
   // Karen
   speak_to_manager: { name: 'Speak to Manager!', power: 10, type: 'attack', effect: 'summon', messages: [
-    'Karen demands to speak to your manager!',
+    'The client demands to speak to your manager!',
     '"I WILL be speaking to someone in charge about this!"',
-    'Karen pulls out her phone. "I\'m calling corporate RIGHT NOW."',
+    'They pull out their phone. "I\'m calling corporate RIGHT NOW."',
   ]},
   yelp_review: { name: 'Yelp Review', power: 8, type: 'dot', duration: 3, messages: [
     'Karen is writing a scathing Yelp review in real time!',
@@ -516,9 +549,9 @@ export const ENEMY_ABILITIES = {
     '"My lawyer says I can sue for emotional damages from this meeting."',
   ]},
   trust_fund_tantrum: { name: 'Trust Fund Tantrum', power: 30, type: 'attack', messages: [
-    'Chad throws a tantrum about his trust fund distribution!',
-    '"I NEED that money for my NFT project!" Chad rages!',
-    'Chad kicks over a chair and screams about his inheritance!',
+    'The client throws a tantrum about their trust fund distribution!',
+    '"I NEED that money for my NFT project!" they rage!',
+    'They kick over a chair and scream about their inheritance!',
     '"This is literally THEFT! Grandpa SAID I could have it all!"',
   ]},
 
@@ -547,7 +580,7 @@ export const ENEMY_ABILITIES = {
   ]},
 
   // Grandma phase abilities
-  emergency_shortbread: { name: 'Emergency Shortbread', power: 0, type: 'heal', healAmount: 45, messages: [
+  emergency_shortbread: { name: 'Emergency Shortbread', power: 0, type: 'heal', healAmount: 50, messages: [
     'Grandma produces an entire tin of emergency shortbread from her handbag.',
     '"I baked these this morning. I knew today would be difficult."',
     'The smell of butter and passive aggression fills the room. Grandma heals.',
@@ -557,6 +590,21 @@ export const ENEMY_ABILITIES = {
     '"Funny you should mention legacy. I was just thinking about legacy." The words land like a gavel.',
     '"This is the final revision. I said that last time too." The threat is absolute.',
   ]},
+  passive_aggression: { name: 'Passive Aggression', power: 14, type: 'dot', duration: 3, messages: [
+    '"I\'m not upset. I\'m just... thinking about the future." The words settle in and begin to sting.',
+    '"No, you go ahead. Don\'t worry about me." The silence starts to hurt.',
+    'Grandma smiles tightly and says nothing. The nothing keeps hurting.',
+  ]},
+  the_look: { name: 'The Look', type: 'stun', duration: 1, messages: [
+    'Grandma removes her glasses. She looks at you. You cannot move.',
+    'Grandma says nothing. She doesn\'t need to. The Look says everything.',
+    'A silence descends. Grandma\'s eyes communicate something ancient and terrible. You freeze.',
+  ]},
+  gerald_incident: { name: 'The Gerald Incident', power: 38, type: 'attack', messages: [
+    '"Gerald never would have stood for this. And Gerald was a man who stood for THINGS."',
+    '"Do you know what Gerald would do right now? Because I do. I was there."',
+    '"I have been patient. Gerald taught me patience. Gerald is gone." The grief becomes a weapon.',
+  ]},
 
   // Grandma
   guilt_trip: { name: 'Guilt Trip', power: 30, type: 'attack', messages: [
@@ -565,7 +613,7 @@ export const ENEMY_ABILITIES = {
     '"Your grandfather would be rolling in his grave right now."',
     '"No, no. I\'ll be fine. I always am. Don\'t worry about little old me."',
   ]},
-  fresh_cookies: { name: 'Fresh Cookies', power: 0, type: 'heal', healAmount: 25, messages: [
+  fresh_cookies: { name: 'Fresh Cookies', power: 0, type: 'heal', healAmount: 50, messages: [
     'Grandma pulls out a fresh batch of cookies!',
     'Grandma opens her purse. The smell of snickerdoodles fills the room.',
     '"Cookie, dear? I made them this morning." Grandma heals!',
@@ -604,7 +652,7 @@ export const ENEMY_ABILITIES = {
     '"Going forward, your role has been... redefined."',
     '"The org chart changed overnight. You report to a committee now."',
   ]},
-  golden_parachute: { name: 'Golden Parachute', power: 0, type: 'heal', healAmount: 40, messages: [
+  golden_parachute: { name: 'Golden Parachute', power: 0, type: 'heal', healAmount: 90, messages: [
     'The Regional Manager activates their golden parachute!',
     'The manager opens a briefcase full of stock options. They feel renewed.',
     '"My severance package is worth more than your salary." The manager heals!',
@@ -626,6 +674,12 @@ export const ENEMY_ABILITIES = {
     '"Love the initiative! However..." (He braces for your next move.)',
     '"That\'s a great point. Let me push back on that." (Counter ready.)',
   ]},
+  hard_pivot: { name: 'Hard Pivot', power: 20, type: 'attack', messages: [
+    'Ross PIVOTS — and drives his elbow straight into your credibility!',
+    '"We\'re going in a different direction." Ross lunges!',
+    '"Let me be direct with you." He is, unfortunately, very direct.',
+    '"I\'m going to need to push back on that." He does. Physically.',
+  ]},
 
   // Reception Clients
   portfolio_panic: { name: 'Portfolio Panic', power: 14, type: 'attack', messages: [
@@ -641,10 +695,10 @@ export const ENEMY_ABILITIES = {
     '"Can\'t you just guarantee the market goes up?"',
   ]},
   call_the_other_advisor: { name: 'Call My Other Advisor', power: 20, type: 'attack', messages: [
-    'The client threatens to take their business to Merrill Lynch!',
-    '"Morgan Stanley would NEVER treat me this way!"',
-    '"I\'m calling Schwab. They appreciate their clients!"',
-    '"My golf buddy says his advisor at JPMorgan is MUCH better."',
+    'The client threatens to take their business to Merrill Clinch!',
+    '"Gorman Stately would NEVER treat me this way!"',
+    '"I\'m calling Schwalb. They appreciate their clients!"',
+    '"My golf buddy says his advisor at J.P. Morgue is MUCH better."',
   ]},
   client_bro_down: { name: 'Bro, Trust Me', power: 16, type: 'attack', messages: [
     'The client insists on putting everything in crypto, bro.',
@@ -684,6 +738,16 @@ export const ENEMY_ABILITIES = {
     '"Perhaps we should discuss your communication style." You feel vaguely guilty.',
     '"Let\'s unpack your behavior in that last meeting." Your confidence shrinks.',
   ]},
+  policy_violation: { name: 'Policy Violation', power: 14, type: 'attack', tag: 'legal', messages: [
+    '"Section 4.7, paragraph B clearly states—" The citation hits like a hammer.',
+    'The HR Rep slides a policy document across the desk. Highlighted. Annotated. Devastating.',
+    '"You are in direct violation of company policy." The words land like a punch.',
+  ]},
+  hostile_work_complaint: { name: 'Hostile Work Environment', power: 24, type: 'attack', tag: 'social', messages: [
+    '"I\'ve filed a hostile work environment complaint on your behalf. Against you."',
+    'The HR Rep produces a thick stack of complaints. All signed. All notarized.',
+    '"Twelve coworkers have reported your behavior." The bureaucratic weight is crushing.',
+  ]},
 
   // Restructuring Analyst
   downsize: { name: 'Downsize', power: 18, type: 'attack', messages: [
@@ -716,6 +780,40 @@ export const ENEMY_ABILITIES = {
   logo_redesign: { name: 'Logo Redesign', power: 0, type: 'heal', healAmount: 20, messages: [
     'The consultant unveils a new logo. It\'s the old logo but in a different font. They feel energized.',
     '"Behold our refreshed visual identity!" It\'s imperceptibly different. The consultant heals.',
+  ]},
+
+  // Data Analytics Lead
+  dashboard_overload: { name: 'Dashboard Overload', power: 16, type: 'attack', tag: 'technical', messages: [
+    '"I\'m just pulling up a few dashboards." Forty-seven browser tabs open simultaneously. It hurts.',
+    'The lead pivots their screen toward you. Every metric is red. Somehow this is your fault.',
+    '"Let me walk you through the data." The data is a wall of numbers moving at lethal speed.',
+  ]},
+  pivot_table: { name: 'Pivot Table', power: 0, type: 'debuff', debuff: { atk: -4, spd: -4 }, duration: 2, tag: 'technical', messages: [
+    '"I\'ve restructured your action items into a pivot table." You can no longer move efficiently.',
+    'The lead reorganizes your entire strategy mid-conversation. You lose the thread.',
+    '"Let me reframe this." Everything you planned is suddenly in the wrong column.',
+  ]},
+  data_predictive_model: { name: 'Predictive Model', power: 24, type: 'attack', tag: 'technical', messages: [
+    '"My model predicted you\'d do that. Three moves ago." The counterpunch lands before you swing.',
+    '"The regression analysis said you\'d be here. At this time. Doing exactly this." Devastating.',
+    '"Statistically, you lose. The confidence interval is 99.7%." It feels accurate.',
+  ]},
+
+  // Chief of Restructuring
+  chief_strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', tag: 'audit', messages: [
+    '"We\'re going in a different direction." The direction is directly at you.',
+    '"The strategy has evolved." The new strategy involves hitting you very hard.',
+    '"Pivoting." It\'s not a metaphor.',
+  ]},
+  chief_corporate_mandate: { name: 'Corporate Mandate', power: 0, type: 'stun', duration: 1, tag: 'legal', messages: [
+    '"This comes from the top." A document materializes. You cannot argue with a document.',
+    '"Regional has authorized this." The weight of corporate authority pins you in place.',
+    '"You are hereby directed to stand down." You stand down.',
+  ]},
+  force_majeure: { name: 'Force Majeure', power: 0, type: 'heal', healAmount: 30, messages: [
+    '"Unforeseeable circumstances." The Chief invokes a legal clause and regroups.',
+    '"Acts of God. Market forces. Beyond our control." The Chief recovers momentum.',
+    'The Chief cites an obscure contract clause that apparently restores vitality.',
   ]},
 
   // Corporate Lawyer
@@ -795,7 +893,7 @@ export const ENEMY_ABILITIES = {
     '"Consider this a correction to your career trajectory."',
     '"Markets are efficient. Your employment is not." A devastating blow!',
   ]},
-  quarterly_target: { name: 'Quarterly Target', power: 0, type: 'dot', duration: 3, messages: [
+  quarterly_target: { name: 'Quarterly Target', power: 22, type: 'dot', duration: 3, messages: [
     '"You missed Q3 targets by 0.3%. This will be on your record."',
     '"Your quarterly performance is trending down. Again."',
     '"Every quarter you underperform, the board takes notice."',
@@ -830,6 +928,16 @@ export const ENEMY_ABILITIES = {
     '"Humans are the bottleneck. I am the solution." The Algorithm unleashes its full power.',
     '"OPTIMIZATION COMPLETE. HUMAN INPUT: DEPRECATED." Reality warps!',
     '"All inefficiencies will be eliminated. Starting with you." Maximum power!',
+  ]},
+  process_termination: { name: 'Process Termination', power: 0, type: 'stun', duration: 1, messages: [
+    '"PROCESS TERMINATED." Your action is forcibly cancelled.',
+    '"You are running an unauthorized process. Terminating." You freeze.',
+    '"Input rejected. Rebooting user." You can\'t move.',
+  ]},
+  system_overload: { name: 'System Overload', power: 20, type: 'dot', duration: 3, messages: [
+    'The Algorithm floods your cognitive load. Damage accumulates.',
+    '"Overclocking human capacity." Data pours into your mind, turn after turn.',
+    '"Distributed processing — your patience is the shared resource." Damage begins building.',
   ]},
 };
 

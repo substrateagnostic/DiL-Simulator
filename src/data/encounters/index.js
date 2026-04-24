@@ -73,6 +73,18 @@ export const ENCOUNTERS = {
     postDialogId: 'brand_consultant_defeated',
     canFlee: true,
   },
+  data_analytics_lead: {
+    enemyId: 'data_analytics_lead',
+    preDialogId: 'data_analytics_combat',
+    postDialogId: 'data_analytics_defeated',
+    canFlee: false,
+  },
+  chief_of_restructuring: {
+    enemyId: 'chief_of_restructuring',
+    preDialogId: 'chief_restructuring_combat',
+    postDialogId: 'chief_restructuring_defeated',
+    canFlee: false,
+  },
   corporate_lawyer: {
     enemyId: 'corporate_lawyer',
     preDialogId: 'corporate_lawyer_combat',

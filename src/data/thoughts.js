@@ -32,7 +32,7 @@ export const ROOM_THOUGHTS = {
   ],
   parking_garage: [
     "Concrete and fluorescent lights. The building's subconscious.",
-    "Someone left a Wells Fargo bumper sticker on a Porsche. Peak irony.",
+    "Someone left a Vaults Fargo bumper sticker on a Porsche. Peak irony.",
   ],
   stairwell: [
     "The graffiti changes every time I look. Or maybe I'm just paying attention now.",
@@ -57,6 +57,22 @@ export const ROOM_THOUGHTS = {
   penthouse: [
     "The top floor. Where numbers replace names and efficiency replaces empathy.",
     "The Algorithm lives here. It's watching. Calculating. Missing the point entirely.",
+  ],
+  penthouse_expanded: [
+    "I used to watch this floor from the lobby. Now I own the coffee machine up here.",
+    "The view hasn't changed. I have.",
+  ],
+  penthouse_aquarium: [
+    "An aquarium and a movie screen. Someone had very specific needs and I respect that.",
+    "The fish don't know what a trust officer is. Lucky them.",
+  ],
+  penthouse_analytics: [
+    "Five screens. Zero ambiguity. This is what accountability looks like when you can afford the electricity.",
+    "The data doesn't lie. Neither do I. We'll get along fine.",
+  ],
+  penthouse_bar: [
+    "Somewhere, a compliance manual is spinning in its binder.",
+    "This is either a reward or a liability. Possibly both.",
   ],
 };
 

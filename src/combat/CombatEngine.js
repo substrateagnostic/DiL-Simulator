@@ -21,7 +21,9 @@ export class CombatEngine {
       momentum: 0,
       bracing: false,
       retaliateReady: false,
+      posterUsed: false,
     };
+    this.posterJustTriggered = false;
     this.telegraphedAbility = null;
     this.enemy = { ...ENEMY_STATS[enemyId], ...enemyOverrides, buffs: [], dots: [], lastAbility: null, exposed: 0, protected: 0, vulnerable: 0, confuseCooldown: 0 };
     this.enemyId = enemyId;
@@ -128,7 +130,7 @@ export class CombatEngine {
 
     this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
 
-    const momentumGain = 5 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
+    const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
     this._gainMomentum(momentumGain);
 
     this.log.push({ type: 'attack', damage: finalDamage, critical: dmg.critical });
@@ -165,7 +167,7 @@ export class CombatEngine {
         let finalDamage = dmg.damage;
         if (combo) finalDamage = Math.floor(finalDamage * 1.25);
         this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
-        const momentumGain = 5 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
+        const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
         this._gainMomentum(momentumGain);
         result = { ...result, damage: finalDamage, critical: dmg.critical, effective: dmg.effective, combo, momentumGain };
         if (ability.stripBuffs) {
@@ -203,9 +205,22 @@ export class CombatEngine {
         result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration };
         break;
       }
+      case 'stall': {
+        this._gainMomentum(ability.momentumGain || 25);
+        result = { ...result, momentumGain: ability.momentumGain || 25, skipsTurn: true };
+        break;
+      }
       case 'special': {
         if (ability.special === 'double_turn') {
           result.doubleTurn = true;
+          if (ability.debuffAmount) {
+            this.enemy.buffs.push({
+              stats: ability.debuffAmount,
+              duration: ability.debuffDuration || 2,
+              name: ability.name,
+            });
+            result.debuffAmount = ability.debuffAmount;
+          }
         }
         break;
       }
@@ -316,7 +331,6 @@ export class CombatEngine {
           this.player.retaliateReady = true;
         }
         this.player.hp = Math.max(0, this.player.hp - finalDamage);
-        if (!braced && finalDamage > this.player.maxHP * 0.25) this._loseMomentum(10);
         result.damage = finalDamage;
         result.critical = dmg.critical;
         result.braced = braced;
@@ -355,7 +369,6 @@ export class CombatEngine {
       }
       case 'stun': {
         this.player.stunned = Math.max(this.player.stunned, ability.duration);
-        this._loseMomentum(10);
         break;
       }
       case 'counter': {
@@ -387,7 +400,6 @@ export class CombatEngine {
           braced = true;
         }
         this.player.hp = Math.max(0, this.player.hp - finalDamage);
-        if (!braced && finalDamage > this.player.maxHP * 0.25) this._loseMomentum(10);
         result.damage = finalDamage;
         result.braced = braced;
         break;
@@ -461,9 +473,10 @@ export class CombatEngine {
       case 'tactical': {
         const hpPercent = this.enemy.hp / this.enemy.maxHP;
         const healThreshold = pattern.healThreshold || 0.5;
+        const healChance = pattern.healChance ?? 0.6;
         if (hpPercent < healThreshold) {
           const healAbility = abilities.find((id) => ENEMY_ABILITIES[id]?.type === 'heal');
-          if (healAbility && Math.random() < 0.6) return healAbility;
+          if (healAbility && Math.random() < healChance) return healAbility;
         }
         const debuffChance = pattern.debuffChance || 0.3;
         if (Math.random() < debuffChance) {
@@ -511,6 +524,11 @@ export class CombatEngine {
         if (this.player.stunned > 0) {
           // Player is stunned — don't waste a counter (they can't attack anyway)
           pool = pool.filter(a => ENEMY_ABILITIES[a]?.type !== 'counter');
+        }
+        // Anti-repeat: avoid picking the same ability twice in a row when alternatives exist
+        if (pool.length > 1 && this.enemy.lastAbility) {
+          const noRepeat = pool.filter(a => a !== this.enemy.lastAbility);
+          if (noRepeat.length > 0) pool = noRepeat;
         }
         if (pool.length === 0) pool = abilities;
         return pool[Math.floor(Math.random() * pool.length)];
@@ -627,6 +645,12 @@ export class CombatEngine {
 
   _checkDefeat() {
     if (this.player.hp <= 0) {
+      if (this.player.posterActive && !this.player.posterUsed) {
+        this.player.hp = 1;
+        this.player.posterUsed = true;
+        this.posterJustTriggered = true;
+        return;
+      }
       this.isOver = true;
       this.result = 'defeat';
     }
@@ -656,9 +680,8 @@ export class CombatEngine {
     if (this.player.momentum < 100) return null;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
-    const baseDmg = (pStats.atk + 30) * COMBAT.BASE_DAMAGE_MULTIPLIER;
-    const defense = eStats.def * COMBAT.DEFENSE_FACTOR * 0.25;
-    const damage = Math.max(10, Math.floor(baseDmg - defense + randomRange(-5, 5)));
+    const baseDmg = (pStats.atk + 75) * COMBAT.BASE_DAMAGE_MULTIPLIER;
+    const damage = Math.max(10, Math.floor(baseDmg + randomRange(-5, 5)));
     this.enemy.hp = Math.max(0, this.enemy.hp - damage);
     this.player.momentum = 0;
     this._checkVictory();
@@ -678,9 +701,16 @@ export class CombatEngine {
     this.player.momentum = Math.max(0, this.player.momentum - amount);
   }
 
-  // Spend 25 momentum — press the attack and lower enemy DEF
+  // Dynamic Press Advantage cost: base 25, reduced by SPD above the player baseline of 8
+  getPressAdvantageCost() {
+    const spd = this._getEffective(this.player).spd;
+    return Math.max(15, 25 - Math.floor((spd - 8) * 0.5));
+  }
+
+  // Spend momentum (SPD-scaled) — press the attack and lower enemy DEF
   playerPressAdvantage() {
-    if (this.player.momentum < 25) return null;
+    const cost = this.getPressAdvantageCost();
+    if (this.player.momentum < cost) return null;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(this.enemy);
     const dmg = this._calcDamage(pStats.atk, 18, eStats.def, this.enemy);
@@ -690,7 +720,7 @@ export class CombatEngine {
     this.enemy.hp = Math.max(0, this.enemy.hp - finalDamage);
     // Apply DEF debuff
     this.enemy.buffs.push({ stats: { def: -5 }, duration: 2, name: 'Press Advantage' });
-    this.player.momentum = Math.max(0, this.player.momentum - 25);
+    this.player.momentum = Math.max(0, this.player.momentum - cost);
     this._checkVictory();
     return { type: 'press_advantage', damage: finalDamage, critical: dmg.critical, combo };
   }
@@ -698,7 +728,7 @@ export class CombatEngine {
   // Spend 50 momentum — recover 25% HP and clear a stun/confuse
   playerSecondWind() {
     if (this.player.momentum < 50) return null;
-    const healAmt = Math.floor(this.player.maxHP * 0.25);
+    const healAmt = 75;
     this.player.hp = Math.min(this.player.maxHP, this.player.hp + healAmt);
     // Clear one negative status
     let clearedStatus = null;

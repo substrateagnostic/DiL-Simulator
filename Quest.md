@@ -17,7 +17,12 @@ All quests, objectives, and rewards.
 | 4 | Handle the Henderson Trust meetings |
 | 5 | Meet Karen Henderson in the Conference Room |
 
-**Reward:** Story progression. Diane gives you a **Large Coffee** (restores 30 Coffee) at the reception desk.
+**Combat reward:**
+| Enemy | XP | Notes |
+|-------|----|-------|
+| The Intern | **25 XP** | Tutorial fight; triggered after briefing. Can flee. |
+
+**Story reward:** Diane gives you a **Large Coffee** (restores 30 Coffee) at the reception desk.
 
 ---
 
@@ -97,18 +102,20 @@ All quests, objectives, and rewards.
 
 | # | Objective |
 |---|-----------|
-| 1 | Defend the department from the Restructuring Team |
-| 2 | Defeat the Brand Consultant |
+| 1 | Defeat the Brand Consultant |
+| 2 | Defeat the Restructuring Analyst |
 | 3 | Defeat the Corporate Lawyer |
 | 4 | Access the Board Room |
 | 5 | Confront Rachel in the Board Room |
 
-**Combat rewards:**
-| Enemy | XP | Notes |
-|-------|----|-------|
-| Restructuring Analyst | **70 XP** | Can flee: no |
-| Brand Consultant | **65 XP** | Can flee: yes |
-| Corporate Lawyer | **120 XP** | Can flee: no |
+**Combat rewards** (in order):
+| Enemy | XP | HP | Notes |
+|-------|----|----|-------|
+| Restructuring Analyst | **70 XP** | 80 | Can flee: no |
+| Brand Consultant | **65 XP** | 70 | Can flee: yes |
+| Corporate Lawyer | **120 XP** | 130 | Can flee: no |
+| Data Analytics Lead | **90 XP** | 330 | Can flee: no. Triggers on executive floor after Corporate Lawyer defeated. |
+| Chief of Restructuring | **130 XP** | 465 | Can flee: no. Triggers on executive floor after Data Analytics Lead defeated. |
 
 ---
 
@@ -144,9 +151,9 @@ All quests, objectives, and rewards.
 **Combat rewards:**
 | Boss | XP | Notes | HP |
 |------|-----|-------|----|
-| CFO's Assistant | **180 XP** | Can flee: no | 320 |
-| Regional Director | **350 XP** | Can flee: no | 600 |
-| The Algorithm | **500 XP** | Can flee: no. Final boss. | 550 |
+| CFO's Assistant | **180 XP** | Can flee: no | 650 |
+| Regional Director | **350 XP** | Can flee: no | 950 |
+| The Algorithm | **500 XP** | Can flee: no. Final boss. | 1200 |
 
 ---
 
@@ -162,7 +169,7 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex in the Server Room |
-| 2 | Examine Server Rack C in the Server Room |
+| 2 | Examine Server Rack C in the Server Room *(x:3, z:3)* |
 | 3 | Return to Alex |
 
 **Reward:** 2× Energy Drink (restores 20 Coffee + SPD +3 for 3 turns). Permanent **SPD +3**.
@@ -175,8 +182,8 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex |
-| 2 | Find the HR paper trail *(HR Department, x:14 z:0.5)* |
-| 3 | Find the phantom workstation *(Cubicle Farm, x:16 z:6)* |
+| 2 | Find the HR paper trail *(HR Department, x:11 z:9)* |
+| 3 | Find the phantom workstation *(Cubicle Farm, x:17 z:5)* |
 | 4 | Return to Alex |
 
 **Reward:** Ability unlocked — **Root Access** *(Power 50, strips all enemy buffs)*
@@ -258,21 +265,27 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 ### The Printer from Hell
 *Something is wrong with the office printer. More wrong than usual.*
 
+> **Unlocks after:** Speaking to Ross and receiving the Henderson briefing (`briefing_complete`).
+
 | Step | What to do |
 |------|-----------|
-| 1 | Investigate the haunted printer |
+| 1 | Interact with the printer in the Cubicle Farm — it prints on its own and mentions the Henderson files |
 | 2 | Ask Alex from IT about the printer |
-| 3 | Find the printer's true purpose |
+| 3 | Find and install the toner to learn the truth |
+
+**Reward:** 350 XP. *(Note: the Notarized Strike ability comes from the Printer's Soul subquest, not this one.)*
 
 ---
 
 ### Server Room Secrets
 *The server room holds more than servers.*
 
+> **Unlocks after:** Meeting Alex from IT (`met_alex_it`), then inspecting the server rack at x:1, z:3 in the Server Room.
+
 | Step | What to do |
 |------|-----------|
-| 1 | Explore the server room |
-| 2 | Help Alex with his discovery |
+| 1 | Inspect the server rack in the Server Room (left row) — spot the `admin_legacy` note |
+| 2 | Talk to Alex about what you found |
 | 3 | Decide what to do with the evidence |
 
 ---
@@ -297,25 +310,4 @@ Each poster gives a stat boost (+1 ATK or +1 DEF) and XP on first read. Andrew h
 
 ---
 
-## Repeatable: Reception Roguelite
-
-Talk to the reception desk to start a client encounter. Win the combat, then accept or decline the client.
-
-- **Win combat:** ~65 XP (scales slightly with client tier)
-- **Accept client:** AUM = max(50, floor(client assets × 1%))
-- **Decline client:** No AUM, no penalty
-
-AUM is the shop currency. Spend it at the **Supply Shop** in the Break Room (interact with the vending machine area).
-
----
-
-## Item Reference
-
-| Item | Effect | How to get |
-|------|--------|-----------|
-| Large Coffee | Restores 30 Coffee | Diane (reception desk), Break Room coffee machine |
-| Antacid | Restores 40 Patience | Diane's desk drawer, Janitor (Act 4) |
-| Energy Drink | Restores 20 Coffee + SPD +3 for 3 turns | Anomaly subquest reward |
-| Stress Ball | Restores 60 Patience | Compliance Auditor (post-combat) |
-| Compliance Manual | DEF +5 for entire battle | Compliance Auditor (mid-story) |
-| Vending Fortune | Restores 10 Patience | Break Room vending machine |
+*See **Gameplay.md** for the roguelite loop, item reference, achievements, cosmetics, and combat attributes.*

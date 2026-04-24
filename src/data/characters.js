@@ -22,6 +22,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'short',
     accessories: ['bluetooth_earpiece', 'boss_mug'],
+    shoeSize: 0.75,
   },
   janet: {
     name: 'Janet',
@@ -221,6 +222,74 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['glasses'],
   },
+  // Act 5 restructuring team
+  brand_consultant: {
+    name: 'Brand Consultant',
+    bodyColor: 0xcc6633, // burnt-orange blazer
+    pantsColor: 0x2a2a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0xddaa00, // gold tie
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_BLONDE,
+    hairStyle: 'slick',
+    accessories: ['clipboard'],
+  },
+  restructuring_analyst: {
+    name: 'Restructuring Analyst',
+    bodyColor: 0x3a3a5a, // dark slate suit
+    pantsColor: 0x2a2a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0x554488, // purple tie
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_DARK,
+    hairStyle: 'short',
+    accessories: ['glasses'],
+  },
+  corporate_lawyer: {
+    name: 'Corporate Lawyer',
+    bodyColor: COLORS.SUIT_BLACK,
+    pantsColor: 0x1a1a1a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: COLORS.RED_TIE,
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_GRAY,
+    hairStyle: 'slick',
+    accessories: ['clipboard', 'glasses'],
+  },
+  data_analytics_lead: {
+    name: 'Data Analytics Lead',
+    bodyColor: 0x1a4a6a, // teal-navy blazer
+    pantsColor: 0x1a2a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0x00aacc, // cyan tie
+    skinColor: COLORS.SKIN_DARK,
+    hairColor: COLORS.HAIR_DARK,
+    hairStyle: 'short',
+    accessories: ['glasses'],
+  },
+  chief_of_restructuring: {
+    name: 'Chief of Restructuring',
+    bodyColor: 0x1a1a3a, // near-black power suit
+    pantsColor: 0x111122,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0x8a0000, // crimson tie
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_WHITE,
+    hairStyle: 'short',
+    accessories: ['clipboard'],
+  },
+  rachel_boss: {
+    name: 'Rachel, SVP',
+    bodyColor: 0x1a1a3a, // navy power suit
+    pantsColor: 0x1a1a3a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: null,
+    skinColor: COLORS.SKIN,
+    hairColor: 0xc0c0c0, // silver
+    hairStyle: 'bob',
+    accessories: ['tablet', 'pearl_earrings'],
+  },
+
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
   reception_client: {
     name: 'Prospective Client',

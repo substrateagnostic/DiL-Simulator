@@ -22,7 +22,7 @@ export class Player {
     // Upgrade system
     this.upgradePoints = 0;
     this.deaths = 0;
-    this.unlockedAbilities = new Set(['file_motion', 'coffee_break']); // starters
+    this.unlockedAbilities = new Set(['file_motion', 'coffee_break', 'stall']); // starters
     // Cosmetic equipment: { hat: null, glasses: null, badge: null, accessory: null }
     this.equipped = {};
     for (const slot of COSMETIC_SLOTS) this.equipped[slot] = null;
@@ -108,6 +108,8 @@ export class Player {
   // Get combat stats with cosmetic bonuses applied
   getCombatStats() {
     const base = { ...this.stats };
+    const maxHPBefore = base.maxHP;
+    const maxMPBefore = base.maxMP;
     for (const slot of COSMETIC_SLOTS) {
       const cosId = this.equipped[slot];
       if (!cosId) continue;
@@ -117,7 +119,19 @@ export class Player {
         if (base[stat] !== undefined) base[stat] += val;
       }
     }
-    // Ensure hp/mp don't exceed boosted max
+    // Cosmetic maxHP/maxMP gains also fill current HP/MP so the bonus is felt immediately
+    const maxHPGain = base.maxHP - maxHPBefore;
+    const maxMPGain = base.maxMP - maxMPBefore;
+    if (maxHPGain > 0) base.hp = Math.min(base.hp + maxHPGain, base.maxHP);
+    if (maxMPGain > 0) base.mp = Math.min(base.mp + maxMPGain, base.maxMP);
+    // Apply decor combat bonuses
+    if (this.getFlag('decor_coffee_machine')) {
+      base.mp = Math.min(base.maxMP, base.mp + 5);
+    }
+    if (this.getFlag('decor_motivational_poster')) {
+      base.posterActive = true;
+    }
+    // Final cap
     if (base.hp > base.maxHP) base.hp = base.maxHP;
     if (base.mp > base.maxMP) base.mp = base.maxMP;
     return base;
@@ -260,7 +274,9 @@ export class Player {
     this.upgradePoints = data.upgradePoints || 0;
     this.deaths = data.deaths || 0;
     if (data.stats?.aum !== undefined) this.stats.aum = data.stats.aum;
-    this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break']);
+    this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break', 'stall']);
+    // Ensure tier-0 starters are always present regardless of save age
+    ['file_motion', 'coffee_break', 'stall'].forEach(id => this.unlockedAbilities.add(id));
     if (data.equipped) {
       this.equipped = { ...data.equipped };
       // Rebuild mesh to show saved cosmetics

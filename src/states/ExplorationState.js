@@ -42,9 +42,16 @@ const QUEST_OBJECTIVES = {
     2: 'Meet Grandma Henderson in the Conference Room',
     3: 'Make your recommendation on the Henderson Trust',
   },
-  main_act3: {
+  main_act2_finale: {
     0: 'Head to the Executive Floor',
     1: 'Face the consequences',
+  },
+  main_act3: {
+    0: 'Talk to Alex from IT about the encrypted partition',
+    1: 'Find the Archive through the stairwell',
+    2: 'Search the Archive for Henderson records',
+    3: 'Confront the Janitor about his past',
+    4: 'Return to Alex with the evidence',
   },
   henderson_trust: {
     briefing: 'Meet Karen Henderson in the Conference Room',
@@ -58,8 +65,8 @@ const QUEST_OBJECTIVES = {
     5: 'Retrieve the 1947 charter from the Vault',
   },
   main_act5: {
-    0: 'Defend the department from the Restructuring Team',
-    1: 'Defeat the Brand Consultant',
+    0: 'Defeat the Brand Consultant',
+    1: 'Defeat the Restructuring Analyst',
     2: 'Defeat the Corporate Lawyer',
     3: 'Access the Board Room',
     4: 'Confront Rachel in the Board Room',
@@ -139,6 +146,14 @@ export class ExplorationState {
           this._pendingDialog = null;
           if (DIALOGS[dialogId]) {
             setTimeout(() => {
+              // If the fight was already started via the terminal, don't re-push the intro dialog
+              if (dialogId === 'algorithm_combat' && this.player.getFlag('defeated_algorithm')) return;
+              // If the menu is open, defer the dialog until resume() fires after it closes
+              const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+              if (menuOpen) {
+                this._pendingDialog = dialogId;
+                return;
+              }
               const dialogState = new DialogState(DIALOGS[dialogId], this.player, this.stateManager, dialogId);
               this.stateManager.push(dialogState);
             }, 500);
@@ -153,20 +168,25 @@ export class ExplorationState {
       EventBus.on('abilities-viewed', () => {
         this._dismissUpgradeTooltip();
       }),
-      EventBus.on('flag-set', ({ key }) => {
+      EventBus.on('flag-set', ({ key, value }) => {
         this._refreshStoryProgress();
         // Alex IT router: chain into the chosen dialog after router ends
-        if (key === 'alex_story_chosen') {
-          const hasAct2 = this.player.getFlag('briefing_complete') && !this.player.getFlag('knows_server_secret');
+        // Only queue pending dialogs when flags are set to truthy values — not when cleared
+        if (key === 'alex_story_chosen' && value) {
+          const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret');
           this._pendingDialog = hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
+          // Reset immediately so the flag can fire again for future story acts
+          this.player.setFlag('alex_story_chosen', false);
         }
-        if (key === 'alex_story_deferred') {
+        if (key === 'alex_story_deferred' && value) {
           this._pendingDialog = this._getAlexSideQuestDialog();
         }
-        if (key === 'alex_side_chosen') {
+        if (key === 'alex_side_chosen' && value) {
           this._pendingDialog = this._getAlexSideQuestDialog();
+          // Reset immediately so the flag can fire again next time the side router is used
+          this.player.setFlag('alex_side_chosen', false);
         }
-        if (key === 'alex_main_chosen') {
+        if (key === 'alex_main_chosen' && value) {
           // Find the appropriate act-based dialog for Alex
           const act = this.player.actIndex || 0;
           const actDialogs = ['alex_it_act7', 'alex_it_act6', 'alex_it_act4', 'alex_it_act3'];
@@ -179,9 +199,11 @@ export class ExplorationState {
             }
           }
           this._pendingDialog = mainDialog;
+          // Reset immediately so the flag can fire again next time the side router is used
+          this.player.setFlag('alex_main_chosen', false);
         }
         if (key === 'briefing_complete' && !this.player.getFlag('defeated_intern')) {
-          this._showToast('Optional: spar with the Intern for a quick combat tutorial.', 'item');
+          this._showToast('Spar with the Intern before meeting Karen — you\'ll need the practice.', 'objective');
         }
         if (key === 'defeated_intern' && this.player.stats.level < 2) {
           const xpNeeded = XP_TABLE[1] - this.player.stats.xp;
@@ -205,7 +227,7 @@ export class ExplorationState {
           this._showToast('Something is stirring in the building...', 'objective');
         }
         if (key === 'archive_accessible') {
-          this._showToast('The Archive is now accessible from the stairwell.', 'objective');
+          this._showToast('The Archive is now accessible from the back corridor.', 'objective');
         }
         if (key === 'hr_accessible') {
           this._showToast('The HR Department is now accessible.', 'objective');
@@ -221,6 +243,9 @@ export class ExplorationState {
         }
         if (key === 'act5_complete') {
           this._showToast('Rachel is defeated, but the board meets tomorrow. Prepare the team!', 'objective');
+        }
+        if (key === 'diane_act6_rallied') {
+          this._showToast("Diane rallied! Her documents are in the HR filing cabinet.", 'objective');
         }
         if (key === 'act6_complete') {
           this._showToast('The Penthouse awaits. Face The Algorithm.', 'objective');
@@ -267,17 +292,22 @@ export class ExplorationState {
         }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
         if (key === 'penthouse_entered') {
-          setTimeout(() => this._startCombat('cfos_assistant'), 2000);
+          this._pendingDialog = 'cfos_assistant_combat';
         }
         if (key === 'cfos_defeated') {
-          setTimeout(() => this._startCombat('regional_director'), 1500);
+          this._pendingDialog = 'regional_director_combat';
         }
         if (key === 'regional_director_defeated') {
-          setTimeout(() => this._startCombat('algorithm'), 1500);
+          this._pendingDialog = 'algorithm_combat';
         }
         // Act 6 → 7 transition: all allies rallied + rolex = penthouse unlocks
         if (key === 'has_rolex') {
           this.player.setFlag('act6_complete', true);
+          // Reward for completing all Act 6 prep (allies + evidence + rolex)
+          const levels = this.player.gainXP(500);
+          this._updateMiniStats();
+          this._showToast('Team assembled, evidence secured. +500 XP', 'objective');
+          if (levels.length > 0) AudioManager.playSfx('levelup');
         }
         if (key === 'has_charter') {
           this._showToast('You have the 1947 Charter! Its power resonates through the building.', 'item');
@@ -287,7 +317,6 @@ export class ExplorationState {
           quest_legacy_admin_complete: 'legacy_admin',
           quest_network_ghost_complete: 'network_ghost',
           quest_daves_legacy_complete: 'daves_legacy',
-          printer_quest_done: 'printers_soul',
           quest_printer_soul_complete: 'printers_soul',
           quest_final_patch_complete: 'final_patch',
         };
@@ -317,6 +346,14 @@ export class ExplorationState {
         if (STORY_THOUGHTS[key]) {
           setTimeout(() => this._showMonologue(STORY_THOUGHTS[key]), 2000);
         }
+        // Act completion achievements — fire immediately when the act-end flag lands
+        const ACT_ACHIEVEMENT_FLAGS = [
+          'briefing_complete', 'act2_complete', 'act3_complete',
+          'act4_complete', 'act5_complete', 'act6_complete', 'algorithm_defeated',
+        ];
+        if (ACT_ACHIEVEMENT_FLAGS.includes(key)) {
+          AchievementManager.check(this.player, {});
+        }
         // Refresh quest tracker on any flag change (picks up side quest starts/completions)
         this._refreshStoryProgress(true);
         // Janitor riddles complete — +2 all stats
@@ -334,6 +371,10 @@ export class ExplorationState {
         const prefix = quantity > 1 ? `${quantity}x ` : '';
         this._showToast(`Received ${prefix}${name}`, 'item');
       }),
+      EventBus.on('renovation-purchased', () => {
+        // Rebuild the current room so new furniture appears immediately
+        this._loadRoom(this.player.currentRoom, this.player.position.x, this.player.position.z);
+      }),
       EventBus.on('room-entered', (roomId) => {
         this._updateLocationDisplay(roomId);
         this._refreshStoryProgress(true);
@@ -349,6 +390,11 @@ export class ExplorationState {
 
         if (roomId === 'reception') {
           this._onReceptionEntered();
+        }
+
+        // Executive floor: track first visit for cosmetic unlock
+        if (roomId === 'executive_floor' && !this.player.getFlag('executive_floor_visited')) {
+          this.player.setFlag('executive_floor_visited');
         }
 
         // Ending dialog re-triggers on every executive floor visit until the boss is defeated
@@ -389,6 +435,7 @@ export class ExplorationState {
         // Archive: first visit triggers security guard encounter
         if (roomId === 'archive' && !this.player.getFlag('visited_archive')) {
           this.player.setFlag('visited_archive');
+          this.player.setFlag('archive_found');
           if (DIALOGS.security_guard_combat) {
             setTimeout(() => {
               const dialogState = new DialogState(DIALOGS['security_guard_combat'], this.player, this.stateManager, 'security_guard_combat');
@@ -397,7 +444,7 @@ export class ExplorationState {
           }
         }
 
-        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team (one-time)
+        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team cutscene (one-time)
         if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && !this.player.getFlag('act4_complete') && !this.player.getFlag('act5_triggered') && DIALOGS.act5_trigger) {
           this.player.setFlag('act5_triggered');
           setTimeout(() => {
@@ -406,8 +453,20 @@ export class ExplorationState {
           }, 800);
         }
 
-        // Board Room: first visit with act5 triggers Rachel boss
-        if (roomId === 'board_room' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('rachel_fight_started')) {
+        // Gauntlet fight 4: Data Analytics Lead — executive floor, first gatekeeper
+        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_combat) {
+          this.player.setFlag('data_lead_fight_started');
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['data_analytics_combat'], this.player, this.stateManager, 'data_analytics_combat');
+            this.stateManager.push(dialogState);
+          }, 800);
+        }
+
+        // Board Room: trigger Rachel fight on every entry until act5 is complete
+        // (act5_complete is the only reliable "fight won" gate — rachel_fight_started
+        //  cannot be used here because it gets saved on first entry and permanently
+        //  blocks re-entry after a loss)
+        if (roomId === 'board_room' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete')) {
           this.player.setFlag('rachel_fight_started');
           if (DIALOGS.rachel_boss_combat) {
             setTimeout(() => {
@@ -454,6 +513,24 @@ export class ExplorationState {
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
     // Check for upgrade points tooltip
     this._checkUpgradeTooltip();
+    // Flush any dialog that was deferred because the menu was open during the push window
+    if (this._pendingDialog) {
+      const dialogId = this._pendingDialog;
+      this._pendingDialog = null;
+      if (DIALOGS[dialogId]) {
+        setTimeout(() => {
+          // If the fight was already started via the terminal, don't re-push the intro dialog
+          if (dialogId === 'algorithm_combat' && this.player.getFlag('defeated_algorithm')) return;
+          const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+          if (menuOpen) {
+            this._pendingDialog = dialogId;
+            return;
+          }
+          const dialogState = new DialogState(DIALOGS[dialogId], this.player, this.stateManager, dialogId);
+          this.stateManager.push(dialogState);
+        }, 500);
+      }
+    }
   }
 
   _getMusicForRoom(roomId) {
@@ -480,15 +557,26 @@ export class ExplorationState {
     this._updateLocationDisplay(this.player.currentRoom);
   }
 
+  _resolveRoomId(roomId) {
+    if (roomId === 'ross_office' && this.player.getFlag('renovation_corner_office')) {
+      return 'ross_office_large';
+    }
+    if (roomId === 'penthouse' && this.player.getFlag('renovation_penthouse')) {
+      return 'penthouse_expanded';
+    }
+    return roomId;
+  }
+
   _loadRoom(roomId, spawnX, spawnZ) {
-    const result = this.roomManager.loadRoom(roomId, spawnX, spawnZ);
+    const actualId = this._resolveRoomId(roomId);
+    const result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
       this.player.currentRoom = roomId;
       this.camera.snapTo(result.spawnX, result.spawnZ);
 
-      const roomData = this.roomManager.getRoomData(roomId);
+      const roomData = this.roomManager.getRoomData(actualId);
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
       }
@@ -503,7 +591,18 @@ export class ExplorationState {
       vault: { flag: 'vault_accessible', message: "The vault door is sealed shut. You need more information." },
       board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
       penthouse: { flag: 'act6_complete', message: "The staircase to the Penthouse is sealed. You need the Janitor's Rolex." },
+      penthouse_aquarium: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
+      penthouse_analytics: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
+      penthouse_bar: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
     };
+
+    // Block executive floor while the corporate lawyer is active and undefeated
+    if (targetRoom === 'executive_floor'
+      && this.player.getFlag('restructuring_defeated')
+      && !this.player.getFlag('corporate_lawyer_defeated')) {
+      this._showToast("The elevator won't open. Someone's waiting for you in the lobby.", 'info');
+      return;
+    }
     const gate = gatedRooms[targetRoom];
     if (gate && !this.player.getFlag(gate.flag)) {
       this._showToast(gate.message, 'info');
@@ -528,7 +627,8 @@ export class ExplorationState {
     Engine.scene.remove(this.player.mesh);
     this.roomManager._clearCurrentRoom();
 
-    const result = this.roomManager.loadRoom(targetRoom, spawnX, spawnZ);
+    const actualRoom = this._resolveRoomId(targetRoom);
+    const result = this.roomManager.loadRoom(actualRoom, spawnX, spawnZ, this.player.flags);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
@@ -536,7 +636,7 @@ export class ExplorationState {
       Engine.scene.add(this.player.mesh);
       this.camera.snapTo(result.spawnX, result.spawnZ);
 
-      const roomData = this.roomManager.getRoomData(targetRoom);
+      const roomData = this.roomManager.getRoomData(actualRoom);
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
       }
@@ -626,8 +726,12 @@ export class ExplorationState {
                   const xpNeeded = XP_TABLE[2] - this.player.stats.xp;
                   if (xpNeeded > 0) this.player.gainXP(xpNeeded);
                   this._updateMiniStats();
+                  this.player.setFlag('karen_retry_ready', true);
                   this._showToast('3 clients handled — Level 3 reached! You\'re ready for Karen.', 'objective');
-                } else if (wins < 3) {
+                } else if (wins >= 3) {
+                  this.player.setFlag('karen_retry_ready', true);
+                  this._showToast("3 clients handled — you're ready to retry Karen!", 'objective');
+                } else {
                   this._showToast(`Client ${wins}/3 handled — keep building experience!`, 'objective');
                 }
               }
@@ -690,7 +794,24 @@ export class ExplorationState {
     this._resetClientSystem();
     // Reset ending gate so boss fights can be retried
     this.player.setFlag('ending_started', false);
+
+    // Reset whichever gauntlet fight-started flag is in progress but not yet won,
+    // so the fight retriggers after the player respawns.
+    const gauntletFlags = [
+      { started: 'brand_consultant_fight_started',  defeated: 'brand_consultant_defeated' },
+      { started: 'restructuring_fight_started',     defeated: 'restructuring_defeated' },
+      { started: 'data_lead_fight_started',         defeated: 'data_lead_defeated' },
+      { started: 'chief_fight_started',             defeated: 'chief_restructuring_defeated' },
+      { started: 'rachel_fight_started',            defeated: 'act5_complete' },
+    ];
+    for (const { started, defeated } of gauntletFlags) {
+      if (this.player.getFlag(started) && !this.player.getFlag(defeated)) {
+        this.player.setFlag(started, false);
+      }
+    }
+
     this._loadRoom('cubicle_farm');
+    this._autoSave(false);
 
     const DEATH_MESSAGES = [
       'You wake up at your desk... Was it all a dream?',
@@ -729,15 +850,29 @@ export class ExplorationState {
       }
     }
 
+    const postGame = !!this.player.getFlag('algorithm_defeated');
+
+    // One-time unlock toast on first post-game reception entry
+    if (postGame && !this.player.getFlag('postGameReceptionUnlocked')) {
+      this.player.setFlag('postGameReceptionUnlocked', true);
+      setTimeout(() => this._showToast(
+        'Diane: "Word got out. The clients you\'re seeing now are in a different league entirely."',
+        'info'
+      ), 400);
+    }
+
     const existing = this.player.getFlag('currentClient');
+    let client = null;
     if (existing) {
-      let client;
       try { client = JSON.parse(existing); } catch { client = null; }
-      if (!client) { this.player.setFlag('currentClient', null); return; }
+      // Discard a cached pre-game client if we're now in post-game
+      if (client && postGame && !client.isPostGame) client = null;
+    }
+    if (client) {
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
-      const client = generateClient(null, this.player.stats.level);
+      client = generateClient(null, this.player.stats.level, postGame);
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
@@ -795,7 +930,7 @@ export class ExplorationState {
       const aumEarned = Math.max(50, Math.floor(clientData.assets * 0.01));
       this.player.stats.aum = (this.player.stats.aum || 0) + aumEarned;
       this._updateMiniStats();
-      AchievementManager.check(this.player, { event: 'client_accepted' });
+      AchievementManager.check(this.player, { event: 'client_accepted', assets: clientData.assets, attributes: clientData.attributes });
       this._autoSave(false);
 
       this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned.`, 'item');
@@ -805,6 +940,7 @@ export class ExplorationState {
       const declineDelta = clientData.netAngerDelta > 0 ? -1 : 1;
       const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + declineDelta));
       this.player.setFlag('bossAnger', anger);
+      AchievementManager.check(this.player, { event: 'client_declined' });
       this._showToast(`Client declined.`, 'info');
     }
 
@@ -859,7 +995,8 @@ export class ExplorationState {
       return lead;
     }
 
-    return generateClient(null, this.player.stats.level);
+    const postGame = !!this.player.getFlag('algorithm_defeated');
+    return generateClient(null, this.player.stats.level, postGame);
   }
 
   _updateChainState(clientData, accepted) {
@@ -899,7 +1036,10 @@ export class ExplorationState {
     }
 
     // Reward or penalty based on grade
-    const XP_BY_GRADE = { 'A+': 200, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
+    const postGame = !!this.player.getFlag('algorithm_defeated');
+    const XP_BY_GRADE = postGame
+      ? { 'A+': 1500, 'A': 1000, 'B': 600, 'C': 300, 'D': 100, 'F': 0 }
+      : { 'A+': 200, 'A': 150, 'B': 100, 'C': 50, 'D': 25, 'F': 0 };
     const xpReward = XP_BY_GRADE[health.grade] ?? 0;
     if (xpReward > 0) this.player.gainXP(xpReward);
 
@@ -1197,7 +1337,33 @@ export class ExplorationState {
     // Combat retry check runs first — overrides hardcoded dialogId on NPC
     const retryEncId = { ross: 'ross_boss' }[id] || id;
     if (DIALOGS[`${retryEncId}_retry`] && this.player.getFlag(`retry_${retryEncId}`) && !this.player.getFlag(`defeated_${retryEncId}`)) {
+      // Block Karen retry until 3 tutorial clients are handled
+      if (id === 'karen' && !this.player.getFlag('karen_retry_ready')) {
+        return 'karen_not_ready';
+      }
       return `${retryEncId}_retry`;
+    }
+
+    // Block Karen until the intern spar is complete (required combat tutorial)
+    if (id === 'karen' && !this.player.getFlag('defeated_intern')) {
+      return 'karen_intern_first';
+    }
+
+    // Janitor riddles take priority over hardcoded dialogId (available act 3+, after meeting janitor AND after act3 confrontation)
+    if (id === 'janitor' && this.player.actIndex >= 3 && this.player.getFlag('met_janitor') && this.player.getFlag('read_janitor_act3')) {
+      if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) return 'janitor_riddle_1';
+      if (this.player.getFlag('janitor_riddle_1_done') && !this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) return 'janitor_riddle_2';
+      if (this.player.getFlag('janitor_riddle_2_done') && !this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) return 'janitor_riddle_3';
+    }
+
+    // Janitor: skip re-running the intro after first meeting — use short return dialog instead
+    if (id === 'janitor' && this.player.getFlag('met_janitor') && npc.dialogId === 'janitor_intro' && DIALOGS.janitor_return) {
+      return 'janitor_return';
+    }
+
+    // Janet act4 rally takes priority over lunch thief dialogId overrides
+    if (id === 'janet' && act >= 4 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
+      return 'janet_act4';
     }
 
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
@@ -1209,9 +1375,31 @@ export class ExplorationState {
       return 'alex_printer_quest';
     }
 
+    // Special: Alex from IT + archive evidence = Act 4 trigger (must be before general routing)
+    if (
+      id === 'alex_it' &&
+      this.player.getFlag('has_archive_evidence') &&
+      !this.player.getFlag('act3_complete') &&
+      DIALOGS.act4_trigger
+    ) {
+      return 'act4_trigger';
+    }
+
+    // Phantom Approver: both locations found — skip router and go straight to completion
+    if (
+      id === 'alex_it' &&
+      this.player.getFlag('legacy_started') &&
+      this.player.getFlag('phantom_hr_found') &&
+      this.player.getFlag('phantom_workstation_found') &&
+      !this.player.getFlag('quest_legacy_admin_complete') &&
+      DIALOGS.alex_it_quest_legacy
+    ) {
+      return 'alex_it_quest_legacy';
+    }
+
     // Alex IT: when story beat is available, offer choice between story and side quests
     if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
-      const hasAct2 = this.player.getFlag('briefing_complete') && !this.player.getFlag('knows_server_secret') && DIALOGS.alex_it_act2;
+      const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret') && DIALOGS.alex_it_act2;
       const hasAct3 = this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done') && DIALOGS.alex_it_act3;
 
       // Player chose story from the router — go straight to the story dialog
@@ -1245,6 +1433,12 @@ export class ExplorationState {
       }
     }
 
+    // Block generic act routing from firing alex_it_act2 before karen is defeated
+    // Only applies after the intro has been read — don't intercept the first meeting
+    if (id === 'alex_it' && this.player.getFlag('met_alex_it') && !this.player.getFlag('karen_defeated') && !this.player.getFlag('read_alex_it_act2')) {
+      if (DIALOGS.alex_it_return) return 'alex_it_return';
+    }
+
     if (
       id === 'intern' &&
       act >= 1 &&
@@ -1256,30 +1450,23 @@ export class ExplorationState {
       return 'intern_combat_intro';
     }
 
-    // Special: Alex from IT + archive evidence = Act 4 trigger
-    if (
-      id === 'alex_it' &&
-      this.player.getFlag('has_archive_evidence') &&
-      !this.player.getFlag('act3_complete') &&
-      DIALOGS.act4_trigger
-    ) {
-      return 'act4_trigger';
-    }
-
-    // Janitor riddle progression (available from act 3+)
-    if (id === 'janitor' && act >= 3) {
-      if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) return 'janitor_riddle_1';
-      if (this.player.getFlag('janitor_riddle_1_done') && !this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) return 'janitor_riddle_2';
-      if (this.player.getFlag('janitor_riddle_2_done') && !this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) return 'janitor_riddle_3';
-    }
-
     // Compliance crossword (available when act >= 3 and compliance NPC is on exec floor)
     if (id === 'compliance' && act >= 3 && !this.player.getFlag('compliance_crossword_done') && DIALOGS.compliance_crossword) {
       return 'compliance_crossword';
     }
 
-    // Social engineering chain (act 4+): Isaiah → Diane → Intern
-    if (act >= 4 && !this.player.getFlag('social_eng_complete')) {
+    // Ross post-Karen debrief: required before Chad fight
+    if (id === 'ross' && this.player.getFlag('karen_defeated') && !this.player.getFlag('ross_post_karen')) {
+      return 'ross_post_karen';
+    }
+
+    // Ross post-Chad debrief: required before Grandma fight
+    if (id === 'ross' && this.player.getFlag('chad_defeated') && !this.player.getFlag('ross_post_chad')) {
+      return 'ross_post_chad';
+    }
+
+    // Social engineering chain (act 4–5 only): Isaiah → Diane → Intern
+    if (act >= 4 && act < 6 && !this.player.getFlag('social_eng_complete')) {
       if (id === 'isaiah' && !this.player.getFlag('social_eng_started') && DIALOGS.social_engineering_1) return 'social_engineering_1';
       if (id === 'diane' && this.player.getFlag('social_eng_started') && !this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_2) return 'social_engineering_2';
       if (id === 'intern' && this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_3) return 'social_engineering_3';
@@ -1289,7 +1476,17 @@ export class ExplorationState {
     if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
     if (act >= 3 && DIALOGS[`${id}_act3`] && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
+    // ross_act2 and janet_act2 both reference the Karen binder incident — hold them until Karen is defeated
+    if (act >= 1 && (id === 'ross' || id === 'janet') && !this.player.getFlag('karen_defeated') && !this.player.getFlag(`read_${id}_act2`)) {
+      if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
+      if (DIALOGS[`${id}_return`]) return `${id}_return`;
+    }
     if (act >= 1 && DIALOGS[`${id}_act2`] && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
+    // Gate team intros until the player has checked their desk
+    const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
+    if (PRE_DESK_TEAM.includes(id) && !this.player.getFlag('checked_desk') && !this.player.getFlag(`read_${id}_intro`)) {
+      return 'team_pre_intro';
+    }
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
     if (act >= 7 && DIALOGS[`${id}_act7`]) return `${id}_act7`;
@@ -1422,12 +1619,16 @@ export class ExplorationState {
       reception: 'Reception',
       parking_garage: 'Parking Garage',
       executive_floor: 'Executive Floor',
-      stairwell: 'The Stairwell',
+      stairwell: 'Back Corridor',
       archive: 'The Archive',
       hr_department: 'HR Department',
       vault: 'The Vault',
       board_room: 'The Board Room',
       penthouse: 'The Penthouse',
+      penthouse_expanded: 'Penthouse',
+      penthouse_aquarium: 'The Reef & Reel',
+      penthouse_analytics: 'Analytics Suite',
+      penthouse_bar: 'Private Lounge',
     };
     if (this.locationElement) {
       this.locationElement.textContent = names[roomId] || roomId;
@@ -1467,6 +1668,8 @@ export class ExplorationState {
 
   _getAlexSideQuestDialog() {
     const p = this.player;
+    // Side quests only available after Henderson Trust arc is resolved
+    if (!p.getFlag('act2_complete')) return 'alex_it_return';
     // Active quests take priority
     if (p.getFlag('anomaly_started') && !p.getFlag('quest_anomaly_347_complete')) return 'alex_it_quest_anomaly';
     if (p.getFlag('legacy_started') && !p.getFlag('quest_legacy_admin_complete')) return 'alex_it_quest_legacy';
@@ -1494,6 +1697,7 @@ export class ExplorationState {
     if (this.player.getFlag('act6_complete')) {
       if (this.player.getFlag('regional_director_defeated')) return 'Face The Algorithm in the Penthouse';
       if (this.player.getFlag('cfos_defeated')) return 'Defeat the Regional Director';
+      if (this.player.getFlag('penthouse_entered')) return "Defeat the CFO's Assistant";
       return 'Ascend to the Penthouse and face The Algorithm';
     }
 
@@ -1503,8 +1707,9 @@ export class ExplorationState {
       const allyFlags = [
         { flag: 'janet_act6_rallied',  label: 'Janet' },
         { flag: 'diane_act6_rallied',  label: 'Diane' },
-        { flag: 'intern_rallied',      label: 'Intern' },
+        { flag: 'intern_act6_rallied', label: 'Intern' },
         { flag: 'ross_speech_ready',   label: 'Ross' },
+        { flag: 'grandma_ally',        label: 'Grandma Henderson' },
       ];
       const evidenceFlags = [
         { flag: 'diane_evidence',  label: "Diane's documents" },
@@ -1514,8 +1719,8 @@ export class ExplorationState {
       const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
       const rallied = allyFlags.length - missingAllies.length;
       const evidence = evidenceFlags.length - missingEvidence.length;
-      if (rallied < 4 || evidence < 2) {
-        const lines = [`Prepare for the finale (${rallied}/4 allies, ${evidence}/2 evidence)`];
+      if (rallied < 5 || evidence < 2) {
+        const lines = [`Prepare for the finale (${rallied}/5 allies, ${evidence}/2 evidence)`];
         if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
         if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
         return lines.join('<br>');
@@ -1526,6 +1731,18 @@ export class ExplorationState {
     // Act 5
     if (this.player.getFlag('rachel_fight_started')) {
       return 'Defeat Rachel in the Board Room';
+    }
+    if (this.player.getFlag('chief_restructuring_defeated')) {
+      return 'Confront Rachel in the Board Room';
+    }
+    if (this.player.getFlag('data_lead_defeated')) {
+      return 'Clear the executive floor';
+    }
+    if (this.player.getFlag('corporate_lawyer_defeated')) {
+      return 'Get to the executive floor';
+    }
+    if (this.player.getFlag('restructuring_defeated')) {
+      return 'Push through to reception';
     }
     if (this.player.getFlag('act4_complete')) {
       return 'Fight through the Restructuring Team to reach the Board Room';
@@ -1548,19 +1765,24 @@ export class ExplorationState {
     }
     if (this.player.getFlag('act3_complete')) {
       const rallied = ['janet_rallied', 'diane_rallied', 'ross_rallied', 'janitor_rallied'].filter(f => this.player.getFlag(f)).length;
-      if (rallied < 4) return `Rally the team: Talk to Janet, Diane, Ross & the Janitor (${rallied}/4)`;
-      return 'Open the Vault and retrieve the 1947 charter';
+      return `Rally the team: Talk to Janet, Diane, Ross & the Janitor (${rallied}/4)`;
     }
 
     // Act 3
     if (this.player.getFlag('has_archive_evidence') && !this.player.getFlag('act3_complete')) {
       return 'Return the Archive evidence to Alex from IT';
     }
+    if (this.player.getFlag('security_guard_info') && !this.player.getFlag('read_janitor_act3')) {
+      return 'Find the Janitor in the Archive — he knows what happened here';
+    }
+    if (this.player.getFlag('visited_archive') && !this.player.getFlag('has_archive_password')) {
+      return 'Get the archive access code from the Compliance Auditor (Executive Floor)';
+    }
     if (this.player.getFlag('visited_archive') && !this.player.getFlag('has_archive_evidence')) {
       return 'Search the Archive for evidence';
     }
     if (this.player.getFlag('archive_accessible') && !this.player.getFlag('visited_archive')) {
-      return 'Find the Archive through the stairwell';
+      return 'Find the Archive through the back corridor';
     }
     if (this.player.getFlag('act2_complete') && !this.player.getFlag('knows_server_secret')) {
       return 'Talk to Alex from IT about the encrypted partition';
@@ -1589,17 +1811,31 @@ export class ExplorationState {
     if (this.player.getFlag('grandma_defeated')) {
       return 'Review the Henderson file at your desk';
     }
-    if (this.player.getFlag('chad_defeated')) {
+    if (this.player.getFlag('chad_defeated') && this.player.getFlag('ross_post_chad')) {
       return 'Meet Grandma Henderson in the Conference Room';
     }
-    if (this.player.getFlag('karen_defeated')) {
+    if (this.player.getFlag('chad_defeated')) {
+      return "Talk to Ross in his office";
+    }
+    if (this.player.getFlag('karen_defeated') && this.player.getFlag('ross_post_karen')) {
       return 'Meet Chad Henderson in the Conference Room';
+    }
+    if (this.player.getFlag('karen_defeated')) {
+      return "Talk to Ross in his office";
+    }
+    if (this.player.getFlag('retry_karen')) {
+      const wins = this.player.getFlag('roguelite_tutorial_wins') || 0;
+      if (wins >= 3) return "You're ready — retry Karen in the Conference Room";
+      return `Handle reception clients to build experience (${wins}/3)`;
+    }
+    if (this.player.getFlag('briefing_complete') && !this.player.getFlag('defeated_intern')) {
+      return 'Spar with the Intern to prepare for the Henderson meetings';
     }
     if (this.player.getFlag('briefing_complete')) {
       return 'Meet Karen Henderson in the Conference Room';
     }
 
-    if (!this.player.getFlag('checked_desk')) {
+    if (!this.player.getFlag('checked_desk') && !this.player.getFlag('ready_for_ross')) {
       return 'Find your cubicle and settle in';
     }
     if (!this.player.getFlag('ready_for_ross')) {
@@ -1678,11 +1914,6 @@ export class ExplorationState {
     const hints = [];
     const f = (flag) => this.player.getFlag(flag);
 
-    // Early optional: spar with the Intern
-    if (f('briefing_complete') && !f('defeated_intern')) {
-      hints.push('Optional: spar with the Intern for a combat tutorial');
-    }
-
     // Janitor riddles — progressive
     if (f('met_janitor')) {
       if (!f('janitor_riddle_1_done')) {
@@ -1730,11 +1961,20 @@ export class ExplorationState {
 
     // Alex IT subquests
     if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
-      quests.push({ name: 'The 3:47 AM Anomaly', objective: 'Return to Alex from IT' });
+      const anomalyObj = f('morse_decoded') ? 'Return to Alex from IT' : 'Find the Morse code pattern in server rack C';
+      quests.push({ name: 'The 3:47 AM Anomaly', objective: anomalyObj });
     }
     if (f('legacy_started') && !f('quest_legacy_admin_complete')) {
       const found = (f('phantom_hr_found') ? 1 : 0) + (f('phantom_workstation_found') ? 1 : 0);
-      const legacyObj = found >= 2 ? 'Return to Alex from IT' : `Investigate the Phantom Approver (${found}/2)`;
+      let legacyObj;
+      if (found >= 2) {
+        legacyObj = 'Return to Alex from IT';
+      } else {
+        const remaining = [];
+        if (!f('phantom_hr_found')) remaining.push('• HR filing cabinets');
+        if (!f('phantom_workstation_found')) remaining.push('• Workstation in cubicle farm');
+        legacyObj = `Investigate the Phantom Approver (${found}/2):<br>${remaining.join('<br>')}`;
+      }
       quests.push({ name: 'The Phantom Approver', objective: legacyObj });
     }
     if (f('network_started') && !f('quest_network_ghost_complete')) {
@@ -1745,7 +1985,7 @@ export class ExplorationState {
       } else {
         const remaining = [];
         if (!f('booster_br_placed')) remaining.push('• Break Room');
-        if (!f('booster_stair_placed')) remaining.push('• Stairwell');
+        if (!f('booster_stair_placed')) remaining.push('• Back Corridor');
         if (!f('booster_conf_placed')) remaining.push('• Conference Room');
         netObj = `Place signal boosters (${placed}/3):<br>${remaining.join('<br>')}`;
       }
@@ -1853,17 +2093,36 @@ export class ExplorationState {
   update(dt) {
     if (this.paused) return;
 
+    // Gauntlet fight 1: Brand Consultant — fires once act4_complete is set (set by act5_trigger dialog)
+    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
+      this.player.setFlag('brand_consultant_fight_started');
+      setTimeout(() => {
+        const dialogState = new DialogState(DIALOGS['brand_consultant_combat'], this.player, this.stateManager, 'brand_consultant_combat');
+        this.stateManager.push(dialogState);
+      }, 1200);
+    }
+
+    // Gauntlet fight 2: Restructuring Analyst chains immediately after Brand Consultant is defeated
+    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('brand_consultant_defeated') && !this.player.getFlag('restructuring_fight_started') && DIALOGS.restructuring_combat) {
+      this.player.setFlag('restructuring_fight_started');
+      setTimeout(() => {
+        const dialogState = new DialogState(DIALOGS['restructuring_combat'], this.player, this.stateManager, 'restructuring_combat');
+        this.stateManager.push(dialogState);
+      }, 2000);
+    }
+
+    // Gauntlet fight 5: Chief of Restructuring chains after Data Analytics Lead is defeated
+    if (this.player.currentRoom === 'executive_floor' && this.player.getFlag('data_lead_defeated') && !this.player.getFlag('chief_fight_started') && DIALOGS.chief_restructuring_combat) {
+      this.player.setFlag('chief_fight_started');
+      setTimeout(() => {
+        const dialogState = new DialogState(DIALOGS['chief_restructuring_combat'], this.player, this.stateManager, 'chief_restructuring_combat');
+        this.stateManager.push(dialogState);
+      }, 2000);
+    }
+
     const { x, z } = InputManager.getMovementVector();
     this.player.move(x, z, dt, this.tileMap);
     this.player.update(dt);
-
-    // Slope the stairwell — player and camera descend together as they walk north
-    if (this.player.currentRoom === 'stairwell') {
-      const t = Math.max(0, Math.min(1, (18 - this.player.position.z) / 16));
-      const elevation = -0.7 * t;
-      this.player.mesh.position.y = elevation;
-      this.camera.follow(this.player.position.x, this.player.position.z, elevation);
-    }
 
     // Fade south wall when player gets close to it
     const southWallMeshes = this.roomManager.currentRoom?.getSouthWallMeshes() ?? [];
@@ -1889,9 +2148,7 @@ export class ExplorationState {
       }
     }
 
-    if (this.player.currentRoom !== 'stairwell') {
-      this.camera.follow(this.player.position.x, this.player.position.z, 0);
-    }
+    this.camera.follow(this.player.position.x, this.player.position.z, 0);
     this.camera.update(dt);
 
     this.roomManager.update(dt, this.player.flags, this.paused);

@@ -1,65 +1,260 @@
-/* Pause Menu */
+/* Pause Menu — Corporate HR Portal Aesthetic */
 .menu-overlay {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 70;
-  animation: fadeIn 0.2s;
+  animation: fadeIn 0.15s;
+  overflow: hidden;
+}
+
+/* Diagonal CONFIDENTIAL watermark */
+.menu-overlay::before {
+  content: 'CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL  CONFIDENTIAL';
+  position: absolute;
+  inset: -40%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'VT323', monospace;
+  font-size: 26px;
+  color: rgba(233, 69, 96, 0.045);
+  transform: rotate(-28deg);
+  letter-spacing: 12px;
+  word-spacing: 48px;
+  white-space: normal;
+  pointer-events: none;
+  line-height: 3.2;
+  text-align: center;
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes statusBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
 
 .menu-panel {
-  background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
-  border: 3px solid #e94560;
-  border-radius: 12px;
-  padding: 32px 40px;
-  min-width: min(320px, 90vw);
-  box-shadow: 0 0 40px rgba(233, 69, 96, 0.3);
+  background: linear-gradient(180deg, #23304a 0%, #1c2840 100%);
+  border: 1px solid rgba(233, 69, 96, 0.5);
+  border-top: 3px solid #e94560;
+  border-radius: 4px;
+  min-width: min(380px, 92vw);
+  max-width: 420px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 20px rgba(233, 69, 96, 0.12);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
 }
 
-.menu-title {
+/* ── Portal header bar ── */
+.menu-portal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.25);
+  border-bottom: 1px solid rgba(233, 69, 96, 0.3);
+  padding: 9px 16px;
+  gap: 8px;
+}
+
+.menu-portal-logo {
   font-family: 'Press Start 2P', cursive;
-  font-size: 18px;
-  color: #e94560;
+  font-size: 7px;
+  color: #7bc8d4;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.menu-portal-name {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: #7a8aaa;
+  letter-spacing: 2px;
+  flex: 1;
   text-align: center;
-  margin-bottom: 24px;
+}
+
+.menu-portal-status {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #e94560;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  animation: statusBlink 1.8s ease-in-out infinite;
+}
+
+/* ── Employee badge ── */
+.menu-employee-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.menu-employee-id {
+  background: rgba(233, 69, 96, 0.18);
+  border: 1px solid rgba(233, 69, 96, 0.35);
+  border-radius: 3px;
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.menu-employee-id-label {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 6px;
+  color: #e94560;
+  letter-spacing: 1px;
+}
+
+.menu-employee-id-value {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: #fff;
+  line-height: 1;
+}
+
+.menu-employee-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.menu-employee-name {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  color: #e8eaf0;
+  letter-spacing: 1px;
+}
+
+.menu-employee-role {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #7bc8d4;
+  letter-spacing: 1px;
+}
+
+.menu-employee-fields {
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.menu-employee-field {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.menu-employee-field-label {
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  color: #7a8aaa;
+  white-space: nowrap;
+}
+
+.menu-employee-field-value {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #dde3ee;
+}
+
+/* ── Nav items ── */
+.menu-nav-section {
+  padding: 8px 0;
+}
+
+.menu-nav-divider {
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  color: #4a5878;
+  letter-spacing: 3px;
+  padding: 5px 16px 2px;
+  text-transform: uppercase;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  margin-top: 2px;
+}
+
+.menu-nav-divider:first-child {
+  border-top: none;
+  margin-top: 0;
 }
 
 .menu-items {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 }
 
 .menu-item {
-  background: rgba(233, 69, 96, 0.1);
-  border: 2px solid rgba(233, 69, 96, 0.3);
-  border-radius: 6px;
-  padding: 12px 20px;
-  color: #fff;
-  font-family: 'VT323', monospace;
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
   cursor: pointer;
-  transition: all 0.15s;
-  text-align: center;
+  transition: background 0.1s;
+  border-left: 3px solid transparent;
 }
 
-.menu-item:hover,
+.menu-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
 .menu-item.selected {
-  background: rgba(233, 69, 96, 0.3);
-  border-color: #e94560;
-  transform: scale(1.03);
-  box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+  background: rgba(233, 69, 96, 0.12);
+  border-left-color: #e94560;
+}
+
+.menu-item-label {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: #c8d0e0;
+  line-height: 1;
+}
+
+.menu-item.selected .menu-item-label {
+  color: #fff;
+}
+
+.menu-item-arrow {
+  font-size: 12px;
+  color: #e94560;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.menu-item.selected .menu-item-arrow {
+  opacity: 1;
+}
+
+/* ── Footer ── */
+.menu-portal-footer {
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  color: #2a2a3a;
+  text-align: center;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  letter-spacing: 2px;
+  background: #0a0f1a;
 }
 
 /* Title Screen */
@@ -496,4 +691,88 @@
 
 .cosmetic-card.locked {
   opacity: 0.4;
+}
+
+/* ---- Controls Screen ---- */
+
+.controls-panel {
+  min-width: min(460px, 92vw);
+  max-width: 500px;
+}
+
+.controls-body {
+  padding: 4px 0 8px;
+}
+
+.controls-section-header {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 9px;
+  color: #53a8b6;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 16px 5px;
+  border-top: 1px solid rgba(83, 168, 182, 0.2);
+  margin-top: 4px;
+}
+
+.controls-section-header:first-child {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 6px;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 16px;
+  gap: 12px;
+}
+
+.controls-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.controls-keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.controls-key {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #e94560;
+  background: rgba(233, 69, 96, 0.1);
+  border: 1px solid rgba(233, 69, 96, 0.4);
+  border-bottom: 2px solid rgba(233, 69, 96, 0.6);
+  border-radius: 4px;
+  padding: 1px 7px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.controls-sep {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #4a5878;
+}
+
+.controls-action {
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: #c8d0e0;
+  text-align: right;
+}
+
+.controls-flavor {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #4a5878;
+  font-style: italic;
+  text-align: center;
+  padding: 10px 16px 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  line-height: 1.5;
 }

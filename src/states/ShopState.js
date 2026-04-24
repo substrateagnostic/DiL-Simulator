@@ -2,6 +2,8 @@ import { InputManager } from '../core/InputManager.js';
 import { AudioManager } from '../core/AudioManager.js';
 import { SHOP_ITEMS, SHOP_CATEGORIES } from '../data/shop.js';
 import { AchievementManager } from '../core/AchievementManager.js';
+import { EventBus } from '../core/EventBus.js';
+import { SaveManager } from '../core/SaveManager.js';
 
 /**
  * ShopState — Supply shop where players spend AUM.
@@ -57,8 +59,14 @@ export class ShopState {
     }
   }
 
+  _getAvailableCategories() {
+    const all = Object.keys(SHOP_CATEGORIES);
+    if (!this.player.getFlag('algorithm_defeated')) return all.filter(c => c !== 'renovation');
+    return all;
+  }
+
   _cycleCategory(dir) {
-    const cats = Object.keys(SHOP_CATEGORIES);
+    const cats = this._getAvailableCategories();
     const idx = cats.indexOf(this.currentCategory);
     this.currentCategory = cats[(idx + dir + cats.length) % cats.length];
     this.selectedIndex = 0;
@@ -99,7 +107,7 @@ export class ShopState {
     if (!this.root) return;
     this._items = this._getFilteredItems();
     const aum = this.player.stats.aum || 0;
-    const cats = Object.keys(SHOP_CATEGORIES);
+    const cats = this._getAvailableCategories();
 
     const catTabs = cats.map(c => {
       const active = c === this.currentCategory;
@@ -111,7 +119,15 @@ export class ShopState {
       >${SHOP_CATEGORIES[c]}</span>`;
     }).join('');
 
-    const rows = this._items.map((item, i) => {
+    const isRenovation = this.currentCategory === 'renovation';
+    let rows = '';
+    let lastArea = null;
+    this._items.forEach((item, i) => {
+      if (isRenovation && item.area && item.area !== lastArea) {
+        lastArea = item.area;
+        rows += `<div style="margin:10px 0 4px;padding:3px 8px;background:rgba(233,69,96,0.12);border-left:3px solid #e94560;font-family:'Press Start 2P',cursive;font-size:8px;color:#e94560;letter-spacing:1px">${item.area.toUpperCase()}</div>`;
+      }
+
       const selected = i === this.selectedIndex;
       const stock = item.category === 'consumable' ? this._getPlayerStock(item.id)
         : item.category === 'upgrade' ? (this.player.getFlag(`shop_${item.id}`) || 0) : 0;
@@ -127,7 +143,7 @@ export class ShopState {
       else if (item.category === 'consumable') statusText = ` (x${stock})`;
       else if (item.category === 'upgrade' && stock > 0) statusText = ` [${stock}/${item.maxStack}]`;
 
-      return `<div style="
+      rows += `<div style="
         display:flex; justify-content:space-between; align-items:center;
         padding:8px 16px; border-radius:4px; margin-bottom:4px;
         background:${selected ? 'rgba(233,69,96,0.2)' : 'transparent'};
@@ -139,7 +155,7 @@ export class ShopState {
         <span>${item.name}${statusText}</span>
         <span style="color:${canAfford && !unavailable ? '#ffd700' : '#888'}">${effectivePrice.toLocaleString()} AUM</span>
       </div>`;
-    }).join('');
+    });
 
     const selected = this._items[this.selectedIndex];
     const descHTML = selected ? `<div style="color:#aaa;font-size:16px;padding:8px 16px;border-top:1px solid rgba(255,255,255,0.1);max-width:400px;text-align:center">${selected.description}</div>` : '';
@@ -210,8 +226,15 @@ export class ShopState {
     } else if (item.category === 'decor') {
       this.player.setFlag(item.flag, true);
       this._flash(`${item.name} installed!`, '#88aaff');
+    } else if (item.category === 'renovation') {
+      this.player.setFlag(item.flag, true);
+      this.player.gainXP(2000);
+      this._flash(`${item.name} complete! +2000 XP`, '#ffd700');
+      SaveManager.save(this.player.serialize());
+      EventBus.emit('renovation-purchased');
     }
 
+    this.player.setFlag(`bought_category_${item.category}`, true);
     AchievementManager.check(this.player, { event: 'shop_purchase' });
     this._render();
   }

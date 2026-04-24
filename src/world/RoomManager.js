@@ -18,22 +18,22 @@ export class RoomManager {
   }
 
   // Build a room from data
-  _buildRoom(roomId) {
+  _buildRoom(roomId, flags = {}) {
     const data = ROOMS[roomId];
     if (!data) {
       console.error(`Room not found: ${roomId}`);
       return null;
     }
     const room = new Room(data);
-    room.build();
+    room.build(flags);
     return room;
   }
 
   // Load initial room (no transition)
-  loadRoom(roomId, spawnX, spawnZ) {
+  loadRoom(roomId, spawnX, spawnZ, flags = {}) {
     this._clearCurrentRoom();
 
-    const room = this._buildRoom(roomId);
+    const room = this._buildRoom(roomId, flags);
     if (!room) return null;
 
     this.currentRoomId = roomId;
