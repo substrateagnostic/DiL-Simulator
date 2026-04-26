@@ -21,6 +21,26 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 
 `npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 9-tab editor: Player, Abilities, Enemies, Shop, Rooms, Combat Sim, Encounters, Characters, Diff. Changes write to three override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
 
+### Dev Mode
+
+Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?dev`). Has no effect on normal play — the flag is read once from `URLSearchParams` in `src/utils/constants.js` (`DEV_MODE`).
+
+**In combat** — press `` ` `` (backtick) during your turn: instantly kills the enemy and routes through the normal victory path, so XP, story flags, and post-dialogs all fire correctly.
+
+**In exploration** — press `F2`: opens a dev panel with two sections:
+
+- **Save Scum** — three save slots with Save and Load buttons. Save writes the current state to that slot and marks it active (future auto-saves go there). Load deserializes the save, reloads the room, and calls `syncFromPlayerState()`. The active slot is highlighted with ★.
+- **Quest Skip** — six cumulative act presets. Clicking a preset writes directly to `player.flags`, then calls `_syncActFromFlags()` and `_refreshStoryProgress()`. Some narrative read-flags are not included, so a small number of NPC dialogs may replay, but all room gates, NPC conditions, and act routing will be correct.
+
+| Preset | Key flags set |
+|--------|--------------|
+| Act 1 — Briefing Complete | `briefing_complete`, `branch_chosen`, all `met_*` |
+| Act 3 — Hendersons Defeated | + `act2_complete`, all Henderson/Act 2 defeat flags |
+| Act 4 — Archive Evidence Found | + `act3_complete`, `has_archive_evidence` |
+| Act 5 — Charter Recovered | + `act4_complete`, `has_charter`, `janitor_rallied` |
+| Act 6 — Rachel Defeated | + `act5_complete`, full gauntlet defeat flags |
+| Act 7 — Penthouse Unlocked | + `act6_complete`, `has_rolex`, all Act 6 ally flags |
+
 ## Architecture
 
 ### Core Loop (`src/main.js`)

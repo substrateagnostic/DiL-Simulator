@@ -78,6 +78,24 @@ export const PLAYER_ABILITIES = {
     tier: 0, // starter — free
     skipsTurn: true,
   },
+  raise_concerns: {
+    name: 'Raise Concerns',
+    description: 'Formally flag a concern in the most passive-aggressive way possible',
+    cost: 10,
+    power: 15,
+    type: 'attack',
+    tag: 'social',
+    tier: 0, // starter — free
+  },
+  spot_check: {
+    name: 'Spot Check',
+    description: 'A quick, targeted review that exposes the cracks',
+    cost: 10,
+    power: 15,
+    type: 'attack',
+    tag: 'audit',
+    tier: 0, // starter — free
+  },
   cite_precedent: {
     name: 'Cite Precedent',
     description: 'Reference devastating case law',
@@ -97,7 +115,7 @@ export const PLAYER_ABILITIES = {
     type: 'attack_aoe',
     tag: 'social',
     tier: 1,
-    requires: 'file_motion',
+    requires: 'raise_concerns',
     upgradePointCost: 1,
   },
   due_diligence: {
@@ -109,7 +127,7 @@ export const PLAYER_ABILITIES = {
     debuffAmount: { def: -5 },
     debuffDuration: 3,
     tier: 1,
-    requires: 'coffee_break',
+    requires: 'spot_check',
     upgradePointCost: 1,
   },
   billable_hours: {
