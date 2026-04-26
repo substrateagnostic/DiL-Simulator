@@ -144,6 +144,7 @@ export class CombatState {
       _xpTable: XP_TABLE,
     });
     this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
+    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy.buffs);
   }
 
   _handleAction(action) {
@@ -824,6 +825,7 @@ export class CombatState {
       _xpTable: XP_TABLE,
     });
     this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
+    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy.buffs);
   }
 
   _spawnDamageNumber(text, type, target = 'enemy') {

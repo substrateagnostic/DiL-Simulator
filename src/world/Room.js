@@ -3,6 +3,7 @@ import { TileMap } from '../world/TileMap.js';
 import { Furniture } from '../world/Furniture.js';
 import { Materials } from '../effects/MaterialLibrary.js';
 import { TILE_SIZE } from '../utils/constants.js';
+import _roomOverrides from '../data/room-overrides.json' with { type: 'json' };
 
 // ============================================================
 // Room — builds a Three.js scene from room data
@@ -97,7 +98,14 @@ export class Room {
 
     // 3. Furniture
     if (furniture && furniture.length > 0) {
-      this._placeFurniture(furniture, flags);
+      const _roomOv = _roomOverrides[this.data.id];
+      const furnitureToPlace = _roomOv?.furniture
+        ? furniture.map((item, i) => {
+            const ov = _roomOv.furniture[String(i)];
+            return ov ? { ...item, ...ov } : item;
+          })
+        : furniture;
+      this._placeFurniture(furnitureToPlace, flags);
     }
 
     // 4. Register exits on the TileMap
@@ -131,8 +139,12 @@ export class Room {
       }
     }
 
-    // 7. Cache NPC data
-    this._builtNPCData = (this.data.npcs || []).map(npc => ({ ...npc }));
+    // 7. Cache NPC data (apply position overrides)
+    const _npcOv = _roomOverrides[this.data.id]?.npcs;
+    this._builtNPCData = (this.data.npcs || []).map((npc, i) => {
+      const ov = _npcOv?.[String(i)];
+      return ov ? { ...npc, ...ov } : { ...npc };
+    });
 
     // 8. Apply room slope (e.g. stairwell descends north)
     if (this.data.slope) {

@@ -693,6 +693,11 @@
   opacity: 0.4;
 }
 
+.cosmetic-card.selected {
+  border-color: #e94560;
+  box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+}
+
 /* ---- Controls Screen ---- */
 
 .controls-panel {

@@ -1,5 +1,6 @@
 // Supply Shop — items the player can buy with AUM
 // Categories: consumable (combat items), upgrade (permanent stat boost), decor (office flags)
+import _balance from './balance.json' with { type: 'json' };
 
 export const SHOP_ITEMS = [
   // ── Consumables ─────────────────────────────────────────────────────────────
@@ -133,3 +134,10 @@ export const SHOP_CATEGORIES = {
   decor: 'Office Decor',
   renovation: 'Renovations',
 };
+
+// Apply balance.json shop price overrides
+for (const item of SHOP_ITEMS) {
+  if (_balance.shop?.[item.id]?.price !== undefined) {
+    item.price = _balance.shop[item.id].price;
+  }
+}

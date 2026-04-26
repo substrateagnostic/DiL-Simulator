@@ -460,6 +460,7 @@ export class MenuState {
     const questAbilities = Object.entries(PLAYER_ABILITIES).filter(([, a]) => a.unlockQuest);
     const tiers = [0, 1, 2, 3];
     let itemIndex = 0;
+    this._abilityActions = [];
 
     for (const tier of tiers) {
       const tierAbilities = allAbilities.filter(([, a]) => (a.tier ?? 0) === tier);
@@ -519,6 +520,11 @@ export class MenuState {
           }
           this._rerenderAbilities();
         });
+        this._abilityActions.push(canUnlock ? () => {
+          this.player.unlockAbility(id);
+          AudioManager.playSfx('confirm');
+          this._rerenderAbilities();
+        } : null);
         grid.appendChild(card);
       }
     }
@@ -557,10 +563,12 @@ export class MenuState {
           card.appendChild(meta);
         }
 
+        this._abilityActions.push(null);
         grid.appendChild(card);
       }
     }
 
+    this._abilityCount = itemIndex;
     panel.appendChild(grid);
 
     // Sell last upgrade point — only when every ability is already learned
@@ -593,6 +601,8 @@ export class MenuState {
 
     this.abilitiesOverlay.innerHTML = '';
     this.abilitiesOverlay.appendChild(panel);
+    const sel = this.abilitiesOverlay.querySelector('.ability-card.selected');
+    if (sel) sel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   _rerenderAbilities() {
@@ -614,6 +624,7 @@ export class MenuState {
     this.cosmeticsOverlay.className = 'menu-overlay';
     this.cosmeticsOverlay.style.zIndex = '60';
     this._cosmeticSlotIndex = 0;
+    this._cosmeticSelectedIndex = 0;
     this._renderCosmetics();
     document.getElementById('ui-overlay').appendChild(this.cosmeticsOverlay);
     if (this.element) this.element.style.display = 'none';
@@ -643,6 +654,8 @@ export class MenuState {
     panel.appendChild(equipped);
 
     // Items by slot
+    this._cosmeticActions = [];
+    let cosIdx = 0;
     for (const slot of COSMETIC_SLOTS) {
       const slotItems = Object.entries(COSMETICS).filter(([, c]) => c.slot === slot);
       if (slotItems.length === 0) continue;
@@ -658,9 +671,10 @@ export class MenuState {
       for (const [id, cos] of slotItems) {
         const unlocked = this.player.isCosmeticUnlocked(id);
         const isEquipped = this.player.equipped[slot] === id;
+        const idx = cosIdx++;
 
         const card = document.createElement('div');
-        card.className = `cosmetic-card${unlocked ? (isEquipped ? ' equipped' : ' available') : ' locked'}`;
+        card.className = `cosmetic-card${unlocked ? (isEquipped ? ' equipped' : ' available') : ' locked'}${idx === this._cosmeticSelectedIndex ? ' selected' : ''}`;
 
         const header = document.createElement('div');
         header.className = 'ability-card-header';
@@ -683,7 +697,7 @@ export class MenuState {
             card.appendChild(statLine);
           }
 
-          card.addEventListener('click', () => {
+          const action = () => {
             if (isEquipped) {
               this.player.unequipCosmetic(slot);
             } else {
@@ -691,18 +705,22 @@ export class MenuState {
             }
             AudioManager.playSfx('confirm');
             this._rerenderCosmetics();
-          });
+          };
+          card.addEventListener('click', () => { this._cosmeticSelectedIndex = idx; action(); });
+          this._cosmeticActions.push(action);
         } else {
           const desc = document.createElement('div');
           desc.className = 'ability-desc';
           desc.textContent = 'Not yet discovered';
           card.appendChild(desc);
+          this._cosmeticActions.push(null);
         }
 
         row.appendChild(card);
       }
       panel.appendChild(row);
     }
+    this._cosmeticCount = cosIdx;
 
     const back = document.createElement('div');
     back.className = 'menu-item';
@@ -713,6 +731,8 @@ export class MenuState {
 
     this.cosmeticsOverlay.innerHTML = '';
     this.cosmeticsOverlay.appendChild(panel);
+    const sel = this.cosmeticsOverlay.querySelector('.cosmetic-card.selected');
+    if (sel) sel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 
   _rerenderCosmetics() {
@@ -729,15 +749,41 @@ export class MenuState {
 
   update(dt) {
     if (this.abilitiesOverlay) {
-      if (InputManager.isCancelPressed()) {
-        this._closeAbilities();
+      if (InputManager.isCancelPressed()) { this._closeAbilities(); return; }
+      const up   = InputManager.isJustPressed('arrowup')   || InputManager.isJustPressed('w');
+      const down = InputManager.isJustPressed('arrowdown') || InputManager.isJustPressed('s');
+      if (up && this._abilitySelectedIndex > 0) {
+        this._abilitySelectedIndex--;
+        AudioManager.playSfx('cursor');
+        this._rerenderAbilities();
+      }
+      if (down && this._abilitySelectedIndex < (this._abilityCount ?? 1) - 1) {
+        this._abilitySelectedIndex++;
+        AudioManager.playSfx('cursor');
+        this._rerenderAbilities();
+      }
+      if (InputManager.isConfirmPressed()) {
+        this._abilityActions?.[this._abilitySelectedIndex]?.();
       }
       return;
     }
 
     if (this.cosmeticsOverlay) {
-      if (InputManager.isCancelPressed()) {
-        this._closeCosmetics();
+      if (InputManager.isCancelPressed()) { this._closeCosmetics(); return; }
+      const up   = InputManager.isJustPressed('arrowup')   || InputManager.isJustPressed('w');
+      const down = InputManager.isJustPressed('arrowdown') || InputManager.isJustPressed('s');
+      if (up && this._cosmeticSelectedIndex > 0) {
+        this._cosmeticSelectedIndex--;
+        AudioManager.playSfx('cursor');
+        this._rerenderCosmetics();
+      }
+      if (down && this._cosmeticSelectedIndex < (this._cosmeticCount ?? 1) - 1) {
+        this._cosmeticSelectedIndex++;
+        AudioManager.playSfx('cursor');
+        this._rerenderCosmetics();
+      }
+      if (InputManager.isConfirmPressed()) {
+        this._cosmeticActions?.[this._cosmeticSelectedIndex]?.();
       }
       return;
     }

@@ -1,3 +1,5 @@
+import _balance from './balance.json' with { type: 'json' };
+
 // Player stats (HP = Patience, MP = Coffee, ATK = Assertiveness, DEF = Composure, SPD = Bureaucratic Efficiency)
 
 export const PLAYER_BASE_STATS = {
@@ -1028,3 +1030,19 @@ export const ITEMS = {
     amount: 10,
   },
 };
+
+// Apply balance.json overrides (set via npm run editor)
+if (_balance.player) {
+  Object.assign(PLAYER_BASE_STATS, _balance.player);
+  if (_balance.player.maxHP !== undefined) PLAYER_BASE_STATS.hp = _balance.player.maxHP;
+  if (_balance.player.maxMP !== undefined) PLAYER_BASE_STATS.mp = _balance.player.maxMP;
+}
+for (const [id, o] of Object.entries(_balance.enemies || {})) {
+  if (ENEMY_STATS[id]) {
+    Object.assign(ENEMY_STATS[id], o);
+    if (o.maxHP !== undefined) ENEMY_STATS[id].hp = o.maxHP;
+  }
+}
+for (const [id, o] of Object.entries(_balance.abilities || {})) {
+  if (PLAYER_ABILITIES[id]) Object.assign(PLAYER_ABILITIES[id], o);
+}

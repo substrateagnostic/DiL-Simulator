@@ -272,8 +272,8 @@ export const ROOMS = {
       { x: 19, z: 5,  type: 'poster', dialogId: 'poster_cf_6' },
       { x: 19, z: 10, type: 'poster', dialogId: 'poster_cf_7' },
       // Side quest interactables
-      { x: 19, z: 12, type: 'poster', dialogId: 'quest_atk_1' },
-      { x: 0,  z: 3,  type: 'poster', dialogId: 'quest_def_1' },
+      { x: 19, z: 12, type: 'poster', dialogId: 'quest_atk_1', condition: { flag: 'retry_karen' } },
+      { x: 0,  z: 3,  type: 'poster', dialogId: 'quest_def_1', condition: { flag: 'retry_karen' } },
       // Phantom Approver: source workstation — on the desk tile, same pattern as andrews_desk
       { x: 17, z: 5,  type: 'monitor', dialogId: 'phantom_workstation_cf' },
       // Tuesday 2PM: sticky note on a monitor
@@ -363,8 +363,8 @@ export const ROOMS = {
       { x: 10, z: 0,  type: 'poster',           dialogId: 'poster_br_1' },
       { x: 13, z: 10, type: 'arcade_cabinet',   dialogId: 'arcade_intro' },
       // Side quest interactables
-      { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3' },
-      { x: 2,  z: 11, type: 'poster', dialogId: 'quest_def_3' },
+      { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3', condition: { flag: 'retry_karen' } },
+      { x: 2,  z: 11, type: 'poster', dialogId: 'quest_def_3', condition: { flag: 'retry_karen' } },
       // Network Ghost signal booster (east wall)
       { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br', condition: { notFlag: 'quest_network_ghost_complete' } },
       // Tuesday 2PM: old floppy disk on westmost table
@@ -565,8 +565,8 @@ export const ROOMS = {
       { x: 6, z: 0, type: 'whiteboard', dialogId: 'conference_whiteboard', condition: { notFlag: 'renovation_projection_wall' } },
       { x: 3, z: 0, type: 'poster', dialogId: 'poster_conf_1', condition: { notFlag: 'renovation_projection_wall' } },
       // Side quest interactables
-      { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2' },
-      { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2' },
+      { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2', condition: { flag: 'retry_karen' } },
+      { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2', condition: { flag: 'retry_karen' } },
       // Network Ghost signal booster (east wall)
       { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
@@ -652,11 +652,11 @@ export const ROOMS = {
     interactables: [
       { x: 1, z: 3, type: 'server_rack', dialogId: 'server_rack_inspect' },
       { x: 3, z: 3, type: 'server_rack', dialogId: 'morse_code_rack' },
-      { x: 5, z: 3, type: 'server_rack', dialogId: 'server_vault_code' },
+      { x: 5, z: 3, type: 'server_rack', dialogId: 'server_vault_code', condition: { flag: 'vault_accessible' } },
       { x: 6, z: 7, type: 'alex_it_desk', dialogId: 'alex_it_desk' },
       // Side quest interactables
-      { x: 3, z: 0, type: 'poster', dialogId: 'quest_atk_4' },
-      { x: 0, z: 7, type: 'poster', dialogId: 'quest_def_4' },
+      { x: 3, z: 0, type: 'poster', dialogId: 'quest_atk_4', condition: { flag: 'retry_karen' } },
+      { x: 0, z: 7, type: 'poster', dialogId: 'quest_def_4', condition: { flag: 'retry_karen' } },
       // Tuesday 2PM: decommissioned server tag on equipment shelf
       { x: 7, z: 3, type: 'poster', dialogId: 'tuesday_server_tag' },
       // Printer's Soul: firmware disk on equipment shelf
@@ -741,8 +741,8 @@ export const ROOMS = {
       { x: 13, z: 3, type: 'elevator', dialogId: 'elevator' },
       { x: 7, z: 2, type: 'reception_desk', dialogId: 'reception_desk' },
       // Side quest interactables
-      { x: 11, z: 0, type: 'poster', dialogId: 'quest_atk_5' },
-      { x: 0,  z: 5, type: 'poster', dialogId: 'quest_def_5' },
+      { x: 11, z: 0, type: 'poster', dialogId: 'quest_atk_5', condition: { flag: 'retry_karen' } },
+      { x: 0,  z: 5, type: 'poster', dialogId: 'quest_def_5', condition: { flag: 'retry_karen' } },
     ],
     playerSpawn: { x: 7, z: 1 },
   },

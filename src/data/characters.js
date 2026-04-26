@@ -1,4 +1,5 @@
 import { COLORS } from '../utils/constants.js';
+import _charOverrides from './character-overrides.json' with { type: 'json' };
 
 export const CHARACTER_CONFIGS = {
   andrew: {
@@ -303,3 +304,8 @@ export const CHARACTER_CONFIGS = {
     accessories: [],
   },
 };
+
+// Apply character-overrides.json (set via npm run editor)
+for (const [id, ov] of Object.entries(_charOverrides)) {
+  if (CHARACTER_CONFIGS[id]) Object.assign(CHARACTER_CONFIGS[id], ov);
+}
