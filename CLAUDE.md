@@ -21,6 +21,19 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 
 `npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 9-tab editor: Player, Abilities, Enemies, Shop, Rooms, Combat Sim, Encounters, Characters, Diff. Changes write to three override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
 
+#### Drag-and-drop furniture (Rooms tab)
+
+In the Rooms tab, furniture and NPC dots on the canvas can be dragged to new positions. The canvas updates in real-time as you drag (2D top-down view). Cursor changes to `grab` when hovering near an item and `grabbing` while dragging. Positions snap to 0.5 tile increments. Rotation can still be set via the edit panel or preset buttons below the canvas.
+
+To see moves reflected in the 3D game view, run both servers simultaneously:
+
+```bash
+npm run dev     # game at localhost:5173
+npm run editor  # editor at localhost:3747
+```
+
+Workflow: drag furniture → **Save Room Overrides** → Vite detects the file change and hot-reloads → re-enter the room in the game (walk out and back in). Positions are live after re-entry.
+
 ### Dev Mode
 
 Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?dev`). Has no effect on normal play — the flag is read once from `URLSearchParams` in `src/utils/constants.js` (`DEV_MODE`).

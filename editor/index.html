@@ -63,7 +63,7 @@ h2 { font-size:12px; font-weight:700; color:var(--muted); text-transform:upperca
 select { background:var(--surface); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:4px; font-size:12px; outline:none; cursor:pointer; }
 select:focus { border-color:var(--accent2); }
 .rooms-body { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start; }
-#room-canvas { display:block; border:1px solid var(--border); border-radius:6px; cursor:crosshair; max-width:100%; }
+#room-canvas { display:block; border:1px solid var(--border); border-radius:6px; cursor:crosshair; max-width:100%; user-select:none; }
 .canvas-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:7px; }
 .legend-item { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--muted); }
 .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
@@ -348,7 +348,7 @@ select:focus { border-color:var(--accent2); }
 // STATE
 // ═══════════════════════════════════════════════════════════════
 let balance = null, origBalance = null;
-let roomOverrides = {}, currentRoom = null, selectedItem = null;
+let roomOverrides = {}, currentRoom = null, selectedItem = null, dragState = null;
 let charConfigs = {}, charOverrides = {}, origCharOverrides = {};
 let currentTab = 'player';
 const CELL = 22;
@@ -552,15 +552,72 @@ function drawDot(ctx,x,z,color,sel,ov,lbl) {
   ctx.font=`${Math.floor(CELL*.42)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(lbl,px,pz);
 }
-document.getElementById('room-canvas').addEventListener('click', function(e) {
-  if (!currentRoom) return;
-  const rect=this.getBoundingClientRect();
-  const mx=(e.clientX-rect.left)*(this.width/rect.width)/CELL;
-  const mz=(e.clientY-rect.top)*(this.height/rect.height)/CELL;
-  let best=null, bd=Infinity;
+function canvasToTile(e) {
+  const c = document.getElementById('room-canvas');
+  const rect = c.getBoundingClientRect();
+  return {
+    mx: (e.clientX - rect.left) * (c.width  / rect.width)  / CELL,
+    mz: (e.clientY - rect.top)  * (c.height / rect.height) / CELL,
+  };
+}
+function nearestItem(mx, mz) {
+  let best = null, bd = Infinity;
   (currentRoom.furniture||[]).forEach((_,i)=>{const ef=getEff('furniture',i);const d=Math.hypot(ef.x-mx,ef.z-mz);if(d<bd){bd=d;best={category:'furniture',index:i};}});
   (currentRoom.npcs||[]).forEach((_,i)=>{const ef=getEff('npcs',i);const d=Math.hypot(ef.x-mx,ef.z-mz);if(d<bd){bd=d;best={category:'npcs',index:i};}});
-  if (best&&bd<1.5) selectItem(best.category,best.index);
+  return { best, bd };
+}
+function stageDragPosition(cat, i, nx, nz) {
+  const base = currentRoom[cat][i];
+  if (!roomOverrides[currentRoom.id]) roomOverrides[currentRoom.id] = {};
+  if (!roomOverrides[currentRoom.id][cat]) roomOverrides[currentRoom.id][cat] = {};
+  const prev = roomOverrides[currentRoom.id][cat][String(i)] || {};
+  const entry = { ...prev };
+  if (Math.abs(nx - base.x) > 0.001) entry.x = nx; else delete entry.x;
+  if (Math.abs(nz - base.z) > 0.001) entry.z = nz; else delete entry.z;
+  if (Object.keys(entry).length) roomOverrides[currentRoom.id][cat][String(i)] = entry;
+  else { delete roomOverrides[currentRoom.id][cat][String(i)]; }
+}
+
+const _rcanvas = document.getElementById('room-canvas');
+
+_rcanvas.addEventListener('mousedown', function(e) {
+  if (!currentRoom) return;
+  const { mx, mz } = canvasToTile(e);
+  const { best, bd } = nearestItem(mx, mz);
+  if (!best || bd >= 1.5) return;
+  e.preventDefault();
+  selectItem(best.category, best.index);
+  const ef = getEff(best.category, best.index);
+  dragState = { category: best.category, index: best.index, ox: ef.x - mx, oz: ef.z - mz };
+  _rcanvas.style.cursor = 'grabbing';
+});
+
+_rcanvas.addEventListener('mousemove', function(e) {
+  if (dragState) return;
+  if (!currentRoom) return;
+  const { mx, mz } = canvasToTile(e);
+  const { bd } = nearestItem(mx, mz);
+  _rcanvas.style.cursor = bd < 1.5 ? 'grab' : 'crosshair';
+});
+
+window.addEventListener('mousemove', function(e) {
+  if (!dragState || !currentRoom) return;
+  e.preventDefault();
+  const { mx, mz } = canvasToTile(e);
+  const nx = Math.max(0, Math.min(currentRoom.width,  Math.round((mx + dragState.ox) * 2) / 2));
+  const nz = Math.max(0, Math.min(currentRoom.height, Math.round((mz + dragState.oz) * 2) / 2));
+  stageDragPosition(dragState.category, dragState.index, nx, nz);
+  document.getElementById('edit-x').value = nx;
+  document.getElementById('edit-z').value = nz;
+  renderCanvas();
+}, { passive: false });
+
+window.addEventListener('mouseup', function() {
+  if (!dragState) return;
+  dragState = null;
+  _rcanvas.style.cursor = 'crosshair';
+  renderItemList();
+  showToast('Override staged — click Save Room Overrides');
 });
 function renderItemList() {
   const el=document.getElementById('room-item-list'); el.innerHTML='';
