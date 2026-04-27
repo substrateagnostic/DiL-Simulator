@@ -19,7 +19,15 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 
 ### Balance & Room Editor
 
-`npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 10-tab editor: Player, Abilities, Enemies, Shop, Rooms, Combat Sim, Encounters, Characters, Dialogs, Diff. Changes write to three override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
+`npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 12-tab editor: Player, Abilities, Enemies, Allies, Shop, Rooms, Combat Sim, Encounters, Characters, Dialogs, Diff. Changes write to five override JSON files in `src/data/`; Publish button commits and pushes all five. The editor is never included in the Vite build and players cannot access it.
+
+A status pill in the header polls `/api/diff-status` every 5s and shows clean/unpublished state. The `?` Help button opens a modal explaining the override pattern.
+
+**Allies tab** — edit `ALLY_STATS` and `ALLY_ABILITIES` fields for all four allies; writes to `ally-overrides.json`.
+
+**Encounters tab** — full edit with Add Encounter button. Supports both `enemyId` (single) and `enemyIds`/`partyIds` (multi-combatant) structures. Writes to `encounter-overrides.json`.
+
+**Combat Sim tab** — extended to multi-combatant Monte Carlo (N enemies vs M allies).
 
 #### Rooms tab
 
@@ -92,7 +100,7 @@ Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?d
 - **`TitleState`** — Title screen; calls a callback with `'new'` or `'continue'`.
 - **`ExplorationState`** — Top-down isometric world traversal. Exit tiles take priority over NPC interactions when the player stands on them. Handles auto-save, AUM award on client acceptance, and shop access.
 - **`CombatState`** — Turn-based combat; owns its own Three.js scene via `CombatScene`. Pushed on top of `ExplorationState` and popped when combat ends via `onEnd(result)` callback. On story victory: restores player HP and MP to max, then auto-plays `encounter.postDialogId` if defined.
-- **`DialogState`** — Pushed over exploration/combat for NPC conversations. Processes a flat array of nodes (`text`, `choice`, `condition`, `action`, `end`). Choice nodes use the `prompt` field for question text. Text/choice nodes support a `next` property for arbitrary index jumps. Space bar is intentionally blocked when choices are visible — only Enter or mouse click confirm a choice.
+- **`DialogState`** — Pushed over exploration/combat for NPC conversations. Processes a flat array of nodes (`text`, `choice`, `condition`, `action`, `end`). Choice nodes use the `prompt` field for question text. Text/choice nodes support a `next` property for arbitrary index jumps. Space bar is intentionally blocked when choices are visible — only Enter or mouse click confirm a choice. Individual choice entries support `requires` (flag must be truthy) and `requiresNot` (flag must be falsy) fields for dynamic filtering without extra condition nodes.
 - **`ClientReviewState`** — DOM UI pushed after winning a Reception encounter. Shows the generated client's financials; player accepts or declines, firing `onDecision(accepted)`.
 - **`ShopState`** — Supply shop UI; pushed from ExplorationState when player interacts with `type: 'supply_shop'` furniture (break room). Sells consumables, permanent stat upgrades, and office décor using AUM.
 - **`MenuState`** — Pause/inventory menu. Tabs: Stats, Abilities, Cosmetics, Journal (enemy log), Achievements, Save Game. "Journal" not "Bestiary". Stats tab shows level, XP bar, HP/Coffee/ATK/DEF/SPD bars, AUM, upgrade points, and death counter.
@@ -100,9 +108,9 @@ Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?d
 
 ### Combat System (`src/combat/`)
 
-- **`CombatEngine`** — Pure logic (no rendering). Key methods: `playerAttack()`, `playerAbility(id)`, `playerItem(id)`, `playerBrace(quality)`, `playerPowerMove()`, `playerPressAdvantage()`, `playerSecondWind()`, `playerRetaliate(multiplier)`, `playerDesperateGamble(risk)`, `playerFlee()`, `enemyTurn()`, `processTurnStart(who)`, `telegraph()`, `getActivePhaseIndex()`.
-- **`CombatScene`** — Three.js backdrop; handles enemy/player visual animations.
-- **`EnemyAI`** — Enemy ability selection; patterns: `random`, `escalating`, `aggressive`, `tactical`, `rotation`, `strategic`, `chaotic`.
+- **`CombatEngine`** — Pure logic (no rendering). Operates on `allies[]` and `enemies[]` arrays internally; single-enemy/single-ally backward-compat getters (`enemy`, `player`) still work. Key methods: `playerAttack()`, `playerAbility(id)`, `playerItem(id)`, `playerBrace(quality)`, `playerPowerMove()`, `playerPressAdvantage()`, `playerSecondWind()`, `playerRetaliate(multiplier)`, `playerDesperateGamble(risk)`, `playerFlee()`, `allyTurn(idx)`, `playerVoiceAction(actionId, targetIndex)`, `getAvailableVoices()`, `enemyTurn()`, `processTurnStart(who)`, `telegraph()`, `getActivePhaseIndex()`, `_resolveTarget(targetIndex)`. `voiceState` object tracks per-fight voice state (`sawCrit`, `sawEnemyHeal`, `tookDamageRecently`, `charterUnlocked`, `skepticLocked`, `charterInvoked`, fired-voice flags).
+- **`CombatScene`** — Three.js backdrop. `setCombatants(enemyIds, partyIds, player)` positions multiple enemies and party members. Pulsing red ring marks the selected target. Per-target hurt/attack/defeat animations.
+- **`EnemyAI`** — Enemy ability selection; patterns: `random`, `escalating`, `aggressive`, `tactical`, `rotation`, `strategic`, `chaotic`. Enemies pick a target ally per attack via aggro logic (55% Andrew bias, otherwise lowest HP-ratio ally).
 
 **Combat mechanics:**
 - **Telegraph**: `telegraph()` pre-rolls the enemy's next ability at the start of each player turn; consumed by `enemyTurn()`. Hint generated in `CombatState._getTelegraphHint()`. If `enemy.vulnerable > 0`, hint appends `(VULNERABLE — hit for 1.5×!)`.
@@ -151,7 +159,11 @@ All game data is plain JS objects/exports:
 - `cosmetics.js` — Unlockable cosmetics with unlock conditions
 - `ClientGenerator.js` — Procedurally generates Reception-room clients. `give_item` actions use the `item` field (not `itemId`). Roguelite enemy HP scales as `Math.round((100 + tier * 160) * levelMultiplier)`.
 - `rooms/index.js` — All room definitions. NPC entries support `condition: { flag, notFlag }` for conditional spawning. Break room has `type: 'supply_shop'` furniture that triggers `ShopState`.
-- `dialogs/index.js`, `quests/index.js`, `encounters/index.js` — dialog trees, quests, encounter configs
+- `dialogs/index.js`, `quests/index.js`, `encounters/index.js` — dialog trees, quests, encounter configs. Encounters support both `enemyId` (single) and `enemyIds`/`partyIds` arrays (multi-combatant).
+- `voices.js` — `VOICES` map (id → trigger function, color, actionId) and `VOICE_ACTIONS` map (actionId → name, quote, needsTarget, effect function). The five voices are `apprentice`, `litigator`, `skeptic`, `witness`, and `the_charter`. All effects are free (no MP) and single-use per fight. `CombatEngine.voiceState` tracks per-fight state; `Player.voiceCounts` tracks campaign-wide usage.
+- `allies.js` — `ALLY_STATS` (id → maxHP, maxMP, atk, def, spd, growthFactor, starterAbilities), `ALLY_ABILITIES` (id → cost, power, type, tag, etc.), `ALLY_AI_PATTERNS` (id → pattern string). Loads `ally-overrides.json` at module load and applies via `Object.assign`. Current allies: `janet`, `alex_it`, `isaiah`, `diane`.
+- `ally-overrides.json` — Editor-managed ally stat and ability overrides. Written by `npm run editor`.
+- `encounter-overrides.json` — Editor-managed encounter overrides. Written by `npm run editor`.
 
 ### Effects (`src/effects/`)
 
@@ -161,7 +173,7 @@ All game data is plain JS objects/exports:
 
 ### Entities (`src/entities/`)
 
-- **`Player`** — Holds `stats` (including `aum`), `inventory`, `flags`, `questStates`, `position`, `currentRoom`, `actIndex`, `upgradePoints`, `unlockedAbilities`, `deaths`. Key methods: `gainXP()`, `rest()`, `addItem()/useItem()`, `setFlag()/getFlag()`, `serialize()/deserialize()`. Emits `flag-set` on EventBus. `gainXP()` caps at `XP_TABLE.length` (15).
+- **`Player`** — Holds `stats` (including `aum`), `inventory`, `flags`, `questStates`, `position`, `currentRoom`, `actIndex`, `upgradePoints`, `unlockedAbilities`, `deaths`, `party` (recruited ally id array), `allyState` (per-ally `{ hp, mp, unlockedAbilities }`), `voiceCounts` (`{ apprentice, litigator, skeptic, witness }` — campaign-wide), `allyControl` (`'manual'` | `'auto'`). Key methods: `gainXP()`, `rest()` (restores all allies too), `addItem()/useItem()`, `setFlag()/getFlag()`, `addAlly(allyId)`, `canUnlockAllyAbility(allyId, abilityId)`, `spendPointOnAllyAbility(allyId, abilityId)`, `serialize()/deserialize()`. Emits `flag-set` on EventBus. `gainXP()` caps at `XP_TABLE.length` (15).
 - **`NPC`** — Per-NPC `interactRange` option (defaults to `PLAYER.INTERACT_RANGE`). `conditionFn` toggled each frame by `EntityManager`. `rebuild(config)` uses `config.name` directly — do NOT spread `{ ...config, name: this.id }` or the display name breaks.
 - **`EntityManager`** — `update(dt, flags, paused)` evaluates `conditionFn` for every NPC every frame.
 - **`CharacterBuilder.js`** — `buildCharacter(config, options)` builds a Three.js character group from box/sphere primitives using `Materials` from MaterialLibrary. `config` holds color fields (`pantsColor`, `bodyColor`, `shirtColor`, `hairColor`, etc.). `options.detailed = true` doubles sphere/capsule segments for combat close-ups. Returns a group with named refs: `group.leftLeg`, `group.rightLeg`, `group.body`, `group.head`, `group.leftArm`, `group.rightArm`.
@@ -170,7 +182,7 @@ All game data is plain JS objects/exports:
 ### UI (`src/ui/`)
 
 All UI is DOM-based HTML/CSS overlaid on the canvas:
-- **`CombatHUD`** — `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP, pressAdvantageCost = 25)`. Renders Brace, Retaliate (when ready), Desperate Gamble (when lowHP), tiered momentum buttons (25/50/100), telegraph row, and Confidence bar. `updateTelegraph(hint)` sets the enemy intent text. `showTaunt(text, side)` renders speech bubbles on `'player'` or `'enemy'` side. `updateBuffStatus(playerBuffs, enemyBuffs)` renders colored pill badges below the stat bars — call from `CombatState._enablePlayerInput()` and `_updateHUD()`. Duration displayed as `b.duration + 1` (a buff at `duration: 2` has 3 turns left).
+- **`CombatHUD`** — `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP, pressAdvantageCost = 25)`. Renders Brace, Retaliate (when ready), Desperate Gamble (when lowHP), tiered momentum buttons (25/50/100), telegraph row, Confidence bar, and **Thoughts** button (only visible when `getAvailableVoices()` returns at least one voice). `updateTelegraph(hint)` sets the enemy intent text. `showTaunt(text, side)` renders speech bubbles on `'player'` or `'enemy'` side. `updateBuffStatus(playerBuffs, enemyBuffs)` renders colored pill badges below the stat bars — call from `CombatState._enablePlayerInput()` and `_updateHUD()`. Duration displayed as `b.duration + 1` (a buff at `duration: 2` has 3 turns left). `showVoices(voices)` renders the Thoughts submenu with voice-card layout (border-color matched to voice). `showAllyMenu(ally, enemies)` shows an ally's action menu (Attack, Abilities, Skip, Switch to Auto). `showAllyAbilities(ally, abilities)` renders the ally ability picker. Top row of enemy health bars with selection highlight; compact party-bar row below player stats; target-picker overlay (←/→ cycle, Enter confirm, Esc cancel) for single-target actions when 2+ enemies alive.
 - **`DialogBox`** — `onAdvance` / `onChoice` callbacks; `skipToEnd()` / `isComplete()`. Space blocked on choice nodes (only Enter/click).
 - **`TransitionOverlay`** — `fadeOut/fadeIn`, `wipeDownOut/wipeDownIn` (descend), `wipeUpOut/wipeUpIn` (ascend).
 - **`TouchControls`** — Injects into `InputManager.keys`; activates only on touch devices.
@@ -201,11 +213,13 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **Ability tags and weaknesses**: Karen = weak `legal`, resists `social`; Chad = weak `social`, resists `legal`; Grandma = weak `audit`, resists `social`. Tag the appropriate ability and the 1.5× bonus fires automatically.
 - **Stat theming**: HP = Patience, MP = Coffee, ATK = Assertiveness, DEF = Composure, SPD = Bureaucratic Efficiency. Player name hardcoded as `'Andrew'`.
 - **Dialog data gotchas**: `give_item` actions use `item` field (not `itemId`). Choice nodes use `prompt` field for the question text (not `text`).
-- **Dialog action nodes** (full list): `set_flag`, `start_combat`, `give_item`, `heal`, `quest_update`, `give_xp` (calls `player.gainXP(node.xp)`), `modify_stat` (increments `player.stats[node.stat]` by `node.amount`, min 1).
+- **Dialog action nodes** (full list): `set_flag`, `start_combat`, `give_item`, `heal`, `quest_update`, `give_xp` (calls `player.gainXP(node.xp)`), `modify_stat` (increments `player.stats[node.stat]` by `node.amount`, min 1), `recruit_ally` (calls `player.addAlly(node.allyId)`), `unlock_ally_ability` (teaches `node.abilityId` to `node.allyId` for free, no upgrade point cost).
 - **One-time poster/side-quest pattern**: Add a `motivationalPoster` furniture entry + `{ type: 'poster', dialogId: 'quest_*' }` interactable to a room. The dialog tree starts with a `condition` node checking a done-flag (`ifTrue` → "already seen" text, `ifFalse` → reward path). The reward path: `set_flag` done → `give_xp` → `modify_stat` → text node with `next` pointing past the "already seen" text → `end`. **Always update both** the `motivationalPoster` furniture entry and the `{ type: 'poster' }` interactable together — they must share the same coordinates. For wall placement: north wall use `z: 0.1`; south wall use `z: [roomHeight - 1.1]` with `rotation: Math.PI`. Values beyond `z: roomHeight - 0.5` land on the exterior wall and are unreachable.
 - **Quest interactable visibility**: Any `{ type: 'poster' }` (or other) interactable placed on an otherwise empty tile is invisible — the player has nothing to click toward. Wall-mounted quest items (signal boosters, terminals, etc.) need a matching `motivationalPoster` furniture entry at `x ± 0.9` from the wall tile with the appropriate rotation. Items described as "on a shelf" need a `fileCabinet` (or similar) at the same tile. The interactable tile and the furniture piece must be at the same `x`/`z` (or within 0.9 units for wall-edge alignment).
 - **`questFlagMap` and ability unlocks**: The `questFlagMap` object inside `ExplorationState`'s `flag-set` listener maps completion flags to `questStates` keys that gate `PLAYER_ABILITIES[id].unlockQuest`. Only add a flag here if the quest *actually* unlocks an ability. Adding a side-quest done-flag (e.g. `printer_quest_done`) that has no corresponding ability will prematurely set `questStates` and fire a false "New ability unlocked!" toast — and if another quest later sets the same key, the toast fires a second time.
 - **Dialog multi-flag gating**: When a quest requires finding N things before completing, the dialog's completion branch must check **all N flags** — not just the last one found. If node 1 only checks the second item's flag, a player who finds that item first can skip the first step entirely. Fix: add a chained condition node between "all found" and the completion path that checks each remaining flag and redirects to a "you still need X" response if any is missing.
+- **Multi-combatant encounters**: set `enemyIds: [...]` (array) instead of `enemyId` for multi-enemy fights. Optionally set `partyIds: [...]` to force specific allies (e.g. `['janet']`); omit to use `player.party` automatically. Post-dialog still needs to set per-enemy `defeated_<id>` flags manually if downstream code gates on them — the engine only auto-sets `defeated_<encounterId>`. See `restructuring_trio` as the canonical example.
+- **Voices system**: `CombatEngine.voiceState` resets each fight. Triggers evaluate at the start of each player turn via `getAvailableVoices()`. Once a voice fires (`voiceState.fired_<id> = true`) it can't fire again that fight. `Player.voiceCounts[id]++` is incremented on each use and persists in saves. Threshold flags (`voice_litigator_high`, `voice_witness_high`, `voice_skeptic_high`) are auto-set in `Player.addAlly()` / `Player.serialize()` — never set them manually. The `the_charter` voice is unlocked in `CombatState.enter()` by checking `witness_charter_read` on the player and calling `engine.voiceState.charterUnlocked = true`.
 - **`ENEMY_ABILITIES` key uniqueness**: `ENEMY_ABILITIES` in `stats.js` is a plain JS object literal — duplicate keys silently overwrite with no error. When multiple enemies share a generic ability name (e.g. `strategic_pivot`), prefix each key with the enemy name (`chief_strategic_pivot`) to avoid silent collisions. Always grep for the key before adding a new ability.
 - **JSON imports require `with { type: 'json' }`**: Node.js 24 (used by the editor server) requires the import attribute on all JSON imports. Vite 7 also supports it. Any file that does `import x from './foo.json'` must use `import x from './foo.json' with { type: 'json' }` — otherwise the editor server fails to load that module via dynamic import. Current files: `stats.js`, `shop.js`, `characters.js`, `Room.js`.
 - **Buff duration off-by-one**: `processTurnStart()` fires at the *start* of the player's turn before they act. The removal threshold is `< 0` (not `<= 0`) so a buff at `duration: 0` survives the current turn and expires after it. A buff with `buffDuration: 3` in `balance.json` therefore provides 3 full player turns of benefit. Do not change the threshold back to `<= 0`.
@@ -257,6 +271,12 @@ Critical flags that are easy to get wrong (not derivable from a single file):
 | `phantom_hr_found` | `phantom_expense_hr` interactable (HR x:11 z:9) | Required alongside `phantom_workstation_found` for Phantom Approver completion |
 | `karen_retry_ready` | Set by ExplorationState when player completes enough tutorial clients after first Karen loss | Gates `karen_not_ready` dialog; without this flag the player gets the "come back later" Karen line instead of the real fight |
 | `corporate_lawyer_defeated` | Auto on combat victory vs `corporate_lawyer` encounter | Clears the executive floor Act 5 gate — elevator blocked until this is set |
+| `witness_charter_read` | End of `team_chat_hub` Witness-high branch | Unlocks `the_charter` voice in the Rachel boss fight |
+| `andrew_invoked_charter` | Set by `charter_read` voice action in Rachel fight | Activates the Charter-read epilogue branch in `rachel_boss_defeated` dialog |
+| `andrew_steadied` | Litigator-high `team_chat_hub` branch, "steadied" response | Activates the Steadied epilogue branch in `rachel_boss_defeated` dialog |
+| `andrew_hardened` | Litigator-high `team_chat_hub` branch, "hardened" response | Activates the Hardened epilogue branch in `rachel_boss_defeated` dialog |
+| `alex_badge_audit_started` | Accepting the Badge Audit quest | Makes PATCH-3 server rack visible in the server room |
+| `alex_badge_audit_complete` | Returning to Alex with the patch log | Marks Badge Audit quest done |
 
 ## Reference Files
 

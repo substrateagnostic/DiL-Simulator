@@ -1,3 +1,139 @@
+# Session Handoff — April 27, 2026
+
+## What Was Done This Session (Session 7)
+
+Multi-combatant combat overhaul, persistent party system, three new recruitable allies, Andrew's inner voices (Reasonable Doubt arc), The Charter Itself endgame payoff, and a Badge Audit personal mission for Alex from IT.
+
+---
+
+### Multi-Combatant Combat Engine
+
+Completely overhauled `CombatEngine`, `CombatScene`, `CombatHUD`, and `CombatState` to support N enemies vs N allies:
+
+- **Engine**: operates on `allies[]` and `enemies[]` arrays internally. Per-enemy telegraph, abilityIndex, and phase tracking. AoE abilities hit all alive enemies. New `allyTurn(idx)` runs AI for non-Andrew party members. Single-enemy backward-compat getters still work.
+- **Scene**: `setCombatants(enemyIds, partyIds, player)` positions multiple enemies and party members. Per-target hurt/attack/defeat animations. Pulsing red ring marks the selected target.
+- **HUD**: top row of enemy health bars with selection highlight, per-enemy telegraphs, compact party-bar row, target-picker overlay (←/→ cycle, Enter confirm, Esc cancel). AoE abilities tagged `[ALL]`.
+- **Turn order**: SPD-sorted initiative interleave (BG3-style), one queue per round mixing allies and enemies. Tiebreak favors allies. Dead combatants are skipped.
+- **First multi-party encounter**: `restructuring_trio` — Brand Consultant + Restructuring Analyst + Corporate Lawyer all at once, with Janet as forced ally. Replaces the chained three solo cubicle fights. Post-dialog still sets per-enemy `_defeated` flags so downstream Act 5 code keeps working.
+
+---
+
+### Persistent Party System
+
+`Player.party[]` holds recruited ally IDs. `Player.allyState[id] = { hp, mp, unlockedAbilities }` tracks per-ally state. Key methods:
+
+- **`addAlly(allyId)`** — idempotent; initializes ally state at full HP/MP with starter abilities.
+- **`rest()`** — now restores all allies to full HP/MP alongside Andrew.
+- **`canUnlockAllyAbility(allyId, abilityId)`** / **`spendPointOnAllyAbility(allyId, abilityId)`** — ability upgrade system for allies, costs 1 upgrade point.
+- Allies scale with Andrew's level via `LEVEL_GROWTH * growthFactor` (default 0.85).
+- When an encounter doesn't specify `partyIds`, `CombatState` falls back to `player.party` so the recruited party auto-joins.
+- New `DialogState` action: `recruit_ally` — adds an ally to the party.
+
+---
+
+### Manual Ally Control (BG3-Style)
+
+`Player.allyControl`: `'manual'` (default) | `'auto'`. Persisted in saves.
+
+When an ally's turn comes up in manual mode, `CombatHUD.showAllyMenu()` presents:
+- **Attack** (target picker when 2+ enemies)
+- **Abilities** (their unlocked list, MP-gated)
+- **Skip** (hold turn)
+- **Switch to AUTO** (toggles persistent preference, hands rest of turn to AI)
+
+Auto mode preserves the original AI flow.
+
+---
+
+### Three New Recruitable Allies
+
+Added Alex from IT, Isaiah (ops manager), and Diane (HR) with full 6-ability kits each. Each has 3 starter abilities and 3 unlockables:
+
+| Ally | Theme | Starter Abilities | Unlockables |
+|------|-------|-------------------|-------------|
+| **Alex from IT** | technical/audit, sysadmin | Reply-All Storm, SSH In, Force Quit (silence) | Backup Restore (heal), Kernel Panic (AoE), Ticket Closed (debuff) |
+| **Isaiah** | operations/defense, ops manager | Motion to Table (ATK debuff), Bridge Builder (party DEF buff), Redirect (taunt) | Filing Cabinet (heavy hit), Staff Meeting (party MP heal), Paperwork Blizzard (AoE) |
+| **Diane** | HR/audit, compliance | HR Complaint (debuff), Receipt (audit hit), Policy Loophole (party buff) | Termination Letter (50-power finisher), Cite Handbook (DEF debuff), Mandatory Training (party-wide debuff) |
+
+Recruitment dialogs trigger at story points: `alex_it_recruit` (post-trio, IT office), `isaiah_recruit` (post-trio), `diane_recruit` (post `diane_act6_rallied`). Each dialog has a choice — recruit or decline.
+
+**Abilities menu** (MenuState) now has a tab per recruited ally with STARTER and UNLOCKABLE sections. Spending 1 upgrade point teaches an ally a new ability.
+
+---
+
+### Data Analytics Duo
+
+New executive-floor encounter: `data_analytics_duo` — Data Analytics Lead + CFO's Assistant simultaneously. Replaces the solo Data Analytics Lead fight. CFO's Assistant still appears as the first solo penthouse fight in Act 7.
+
+---
+
+### Team Chat Hub
+
+Once any ally is recruited, the water cooler reroutes to `team_chat_hub`. The hub uses choice nodes filtered by `requires` flag so each ally only appears as a chat option after recruitment. Each ally has a distinctive monologue establishing their motivation. `DialogState` now supports `requires` and `requiresNot` fields on individual choice nodes for dynamic filtering without condition node explosions.
+
+---
+
+### Andrew's Voices — Reasonable Doubt
+
+Four facets of Andrew interject during combat as contextually-triggered **free actions** (no MP cost, one use per fight). The cumulative usage profile across the campaign (`Player.voiceCounts`) shapes late-game dialogue and the endgame epilogue.
+
+`src/data/voices.js` exports `VOICES` and `VOICE_ACTIONS`. The **Thoughts** combat menu only appears when at least one voice is currently available.
+
+| Voice | Color | Trigger | Action | Effect |
+|-------|-------|---------|--------|--------|
+| **The Apprentice** | #88ccff | HP < 50% | Remember Why You're Here | Heal 30% maxHP, clear one debuff/status, +10 confidence |
+| **The Litigator** | #cc6644 | After crit OR enemy healed | Sever | 30-power legal, ignores 50% DEF, +15 confidence |
+| **The Skeptic** | #888888 | Round 7+ after taking damage | Just... Walk | 90% flee if fleeable, else +30 confidence + skip |
+| **The Witness** | #ddccaa | HP < 25% vs Rachel-aligned enemies | For Mrs. Henderson | 50-power +30% to Rachel-aligned, +25 confidence, locks Skeptic |
+
+Voice usage sets threshold flags: `voice_litigator_high` (at 5 uses), `voice_witness_high` (at 3), `voice_skeptic_high` (at 5). These unlock branches in `team_chat_hub`:
+- Litigator high → Janet warns Andrew he's getting cold; player picks response setting `andrew_steadied` or `andrew_hardened`.
+- Witness high → Andrew reads the 1947 charter margin note. +100 XP. Sets `witness_charter_read`.
+- Skeptic high → Andrew sits at his desk, decides not to quit. +5 maxMP.
+
+---
+
+### The Charter Itself
+
+A 5th voice — `the_charter` — triggers **only** in the `rachel_boss` fight **only** if `witness_charter_read` is set. Action: **Read the 1947 Charter Aloud**. Damage = `max(200-power calc, 1/3 Rachel's maxHP)` — ignores DEF entirely. Sets `andrew_invoked_charter` for post-dialog branching. Locks the Skeptic.
+
+`rachel_boss_defeated` dialog now has **four epilogue paths** converging on `act5_complete`:
+- **Default**: existing universal celebration
+- **Charter Read** (nodes 30+): rhetorical-kill epilogue. Old board member switches sides.
+- **Steadied** (nodes 50+): Janet — "You're still you." Andrew exhales for the first time since Tuesday.
+- **Hardened** (nodes 60+): Andrew watches himself watch them celebrate. Professional distance. Janet notices.
+
+Reserved index gaps (21–29, 46–49, 56–59, 66–69) allow future epilogue beats without renumbering.
+
+---
+
+### Alex from IT — Badge Audit Side Quest
+
+Three-stage side quest unlocked post-recruit:
+1. Talk to Alex → accept the badge audit (`alex_badge_audit_offer` dialog)
+2. Go to server room → inspect PATCH-3 rack (`alex_badge_audit_pull` dialog; visible only when `alex_badge_audit_started`)
+3. Return to Alex (`alex_badge_audit_return` dialog)
+
+**Reward**: Kernel Panic (Alex's AoE) unlocked via `unlock_ally_ability` dialog action (no upgrade point cost) + 200 XP.
+
+The patch log reveals Rachel ran a physical cable from her office to the badge issuer for at least four years. New `DialogState` action: `unlock_ally_ability` — teaches a specific ability to a specific ally for free.
+
+---
+
+### Editor Additions (Session 7)
+
+Four new tabs added to `npm run editor`:
+- **Allies tab**: edit `ALLY_STATS` + `ALLY_ABILITIES`; writes to `ally-overrides.json`.
+- **Encounters tab**: full edit + Add Encounter button supporting `enemyIds`/`partyIds` arrays for multi-combatant encounters; writes to `encounter-overrides.json`.
+- **Combat Sim**: extended to multi-combatant Monte Carlo (N enemies vs M allies).
+- **Dialogs viewer**: read-only, search by ID/speaker/text, expandable node list color-coded by type.
+
+Status pill in the header polls `/api/diff-status` every 5s and shows clean/unpublished state. Help modal (`?` button) explains the override pattern.
+
+`ally-overrides.json` and `encounter-overrides.json` are now included in the Publish flow (all five override files staged together).
+
+---
+
 # Session Handoff — April 26, 2026
 
 ## What Was Done This Session (Session 6)
@@ -610,6 +746,7 @@ Full audit and bug-fix pass on Acts 5–7 and all six Alex IT subquests, plus th
 
 - **Build**: `npx vite build` passes clean (chunk size warning only — expected)
 - **No test suite** — verification is manual playtest
+- **Branch**: `andrew` is fully merged with `origin/main` and pushed to `origin/andrew`
 
 ## Known Issues / Future Work
 

@@ -162,6 +162,65 @@ Cosmetics are equipped in the Pause Menu → Cosmetics tab. Each item occupies o
 
 ---
 
+## Party System — Recruited Allies
+
+Starting in Act 5, you can recruit allies who join you in combat. Recruited allies persist across all subsequent fights via `player.party[]`.
+
+### Recruiting
+
+Recruitment dialog choices appear at specific story points. Declining a recruit still shares relevant evidence — you're never punished for keeping a small party. Allies are added via the `recruit_ally` dialog action.
+
+### In Combat
+
+- Allies use SPD-sorted initiative interleave (BG3-style) — their turns are interspersed with enemies each round.
+- **Manual control** (default): when an ally's turn comes up, a menu lets you choose Attack, Abilities, Skip, or switch to Auto.
+- **Auto control**: ally acts on its own AI (rotation + heal/AoE heuristics). Toggle per fight or set persistently.
+- Allies share Andrew's level and scale stats via `LEVEL_GROWTH × growthFactor` (default 0.85).
+- Andrew's `rest()` after story victories restores all allies to full HP/MP.
+
+### Ally Abilities
+
+Each ally has 3 starter abilities (known on recruit) and 3 unlockables. Spend 1 upgrade point in the **Abilities tab** of the pause menu to teach an ally a new ability. Some quest rewards (e.g., Badge Audit) unlock abilities for free.
+
+### Ally Roster
+
+| Ally | Recruited | Theme | Starter Abilities |
+|------|-----------|-------|-------------------|
+| **Janet** | Act 5 cubicle farm (auto-joins) | social/legal | Nope (social), Group Complaint (AoE), Rally (party buff), Fact Check (debuff) |
+| **Alex from IT** | Post-trio, IT office | technical/audit | Reply-All Storm, SSH In, Force Quit (silence) |
+| **Isaiah** | Post-trio | operations/defense | Motion to Table (ATK debuff), Bridge Builder (party DEF buff), Redirect (taunt) |
+| **Diane** | Post `diane_act6_rallied` | HR/audit | HR Complaint (debuff), Receipt (audit hit), Policy Loophole (party buff) |
+| **Grandma Henderson** | Act 6 | — | (Henderson family |
+
+---
+
+## Andrew's Voices — Reasonable Doubt
+
+Four facets of Andrew interject during combat as free actions — no MP cost, one use per fight. They appear in a **Thoughts** submenu in the combat action menu, only visible when at least one voice is available.
+
+Usage across the whole campaign is tracked in `Player.voiceCounts` and persists in saves. High usage unlocks branches in the Team Chat Hub (water cooler, available once any ally is recruited).
+
+| Voice | Trigger | Action | Effect |
+|-------|---------|--------|--------|
+| **The Apprentice** *(#88ccff)* | HP < 50% | Remember Why You're Here | Heal 30% max HP, clear one debuff/status, +10 confidence |
+| **The Litigator** *(#cc6644)* | After landing a crit OR after an enemy heals | Sever | 30-power legal attack, ignores 50% DEF, +15 confidence |
+| **The Skeptic** *(#888888)* | Round 7+ after taking damage | Just... Walk | Flee if fleeable (90% chance); otherwise +30 confidence + skip turn |
+| **The Witness** *(#ddccaa)* | HP < 25% vs Rachel-aligned enemies | For Mrs. Henderson | 50-power attack (+30% to Rachel-aligned targets), +25 confidence, locks the Skeptic |
+
+### Late-Game Reactivity (Team Chat Hub)
+
+| Threshold | Voice | Unlocked Branch |
+|-----------|-------|----------------|
+| 5 uses | Litigator | Janet warns Andrew he's becoming clinical. Player chooses a response → sets `andrew_steadied` or `andrew_hardened` for epilogue branching. |
+| 3 uses | Witness | Andrew reads the 1947 charter. D. Henderson margin note revealed. +100 XP. Sets `witness_charter_read`. |
+| 5 uses | Skeptic | Andrew sits at his desk and realizes he could quit — decides not to. +5 maxMP. |
+
+### The Charter Itself
+
+A 5th voice unlocked only if `witness_charter_read` is set **and** you're fighting Rachel (`rachel_boss` encounter). Action: **Read the 1947 Charter Aloud**. Deals massive damage (200 power, ignores DEF, floors at 1/3 of Rachel's max HP). Sets `andrew_invoked_charter`, which determines which of the four Rachel epilogue branches plays.
+
+---
+
 ## Attributes
 
 Andrew has five combat stats. Each levels up automatically and can also be boosted through the shop, posters, and quest rewards.
