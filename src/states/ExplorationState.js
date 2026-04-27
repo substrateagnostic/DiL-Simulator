@@ -799,6 +799,7 @@ export class ExplorationState {
     // Reset whichever gauntlet fight-started flag is in progress but not yet won,
     // so the fight retriggers after the player respawns.
     const gauntletFlags = [
+      { started: 'restructuring_trio_started',      defeated: 'restructuring_trio_defeated' },
       { started: 'brand_consultant_fight_started',  defeated: 'brand_consultant_defeated' },
       { started: 'restructuring_fight_started',     defeated: 'restructuring_defeated' },
       { started: 'data_lead_fight_started',         defeated: 'data_lead_defeated' },
@@ -2107,22 +2108,16 @@ export class ExplorationState {
       this._showDevPanel();
     }
 
-    // Gauntlet fight 1: Brand Consultant — fires once act4_complete is set (set by act5_trigger dialog)
-    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
-      this.player.setFlag('brand_consultant_fight_started');
+    // Act 5 — Restructuring Trio: 3v2 multi-combatant fight (Andrew + Janet vs all three analysts).
+    // Fires once act4_complete is set (set by act5_trigger dialog) and runs once.
+    // Defeating the trio sets brand_consultant_defeated / restructuring_defeated / corporate_lawyer_defeated
+    // so downstream gates (executive floor) keep working unchanged.
+    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('restructuring_trio_started') && !this.player.getFlag('restructuring_trio_defeated') && DIALOGS.restructuring_trio_intro) {
+      this.player.setFlag('restructuring_trio_started');
       setTimeout(() => {
-        const dialogState = new DialogState(DIALOGS['brand_consultant_combat'], this.player, this.stateManager, 'brand_consultant_combat');
+        const dialogState = new DialogState(DIALOGS['restructuring_trio_intro'], this.player, this.stateManager, 'restructuring_trio_intro');
         this.stateManager.push(dialogState);
       }, 1200);
-    }
-
-    // Gauntlet fight 2: Restructuring Analyst chains immediately after Brand Consultant is defeated
-    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('brand_consultant_defeated') && !this.player.getFlag('restructuring_fight_started') && DIALOGS.restructuring_combat) {
-      this.player.setFlag('restructuring_fight_started');
-      setTimeout(() => {
-        const dialogState = new DialogState(DIALOGS['restructuring_combat'], this.player, this.stateManager, 'restructuring_combat');
-        this.stateManager.push(dialogState);
-      }, 2000);
     }
 
     // Gauntlet fight 5: Chief of Restructuring chains after Data Analytics Lead is defeated
@@ -2301,7 +2296,8 @@ export class ExplorationState {
           act3_complete: true,
           met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
           has_charter: true, act4_complete: true,
-          act5_triggered: true,
+          act5_triggered: true, janet_recruited: true,
+          restructuring_trio_started: true, restructuring_trio_defeated: true,
           brand_consultant_fight_started: true, brand_consultant_defeated: true,
           restructuring_fight_started: true, restructuring_analyst_defeated: true, restructuring_defeated: true,
           data_lead_fight_started: true, data_lead_defeated: true,
@@ -2326,7 +2322,8 @@ export class ExplorationState {
           act3_complete: true,
           met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
           has_charter: true, act4_complete: true,
-          act5_triggered: true,
+          act5_triggered: true, janet_recruited: true,
+          restructuring_trio_started: true, restructuring_trio_defeated: true,
           brand_consultant_fight_started: true, brand_consultant_defeated: true,
           restructuring_fight_started: true, restructuring_analyst_defeated: true, restructuring_defeated: true,
           data_lead_fight_started: true, data_lead_defeated: true,

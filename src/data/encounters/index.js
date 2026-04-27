@@ -73,6 +73,16 @@ export const ENCOUNTERS = {
     postDialogId: 'brand_consultant_defeated',
     canFlee: true,
   },
+  // Act 5 — Restructuring Trio: 3v2 multi-combatant fight with Janet as ally.
+  // The whole "they sent a restructuring TEAM" line pays off here: all three
+  // analysts come at once, Janet (fellow trust officer) joins Andrew.
+  restructuring_trio: {
+    enemyIds: ['brand_consultant', 'restructuring_analyst', 'corporate_lawyer'],
+    partyIds: ['janet'],
+    preDialogId: 'restructuring_trio_intro',
+    postDialogId: 'restructuring_trio_defeated',
+    canFlee: false,
+  },
   data_analytics_lead: {
     enemyId: 'data_analytics_lead',
     preDialogId: 'data_analytics_combat',

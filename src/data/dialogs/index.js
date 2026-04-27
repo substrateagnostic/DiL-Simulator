@@ -1892,8 +1892,37 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One of them tried to reformat my server. MY server. I may have... physically intervened." },
     /* 5  */ { type: 'text', speaker: 'Diane', text: "Andrew, Rachel's moved to the Board Room. She's calling an emergency vote to dissolve the trust department." },
     /* 6  */ { type: 'text', speaker: 'Diane', text: "You need to get up there. But first, you'll need to deal with her team down here. They're blocking all access." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true, next: 8 },
-    /* 8  */ { type: 'end' },
+    /* 7  */ { type: 'text', speaker: 'Janet', text: "I'm going with you. They came for our department. We answer together — or we answer alone, and they pick us off one by one." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true, next: 9 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'janet_recruited', value: true, next: 10 },
+    /* 10 */ { type: 'end' },
+  ],
+
+  // Act 5 — Restructuring Trio (Brand Consultant + Restructuring Analyst + Corporate Lawyer all at once)
+  // Andrew + Janet vs three. The first multi-combatant fight in the game.
+  restructuring_trio_intro: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Three suits step out from between the cubicles, blocking the path to the elevator. They've coordinated this." },
+    /* 1  */ { type: 'text', speaker: 'Brand Consultant', text: "Oh PERFECT. We can do the rebranding pitch and the metrics review and the legal threat all at once. SO efficient." },
+    /* 2  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Joint engagement reduces single-point dependency on any individual change vector. Standard practice." },
+    /* 3  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I've already drafted three NDAs, four severance riders, and a non-compete that would survive a nuclear strike. Sign anywhere." },
+    /* 4  */ { type: 'text', speaker: 'Janet', text: "Andrew. I'll take the one with the binder. You handle whichever one's loudest." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Stay sharp. They'll try to split us." },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_trio', next: 7 },
+    /* 7  */ { type: 'end' },
+  ],
+
+  restructuring_trio_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "All three of them are on the floor of the cubicle farm. The brand consultant is crying about her mood board. The analyst is muttering at a spreadsheet. The lawyer is drafting a settlement to himself." },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "I forgot how good it feels to be right." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "We're not done. Rachel's whole team is between us and the Board Room." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "Then I'm not done either. Lead the way." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'restructuring_trio_defeated', value: true, next: 5 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true, next: 6 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'restructuring_defeated', value: true, next: 7 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'corporate_lawyer_defeated', value: true, next: 8 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_fight_started', value: true, next: 9 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'restructuring_fight_started', value: true, next: 10 },
+    /* 10 */ { type: 'end' },
   ],
 
   restructuring_combat: [

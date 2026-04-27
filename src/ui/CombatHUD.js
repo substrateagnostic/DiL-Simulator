@@ -1,10 +1,16 @@
-// Combat HUD - player stats, action menu, enemy info
+// Combat HUD — supports 1+ enemies and 1+ party members.
+// Top-center: row of enemy bars with name/HP/telegraph; selected target gets a highlight.
+// Bottom-left: stats wrapper. Active actor's full bars on top; remaining party shows compact bars below.
+// New: showTargetPicker(enemies, onPick) — arrow-key cycle through alive enemies, Enter to pick.
+
 export class CombatHUD {
   constructor() {
     this.container = document.getElementById('ui-overlay');
     this.root = null;
-    this.enemyInfo = null;
-    this.statsEl = null;
+    this.enemyRowEl = null;       // row container holding all enemy info blocks
+    this.enemyEntries = [];       // [{ index, infoEl, hpFill, telegraphEl }]
+    this.statsEl = null;          // active actor stat block
+    this.partyRowEl = null;       // compact party bar row
     this.menuEl = null;
     this.onActionSelect = null;
     this.onAbilitySelect = null;
@@ -13,28 +19,28 @@ export class CombatHUD {
     this.currentMenu = 'main';
     this.menuItems = [];
     this.canFlee = true;
-    this.telegraphEl = null;
+    this._activeAllyIndex = 0;
+    this._highlightedEnemyIndex = -1;
+    this._targetPickerCleanup = null;
   }
 
-  show(playerStats, enemyName, enemyHP, enemyMaxHP, options = {}) {
+  // enemies: [{ name, hp, maxHP }, ...]; party: [{ name, hp, maxHP, mp, maxMP, momentum, isPlayer }, ...]
+  show(enemies, party, options = {}) {
     this.remove();
     this.canFlee = options.canFlee !== false;
 
     this.root = document.createElement('div');
     this.root.className = 'combat-hud';
 
-    this.enemyInfo = document.createElement('div');
-    this.enemyInfo.className = 'combat-enemy-info';
-    this.enemyInfo.innerHTML = `
-      <div class="combat-enemy-name">${enemyName}</div>
-      <div class="combat-enemy-hp-bar">
-        <div class="combat-enemy-hp-fill" style="width: ${(enemyHP / enemyMaxHP) * 100}%"></div>
-      </div>
-      <div class="combat-telegraph" style="display:none;"></div>
-    `;
-    this.telegraphEl = this.enemyInfo.querySelector('.combat-telegraph');
-    this.container.appendChild(this.enemyInfo);
+    // Top: enemy row
+    this.enemyRowEl = document.createElement('div');
+    this.enemyRowEl.className = 'combat-enemy-row';
+    if (enemies.length === 1) this.enemyRowEl.classList.add('single');
+    if (enemies.length >= 3) this.enemyRowEl.classList.add('crowded');
+    this.container.appendChild(this.enemyRowEl);
+    this._renderEnemyRow(enemies);
 
+    // Bottom: player panel
     const panel = document.createElement('div');
     panel.className = 'combat-player-panel';
 
@@ -43,12 +49,15 @@ export class CombatHUD {
 
     this.statsEl = document.createElement('div');
     this.statsEl.className = 'combat-stats';
-    this._updateStats(playerStats);
     statsWrapper.appendChild(this.statsEl);
 
     this.buffStatusEl = document.createElement('div');
     this.buffStatusEl.className = 'combat-buff-status';
     statsWrapper.appendChild(this.buffStatusEl);
+
+    this.partyRowEl = document.createElement('div');
+    this.partyRowEl.className = 'combat-party-row';
+    statsWrapper.appendChild(this.partyRowEl);
 
     panel.appendChild(statsWrapper);
 
@@ -59,9 +68,129 @@ export class CombatHUD {
     this.root.appendChild(panel);
     this.container.appendChild(this.root);
 
+    // Initial render of stats/party using the active ally
+    this._activeAllyIndex = 0;
+    this._renderStats(party[0] || {});
+    this._renderPartyRow(party);
     this.showMainMenu();
   }
 
+  _renderEnemyRow(enemies) {
+    if (!this.enemyRowEl) return;
+    this.enemyRowEl.innerHTML = '';
+    this.enemyEntries = [];
+    enemies.forEach((e, i) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'combat-enemy-info';
+      if (e.hp <= 0) wrap.classList.add('dead');
+      wrap.innerHTML = `
+        <div class="combat-enemy-name">${e.name}</div>
+        <div class="combat-enemy-hp-bar">
+          <div class="combat-enemy-hp-fill" style="width: ${e.maxHP > 0 ? (e.hp / e.maxHP) * 100 : 0}%"></div>
+        </div>
+        <div class="combat-telegraph" style="display:none;"></div>
+      `;
+      const hpFill = wrap.querySelector('.combat-enemy-hp-fill');
+      const telegraphEl = wrap.querySelector('.combat-telegraph');
+      this.enemyRowEl.appendChild(wrap);
+      this.enemyEntries.push({ index: i, infoEl: wrap, hpFill, telegraphEl });
+    });
+  }
+
+  setEnemies(enemies) {
+    this._renderEnemyRow(enemies);
+    if (this._highlightedEnemyIndex >= 0) {
+      this.highlightEnemy(this._highlightedEnemyIndex);
+    }
+  }
+
+  updateEnemyHP(idx, hp, maxHP) {
+    // Backward compat: if called with (hp, maxHP) treat as enemy 0
+    if (typeof maxHP === 'undefined') {
+      maxHP = hp;
+      hp = idx;
+      idx = 0;
+    }
+    const entry = this.enemyEntries[idx];
+    if (!entry) return;
+    entry.hpFill.style.width = `${Math.max(0, (hp / maxHP) * 100)}%`;
+    if (hp <= 0) entry.infoEl.classList.add('dead');
+  }
+
+  updateAllEnemies(enemies) {
+    enemies.forEach((e, i) => this.updateEnemyHP(i, e.hp, e.maxHP));
+  }
+
+  highlightEnemy(idx) {
+    this._highlightedEnemyIndex = idx;
+    this.enemyEntries.forEach((e, i) => {
+      e.infoEl.classList.toggle('targeted', i === idx);
+    });
+  }
+
+  clearEnemyHighlight() {
+    this._highlightedEnemyIndex = -1;
+    this.enemyEntries.forEach(e => e.infoEl.classList.remove('targeted'));
+  }
+
+  // hints: array of strings parallel to enemies (one telegraph per enemy)
+  updateTelegraphAll(hints) {
+    this.enemyEntries.forEach((entry, i) => {
+      const hint = hints[i];
+      if (hint) {
+        entry.telegraphEl.textContent = `⚠ ${hint}`;
+        entry.telegraphEl.style.display = '';
+      } else {
+        entry.telegraphEl.style.display = 'none';
+      }
+    });
+  }
+
+  // Backward-compat: single-enemy telegraph hint (uses enemy 0)
+  updateTelegraph(hint) {
+    if (this.enemyEntries.length === 0) return;
+    if (this.enemyEntries.length === 1) {
+      const entry = this.enemyEntries[0];
+      if (hint) {
+        entry.telegraphEl.textContent = `⚠ ${hint}`;
+        entry.telegraphEl.style.display = '';
+      } else {
+        entry.telegraphEl.style.display = 'none';
+      }
+    }
+  }
+
+  _renderPartyRow(party) {
+    if (!this.partyRowEl) return;
+    this.partyRowEl.innerHTML = '';
+    party.forEach((p, i) => {
+      if (i === this._activeAllyIndex) return; // Active actor's full bars are already shown above
+      const item = document.createElement('div');
+      item.className = 'combat-party-bar';
+      if (p.hp <= 0) item.classList.add('dead');
+      item.innerHTML = `
+        <span class="combat-party-name">${p.name}</span>
+        <div class="combat-party-hp-bar"><div class="combat-party-hp-fill" style="width:${p.maxHP > 0 ? (p.hp / p.maxHP) * 100 : 0}%"></div></div>
+        <span class="combat-party-hp-num">${p.hp}/${p.maxHP}</span>
+      `;
+      this.partyRowEl.appendChild(item);
+    });
+  }
+
+  setActiveAlly(index, party) {
+    this._activeAllyIndex = index;
+    if (party) {
+      this._renderStats(party[index] || {});
+      this._renderPartyRow(party);
+    }
+  }
+
+  // Public refresh — updates the compact party-row bars without re-rendering the active actor stats.
+  refreshPartyRow(party) {
+    this._renderPartyRow(party);
+  }
+
+  // ── Main / sub menus ─────────────────────────────────────────────────
   showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false, pressAdvantageCost = 25) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
@@ -75,14 +204,8 @@ export class CombatHUD {
     if (retaliateReady) {
       this.menuItems.push({ label: '↩ Retaliate (Free)', action: 'retaliate', retaliateBtn: true });
     }
-
-    if (this.canFlee) {
-      this.menuItems.push({ label: 'Flee', action: 'flee' });
-    }
-
-    if (lowHP) {
-      this.menuItems.push({ label: '🎲 Desperate Gamble', action: 'desperate_gamble', desperateBtn: true });
-    }
+    if (this.canFlee) this.menuItems.push({ label: 'Flee', action: 'flee' });
+    if (lowHP) this.menuItems.push({ label: '🎲 Desperate Gamble', action: 'desperate_gamble', desperateBtn: true });
 
     if (momentum >= pressAdvantageCost && momentum < 50) {
       this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
@@ -90,7 +213,6 @@ export class CombatHUD {
       this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
       this.menuItems.push({ label: `★ Second Wind (+75 HP)`, action: 'second_wind', momentumSpend: true });
     }
-
     if (momentum >= 100) {
       this.menuItems.push({ label: '⚡ ASSERT DOMINANCE', action: 'power_move', powerMove: true });
     }
@@ -107,6 +229,7 @@ export class CombatHUD {
       id: ability.id,
       description: ability.description,
       tag: ability.tag || null,
+      type: ability.type,
       disabled: playerMP < ability.cost,
     }));
     this.menuItems.push({ label: 'Back', action: 'back' });
@@ -154,7 +277,6 @@ export class CombatHUD {
   _renderSubmenu() {
     this.menuEl.className = 'combat-submenu';
     this.menuEl.innerHTML = '';
-    // Tooltip element for ability descriptions
     if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }
 
     this.menuItems.forEach((item, i) => {
@@ -170,6 +292,14 @@ export class CombatHUD {
         tagSpan.style.marginLeft = '6px';
         tagSpan.textContent = `[${item.tag}]`;
         nameSpan.appendChild(tagSpan);
+      }
+      if (item.type === 'attack_aoe') {
+        const aoe = document.createElement('span');
+        aoe.style.color = '#ffaa44';
+        aoe.style.fontSize = '13px';
+        aoe.style.marginLeft = '6px';
+        aoe.textContent = '[ALL]';
+        nameSpan.appendChild(aoe);
       }
       el.appendChild(nameSpan);
       if (item.cost !== undefined) {
@@ -188,7 +318,6 @@ export class CombatHUD {
       this.menuEl.appendChild(el);
     });
 
-    // Show tooltip for selected ability
     const selected = this.menuItems[this.selectedIndex];
     if (selected && selected.description) {
       this._tooltip = document.createElement('div');
@@ -211,16 +340,13 @@ export class CombatHUD {
       if (direction === 'up') this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       if (direction === 'down') this.selectedIndex = Math.min(this.menuItems.length - 1, this.selectedIndex + 1);
     }
-
     if (prev !== this.selectedIndex) {
       if (this.currentMenu === 'main') this._renderMenu();
       else this._renderSubmenu();
     }
   }
 
-  selectCurrent() {
-    this._selectCurrent();
-  }
+  selectCurrent() { this._selectCurrent(); }
 
   _selectCurrent() {
     const item = this.menuItems[this.selectedIndex];
@@ -232,7 +358,7 @@ export class CombatHUD {
       if (item.action === 'back') {
         this.showMainMenu();
       } else if (this.onAbilitySelect) {
-        this.onAbilitySelect(item.id);
+        this.onAbilitySelect(item.id, item);
       }
     } else if (this.currentMenu === 'items') {
       if (item.action === 'back') {
@@ -243,15 +369,45 @@ export class CombatHUD {
     }
   }
 
-  updatePlayerStats(stats) {
-    this._updateStats(stats);
-  }
+  // ── Stats / buffs ────────────────────────────────────────────────────
+  // Backward-compat: callers pass a player-stats object. We re-route to the
+  // active actor stats panel.
+  updatePlayerStats(stats) { this._renderStats(stats); }
+  updateActorStats(stats) { this._renderStats(stats); }
 
-  updateEnemyHP(hp, maxHP) {
-    if (this.enemyInfo) {
-      const fill = this.enemyInfo.querySelector('.combat-enemy-hp-fill');
-      if (fill) fill.style.width = `${Math.max(0, (hp / maxHP) * 100)}%`;
-    }
+  _renderStats(stats) {
+    if (!this.statsEl) return;
+    const momentum = Math.round(stats.momentum || 0);
+    const momentumReady = momentum >= 100;
+    const showMomentum = stats.isPlayer !== false; // hide for non-Andrew allies
+    const mpRow = (stats.maxMP && stats.maxMP > 0)
+      ? `<div class="combat-stat-row">
+          <span class="combat-stat-label">Coffee</span>
+          <div class="combat-stat-bar">
+            <div class="combat-stat-bar-fill mp" style="width: ${(stats.mp / stats.maxMP) * 100}%"></div>
+          </div>
+          <span class="combat-stat-value">${stats.mp}/${stats.maxMP}</span>
+        </div>` : '';
+    const momentumRow = showMomentum
+      ? `<div class="combat-stat-row">
+          <span class="combat-stat-label" style="color: ${momentumReady ? '#ffd700' : '#aaa'}">Confidence</span>
+          <div class="combat-stat-bar">
+            <div class="combat-stat-bar-fill momentum" style="width: ${momentum}%"></div>
+          </div>
+          <span class="combat-stat-value" style="color: ${momentumReady ? '#ffd700' : '#fff'}">${momentum}%${momentumReady ? ' ⚡' : ''}</span>
+        </div>` : '';
+    this.statsEl.innerHTML = `
+      <div class="combat-stats-name">${stats.name || 'Andrew'}</div>
+      <div class="combat-stat-row">
+        <span class="combat-stat-label">HP</span>
+        <div class="combat-stat-bar">
+          <div class="combat-stat-bar-fill hp" style="width: ${(stats.hp / stats.maxHP) * 100}%"></div>
+        </div>
+        <span class="combat-stat-value">${stats.hp}/${stats.maxHP}</span>
+      </div>
+      ${mpRow}
+      ${momentumRow}
+    `;
   }
 
   updateBuffStatus(playerBuffs = [], enemyBuffs = []) {
@@ -270,44 +426,84 @@ export class CombatHUD {
     this.buffStatusEl.innerHTML = pills.join('');
   }
 
-  updateTelegraph(hint) {
-    if (!this.telegraphEl) return;
-    if (hint) {
-      this.telegraphEl.textContent = `⚠ ${hint}`;
-      this.telegraphEl.style.display = '';
-    } else {
-      this.telegraphEl.style.display = 'none';
+  // ── Target picker overlay ────────────────────────────────────────────
+  // enemies: [{ name, hp, maxHP, idx }]; onPick(idx) called when user confirms.
+  // onCancel() called on Escape (returns to main menu).
+  showTargetPicker(enemies, onPick, onCancel) {
+    this._closeTargetPicker();
+    const aliveEnemies = enemies.filter(e => e.hp > 0);
+    if (aliveEnemies.length === 0) {
+      onPick(0);
+      return;
     }
+    if (aliveEnemies.length === 1) {
+      // Single target — auto-pick
+      onPick(aliveEnemies[0].idx);
+      return;
+    }
+
+    let cursor = 0;
+    this.highlightEnemy(aliveEnemies[cursor].idx);
+    const overlay = document.createElement('div');
+    overlay.className = 'target-picker-overlay';
+    overlay.innerHTML = `<div class="target-picker-hint">← → / A D to choose target · ENTER to confirm · ESC to cancel</div>`;
+    this.container.appendChild(overlay);
+
+    const finish = (idx) => {
+      this._closeTargetPicker();
+      onPick(idx);
+    };
+    const cancel = () => {
+      this._closeTargetPicker();
+      if (onCancel) onCancel();
+    };
+
+    const keyHandler = (e) => {
+      if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        cursor = (cursor - 1 + aliveEnemies.length) % aliveEnemies.length;
+        this.highlightEnemy(aliveEnemies[cursor].idx);
+        e.preventDefault();
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        cursor = (cursor + 1) % aliveEnemies.length;
+        this.highlightEnemy(aliveEnemies[cursor].idx);
+        e.preventDefault();
+      } else if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') {
+        e.preventDefault();
+        finish(aliveEnemies[cursor].idx);
+      } else if (e.code === 'Escape') {
+        e.preventDefault();
+        cancel();
+      }
+    };
+    document.addEventListener('keydown', keyHandler);
+
+    // Click on an enemy info block to pick it
+    const clickHandlers = [];
+    aliveEnemies.forEach((e) => {
+      const entry = this.enemyEntries[e.idx];
+      if (!entry) return;
+      const handler = () => finish(e.idx);
+      entry.infoEl.addEventListener('click', handler);
+      entry.infoEl.classList.add('clickable');
+      clickHandlers.push({ entry, handler });
+    });
+
+    this._targetPickerCleanup = () => {
+      document.removeEventListener('keydown', keyHandler);
+      for (const { entry, handler } of clickHandlers) {
+        entry.infoEl.removeEventListener('click', handler);
+        entry.infoEl.classList.remove('clickable');
+      }
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+      this.clearEnemyHighlight();
+    };
   }
 
-  _updateStats(stats) {
-    if (!this.statsEl) return;
-    const momentum = Math.round(stats.momentum || 0);
-    const momentumReady = momentum >= 100;
-    this.statsEl.innerHTML = `
-      <div class="combat-stats-name">${stats.name || 'Andrew'}</div>
-      <div class="combat-stat-row">
-        <span class="combat-stat-label">HP</span>
-        <div class="combat-stat-bar">
-          <div class="combat-stat-bar-fill hp" style="width: ${(stats.hp / stats.maxHP) * 100}%"></div>
-        </div>
-        <span class="combat-stat-value">${stats.hp}/${stats.maxHP}</span>
-      </div>
-      <div class="combat-stat-row">
-        <span class="combat-stat-label">Coffee</span>
-        <div class="combat-stat-bar">
-          <div class="combat-stat-bar-fill mp" style="width: ${(stats.mp / stats.maxMP) * 100}%"></div>
-        </div>
-        <span class="combat-stat-value">${stats.mp}/${stats.maxMP}</span>
-      </div>
-      <div class="combat-stat-row">
-        <span class="combat-stat-label" style="color: ${momentumReady ? '#ffd700' : '#aaa'}">Confidence</span>
-        <div class="combat-stat-bar">
-          <div class="combat-stat-bar-fill momentum" style="width: ${momentum}%"></div>
-        </div>
-        <span class="combat-stat-value" style="color: ${momentumReady ? '#ffd700' : '#fff'}">${momentum}%${momentumReady ? ' ⚡' : ''}</span>
-      </div>
-    `;
+  _closeTargetPicker() {
+    if (this._targetPickerCleanup) {
+      this._targetPickerCleanup();
+      this._targetPickerCleanup = null;
+    }
   }
 
   showTaunt(text, side = 'player') {
@@ -333,21 +529,24 @@ export class CombatHUD {
   }
 
   disableInput() {
+    if (!this.menuEl) return;
     this.menuEl.style.pointerEvents = 'none';
     this.menuEl.style.opacity = '0.5';
   }
 
   enableInput() {
+    if (!this.menuEl) return;
     this.menuEl.style.pointerEvents = 'auto';
     this.menuEl.style.opacity = '1';
   }
 
   remove() {
+    this._closeTargetPicker();
     if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);
-    if (this.enemyInfo && this.enemyInfo.parentNode) this.enemyInfo.parentNode.removeChild(this.enemyInfo);
+    if (this.enemyRowEl && this.enemyRowEl.parentNode) this.enemyRowEl.parentNode.removeChild(this.enemyRowEl);
     this.root = null;
-    this.enemyInfo = null;
-    this.telegraphEl = null;
+    this.enemyRowEl = null;
+    this.enemyEntries = [];
   }
 }
