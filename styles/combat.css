@@ -640,6 +640,111 @@
   box-shadow: 0 0 10px rgba(255, 68, 102, 0.4);
 }
 
+/* ── Reasonable Doubt: voices ──────────────────────────────────────────── */
+
+/* Thoughts button on the main combat menu */
+.combat-action-btn.voice-btn {
+  background: rgba(180, 180, 220, 0.10);
+  border: 2px dashed rgba(180, 180, 220, 0.55);
+  color: #ccccdd;
+  grid-column: 1 / -1;
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+.combat-action-btn.voice-btn:hover,
+.combat-action-btn.voice-btn.selected {
+  background: rgba(180, 180, 220, 0.20);
+  border-color: #ddddee;
+  box-shadow: 0 0 12px rgba(200, 200, 230, 0.4);
+}
+
+/* Voices submenu — distinct card layout */
+.combat-voices-submenu .voice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(180, 180, 220, 0.25);
+  background: rgba(20, 20, 30, 0.8);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.combat-voices-submenu .voice-card:hover,
+.combat-voices-submenu .voice-card.selected {
+  background: rgba(60, 60, 80, 0.65);
+  border-color: rgba(220, 220, 240, 0.6);
+}
+
+.voice-speaker {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.voice-quote {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  font-style: italic;
+  color: #d4d4dc;
+  line-height: 1.2;
+}
+
+.voice-action-name {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #ffd700;
+  margin-top: 4px;
+}
+
+.voice-desc {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #aaa;
+  font-style: italic;
+}
+
+/* Voice bubble (appears top-center when a voice's quote fires in combat) */
+.combat-voice-bubble {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 8, 18, 0.92);
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 10px 18px;
+  max-width: 440px;
+  text-align: center;
+  z-index: 32;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  animation: voiceBubbleAppear 0.35s ease-out;
+}
+
+.combat-voice-name {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.combat-voice-quote {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  font-style: italic;
+  line-height: 1.25;
+  color: inherit;
+}
+
+@keyframes voiceBubbleAppear {
+  from { transform: translate(-50%, -10px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
+}
+
 /* Combat taunts */
 .combat-taunt {
   position: absolute;

@@ -30,6 +30,8 @@ export class Player {
     // Party / allies
     this.party = []; // ordered array of recruited allyIds (e.g., ['janet', 'alex_it'])
     this.allyState = {}; // { allyId: { hp, mp, unlockedAbilities: [ids] } }
+    // Reasonable Doubt — voice usage profile across the game (see src/data/voices.js)
+    this.voiceCounts = { apprentice: 0, litigator: 0, skeptic: 0, witness: 0 };
   }
 
   setPosition(x, z) {
@@ -364,6 +366,7 @@ export class Player {
       equipped: { ...this.equipped },
       party: [...this.party],
       allyState: JSON.parse(JSON.stringify(this.allyState)),
+      voiceCounts: { ...this.voiceCounts },
     };
   }
 
@@ -410,6 +413,13 @@ export class Player {
           hp: stats.maxHP, mp: stats.maxMP,
           unlockedAbilities: [...(cfg.starterAbilities || cfg.abilities)],
         };
+      }
+    }
+    // Voice profile
+    this.voiceCounts = { apprentice: 0, litigator: 0, skeptic: 0, witness: 0 };
+    if (data.voiceCounts && typeof data.voiceCounts === 'object') {
+      for (const k of Object.keys(this.voiceCounts)) {
+        if (typeof data.voiceCounts[k] === 'number') this.voiceCounts[k] = data.voiceCounts[k];
       }
     }
     this.setPosition(this.position.x, this.position.z);

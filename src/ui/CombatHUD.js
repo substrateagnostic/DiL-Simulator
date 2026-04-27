@@ -191,7 +191,7 @@ export class CombatHUD {
   }
 
   // ── Main / sub menus ─────────────────────────────────────────────────
-  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false, pressAdvantageCost = 25) {
+  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false, pressAdvantageCost = 25, voicesAvailable = []) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
     this.menuItems = [
@@ -206,6 +206,14 @@ export class CombatHUD {
     }
     if (this.canFlee) this.menuItems.push({ label: 'Flee', action: 'flee' });
     if (lowHP) this.menuItems.push({ label: '🎲 Desperate Gamble', action: 'desperate_gamble', desperateBtn: true });
+
+    // Reasonable Doubt — Thoughts button only appears when voices are available
+    if (Array.isArray(voicesAvailable) && voicesAvailable.length > 0) {
+      const label = voicesAvailable.length === 1
+        ? `💭 ${voicesAvailable[0].name} speaks...`
+        : `💭 Thoughts (${voicesAvailable.length})`;
+      this.menuItems.push({ label, action: 'thoughts', voiceBtn: true });
+    }
 
     if (momentum >= pressAdvantageCost && momentum < 50) {
       this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
@@ -247,6 +255,67 @@ export class CombatHUD {
     this._renderSubmenu();
   }
 
+  // Voice submenu — list available voices and their action.
+  // voices: [{ id, name, color, actionId, action: { name, description, quote } }]
+  showVoices(voices) {
+    this.currentMenu = 'voices';
+    this.selectedIndex = 0;
+    this.menuItems = voices.map(v => ({
+      label: v.action.name,
+      id: v.actionId,
+      voiceId: v.id,
+      voiceName: v.name,
+      voiceColor: v.color,
+      description: v.action.description,
+      quote: v.action.quote,
+    }));
+    this.menuItems.push({ label: 'Back', action: 'back' });
+    this._renderVoicesSubmenu();
+  }
+
+  _renderVoicesSubmenu() {
+    this.menuEl.className = 'combat-submenu combat-voices-submenu';
+    this.menuEl.innerHTML = '';
+    if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }
+
+    this.menuItems.forEach((item, i) => {
+      if (item.action === 'back') {
+        const back = document.createElement('div');
+        back.className = `combat-submenu-item${i === this.selectedIndex ? ' selected' : ''}`;
+        back.textContent = item.label;
+        back.addEventListener('click', () => { this.selectedIndex = i; this._selectCurrent(); });
+        this.menuEl.appendChild(back);
+        return;
+      }
+      const card = document.createElement('div');
+      card.className = `voice-card${i === this.selectedIndex ? ' selected' : ''}`;
+      card.style.borderLeft = `3px solid ${item.voiceColor}`;
+      const speakerLine = document.createElement('div');
+      speakerLine.className = 'voice-speaker';
+      speakerLine.style.color = item.voiceColor;
+      speakerLine.textContent = `[${item.voiceName}]`;
+      card.appendChild(speakerLine);
+
+      const quote = document.createElement('div');
+      quote.className = 'voice-quote';
+      quote.textContent = `"${item.quote}"`;
+      card.appendChild(quote);
+
+      const actionLine = document.createElement('div');
+      actionLine.className = 'voice-action-name';
+      actionLine.textContent = `→ ${item.label}`;
+      card.appendChild(actionLine);
+
+      const desc = document.createElement('div');
+      desc.className = 'voice-desc';
+      desc.textContent = item.description;
+      card.appendChild(desc);
+
+      card.addEventListener('click', () => { this.selectedIndex = i; this._selectCurrent(); });
+      this.menuEl.appendChild(card);
+    });
+  }
+
   _renderMenu() {
     this.menuEl.className = 'combat-actions';
     this.menuEl.innerHTML = '';
@@ -258,6 +327,7 @@ export class CombatHUD {
       if (item.retaliateBtn) className += ' retaliate-btn';
       if (item.momentumSpend) className += ' momentum-spend';
       if (item.desperateBtn) className += ' desperate-btn';
+      if (item.voiceBtn) className += ' voice-btn';
       btn.className = className;
       btn.textContent = item.label;
       if (item.disabled) {
@@ -365,6 +435,12 @@ export class CombatHUD {
         this.showMainMenu();
       } else if (this.onItemSelect) {
         this.onItemSelect(item.id);
+      }
+    } else if (this.currentMenu === 'voices') {
+      if (item.action === 'back') {
+        this.showMainMenu();
+      } else if (this.onVoiceSelect) {
+        this.onVoiceSelect(item.id, item);
       }
     }
   }

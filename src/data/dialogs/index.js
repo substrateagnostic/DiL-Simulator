@@ -2064,12 +2064,19 @@ export const DIALOGS = {
   // ── Team chat hub: out-of-combat conversations ─────────────────────
   // Cycles through ally-specific lines based on which allies are recruited.
   // Acts as a Mass Effect-style "talk to your squad between missions" beat.
+  // Voice-profile choices (Reasonable Doubt) appear when the cumulative voice
+  // counts cross thresholds set in CombatState.
   team_chat_hub: [
     /* 0  */ { type: 'choice', prompt: 'Who do you want to talk to?', choices: [
       { text: 'Janet',         next: 1, requires: 'janet_recruited' },
       { text: 'Alex from IT',  next: 5, requires: 'alex_it_recruited' },
       { text: 'Isaiah',        next: 9, requires: 'isaiah_recruited' },
       { text: 'Diane',         next: 13, requires: 'diane_recruited' },
+      // Voice-profile branches — only appear when the corresponding voice
+      // has been used heavily across the campaign
+      { text: '[Janet looks at you differently lately]',     next: 20, requires: 'voice_litigator_high', requiresNot: 'janet_warning_seen' },
+      { text: '[Open the charter and read]',                 next: 30, requires: 'voice_witness_high',   requiresNot: 'witness_charter_read' },
+      { text: '[Just sit. The day is heavy]',                next: 40, requires: 'voice_skeptic_high',   requiresNot: 'skeptic_chair_seen' },
       { text: 'Just check in with the team. Nothing specific.', next: 17 },
       { text: 'Get back to work.', next: 19 },
     ] },
@@ -2092,6 +2099,43 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "The team is getting ready for what's coming. Janet's making coffee. Alex is hunched over a laptop. Isaiah is filing something. Diane is already on a call." },
     /* 18 */ { type: 'text', speaker: 'Narrator', text: "It feels, briefly, like a real team.", next: 0 },
     /* 19 */ { type: 'end' },
+
+    // ── Voice-profile reactivity branches ────────────────────────────
+    // 20-29: The Litigator — Janet warning. Andrew has been getting cold.
+    /* 20 */ { type: 'text', speaker: 'Janet', text: "Andrew. Sit down for a second." },
+    /* 21 */ { type: 'text', speaker: 'Janet', text: "I want to say something out loud and I want you to hear it without the binder voice on." },
+    /* 22 */ { type: 'text', speaker: 'Janet', text: "You've been... clinical. In the last few. The way you talked down the analyst — that wasn't argument, that was a closing." },
+    /* 23 */ { type: 'text', speaker: 'Janet', text: "I know what that sounds like. I did three years of corporate before I came back to trust. There's a version of you who can win this fight by becoming exactly the thing we're fighting." },
+    /* 24 */ { type: 'text', speaker: 'Janet', text: "Don't do that. We can win and stay people. Both. I refuse to let you forget that." },
+    /* 25 */ { type: 'choice', prompt: '...', choices: [
+      { text: '"You\'re right. Thank you."', next: 26 },
+      { text: '"It works. That\'s what matters."', next: 27 },
+      { text: '"I hear you."', next: 28 },
+    ] },
+    /* 26 */ { type: 'action', action: 'set_flag', flag: 'andrew_steadied', value: true, next: 29 },
+    /* 27 */ { type: 'action', action: 'set_flag', flag: 'andrew_hardened', value: true, next: 29 },
+    /* 28 */ { type: 'action', action: 'set_flag', flag: 'andrew_steadied', value: true, next: 29 },
+    /* 29 */ { type: 'action', action: 'set_flag', flag: 'janet_warning_seen', value: true, next: 0 },
+
+    // 30-39: The Witness — Andrew opens the charter and reads
+    /* 30 */ { type: 'text', speaker: 'Narrator', text: "You take the 1947 charter out of your bag. The leather binding is soft from forty years of careful handling. The pages smell like the bank smelled when you started." },
+    /* 31 */ { type: 'text', speaker: 'Narrator', text: "Section 1, Paragraph A: 'A trustee shall, at all times, place the interests of the beneficiary above all other considerations, including the interests of the trustee, the institution, and any successor entity.'" },
+    /* 32 */ { type: 'text', speaker: 'Narrator', text: "Section 1, Paragraph B: 'No reorganization, restructuring, or rebranding of the institution shall release the trustee from this duty. The duty survives the institution.'" },
+    /* 33 */ { type: 'text', speaker: 'Narrator', text: "There's a handwritten note in the margin, in pencil, faded. You don't recognize the handwriting." },
+    /* 34 */ { type: 'text', speaker: 'Narrator', text: "It says: 'For the people whose names you will never know, who trusted you anyway. — D. Henderson, founding trustee, 1947.'" },
+    /* 35 */ { type: 'text', speaker: 'Andrew', text: "...Mrs. Henderson's grandfather wrote this." },
+    /* 36 */ { type: 'text', speaker: 'Narrator', text: "You close the charter. You sit with it on your knees for a moment. The day is heavy, and that's okay. The day is supposed to be heavy." },
+    /* 37 */ { type: 'action', action: 'set_flag', flag: 'witness_charter_read', value: true, next: 38 },
+    /* 38 */ { type: 'action', action: 'give_xp', xp: 100, next: 0 },
+
+    // 40-49: The Skeptic — Andrew sits and lets the day press
+    /* 40 */ { type: 'text', speaker: 'Narrator', text: "You sit at your desk. You don't open anything. You don't pick anything up. You just sit." },
+    /* 41 */ { type: 'text', speaker: 'Narrator', text: "Across the room, Janet is laughing at something Alex said. Isaiah is on the phone with someone whose grandmother is sick. The fluorescents hum at the same exact frequency they hummed when you started here." },
+    /* 42 */ { type: 'text', speaker: 'Narrator', text: "You think: I could quit. I could walk out the front of the building and not come back. There's a version of every life where you just don't show up the next day." },
+    /* 43 */ { type: 'text', speaker: 'Narrator', text: "And then you think: yeah. But not this one." },
+    /* 44 */ { type: 'text', speaker: 'Narrator', text: "You stand up. You're still tired. But you're standing." },
+    /* 45 */ { type: 'action', action: 'set_flag', flag: 'skeptic_chair_seen', value: true, next: 46 },
+    /* 46 */ { type: 'action', action: 'modify_stat', stat: 'maxMP', amount: 5, next: 0 },
   ],
 
   restructuring_combat: [

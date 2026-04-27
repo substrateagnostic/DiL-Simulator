@@ -6,6 +6,7 @@ import { CombatEngine } from '../combat/CombatEngine.js';
 import { CombatHUD } from '../ui/CombatHUD.js';
 import { FloatingText } from '../ui/FloatingText.js';
 import { ITEMS, ENEMY_ABILITIES, ENEMY_STATS, ANDREW_TAUNTS, XP_TABLE, PLAYER_ABILITIES } from '../data/stats.js';
+import { VOICE_ACTIONS, VOICES } from '../data/voices.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
@@ -120,6 +121,7 @@ export class CombatState {
     this.hud.onActionSelect = (action) => this._handleAction(action);
     this.hud.onAbilitySelect = (id, item) => this._handleAbility(id, item);
     this.hud.onItemSelect = (id) => this._handleItem(id);
+    this.hud.onVoiceSelect = (actionId, item) => this._handleVoice(actionId, item);
 
     this.phase = 'intro';
     this.animTimer = 1.0;
@@ -278,6 +280,8 @@ export class CombatState {
       if (result.damage) {
         this.scene.enemyAttackAnim(enemyIndex);
         const targetAllyIndex = result.targetAllyIndex ?? 0;
+        // Voice triggers: damage to Andrew arms the Skeptic
+        if (targetAllyIndex === 0 && this.engine.noteDamageTakenByPlayer) this.engine.noteDamageTakenByPlayer();
         setTimeout(() => {
           this.scene.shake(result.critical ? 0.8 : 0.4);
           if (result.braced) {
@@ -308,6 +312,8 @@ export class CombatState {
         AudioManager.playSfx('heal');
         this._spawnDamageNumberAtEnemy(`+${result.healAmount}`, 'heal', enemyIndex);
         this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44ff44, 2, 1.0);
+        // Voice triggers: enemy healing arms the Litigator
+        if (this.engine.noteEnemyHeal) this.engine.noteEnemyHeal();
       }
 
       this._refreshHUD();
@@ -322,6 +328,8 @@ export class CombatState {
     this.phase = 'ally_turn';
     this.inputEnabled = true;
     this.hud.enableInput();
+    // Voice triggers reset their "took damage recently" signal at the top of each player turn
+    if (this.engine.clearRecentDamageNote) this.engine.clearRecentDamageNote();
 
     // Telegraph all enemies for the upcoming enemy phase
     this.engine.telegraph();
@@ -333,13 +341,20 @@ export class CombatState {
     });
     this.hud.updateTelegraphAll(hints);
 
+    const voicesAvailable = this.engine.getAvailableVoices ? this.engine.getAvailableVoices() : [];
+    // Resolve action descriptors for the voice submenu
+    this._currentVoices = voicesAvailable.map(v => {
+      const action = VOICE_ACTIONS[v.actionId] || {};
+      return { ...v, action };
+    });
     this.hud.showMainMenu(
       this.engine.player.silencedThisTurn,
       this.engine.player.momentum,
       this.engine.player.bracing,
       this.engine.player.retaliateReady,
       this.engine.player.hp / this.engine.player.maxHP < 0.25,
-      this.engine.getPressAdvantageCost()
+      this.engine.getPressAdvantageCost(),
+      this._currentVoices,
     );
     this.hud.updatePlayerStats({
       ...this.player.stats,
@@ -485,7 +500,137 @@ export class CombatState {
         this.inputEnabled = true;
         this._showDesperateGamble();
         break;
+      case 'thoughts':
+        this.inputEnabled = true;
+        this.hud.showVoices(this._currentVoices || []);
+        break;
     }
+  }
+
+  // ── Voice ("Reasonable Doubt") handler ────────────────────────────────
+  _handleVoice(actionId, item) {
+    if (!this.inputEnabled) return;
+    const action = VOICE_ACTIONS[actionId];
+    if (!action) return;
+    AudioManager.playSfx('confirm');
+
+    // For target-needing voice actions, show target picker if 2+ alive enemies
+    if (action.needsTarget && this.engine.aliveEnemies().length > 1) {
+      this.inputEnabled = false;
+      const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+      this.phase = 'targeting';
+      this.hud.showTargetPicker(enemiesView, (idx) => {
+        this.scene.setTargetMarker(idx, true);
+        this._executeVoiceAction(actionId, idx);
+        setTimeout(() => this.scene.hideTargetMarker(), 1200);
+      }, () => {
+        this.phase = 'ally_turn';
+        this.inputEnabled = true;
+        this.hud.showVoices(this._currentVoices || []);
+      });
+    } else {
+      this.inputEnabled = false;
+      this._executeVoiceAction(actionId, undefined);
+    }
+  }
+
+  _executeVoiceAction(actionId, targetIndex) {
+    const result = this.engine.playerVoiceAction(actionId, targetIndex);
+    if (!result) {
+      this.inputEnabled = true;
+      return;
+    }
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+
+    // Track on the player profile (persists across fights). Update threshold flags so
+    // dialogs can branch on them via the existing `requires` mechanism.
+    if (this.player.voiceCounts && result.voiceId) {
+      this.player.voiceCounts[result.voiceId] = (this.player.voiceCounts[result.voiceId] || 0) + 1;
+      const counts = this.player.voiceCounts;
+      if (counts.litigator  >= 5)  this.player.setFlag('voice_litigator_high');
+      if (counts.litigator  >= 10) this.player.setFlag('voice_litigator_max');
+      if (counts.witness    >= 3)  this.player.setFlag('voice_witness_high');
+      if (counts.witness    >= 6)  this.player.setFlag('voice_witness_max');
+      if (counts.skeptic    >= 5)  this.player.setFlag('voice_skeptic_high');
+      if (counts.apprentice >= 5)  this.player.setFlag('voice_apprentice_high');
+    }
+
+    // Voice bubble — italic speech in the voice's color, top-center
+    this._showVoiceBubble(result.voiceName, result.quote, result.voiceColor);
+
+    let delay = 1400;
+    setTimeout(() => {
+      // Animate the action effect
+      if (result.type === 'voice_attack') {
+        this.scene.playerAttackAnim(this._activeAllyIndex);
+        AudioManager.playSfx('critical');
+        const ti = result.targetIndex ?? 0;
+        this.scene.flash(this._hexFromColor(result.voiceColor), 0.18);
+        this.particles.burst({ x: 0, y: 1.6, z: 1.5 }, 24, this._hexFromColor(result.voiceColor), 3, 0.9);
+        setTimeout(() => {
+          this.scene.enemyHurtAnim(ti);
+          this.scene.shake(1.0);
+          this._spawnDamageNumberAtEnemy(result.damage, 'critical', ti);
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 30, this._hexFromColor(result.voiceColor), 4, 1.0);
+          if (result.skepticLocked) {
+            setTimeout(() => this.hud.showMessage('The Skeptic falls silent.'), 500);
+          }
+        }, 220);
+      } else if (result.type === 'voice_heal') {
+        AudioManager.playSfx('heal');
+        this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', 0);
+        this.scene.flash(this._hexFromColor(result.voiceColor), 0.18);
+        this.particles.burst({ x: 0, y: 1.0, z: 4 }, 24, this._hexFromColor(result.voiceColor), 3, 1.0);
+        this.particles.rise({ x: 0, y: 0.4, z: 4 }, 16, 0xffffff, 1.6);
+        if (result.cleared) setTimeout(() => this.hud.showMessage(`Cleared: ${result.cleared}`), 500);
+      } else if (result.type === 'voice_skip') {
+        AudioManager.playSfx('cancel');
+        this.particles.rise({ x: 0, y: 0.5, z: 4 }, 12, 0x888888, 1.4);
+        if (result.attemptFlee && this.canFlee) {
+          // Use Skeptic to walk: 90% flee chance
+          if (Math.random() < 0.9) {
+            this.engine.isOver = true;
+            this.engine.result = 'flee';
+            this.hud.showMessage('You walk out of the meeting.');
+            setTimeout(() => this._endCombat('flee'), 1500);
+            return;
+          }
+          this.hud.showMessage("You can't quite make yourself leave.");
+        }
+      }
+    }, 800);
+
+    this._refreshHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextTurn();
+    }, delay);
+  }
+
+  _hexFromColor(cssColor) {
+    if (!cssColor) return 0xffffff;
+    if (typeof cssColor === 'number') return cssColor;
+    if (cssColor.startsWith('#')) {
+      const hex = cssColor.slice(1);
+      const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+      return parseInt(full, 16);
+    }
+    return 0xffffff;
+  }
+
+  _showVoiceBubble(voiceName, quote, color) {
+    const el = document.createElement('div');
+    el.className = 'combat-voice-bubble';
+    el.style.borderColor = color || '#fff';
+    el.style.color = color || '#fff';
+    el.innerHTML = `<div class="combat-voice-name">${voiceName}</div><div class="combat-voice-quote">"${quote}"</div>`;
+    document.getElementById('ui-overlay').appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+    }, 2200);
   }
 
   // For single-target actions: pick target then execute
@@ -616,7 +761,7 @@ export class CombatState {
     const result = this.engine.playerAttack(targetIndex);
     const delay = this._playPlayerActionResult(result);
 
-    if (result && result.critical) this._fireTaunt('crit');
+    if (result && result.critical) { this._fireTaunt('crit'); this.engine.noteCrit && this.engine.noteCrit(); }
     if (result && result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
     if (result && result.combo) AchievementManager.check(this.player, { event: 'combo_hit' });
     this._checkPhaseChange();

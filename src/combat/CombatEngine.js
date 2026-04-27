@@ -1,5 +1,6 @@
 import { PLAYER_ABILITIES, ENEMY_ABILITIES, ENEMY_STATS, ITEMS, pickMessage } from '../data/stats.js';
 import { ALLY_STATS, ALLY_ABILITIES, ALLY_AI_PATTERNS } from '../data/allies.js';
+import { VOICES, VOICE_ACTIONS } from '../data/voices.js';
 import { COMBAT } from '../utils/constants.js';
 import { randomRange } from '../utils/math.js';
 import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
@@ -39,6 +40,15 @@ export class CombatEngine {
     this.log = [];
     this.counterActive = false;
     this.posterJustTriggered = false;
+    // Voice ("Reasonable Doubt") state — see src/data/voices.js
+    this.voiceState = {
+      fired: { apprentice: false, litigator: false, skeptic: false, witness: false },
+      sawCrit: false,
+      sawEnemyHeal: false,
+      tookDamageRecently: false,
+      skepticLocked: false,
+      lastVoiceUsed: null,
+    };
   }
 
   _initPlayer(playerStats) {
@@ -1100,4 +1110,52 @@ export class CombatEngine {
   getXPReward() {
     return this.enemies.reduce((sum, e) => sum + (e.xpReward || 0), 0);
   }
+
+  // ── Voices ("Reasonable Doubt") ───────────────────────────────────────
+  // Returns the list of voices that are currently available to fire.
+  // Called at the start of each player (Andrew) turn by CombatState.
+  getAvailableVoices() {
+    const out = [];
+    for (const [id, voice] of Object.entries(VOICES)) {
+      if (this.voiceState.fired[id]) continue;
+      if (id === 'skeptic' && this.voiceState.skepticLocked) continue;
+      try {
+        if (voice.trigger(this)) out.push({ ...voice });
+      } catch { /* trigger fn safety */ }
+    }
+    return out;
+  }
+
+  // Execute a voice action. Returns the result object from the action's effect().
+  // Marks the voice as fired this combat. Voice actions are FREE — no MP cost,
+  // do not advance the round queue (CombatState calls _processNextTurn after).
+  playerVoiceAction(actionId, targetIndex) {
+    const action = VOICE_ACTIONS[actionId];
+    if (!action) return null;
+    const voice = VOICES[action.voice];
+    if (!voice) return null;
+    if (this.voiceState.fired[action.voice]) return null;
+    if (action.voice === 'skeptic' && this.voiceState.skepticLocked) return null;
+
+    const result = action.effect(this, targetIndex);
+    if (!result) return null;
+    this.voiceState.fired[action.voice] = true;
+    this.voiceState.lastVoiceUsed = action.voice;
+    return {
+      ...result,
+      voiceId: action.voice,
+      voiceName: voice.name,
+      voiceColor: voice.color,
+      actionName: action.name,
+      actionDescription: action.description,
+      quote: action.quote,
+      actionId,
+    };
+  }
+
+  // Track signals voices listen for. Called by CombatState at appropriate points.
+  noteCrit() { this.voiceState.sawCrit = true; }
+  noteEnemyHeal() { this.voiceState.sawEnemyHeal = true; }
+  noteDamageTakenByPlayer() { this.voiceState.tookDamageRecently = true; }
+  clearRecentDamageNote() { this.voiceState.tookDamageRecently = false; }
 }
