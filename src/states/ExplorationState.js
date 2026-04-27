@@ -455,11 +455,24 @@ export class ExplorationState {
           }, 800);
         }
 
-        // Gauntlet fight 4: Data Analytics Lead — executive floor, first gatekeeper
-        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_combat) {
+        // Gauntlet fight 4: Data Analytics Duo — Lead + CFO's Assistant on executive floor
+        // (replaces the solo Data Analytics Lead encounter; party from player.party comes along)
+        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_duo_intro) {
           this.player.setFlag('data_lead_fight_started');
           setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['data_analytics_combat'], this.player, this.stateManager, 'data_analytics_combat');
+            const dialogState = new DialogState(DIALOGS['data_analytics_duo_intro'], this.player, this.stateManager, 'data_analytics_duo_intro');
+            this.stateManager.push(dialogState);
+          }, 800);
+        }
+
+        // Alex from IT recruitment: triggers when Andrew enters the server room after the trio fight
+        if (roomId === 'server_room'
+            && this.player.getFlag('restructuring_trio_defeated')
+            && !this.player.getFlag('alex_it_recruit_offered')
+            && DIALOGS.alex_it_recruit) {
+          this.player.setFlag('alex_it_recruit_offered');
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['alex_it_recruit'], this.player, this.stateManager, 'alex_it_recruit');
             this.stateManager.push(dialogState);
           }, 800);
         }
@@ -815,6 +828,7 @@ export class ExplorationState {
     // Reset whichever gauntlet fight-started flag is in progress but not yet won,
     // so the fight retriggers after the player respawns.
     const gauntletFlags = [
+      { started: 'restructuring_trio_started',      defeated: 'restructuring_trio_defeated' },
       { started: 'brand_consultant_fight_started',  defeated: 'brand_consultant_defeated' },
       { started: 'restructuring_fight_started',     defeated: 'restructuring_defeated' },
       { started: 'data_lead_fight_started',         defeated: 'data_lead_defeated' },
@@ -1238,6 +1252,14 @@ export class ExplorationState {
     if (interactable.dialogId === 'andrews_desk' && this.player.getFlag('grandma_defeated') && !this.player.getFlag('branch_chosen')) {
       return 'branch_decision';
     }
+    // Water cooler doubles as the team huddle hub once any ally is recruited.
+    // Reverts to its normal water_cooler dialog before the trio fight, and
+    // any time you have no recruited teammates around.
+    if (interactable.dialogId === 'water_cooler'
+        && this.player.party && this.player.party.length > 0
+        && DIALOGS.team_chat_hub) {
+      return 'team_chat_hub';
+    }
     return interactable.dialogId;
   }
 
@@ -1496,6 +1518,60 @@ export class ExplorationState {
       if (id === 'isaiah' && !this.player.getFlag('social_eng_started') && DIALOGS.social_engineering_1) return 'social_engineering_1';
       if (id === 'diane' && this.player.getFlag('social_eng_started') && !this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_2) return 'social_engineering_2';
       if (id === 'intern' && this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_3) return 'social_engineering_3';
+    }
+
+    // Ally recruitment: triggered after the trio fight when Andrew talks to recruitable team members
+    if (id === 'isaiah'
+        && this.player.getFlag('restructuring_trio_defeated')
+        && !this.player.getFlag('isaiah_recruited')
+        && !this.player.getFlag('isaiah_documents_shared')
+        && DIALOGS.isaiah_recruit) {
+      return 'isaiah_recruit';
+    }
+    if (id === 'diane'
+        && this.player.getFlag('diane_act6_rallied')
+        && !this.player.getFlag('diane_recruited')
+        && DIALOGS.diane_recruit) {
+      return 'diane_recruit';
+    }
+
+    // Alex from IT — Badge Audit personal mission (post-recruit, before Act 7)
+    if (id === 'alex_it'
+        && this.player.getFlag('alex_it_recruited')
+        && !this.player.getFlag('act6_complete')
+        && DIALOGS.alex_badge_audit_offer
+        && (!this.player.getFlag('alex_badge_audit_complete') || !this.player.getFlag(`read_alex_it_act${act}`))) {
+      // While the personal mission is active OR done but the player hasn't seen it yet, prefer it
+      if (this.player.getFlag('alex_has_patch_log') && !this.player.getFlag('alex_badge_audit_complete')) {
+        return 'alex_badge_audit_return';
+      }
+      if (!this.player.getFlag('alex_badge_audit_complete')) {
+        return 'alex_badge_audit_offer';
+      }
+    }
+
+    // Isaiah — The Receipts personal mission (post-recruit, before Act 7)
+    if (id === 'isaiah'
+        && this.player.getFlag('isaiah_recruited')
+        && !this.player.getFlag('act6_complete')
+        && DIALOGS.isaiah_receipts_offer
+        && !this.player.getFlag('isaiah_receipts_complete')) {
+      if (this.player.getFlag('isaiah_has_receipts')) {
+        return 'isaiah_receipts_return';
+      }
+      return 'isaiah_receipts_offer';
+    }
+
+    // Diane — The Original Handbook personal mission (post-recruit, before Act 7)
+    if (id === 'diane'
+        && this.player.getFlag('diane_recruited')
+        && !this.player.getFlag('act6_complete')
+        && DIALOGS.diane_handbook_offer
+        && !this.player.getFlag('diane_handbook_complete')) {
+      if (this.player.getFlag('diane_has_handbook')) {
+        return 'diane_handbook_return';
+      }
+      return 'diane_handbook_offer';
     }
 
     if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
@@ -2123,22 +2199,16 @@ export class ExplorationState {
       this._showDevPanel();
     }
 
-    // Gauntlet fight 1: Brand Consultant — fires once act4_complete is set (set by act5_trigger dialog)
-    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('brand_consultant_fight_started') && DIALOGS.brand_consultant_combat) {
-      this.player.setFlag('brand_consultant_fight_started');
+    // Act 5 — Restructuring Trio: 3v2 multi-combatant fight (Andrew + Janet vs all three analysts).
+    // Fires once act4_complete is set (set by act5_trigger dialog) and runs once.
+    // Defeating the trio sets brand_consultant_defeated / restructuring_defeated / corporate_lawyer_defeated
+    // so downstream gates (executive floor) keep working unchanged.
+    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('restructuring_trio_started') && !this.player.getFlag('restructuring_trio_defeated') && DIALOGS.restructuring_trio_intro) {
+      this.player.setFlag('restructuring_trio_started');
       setTimeout(() => {
-        const dialogState = new DialogState(DIALOGS['brand_consultant_combat'], this.player, this.stateManager, 'brand_consultant_combat');
+        const dialogState = new DialogState(DIALOGS['restructuring_trio_intro'], this.player, this.stateManager, 'restructuring_trio_intro');
         this.stateManager.push(dialogState);
       }, 1200);
-    }
-
-    // Gauntlet fight 2: Restructuring Analyst chains immediately after Brand Consultant is defeated
-    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('brand_consultant_defeated') && !this.player.getFlag('restructuring_fight_started') && DIALOGS.restructuring_combat) {
-      this.player.setFlag('restructuring_fight_started');
-      setTimeout(() => {
-        const dialogState = new DialogState(DIALOGS['restructuring_combat'], this.player, this.stateManager, 'restructuring_combat');
-        this.stateManager.push(dialogState);
-      }, 2000);
     }
 
     // Gauntlet fight 5: Chief of Restructuring chains after Data Analytics Lead is defeated
@@ -2317,7 +2387,8 @@ export class ExplorationState {
           act3_complete: true,
           met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
           has_charter: true, act4_complete: true,
-          act5_triggered: true,
+          act5_triggered: true, janet_recruited: true,
+          restructuring_trio_started: true, restructuring_trio_defeated: true,
           brand_consultant_fight_started: true, brand_consultant_defeated: true,
           restructuring_fight_started: true, restructuring_analyst_defeated: true, restructuring_defeated: true,
           data_lead_fight_started: true, data_lead_defeated: true,
@@ -2342,7 +2413,8 @@ export class ExplorationState {
           act3_complete: true,
           met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
           has_charter: true, act4_complete: true,
-          act5_triggered: true,
+          act5_triggered: true, janet_recruited: true,
+          restructuring_trio_started: true, restructuring_trio_defeated: true,
           brand_consultant_fight_started: true, brand_consultant_defeated: true,
           restructuring_fight_started: true, restructuring_analyst_defeated: true, restructuring_defeated: true,
           data_lead_fight_started: true, data_lead_defeated: true,

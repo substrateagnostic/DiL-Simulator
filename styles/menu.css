@@ -493,6 +493,65 @@
   font-size: 26px;
 }
 
+/* Character tabs (Andrew + each recruited ally) */
+.abilities-character-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.abilities-character-tab {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: #888;
+  border: 1px solid transparent;
+  border-radius: 4px 4px 0 0;
+  transition: color 0.1s, border-color 0.1s, background 0.1s;
+}
+
+.abilities-character-tab:hover {
+  color: #ccc;
+  background: rgba(83, 168, 182, 0.08);
+}
+
+.abilities-character-tab.active {
+  color: #ffcc33;
+  border-color: #53a8b6 #53a8b6 transparent;
+  background: rgba(83, 168, 182, 0.18);
+}
+
+/* Ally header inside abilities panel */
+.abilities-ally-header {
+  background: rgba(83, 168, 182, 0.06);
+  border: 1px solid rgba(83, 168, 182, 0.2);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+
+.abilities-ally-name {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  color: #ffcc33;
+}
+
+.abilities-ally-role {
+  color: #888;
+  font-size: 16px;
+}
+
+.abilities-ally-stats {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #aaa;
+  margin-top: 4px;
+}
+
 .abilities-grid {
   display: flex;
   flex-direction: column;

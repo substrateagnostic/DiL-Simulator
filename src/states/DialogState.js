@@ -141,17 +141,32 @@ export class DialogState {
    * Display a choice node -- text first, then choices appear after typewriter.
    */
   _showChoiceNode(node) {
-    // Map choice objects to the format DialogBox expects
-    const boxChoices = node.choices.map((c, i) => ({
-      text: c.text,
-      id: i,
+    // Filter choices by `requires` (flag must be truthy) and `requiresNot` (flag must be falsy).
+    // This lets a single choice node branch dynamically without exploding into multiple nodes.
+    const filteredChoices = node.choices
+      .map((c, originalIndex) => ({ choice: c, originalIndex }))
+      .filter(({ choice }) => {
+        if (choice.requires && !this.player.getFlag(choice.requires)) return false;
+        if (choice.requiresNot && this.player.getFlag(choice.requiresNot)) return false;
+        return true;
+      });
+
+    // Map filtered choices to DialogBox format
+    const boxChoices = filteredChoices.map(({ choice }, displayIdx) => ({
+      text: choice.text,
+      id: displayIdx,
     }));
 
     this.dialogBox.show(node.speaker || 'Narrator', node.prompt || node.text || '', boxChoices);
 
     // Set up choice callback
     this.dialogBox.onChoice = (choiceIndex) => {
-      const chosen = node.choices[choiceIndex];
+      const chosen = filteredChoices[choiceIndex]?.choice;
+      if (!chosen) {
+        this.waitingForInput = false;
+        this._processNode();
+        return;
+      }
 
       // Set flag if the choice specifies one
       if (chosen.flag) {
@@ -233,6 +248,20 @@ export class DialogState {
         if (this.player.stats[stat] !== undefined) {
           this.player.stats[stat] = Math.max(1, this.player.stats[stat] + amount);
         }
+        break;
+      }
+
+      case 'recruit_ally': {
+        if (node.ally) this.player.addAlly(node.ally);
+        AudioManager.playSfx('confirm');
+        break;
+      }
+
+      case 'unlock_ally_ability': {
+        if (node.ally && node.ability) {
+          this.player.unlockAllyAbility(node.ally, node.ability);
+        }
+        AudioManager.playSfx('confirm');
         break;
       }
 

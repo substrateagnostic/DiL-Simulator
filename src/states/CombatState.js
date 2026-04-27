@@ -5,7 +5,8 @@ import { CombatScene } from '../combat/CombatScene.js';
 import { CombatEngine } from '../combat/CombatEngine.js';
 import { CombatHUD } from '../ui/CombatHUD.js';
 import { FloatingText } from '../ui/FloatingText.js';
-import { ITEMS, ENEMY_ABILITIES, ENEMY_STATS, ANDREW_TAUNTS, XP_TABLE } from '../data/stats.js';
+import { ITEMS, ENEMY_ABILITIES, ENEMY_STATS, ANDREW_TAUNTS, XP_TABLE, PLAYER_ABILITIES } from '../data/stats.js';
+import { VOICE_ACTIONS, VOICES } from '../data/voices.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
@@ -19,25 +20,84 @@ export class CombatState {
     this.onEnd = onEnd;
     this.enemyOverrides = enemyOverrides;
     this.encounterConfig = ENCOUNTERS[enemyId] || {};
-    // Resolve the actual enemy stats/model ID — encounters can use a different name than their enemy
-    this.actualEnemyId = this.encounterConfig.enemyId || enemyId;
+
+    // Resolve enemy list — multi-enemy via enemyIds, fallback to single enemyId mapping
+    this.enemyIdsList = (this.encounterConfig.enemyIds && this.encounterConfig.enemyIds.length > 0)
+      ? [...this.encounterConfig.enemyIds]
+      : [this.encounterConfig.enemyId || enemyId];
+    // Resolve party list:
+    //   1. Encounter `partyIds` overrides (forced narrative party, e.g. trio fight forces Janet)
+    //   2. `player.party` — recruited, persistent allies
+    //   3. Empty (Andrew alone)
+    // Encounter also supports `noParty: true` to force a solo fight regardless of recruits.
+    if (this.encounterConfig.noParty) {
+      this.partyIdsList = [];
+    } else if (this.encounterConfig.partyIds && this.encounterConfig.partyIds.length > 0) {
+      this.partyIdsList = [...this.encounterConfig.partyIds];
+    } else if (this.player?.party && this.player.party.length > 0) {
+      // Cap to a reasonable number to keep the scene readable
+      this.partyIdsList = this.player.party.slice(0, 2);
+    } else {
+      this.partyIdsList = [];
+    }
+    this.partyCharIds = ['andrew', ...this.partyIdsList]; // for the scene (visual)
+    // The "primary" enemy — used for backdrop colors / ENEMY_STATS lookup for legacy code
+    this.actualEnemyId = this.enemyIdsList[0];
     this.canFlee = this.encounterConfig.canFlee !== false;
+
     this.scene = new CombatScene();
     this.engine = null;
     this.hud = new CombatHUD();
     this.floatingText = new FloatingText();
     this.particles = new ParticleSystem(this.scene.scene);
-    this.phase = 'intro';
+
+    this.phase = 'intro';                 // intro, ally_turn, targeting, animating, enemy_phase, result
     this.animTimer = 0;
-    this.pendingActions = [];
     this.inputEnabled = false;
     this._lastPhaseIndex = -1;
+    this._activeAllyIndex = 0;            // Index into engine.allies that's currently acting
+    this._allyTurnQueue = [];             // SPD-sorted ally indices for this round
+    this._enemyTurnQueue = [];            // SPD-sorted enemy indices for the enemy phase
+    this._pendingAbilityForTarget = null; // Stored ability waiting on target pick
+    this._pendingActionForTarget = null;  // 'attack' | 'press_advantage' | 'power_move' | 'retaliate' | etc.
+    this._targetIndex = 0;
   }
 
   enter() {
-    this.scene.setEnemy(this.actualEnemyId, this.player);
-    this.engine = new CombatEngine(this.player.getCombatStats(), this.actualEnemyId, this.enemyOverrides);
+    // Build scene with all enemies + the party
+    this.scene.setCombatants(this.enemyIdsList, this.partyCharIds, this.player);
 
+    // Build engine. Per-ally overrides bring level-scaled stats + unlocked abilities + persisted HP/MP.
+    const partyOverrides = {};
+    for (const allyId of this.partyIdsList) {
+      const eff = this.player.getAllyEffectiveStats(allyId);
+      const persisted = this.player.allyState[allyId] || {};
+      const unlocked = this.player.getAllyUnlockedAbilities(allyId);
+      if (eff) {
+        partyOverrides[allyId] = {
+          maxHP: eff.maxHP, maxMP: eff.maxMP,
+          atk: eff.atk, def: eff.def, spd: eff.spd,
+          hp: persisted.hp ?? eff.maxHP,
+          mp: persisted.mp ?? eff.maxMP,
+          unlockedAbilities: unlocked.length > 0 ? unlocked : (eff.starterAbilities || eff.abilities),
+        };
+      }
+    }
+    this.engine = new CombatEngine(
+      this.player.getCombatStats(),
+      this.actualEnemyId,
+      this.enemyOverrides,
+      { enemyIds: this.enemyIdsList, partyIds: this.partyIdsList, partyOverrides }
+    );
+
+    // Reasonable Doubt: unlock the Charter voice in the Rachel fight if the
+    // player has read the charter via the team_chat_hub Witness branch.
+    const fightingRachel = this.enemyIdsList.includes('rachel_boss') || this.actualEnemyId === 'rachel_boss';
+    if (fightingRachel && this.player.getFlag('witness_charter_read')) {
+      this.engine.voiceState.charterUnlocked = true;
+    }
+
+    // Backdrop colors keyed by primary enemy (legacy mapping)
     const bgColors = {
       intern: [0x1a2a1a, 0x0a3a0a, 0x2a3a1a, 0x4a8a2a],
       karen: [0x3a0a2a, 0x5a0a3a, 0x2a0a4a, 0xe94560],
@@ -60,17 +120,23 @@ export class CombatState {
     const colors = bgColors[this.actualEnemyId] || [0x1a0533, 0x0a2463, 0x3e1f47, 0xe94560];
     this.scene.setBackgroundColors(...colors);
 
-    this.hud.show(
-      { ...this.player.stats, name: 'Andrew' },
-      this.engine.enemy.name,
-      this.engine.enemy.hp,
-      this.engine.enemy.maxHP,
-      { canFlee: this.canFlee }
-    );
+    // HUD: enemies + party in the order the engine has them
+    const enemiesView = this.engine.enemies.map(e => ({ name: e.name, hp: e.hp, maxHP: e.maxHP }));
+    const partyView = this._buildPartyView();
+    this.hud.show(enemiesView, partyView, { canFlee: this.canFlee });
 
     this.hud.onActionSelect = (action) => this._handleAction(action);
-    this.hud.onAbilitySelect = (id) => this._handleAbility(id);
+    this.hud.onAbilitySelect = (id, item) => this._handleAbility(id, item);
     this.hud.onItemSelect = (id) => this._handleItem(id);
+    this.hud.onVoiceSelect = (actionId, item) => this._handleVoice(actionId, item);
+    this.hud.onAllyActionSelect = (action) => {
+      if (action === 'back') {
+        this._enableAllyInput(this._activeAllyIndex);
+      } else {
+        this._handleAllyAction(action);
+      }
+    };
+    this.hud.onAllyAbilitySelect = (id) => this._handleAllyAbility(id);
 
     this.phase = 'intro';
     this.animTimer = 1.0;
@@ -90,49 +156,444 @@ export class CombatState {
     AudioManager.stopMusic(0.5);
   }
 
-  _startPlayerTurn() {
-    const effects = this.engine.processTurnStart('player');
-    if (effects.length > 0) {
-      this._showEffects(effects, () => {
-        if (this.engine.isOver) {
-          this._handleResult();
-          return;
-        }
-        if (this.engine.isPlayerStunned()) {
-          this.hud.showMessage("Stunned! Can't move!");
-          setTimeout(() => this._startEnemyTurn(), 1500);
-          return;
-        }
+  _buildPartyView() {
+    return this.engine.allies.map((a, i) => ({
+      name: a.name,
+      hp: a.hp,
+      maxHP: a.maxHP,
+      mp: a.mp,
+      maxMP: a.maxMP,
+      momentum: a.momentum || 0,
+      isPlayer: i === 0,
+    }));
+  }
+
+  // ── Round / turn flow ─────────────────────────────────────────────────
+  // Build a single SPD-sorted turn queue mixing allies and enemies (BG3-style interleave).
+  // Each entry: { kind: 'ally' | 'enemy', index: number, spd: number }.
+  // Stable secondary sort: allies before enemies on tie (player-friendly).
+  _startRound() {
+    const queue = [];
+    this.engine.allies.forEach((a, i) => {
+      if (a.hp > 0) queue.push({ kind: 'ally', index: i, spd: this.engine._getEffective(a).spd });
+    });
+    this.engine.enemies.forEach((e, i) => {
+      if (e.hp > 0) queue.push({ kind: 'enemy', index: i, spd: this.engine._getEffective(e).spd });
+    });
+    queue.sort((x, y) => {
+      if (y.spd !== x.spd) return y.spd - x.spd;
+      // Tiebreaker: allies act before enemies
+      if (x.kind !== y.kind) return x.kind === 'ally' ? -1 : 1;
+      return 0;
+    });
+    this._turnQueue = queue;
+    this._processNextTurn();
+  }
+
+  // Compatibility shim — older flow referenced this as the "next ally" — now it's just the next combatant.
+  _processNextAllyTurn() { return this._processNextTurn(); }
+
+  _processNextTurn() {
+    if (this.engine.isOver) {
+      this._handleResult();
+      return;
+    }
+    // Drop entries for combatants that died before their turn came up
+    while (this._turnQueue.length > 0) {
+      const next = this._turnQueue[0];
+      const entity = next.kind === 'ally' ? this.engine.allies[next.index] : this.engine.enemies[next.index];
+      if (entity && entity.hp > 0) break;
+      this._turnQueue.shift();
+    }
+    if (this._turnQueue.length === 0) {
+      // Round complete — start a new one
+      this._startRound();
+      return;
+    }
+    const next = this._turnQueue.shift();
+    if (next.kind === 'enemy') {
+      this._runInterleavedEnemyTurn(next.index);
+      return;
+    }
+    // Ally turn
+    this._activeAllyIndex = next.index;
+    const ally = this.engine.allies[this._activeAllyIndex];
+    if (!ally || ally.hp <= 0) {
+      this._processNextTurn();
+      return;
+    }
+    this.hud.setActiveAlly(this._activeAllyIndex, this._buildPartyView());
+
+    // Process turn-start effects (DoTs, status decrement) for this ally
+    const effects = this.engine.processTurnStart(ally);
+    const continueTurn = () => {
+      if (this.engine.isOver) {
+        this._handleResult();
+        return;
+      }
+      // Stunned actors skip their turn
+      if (ally.stunnedThisTurn) {
+        this.hud.showMessage(`${ally.name} is stunned!`);
+        setTimeout(() => this._processNextTurn(), 1200);
+        return;
+      }
+      if (this._activeAllyIndex === 0) {
         this._enablePlayerInput();
-      }, 'player');
+      } else if ((this.player.allyControl || 'manual') === 'manual') {
+        // BG3-style: player picks each ally's action manually
+        this._enableAllyInput(this._activeAllyIndex);
+      } else {
+        this._runAllyAITurn(this._activeAllyIndex);
+      }
+    };
+
+    if (effects.length > 0) {
+      this._showEffects(effects, continueTurn, this._activeAllyIndex === 0 ? 'player' : 'enemy');
+    } else {
+      continueTurn();
+    }
+  }
+
+  // ── Manual ally input ─────────────────────────────────────────────────
+  // When player.allyControl === 'manual', allies get their own action menu
+  // on their turn. Simpler than Andrew's: Attack, Abilities, Skip, plus
+  // Auto/Manual toggle.
+  _enableAllyInput(allyIndex) {
+    this.phase = 'ally_turn';
+    this.inputEnabled = true;
+    this.hud.enableInput();
+    const ally = this.engine.allies[allyIndex];
+    this.hud.updatePlayerStats({
+      hp: ally.hp, mp: ally.mp,
+      maxHP: ally.maxHP, maxMP: ally.maxMP,
+      momentum: 0, name: ally.name,
+      isPlayer: false,
+    });
+    this.hud.updateAllEnemies(this.engine.enemies);
+    this.hud.showAllyMenu(ally, this.player.allyControl || 'manual');
+  }
+
+  _handleAllyAction(action) {
+    if (!this.inputEnabled) return;
+    AudioManager.playSfx('confirm');
+    const ally = this.engine.allies[this._activeAllyIndex];
+    if (!ally) return;
+
+    switch (action) {
+      case 'attack':
+        this.inputEnabled = false;
+        this._beginAllyTargetedAttack();
+        break;
+      case 'abilities': {
+        // Build the unlocked-ability list for this ally
+        const unlocked = (this.player.allyState[ally.allyId]?.unlockedAbilities) || ally.abilities || [];
+        const list = unlocked
+          .map(id => ({ id, ...(ALLY_ABILITIES[id] || {}) }))
+          .filter(a => a.name); // skip undefined
+        this.inputEnabled = true;
+        this.hud.showAllyAbilities(list, ally.mp);
+        break;
+      }
+      case 'skip':
+        this.inputEnabled = false;
+        this.hud.showMessage(`${ally.name} holds.`);
+        setTimeout(() => this._processNextTurn(), 800);
+        break;
+      case 'toggle_auto':
+        // Flip persistent preference and either keep manual menu (manual) or
+        // hand the rest of this turn to the AI (auto)
+        this.player.allyControl = (this.player.allyControl === 'auto') ? 'manual' : 'auto';
+        if (this.player.allyControl === 'auto') {
+          this.inputEnabled = false;
+          this._runAllyAITurn(this._activeAllyIndex);
+        } else {
+          this._enableAllyInput(this._activeAllyIndex);
+        }
+        break;
+    }
+  }
+
+  _handleAllyAbility(abilityId) {
+    if (!this.inputEnabled) return;
+    AudioManager.playSfx('confirm');
+    const ability = ALLY_ABILITIES[abilityId];
+    if (!ability) return;
+    const ally = this.engine.allies[this._activeAllyIndex];
+    if (ally.mp < (ability.cost || 0)) {
+      this.hud.showMessage("Not enough Coffee.");
       return;
     }
 
-    if (this.engine.isPlayerStunned()) {
-      this.hud.showMessage("Stunned! Can't move!");
-      setTimeout(() => this._startEnemyTurn(), 1500);
+    const needsTarget = ability.type === 'attack' || ability.type === 'debuff';
+    if (needsTarget && this.engine.aliveEnemies().length > 1) {
+      this.inputEnabled = false;
+      const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+      this.phase = 'targeting';
+      this.hud.showTargetPicker(enemiesView, (idx) => {
+        this.scene.setTargetMarker(idx, true);
+        this._executeAllyAbility(abilityId, idx);
+        setTimeout(() => this.scene.hideTargetMarker(), 1200);
+      }, () => {
+        this.phase = 'ally_turn';
+        this.inputEnabled = true;
+        this._enableAllyInput(this._activeAllyIndex);
+      });
+    } else {
+      this.inputEnabled = false;
+      this._executeAllyAbility(abilityId, undefined);
+    }
+  }
+
+  _beginAllyTargetedAttack() {
+    const ally = this.engine.allies[this._activeAllyIndex];
+    if (!ally) return;
+    if (this.engine.aliveEnemies().length === 1) {
+      this._executeAllyBasicAttack(this.engine._firstAliveEnemyIndex());
       return;
     }
+    const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+    this.phase = 'targeting';
+    this.hud.showTargetPicker(enemiesView, (idx) => {
+      this.scene.setTargetMarker(idx, true);
+      this._executeAllyBasicAttack(idx);
+      setTimeout(() => this.scene.hideTargetMarker(), 1200);
+    }, () => {
+      this.phase = 'ally_turn';
+      this.inputEnabled = true;
+      this._enableAllyInput(this._activeAllyIndex);
+    });
+  }
 
-    this._enablePlayerInput();
+  _executeAllyBasicAttack(targetIndex) {
+    const allyIndex = this._activeAllyIndex;
+    const ally = this.engine.allies[allyIndex];
+    const target = this.engine._resolveTarget(targetIndex);
+    if (!ally || !target) { this._processNextTurn(); return; }
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+    const aStats = this.engine._getEffective(ally);
+    const eStats = this.engine._getEffective(target);
+    const dmg = this.engine._calcDamage(aStats.atk, 0, eStats.def, target);
+    target.hp = Math.max(0, target.hp - dmg.damage);
+    this.engine._checkVictory();
+
+    const result = {
+      type: 'ally_attack',
+      allyIndex,
+      allyName: ally.name,
+      damage: dmg.damage,
+      critical: dmg.critical,
+      targetIndex: this.engine.enemies.indexOf(target),
+    };
+    const delay = this._playAllyResult(result, allyIndex);
+    this._refreshHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextTurn();
+    }, delay);
+  }
+
+  _executeAllyAbility(abilityId, targetIndex) {
+    const allyIndex = this._activeAllyIndex;
+    const ally = this.engine.allies[allyIndex];
+    const ability = ALLY_ABILITIES[abilityId];
+    if (!ally || !ability) { this._processNextTurn(); return; }
+
+    // Manual MP spend (mirrors what allyTurn() does in AI mode)
+    if (ability.cost) ally.mp = Math.max(0, ally.mp - ability.cost);
+
+    const aStats = this.engine._getEffective(ally);
+    let result = { type: 'ally_' + ability.type, allyIndex, allyName: ally.name, abilityName: ability.name, message: ability.messages ? (ability.messages[Math.floor(Math.random() * ability.messages.length)]) : (ability.message || '') };
+
+    switch (ability.type) {
+      case 'attack': {
+        const target = this.engine._resolveTarget(targetIndex);
+        if (!target) { this._processNextTurn(); return; }
+        const eStats = this.engine._getEffective(target);
+        const dmg = this.engine._calcDamage(aStats.atk, ability.power || 10, eStats.def, target, ability.tag);
+        target.hp = Math.max(0, target.hp - dmg.damage);
+        result = { ...result, damage: dmg.damage, critical: dmg.critical, effective: dmg.effective, targetIndex: this.engine.enemies.indexOf(target) };
+        break;
+      }
+      case 'attack_aoe': {
+        const targets = this.engine.aliveEnemies();
+        const hits = [];
+        for (const t of targets) {
+          const eStats = this.engine._getEffective(t);
+          const dmg = this.engine._calcDamage(aStats.atk, ability.power || 10, eStats.def, t, ability.tag);
+          t.hp = Math.max(0, t.hp - dmg.damage);
+          hits.push({ targetIndex: this.engine.enemies.indexOf(t), damage: dmg.damage, critical: dmg.critical, effective: dmg.effective });
+        }
+        result = { ...result, aoe: true, hits, damage: hits.reduce((s, h) => s + h.damage, 0) };
+        break;
+      }
+      case 'heal_ally': {
+        const candidates = this.engine.aliveAllies().slice().sort((a, b) => (a.hp / a.maxHP) - (b.hp / b.maxHP));
+        const tgt = candidates[0] || ally;
+        const heal = ability.healAmount || 0;
+        if (heal > 0) tgt.hp = Math.min(tgt.maxHP, tgt.hp + heal);
+        if (ability.mpHealAmount) {
+          for (const a of this.engine.aliveAllies()) {
+            a.mp = Math.min(a.maxMP, a.mp + ability.mpHealAmount);
+          }
+        }
+        result = { ...result, healAmount: heal, healTargetAllyIndex: this.engine.allies.indexOf(tgt), healTargetName: tgt.name };
+        break;
+      }
+      case 'buff_party': {
+        for (const a of this.engine.aliveAllies()) {
+          a.buffs.push({ stats: ability.buffAmount, duration: ability.buffDuration || 2, name: ability.name });
+        }
+        result = { ...result, buffAmount: ability.buffAmount, duration: ability.buffDuration || 2 };
+        break;
+      }
+      case 'debuff': {
+        const target = this.engine._resolveTarget(targetIndex);
+        if (!target) { this._processNextTurn(); return; }
+        target.buffs.push({ stats: ability.debuffAmount, duration: ability.debuffDuration || 2, name: ability.name });
+        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration || 2, targetIndex: this.engine.enemies.indexOf(target) };
+        break;
+      }
+      case 'silence': {
+        const target = this.engine._resolveTarget(targetIndex);
+        if (!target) { this._processNextTurn(); return; }
+        target.silenced = Math.max(target.silenced || 0, ability.duration || 2);
+        result = { ...result, targetIndex: this.engine.enemies.indexOf(target) };
+        break;
+      }
+    }
+
+    this.engine._checkVictory();
+    this.phase = 'animating';
+    this.hud.disableInput();
+    const delay = this._playAllyResult(result, allyIndex);
+    this._refreshHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextTurn();
+    }, delay);
+  }
+
+  // Wraps _processNextEnemyTurn for the interleaved queue — runs ONE enemy then yields
+  // back to the main turn loop instead of draining the whole enemy phase.
+  _runInterleavedEnemyTurn(enemyIndex) {
+    const enemy = this.engine.enemies[enemyIndex];
+    if (!enemy || enemy.hp <= 0) {
+      this._processNextTurn();
+      return;
+    }
+    this.phase = 'enemy_phase';
+    this.inputEnabled = false;
+    this.hud.disableInput();
+
+    const effects = this.engine.processTurnStart(enemy);
+    const proceed = () => {
+      if (this.engine.isOver) { this._handleResult(); return; }
+      this._runSingleEnemyTurnInterleaved(enemyIndex);
+    };
+    if (effects.length > 0) this._showEffects(effects, proceed, 'enemy');
+    else proceed();
+  }
+
+  // Same as _runSingleEnemyTurn but the post-completion call goes to _processNextTurn (interleaved)
+  _runSingleEnemyTurnInterleaved(enemyIndex) {
+    setTimeout(() => {
+      const result = this.engine.enemyTurn(enemyIndex);
+      if (!result) {
+        this._processNextTurn();
+        return;
+      }
+
+      if (result.type === 'blocked') {
+        this.hud.showMessage(result.message);
+        AudioManager.playSfx('confirm');
+        this.particles.burst({ x: 0, y: 1, z: 4 }, 15, 0x4488ff, 3, 0.8);
+        this._refreshHUD();
+        setTimeout(() => this._processNextTurn(), 1500);
+        return;
+      }
+
+      if (result.message) this.hud.showMessage(result.message);
+
+      if (result.damage) {
+        this.scene.enemyAttackAnim(enemyIndex);
+        const targetAllyIndex = result.targetAllyIndex ?? 0;
+        // Voice triggers: damage to Andrew arms the Skeptic
+        if (targetAllyIndex === 0 && this.engine.noteDamageTakenByPlayer) this.engine.noteDamageTakenByPlayer();
+        setTimeout(() => {
+          this.scene.shake(result.critical ? 0.8 : 0.4);
+          if (result.braced) {
+            this.scene.flash(0x4488ff, 0.15);
+            this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0x4488ff, 3, 0.9);
+            this.hud.showMessage('BRACED! Damage halved! Retaliate available!');
+            setTimeout(() => this._fireTaunt('brace_success'), 400);
+            AchievementManager.check(this.player, { event: 'brace_success' });
+          } else {
+            this.scene.flash(0xff0000, 0.1);
+            this.particles.burst({ x: 0, y: 1, z: 4 }, 12, 0xff0000, 2, 0.6);
+            if (result.critical) setTimeout(() => this._fireTaunt('enemy_crit'), 400);
+            this.scene.allyHurtAnim(targetAllyIndex);
+          }
+          AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
+          this._spawnDamageNumberForAlly(result.damage, result.critical ? 'critical' : 'damage', targetAllyIndex);
+          this._refreshHUD();
+          if (this.engine.posterJustTriggered) {
+            this.engine.posterJustTriggered = false;
+            setTimeout(() => {
+              this.scene.flash(0xffdd00, 0.4);
+              this.particles.burst({ x: 0, y: 1.2, z: 4 }, 25, 0xffdd00, 3, 1.0);
+              this.hud.showMessage('HANG IN THERE! Survived at 1 HP!');
+            }, 300);
+          }
+        }, 200);
+      } else if (result.healAmount) {
+        AudioManager.playSfx('heal');
+        this._spawnDamageNumberAtEnemy(`+${result.healAmount}`, 'heal', enemyIndex);
+        this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44ff44, 2, 1.0);
+        // Voice triggers: enemy healing arms the Litigator
+        if (this.engine.noteEnemyHeal) this.engine.noteEnemyHeal();
+      }
+
+      this._refreshHUD();
+      setTimeout(() => {
+        if (this.engine.isOver) this._handleResult();
+        else this._processNextTurn();
+      }, 1700);
+    }, 400);
   }
 
   _enablePlayerInput() {
-    this.phase = 'player_turn';
+    this.phase = 'ally_turn';
     this.inputEnabled = true;
     this.hud.enableInput();
+    // Voice triggers reset their "took damage recently" signal at the top of each player turn
+    if (this.engine.clearRecentDamageNote) this.engine.clearRecentDamageNote();
 
-    const telegraphed = this.engine.telegraph();
-    const vulnerable = this.engine.enemy.vulnerable > 0;
-    const hint = this._getTelegraphHint(telegraphed) + (vulnerable ? ' (VULNERABLE — hit for 1.5×!)' : '');
-    this.hud.updateTelegraph(hint);
+    // Telegraph all enemies for the upcoming enemy phase
+    this.engine.telegraph();
+    const hints = this.engine.enemies.map(e => {
+      if (e.hp <= 0) return null;
+      const t = e.telegraphedAbility;
+      const vulnerable = e.vulnerable > 0;
+      return this._getTelegraphHint(t, e) + (vulnerable ? ' (VULNERABLE — hit for 1.5×!)' : '');
+    });
+    this.hud.updateTelegraphAll(hints);
+
+    const voicesAvailable = this.engine.getAvailableVoices ? this.engine.getAvailableVoices() : [];
+    // Resolve action descriptors for the voice submenu
+    this._currentVoices = voicesAvailable.map(v => {
+      const action = VOICE_ACTIONS[v.actionId] || {};
+      return { ...v, action };
+    });
     this.hud.showMainMenu(
       this.engine.player.silencedThisTurn,
       this.engine.player.momentum,
       this.engine.player.bracing,
       this.engine.player.retaliateReady,
       this.engine.player.hp / this.engine.player.maxHP < 0.25,
-      this.engine.getPressAdvantageCost()
+      this.engine.getPressAdvantageCost(),
+      this._currentVoices,
     );
     this.hud.updatePlayerStats({
       ...this.player.stats,
@@ -142,12 +603,98 @@ export class CombatState {
       maxMP: this.engine.player.maxMP,
       momentum: this.engine.player.momentum,
       name: 'Andrew',
+      isPlayer: true,
       _xpTable: XP_TABLE,
     });
-    this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
-    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy.buffs);
+    this.hud.updateAllEnemies(this.engine.enemies);
+    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy?.buffs || []);
   }
 
+  _runAllyAITurn(allyIndex) {
+    this.phase = 'animating';
+    this.hud.disableInput();
+    const ally = this.engine.allies[allyIndex];
+    this.hud.showMessage(`${ally.name}'s turn...`);
+    setTimeout(() => {
+      const result = this.engine.allyTurn(allyIndex);
+      const delay = this._playAllyResult(result, allyIndex);
+      this._refreshHUD();
+      setTimeout(() => {
+        if (this.engine.isOver) {
+          this._handleResult();
+        } else {
+          this._processNextAllyTurn();
+        }
+      }, delay);
+    }, 600);
+  }
+
+  _playAllyResult(result, allyIndex) {
+    if (!result) return 600;
+    const ally = this.engine.allies[allyIndex];
+    if (result.message) this.hud.showMessage(result.message);
+
+    if (result.type === 'confused') {
+      this.scene.flash(0xffaa00, 0.10);
+      this._spawnDamageNumberForAlly(result.damage, result.critical ? 'critical' : 'damage', allyIndex);
+      return 1100;
+    }
+
+    if (result.aoe && Array.isArray(result.hits)) {
+      this.scene.playerAttackAnim(allyIndex);
+      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      this.particles.ring({ x: 0, y: 1.0, z: 0 }, 24, 0x88ccff, 4.0, 0.9);
+      result.hits.forEach((h, i) => {
+        setTimeout(() => {
+          this.scene.enemyHurtAnim(h.targetIndex);
+          this._spawnDamageNumberAtEnemy(h.damage, h.critical ? 'critical' : 'damage', h.targetIndex);
+        }, 200 + i * 150);
+      });
+      this.scene.shake(0.4);
+      return 700 + result.hits.length * 150;
+    }
+
+    if (result.type === 'ally_attack' || result.type === 'ally_attack_aoe') {
+      this.scene.playerAttackAnim(allyIndex);
+      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      const ti = result.targetIndex ?? 0;
+      setTimeout(() => {
+        this.scene.enemyHurtAnim(ti);
+        this.scene.shake(result.critical ? 0.6 : 0.3);
+        this._spawnDamageNumberAtEnemy(result.damage || 0, result.critical ? 'critical' : 'damage', ti);
+      }, 220);
+      return 1100;
+    }
+
+    if (result.type === 'ally_buff_party') {
+      AudioManager.playSfx('confirm');
+      this.scene.flash(0xffd700, 0.10);
+      // Burst around each ally
+      this.engine.allies.forEach((_a, i) => {
+        const e = this.scene.allyGroups[i];
+        if (e) this.particles.burst({ x: e.baseX - 2.2, y: 1.2, z: e.baseZ - 3.5 }, 12, 0xffdd44, 2, 0.7);
+      });
+      return 1100;
+    }
+
+    if (result.type === 'ally_heal_ally') {
+      AudioManager.playSfx('heal');
+      this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', result.healTargetAllyIndex ?? 0);
+      return 1100;
+    }
+
+    if (result.type === 'ally_debuff') {
+      AudioManager.playSfx('confirm');
+      const ti = result.targetIndex ?? 0;
+      this.scene.flash(0xffaa44, 0.08);
+      this.particles.burst({ x: 0, y: 1.4, z: 0 }, 14, 0xffaa44, 2.5, 0.7);
+      return 1000;
+    }
+
+    return 800;
+  }
+
+  // ── Action handlers ──────────────────────────────────────────────────
   _handleAction(action) {
     if (!this.inputEnabled) return;
     this.inputEnabled = false;
@@ -155,7 +702,7 @@ export class CombatState {
 
     switch (action) {
       case 'attack':
-        this._executePlayerAttack();
+        this._beginTargetedAction('attack');
         break;
       case 'special':
         this.inputEnabled = true;
@@ -177,35 +724,232 @@ export class CombatState {
         this._executeFlee();
         break;
       case 'power_move':
-        this._executePowerMove();
+        this._beginTargetedAction('power_move');
         break;
       case 'press_advantage':
-        this._executePressAdvantage();
+        this._beginTargetedAction('press_advantage');
         break;
       case 'second_wind':
         this._executeSecondWind();
         break;
       case 'retaliate':
-        this._executeRetaliate();
+        this._beginTargetedAction('retaliate');
         break;
       case 'desperate_gamble':
         this.inputEnabled = true;
         this._showDesperateGamble();
         break;
+      case 'thoughts':
+        this.inputEnabled = true;
+        this.hud.showVoices(this._currentVoices || []);
+        break;
     }
   }
 
-  _handleAbility(abilityId) {
+  // ── Voice ("Reasonable Doubt") handler ────────────────────────────────
+  _handleVoice(actionId, item) {
     if (!this.inputEnabled) return;
-    this.inputEnabled = false;
+    const action = VOICE_ACTIONS[actionId];
+    if (!action) return;
     AudioManager.playSfx('confirm');
 
-    const result = this.engine.playerAbility(abilityId);
+    // For target-needing voice actions, show target picker if 2+ alive enemies
+    if (action.needsTarget && this.engine.aliveEnemies().length > 1) {
+      this.inputEnabled = false;
+      const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+      this.phase = 'targeting';
+      this.hud.showTargetPicker(enemiesView, (idx) => {
+        this.scene.setTargetMarker(idx, true);
+        this._executeVoiceAction(actionId, idx);
+        setTimeout(() => this.scene.hideTargetMarker(), 1200);
+      }, () => {
+        this.phase = 'ally_turn';
+        this.inputEnabled = true;
+        this.hud.showVoices(this._currentVoices || []);
+      });
+    } else {
+      this.inputEnabled = false;
+      this._executeVoiceAction(actionId, undefined);
+    }
+  }
+
+  _executeVoiceAction(actionId, targetIndex) {
+    const result = this.engine.playerVoiceAction(actionId, targetIndex);
     if (!result) {
       this.inputEnabled = true;
       return;
     }
 
+    this.phase = 'animating';
+    this.hud.disableInput();
+
+    // Track on the player profile (persists across fights). Update threshold flags so
+    // dialogs can branch on them via the existing `requires` mechanism.
+    if (this.player.voiceCounts && result.voiceId) {
+      this.player.voiceCounts[result.voiceId] = (this.player.voiceCounts[result.voiceId] || 0) + 1;
+      const counts = this.player.voiceCounts;
+      if (counts.litigator  >= 5)  this.player.setFlag('voice_litigator_high');
+      if (counts.litigator  >= 10) this.player.setFlag('voice_litigator_max');
+      if (counts.witness    >= 3)  this.player.setFlag('voice_witness_high');
+      if (counts.witness    >= 6)  this.player.setFlag('voice_witness_max');
+      if (counts.skeptic    >= 5)  this.player.setFlag('voice_skeptic_high');
+      if (counts.apprentice >= 5)  this.player.setFlag('voice_apprentice_high');
+    }
+    // The Charter Read sets a permanent flag the post-Rachel dialog branches on
+    if (result.charterInvoked) this.player.setFlag('andrew_invoked_charter');
+
+    // Voice bubble — italic speech in the voice's color, top-center
+    this._showVoiceBubble(result.voiceName, result.quote, result.voiceColor);
+
+    let delay = 1400;
+    setTimeout(() => {
+      // Animate the action effect
+      if (result.type === 'voice_attack') {
+        this.scene.playerAttackAnim(this._activeAllyIndex);
+        AudioManager.playSfx('critical');
+        const ti = result.targetIndex ?? 0;
+        this.scene.flash(this._hexFromColor(result.voiceColor), 0.18);
+        this.particles.burst({ x: 0, y: 1.6, z: 1.5 }, 24, this._hexFromColor(result.voiceColor), 3, 0.9);
+        setTimeout(() => {
+          this.scene.enemyHurtAnim(ti);
+          this.scene.shake(1.0);
+          this._spawnDamageNumberAtEnemy(result.damage, 'critical', ti);
+          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 30, this._hexFromColor(result.voiceColor), 4, 1.0);
+          if (result.skepticLocked) {
+            setTimeout(() => this.hud.showMessage('The Skeptic falls silent.'), 500);
+          }
+        }, 220);
+      } else if (result.type === 'voice_heal') {
+        AudioManager.playSfx('heal');
+        this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', 0);
+        this.scene.flash(this._hexFromColor(result.voiceColor), 0.18);
+        this.particles.burst({ x: 0, y: 1.0, z: 4 }, 24, this._hexFromColor(result.voiceColor), 3, 1.0);
+        this.particles.rise({ x: 0, y: 0.4, z: 4 }, 16, 0xffffff, 1.6);
+        if (result.cleared) setTimeout(() => this.hud.showMessage(`Cleared: ${result.cleared}`), 500);
+      } else if (result.type === 'voice_skip') {
+        AudioManager.playSfx('cancel');
+        this.particles.rise({ x: 0, y: 0.5, z: 4 }, 12, 0x888888, 1.4);
+        if (result.attemptFlee && this.canFlee) {
+          // Use Skeptic to walk: 90% flee chance
+          if (Math.random() < 0.9) {
+            this.engine.isOver = true;
+            this.engine.result = 'flee';
+            this.hud.showMessage('You walk out of the meeting.');
+            setTimeout(() => this._endCombat('flee'), 1500);
+            return;
+          }
+          this.hud.showMessage("You can't quite make yourself leave.");
+        }
+      }
+    }, 800);
+
+    this._refreshHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextTurn();
+    }, delay);
+  }
+
+  _hexFromColor(cssColor) {
+    if (!cssColor) return 0xffffff;
+    if (typeof cssColor === 'number') return cssColor;
+    if (cssColor.startsWith('#')) {
+      const hex = cssColor.slice(1);
+      const full = hex.length === 3 ? hex.split('').map(c => c + c).join('') : hex;
+      return parseInt(full, 16);
+    }
+    return 0xffffff;
+  }
+
+  _showVoiceBubble(voiceName, quote, color) {
+    const el = document.createElement('div');
+    el.className = 'combat-voice-bubble';
+    el.style.borderColor = color || '#fff';
+    el.style.color = color || '#fff';
+    el.innerHTML = `<div class="combat-voice-name">${voiceName}</div><div class="combat-voice-quote">"${quote}"</div>`;
+    document.getElementById('ui-overlay').appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = '0';
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
+    }, 2200);
+  }
+
+  // For single-target actions: pick target then execute
+  _beginTargetedAction(action) {
+    const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+    this.phase = 'targeting';
+    this.hud.showTargetPicker(enemiesView, (idx) => {
+      this._targetIndex = idx;
+      this.scene.setTargetMarker(idx, true);
+      this._dispatchTargetedAction(action, idx);
+      // Hide marker shortly after — animations move on
+      setTimeout(() => this.scene.hideTargetMarker(), 1200);
+    }, () => {
+      // Cancelled — return to main menu
+      this.phase = 'ally_turn';
+      this.inputEnabled = true;
+      this.hud.enableInput();
+      this.hud.showMainMenu(
+        this.engine.player.silencedThisTurn,
+        this.engine.player.momentum,
+        this.engine.player.bracing,
+        this.engine.player.retaliateReady,
+        this.engine.player.hp / this.engine.player.maxHP < 0.25,
+        this.engine.getPressAdvantageCost()
+      );
+    });
+  }
+
+  _dispatchTargetedAction(action, targetIndex) {
+    switch (action) {
+      case 'attack': this._executePlayerAttack(targetIndex); break;
+      case 'power_move': this._executePowerMove(targetIndex); break;
+      case 'press_advantage': this._executePressAdvantage(targetIndex); break;
+      case 'retaliate': this._executeRetaliate(targetIndex); break;
+      case 'ability': {
+        const data = this._pendingAbilityForTarget;
+        this._pendingAbilityForTarget = null;
+        if (data) this._executeAbility(data.id, targetIndex);
+        break;
+      }
+    }
+  }
+
+  _handleAbility(abilityId, item) {
+    if (!this.inputEnabled) return;
+    AudioManager.playSfx('confirm');
+    const ability = PLAYER_ABILITIES[abilityId];
+    if (!ability) return;
+
+    const needsTarget = ability.type === 'attack' || ability.type === 'debuff';
+    const isAoE = ability.type === 'attack_aoe' || ability.type === 'special'; // double_turn applies to all
+
+    if (needsTarget && this.engine.aliveEnemies().length > 1) {
+      this.inputEnabled = false;
+      this._pendingAbilityForTarget = { id: abilityId };
+      const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+      this.phase = 'targeting';
+      this.hud.showTargetPicker(enemiesView, (idx) => {
+        this.scene.setTargetMarker(idx, true);
+        this._executeAbility(abilityId, idx);
+        setTimeout(() => this.scene.hideTargetMarker(), 1200);
+      }, () => {
+        this.phase = 'ally_turn';
+        this.inputEnabled = true;
+        this.hud.showAbilities(this.player.getAbilities(), this.engine.player.mp);
+      });
+    } else {
+      this.inputEnabled = false;
+      this._executeAbility(abilityId, undefined);
+    }
+  }
+
+  _executeAbility(abilityId, targetIndex) {
+    const result = this.engine.playerAbility(abilityId, targetIndex);
+    if (!result) {
+      this.inputEnabled = true;
+      return;
+    }
     this.phase = 'animating';
     this.hud.disableInput();
     const delay = this._playPlayerActionResult(result, abilityId);
@@ -214,16 +958,19 @@ export class CombatState {
     if (result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
     if (result.combo) AchievementManager.check(this.player, { event: 'combo_hit' });
     this._checkPhaseChange();
-    this._updateHUD();
+    this._refreshHUD();
     setTimeout(() => {
       if (this.engine.isOver) {
         this._handleResult();
       } else if (result.doubleTurn) {
         const msg = result.debuffAmount ? 'Enemy DEF reduced! Double turn!' : 'Double turn!';
         this.hud.showMessage(msg);
-        setTimeout(() => this._startPlayerTurn(), 600);
+        // Re-insert this ally at the front of the interleaved turn queue for an extra action
+        const ally = this.engine.allies[this._activeAllyIndex];
+        if (ally) this._turnQueue.unshift({ kind: 'ally', index: this._activeAllyIndex, spd: this.engine._getEffective(ally).spd });
+        setTimeout(() => this._processNextTurn(), 600);
       } else {
-        this._startEnemyTurn();
+        this._processNextTurn();
       }
     }, result.skipsTurn ? 800 : delay);
   }
@@ -240,38 +987,29 @@ export class CombatState {
     this.phase = 'animating';
     this.hud.disableInput();
     const delay = this._playPlayerActionResult(result);
-    if (result.type === 'item') {
-      this.hud.showMessage(`Used ${result.itemName}!`);
-    }
+    if (result.type === 'item') this.hud.showMessage(`Used ${result.itemName}!`);
 
-    this._updateHUD();
+    this._refreshHUD();
     setTimeout(() => {
-      if (this.engine.isOver) {
-        this._handleResult();
-      } else {
-        this._startEnemyTurn();
-      }
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextAllyTurn();
     }, delay);
   }
 
-  _executePlayerAttack() {
+  _executePlayerAttack(targetIndex) {
     this.phase = 'animating';
     this.hud.disableInput();
-
-    const result = this.engine.playerAttack();
+    const result = this.engine.playerAttack(targetIndex);
     const delay = this._playPlayerActionResult(result);
 
-    if (result && result.critical) this._fireTaunt('crit');
+    if (result && result.critical) { this._fireTaunt('crit'); this.engine.noteCrit && this.engine.noteCrit(); }
     if (result && result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
     if (result && result.combo) AchievementManager.check(this.player, { event: 'combo_hit' });
     this._checkPhaseChange();
-    this._updateHUD();
+    this._refreshHUD();
     setTimeout(() => {
-      if (this.engine.isOver) {
-        this._handleResult();
-      } else {
-        this._startEnemyTurn();
-      }
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextAllyTurn();
     }, delay);
   }
 
@@ -282,19 +1020,18 @@ export class CombatState {
       setTimeout(() => this._endCombat('flee'), 1500);
     } else {
       this.hud.showMessage("Can't escape!");
-      setTimeout(() => this._startEnemyTurn(), 1500);
+      setTimeout(() => this._processNextAllyTurn(), 1500);
     }
   }
 
   _playPlayerActionResult(result, abilityId = null) {
     if (!result) return 1000;
 
-    // Confusion and counter always use generic handling regardless of ability
     if (result.type === 'confused') {
       this.scene.flash(0xffaa00, 0.12);
       this.scene.shake(result.critical ? 0.5 : 0.3);
       AudioManager.playSfx('hit');
-      this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'player');
+      this._spawnDamageNumberForAlly(result.damage, result.critical ? 'critical' : 'damage', this._activeAllyIndex);
       this.hud.showMessage(result.message || 'Confused! The action backfires.');
       this.particles.burst({ x: 0, y: 1, z: 4 }, 12, 0xffaa00, 2, 0.7);
       return 1100;
@@ -303,45 +1040,53 @@ export class CombatState {
     if (result.type === 'counter') {
       this.scene.shake(0.6);
       AudioManager.playSfx('hit');
-      this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'player');
+      this._spawnDamageNumberForAlly(result.damage, result.critical ? 'critical' : 'damage', 0);
       this.hud.showMessage('"Great catch! But actually..." Counter!');
       this.particles.burst({ x: 0, y: 1, z: 4 }, 15, 0xffcc00, 3, 0.8);
       return 1200;
     }
 
     if (result.type === 'break_counter') {
-      this.scene.playerAttackAnim();
+      this.scene.playerAttackAnim(this._activeAllyIndex);
       AudioManager.playSfx('hit');
       this.scene.shake(0.2);
+      const ti = result.targetIndex ?? 0;
       setTimeout(() => {
-        this.scene.enemyHurtAnim();
-        this._spawnDamageNumber(result.damage, 'damage', 'enemy');
+        this.scene.enemyHurtAnim(ti);
+        this._spawnDamageNumberAtEnemy(result.damage, 'damage', ti);
       }, 100);
       this.hud.showMessage('Pushed through the counter!');
       this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44aaff, 2, 0.6);
       return 1200;
     }
 
-    // Route special abilities to their unique animations
-    if (abilityId) {
-      return this._playAbilityAnim(abilityId, result);
+    // AoE attack: per-target hurt anim
+    if (result.aoe && Array.isArray(result.hits)) {
+      const aniDelay = abilityId ? this._playAbilityAnim(abilityId, result, true) : 0;
+      result.hits.forEach((h, i) => {
+        setTimeout(() => {
+          this.scene.enemyHurtAnim(h.targetIndex);
+          this._spawnDamageNumberAtEnemy(h.damage, h.critical ? 'critical' : 'damage', h.targetIndex);
+        }, 250 + i * 130);
+      });
+      return aniDelay || (700 + result.hits.length * 130);
     }
 
-    // --- Generic handling for basic attack ---
+    if (abilityId) return this._playAbilityAnim(abilityId, result);
+
+    // Generic single-target attack
     if (result.type === 'attack' || result.type === 'attack_aoe') {
-      this.scene.playerAttackAnim();
+      const ti = result.targetIndex ?? 0;
+      this.scene.playerAttackAnim(this._activeAllyIndex);
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
       this.particles.stream({ x:  0.2, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 14, 0xffffff, 0.20);
       this.particles.stream({ x: -0.1, y: 1.1, z: 3.8 }, { x: 0, y: 1.0, z: 0.2 },  8, 0xffee88, 0.22);
       setTimeout(() => {
-        this.scene.enemyHurtAnim();
+        this.scene.enemyHurtAnim(ti);
         this.scene.shake(result.critical ? 0.8 : 0.3);
-        this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
-        if (result.critical) {
-          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 25, 0xff4444, 4, 1.0);
-        } else {
-          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
-        }
+        this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', ti);
+        if (result.critical) this.particles.burst({ x: 0, y: 1.2, z: 0 }, 25, 0xff4444, 4, 1.0);
+        else this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
         if (result.effective === 'super') {
           setTimeout(() => this.hud.showMessage('WEAKNESS! +50% damage!'), 300);
         } else if (result.effective === 'resist') {
@@ -356,7 +1101,7 @@ export class CombatState {
 
     if (result.type === 'heal') {
       AudioManager.playSfx('heal');
-      this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+      this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', this._activeAllyIndex);
       this.particles.burst({ x: 0, y: 1, z: 4 }, 10, 0x44ff44, 2, 1.0);
       this.hud.showMessage(`${result.abilityName}!`);
       return result.skipsTurn ? 800 : 1000;
@@ -389,7 +1134,7 @@ export class CombatState {
     if (result.type === 'item') {
       if (result.healAmount) {
         AudioManager.playSfx('heal');
-        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+        this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', this._activeAllyIndex);
         this.particles.burst({ x: 0, y: 1, z: 4 }, 10, 0x44ff44, 2, 1.0);
       } else if (result.buffAmount) {
         AudioManager.playSfx('confirm');
@@ -401,53 +1146,50 @@ export class CombatState {
     return 1000;
   }
 
-  // Unique animations for each player special ability
-  _playAbilityAnim(abilityId, result) {
+  // Same per-ability animations, but parameterized for AoE skip path.
+  // skipImpact = true tells AoE callers to handle hurt/damage numbers themselves.
+  _playAbilityAnim(abilityId, result, skipImpact = false) {
     const crit = result.critical;
+    const ti = result.targetIndex ?? 0;
+    const allyIndex = this._activeAllyIndex;
 
     switch (abilityId) {
-
       case 'file_motion': {
-        // Legal paperwork hurled across the field — stream of paper, then scraps burst on impact
-        this.scene.playerAbilityLunge(0.5);
+        this.scene.playerAbilityLunge(0.5, allyIndex);
         this.particles.stream(
           { x: 0.1, y: 1.0, z: 3.5 },
           { x: 0.0, y: 1.2, z: 0.3 },
           20, 0xfffde8, 0.35
         );
-        setTimeout(() => {
-          this.scene.enemyHurtAnim();
+        if (!skipImpact) setTimeout(() => {
+          this.scene.enemyHurtAnim(ti);
           this.scene.shake(crit ? 0.7 : 0.35);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 30 : 18, 0xfffde8, 2.5, 0.7);
           this.particles.burst({ x: 0, y: 1.0, z: 0 }, 8, 0xccccaa, 1.5, 0.5);
           if (crit) this.scene.flash(0xffffee, 0.1);
         }, 350);
         return 1400;
       }
-
       case 'cite_precedent': {
-        // Golden law energy condenses overhead, then SLAMS down with authority
-        this.scene.playerAbilityLunge(0.4);
+        this.scene.playerAbilityLunge(0.4, allyIndex);
         this.scene.flash(0xddaa00, 0.08);
         this.particles.burst({ x: 0,    y: 2.8, z: 0 }, 15, 0xffdd44, 0.8, 0.55);
         this.particles.burst({ x: 0.3,  y: 2.5, z: 0 }, 10, 0xddaa00, 0.6, 0.45);
-        setTimeout(() => {
+        if (!skipImpact) setTimeout(() => {
           this.scene.flash(0xffdd00, 0.2);
           this.scene.shake(crit ? 1.0 : 0.7);
-          this.scene.enemyHurtAnim();
+          this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.5, z: 0 }, crit ? 35 : 25, 0xffd700, 3.5, 1.0);
           this.particles.burst({ x: 0, y: 0.3, z: 0 }, 12, 0xaa8800, 2.0, 0.6);
         }, 500);
         return 1600;
       }
-
       case 'per_my_last_email': {
-        // Three escalating waves of corporate fury — the most devastating phrase known to man
-        this.scene.playerAbilityLunge(0.8);
+        this.scene.playerAbilityLunge(0.8, allyIndex);
         this.hud.showMessage('Per My Last Email...');
         this.scene.flash(0x660000, 0.15);
         this.particles.burst({ x: 0, y: 1.8, z: 1.5 }, 20, 0xff2200, 3, 0.55);
@@ -456,30 +1198,29 @@ export class CombatState {
           this.scene.shake(0.6);
           this.particles.burst({ x: 0, y: 1.5, z: 0.8 }, 30, 0xff4400, 4, 0.75);
         }, 250);
-        setTimeout(() => {
+        if (!skipImpact) setTimeout(() => {
           this.scene.flash(0xff0000, 0.3);
           this.scene.shake(crit ? 1.5 : 1.2);
-          this.scene.enemyHurtAnim();
+          this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 50 : 40, 0xff0000, 5,   1.2);
           this.particles.burst({ x: 0, y: 1.4, z: 0 }, 20,             0xff8800, 4,   0.9);
           this.particles.burst({ x: 0, y: 1.0, z: 0 }, 15,             0xffff00, 3,   0.7);
         }, 500);
         return 1800;
       }
-
       case 'cc_all': {
-        // Passive-aggressive email blast — three expanding rings of corporate blue
-        this.scene.playerAbilityLunge(0.5);
+        this.scene.playerAbilityLunge(0.5, allyIndex);
         this.hud.showMessage('CC All! Everyone is now involved.');
         this.scene.flash(0x2244aa, 0.10);
         this.particles.ring({ x: 0, y: 1.0, z: 0 }, 28, 0x4488ff, 3.5, 1.0);
-        setTimeout(() => {
+        // Note: AoE — caller (skipImpact=true) handles per-target hurt anims
+        if (!skipImpact) setTimeout(() => {
           this.scene.shake(crit ? 0.7 : 0.4);
-          this.scene.enemyHurtAnim();
+          this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.ring({ x: 0, y: 1.3, z: 0 }, 24, 0x2266dd, 4.5, 0.85);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 25 : 15, 0x88aaff, 3, 0.8);
         }, 300);
@@ -488,11 +1229,9 @@ export class CombatState {
         }, 500);
         return 1600;
       }
-
       case 'coffee_break': {
-        // Warm coffee steam rises from the player's side — soothing, healing
         AudioManager.playSfx('heal');
-        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+        this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', allyIndex);
         this.hud.showMessage(`${result.abilityName}!`);
         this.scene.flash(0x7a4522, 0.08);
         this.particles.rise({ x:  0.0, y: 0.4, z: 4.0 }, 18, 0xaa7744, 1.8);
@@ -503,9 +1242,7 @@ export class CombatState {
         }, 300);
         return 1200;
       }
-
       case 'billable_hours': {
-        // Golden orbital aura spins into existence, then coin shower explodes outward
         AudioManager.playSfx('confirm');
         this.hud.showMessage(`${result.abilityName}! Stats buffed for ${result.duration} turns!`);
         this.scene.flash(0xddaa00, 0.12);
@@ -518,9 +1255,7 @@ export class CombatState {
         }, 400);
         return 1400;
       }
-
       case 'fiduciary_shield': {
-        // Blue shield particles orbiting player
         AudioManager.playSfx('confirm');
         this.hud.showMessage(`${result.abilityName}! DEF buffed for ${result.duration} turns!`);
         this.scene.flash(0x2266ff, 0.12);
@@ -531,23 +1266,19 @@ export class CombatState {
         }, 400);
         return 1400;
       }
-
       case 'due_diligence': {
-        // Magnifying glass effect — gold burst on enemy
         AudioManager.playSfx('confirm');
         this.hud.showMessage(`${result.abilityName}! Enemy weakened for ${result.duration} turns!`);
         this.scene.flash(0xddaa00, 0.10);
         this.particles.burst({ x: 0, y: 1.5, z: 0 }, 20, 0xffd700, 3, 1.0);
         setTimeout(() => {
-          this.scene.enemyHurtAnim();
+          this.scene.enemyHurtAnim(ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffee44, 2.5, 0.8);
         }, 300);
         return 1300;
       }
-
       case 'whistleblower': {
-        // Red alert — three escalating flashes + damage
-        this.scene.playerAbilityLunge(0.7);
+        this.scene.playerAbilityLunge(0.7, allyIndex);
         this.hud.showMessage('Whistleblower!');
         this.scene.flash(0xcc0000, 0.12);
         this.particles.burst({ x: 0, y: 1.5, z: 2 }, 15, 0xff2200, 3, 0.6);
@@ -556,22 +1287,20 @@ export class CombatState {
           this.scene.shake(0.5);
           this.particles.burst({ x: 0, y: 1.3, z: 1 }, 20, 0xff4400, 3.5, 0.8);
         }, 250);
-        setTimeout(() => {
+        if (!skipImpact) setTimeout(() => {
           this.scene.flash(0xff2200, 0.25);
           this.scene.shake(crit ? 1.2 : 0.9);
-          this.scene.enemyHurtAnim();
+          this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 40 : 30, 0xff0000, 4, 1.0);
         }, 500);
         return 1600;
       }
-
       case 'power_of_attorney': {
-        // Green healing aura, large heal number
         AudioManager.playSfx('heal');
         this.hud.showMessage(`${result.abilityName}!`);
-        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+        this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', allyIndex);
         this.scene.flash(0x22aa44, 0.15);
         this.particles.burst({ x: 0, y: 0.5, z: 4 }, 25, 0x44ff88, 3, 1.2);
         this.particles.rise({ x: 0, y: 0.3, z: 4 }, 20, 0x88ffaa, 2.0);
@@ -580,36 +1309,22 @@ export class CombatState {
         }, 400);
         return 1400;
       }
-
       case 'root_access': {
-        // Green matrix-style particles streaming to enemy
-        this.scene.playerAbilityLunge(0.6);
+        this.scene.playerAbilityLunge(0.6, allyIndex);
         this.hud.showMessage('Root Access!');
-        this.particles.stream(
-          { x: 0.1, y: 1.0, z: 3.5 },
-          { x: 0, y: 1.2, z: 0.3 },
-          25, 0x00ff44, 0.4
-        );
-        this.particles.stream(
-          { x: -0.1, y: 1.3, z: 3.5 },
-          { x: 0, y: 1.0, z: 0.2 },
-          15, 0x44ff88, 0.35
-        );
-        setTimeout(() => {
-          this.scene.enemyHurtAnim();
+        this.particles.stream({ x: 0.1, y: 1.0, z: 3.5 }, { x: 0, y: 1.2, z: 0.3 }, 25, 0x00ff44, 0.4);
+        this.particles.stream({ x: -0.1, y: 1.3, z: 3.5 }, { x: 0, y: 1.0, z: 0.2 }, 15, 0x44ff88, 0.35);
+        if (!skipImpact) setTimeout(() => {
+          this.scene.enemyHurtAnim(ti);
           this.scene.shake(crit ? 0.9 : 0.5);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 35 : 22, 0x00ff44, 3.5, 1.0);
-          if (result.strippedBuffs) {
-            this.hud.showMessage('All enemy buffs stripped!');
-          }
+          if (result.strippedBuffs) this.hud.showMessage('All enemy buffs stripped!');
         }, 400);
         return 1500;
       }
-
       case 'firewall': {
-        // Blue shield wall effect
         AudioManager.playSfx('confirm');
         this.hud.showMessage('Firewall active! Next enemy action will be blocked.');
         this.scene.flash(0x2244aa, 0.15);
@@ -617,9 +1332,7 @@ export class CombatState {
         this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 14, 0x88aaff, 1.0, 1.4);
         return 1300;
       }
-
       case 'temporal_audit': {
-        // Purple time-warp effect
         AudioManager.playSfx('confirm');
         this.hud.showMessage('Temporal Audit! You get another action!');
         this.scene.flash(0x8844cc, 0.15);
@@ -627,168 +1340,83 @@ export class CombatState {
         this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 16, 0xcc88ff, 1.2, 1.5);
         return 1200;
       }
-
       case 'notarized_strike': {
-        // Gold stamp effect — heavy impact
-        this.scene.playerAbilityLunge(0.7);
+        this.scene.playerAbilityLunge(0.7, allyIndex);
         this.hud.showMessage('Notarized Strike!');
         this.scene.flash(0xddaa00, 0.10);
         this.particles.burst({ x: 0, y: 2.5, z: 0 }, 12, 0xffd700, 1.0, 0.5);
-        setTimeout(() => {
+        if (!skipImpact) setTimeout(() => {
           this.scene.flash(0xffdd00, 0.25);
           this.scene.shake(crit ? 1.2 : 0.8);
-          this.scene.enemyHurtAnim();
+          this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 35 : 25, 0xffd700, 4, 1.0);
           this.particles.burst({ x: 0, y: 0.5, z: 0 }, 10, 0xaa8800, 2, 0.6);
         }, 400);
         return 1500;
       }
-
       case 'invoke_charter': {
-        // White/gold holy light from above
-        this.scene.playerAbilityLunge(0.9);
+        this.scene.playerAbilityLunge(0.9, allyIndex);
         this.hud.showMessage('Invoke Charter!');
         this.scene.flash(0xffffff, 0.15);
         this.particles.burst({ x: 0, y: 3.0, z: 0 }, 20, 0xffffff, 1.5, 0.6);
         this.particles.burst({ x: 0, y: 2.8, z: 0 }, 15, 0xffd700, 1.2, 0.5);
-        setTimeout(() => {
+        if (!skipImpact) setTimeout(() => {
           this.scene.flash(0xffffcc, 0.30);
           this.scene.shake(crit ? 1.5 : 1.0);
-          this.scene.enemyHurtAnim();
+          this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
+          this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.5, z: 0 }, crit ? 45 : 35, 0xffffff, 5, 1.2);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, 20, 0xffd700, 4, 1.0);
         }, 500);
         return 1700;
       }
-
       default: {
-        this.scene.enemyHurtAnim();
-        this.scene.shake(crit ? 0.8 : 0.3);
-        AudioManager.playSfx(crit ? 'critical' : 'hit');
-        if (result.damage) {
-          this._spawnDamageNumber(result.damage, crit ? 'critical' : 'damage', 'enemy');
-          this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
-          if (result.effective === 'super') {
-            setTimeout(() => this.hud.showMessage('WEAKNESS! +50% damage!'), 300);
-          } else if (result.effective === 'resist') {
-            setTimeout(() => this.hud.showMessage('Resisted... -30% damage.'), 300);
+        if (!skipImpact) {
+          this.scene.enemyHurtAnim(ti);
+          this.scene.shake(crit ? 0.8 : 0.3);
+          AudioManager.playSfx(crit ? 'critical' : 'hit');
+          if (result.damage) {
+            this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
+            this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
+            if (result.effective === 'super') setTimeout(() => this.hud.showMessage('WEAKNESS! +50% damage!'), 300);
+            else if (result.effective === 'resist') setTimeout(() => this.hud.showMessage('Resisted... -30% damage.'), 300);
+            if (result.combo) setTimeout(() => this.hud.showMessage('FOLLOW THROUGH! +25% damage!'), result.effective ? 600 : 300);
           }
-          if (result.combo) {
-            setTimeout(() => this.hud.showMessage('FOLLOW THROUGH! +25% damage!'), result.effective ? 600 : 300);
+          if (result.healAmount) {
+            this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', this._activeAllyIndex);
+            this.particles.burst({ x: 0, y: 1, z: 4 }, 10, 0x44ff44, 2, 1.0);
           }
-        }
-        if (result.healAmount) {
-          this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
-          this.particles.burst({ x: 0, y: 1, z: 4 }, 10, 0x44ff44, 2, 1.0);
         }
         return 1200;
       }
     }
   }
 
-  _startEnemyTurn() {
-    this.phase = 'enemy_turn';
-    this.inputEnabled = false;
-    this.hud.disableInput();
-
-    const effects = this.engine.processTurnStart('enemy');
-    if (effects.length > 0) {
-      this._showEffects(effects, () => {
-        if (this.engine.isOver) {
-          this._handleResult();
-          return;
-        }
-        this._runEnemyTurn();
-      }, 'enemy');
-      return;
-    }
-
-    this._runEnemyTurn();
-  }
-
-  _runEnemyTurn() {
-    setTimeout(() => {
-      const result = this.engine.enemyTurn();
-      if (!result) return;
-
-      if (result.type === 'blocked') {
-        this.hud.showMessage(result.message);
-        AudioManager.playSfx('confirm');
-        this.particles.burst({ x: 0, y: 1, z: 4 }, 15, 0x4488ff, 3, 0.8);
-        this._updateHUD();
-        setTimeout(() => {
-          this.engine.turn = 'player';
-          this._startPlayerTurn();
-        }, 1500);
-        return;
-      }
-
-      if (result.message) {
-        this.hud.showMessage(result.message);
-      }
-
-      if (result.damage) {
-        this.scene.enemyAttackAnim();
-        setTimeout(() => {
-          this.scene.shake(result.critical ? 0.8 : 0.4);
-          if (result.braced) {
-            this.scene.flash(0x4488ff, 0.15);
-            this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0x4488ff, 3, 0.9);
-            this.hud.showMessage('BRACED! Damage halved! Retaliate available!');
-            setTimeout(() => this._fireTaunt('brace_success'), 400);
-            AchievementManager.check(this.player, { event: 'brace_success' });
-          } else {
-            this.scene.flash(0xff0000, 0.1);
-            this.particles.burst({ x: 0, y: 1, z: 4 }, 12, 0xff0000, 2, 0.6);
-            if (result.critical) setTimeout(() => this._fireTaunt('enemy_crit'), 400);
-          }
-          AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
-          this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'player');
-          this._updateHUD();
-          if (this.engine.posterJustTriggered) {
-            this.engine.posterJustTriggered = false;
-            setTimeout(() => {
-              this.scene.flash(0xffdd00, 0.4);
-              this.particles.burst({ x: 0, y: 1.2, z: 4 }, 25, 0xffdd00, 3, 1.0);
-              this.hud.showMessage('HANG IN THERE! Survived at 1 HP!');
-            }, 300);
-          }
-        }, 200);
-      } else if (result.healAmount) {
-        AudioManager.playSfx('heal');
-        this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'enemy');
-        this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44ff44, 2, 1.0);
-      }
-
-      this._updateHUD();
-      setTimeout(() => {
-        if (this.engine.isOver) {
-          this._handleResult();
-        } else {
-          this.engine.turn = 'player';
-          this._startPlayerTurn();
-        }
-      }, 2000);
-    }, 500);
-  }
-
+  // ── Result handling ──────────────────────────────────────────────────
   _handleResult() {
     this.phase = 'result';
     this.inputEnabled = false;
 
     if (this.engine.result === 'victory') {
       AudioManager.playSfx('victory');
-      this.scene.enemyDefeatAnim();
+      // Defeat anim for any enemies still in scene at hp 0
+      this.engine.enemies.forEach((e, i) => { if (e.hp <= 0) this.scene.enemyDefeatAnim(i); });
 
       const xp = this.engine.getXPReward();
       setTimeout(() => {
         this.hud.showMessage(`Victory! +${xp} XP`);
         this.player.stats.hp = this.player.stats.maxHP;
         this.player.stats.mp = this.player.stats.maxMP;
+        // Restore allies to full after victory (matches Andrew's restoration). Persisted to allyState.
+        for (let i = 1; i < this.engine.allies.length; i++) {
+          const ally = this.engine.allies[i];
+          if (!ally.allyId || !this.player.allyState[ally.allyId]) continue;
+          this.player.allyState[ally.allyId].hp = ally.maxHP;
+          this.player.allyState[ally.allyId].mp = ally.maxMP;
+        }
         const levels = this.player.gainXP(xp);
         if (levels.length > 0) {
           AchievementManager.check(this.player, { event: 'level_up' });
@@ -801,7 +1429,6 @@ export class CombatState {
       }, 1000);
     } else if (this.engine.result === 'defeat') {
       AudioManager.playSfx('defeat');
-      // Don't count the scripted first-Karen one-shot as a real defeat
       const scriptedKarenLoss = this.enemyId === 'karen' && !this.player.getFlag('retry_karen');
       if (!scriptedKarenLoss) this.player.deaths = (this.player.deaths || 0) + 1;
       this.hud.showMessage('Your patience has run out...');
@@ -814,26 +1441,48 @@ export class CombatState {
     this.stateManager.pop();
   }
 
-  _updateHUD() {
+  // ── HUD refresh helpers ──────────────────────────────────────────────
+  _refreshHUD() {
+    const ally = this.engine.allies[this._activeAllyIndex] || this.engine.allies[0];
     this.hud.updatePlayerStats({
-      ...this.player.stats,
-      hp: this.engine.player.hp,
-      mp: this.engine.player.mp,
-      maxHP: this.engine.player.maxHP,
-      maxMP: this.engine.player.maxMP,
+      ...(this._activeAllyIndex === 0 ? this.player.stats : {}),
+      hp: ally.hp,
+      mp: ally.mp,
+      maxHP: ally.maxHP,
+      maxMP: ally.maxMP,
       momentum: this.engine.player.momentum,
-      name: 'Andrew',
-      _xpTable: XP_TABLE,
+      name: ally.name,
+      isPlayer: this._activeAllyIndex === 0,
+      _xpTable: this._activeAllyIndex === 0 ? XP_TABLE : null,
     });
-    this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
-    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy.buffs);
+    this.hud.updateAllEnemies(this.engine.enemies);
+    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy?.buffs || []);
+    this.hud.refreshPartyRow(this._buildPartyView());
   }
 
-  _spawnDamageNumber(text, type, target = 'enemy') {
+  _spawnDamageNumberAtEnemy(text, type, enemyIndex) {
     const cx = window.innerWidth / 2;
-    const baseY = target === 'enemy' ? window.innerHeight * 0.35 : window.innerHeight * 0.65;
-    const offsetX = (Math.random() - 0.5) * 60;
-    this.floatingText.spawn(String(text), cx + offsetX, baseY, type);
+    // Spread enemy damage numbers horizontally based on enemy index relative to center
+    const count = this.engine.enemies.length;
+    const offset = count > 1 ? ((enemyIndex - (count - 1) / 2) * 160) : 0;
+    const baseY = window.innerHeight * 0.35;
+    const jitter = (Math.random() - 0.5) * 40;
+    this.floatingText.spawn(String(text), cx + offset + jitter, baseY, type);
+  }
+
+  _spawnDamageNumberForAlly(text, type, allyIndex) {
+    const cx = window.innerWidth / 2;
+    const count = this.engine.allies.length;
+    const offset = count > 1 ? ((allyIndex - 0) * 120 + 100) : 0;
+    const baseY = window.innerHeight * 0.65;
+    const jitter = (Math.random() - 0.5) * 30;
+    this.floatingText.spawn(String(text), cx + offset + jitter, baseY, type);
+  }
+
+  // Legacy entrypoint preserved for code that calls _spawnDamageNumber('text','type','enemy'|'player')
+  _spawnDamageNumber(text, type, target = 'enemy') {
+    if (target === 'enemy') this._spawnDamageNumberAtEnemy(text, type, this.engine.targetEnemyIndex);
+    else this._spawnDamageNumberForAlly(text, type, this._activeAllyIndex);
   }
 
   _showEffects(effects, callback, target = 'player') {
@@ -842,7 +1491,8 @@ export class CombatState {
       setTimeout(() => {
         if (effect.type === 'dot') {
           this.scene.flash(0x880088, 0.1);
-          this._spawnDamageNumber(effect.damage, 'damage', target);
+          if (target === 'player') this._spawnDamageNumberForAlly(effect.damage, 'damage', this._activeAllyIndex);
+          else this._spawnDamageNumberAtEnemy(effect.damage, 'damage', 0);
           this.hud.showMessage(`${effect.name}: ${effect.damage} damage!`);
         } else if (effect.type === 'buff_expire') {
           this.hud.showMessage(`${effect.name} wore off!`);
@@ -855,13 +1505,14 @@ export class CombatState {
         } else if (effect.type === 'status_expire') {
           this.hud.showMessage(effect.message);
         }
-        this._updateHUD();
+        this._refreshHUD();
       }, delay);
       delay += 800;
     }
     setTimeout(callback, delay + 300);
   }
 
+  // ── Brace / Retaliate / Power / Press / Gamble / Second Wind ─────────
   _executeBrace() {
     this._showBraceMiniGame((quality) => {
       const result = this.engine.playerBrace(quality);
@@ -882,8 +1533,8 @@ export class CombatState {
       if (quality !== 'miss') this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 12, 0x88aaff, 1.0, 1.2);
       if (quality === 'perfect') AchievementManager.check(this.player, { event: 'perfect_brace' });
 
-      this._updateHUD();
-      setTimeout(() => this._startEnemyTurn(), 1200);
+      this._refreshHUD();
+      setTimeout(() => this._processNextAllyTurn(), 1200);
     });
   }
 
@@ -943,8 +1594,8 @@ export class CombatState {
     });
   }
 
-  _executePowerMove() {
-    const result = this.engine.playerPowerMove();
+  _executePowerMove(targetIndex) {
+    const result = this.engine.playerPowerMove(targetIndex);
     if (!result) return;
 
     this.phase = 'animating';
@@ -961,51 +1612,45 @@ export class CombatState {
     setTimeout(() => {
       this.scene.flash(0xffffff, 0.3);
       this.scene.shake(1.5);
-      this.scene.enemyHurtAnim();
-      this.scene.playerAbilityLunge(1.0);
+      this.scene.enemyHurtAnim(result.targetIndex ?? 0);
+      this.scene.playerAbilityLunge(1.0, this._activeAllyIndex);
       AudioManager.playSfx('critical');
-      this._spawnDamageNumber(result.damage, 'critical', 'enemy');
+      this._spawnDamageNumberAtEnemy(result.damage, 'critical', result.targetIndex ?? 0);
       this.particles.burst({ x: 0, y: 1.2, z: 0 }, 50, 0xffd700, 6, 1.5);
       this.particles.burst({ x: 0, y: 1.5, z: 0 }, 25, 0xffffff, 5, 1.2);
     }, 400);
 
-    this._updateHUD();
+    this._refreshHUD();
     setTimeout(() => {
-      if (this.engine.isOver) {
-        this._handleResult();
-      } else {
-        this._startEnemyTurn();
-      }
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextAllyTurn();
     }, 2000);
   }
 
-  _executePressAdvantage() {
-    const result = this.engine.playerPressAdvantage();
+  _executePressAdvantage(targetIndex) {
+    const result = this.engine.playerPressAdvantage(targetIndex);
     if (!result) return;
 
     this.phase = 'animating';
     this.hud.disableInput();
     this.hud.showMessage('Press Advantage! Enemy DEF lowered!');
-    this.scene.playerAbilityLunge(0.6);
+    this.scene.playerAbilityLunge(0.6, this._activeAllyIndex);
     this.scene.flash(0x8844ff, 0.10);
     this.particles.stream({ x: 0.1, y: 1.0, z: 3.5 }, { x: 0, y: 1.2, z: 0.3 }, 18, 0xaa66ff, 0.30);
     setTimeout(() => {
-      this.scene.enemyHurtAnim();
+      this.scene.enemyHurtAnim(result.targetIndex ?? 0);
       this.scene.shake(result.critical ? 0.7 : 0.4);
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
-      this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+      this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', result.targetIndex ?? 0);
       this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 25 : 15, 0xaa66ff, 3, 0.9);
     }, 300);
 
     if (result.critical) this._fireTaunt('crit');
     this._checkPhaseChange();
-    this._updateHUD();
+    this._refreshHUD();
     setTimeout(() => {
-      if (this.engine.isOver) {
-        this._handleResult();
-      } else {
-        this._startEnemyTurn();
-      }
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextAllyTurn();
     }, 1400);
   }
 
@@ -1020,24 +1665,21 @@ export class CombatState {
     this.hud.showMessage(msg);
     AchievementManager.check(this.player, { event: 'second_wind_used' });
     AudioManager.playSfx('heal');
-    this._spawnDamageNumber(`+${result.healAmount}`, 'heal', 'player');
+    this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', 0);
     this.scene.flash(0x44aaff, 0.12);
     this.particles.burst({ x: 0, y: 1.0, z: 4 }, 18, 0x44aaff, 2.5, 1.0);
     this.particles.rise({ x: 0, y: 0.5, z: 4 }, 12, 0x88ccff, 1.8);
 
-    this._updateHUD();
+    this._refreshHUD();
     setTimeout(() => {
-      if (this.engine.isOver) {
-        this._handleResult();
-      } else {
-        this._startEnemyTurn();
-      }
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextAllyTurn();
     }, 1400);
   }
 
-  _executeRetaliate() {
+  _executeRetaliate(targetIndex) {
     this._showRetaliateQTE((multiplier) => {
-      const result = this.engine.playerRetaliate(multiplier);
+      const result = this.engine.playerRetaliate(multiplier, targetIndex);
       if (!result) return;
 
       this.phase = 'animating';
@@ -1046,25 +1688,22 @@ export class CombatState {
       this.hud.showMessage(msg);
       this._fireTaunt('retaliate');
       AchievementManager.check(this.player, { event: 'retaliate_used' });
-      this.scene.playerAttackAnim();
+      this.scene.playerAttackAnim(this._activeAllyIndex);
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
       this.particles.stream({ x: 0.1, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 16, 0x44ffaa, 0.25);
       setTimeout(() => {
-        this.scene.enemyHurtAnim();
+        this.scene.enemyHurtAnim(result.targetIndex ?? 0);
         this.scene.shake(result.critical ? 0.8 : 0.4);
         this.scene.flash(0x44ffaa, 0.12);
-        this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+        this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', result.targetIndex ?? 0);
         this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 28 : 18, 0x44ffaa, 3, 0.9);
       }, 200);
 
       this._checkPhaseChange();
-      this._updateHUD();
+      this._refreshHUD();
       setTimeout(() => {
-        if (this.engine.isOver) {
-          this._handleResult();
-        } else {
-          this._startEnemyTurn();
-        }
+        if (this.engine.isOver) this._handleResult();
+        else this._processNextAllyTurn();
       }, 1300);
     });
   }
@@ -1078,7 +1717,6 @@ export class CombatState {
       { len: 6, label: '6 Keys',  desc: '1.5× base — maximum damage', color: '#ff4466' },
     ];
 
-    // Step 1: length selection screen
     const selOverlay = document.createElement('div');
     selOverlay.className = 'minigame-overlay';
     selOverlay.innerHTML = `
@@ -1096,22 +1734,16 @@ export class CombatState {
 
     let selIdx = 0;
     const optEls = selOverlay.querySelectorAll('.gamble-option');
-
-    const updateSel = () => {
-      optEls.forEach((el, i) => el.classList.toggle('selected', i === selIdx));
-    };
-
+    const updateSel = () => optEls.forEach((el, i) => el.classList.toggle('selected', i === selIdx));
     const confirmSelection = () => {
       document.removeEventListener('keydown', selHandler);
       const chosenLen = LENGTH_OPTIONS[selIdx].len;
       selOverlay.remove();
       this._runRetaliateSequence(chosenLen, BASE_MULTIPLIERS[chosenLen], onComplete);
     };
-
     optEls.forEach((el, i) => {
       el.addEventListener('click', () => { selIdx = i; updateSel(); confirmSelection(); });
     });
-
     const selHandler = (e) => {
       if (e.code === 'ArrowUp'   || e.code === 'KeyW') { selIdx = Math.max(0, selIdx - 1); updateSel(); e.preventDefault(); }
       if (e.code === 'ArrowDown' || e.code === 'KeyS') { selIdx = Math.min(LENGTH_OPTIONS.length - 1, selIdx + 1); updateSel(); e.preventDefault(); }
@@ -1146,8 +1778,6 @@ export class CombatState {
 
     const keyEls = overlay.querySelectorAll('.qte-key');
     let inputIndex = 0, correct = 0, inputPhase = false, keyHandler, inputTimeout;
-
-    // Memorize window scales slightly with length
     const memorizeMs = 1200 + seqLen * 150;
 
     setTimeout(() => {
@@ -1169,7 +1799,6 @@ export class CombatState {
         const validCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyF', 'KeyW', 'KeyA', 'KeyS', 'KeyD'];
         if (!validCodes.includes(e.code)) return;
         e.preventDefault();
-
         const pressedCode = WASD_TO_ARROW[e.code] || e.code;
         const el = keyEls[inputIndex];
         if (pressedCode === sequence[inputIndex].code) {
@@ -1181,7 +1810,6 @@ export class CombatState {
           el.classList.add('wrong');
         }
         inputIndex++;
-
         if (inputIndex >= sequence.length) {
           clearTimeout(inputTimeout);
           document.removeEventListener('keydown', keyHandler);
@@ -1198,7 +1826,6 @@ export class CombatState {
       { risk: 'risky',  label: 'Risky Move', desc: '60% chance of 1.5× damage — or 0.5× on fail', color: '#ffaa44' },
       { risk: 'all_in', label: 'All-In',     desc: '30% chance of 2.5× damage — or nothing', color: '#ff4466' },
     ];
-
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay';
     overlay.innerHTML = `
@@ -1216,33 +1843,32 @@ export class CombatState {
 
     let sel = 0;
     const optEls = overlay.querySelectorAll('.gamble-option');
-
-    const updateSel = () => {
-      optEls.forEach((el, i) => el.classList.toggle('selected', i === sel));
-    };
-
+    const updateSel = () => optEls.forEach((el, i) => el.classList.toggle('selected', i === sel));
     const resolve = (risk) => {
       document.removeEventListener('keydown', keyHandler);
       overlay.remove();
       this.inputEnabled = false;
-      this._executeDesperateGamble(risk);
+      // For desperate gamble, target the lowest-HP alive enemy (most likely to finish)
+      const alive = this.engine.aliveEnemies();
+      const target = alive.length > 0 ? this.engine.enemies.indexOf(alive.slice().sort((a, b) => a.hp - b.hp)[0]) : 0;
+      this._executeDesperateGamble(risk, target);
     };
-
-    optEls.forEach((el) => {
-      el.addEventListener('click', () => resolve(el.dataset.risk));
-    });
-
+    optEls.forEach((el) => el.addEventListener('click', () => resolve(el.dataset.risk)));
     const keyHandler = (e) => {
       if (e.code === 'ArrowUp')   { sel = Math.max(0, sel - 1); updateSel(); e.preventDefault(); }
       if (e.code === 'ArrowDown') { sel = Math.min(options.length - 1, sel + 1); updateSel(); e.preventDefault(); }
       if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') { e.preventDefault(); resolve(options[sel].risk); }
-      if (e.code === 'Escape') { document.removeEventListener('keydown', keyHandler); overlay.remove(); this._startPlayerTurn(); }
+      if (e.code === 'Escape') {
+        document.removeEventListener('keydown', keyHandler);
+        overlay.remove();
+        this._enablePlayerInput();
+      }
     };
     document.addEventListener('keydown', keyHandler);
   }
 
-  _executeDesperateGamble(risk) {
-    const result = this.engine.playerDesperateGamble(risk);
+  _executeDesperateGamble(risk, targetIndex) {
+    const result = this.engine.playerDesperateGamble(risk, targetIndex);
     if (!result) return;
 
     this.phase = 'animating';
@@ -1256,25 +1882,22 @@ export class CombatState {
     } else {
       const label = risk === 'all_in' ? 'ALL IN pays off!' : risk === 'risky' ? (result.success ? 'Risky move pays off!' : 'Risky move backfires!') : 'Safe bet lands!';
       this.hud.showMessage(label);
-      this.scene.playerAttackAnim();
+      this.scene.playerAttackAnim(this._activeAllyIndex);
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
       setTimeout(() => {
-        this.scene.enemyHurtAnim();
+        this.scene.enemyHurtAnim(result.targetIndex ?? 0);
         this.scene.shake(result.critical ? 1.0 : 0.4);
         this.scene.flash(result.critical ? 0xffd700 : 0xff4466, 0.15);
-        this._spawnDamageNumber(result.damage, result.critical ? 'critical' : 'damage', 'enemy');
+        this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', result.targetIndex ?? 0);
         this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 35 : 18, 0xff4466, 3, 0.9);
       }, 200);
     }
 
     this._checkPhaseChange();
-    this._updateHUD();
+    this._refreshHUD();
     setTimeout(() => {
-      if (this.engine.isOver) {
-        this._handleResult();
-      } else {
-        this._startEnemyTurn();
-      }
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextAllyTurn();
     }, 1400);
   }
 
@@ -1290,7 +1913,6 @@ export class CombatState {
         this.hud.showMessage(phaseMsg);
         this.scene.flash(0xff4400, 0.20);
         this.particles.burst({ x: 0, y: 1.5, z: 0 }, 25, 0xff4400, 4, 1.0);
-        // Trigger enemy taunt
         const taunt = this._pickTaunt('enemy');
         if (taunt) setTimeout(() => this.hud.showTaunt(taunt, 'enemy'), 600);
       }, 500);
@@ -1301,10 +1923,7 @@ export class CombatState {
     if (!ANDREW_TAUNTS[type]) return;
     const lines = ANDREW_TAUNTS[type];
     const line = lines[Math.floor(Math.random() * lines.length)];
-    // 60% chance to show taunt — not too spammy
-    if (Math.random() < 0.6) {
-      setTimeout(() => this.hud.showTaunt(line, 'player'), 300);
-    }
+    if (Math.random() < 0.6) setTimeout(() => this.hud.showTaunt(line, 'player'), 300);
   }
 
   _pickTaunt(side) {
@@ -1314,22 +1933,22 @@ export class CombatState {
     return taunts[Math.floor(Math.random() * taunts.length)];
   }
 
-  _getTelegraphHint(abilityId) {
+  _getTelegraphHint(abilityId, enemy = null) {
     if (!abilityId) return '';
     const ability = ENEMY_ABILITIES[abilityId];
-    const name = this.engine.enemy.name;
+    const name = enemy?.name || this.engine.enemy?.name || 'Enemy';
     if (!ability) return `${name} is making a move...`;
     switch (ability.type) {
-      case 'attack': return `${name} is preparing to attack!`;
-      case 'dot': return `${name} is winding up a lingering attack!`;
-      case 'heal': return `${name} is about to recover!`;
-      case 'debuff': return `${name} is about to weaken you!`;
-      case 'confuse': return `${name} is about to confuse you!`;
-      case 'stun': return `${name} is winding up a stun — consider bracing!`;
-      case 'counter': return `${name} is taking a counter stance — don't use abilities!`;
-      case 'buff': return `${name} is about to power up!`;
-      case 'repeat': return `${name} is repeating their last move!`;
-      default: return `${name} is making a move...`;
+      case 'attack': return `${name}: attack`;
+      case 'dot': return `${name}: lingering`;
+      case 'heal': return `${name}: heal`;
+      case 'debuff': return `${name}: weaken`;
+      case 'confuse': return `${name}: confuse`;
+      case 'stun': return `${name}: stun — brace!`;
+      case 'counter': return `${name}: counter — no abilities!`;
+      case 'buff': return `${name}: power up`;
+      case 'repeat': return `${name}: repeat`;
+      default: return `${name}: ?`;
     }
   }
 
@@ -1343,12 +1962,12 @@ export class CombatState {
     if (this.phase === 'intro') {
       this.animTimer -= dt;
       if (this.animTimer <= 0) {
-        this._startPlayerTurn();
+        this._startRound();
       }
       return;
     }
 
-    if (this.phase === 'player_turn' && this.inputEnabled) {
+    if (this.phase === 'ally_turn' && this.inputEnabled) {
       if (InputManager.isJustPressed('w') || InputManager.isJustPressed('arrowup')) {
         this.hud.navigate('up');
         AudioManager.playSfx('cursor');
@@ -1365,37 +1984,29 @@ export class CombatState {
         this.hud.navigate('right');
         AudioManager.playSfx('cursor');
       }
-      if (InputManager.isConfirmPressed()) {
-        this.hud.selectCurrent();
-      }
+      if (InputManager.isConfirmPressed()) this.hud.selectCurrent();
       if (InputManager.isCancelPressed()) {
         if (this.hud.currentMenu !== 'main') {
           this.hud.showMainMenu();
           AudioManager.playSfx('cancel');
         }
       }
-      if (DEV_MODE && InputManager.isJustPressed('`')) {
-        this._devInstantWin();
-      }
+      if (DEV_MODE && InputManager.isJustPressed('`')) this._devInstantWin();
     }
   }
 
   _devInstantWin() {
     this.inputEnabled = false;
     this.hud.disableInput();
-    this.engine.enemy.hp = 0;
+    for (const e of this.engine.enemies) e.hp = 0;
     this.engine.result = 'victory';
+    this.engine.isOver = true;
     this.hud.showMessage('[DEV] Instant win');
     setTimeout(() => this._handleResult(), 800);
   }
 
-  pause() {
-    this.hud.disableInput();
-  }
-
+  pause() { this.hud.disableInput(); }
   resume() {
-    if (this.phase === 'player_turn') {
-      this.hud.enableInput();
-    }
+    if (this.phase === 'ally_turn') this.hud.enableInput();
   }
 }

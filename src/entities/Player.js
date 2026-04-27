@@ -3,6 +3,7 @@ import { buildCharacter } from './CharacterBuilder.js';
 import { CharacterAnimator } from './CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { PLAYER_BASE_STATS, PLAYER_ABILITIES, XP_TABLE, LEVEL_GROWTH } from '../data/stats.js';
+import { ALLY_STATS } from '../data/allies.js';
 import { STARTING_INVENTORY } from '../data/items.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { PLAYER } from '../utils/constants.js';
@@ -26,6 +27,15 @@ export class Player {
     // Cosmetic equipment: { hat: null, glasses: null, badge: null, accessory: null }
     this.equipped = {};
     for (const slot of COSMETIC_SLOTS) this.equipped[slot] = null;
+    // Party / allies
+    this.party = []; // ordered array of recruited allyIds (e.g., ['janet', 'alex_it'])
+    this.allyState = {}; // { allyId: { hp, mp, unlockedAbilities: [ids] } }
+    // Reasonable Doubt — voice usage profile across the game (see src/data/voices.js)
+    this.voiceCounts = { apprentice: 0, litigator: 0, skeptic: 0, witness: 0 };
+    // Combat preference: 'manual' = player picks each ally's action (BG3-style),
+    // 'auto' = AI runs allies on their turn. Per-fight toggle is also available
+    // via the in-combat HUD; this is the persistent default.
+    this.allyControl = 'manual';
   }
 
   setPosition(x, z) {
@@ -210,6 +220,104 @@ export class Player {
   rest() {
     this.stats.hp = this.stats.maxHP;
     this.stats.mp = this.stats.maxMP;
+    this.restAllies();
+  }
+
+  // ── Party / ally management ──────────────────────────────────────────
+  // Add an ally to the party (idempotent). Initializes their ally state to full HP/MP and starter abilities.
+  addAlly(allyId) {
+    if (!ALLY_STATS[allyId]) return false;
+    if (!this.party.includes(allyId)) this.party.push(allyId);
+    if (!this.allyState[allyId]) {
+      const cfg = ALLY_STATS[allyId];
+      const baseStarters = cfg.starterAbilities || cfg.abilities || [];
+      const stats = this.getAllyEffectiveStats(allyId);
+      this.allyState[allyId] = {
+        hp: stats.maxHP,
+        mp: stats.maxMP,
+        unlockedAbilities: [...baseStarters],
+      };
+    }
+    EventBus.emit('ally-recruited', { allyId });
+    return true;
+  }
+
+  // True if this ally is currently in the party
+  hasAlly(allyId) {
+    return this.party.includes(allyId);
+  }
+
+  // Restore all recruited allies to full HP/MP — called on Player.rest()
+  restAllies() {
+    for (const allyId of this.party) {
+      const stats = this.getAllyEffectiveStats(allyId);
+      if (!this.allyState[allyId]) {
+        this.allyState[allyId] = { hp: stats.maxHP, mp: stats.maxMP, unlockedAbilities: [...(ALLY_STATS[allyId].starterAbilities || ALLY_STATS[allyId].abilities)] };
+      } else {
+        this.allyState[allyId].hp = stats.maxHP;
+        this.allyState[allyId].mp = stats.maxMP;
+      }
+    }
+  }
+
+  // Compute effective ally stats — base stats + LEVEL_GROWTH scaled by Andrew's level.
+  // Allies share Andrew's level so the party scales together.
+  getAllyEffectiveStats(allyId) {
+    const cfg = ALLY_STATS[allyId];
+    if (!cfg) return null;
+    const playerLevel = this._currentLevel();
+    const lvUp = Math.max(0, playerLevel - 1);
+    // Allies grow at 80% of Andrew's growth — keeps them slightly behind in raw stats but useful
+    const f = cfg.growthFactor || 0.8;
+    return {
+      ...cfg,
+      maxHP: cfg.maxHP + Math.floor(LEVEL_GROWTH.maxHP * f * lvUp),
+      maxMP: cfg.maxMP + Math.floor(LEVEL_GROWTH.maxMP * f * lvUp),
+      atk:   cfg.atk   + Math.floor(LEVEL_GROWTH.atk   * f * lvUp),
+      def:   cfg.def   + Math.floor(LEVEL_GROWTH.def   * f * lvUp),
+      spd:   cfg.spd   + Math.floor(LEVEL_GROWTH.spd   * f * lvUp),
+    };
+  }
+
+  _currentLevel() {
+    let lvl = 1;
+    for (let i = 0; i < XP_TABLE.length; i++) {
+      if (this.stats.xp >= XP_TABLE[i]) lvl = i + 2; else break;
+    }
+    return Math.min(15, lvl);
+  }
+
+  // Get a list of unlocked abilities for an ally (returns ability ids)
+  getAllyUnlockedAbilities(allyId) {
+    return [...(this.allyState[allyId]?.unlockedAbilities || [])];
+  }
+
+  // Add an ability to an ally's unlocked set (used by ability menu unlock flow)
+  unlockAllyAbility(allyId, abilityId) {
+    if (!this.allyState[allyId]) return false;
+    const list = this.allyState[allyId].unlockedAbilities;
+    if (!list.includes(abilityId)) list.push(abilityId);
+    return true;
+  }
+
+  // Returns true if the player can unlock this non-starter ally ability right now
+  // (ally is recruited, ability is in pool, not already unlocked, has upgrade points).
+  canUnlockAllyAbility(allyId, abilityId) {
+    const cfg = ALLY_STATS[allyId];
+    if (!cfg) return false;
+    if (!this.allyState[allyId]) return false;
+    if (!cfg.abilities.includes(abilityId)) return false;
+    if (this.allyState[allyId].unlockedAbilities.includes(abilityId)) return false;
+    if (this.upgradePoints < 1) return false;
+    return true;
+  }
+
+  // Spend 1 upgrade point to teach an ally a new ability from their pool.
+  spendPointOnAllyAbility(allyId, abilityId) {
+    if (!this.canUnlockAllyAbility(allyId, abilityId)) return false;
+    this.upgradePoints -= 1;
+    this.unlockAllyAbility(allyId, abilityId);
+    return true;
   }
 
   // Add item to inventory
@@ -260,6 +368,10 @@ export class Player {
       deaths: this.deaths,
       unlockedAbilities: [...this.unlockedAbilities],
       equipped: { ...this.equipped },
+      party: [...this.party],
+      allyState: JSON.parse(JSON.stringify(this.allyState)),
+      voiceCounts: { ...this.voiceCounts },
+      allyControl: this.allyControl,
     };
   }
 
@@ -275,14 +387,48 @@ export class Player {
     this.deaths = data.deaths || 0;
     if (data.stats?.aum !== undefined) this.stats.aum = data.stats.aum;
     this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check']);
-    // Ensure tier-0 starters are always present regardless of save age
     ['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check'].forEach(id => this.unlockedAbilities.add(id));
     if (data.equipped) {
       this.equipped = { ...data.equipped };
-      // Rebuild mesh to show saved cosmetics
       const hasCosmetics = COSMETIC_SLOTS.some(s => this.equipped[s]);
       if (hasCosmetics) this.rebuildMesh();
     }
+    // Party state — rebuild ally state objects (don't trust unknown ally ids)
+    this.party = Array.isArray(data.party) ? data.party.filter(id => ALLY_STATS[id]) : [];
+    this.allyState = {};
+    if (data.allyState && typeof data.allyState === 'object') {
+      for (const [id, st] of Object.entries(data.allyState)) {
+        if (!ALLY_STATS[id]) continue;
+        const stats = this.getAllyEffectiveStats(id);
+        this.allyState[id] = {
+          hp: Math.min(stats.maxHP, st.hp ?? stats.maxHP),
+          mp: Math.min(stats.maxMP, st.mp ?? stats.maxMP),
+          unlockedAbilities: Array.isArray(st.unlockedAbilities)
+            ? st.unlockedAbilities
+            : [...(ALLY_STATS[id].starterAbilities || ALLY_STATS[id].abilities)],
+        };
+      }
+    }
+    // Ensure recruited allies always have state initialized
+    for (const allyId of this.party) {
+      if (!this.allyState[allyId]) {
+        const stats = this.getAllyEffectiveStats(allyId);
+        const cfg = ALLY_STATS[allyId];
+        this.allyState[allyId] = {
+          hp: stats.maxHP, mp: stats.maxMP,
+          unlockedAbilities: [...(cfg.starterAbilities || cfg.abilities)],
+        };
+      }
+    }
+    // Voice profile
+    this.voiceCounts = { apprentice: 0, litigator: 0, skeptic: 0, witness: 0 };
+    if (data.voiceCounts && typeof data.voiceCounts === 'object') {
+      for (const k of Object.keys(this.voiceCounts)) {
+        if (typeof data.voiceCounts[k] === 'number') this.voiceCounts[k] = data.voiceCounts[k];
+      }
+    }
+    // Combat ally-control preference
+    this.allyControl = (data.allyControl === 'auto') ? 'auto' : 'manual';
     this.setPosition(this.position.x, this.position.z);
   }
 }

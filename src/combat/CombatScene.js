@@ -3,29 +3,32 @@ import { buildCharacter } from '../entities/CharacterBuilder.js';
 import { CharacterAnimator } from '../entities/CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 
-// Separate Three.js scene for combat with psychedelic Earthbound-style background
+// Multi-combatant combat scene.
+// Renders 1+ enemies on the left/center stage and 1+ allies on the right.
+// Per-target animations: enemyHurtAnim(idx), enemyAttackAnim(idx), enemyDefeatAnim(idx).
+// Backward-compat: methods without an index default to the primary enemy / Andrew.
+
 export class CombatScene {
   constructor() {
     this.scene = new THREE.Scene();
     this.camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-    this.enemyGroup = null;
-    this.enemyAnimator = null;
+    // Multi-combatant state
+    this.enemyGroups = [];     // [{ group, animator, baseX, baseZ, baseRotY, baseScale, characterId }]
+    this.allyGroups = [];      // same shape as enemyGroups but on player side
+    this.targetMarker = null;  // ring under selected target enemy
     this.bgMesh = null;
     this.time = 0;
     this.shakeAmount = 0;
     this.flashTimer = 0;
     this.flashColor = null;
     this._basePos = { x: 0, y: 1.5, z: 5 };
-
     this._setup();
   }
 
   _setup() {
-    // Camera position
     this.camera.position.set(0, 1.5, 5);
     this.camera.lookAt(0, 0.8, 0);
 
-    // Lighting
     const ambient = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(ambient);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -34,29 +37,30 @@ export class CombatScene {
     const backLight = new THREE.DirectionalLight(0x8888ff, 0.3);
     backLight.position.set(-2, 3, -3);
     this.scene.add(backLight);
-    // Rim light for character silhouette definition
     const rimLight = new THREE.DirectionalLight(0xe94560, 0.4);
     rimLight.position.set(-3, 2, 1);
     this.scene.add(rimLight);
 
-    // Psychedelic scrolling background (shader plane)
     this._createBackground();
 
-    // Ground plane (subtle grid)
-    const groundGeo = new THREE.PlaneGeometry(10, 6);
-    const groundMat = new THREE.MeshBasicMaterial({
-      color: 0x111122,
-      transparent: true,
-      opacity: 0.3,
-    });
+    const groundGeo = new THREE.PlaneGeometry(14, 7);
+    const groundMat = new THREE.MeshBasicMaterial({ color: 0x111122, transparent: true, opacity: 0.3 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.01;
     this.scene.add(ground);
+
+    // Target selector ring (invisible until used)
+    const ringGeo = new THREE.RingGeometry(0.6, 0.85, 32);
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xff4466, transparent: true, opacity: 0.85, side: THREE.DoubleSide });
+    this.targetMarker = new THREE.Mesh(ringGeo, ringMat);
+    this.targetMarker.rotation.x = -Math.PI / 2;
+    this.targetMarker.position.y = 0.02;
+    this.targetMarker.visible = false;
+    this.scene.add(this.targetMarker);
   }
 
   _createBackground() {
-    // Psychedelic shader background inspired by Earthbound
     const bgGeo = new THREE.PlaneGeometry(30, 20);
     const bgMat = new THREE.ShaderMaterial({
       uniforms: {
@@ -80,75 +84,67 @@ export class CombatScene {
         uniform vec3 uColor3;
         uniform vec3 uColor4;
         varying vec2 vUv;
-
         void main() {
           vec2 uv = vUv;
-
-          // Scrolling pattern
           float t = uTime * 0.3;
-
-          // Wavy distortion
           float wave1 = sin(uv.x * 6.0 + t * 2.0) * 0.1;
           float wave2 = sin(uv.y * 4.0 + t * 1.5) * 0.1;
           float wave3 = sin((uv.x + uv.y) * 8.0 + t * 3.0) * 0.05;
           vec2 distorted = uv + vec2(wave1 + wave3, wave2 + wave3);
-
-          // Diamond/checker pattern
           float pattern = sin(distorted.x * 12.0 + t) * sin(distorted.y * 12.0 - t * 0.7);
-
-          // Spiral overlay
           vec2 center = distorted - 0.5;
           float angle = atan(center.y, center.x);
           float dist = length(center);
           float spiral = sin(angle * 3.0 + dist * 10.0 - t * 4.0);
-
-          // Color mixing
           float blend1 = smoothstep(-0.3, 0.3, pattern);
           float blend2 = smoothstep(-0.2, 0.2, spiral);
-
           vec3 color = mix(
             mix(uColor1, uColor2, blend1),
             mix(uColor3, uColor4, blend1),
             blend2
           );
-
-          // Pulsing brightness
           color *= 0.8 + 0.2 * sin(t * 1.5);
-
           gl_FragColor = vec4(color, 1.0);
         }
       `,
       side: THREE.DoubleSide,
     });
-
     this.bgMesh = new THREE.Mesh(bgGeo, bgMat);
     this.bgMesh.position.set(0, 4, -8);
     this.scene.add(this.bgMesh);
   }
 
-  setEnemy(enemyId, player) {
-    // Remove old enemy
-    if (this.enemyGroup) {
-      this.scene.remove(this.enemyGroup);
+  // Set up the combat stage. enemyIds/partyIds are CHARACTER_CONFIGS keys.
+  // partyIds defaults to ['andrew']. player is the Player entity (for cosmetic equipment merge).
+  setCombatants(enemyIds, partyIds, player) {
+    this._clearGroups();
+
+    // Place enemies on the back stage
+    const positions = this._enemyPositions(enemyIds.length);
+    for (let i = 0; i < enemyIds.length; i++) {
+      const id = enemyIds[i];
+      const config = CHARACTER_CONFIGS[id];
+      if (!config) continue;
+      const group = buildCharacter(config, { detailed: true });
+      const animator = new CharacterAnimator(group);
+      const pos = positions[i];
+      const scale = enemyIds.length === 1 ? 2.2 : 1.85;
+      group.position.set(pos.x, 0, pos.z);
+      group.scale.setScalar(scale);
+      group.rotation.y = Math.PI;
+      this.scene.add(group);
+      this.enemyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: Math.PI, baseScale: scale, characterId: id });
     }
 
-    const config = CHARACTER_CONFIGS[enemyId];
-    if (!config) return;
-
-    this.enemyGroup = buildCharacter(config, { detailed: true });
-    this.enemyAnimator = new CharacterAnimator(this.enemyGroup);
-    this.enemyGroup.position.set(0, 0, 0);
-    this.enemyGroup.scale.set(2.2, 2.2, 2.2); // Enemies loom large in combat
-    this.enemyGroup.rotation.y = Math.PI; // Face player
-    this.scene.add(this.enemyGroup);
-
-    // Add player character on right side, facing enemy
-    if (this.playerGroup) this.scene.remove(this.playerGroup);
-    const playerConfig = CHARACTER_CONFIGS['andrew'];
-    if (playerConfig) {
-      // Merge equipped cosmetic visuals into player config for combat
-      const combatConfig = { ...playerConfig };
-      if (player && player.equipped) {
+    // Place party on the front stage
+    const partyPositions = this._allyPositions(partyIds.length);
+    for (let i = 0; i < partyIds.length; i++) {
+      const id = partyIds[i];
+      const config = CHARACTER_CONFIGS[id];
+      if (!config) continue;
+      // Andrew gets cosmetic merge; other allies use base config
+      let combatConfig = { ...config };
+      if (id === 'andrew' && player && player.equipped) {
         const extraAccessories = [...(combatConfig.accessories || [])];
         for (const slot of Object.keys(player.equipped)) {
           const cosId = player.equipped[slot];
@@ -156,13 +152,50 @@ export class CombatScene {
         }
         combatConfig.accessories = extraAccessories;
       }
-      this.playerGroup = buildCharacter(combatConfig, { detailed: true });
-      this.playerAnimator = new CharacterAnimator(this.playerGroup);
-      this.playerGroup.position.set(2.2, 0, 3.5);
-      this.playerGroup.scale.set(1.8, 1.8, 1.8);
-      this.playerGroup.rotation.y = -Math.PI * 0.6; // angled toward enemy
-      this.scene.add(this.playerGroup);
+      const group = buildCharacter(combatConfig, { detailed: true });
+      const animator = new CharacterAnimator(group);
+      const pos = partyPositions[i];
+      group.position.set(pos.x, 0, pos.z);
+      group.scale.setScalar(1.8);
+      group.rotation.y = -Math.PI * 0.6;
+      this.scene.add(group);
+      this.allyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: -Math.PI * 0.6, baseScale: 1.8, characterId: id });
     }
+  }
+
+  // Legacy single-enemy entry point — kept for backward compatibility
+  setEnemy(enemyId, player) {
+    this.setCombatants([enemyId], ['andrew'], player);
+  }
+
+  _enemyPositions(count) {
+    if (count <= 1) return [{ x: 0, z: 0 }];
+    if (count === 2) return [{ x: -1.4, z: -0.2 }, { x: 1.4, z: -0.2 }];
+    if (count === 3) return [{ x: -2.0, z: 0.0 }, { x: 0, z: -0.5 }, { x: 2.0, z: 0.0 }];
+    // Fallback for 4+
+    const out = [];
+    const span = 2.2 * (count - 1);
+    for (let i = 0; i < count; i++) {
+      out.push({ x: -span / 2 + i * 2.2, z: i % 2 === 0 ? 0 : -0.4 });
+    }
+    return out;
+  }
+
+  _allyPositions(count) {
+    if (count <= 1) return [{ x: 2.2, z: 3.5 }];
+    if (count === 2) return [{ x: 1.8, z: 3.4 }, { x: 3.0, z: 4.2 }];
+    if (count === 3) return [{ x: 1.4, z: 3.3 }, { x: 2.6, z: 4.1 }, { x: 3.6, z: 3.5 }];
+    const out = [];
+    for (let i = 0; i < count; i++) out.push({ x: 1.4 + i * 1.0, z: 3.3 + (i % 2) * 0.8 });
+    return out;
+  }
+
+  _clearGroups() {
+    for (const e of this.enemyGroups) this.scene.remove(e.group);
+    for (const a of this.allyGroups) this.scene.remove(a.group);
+    this.enemyGroups = [];
+    this.allyGroups = [];
+    if (this.targetMarker) this.targetMarker.visible = false;
   }
 
   setBackgroundColors(c1, c2, c3, c4) {
@@ -174,84 +207,135 @@ export class CombatScene {
     u.uColor4.value.set(c4);
   }
 
-  shake(intensity = 0.5) {
-    this.shakeAmount = intensity;
-  }
+  shake(intensity = 0.5) { this.shakeAmount = intensity; }
 
   flash(color = 0xffffff, duration = 0.15) {
     this.flashColor = new THREE.Color(color);
     this.flashTimer = duration;
   }
 
-  // Flash the enemy model white (hit effect)
-  flashEnemy(duration = 0.15) {
-    if (!this.enemyGroup) return;
+  // Show/move the target reticle under enemy at the given index
+  setTargetMarker(enemyIndex, visible = true) {
+    if (!this.targetMarker) return;
+    const e = this.enemyGroups[enemyIndex];
+    if (!e || !visible) {
+      this.targetMarker.visible = false;
+      return;
+    }
+    this.targetMarker.position.set(e.baseX, 0.02, e.baseZ);
+    this.targetMarker.visible = true;
+  }
+
+  hideTargetMarker() { if (this.targetMarker) this.targetMarker.visible = false; }
+
+  // ── Per-target animations ────────────────────────────────────────────
+  // Backward-compat: idx default = 0 (the primary enemy).
+  flashEnemy(duration = 0.15, idx = 0) {
+    const entry = this.enemyGroups[idx];
+    if (!entry) return;
     const originalMaterials = [];
     const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
-    this.enemyGroup.traverse(child => {
+    entry.group.traverse(child => {
       if (child.isMesh) {
         originalMaterials.push({ mesh: child, material: child.material });
         child.material = whiteMat;
       }
     });
-
     setTimeout(() => {
-      for (const { mesh, material } of originalMaterials) {
-        mesh.material = material;
-      }
+      for (const { mesh, material } of originalMaterials) mesh.material = material;
     }, duration * 1000);
   }
 
-  // Player attack animation — wind-up, lunge, slash sprites
-  playerAttackAnim() {
-    if (!this.playerGroup) {
+  enemyAttackAnim(idx = 0) {
+    const entry = this.enemyGroups[idx];
+    if (!entry) return;
+    const startZ = entry.baseZ;
+    const startX = entry.baseX;
+    const startRotY = entry.baseRotY;
+    entry.group.position.z = startZ - 0.3;
+    setTimeout(() => {
+      if (!entry.group.parent) return;
+      entry.group.position.z = startZ + 1.5;
+      entry.group.position.x = startX + 0.15;
+      entry.group.rotation.y = startRotY + 0.08;
+      setTimeout(() => {
+        entry.group.position.z = startZ;
+        entry.group.position.x = startX;
+        entry.group.rotation.y = startRotY;
+      }, 180);
+    }, 60);
+  }
+
+  enemyHurtAnim(idx = 0) {
+    const entry = this.enemyGroups[idx];
+    if (!entry) return;
+    this.flashEnemy(0.15, idx);
+    const startX = entry.baseX;
+    entry.group.position.x = startX + 0.2;
+    setTimeout(() => {
+      if (entry.group.parent) entry.group.position.x = startX - 0.15;
+      setTimeout(() => {
+        if (entry.group.parent) entry.group.position.x = startX;
+      }, 100);
+    }, 100);
+  }
+
+  enemyDefeatAnim(idx = 0) {
+    const entry = this.enemyGroups[idx];
+    if (!entry) return;
+    const startY = entry.group.position.y;
+    const startRot = entry.group.rotation.z;
+    const startScale = entry.baseScale;
+    let t = 0;
+    const animate = () => {
+      t += 0.02;
+      if (t > 1 || !entry.group.parent) return;
+      entry.group.position.y = startY - t * 2;
+      entry.group.rotation.z = startRot + t * 1.5;
+      entry.group.scale.setScalar(startScale * (1 - t * 0.5));
+      requestAnimationFrame(animate);
+    };
+    animate();
+  }
+
+  // ── Player / ally animations ─────────────────────────────────────────
+  // allyIndex 0 = Andrew. Defaults preserved for legacy callers.
+  playerAttackAnim(allyIndex = 0) {
+    const entry = this.allyGroups[allyIndex];
+    if (!entry) {
       this.flash(0xffffff, 0.06);
       return;
     }
+    const startX = entry.baseX;
+    const startZ = entry.baseZ;
+    const startRotY = entry.baseRotY;
 
-    const startX = this.playerGroup.position.x;
-    const startZ = this.playerGroup.position.z;
-    const startRotY = this.playerGroup.rotation.y;
-
-    // Phase 1: Wind-up — pull back slightly and rotate
-    this.playerGroup.position.x = startX + 0.3;
-    this.playerGroup.position.z = startZ + 0.2;
-    this.playerGroup.rotation.y = startRotY + 0.15;
+    entry.group.position.x = startX + 0.3;
+    entry.group.position.z = startZ + 0.2;
+    entry.group.rotation.y = startRotY + 0.15;
 
     setTimeout(() => {
-      if (!this.playerGroup) return;
-      // Phase 2: Lunge forward toward enemy
-      this.playerGroup.position.x = startX - 1.4;
-      this.playerGroup.position.z = startZ - 1.8;
-      this.playerGroup.rotation.y = startRotY - 0.1;
-      // Punch-in camera
+      if (!entry.group.parent) return;
+      entry.group.position.x = startX - 1.4;
+      entry.group.position.z = startZ - 1.8;
+      entry.group.rotation.y = startRotY - 0.1;
       const origZ = this._basePos.z;
       this._basePos.z = origZ - 0.6;
 
-      // Phase 3: Snap back
       setTimeout(() => {
-        if (this.playerGroup) {
-          this.playerGroup.position.x = startX;
-          this.playerGroup.position.z = startZ;
-          this.playerGroup.rotation.y = startRotY;
+        if (entry.group.parent) {
+          entry.group.position.x = startX;
+          entry.group.position.z = startZ;
+          entry.group.rotation.y = startRotY;
         }
         this._basePos.z = origZ;
       }, 160);
     }, 80);
 
-    // Flash on impact (delayed to match lunge)
     setTimeout(() => this.flash(0xffffff, 0.06), 80);
 
-    // Helper: create a sprite slash at a given position/size/rotation
     const makeSlash = (x, y, z, color, scaleX, scaleY, rotation) => {
-      const mat = new THREE.SpriteMaterial({
-        color,
-        transparent: true,
-        opacity: 1.0,
-        rotation,
-        depthWrite: false,
-      });
+      const mat = new THREE.SpriteMaterial({ color, transparent: true, opacity: 1.0, rotation, depthWrite: false });
       const sprite = new THREE.Sprite(mat);
       sprite.position.set(x, y, z);
       sprite.scale.set(scaleX, scaleY, 1);
@@ -259,7 +343,6 @@ export class CombatScene {
       return { sprite, mat };
     };
 
-    // Slashes appear on impact (delayed)
     setTimeout(() => {
       const s1 = makeSlash( 0.1, 1.2, 0.3, 0xffffff, 0.6, 0.6,  0.35);
       const s2 = makeSlash(-0.2, 0.9, 0.2, 0xffee88, 0.5, 0.5, -0.25);
@@ -294,94 +377,52 @@ export class CombatScene {
     }, 80);
   }
 
-  // Player lunge helper for special abilities — shorter, no slashes
-  playerAbilityLunge(distance = 0.6) {
-    if (!this.playerGroup) return;
-    const startX = this.playerGroup.position.x;
-    const startZ = this.playerGroup.position.z;
-    this.playerGroup.position.x = startX - distance;
-    this.playerGroup.position.z = startZ - distance * 1.2;
+  playerAbilityLunge(distance = 0.6, allyIndex = 0) {
+    const entry = this.allyGroups[allyIndex];
+    if (!entry) return;
+    const startX = entry.baseX;
+    const startZ = entry.baseZ;
+    entry.group.position.x = startX - distance;
+    entry.group.position.z = startZ - distance * 1.2;
     setTimeout(() => {
-      if (this.playerGroup) {
-        this.playerGroup.position.x = startX;
-        this.playerGroup.position.z = startZ;
+      if (entry.group.parent) {
+        entry.group.position.x = startX;
+        entry.group.position.z = startZ;
       }
     }, 200);
   }
 
-  // Enemy attack animation — wind-up and lunge with rotation
-  enemyAttackAnim() {
-    if (!this.enemyGroup) return;
-    const startZ = this.enemyGroup.position.z;
-    const startX = this.enemyGroup.position.x;
-    const startRotY = this.enemyGroup.rotation.y;
-
-    // Wind-up: pull back
-    this.enemyGroup.position.z = startZ - 0.3;
+  // Ally-side hurt animation (when an enemy hits an ally specifically — falls back to ally 0)
+  allyHurtAnim(allyIndex = 0) {
+    const entry = this.allyGroups[allyIndex];
+    if (!entry) return;
+    const startX = entry.baseX;
+    entry.group.position.x = startX - 0.2;
     setTimeout(() => {
-      if (!this.enemyGroup) return;
-      // Lunge forward
-      this.enemyGroup.position.z = startZ + 1.5;
-      this.enemyGroup.position.x = startX + 0.15;
-      this.enemyGroup.rotation.y = startRotY + 0.08;
+      if (entry.group.parent) entry.group.position.x = startX + 0.15;
       setTimeout(() => {
-        if (this.enemyGroup) {
-          this.enemyGroup.position.z = startZ;
-          this.enemyGroup.position.x = startX;
-          this.enemyGroup.rotation.y = startRotY;
-        }
-      }, 180);
-    }, 60);
-  }
-
-  // Enemy hurt animation (recoil)
-  enemyHurtAnim() {
-    if (!this.enemyGroup) return;
-    this.flashEnemy(0.15);
-    const startX = this.enemyGroup.position.x;
-    this.enemyGroup.position.x = startX + 0.2;
-    setTimeout(() => {
-      if (this.enemyGroup) this.enemyGroup.position.x = startX - 0.15;
-      setTimeout(() => {
-        if (this.enemyGroup) this.enemyGroup.position.x = startX;
+        if (entry.group.parent) entry.group.position.x = startX;
       }, 100);
     }, 100);
-  }
-
-  // Enemy defeat animation
-  enemyDefeatAnim() {
-    if (!this.enemyGroup) return;
-    const startY = this.enemyGroup.position.y;
-    const startRot = this.enemyGroup.rotation.z;
-    let t = 0;
-    const animate = () => {
-      t += 0.02;
-      if (t > 1 || !this.enemyGroup) return;
-      this.enemyGroup.position.y = startY - t * 2;
-      this.enemyGroup.rotation.z = startRot + t * 1.5;
-      this.enemyGroup.scale.setScalar(2.2 * (1 - t * 0.5));
-      requestAnimationFrame(animate);
-    };
-    animate();
   }
 
   update(dt) {
     this.time += dt;
 
-    // Update background shader
     if (this.bgMesh && this.bgMesh.material.uniforms) {
       this.bgMesh.material.uniforms.uTime.value = this.time;
     }
 
-    // Update character idle animations
-    if (this.enemyAnimator) {
-      this.enemyAnimator.update(dt);
-    }
-    if (this.playerAnimator) {
-      this.playerAnimator.update(dt);
+    for (const e of this.enemyGroups) e.animator?.update(dt);
+    for (const a of this.allyGroups) a.animator?.update(dt);
+
+    // Pulse the target marker
+    if (this.targetMarker && this.targetMarker.visible) {
+      const pulse = 0.85 + 0.15 * Math.sin(this.time * 6);
+      this.targetMarker.material.opacity = pulse;
+      this.targetMarker.rotation.z += dt * 1.2;
     }
 
-    // Camera shake
     if (this.shakeAmount > 0.01) {
       this.camera.position.set(
         this._basePos.x + (Math.random() - 0.5) * this.shakeAmount,
@@ -394,7 +435,6 @@ export class CombatScene {
       this.camera.position.set(this._basePos.x, this._basePos.y, this._basePos.z);
     }
 
-    // Flash overlay
     if (this.flashTimer > 0) {
       this.flashTimer -= dt;
       if (this.flashTimer <= 0) {
@@ -411,13 +451,12 @@ export class CombatScene {
   }
 
   dispose() {
-    if (this.enemyGroup) {
-      this.scene.remove(this.enemyGroup);
-      this.enemyGroup = null;
-    }
-    if (this.playerGroup) {
-      this.scene.remove(this.playerGroup);
-      this.playerGroup = null;
+    this._clearGroups();
+    if (this.targetMarker) {
+      this.scene.remove(this.targetMarker);
+      this.targetMarker.geometry.dispose();
+      this.targetMarker.material.dispose();
+      this.targetMarker = null;
     }
   }
 }

@@ -1,3 +1,5 @@
+import _encounterOverrides from '../encounter-overrides.json' with { type: 'json' };
+
 // Combat encounter configurations
 // Maps encounter IDs to enemy + pre/post dialog
 export const ENCOUNTERS = {
@@ -73,10 +75,28 @@ export const ENCOUNTERS = {
     postDialogId: 'brand_consultant_defeated',
     canFlee: true,
   },
+  // Act 5 — Restructuring Trio: 3v2 multi-combatant fight with Janet as ally.
+  // The whole "they sent a restructuring TEAM" line pays off here: all three
+  // analysts come at once, Janet (fellow trust officer) joins Andrew.
+  restructuring_trio: {
+    enemyIds: ['brand_consultant', 'restructuring_analyst', 'corporate_lawyer'],
+    partyIds: ['janet'],
+    preDialogId: 'restructuring_trio_intro',
+    postDialogId: 'restructuring_trio_defeated',
+    canFlee: false,
+  },
   data_analytics_lead: {
     enemyId: 'data_analytics_lead',
     preDialogId: 'data_analytics_combat',
     postDialogId: 'data_analytics_defeated',
+    canFlee: false,
+  },
+  // Act 5 — Executive Floor pair fight (Data Analytics Lead + CFO's Assistant).
+  // Pulls from player.party (so any allies recruited up to this point come along).
+  data_analytics_duo: {
+    enemyIds: ['data_analytics_lead', 'cfos_assistant'],
+    preDialogId: 'data_analytics_duo_intro',
+    postDialogId: 'data_analytics_duo_defeated',
     canFlee: false,
   },
   chief_of_restructuring: {
@@ -122,3 +142,11 @@ export const ENCOUNTERS = {
     canFlee: false,
   },
 };
+
+// Apply encounter-overrides.json (set via `npm run editor`).
+// Skip the `_note` metadata key. Values are merged onto the base entry.
+for (const [id, o] of Object.entries(_encounterOverrides || {})) {
+  if (id.startsWith('_') || !o || typeof o !== 'object') continue;
+  if (ENCOUNTERS[id]) Object.assign(ENCOUNTERS[id], o);
+  else ENCOUNTERS[id] = { ...o };
+}

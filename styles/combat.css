@@ -197,26 +197,56 @@
   cursor: not-allowed;
 }
 
-/* Enemy info */
-.combat-enemy-info {
+/* Enemy row (multi-combatant) */
+.combat-enemy-row {
   position: absolute;
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 20;
-  text-align: center;
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 95vw;
 }
+
+.combat-enemy-row.crowded { gap: 12px; }
+
+.combat-enemy-info {
+  text-align: center;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+  background: rgba(10, 10, 20, 0.0);
+}
+
+.combat-enemy-info.targeted {
+  border-color: #ff4466;
+  background: rgba(233, 69, 96, 0.18);
+  box-shadow: 0 0 14px rgba(233, 69, 96, 0.6);
+}
+
+.combat-enemy-info.dead {
+  opacity: 0.35;
+  filter: grayscale(0.8);
+}
+
+.combat-enemy-info.clickable { cursor: crosshair; }
 
 .combat-enemy-name {
   font-family: 'Press Start 2P', cursive;
-  font-size: 16px;
+  font-size: 14px;
   color: #e94560;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
+.combat-enemy-row.single .combat-enemy-name { font-size: 16px; }
+
 .combat-enemy-hp-bar {
-  width: 300px;
+  width: 220px;
   height: 12px;
   background: #111;
   border-radius: 6px;
@@ -225,11 +255,103 @@
   margin: 0 auto;
 }
 
+.combat-enemy-row.single .combat-enemy-hp-bar { width: 300px; }
+.combat-enemy-row.crowded .combat-enemy-hp-bar { width: 180px; }
+
 .combat-enemy-hp-fill {
   height: 100%;
   background: linear-gradient(90deg, #e94560, #ff6b6b);
   border-radius: 4px;
   transition: width 0.5s ease;
+}
+
+/* Per-enemy telegraph (smaller text in multi-enemy rows) */
+.combat-enemy-row .combat-telegraph {
+  margin-top: 6px;
+  font-size: 14px;
+  max-width: 220px;
+  padding: 3px 6px;
+}
+
+.combat-enemy-row.single .combat-telegraph {
+  font-size: 17px;
+  max-width: 300px;
+  padding: 4px 10px;
+}
+
+/* Party row (compact bars for inactive party members) */
+.combat-party-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.combat-party-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #ccc;
+  background: rgba(20, 25, 40, 0.7);
+  border: 1px solid #2a3550;
+  border-radius: 4px;
+  padding: 3px 8px;
+  min-width: min(280px, 90vw);
+}
+
+.combat-party-bar.dead {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.combat-party-name {
+  flex: 0 0 70px;
+  color: #88aacc;
+}
+
+.combat-party-hp-bar {
+  flex: 1;
+  height: 8px;
+  background: #111;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #222;
+}
+
+.combat-party-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #44aa66, #66cc88);
+  transition: width 0.4s ease;
+}
+
+.combat-party-hp-num {
+  flex: 0 0 70px;
+  text-align: right;
+  font-size: 14px;
+  color: #ccc;
+}
+
+/* Target picker overlay hint */
+.target-picker-overlay {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  pointer-events: none;
+  background: rgba(10, 15, 25, 0.92);
+  border: 1px solid #ff4466;
+  border-radius: 6px;
+  padding: 6px 12px;
+  animation: tauntAppear 0.15s ease-out;
+}
+
+.target-picker-hint {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #ffaabb;
 }
 
 /* Floating damage */
@@ -516,6 +638,111 @@
 .combat-action-btn.desperate-btn.selected {
   background: rgba(180, 30, 60, 0.45);
   box-shadow: 0 0 10px rgba(255, 68, 102, 0.4);
+}
+
+/* ── Reasonable Doubt: voices ──────────────────────────────────────────── */
+
+/* Thoughts button on the main combat menu */
+.combat-action-btn.voice-btn {
+  background: rgba(180, 180, 220, 0.10);
+  border: 2px dashed rgba(180, 180, 220, 0.55);
+  color: #ccccdd;
+  grid-column: 1 / -1;
+  font-style: italic;
+  letter-spacing: 1px;
+}
+
+.combat-action-btn.voice-btn:hover,
+.combat-action-btn.voice-btn.selected {
+  background: rgba(180, 180, 220, 0.20);
+  border-color: #ddddee;
+  box-shadow: 0 0 12px rgba(200, 200, 230, 0.4);
+}
+
+/* Voices submenu — distinct card layout */
+.combat-voices-submenu .voice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(180, 180, 220, 0.25);
+  background: rgba(20, 20, 30, 0.8);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.combat-voices-submenu .voice-card:hover,
+.combat-voices-submenu .voice-card.selected {
+  background: rgba(60, 60, 80, 0.65);
+  border-color: rgba(220, 220, 240, 0.6);
+}
+
+.voice-speaker {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.voice-quote {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  font-style: italic;
+  color: #d4d4dc;
+  line-height: 1.2;
+}
+
+.voice-action-name {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #ffd700;
+  margin-top: 4px;
+}
+
+.voice-desc {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #aaa;
+  font-style: italic;
+}
+
+/* Voice bubble (appears top-center when a voice's quote fires in combat) */
+.combat-voice-bubble {
+  position: absolute;
+  top: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 8, 18, 0.92);
+  border: 2px solid;
+  border-radius: 8px;
+  padding: 10px 18px;
+  max-width: 440px;
+  text-align: center;
+  z-index: 32;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+  animation: voiceBubbleAppear 0.35s ease-out;
+}
+
+.combat-voice-name {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+
+.combat-voice-quote {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  font-style: italic;
+  line-height: 1.25;
+  color: inherit;
+}
+
+@keyframes voiceBubbleAppear {
+  from { transform: translate(-50%, -10px); opacity: 0; }
+  to   { transform: translate(-50%, 0);     opacity: 1; }
 }
 
 /* Combat taunts */

@@ -10,11 +10,31 @@ const ROOT = path.resolve(__dirname, '..');
 const BALANCE_PATH          = path.join(ROOT, 'src', 'data', 'balance.json');
 const ROOM_OVERRIDES_PATH   = path.join(ROOT, 'src', 'data', 'room-overrides.json');
 const CHAR_OVERRIDES_PATH   = path.join(ROOT, 'src', 'data', 'character-overrides.json');
+const ALLY_OVERRIDES_PATH   = path.join(ROOT, 'src', 'data', 'ally-overrides.json');
+const ENC_OVERRIDES_PATH    = path.join(ROOT, 'src', 'data', 'encounter-overrides.json');
 const EDITOR_HTML           = path.join(ROOT, 'editor', 'index.html');
 const PORT = 3747;
 
+// ── Bootstrap missing override files (idempotent) ─────────────────
+function ensureFile(p, contents) {
+  if (!fs.existsSync(p)) fs.writeFileSync(p, contents, 'utf8');
+}
+ensureFile(ALLY_OVERRIDES_PATH,
+  '{\n  "_note": "Edit via `npm run editor`. Do not edit manually.",\n  "stats": {},\n  "abilities": {}\n}\n');
+ensureFile(ENC_OVERRIDES_PATH,
+  '{\n  "_note": "Edit via `npm run editor`. Do not edit manually."\n}\n');
+
+// All editor-managed override files (used for git add/commit + diff).
+const TRACKED_PATHS = [
+  'src/data/balance.json',
+  'src/data/room-overrides.json',
+  'src/data/character-overrides.json',
+  'src/data/ally-overrides.json',
+  'src/data/encounter-overrides.json',
+];
+
 // ── Module cache ──────────────────────────────────────────────────
-let _rooms = null, _encounters = null, _characters = null, _dialogs = null;
+let _rooms = null, _encounters = null, _characters = null, _allies = null, _dialogs = null;
 
 // ── Live preview (SSE) ────────────────────────────────────────────
 let sseClients = [];
@@ -33,6 +53,13 @@ async function getRooms()      { if (!_rooms)      { _rooms      = (await imp('s
 async function getEncounters() { if (!_encounters) { _encounters = (await imp('src/data/encounters/index.js')).ENCOUNTERS;   } return _encounters; }
 async function getCharacters() { if (!_characters) { _characters = (await imp('src/data/characters.js')).CHARACTER_CONFIGS; } return _characters; }
 async function getDialogs()    { if (!_dialogs)    { _dialogs    = (await imp('src/data/dialogs/index.js')).DIALOGS;         } return _dialogs; }
+async function getAllies() {
+  if (!_allies) {
+    const mod = await imp('src/data/allies.js');
+    _allies = { stats: mod.ALLY_STATS, abilities: mod.ALLY_ABILITIES, patterns: mod.ALLY_AI_PATTERNS };
+  }
+  return _allies;
+}
 
 // ── File helpers ──────────────────────────────────────────────────
 const readJson  = p => JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -41,6 +68,22 @@ const writeJson = (p, d) => fs.writeFileSync(p, JSON.stringify(d, null, 2) + '\n
 function writeBalance(d) {
   const note = 'Edit via `npm run editor`. Do not edit manually.';
   writeJson(BALANCE_PATH, { _note: note, player: d.player, enemies: d.enemies, abilities: d.abilities, shop: d.shop });
+}
+
+function writeAllyOverrides(d) {
+  const note = 'Edit via `npm run editor`. Do not edit manually.';
+  writeJson(ALLY_OVERRIDES_PATH, { _note: note, stats: d.stats || {}, abilities: d.abilities || {} });
+}
+
+function writeEncounterOverrides(d) {
+  const note = 'Edit via `npm run editor`. Do not edit manually.';
+  // Strip any incoming _note before re-adding the canonical one.
+  const out = { _note: note };
+  for (const [k, v] of Object.entries(d || {})) {
+    if (k.startsWith('_')) continue;
+    out[k] = v;
+  }
+  writeJson(ENC_OVERRIDES_PATH, out);
 }
 
 function runGit(args) {
@@ -148,10 +191,22 @@ const server = http.createServer(async (req, res) => {
     try {
       const enc = await getEncounters();
       json(res, Object.entries(enc).map(([id, e]) => ({
-        id, enemyId: e.enemyId, canFlee: e.canFlee,
-        preDialogId: e.preDialogId, postDialogId: e.postDialogId,
+        id,
+        enemyId: e.enemyId || null,
+        enemyIds: Array.isArray(e.enemyIds) ? e.enemyIds : null,
+        partyIds: Array.isArray(e.partyIds) ? e.partyIds : null,
+        canFlee: !!e.canFlee,
+        preDialogId: e.preDialogId,
+        postDialogId: e.postDialogId,
       })));
     } catch (e) { json(res, { error: String(e) }, 500); }
+    return;
+  }
+
+  if (req.method === 'GET'  && pathname === '/api/encounter-overrides') return json(res, readJson(ENC_OVERRIDES_PATH));
+  if (req.method === 'POST' && pathname === '/api/encounter-overrides') {
+    try { writeEncounterOverrides(JSON.parse(await readBody(req))); json(res, { ok: true }); }
+    catch (e) { json(res, { error: String(e) }, 400); }
     return;
   }
 
@@ -173,6 +228,22 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET'  && pathname === '/api/character-overrides') return json(res, readJson(CHAR_OVERRIDES_PATH));
   if (req.method === 'POST' && pathname === '/api/character-overrides') {
     try { writeJson(CHAR_OVERRIDES_PATH, JSON.parse(await readBody(req))); json(res, { ok: true }); }
+    catch (e) { json(res, { error: String(e) }, 400); }
+    return;
+  }
+
+  // ── Allies ────────────────────────────────────────────────────
+  if (req.method === 'GET' && pathname === '/api/allies') {
+    try {
+      const a = await getAllies();
+      json(res, { stats: a.stats, abilities: a.abilities, patterns: a.patterns });
+    } catch (e) { json(res, { error: String(e) }, 500); }
+    return;
+  }
+
+  if (req.method === 'GET'  && pathname === '/api/ally-overrides') return json(res, readJson(ALLY_OVERRIDES_PATH));
+  if (req.method === 'POST' && pathname === '/api/ally-overrides') {
+    try { writeAllyOverrides(JSON.parse(await readBody(req))); json(res, { ok: true }); }
     catch (e) { json(res, { error: String(e) }, 400); }
     return;
   }
@@ -201,7 +272,8 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && dialogMatch) {
     try {
       const dialogs = await getDialogs();
-      const dialog = dialogs[dialogMatch[1]];
+      const id = decodeURIComponent(dialogMatch[1]);
+      const dialog = dialogs[id];
       if (!dialog) return json(res, { error: 'Not found' }, 404);
       json(res, dialog);
     } catch (e) { json(res, { error: String(e) }, 500); }
@@ -211,10 +283,22 @@ const server = http.createServer(async (req, res) => {
   // ── Diff ──────────────────────────────────────────────────────
   if (req.method === 'GET' && pathname === '/api/diff') {
     try {
-      const out = await runGit(['diff', 'HEAD', '--',
-        'src/data/balance.json', 'src/data/room-overrides.json', 'src/data/character-overrides.json']);
+      const out = await runGit(['diff', 'HEAD', '--', ...TRACKED_PATHS]);
       text(res, out || '(no uncommitted changes)');
     } catch (e) { text(res, 'git diff failed: ' + e, 500); }
+    return;
+  }
+
+  // Per-file dirty check (used by status indicator). Returns a JSON map
+  // of relative path -> boolean.
+  if (req.method === 'GET' && pathname === '/api/diff-status') {
+    try {
+      const out = await runGit(['diff', '--name-only', 'HEAD', '--', ...TRACKED_PATHS]);
+      const dirty = new Set(out.split(/\r?\n/).map(s => s.trim()).filter(Boolean));
+      const status = {};
+      for (const p of TRACKED_PATHS) status[p] = dirty.has(p);
+      json(res, status);
+    } catch (e) { json(res, { error: String(e) }, 500); }
     return;
   }
 
@@ -231,10 +315,10 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
     const send = s => res.write(s + '\n');
     try {
-      send('> git add src/data/balance.json src/data/room-overrides.json src/data/character-overrides.json');
-      send(await runGit(['add', 'src/data/balance.json', 'src/data/room-overrides.json', 'src/data/character-overrides.json']));
-      send('> git commit -m "editor: update balance, rooms, and character overrides"');
-      send(await runGit(['commit', '-m', 'editor: update balance, rooms, and character overrides']));
+      send('> git add ' + TRACKED_PATHS.join(' '));
+      send(await runGit(['add', ...TRACKED_PATHS]));
+      send('> git commit -m "editor: update content overrides"');
+      send(await runGit(['commit', '-m', 'editor: update content overrides']));
       send('> git push');
       send(await runGit(['push']));
       send('PUBLISH COMPLETE');

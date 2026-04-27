@@ -653,6 +653,8 @@ export const ROOMS = {
       { x: 1, z: 3, type: 'server_rack', dialogId: 'server_rack_inspect' },
       { x: 3, z: 3, type: 'server_rack', dialogId: 'morse_code_rack' },
       { x: 5, z: 3, type: 'server_rack', dialogId: 'server_vault_code', condition: { flag: 'vault_accessible' } },
+      // Alex from IT — Badge Audit personal mission: PATCH-3 server rack ("DO NOT TOUCH 4ever")
+      { x: 5, z: 5, type: 'server_rack', dialogId: 'alex_badge_audit_pull', condition: { flag: 'alex_badge_audit_started' } },
       { x: 6, z: 7, type: 'alex_it_desk', dialogId: 'alex_it_desk' },
       // Side quest interactables
       { x: 3, z: 0, type: 'poster', dialogId: 'quest_atk_4', condition: { flag: 'retry_karen' } },
@@ -1021,6 +1023,8 @@ export const ROOMS = {
     interactables: [
       { x: 10, z: 7, type: 'archive_terminal', dialogId: 'archive_terminal' },
       { x: 2, z: 3, type: 'filing_cabinets', dialogId: 'archive_cabinets' },
+      // Isaiah's buried receipts — mislabeled HVAC cabinet, only visible once quest started
+      { x: 1, z: 5, type: 'filing_cabinets', dialogId: 'isaiah_receipts_pull', condition: { flag: 'isaiah_receipts_started' } },
     ],
     playerSpawn: { x: 6, z: 8 },
   },
@@ -1094,6 +1098,8 @@ export const ROOMS = {
       { x: 14, z: 9, type: 'filing_cabinets', dialogId: 'diane_documents' },
       { x: 8,  z: 0, type: 'poster',          dialogId: 'poster_hr_1' },
       { x: 11, z: 9, type: 'filing_cabinets', dialogId: 'phantom_expense_hr' },
+      // Diane's original handbook — MISC ADMIN ARCHIVE box, only visible once quest started
+      { x: 6,  z: 9, type: 'filing_cabinets', dialogId: 'diane_handbook_search', condition: { flag: 'diane_handbook_started' } },
     ],
     playerSpawn: { x: 2, z: 4 },
   },
