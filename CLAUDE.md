@@ -19,26 +19,43 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 
 ### Balance & Room Editor
 
-`npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 9-tab editor: Player, Abilities, Enemies, Shop, Rooms, Combat Sim, Encounters, Characters, Diff. Changes write to three override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
+`npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 10-tab editor: Player, Abilities, Enemies, Shop, Rooms, Combat Sim, Encounters, Characters, Dialogs, Diff. Changes write to three override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
 
-#### Drag-and-drop furniture (Rooms tab)
+#### Rooms tab
 
-In the Rooms tab, furniture and NPC dots on the canvas can be dragged to new positions. The canvas updates in real-time as you drag (2D top-down view). Cursor changes to `grab` when hovering near an item and `grabbing` while dragging. Positions snap to 0.5 tile increments. Rotation can still be set via the edit panel or preset buttons below the canvas.
+The Rooms tab has a 2D top-down canvas with full drag-and-drop editing:
 
-To see moves reflected in the 3D game view, run both servers simultaneously:
+- **Drag furniture/NPCs** — click and drag any dot; snaps to 0.25 tile increments, clamped to room bounds
+- **Rotate** — select an item, press `R` to rotate 90° clockwise; or use the edit panel preset buttons (N/E/S/W)
+- **Scroll to zoom** — 40%–400%, zoom % shown above the canvas
+- **Exit tile overlay** — green squares show doorway positions; `→` label appears when zoomed in
+- **NPC facing arrows** — orange arrow on each NPC dot shows its `facing` direction
+- **Furniture/NPC search** — filter box above the item list; section titles show `(N/Total)` when filtered
+- **Flag simulator** — collapsible section below the canvas; toggle story flags to preview which NPCs would be visible/hidden in the current room
+- **Undo/redo** — Ctrl+Z / Ctrl+Y, 50-step stack per room, resets on room change
+
+#### Dialogs tab
+
+Read-only browser for all dialog trees. Search by dialog ID, speaker, or text. Click any entry to expand and read its nodes color-coded by type (teal=text, yellow=choice, green=action, purple=condition, gray=end).
+
+#### Real-time 3D live preview
+
+Run both servers simultaneously for live 3D furniture preview:
 
 ```bash
-npm run dev     # game at localhost:5173
+npm run dev     # game at localhost:5173/?dev
 npm run editor  # editor at localhost:3747
 ```
 
-Workflow: drag furniture → **Save Room Overrides** → Vite detects the file change and hot-reloads → re-enter the room in the game (walk out and back in). Positions are live after re-entry.
+The game (when opened with `?dev`) connects to the editor via Server-Sent Events (`http://localhost:3747/api/live`). As you drag furniture in the editor, the mesh moves in the 3D view in real time (~20fps) with no page reload. Interactable tiles follow their furniture automatically when the item crosses a tile boundary. When satisfied with positions, click **Save Room Overrides** — this writes to disk and Vite reloads, baking the positions permanently. Do not click Save mid-drag or Vite will reload.
 
 ### Dev Mode
 
 Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?dev`). Has no effect on normal play — the flag is read once from `URLSearchParams` in `src/utils/constants.js` (`DEV_MODE`).
 
 **In combat** — press `` ` `` (backtick) during your turn: instantly kills the enemy and routes through the normal victory path, so XP, story flags, and post-dialogs all fire correctly.
+
+**Live editor preview** — opening the game with `?dev` also connects an `EventSource` to `http://localhost:3747/api/live`. While the editor is running, dragging furniture updates the 3D mesh in real time. If the editor is not running, the connection fails silently.
 
 **In exploration** — press `F2`: opens a dev panel with two sections:
 

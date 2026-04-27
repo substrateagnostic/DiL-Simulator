@@ -1,5 +1,76 @@
 # Session Handoff — April 26, 2026
 
+## What Was Done This Session (Session 6)
+
+Dev mode, new starter abilities, input improvements, quest bug fixes, and a major editor upgrade including real-time 3D furniture preview.
+
+---
+
+### Dev Mode (`?dev` URL param)
+
+Append `?dev` to the game URL to enable. Flag is read once from `URLSearchParams` in `src/utils/constants.js` (`DEV_MODE`). Has no effect in normal play.
+
+- **Backtick in combat** — instant victory; routes through normal `_handleResult()` so XP, flags, and post-dialogs all fire correctly
+- **F2 in exploration** — dev panel with two sections:
+  - **Save Scum** — 3-slot save/load. Save writes to that slot and marks it active. Load deserializes and reloads the room. Active slot shown with ★.
+  - **Quest Skip** — 6 cumulative act presets (Acts 1, 3, 4, 5, 6, 7). Writes directly to `player.flags`, then calls `_syncActFromFlags()` + `_refreshStoryProgress()`. Some NPC dialogs may replay; all room gates and act routing will be correct.
+- **Live editor preview** — `?dev` also connects an `EventSource` to `http://localhost:3747/api/live`. Dragging furniture in the editor moves the 3D mesh in real time. Silent no-op if editor isn't running.
+
+---
+
+### New Tier-0 Starter Abilities
+
+Added `raise_concerns` (social, power 15, 10 MP) and `spot_check` (audit, power 15, 10 MP) alongside `file_motion` as free starting attacks. Players now begin with one attack of each type. Re-chained `cc_all` to require `raise_concerns` and `due_diligence` to require `spot_check`.
+
+---
+
+### Input Improvements
+
+- **WASD as arrows in retaliate QTE** — W/A/S/D map to Up/Left/Down/Right in the sequence input phase; `WASD_TO_ARROW` map applied before matching against the generated sequence
+- **E as confirm everywhere** — added `KeyE` to the confirm check in brace QTE, retaliate length selection, and desperate gamble overlay. `isConfirmPressed()` in InputManager already included E; these were raw `keydown` handlers that didn't go through InputManager.
+- **W/S for retaliate length selection** — W/S navigate up/down in the length picker; hint text updated to `↑↓/WS navigate · ENTER/E confirm`
+
+---
+
+### Bug Fixes
+
+- **Karen location misdirection** — `karen_first_loss_tutorial` node 8 now says "head back to the conference room" instead of the ambiguous "go back to Karen" after mentioning the reception desk. Both `karen_retry_ready` toasts updated to point to the conference room explicitly.
+- **Alex side quests blocked by archive evidence** — `act4_trigger` routing now checks for in-progress side quests before firing. If any side quest is started but not complete, Alex routes to the side quest instead of forcing `act4_trigger`. Players can finish active quests before Act 3 closes.
+- **Compliance crossword too early** — gated on `alex_it_act3_done` in addition to `act >= 3`. Crossword is now only available after Alex directs the player to the archive, not immediately when Act 2 ends.
+
+---
+
+### Editor Upgrades (Session 6)
+
+#### Rooms Tab
+
+- **Drag-and-drop** — furniture and NPC dots draggable on canvas; 2D canvas updates in real time during drag
+- **0.25-tile snap** — drag positions snap to 0.25 tile increments (down from 0.5)
+- **Zoom** — scroll wheel on canvas, 40%–400%, zoom % shown above canvas. All canvas drawing uses `cellPx()` = `CELL * zoomLevel`
+- **NPC facing arrows** — orange directional arrows on each NPC dot (game convention: 0 = north)
+- **Exit tile overlay** — green squares on exit tiles; `→` label at high zoom
+- **R to rotate** — press R with item selected to rotate 90° clockwise
+- **Undo/redo** — Ctrl+Z / Ctrl+Y, 50-step stack per room, resets on room change
+- **Furniture/NPC search** — filter box above item list; section titles show `(N/Total)` when filtered
+- **Flag simulator** — toggle story flags to preview NPC visibility in the current room; hidden NPCs shown as dimmed dots on canvas
+
+#### Dialogs Tab (new)
+
+Read-only browser for all dialog trees. Searchable by ID, speaker, or first-line text. Click to expand and read nodes color-coded by type.
+
+#### Real-time 3D Live Preview (SSE)
+
+- Editor server exposes `GET /api/live` (SSE, CORS `*`) and `POST /api/live-move`
+- Editor sends position updates during drag (throttled to ~20fps, no disk write)
+- Game connects `EventSource` to `http://localhost:3747/api/live` when `DEV_MODE` is true
+- On receiving `{ type:'move', roomId, category, index, x, z }` for the current room, calls `roomManager.liveMove()` which updates the mesh position directly — no reload
+- **Interactable tiles follow furniture** — `TileMap.moveInteractable()` relocates the interact zone when the dragged piece crosses a tile boundary. `Room` tracks `_furnitureOrigPos` and `_furnitureLivePos` per index so subsequent drags use the current position, not the build-time position
+- Auto-save on drop removed — was causing Vite HMR full-page reload. Save manually when done
+
+---
+
+# Session Handoff — April 26, 2026
+
 ## What Was Done This Session (Session 5)
 
 Balance/room/character editor, combat bug fixes, quest gate fixes, and menu keyboard navigation.
