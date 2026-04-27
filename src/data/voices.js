@@ -60,6 +60,18 @@ export const VOICES = {
     },
     actionId: 'witness_invoke',
   },
+  // The apotheosis voice. Available ONLY in the Rachel boss fight, ONLY if the
+  // player has actually read the charter via the team_chat_hub Witness branch.
+  // This is the payoff for the entire Reasonable Doubt arc — a rhetorical kill
+  // built from accumulated narrative choices, not a stat purchase.
+  the_charter: {
+    id: 'the_charter',
+    name: 'The Charter Itself',
+    description: '"The duty survives the institution." The founding document, in your hands, in this room.',
+    color: '#fff7d6',
+    trigger: (engine) => engine.voiceState?.charterUnlocked === true,
+    actionId: 'charter_read',
+  },
 };
 
 // Voice actions — all FREE, all single-use per fight.
@@ -155,6 +167,39 @@ export const VOICE_ACTIONS = {
       if (engine.voiceState) engine.voiceState.skepticLocked = true;
       engine._checkVictory();
       return { type: 'voice_attack', damage, targetIndex: engine.targetEnemyIndex, momentumGain: 25, skepticLocked: true };
+    },
+  },
+  // Charter Read — the rhetorical kill. Damage is min(third of Rachel's max HP, 200 power computed normally).
+  // Sets `andrew_invoked_charter` so the post-Rachel dialog can branch on it.
+  charter_read: {
+    voice: 'the_charter',
+    name: 'Read the 1947 Charter Aloud',
+    description: 'Quote the founding clause to the entire room. Devastating against Rachel-aligned targets.',
+    quote: 'Section 1, Paragraph B: No reorganization, restructuring, or rebranding of the institution shall release the trustee from this duty. The duty survives the institution.',
+    needsTarget: true,
+    effect: (engine, targetIndex) => {
+      const target = engine._resolveTarget(targetIndex);
+      if (!target) return null;
+      const pStats = engine._getEffective(engine.player);
+      // Base damage uses 200 power, ignores DEF entirely (it's a documentary kill, not a punch)
+      const baseDmg = (pStats.atk + 200) * 1.5;
+      let damage = Math.max(80, Math.floor(baseDmg));
+      // Floor of "one third of target's max HP" to guarantee a meaningful payoff
+      damage = Math.max(damage, Math.floor((target.maxHP || target.hp) / 3));
+      target.hp = Math.max(0, target.hp - damage);
+      engine._gainMomentum(40);
+      if (engine.voiceState) {
+        engine.voiceState.skepticLocked = true;
+        engine.voiceState.charterInvoked = true;
+      }
+      engine._checkVictory();
+      return {
+        type: 'voice_attack',
+        damage,
+        targetIndex: engine.targetEnemyIndex,
+        momentumGain: 40,
+        charterInvoked: true,
+      };
     },
   },
 };

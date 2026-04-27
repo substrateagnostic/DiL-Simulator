@@ -32,6 +32,10 @@ export class Player {
     this.allyState = {}; // { allyId: { hp, mp, unlockedAbilities: [ids] } }
     // Reasonable Doubt — voice usage profile across the game (see src/data/voices.js)
     this.voiceCounts = { apprentice: 0, litigator: 0, skeptic: 0, witness: 0 };
+    // Combat preference: 'manual' = player picks each ally's action (BG3-style),
+    // 'auto' = AI runs allies on their turn. Per-fight toggle is also available
+    // via the in-combat HUD; this is the persistent default.
+    this.allyControl = 'manual';
   }
 
   setPosition(x, z) {
@@ -367,6 +371,7 @@ export class Player {
       party: [...this.party],
       allyState: JSON.parse(JSON.stringify(this.allyState)),
       voiceCounts: { ...this.voiceCounts },
+      allyControl: this.allyControl,
     };
   }
 
@@ -422,6 +427,8 @@ export class Player {
         if (typeof data.voiceCounts[k] === 'number') this.voiceCounts[k] = data.voiceCounts[k];
       }
     }
+    // Combat ally-control preference
+    this.allyControl = (data.allyControl === 'auto') ? 'auto' : 'manual';
     this.setPosition(this.position.x, this.position.z);
   }
 }

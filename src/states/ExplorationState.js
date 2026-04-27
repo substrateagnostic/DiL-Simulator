@@ -1534,6 +1534,30 @@ export class ExplorationState {
       }
     }
 
+    // Isaiah — The Receipts personal mission (post-recruit, before Act 7)
+    if (id === 'isaiah'
+        && this.player.getFlag('isaiah_recruited')
+        && !this.player.getFlag('act6_complete')
+        && DIALOGS.isaiah_receipts_offer
+        && !this.player.getFlag('isaiah_receipts_complete')) {
+      if (this.player.getFlag('isaiah_has_receipts')) {
+        return 'isaiah_receipts_return';
+      }
+      return 'isaiah_receipts_offer';
+    }
+
+    // Diane — The Original Handbook personal mission (post-recruit, before Act 7)
+    if (id === 'diane'
+        && this.player.getFlag('diane_recruited')
+        && !this.player.getFlag('act6_complete')
+        && DIALOGS.diane_handbook_offer
+        && !this.player.getFlag('diane_handbook_complete')) {
+      if (this.player.getFlag('diane_has_handbook')) {
+        return 'diane_handbook_return';
+      }
+      return 'diane_handbook_offer';
+    }
+
     if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
     if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;

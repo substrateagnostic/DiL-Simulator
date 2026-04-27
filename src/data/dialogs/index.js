@@ -2068,15 +2068,20 @@ export const DIALOGS = {
   // counts cross thresholds set in CombatState.
   team_chat_hub: [
     /* 0  */ { type: 'choice', prompt: 'Who do you want to talk to?', choices: [
-      { text: 'Janet',         next: 1, requires: 'janet_recruited' },
-      { text: 'Alex from IT',  next: 5, requires: 'alex_it_recruited' },
-      { text: 'Isaiah',        next: 9, requires: 'isaiah_recruited' },
-      { text: 'Diane',         next: 13, requires: 'diane_recruited' },
+      { text: 'Janet',         next: 47, requires: 'janet_recruited' },
+      { text: 'Alex from IT',  next: 62, requires: 'alex_it_recruited' },
+      { text: 'Isaiah',        next: 77, requires: 'isaiah_recruited' },
+      { text: 'Diane',         next: 92, requires: 'diane_recruited' },
       // Voice-profile branches — only appear when the corresponding voice
       // has been used heavily across the campaign
       { text: '[Janet looks at you differently lately]',     next: 20, requires: 'voice_litigator_high', requiresNot: 'janet_warning_seen' },
       { text: '[Open the charter and read]',                 next: 30, requires: 'voice_witness_high',   requiresNot: 'witness_charter_read' },
       { text: '[Just sit. The day is heavy]',                next: 40, requires: 'voice_skeptic_high',   requiresNot: 'skeptic_chair_seen' },
+      // Voice-noticed extras — ally observations about Andrew's profile shift
+      { text: "[Janet's noticed something different about you]", next: 107, requires: 'voice_litigator_high', requiresNot: 'janet_litigator_noticed' },
+      { text: '[Alex keeps catching you reading the charter]',   next: 110, requires: 'voice_witness_high',   requiresNot: 'alex_witness_noticed' },
+      { text: '[Isaiah has something to say about leaving]',     next: 113, requires: 'voice_skeptic_high',   requiresNot: 'isaiah_skeptic_noticed' },
+      { text: '[Diane noticed you being easy on yourself today]',next: 116, requires: 'voice_apprentice_high', requiresNot: 'diane_apprentice_noticed' },
       { text: 'Just check in with the team. Nothing specific.', next: 17 },
       { text: 'Get back to work.', next: 19 },
     ] },
@@ -2136,6 +2141,115 @@ export const DIALOGS = {
     /* 44 */ { type: 'text', speaker: 'Narrator', text: "You stand up. You're still tired. But you're standing." },
     /* 45 */ { type: 'action', action: 'set_flag', flag: 'skeptic_chair_seen', value: true, next: 46 },
     /* 46 */ { type: 'action', action: 'modify_stat', stat: 'maxMP', amount: 5, next: 0 },
+
+    // ── Act-tier dispatchers and content ──────────────────────────────────
+    // Each ally's main choice routes here first.
+    // Pattern per ally:
+    //   dispatcher → check act7 (→ act7 gate) or act6 (→ act6 gate) or default
+    //   act6 gate  → if already seen → default; else → act6 lines → set_flag → 0
+    //   act7 gate  → if already seen → default; else → act7 lines → set_flag → 0
+
+    // ── JANET dispatcher (47–61) ──────────────────────────────────────────
+    /* 47 */ { type: 'condition', flag: 'act6_complete', ifTrue: 48, ifFalse: 1 },
+    /* 48 */ { type: 'condition', flag: 'act7_complete', ifTrue: 57, ifFalse: 52 },
+    // Act 6: Karen's just gone, Rachel is still upstairs
+    /* 49 */ { type: 'text', speaker: 'Janet', text: "I keep thinking about Karen's face when she finally backed down. Three meetings in. She was exhausted before I was." },
+    /* 50 */ { type: 'text', speaker: 'Janet', text: "I spent ten years scared of people like Karen. Turns out they're just afraid too. They've just had longer to practice hiding it." },
+    /* 51 */ { type: 'text', speaker: 'Andrew', text: "And now we go upstairs.", next: 56 },
+    /* 52 */ { type: 'condition', flag: 'chat_janet_act6_seen', ifTrue: 1, ifFalse: 49 },
+    // Act 7: Rachel's gone, the department is saved
+    /* 53 */ { type: 'text', speaker: 'Janet', text: "I called my mom last night. First time in six months. I said: 'I work somewhere worth keeping.' That's all I said. She cried." },
+    /* 54 */ { type: 'text', speaker: 'Janet', text: "*very long sip*" },
+    /* 55 */ { type: 'text', speaker: 'Janet', text: "I've been here twelve years, Andrew. This is the first time I've actually meant it.", next: 58 },
+    /* 56 */ { type: 'action', action: 'set_flag', flag: 'chat_janet_act6_seen', value: true, next: 0 },
+    /* 57 */ { type: 'condition', flag: 'chat_janet_act7_seen', ifTrue: 1, ifFalse: 53 },
+    /* 58 */ { type: 'action', action: 'set_flag', flag: 'chat_janet_act7_seen', value: true, next: 0 },
+    /* 59 */ { type: 'end' },
+    /* 60 */ { type: 'end' },
+    /* 61 */ { type: 'end' },
+
+    // ── ALEX dispatcher (62–76) ───────────────────────────────────────────
+    /* 62 */ { type: 'condition', flag: 'act6_complete', ifTrue: 63, ifFalse: 5 },
+    /* 63 */ { type: 'condition', flag: 'act7_complete', ifTrue: 72, ifFalse: 67 },
+    // Act 6: forensics guy finally named
+    /* 64 */ { type: 'text', speaker: 'Alex from IT', text: "You know what I actually am? I'm a forensics guy. That's the thing I always was. Every job I've had, I ended up being the one who found the thing nobody wanted found." },
+    /* 65 */ { type: 'text', speaker: 'Alex from IT', text: "They called it 'over-involved.' I called it thorough. Turns out they're the same thing." },
+    /* 66 */ { type: 'text', speaker: 'Andrew', text: "That quality has saved this building twice.", next: 71 },
+    /* 67 */ { type: 'condition', flag: 'chat_alex_act6_seen', ifTrue: 5, ifFalse: 64 },
+    // Act 7: audit trail preserved, records survive Rachel
+    /* 68 */ { type: 'text', speaker: 'Alex from IT', text: "I forwarded the audit trail. To everyone. Yes, including the board." },
+    /* 69 */ { type: 'text', speaker: 'Alex from IT', text: "Every badge, every cable, every 3 AM packet. Rachel can claim ignorance. The logs cannot." },
+    /* 70 */ { type: 'text', speaker: 'Alex from IT', text: "That's the thing about records. They don't care who wins.", next: 73 },
+    /* 71 */ { type: 'action', action: 'set_flag', flag: 'chat_alex_act6_seen', value: true, next: 0 },
+    /* 72 */ { type: 'condition', flag: 'chat_alex_act7_seen', ifTrue: 5, ifFalse: 68 },
+    /* 73 */ { type: 'action', action: 'set_flag', flag: 'chat_alex_act7_seen', value: true, next: 0 },
+    /* 74 */ { type: 'end' },
+    /* 75 */ { type: 'end' },
+    /* 76 */ { type: 'end' },
+
+    // ── ISAIAH dispatcher (77–91) ─────────────────────────────────────────
+    /* 77 */ { type: 'condition', flag: 'act6_complete', ifTrue: 78, ifFalse: 9 },
+    /* 78 */ { type: 'condition', flag: 'act7_complete', ifTrue: 87, ifFalse: 82 },
+    // Act 6: the notes he kept for seven years
+    /* 79 */ { type: 'text', speaker: 'Isaiah', text: "I started keeping a second set of notes after Merger Four. Not copies of work — observations. Who said what in what room on what day." },
+    /* 80 */ { type: 'text', speaker: 'Isaiah', text: "I told myself it was just documentation practice." },
+    /* 81 */ { type: 'text', speaker: 'Isaiah', text: "Seven years of practice. Turned out to be exactly what we needed.", next: 88 },
+    /* 82 */ { type: 'condition', flag: 'chat_isaiah_act6_seen', ifTrue: 9, ifFalse: 79 },
+    // Act 7: the binder and what it means now
+    /* 83 */ { type: 'text', speaker: 'Isaiah', text: "Eleven years. Eleven years of notes in a binder nobody asked for." },
+    /* 84 */ { type: 'text', speaker: 'Isaiah', text: "For the first time since I started keeping them, I hope I never need them again." },
+    /* 85 */ { type: 'text', speaker: 'Andrew', text: "Keep the binder." },
+    /* 86 */ { type: 'text', speaker: 'Isaiah', text: "I'm going to keep the binder.", next: 89 },
+    /* 87 */ { type: 'condition', flag: 'chat_isaiah_act7_seen', ifTrue: 9, ifFalse: 83 },
+    /* 88 */ { type: 'action', action: 'set_flag', flag: 'chat_isaiah_act6_seen', value: true, next: 0 },
+    /* 89 */ { type: 'action', action: 'set_flag', flag: 'chat_isaiah_act7_seen', value: true, next: 0 },
+    /* 90 */ { type: 'end' },
+    /* 91 */ { type: 'end' },
+
+    // ── DIANE dispatcher (92–106) ─────────────────────────────────────────
+    /* 92  */ { type: 'condition', flag: 'act6_complete', ifTrue: 93, ifFalse: 13 },
+    /* 93  */ { type: 'condition', flag: 'act7_complete', ifTrue: 102, ifFalse: 97 },
+    // Act 6: sixty-three pages, twice
+    /* 94  */ { type: 'text', speaker: 'Diane', text: "I read the whole restructuring packet last night. All sixty-three pages. Twice." },
+    /* 95  */ { type: 'text', speaker: 'Diane', text: "Rachel isn't wrong that the department is inefficient. She's wrong about what that means. Inefficiency in trust work is sometimes just called — being thorough." },
+    /* 96  */ { type: 'text', speaker: 'Diane', text: "Page forty-seven of the original charter. I've bookmarked it for you.", next: 103 },
+    /* 97  */ { type: 'condition', flag: 'chat_diane_act6_seen', ifTrue: 13, ifFalse: 94 },
+    // Act 7: the post-restructuring review form
+    /* 98  */ { type: 'text', speaker: 'Diane', text: "The handbook has a provision for post-restructuring review. Nobody ever gets to that page." },
+    /* 99  */ { type: 'text', speaker: 'Diane', text: "I filed for it this morning. Standard form. Three signatures required." },
+    /* 100 */ { type: 'text', speaker: 'Andrew', text: "You filed it the morning after the fight." },
+    /* 101 */ { type: 'text', speaker: 'Diane', text: "Twenty minutes after. I had the form pre-filled.", next: 104 },
+    /* 102 */ { type: 'condition', flag: 'chat_diane_act7_seen', ifTrue: 13, ifFalse: 98 },
+    /* 103 */ { type: 'action', action: 'set_flag', flag: 'chat_diane_act6_seen', value: true, next: 0 },
+    /* 104 */ { type: 'action', action: 'set_flag', flag: 'chat_diane_act7_seen', value: true, next: 0 },
+    /* 105 */ { type: 'end' },
+    /* 106 */ { type: 'end' },
+
+    // ── Voice-noticed extras (Task 4) ─────────────────────────────────────
+    // Separate from the existing voice branches (20-46). Different requiresNot flags.
+    // Each is 2-3 nodes: an ally's quiet observation about Andrew's profile shift.
+
+    // 107–109: Janet notices Litigator energy (different angle from janet_warning_seen)
+    /* 107 */ { type: 'text', speaker: 'Janet', text: "You've been... lawyer-ish. The way you phrase things. 'From an obligation standpoint.' 'As a matter of record.'" },
+    /* 108 */ { type: 'text', speaker: 'Janet', text: "It works. I'm not saying it doesn't. It's just — it's not a fit on you the same way a good blazer is. It's more like a suit of armor you borrowed from someone else's closet." },
+    /* 109 */ { type: 'action', action: 'set_flag', flag: 'janet_litigator_noticed', value: true, next: 0 },
+
+    // 110–112: Alex notices Witness energy
+    /* 110 */ { type: 'text', speaker: 'Alex from IT', text: "I keep finding you reading the charter. Not referencing it — reading it. Like it's a letter someone wrote you." },
+    /* 111 */ { type: 'text', speaker: 'Alex from IT', text: "That's not normal Andrew. Normal Andrew reads the lunch menu like it might be a legal document." },
+    /* 112 */ { type: 'action', action: 'set_flag', flag: 'alex_witness_noticed', value: true, next: 0 },
+
+    // 113–115: Isaiah notices Skeptic energy
+    /* 113 */ { type: 'text', speaker: 'Isaiah', text: "You can leave. You know that, right? There's no chain here. You don't owe this building anything." },
+    /* 114 */ { type: 'text', speaker: 'Isaiah', text: "I won't tell anyone you wanted to. Some days wanting to leave is just proof you're paying attention." },
+    /* 115 */ { type: 'action', action: 'set_flag', flag: 'isaiah_skeptic_noticed', value: true, next: 0 },
+
+    // 116–118: Diane notices Apprentice energy
+    /* 116 */ { type: 'text', speaker: 'Diane', text: "You're being kind to yourself today. I noticed. It's in how you're walking — less braced." },
+    /* 117 */ { type: 'text', speaker: 'Diane', text: "Keep doing that. It's data. People who are kind to themselves make better decisions under pressure. That's not philosophy — that's in the literature." },
+    /* 118 */ { type: 'action', action: 'set_flag', flag: 'diane_apprentice_noticed', value: true, next: 0 },
+
+    /* 119 */ { type: 'end' },
   ],
 
   restructuring_combat: [
@@ -2258,26 +2372,95 @@ export const DIALOGS = {
   ],
 
   rachel_boss_defeated: [
-    /* 0  */ { type: 'text', speaker: 'Rachel', text: "I... this isn't possible. No one has ever..." },
-    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The charter glows brighter. The Fiduciary Force fills the Board Room. Every promise ever made within these walls resonates." },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Rachel's phone rings. She answers. Her face goes white." },
-    /* 3  */ { type: 'text', speaker: 'Rachel', text: "The Regional Manager has been arrested. The SEC found the offshore accounts. The board vote is... cancelled." },
-    /* 4  */ { type: 'text', speaker: 'Rachel', text: "You win. This time. But corporations have long memories, Andrew. Longer than any building." },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Rachel leaves the Board Room. Her heels echo on the marble floor, each step a little less certain than the last." },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "The charter's glow fades to a gentle warmth. The building settles. Not asleep — just... satisfied." },
-    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Ross appears in the doorway. Behind him, Janet, Diane, Alex, the Intern, Isaiah, and the Janitor." },
-    /* 8  */ { type: 'text', speaker: 'Ross', text: "Andrew... did we just save the department?" },
-    /* 9  */ { type: 'text', speaker: 'Andrew', text: "We saved more than that, Ross." },
-    /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The charter is restored. The trust is honored. The building remembers." },
-    /* 11 */ { type: 'text', speaker: 'Janet', text: "*raises tumbler* To trust issues. May we always have them." },
-    /* 12 */ { type: 'text', speaker: 'Ross', text: "That's the most beautiful thing I've ever heard. And I've read SEVEN leadership books this month." },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: "~ END OF ACT 5 ~" },
-    /* 14 */ { type: 'text', speaker: 'Narrator', text: "The trust department stands. Battered, caffeinated, and slightly traumatized. But standing." },
-    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force sleeps again. Until the next breach. Until the next broken promise." },
-    /* 16 */ { type: 'text', speaker: 'Narrator', text: "But that's a story for another day. Or maybe... another floor." },
-    /* 17 */ { type: 'text', speaker: 'Narrator', text: "The penthouse elevator dings. Nobody pressed it." },
-    /* 18 */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true, next: 19 },
-    /* 19 */ { type: 'end' },
+    // ── Voice-profile branching: how this victory FELT depends on Andrew's profile.
+    // Charter Read → rhetorical-kill epilogue (path 30+). Steadied → humble (path 50+).
+    // Hardened → cold (path 60+). Default → existing universal celebration. All paths
+    // converge on the act5_complete flag at index 70.
+    /* 0  */ { type: 'condition', flag: 'andrew_invoked_charter', ifTrue: 30, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Rachel', text: "I... this isn't possible. No one has ever..." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The charter glows brighter. The Fiduciary Force fills the Board Room. Every promise ever made within these walls resonates." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "Rachel's phone rings. She answers. Her face goes white." },
+    /* 4  */ { type: 'text', speaker: 'Rachel', text: "The Regional Manager has been arrested. The SEC found the offshore accounts. The board vote is... cancelled." },
+    /* 5  */ { type: 'text', speaker: 'Rachel', text: "You win. This time. But corporations have long memories, Andrew. Longer than any building." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Rachel leaves the Board Room. Her heels echo on the marble floor, each step a little less certain than the last." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The charter's glow fades to a gentle warmth. The building settles. Not asleep — just... satisfied." },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "Ross appears in the doorway. Behind him, Janet, Diane, Alex, the Intern, Isaiah, and the Janitor." },
+    /* 9  */ { type: 'text', speaker: 'Ross', text: "Andrew... did we just save the department?" },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "We saved more than that, Ross." },
+    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The charter is restored. The trust is honored. The building remembers." },
+    /* 12 */ { type: 'text', speaker: 'Janet', text: "*raises tumbler* To trust issues. May we always have them." },
+    /* 13 */ { type: 'text', speaker: 'Ross', text: "That's the most beautiful thing I've ever heard. And I've read SEVEN leadership books this month." },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "~ END OF ACT 5 ~" },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The trust department stands. Battered, caffeinated, and slightly traumatized. But standing." },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force sleeps again. Until the next breach. Until the next broken promise." },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "But that's a story for another day. Or maybe... another floor." },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: "The penthouse elevator dings. Nobody pressed it.", next: 19 },
+    // Voice-profile epilogue branch — runs AFTER the universal celebration
+    /* 19 */ { type: 'condition', flag: 'andrew_steadied',  ifTrue: 50, ifFalse: 20 },
+    /* 20 */ { type: 'condition', flag: 'andrew_hardened',  ifTrue: 60, ifFalse: 70 },
+    // 21–29 reserved (intentionally empty so future epilogue paths can be inserted without renumbering downstream)
+    /* 21 */ { type: 'end' },
+    /* 22 */ { type: 'end' },
+    /* 23 */ { type: 'end' },
+    /* 24 */ { type: 'end' },
+    /* 25 */ { type: 'end' },
+    /* 26 */ { type: 'end' },
+    /* 27 */ { type: 'end' },
+    /* 28 */ { type: 'end' },
+    /* 29 */ { type: 'end' },
+
+    // ── Charter Read epilogue (30-49) — Andrew rhetorical-killed Rachel by reading the founding clause.
+    /* 30 */ { type: 'text', speaker: 'Rachel', text: "...what... was that..." },
+    /* 31 */ { type: 'text', speaker: 'Narrator', text: "She'd been ready for everything. The legal threat. The compliance audit. The HR complaint. The PowerPoint counter-deck. She had answers prepared for all of it." },
+    /* 32 */ { type: 'text', speaker: 'Narrator', text: "She wasn't ready for someone to read the document aloud." },
+    /* 33 */ { type: 'text', speaker: 'Narrator', text: "You held it up — softly, not as a weapon, just as itself — and read Section 1, Paragraph B again. Slower this time. The board members in the room couldn't quite look away from you." },
+    /* 34 */ { type: 'text', speaker: 'Andrew', text: "'The duty survives the institution.' That's the whole thing. That's the only thing it ever was." },
+    /* 35 */ { type: 'text', speaker: 'Narrator', text: "One of the board members — old, tired-looking, mostly silent in every meeting for years — quietly stood up and walked out. He came back two minutes later carrying a coffee mug. He sat back down on YOUR side of the table." },
+    /* 36 */ { type: 'text', speaker: 'Narrator', text: "Rachel's phone rang. She answered. Her face went white." },
+    /* 37 */ { type: 'text', speaker: 'Narrator', text: "The Regional Manager had been arrested. SEC. Offshore accounts. The vote was cancelled before it could be called." },
+    /* 38 */ { type: 'text', speaker: 'Rachel', text: "You... beat me by reading from a book." },
+    /* 39 */ { type: 'text', speaker: 'Andrew', text: "It's not a book. It's the contract everyone in this building forgot they signed." },
+    /* 40 */ { type: 'text', speaker: 'Narrator', text: "Rachel left without finishing her sentence. The Janitor was waiting in the hallway. He nodded at her once, the way you nod at the weather." },
+    /* 41 */ { type: 'text', speaker: 'Mysterious Janitor', text: "She'll be back, in a different form, with a different name. They always are. The charter stays anyway. The charter is what stays." },
+    /* 42 */ { type: 'text', speaker: 'Janet', text: "I'm framing the page you read from. I'm hanging it over the coffee machine. That's a hill I will die on." },
+    /* 43 */ { type: 'text', speaker: 'Narrator', text: "~ END OF ACT 5 ~" },
+    /* 44 */ { type: 'text', speaker: 'Narrator', text: "You won by quoting a forty-seven-year-old paragraph at a hostile takeover. The most boring possible victory. The realest possible victory." },
+    /* 45 */ { type: 'text', speaker: 'Narrator', text: "The penthouse elevator dings. Nobody pressed it.", next: 70 },
+    // 46-49 reserved
+    /* 46 */ { type: 'end' },
+    /* 47 */ { type: 'end' },
+    /* 48 */ { type: 'end' },
+    /* 49 */ { type: 'end' },
+
+    // ── Steadied epilogue (50-59) — Andrew accepted Janet's warning, won as a person.
+    /* 50 */ { type: 'text', speaker: 'Narrator', text: "After Rachel leaves, the room is too quiet. Janet is the first one to put her tumbler down." },
+    /* 51 */ { type: 'text', speaker: 'Janet', text: "Andrew. Look at me. — Yeah. Hi. You're still you. I can see it. Good." },
+    /* 52 */ { type: 'text', speaker: 'Andrew', text: "I almost wasn't, for a minute." },
+    /* 53 */ { type: 'text', speaker: 'Janet', text: "I know. Almost is not the same as wasn't. Almost is fine. Almost is part of the job." },
+    /* 54 */ { type: 'text', speaker: 'Narrator', text: "You sit down on the conference table — not at it, ON it — and exhale for what might be the first time since Tuesday." },
+    /* 55 */ { type: 'text', speaker: 'Narrator', text: "You won. You stayed yourself. Both at once. It's enough.", next: 70 },
+    // 56-59 reserved
+    /* 56 */ { type: 'end' },
+    /* 57 */ { type: 'end' },
+    /* 58 */ { type: 'end' },
+    /* 59 */ { type: 'end' },
+
+    // ── Hardened epilogue (60-69) — Andrew brushed off Janet, victory tastes off.
+    /* 60 */ { type: 'text', speaker: 'Narrator', text: "Rachel leaves. The team celebrates. You watch yourself watch them celebrate. There is a small, professional distance between you and the room that you do not entirely understand." },
+    /* 61 */ { type: 'text', speaker: 'Janet', text: "Andrew? You okay?" },
+    /* 62 */ { type: 'text', speaker: 'Andrew', text: "Yeah. We won." },
+    /* 63 */ { type: 'text', speaker: 'Janet', text: "...yeah. We did." },
+    /* 64 */ { type: 'text', speaker: 'Narrator', text: "She doesn't say what she's looking at when she says it. She's looking at you. She's looking at the version of you that did the closing arguments. The version that doesn't fully come back when the fight ends." },
+    /* 65 */ { type: 'text', speaker: 'Narrator', text: "You won. The department stands. There is a thing in the way you hold the charter now that wasn't there a month ago. It might be care. It might be something else.", next: 70 },
+    // 66-69 reserved
+    /* 66 */ { type: 'end' },
+    /* 67 */ { type: 'end' },
+    /* 68 */ { type: 'end' },
+    /* 69 */ { type: 'end' },
+
+    // ── Final flag + end — every path converges here ──
+    /* 70 */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true, next: 71 },
+    /* 71 */ { type: 'end' },
   ],
 
   // --------------------------------------------------------------------------
@@ -3519,5 +3702,125 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The monitoring process is terminated. Screen dark. No alerts will go out tonight.", next: 6 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "A network monitoring terminal. It logs all server activity and reports anything unusual to corporate IT. The fan hums quietly.", next: 6 },
     /* 6  */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // ISAIAH — Personal Mission: "The Receipts"
+  // Reward: free unlock of `paperwork_blizzard` + 250 XP
+  // Pattern mirrors alex_badge_audit_* above.
+  // ==========================================================================
+
+  isaiah_receipts_offer: [
+    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 13, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'isaiah_receipts_started', ifTrue: 11, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Isaiah', text: "I want to ask you something. Before we go upstairs." },
+    /* 3  */ { type: 'text', speaker: 'Isaiah', text: "Nine years ago I started keeping physical copies. Board minutes, expense reports — the things that usually disappear when a company 'modernizes.' Rachel's people swept the floor in 2019. I thought they were gone." },
+    /* 4  */ { type: 'text', speaker: 'Isaiah', text: "But I'd already moved them. There's a filing cabinet in the Archive basement section. It's been mislabeled 'HVAC MAINTENANCE LOG 2015–' for five years. Nobody's touched it." },
+    /* 5  */ { type: 'text', speaker: 'Isaiah', text: "If those records are still there, they would show a pattern. Not just this branch. Rachel's done this before. Other places. Other people." },
+    /* 6  */ { type: 'choice', prompt: 'Help Isaiah find the buried records?', choices: [
+      { text: '"Tell me where to look."', next: 7 },
+      { text: '"Not right now. But I will."', next: 10 },
+    ] },
+    /* 7  */ { type: 'text', speaker: 'Isaiah', text: "Archive room. West bank, bottom row. The cabinet with the HVAC label. If someone moved it, look for anything taped on the back." },
+    /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I wrote my initials on the inside of the drawer in pencil. I.W. You'll know it's the right one." },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'isaiah_receipts_started', value: true, next: 12 },
+    /* 10 */ { type: 'text', speaker: 'Isaiah', text: "Understood. I'll be here.", next: 12 },
+    /* 11 */ { type: 'text', speaker: 'Isaiah', text: "Did you find the HVAC cabinet? West bank, Archive. My initials are inside the drawer.", next: 12 },
+    /* 12 */ { type: 'end' },
+    /* 13 */ { type: 'text', speaker: 'Isaiah', text: "The receipts. Seven acquisitions, one signature. I've been sitting with that for a week now.", next: 12 },
+  ],
+
+  isaiah_receipts_pull: [
+    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 8, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'isaiah_receipts_started', ifTrue: 2, ifFalse: 7 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet on the bottom row. The label reads: 'HVAC MAINTENANCE LOG 2015–' in marker. The marker has faded. The tape holding the label has lifted at one corner." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "You open the bottom drawer. Inside the front face, in small pencil letters: I.W." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The files are intact. Board minutes. Quarterly expense reports. Rachel's signature appears on seventeen consecutive pages. The pattern is identical to what Andrew found upstairs — only these records go back nine years." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Seven branches. Same signature. Same timeline. She's been doing this since before anyone here was hired." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'isaiah_has_receipts', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet labeled 'HVAC MAINTENANCE LOG 2015–.' The tape on the label has lifted. You don't have a reason to open it yet.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The cabinet Isaiah hid his records in. The files are gone now — you gave them to him.", next: 9 },
+    /* 9  */ { type: 'end' },
+  ],
+
+  isaiah_receipts_return: [
+    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 13, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'isaiah_has_receipts', ifTrue: 2, ifFalse: 12 },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Found the cabinet. I.W. inside the drawer, like you said. Isaiah — these go back nine years. Seven acquisitions." },
+    /* 3  */ { type: 'text', speaker: 'Isaiah', text: "Seven. I counted them three times when I first put them together. I kept hoping I'd missed something. I hadn't." },
+    /* 4  */ { type: 'text', speaker: 'Isaiah', text: "She has a pattern. She comes in as an SVP, identifies the branch's most valuable compliance assets — the ones that make it hard to dissolve — and starts dismantling them. Paperwork first. Then people." },
+    /* 5  */ { type: 'text', speaker: 'Isaiah', text: "This branch is number eight. She's never made it this far before. There's always been someone who just — walked away." },
+    /* 6  */ { type: 'text', speaker: 'Andrew', text: "Well. We're not walking." },
+    /* 7  */ { type: 'text', speaker: 'Isaiah', text: "No. We're not." },
+    /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I've been holding this for nine years. I didn't have anyone to give it to. Here." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "Isaiah shows you a stack of forms he's memorized filling out — a blizzard of paperwork, filed so fast and precisely that any counter-filing gets buried. He walks you through every step. In ten minutes you understand it completely." },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'isaiah_receipts_complete', value: true, next: 11 },
+    /* 11 */ { type: 'action', action: 'give_xp', xp: 250, next: 14 },
+    /* 12 */ { type: 'text', speaker: 'Isaiah', text: "The HVAC cabinet. West bank, Archive. Bottom row. I.W. inside the drawer.", next: 13 },
+    /* 13 */ { type: 'end' },
+    /* 14 */ { type: 'action', action: 'unlock_ally_ability', ally: 'isaiah', ability: 'paperwork_blizzard', next: 15 },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "Isaiah teaches you the Paperwork Blizzard. He is not smiling exactly. But something in his posture has settled.", next: 13 },
+  ],
+
+  // ==========================================================================
+  // DIANE — Personal Mission: "The Original Handbook"
+  // Reward: free unlock of `termination_letter` + 250 XP
+  // ==========================================================================
+
+  diane_handbook_offer: [
+    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 14, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'diane_handbook_started', ifTrue: 12, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Diane', text: "I need to tell you something. Before I ask." },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "The reason I came to HR was a company I watched gut its own policy book. Line by line. Over four years. They called it 'streamlining.' By the time anyone noticed, there was nothing left to protect anyone." },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "I've been in HR for fourteen years. I know handbooks the way some people know scripture. And I know when one's been changed." },
+    /* 5  */ { type: 'text', speaker: 'Diane', text: "Vaults Fargo had an original employee handbook. 1947. Article 1 is different from what's in the current edition. I've compared them. The current version removed a sentence." },
+    /* 6  */ { type: 'text', speaker: 'Diane', text: "Rachel had the original boxed up eighteen months ago. 'For archival.' I need to know if it's been destroyed or if it's still there." },
+    /* 7  */ { type: 'choice', prompt: "Help Diane find the original handbook?", choices: [
+      { text: '"Where was it boxed up?"', next: 8 },
+      { text: '"I\'ll look when I can."', next: 11 },
+    ] },
+    /* 8  */ { type: 'text', speaker: 'Diane', text: "HR Records room. There should be a box labeled 'MISC ADMIN ARCHIVE' in the south filing section. That's how Rachel's people label things they want to disappear without destroying them. Plausible deniability." },
+    /* 9  */ { type: 'text', speaker: 'Diane', text: "If it's there, bring it back whole. Don't open it — I want to be the first one to read it in this context. That matters to me." },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'diane_handbook_started', value: true, next: 13 },
+    /* 11 */ { type: 'text', speaker: 'Diane', text: "Okay. When you can.", next: 13 },
+    /* 12 */ { type: 'text', speaker: 'Diane', text: "HR Records — south filing section. Box labeled 'MISC ADMIN ARCHIVE.' That's where they put things they want forgotten without a paper trail.", next: 13 },
+    /* 13 */ { type: 'end' },
+    /* 14 */ { type: 'text', speaker: 'Diane', text: "'An employee's first duty is to the truth, told plainly.' I've been thinking about that sentence all week.", next: 13 },
+  ],
+
+  diane_handbook_search: [
+    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 8, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'diane_handbook_started', ifTrue: 2, ifFalse: 7 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A cardboard banker's box on the bottom shelf of the south wall cabinet. The label, in printed adhesive tape: 'MISC ADMIN ARCHIVE.'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "You open it. Inside: a leather-bound document, spine intact. The cover reads: 'VAULTS FARGO EMPLOYEE HANDBOOK — ORIGINAL EDITION, 1947. NOT FOR REPRODUCTION.'" },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "It's not destroyed. It's here. It's just been waiting." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "You close the box without reading further. Diane said to bring it back whole. That matters." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'diane_has_handbook', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A cardboard box labeled 'MISC ADMIN ARCHIVE.' Nothing inside seems to need attention right now.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The box that held the original handbook. You gave it to Diane.", next: 9 },
+    /* 9  */ { type: 'end' },
+  ],
+
+  diane_handbook_return: [
+    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 14, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'diane_has_handbook', ifTrue: 2, ifFalse: 13 },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Found it. MISC ADMIN ARCHIVE, south filing section. It's intact." },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "..." },
+    /* 4  */ { type: 'text', speaker: 'Diane', text: "Okay. Okay. Give me a second." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Diane opens the box with both hands. She turns to Article 1. She reads it once, silently. Then she reads it aloud." },
+    /* 6  */ { type: 'text', speaker: 'Diane', text: "'An employee's first duty is to the truth, told plainly.'" },
+    /* 7  */ { type: 'text', speaker: 'Diane', text: "The current edition says: 'An employee's first duty is to the institution, maintained professionally.' They swapped six words. Six words in seventy-seven years." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "When was it changed?" },
+    /* 9  */ { type: 'text', speaker: 'Diane', text: "Edition stamp says 2019. The year Rachel arrived." },
+    /* 10 */ { type: 'text', speaker: 'Diane', text: "I've been arguing from the wrong book for five years. I didn't know. I didn't know." },
+    /* 11 */ { type: 'text', speaker: 'Andrew', text: "Now you do." },
+    /* 12 */ { type: 'text', speaker: 'Diane', text: "Now I do. And I'm going to make very thorough use of that information. — Here. You should know how to do this.", next: 15 },
+    /* 13 */ { type: 'text', speaker: 'Diane', text: "South filing section in HR Records. The box is labeled 'MISC ADMIN ARCHIVE.' That's their tell.", next: 16 },
+    /* 14 */ { type: 'text', speaker: 'Diane', text: "'An employee's first duty is to the truth, told plainly.' That sentence is doing a lot of work right now.", next: 16 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'diane_handbook_complete', value: true, next: 17 },
+    /* 16 */ { type: 'end' },
+    /* 17 */ { type: 'action', action: 'give_xp', xp: 250, next: 18 },
+    /* 18 */ { type: 'action', action: 'unlock_ally_ability', ally: 'diane', ability: 'termination_letter', next: 19 },
+    /* 19 */ { type: 'text', speaker: 'Narrator', text: "Diane walks you through the Termination Letter — a formal compliance action that, when filed correctly, carries the full weight of the original charter. She knows every clause.", next: 16 },
   ],
 };

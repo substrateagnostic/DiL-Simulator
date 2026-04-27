@@ -90,6 +90,13 @@ export class CombatState {
       { enemyIds: this.enemyIdsList, partyIds: this.partyIdsList, partyOverrides }
     );
 
+    // Reasonable Doubt: unlock the Charter voice in the Rachel fight if the
+    // player has read the charter via the team_chat_hub Witness branch.
+    const fightingRachel = this.enemyIdsList.includes('rachel_boss') || this.actualEnemyId === 'rachel_boss';
+    if (fightingRachel && this.player.getFlag('witness_charter_read')) {
+      this.engine.voiceState.charterUnlocked = true;
+    }
+
     // Backdrop colors keyed by primary enemy (legacy mapping)
     const bgColors = {
       intern: [0x1a2a1a, 0x0a3a0a, 0x2a3a1a, 0x4a8a2a],
@@ -122,6 +129,14 @@ export class CombatState {
     this.hud.onAbilitySelect = (id, item) => this._handleAbility(id, item);
     this.hud.onItemSelect = (id) => this._handleItem(id);
     this.hud.onVoiceSelect = (actionId, item) => this._handleVoice(actionId, item);
+    this.hud.onAllyActionSelect = (action) => {
+      if (action === 'back') {
+        this._enableAllyInput(this._activeAllyIndex);
+      } else {
+        this._handleAllyAction(action);
+      }
+    };
+    this.hud.onAllyAbilitySelect = (id) => this._handleAllyAbility(id);
 
     this.phase = 'intro';
     this.animTimer = 1.0;
@@ -224,6 +239,9 @@ export class CombatState {
       }
       if (this._activeAllyIndex === 0) {
         this._enablePlayerInput();
+      } else if ((this.player.allyControl || 'manual') === 'manual') {
+        // BG3-style: player picks each ally's action manually
+        this._enableAllyInput(this._activeAllyIndex);
       } else {
         this._runAllyAITurn(this._activeAllyIndex);
       }
@@ -234,6 +252,227 @@ export class CombatState {
     } else {
       continueTurn();
     }
+  }
+
+  // ── Manual ally input ─────────────────────────────────────────────────
+  // When player.allyControl === 'manual', allies get their own action menu
+  // on their turn. Simpler than Andrew's: Attack, Abilities, Skip, plus
+  // Auto/Manual toggle.
+  _enableAllyInput(allyIndex) {
+    this.phase = 'ally_turn';
+    this.inputEnabled = true;
+    this.hud.enableInput();
+    const ally = this.engine.allies[allyIndex];
+    this.hud.updatePlayerStats({
+      hp: ally.hp, mp: ally.mp,
+      maxHP: ally.maxHP, maxMP: ally.maxMP,
+      momentum: 0, name: ally.name,
+      isPlayer: false,
+    });
+    this.hud.updateAllEnemies(this.engine.enemies);
+    this.hud.showAllyMenu(ally, this.player.allyControl || 'manual');
+  }
+
+  _handleAllyAction(action) {
+    if (!this.inputEnabled) return;
+    AudioManager.playSfx('confirm');
+    const ally = this.engine.allies[this._activeAllyIndex];
+    if (!ally) return;
+
+    switch (action) {
+      case 'attack':
+        this.inputEnabled = false;
+        this._beginAllyTargetedAttack();
+        break;
+      case 'abilities': {
+        // Build the unlocked-ability list for this ally
+        const unlocked = (this.player.allyState[ally.allyId]?.unlockedAbilities) || ally.abilities || [];
+        const list = unlocked
+          .map(id => ({ id, ...(ALLY_ABILITIES[id] || {}) }))
+          .filter(a => a.name); // skip undefined
+        this.inputEnabled = true;
+        this.hud.showAllyAbilities(list, ally.mp);
+        break;
+      }
+      case 'skip':
+        this.inputEnabled = false;
+        this.hud.showMessage(`${ally.name} holds.`);
+        setTimeout(() => this._processNextTurn(), 800);
+        break;
+      case 'toggle_auto':
+        // Flip persistent preference and either keep manual menu (manual) or
+        // hand the rest of this turn to the AI (auto)
+        this.player.allyControl = (this.player.allyControl === 'auto') ? 'manual' : 'auto';
+        if (this.player.allyControl === 'auto') {
+          this.inputEnabled = false;
+          this._runAllyAITurn(this._activeAllyIndex);
+        } else {
+          this._enableAllyInput(this._activeAllyIndex);
+        }
+        break;
+    }
+  }
+
+  _handleAllyAbility(abilityId) {
+    if (!this.inputEnabled) return;
+    AudioManager.playSfx('confirm');
+    const ability = ALLY_ABILITIES[abilityId];
+    if (!ability) return;
+    const ally = this.engine.allies[this._activeAllyIndex];
+    if (ally.mp < (ability.cost || 0)) {
+      this.hud.showMessage("Not enough Coffee.");
+      return;
+    }
+
+    const needsTarget = ability.type === 'attack' || ability.type === 'debuff';
+    if (needsTarget && this.engine.aliveEnemies().length > 1) {
+      this.inputEnabled = false;
+      const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+      this.phase = 'targeting';
+      this.hud.showTargetPicker(enemiesView, (idx) => {
+        this.scene.setTargetMarker(idx, true);
+        this._executeAllyAbility(abilityId, idx);
+        setTimeout(() => this.scene.hideTargetMarker(), 1200);
+      }, () => {
+        this.phase = 'ally_turn';
+        this.inputEnabled = true;
+        this._enableAllyInput(this._activeAllyIndex);
+      });
+    } else {
+      this.inputEnabled = false;
+      this._executeAllyAbility(abilityId, undefined);
+    }
+  }
+
+  _beginAllyTargetedAttack() {
+    const ally = this.engine.allies[this._activeAllyIndex];
+    if (!ally) return;
+    if (this.engine.aliveEnemies().length === 1) {
+      this._executeAllyBasicAttack(this.engine._firstAliveEnemyIndex());
+      return;
+    }
+    const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
+    this.phase = 'targeting';
+    this.hud.showTargetPicker(enemiesView, (idx) => {
+      this.scene.setTargetMarker(idx, true);
+      this._executeAllyBasicAttack(idx);
+      setTimeout(() => this.scene.hideTargetMarker(), 1200);
+    }, () => {
+      this.phase = 'ally_turn';
+      this.inputEnabled = true;
+      this._enableAllyInput(this._activeAllyIndex);
+    });
+  }
+
+  _executeAllyBasicAttack(targetIndex) {
+    const allyIndex = this._activeAllyIndex;
+    const ally = this.engine.allies[allyIndex];
+    const target = this.engine._resolveTarget(targetIndex);
+    if (!ally || !target) { this._processNextTurn(); return; }
+
+    this.phase = 'animating';
+    this.hud.disableInput();
+    const aStats = this.engine._getEffective(ally);
+    const eStats = this.engine._getEffective(target);
+    const dmg = this.engine._calcDamage(aStats.atk, 0, eStats.def, target);
+    target.hp = Math.max(0, target.hp - dmg.damage);
+    this.engine._checkVictory();
+
+    const result = {
+      type: 'ally_attack',
+      allyIndex,
+      allyName: ally.name,
+      damage: dmg.damage,
+      critical: dmg.critical,
+      targetIndex: this.engine.enemies.indexOf(target),
+    };
+    const delay = this._playAllyResult(result, allyIndex);
+    this._refreshHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextTurn();
+    }, delay);
+  }
+
+  _executeAllyAbility(abilityId, targetIndex) {
+    const allyIndex = this._activeAllyIndex;
+    const ally = this.engine.allies[allyIndex];
+    const ability = ALLY_ABILITIES[abilityId];
+    if (!ally || !ability) { this._processNextTurn(); return; }
+
+    // Manual MP spend (mirrors what allyTurn() does in AI mode)
+    if (ability.cost) ally.mp = Math.max(0, ally.mp - ability.cost);
+
+    const aStats = this.engine._getEffective(ally);
+    let result = { type: 'ally_' + ability.type, allyIndex, allyName: ally.name, abilityName: ability.name, message: ability.messages ? (ability.messages[Math.floor(Math.random() * ability.messages.length)]) : (ability.message || '') };
+
+    switch (ability.type) {
+      case 'attack': {
+        const target = this.engine._resolveTarget(targetIndex);
+        if (!target) { this._processNextTurn(); return; }
+        const eStats = this.engine._getEffective(target);
+        const dmg = this.engine._calcDamage(aStats.atk, ability.power || 10, eStats.def, target, ability.tag);
+        target.hp = Math.max(0, target.hp - dmg.damage);
+        result = { ...result, damage: dmg.damage, critical: dmg.critical, effective: dmg.effective, targetIndex: this.engine.enemies.indexOf(target) };
+        break;
+      }
+      case 'attack_aoe': {
+        const targets = this.engine.aliveEnemies();
+        const hits = [];
+        for (const t of targets) {
+          const eStats = this.engine._getEffective(t);
+          const dmg = this.engine._calcDamage(aStats.atk, ability.power || 10, eStats.def, t, ability.tag);
+          t.hp = Math.max(0, t.hp - dmg.damage);
+          hits.push({ targetIndex: this.engine.enemies.indexOf(t), damage: dmg.damage, critical: dmg.critical, effective: dmg.effective });
+        }
+        result = { ...result, aoe: true, hits, damage: hits.reduce((s, h) => s + h.damage, 0) };
+        break;
+      }
+      case 'heal_ally': {
+        const candidates = this.engine.aliveAllies().slice().sort((a, b) => (a.hp / a.maxHP) - (b.hp / b.maxHP));
+        const tgt = candidates[0] || ally;
+        const heal = ability.healAmount || 0;
+        if (heal > 0) tgt.hp = Math.min(tgt.maxHP, tgt.hp + heal);
+        if (ability.mpHealAmount) {
+          for (const a of this.engine.aliveAllies()) {
+            a.mp = Math.min(a.maxMP, a.mp + ability.mpHealAmount);
+          }
+        }
+        result = { ...result, healAmount: heal, healTargetAllyIndex: this.engine.allies.indexOf(tgt), healTargetName: tgt.name };
+        break;
+      }
+      case 'buff_party': {
+        for (const a of this.engine.aliveAllies()) {
+          a.buffs.push({ stats: ability.buffAmount, duration: ability.buffDuration || 2, name: ability.name });
+        }
+        result = { ...result, buffAmount: ability.buffAmount, duration: ability.buffDuration || 2 };
+        break;
+      }
+      case 'debuff': {
+        const target = this.engine._resolveTarget(targetIndex);
+        if (!target) { this._processNextTurn(); return; }
+        target.buffs.push({ stats: ability.debuffAmount, duration: ability.debuffDuration || 2, name: ability.name });
+        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration || 2, targetIndex: this.engine.enemies.indexOf(target) };
+        break;
+      }
+      case 'silence': {
+        const target = this.engine._resolveTarget(targetIndex);
+        if (!target) { this._processNextTurn(); return; }
+        target.silenced = Math.max(target.silenced || 0, ability.duration || 2);
+        result = { ...result, targetIndex: this.engine.enemies.indexOf(target) };
+        break;
+      }
+    }
+
+    this.engine._checkVictory();
+    this.phase = 'animating';
+    this.hud.disableInput();
+    const delay = this._playAllyResult(result, allyIndex);
+    this._refreshHUD();
+    setTimeout(() => {
+      if (this.engine.isOver) this._handleResult();
+      else this._processNextTurn();
+    }, delay);
   }
 
   // Wraps _processNextEnemyTurn for the interleaved queue — runs ONE enemy then yields
@@ -556,6 +795,8 @@ export class CombatState {
       if (counts.skeptic    >= 5)  this.player.setFlag('voice_skeptic_high');
       if (counts.apprentice >= 5)  this.player.setFlag('voice_apprentice_high');
     }
+    // The Charter Read sets a permanent flag the post-Rachel dialog branches on
+    if (result.charterInvoked) this.player.setFlag('andrew_invoked_charter');
 
     // Voice bubble — italic speech in the voice's color, top-center
     this._showVoiceBubble(result.voiceName, result.quote, result.voiceColor);

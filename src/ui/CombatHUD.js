@@ -255,6 +255,35 @@ export class CombatHUD {
     this._renderSubmenu();
   }
 
+  // Manual-control ally main menu — Attack / Abilities / Skip + Auto-toggle.
+  showAllyMenu(ally, allyControlMode = 'manual') {
+    this.currentMenu = 'allyMain';
+    this.selectedIndex = 0;
+    this.menuItems = [
+      { label: `${ally.name}: Attack`, action: 'attack' },
+      { label: `Abilities (${ally.mp}/${ally.maxMP} Coffee)`, action: 'abilities' },
+      { label: 'Skip', action: 'skip' },
+      { label: allyControlMode === 'auto' ? '⟳ Switch to MANUAL' : '⟳ Switch to AUTO', action: 'toggle_auto', momentumSpend: true },
+    ];
+    this._renderMenu();
+  }
+
+  showAllyAbilities(abilities, mp) {
+    this.currentMenu = 'allyAbilities';
+    this.selectedIndex = 0;
+    this.menuItems = abilities.map((a) => ({
+      label: a.name,
+      cost: a.cost,
+      id: a.id,
+      description: a.description,
+      tag: a.tag || null,
+      type: a.type,
+      disabled: mp < (a.cost || 0),
+    }));
+    this.menuItems.push({ label: 'Back', action: 'back' });
+    this._renderSubmenu();
+  }
+
   // Voice submenu — list available voices and their action.
   // voices: [{ id, name, color, actionId, action: { name, description, quote } }]
   showVoices(voices) {
@@ -441,6 +470,15 @@ export class CombatHUD {
         this.showMainMenu();
       } else if (this.onVoiceSelect) {
         this.onVoiceSelect(item.id, item);
+      }
+    } else if (this.currentMenu === 'allyMain') {
+      if (this.onAllyActionSelect) this.onAllyActionSelect(item.action);
+    } else if (this.currentMenu === 'allyAbilities') {
+      if (item.action === 'back') {
+        // Caller will re-show the ally main menu
+        if (this.onAllyActionSelect) this.onAllyActionSelect('back');
+      } else if (this.onAllyAbilitySelect) {
+        this.onAllyAbilitySelect(item.id, item);
       }
     }
   }
