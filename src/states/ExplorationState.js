@@ -128,6 +128,7 @@ export class ExplorationState {
     this._loadRoom(this.player.currentRoom);
     this._updateLocationDisplay(this.player.currentRoom);
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
+    if (DEV_MODE) this._connectLiveEditor();
 
     this._listeners.push(
       EventBus.on('start-combat', (data) => {
@@ -500,6 +501,21 @@ export class ExplorationState {
       unsub();
     }
     this._listeners = [];
+    if (this._devEventSource) { this._devEventSource.close(); this._devEventSource = null; }
+  }
+
+  _connectLiveEditor() {
+    if (this._devEventSource) this._devEventSource.close();
+    this._devEventSource = new EventSource('http://localhost:3747/api/live');
+    this._devEventSource.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'move' && msg.roomId === this.player.currentRoom) {
+          this.roomManager.liveMove(msg.category, msg.index, msg.x, msg.z);
+        }
+      } catch {}
+    };
+    this._devEventSource.onerror = () => {};
   }
 
   pause() {

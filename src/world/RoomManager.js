@@ -46,6 +46,7 @@ export class RoomManager {
 
     // Set up NPCs
     this.entityManager.clear();
+    this._npcsByIndex = [];
     const npcData = room.getNPCData();
     for (const npc of npcData) {
       // Build conditionFn from data-driven condition object
@@ -69,6 +70,7 @@ export class RoomManager {
         conditionFn,
       });
       npcEntity.tileMap = room.tileMap;
+      this._npcsByIndex.push(npcEntity);
       this.entityManager.addNPC(npcEntity);
       this.mainScene.add(npcEntity.mesh);
     }
@@ -105,6 +107,16 @@ export class RoomManager {
 
   getRoomData(roomId) {
     return ROOMS[roomId] || null;
+  }
+
+  liveMove(category, index, x, z) {
+    if (!this.currentRoom) return;
+    if (category === 'furniture') {
+      this.currentRoom.liveMoveFurniture(index, x, z);
+    } else if (category === 'npcs') {
+      const npc = this._npcsByIndex?.[index];
+      if (npc) { npc.mesh.position.x = x; npc.mesh.position.z = z; }
+    }
   }
 
   update(dt, flags, paused) {

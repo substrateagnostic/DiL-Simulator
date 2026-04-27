@@ -307,6 +307,10 @@ select:focus { border-color:var(--accent2); }
     </div>
     <div class="room-list-wrap">
       <div class="room-list-header">Furniture &amp; NPCs — click to select</div>
+      <div style="padding:5px 8px;border-bottom:1px solid var(--border);background:var(--surface2)">
+        <input id="item-search" type="text" placeholder="Filter…" oninput="renderItemList()"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:4px 8px;outline:none">
+      </div>
       <div id="room-item-list"></div>
     </div>
   </div>
@@ -447,7 +451,7 @@ select:focus { border-color:var(--accent2); }
 // STATE
 // ═══════════════════════════════════════════════════════════════
 let balance = null, origBalance = null;
-let roomOverrides = {}, currentRoom = null, selectedItem = null, dragState = null;
+let roomOverrides = {}, currentRoom = null, selectedItem = null, dragState = null, _liveThrottle = 0;
 let charConfigs = {}, charOverrides = {}, origCharOverrides = {};
 let currentTab = 'player';
 const CELL = 22;
@@ -818,6 +822,8 @@ function typeColor(t) { return TYPE_COLORS[t]||'#666688'; }
 
 async function onRoomSelect() {
   const id = document.getElementById('room-select').value;
+  const searchEl = document.getElementById('item-search');
+  if (searchEl) searchEl.value = '';
   if (!id) { currentRoom=null; drawEmptyCanvas(); renderItemList(); hideEditPanel(); return; }
   currentRoom = await (await fetch('/api/rooms/'+id)).json();
   selectedItem = null;
@@ -979,12 +985,22 @@ window.addEventListener('mousemove', function(e) {
   if (!dragState || !currentRoom) return;
   e.preventDefault();
   const { mx, mz } = canvasToTile(e);
-  const nx = Math.max(0, Math.min(currentRoom.width,  Math.round((mx + dragState.ox) * 2) / 2));
-  const nz = Math.max(0, Math.min(currentRoom.height, Math.round((mz + dragState.oz) * 2) / 2));
+  const nx = Math.max(0, Math.min(currentRoom.width,  Math.round((mx + dragState.ox) * 4) / 4));
+  const nz = Math.max(0, Math.min(currentRoom.height, Math.round((mz + dragState.oz) * 4) / 4));
   stageDragPosition(dragState.category, dragState.index, nx, nz);
   document.getElementById('edit-x').value = nx;
   document.getElementById('edit-z').value = nz;
   renderCanvas();
+  // Broadcast live position to game (throttled to ~20fps)
+  const _now = Date.now();
+  if (_now - _liveThrottle > 50) {
+    _liveThrottle = _now;
+    fetch('/api/live-move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId: currentRoom.id, category: dragState.category, index: dragState.index, x: nx, z: nz }),
+    }).catch(() => {});
+  }
 }, { passive: false });
 
 window.addEventListener('mouseup', function() {
@@ -993,19 +1009,28 @@ window.addEventListener('mouseup', function() {
   _rcanvas.style.cursor = 'crosshair';
   renderItemList();
   showToast('Override staged — click Save Room Overrides');
-  saveRoomOverrides(); // auto-save on drop
 });
 function renderItemList() {
   const el=document.getElementById('room-item-list'); el.innerHTML='';
   if (!currentRoom) return;
   const ov=getRoomOv();
-  if (currentRoom.furniture?.length) {
-    el.appendChild(sectionTitle(`Furniture (${currentRoom.furniture.length})`));
-    currentRoom.furniture.forEach((item,i)=>el.appendChild(makeListRow('furniture',i,item.type,ov.furniture?.[i])));
+  const q=(document.getElementById('item-search')?.value||'').toLowerCase().trim();
+  const furniture=currentRoom.furniture||[], npcs=currentRoom.npcs||[];
+  const ff=furniture.map((item,i)=>({item,i})).filter(({item})=>!q||item.type.toLowerCase().includes(q));
+  const fn=npcs.map((npc,i)=>({npc,i})).filter(({npc})=>!q||npc.id.toLowerCase().includes(q));
+  if (ff.length) {
+    const label=q&&ff.length<furniture.length?`Furniture (${ff.length}/${furniture.length})`:`Furniture (${furniture.length})`;
+    el.appendChild(sectionTitle(label));
+    ff.forEach(({item,i})=>el.appendChild(makeListRow('furniture',i,item.type,ov.furniture?.[i])));
   }
-  if (currentRoom.npcs?.length) {
-    el.appendChild(sectionTitle(`NPCs (${currentRoom.npcs.length})`));
-    currentRoom.npcs.forEach((npc,i)=>el.appendChild(makeListRow('npcs',i,npc.id,ov.npcs?.[i])));
+  if (fn.length) {
+    const label=q&&fn.length<npcs.length?`NPCs (${fn.length}/${npcs.length})`:`NPCs (${npcs.length})`;
+    el.appendChild(sectionTitle(label));
+    fn.forEach(({npc,i})=>el.appendChild(makeListRow('npcs',i,npc.id,ov.npcs?.[i])));
+  }
+  if (q&&!ff.length&&!fn.length) {
+    const d=div(''); d.style.cssText='padding:12px;font-size:11px;color:var(--muted);text-align:center';
+    d.textContent='No matches'; el.appendChild(d);
   }
 }
 function makeListRow(cat,i,lbl,hasOv) {

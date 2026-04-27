@@ -552,7 +552,11 @@ export class Room {
    * Instantiate all furniture pieces and block their tiles.
    */
   _placeFurniture(furnitureList, flags = {}) {
-    for (const item of furnitureList) {
+    this._furnitureMeshes = {};
+    this._furnitureOrigPos = {};   // original tile position per index
+    this._furnitureLivePos = {};   // tracks current live position after drag moves
+    for (let i = 0; i < furnitureList.length; i++) {
+      const item = furnitureList[i];
       if (item.condition) {
         const c = item.condition;
         if (c.flag && !flags[c.flag]) continue;
@@ -576,6 +580,8 @@ export class Room {
       }
 
       obj.name = `${type}_${x}_${z}`;
+      this._furnitureMeshes[i] = obj;
+      this._furnitureOrigPos[i] = { x, z };
       this.scene.add(obj);
 
       // Block tiles based on footprint
@@ -598,6 +604,20 @@ export class Room {
       }
       this.tileMap.blockRect(tileX, tileZ, fw, fh);
     }
+  }
+
+  // Live-preview move — called by RoomManager when editor sends a drag update
+  liveMoveFurniture(index, x, z) {
+    const mesh = this._furnitureMeshes?.[index];
+    if (!mesh) return;
+    mesh.position.x = x * TILE_SIZE;
+    mesh.position.z = z * TILE_SIZE;
+    // Move any interactable sitting on this furniture's current tile
+    const from = this._furnitureLivePos[index] || this._furnitureOrigPos[index];
+    if (from && this.tileMap) {
+      this.tileMap.moveInteractable(from.x, from.z, x, z);
+    }
+    this._furnitureLivePos[index] = { x, z };
   }
 
   // ----------------------------------------------------------

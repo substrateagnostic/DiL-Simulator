@@ -16,6 +16,14 @@ const PORT = 3747;
 // ── Module cache ──────────────────────────────────────────────────
 let _rooms = null, _encounters = null, _characters = null, _dialogs = null;
 
+// ── Live preview (SSE) ────────────────────────────────────────────
+let sseClients = [];
+function broadcast(data) {
+  const msg = `data: ${JSON.stringify(data)}\n\n`;
+  sseClients = sseClients.filter(c => !c.destroyed);
+  sseClients.forEach(c => { try { c.write(msg); } catch {} });
+}
+
 async function imp(relPath) {
   const url = pathToFileURL(path.join(ROOT, relPath)).href;
   return import(url);
@@ -112,6 +120,25 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET'  && pathname === '/api/room-overrides') return json(res, readJson(ROOM_OVERRIDES_PATH));
   if (req.method === 'POST' && pathname === '/api/room-overrides') {
     try { writeJson(ROOM_OVERRIDES_PATH, JSON.parse(await readBody(req))); json(res, { ok: true }); }
+    catch (e) { json(res, { error: String(e) }, 400); }
+    return;
+  }
+
+  // ── Live preview ──────────────────────────────────────────────
+  if (req.method === 'GET' && pathname === '/api/live') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.write('data: {"type":"connected"}\n\n');
+    sseClients.push(res);
+    req.on('close', () => { sseClients = sseClients.filter(c => c !== res); });
+    return;
+  }
+  if (req.method === 'POST' && pathname === '/api/live-move') {
+    try { broadcast({ type: 'move', ...JSON.parse(await readBody(req)) }); json(res, { ok: true }); }
     catch (e) { json(res, { error: String(e) }, 400); }
     return;
   }
