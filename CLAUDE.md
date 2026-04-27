@@ -12,9 +12,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 npm run dev      # Start dev server at localhost:5173 (--port 5173 to force it)
 npm run build    # Build to dist/ (chunk size warning is expected, not an error)
 npm run preview  # Preview production build
+npm run editor   # Start balance/room/character editor at localhost:3747 (developer-only, never bundled)
 ```
 
 There is no test suite. Verification is manual playtest + `npx vite build`.
+
+### Balance & Room Editor
+
+`npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 9-tab editor: Player, Abilities, Enemies, Shop, Rooms, Combat Sim, Encounters, Characters, Diff. Changes write to three override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
+
+#### Drag-and-drop furniture (Rooms tab)
+
+In the Rooms tab, furniture and NPC dots on the canvas can be dragged to new positions. The canvas updates in real-time as you drag (2D top-down view). Cursor changes to `grab` when hovering near an item and `grabbing` while dragging. Positions snap to 0.5 tile increments. Rotation can still be set via the edit panel or preset buttons below the canvas.
+
+To see moves reflected in the 3D game view, run both servers simultaneously:
+
+```bash
+npm run dev     # game at localhost:5173
+npm run editor  # editor at localhost:3747
+```
+
+Workflow: drag furniture → **Save Room Overrides** → Vite detects the file change and hot-reloads → re-enter the room in the game (walk out and back in). Positions are live after re-entry.
+
+### Dev Mode
+
+Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?dev`). Has no effect on normal play — the flag is read once from `URLSearchParams` in `src/utils/constants.js` (`DEV_MODE`).
+
+**In combat** — press `` ` `` (backtick) during your turn: instantly kills the enemy and routes through the normal victory path, so XP, story flags, and post-dialogs all fire correctly.
+
+**In exploration** — press `F2`: opens a dev panel with two sections:
+
+- **Save Scum** — three save slots with Save and Load buttons. Save writes the current state to that slot and marks it active (future auto-saves go there). Load deserializes the save, reloads the room, and calls `syncFromPlayerState()`. The active slot is highlighted with ★.
+- **Quest Skip** — six cumulative act presets. Clicking a preset writes directly to `player.flags`, then calls `_syncActFromFlags()` and `_refreshStoryProgress()`. Some narrative read-flags are not included, so a small number of NPC dialogs may replay, but all room gates, NPC conditions, and act routing will be correct.
+
+| Preset | Key flags set |
+|--------|--------------|
+| Act 1 — Briefing Complete | `briefing_complete`, `branch_chosen`, all `met_*` |
+| Act 3 — Hendersons Defeated | + `act2_complete`, all Henderson/Act 2 defeat flags |
+| Act 4 — Archive Evidence Found | + `act3_complete`, `has_archive_evidence` |
+| Act 5 — Charter Recovered | + `act4_complete`, `has_charter`, `janitor_rallied` |
+| Act 6 — Rachel Defeated | + `act5_complete`, full gauntlet defeat flags |
+| Act 7 — Penthouse Unlocked | + `act6_complete`, `has_rolex`, all Act 6 ally flags |
 
 ## Architecture
 
@@ -77,14 +115,18 @@ There is no test suite. Verification is manual playtest + `npx vite build`.
 
 - **`RoomManager`** — Loads rooms from `src/data/rooms/index.js`, instantiates NPCs. NPCs with a `condition` object start **hidden** by default; `EntityManager.update()` shows/hides them each frame based on player flags. This means conditional NPCs never flash visible on room entry.
 - **`Room`** — Builds `TileMap`, places `Furniture`, manages exit triggers. Furniture entries support an optional `y` property for vertical offset (e.g., `{ type: 'monitor', x: 8, z: 2, y: 0.06 }`) — useful when a custom furniture model has a taller surface than the standard desk height of 0.72.
+- **`Furniture`** — All furniture is built as static factory methods on the `Furniture` class (e.g., `Furniture.desk()`, `Furniture.pokerTable()`). To add a new type: (1) add a static method in `Furniture.js`, (2) add the type string to the `switch` in `Room._placeFurniture()`, (3) if it shouldn't block player movement, add it to the `NO_BLOCK` set at the top of `Room.js`, (4) if wider than ~3 tiles, add a footprint entry to `FURNITURE_FOOTPRINTS` in `Room.js`.
 - **`TileMap`** — Grid-based collision (`canMove()`).
 - **`IsometricCamera`** — Smooth follow camera with dead zone.
 
 ### Data (`src/data/`)
 
 All game data is plain JS objects/exports:
-- `stats.js` — `PLAYER_BASE_STATS` (includes `aum: 0`), `XP_TABLE` (15 levels, exponential), `LEVEL_GROWTH`, `PLAYER_ABILITIES` (with `tag` fields), `ENEMY_STATS` (with `weakness`/`resistance`/`phases`/`phaseMessages`/`taunts` on Hendersons), `ENEMY_ABILITIES`, `ANDREW_TAUNTS`, `ITEMS`, `pickMessage()`
-- `shop.js` — `SHOP_ITEMS` (consumables, upgrades, decor, renovation) and `SHOP_CATEGORIES`. Renovations are post-game only (5M AUM each, +2000 XP), except `renovation_penthouse` which costs 10M AUM. Each renovation item has a `flag` that is set on purchase and may trigger visual changes in the target room.
+- `stats.js` — `PLAYER_BASE_STATS` (includes `aum: 0`), `XP_TABLE` (15 levels, exponential), `LEVEL_GROWTH`, `PLAYER_ABILITIES` (with `tag` fields), `ENEMY_STATS` (with `weakness`/`resistance`/`phases`/`phaseMessages`/`taunts` on Hendersons), `ENEMY_ABILITIES`, `ANDREW_TAUNTS`, `ITEMS`, `pickMessage()`. Imports `balance.json` and applies overrides via `Object.assign` at the bottom of the file.
+- `shop.js` — `SHOP_ITEMS` (consumables, upgrades, decor, renovation) and `SHOP_CATEGORIES`. Renovations are post-game only (5M AUM each, +2000 XP), except `renovation_penthouse` which costs 10M AUM. Each renovation item has a `flag` that is set on purchase and may trigger visual changes in the target room. Imports `balance.json` and applies shop price overrides.
+- `balance.json` — Editor-managed override layer for all tunable values: player base stats, all enemy stats, all ability stats, all shop prices. Written by `npm run editor`. Imported with `with { type: 'json' }` in `stats.js` and `shop.js`.
+- `room-overrides.json` — Editor-managed furniture/NPC position overrides. Structure: `{ roomId: { furniture: { "index": { x, z, rotation } }, npcs: { "index": { x, z, facing } } } }`. Applied in `Room.build()` before `_placeFurniture()`.
+- `character-overrides.json` — Editor-managed character color overrides. Structure: `{ characterId: { bodyColor: 0xRRGGBB, ... } }`. Applied at the bottom of `characters.js` via `Object.assign` loop.
 - `items.js` — Re-exports `ITEMS` from `stats.js` for convenience + exports `STARTING_INVENTORY` (starting loadout: 2× large coffee, 1× antacid).
 - `bestiary.js` — `BESTIARY_DATA`: maps every enemy `id` to `{ name, category, quip }`. Displayed in the Journal tab of MenuState. Add an entry here whenever a new enemy is added to `ENEMY_STATS`.
 - `thoughts.js` — `ROOM_THOUGHTS`: maps room IDs to arrays of Andrew inner-monologue strings that fire on first visit. Add new strings here to flesh out new rooms without touching ExplorationState.
@@ -111,7 +153,7 @@ All game data is plain JS objects/exports:
 ### UI (`src/ui/`)
 
 All UI is DOM-based HTML/CSS overlaid on the canvas:
-- **`CombatHUD`** — `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP, pressAdvantageCost = 25)`. Renders Brace, Retaliate (when ready), Desperate Gamble (when lowHP), tiered momentum buttons (25/50/100), telegraph row, and Confidence bar. `updateTelegraph(hint)` sets the enemy intent text. `showTaunt(text, side)` renders speech bubbles on `'player'` or `'enemy'` side.
+- **`CombatHUD`** — `showMainMenu(silenced, momentum, bracing, retaliateReady, lowHP, pressAdvantageCost = 25)`. Renders Brace, Retaliate (when ready), Desperate Gamble (when lowHP), tiered momentum buttons (25/50/100), telegraph row, and Confidence bar. `updateTelegraph(hint)` sets the enemy intent text. `showTaunt(text, side)` renders speech bubbles on `'player'` or `'enemy'` side. `updateBuffStatus(playerBuffs, enemyBuffs)` renders colored pill badges below the stat bars — call from `CombatState._enablePlayerInput()` and `_updateHUD()`. Duration displayed as `b.duration + 1` (a buff at `duration: 2` has 3 turns left).
 - **`DialogBox`** — `onAdvance` / `onChoice` callbacks; `skipToEnd()` / `isComplete()`. Space blocked on choice nodes (only Enter/click).
 - **`TransitionOverlay`** — `fadeOut/fadeIn`, `wipeDownOut/wipeDownIn` (descend), `wipeUpOut/wipeUpIn` (ascend).
 - **`TouchControls`** — Injects into `InputManager.keys`; activates only on touch devices.
@@ -148,6 +190,8 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **`questFlagMap` and ability unlocks**: The `questFlagMap` object inside `ExplorationState`'s `flag-set` listener maps completion flags to `questStates` keys that gate `PLAYER_ABILITIES[id].unlockQuest`. Only add a flag here if the quest *actually* unlocks an ability. Adding a side-quest done-flag (e.g. `printer_quest_done`) that has no corresponding ability will prematurely set `questStates` and fire a false "New ability unlocked!" toast — and if another quest later sets the same key, the toast fires a second time.
 - **Dialog multi-flag gating**: When a quest requires finding N things before completing, the dialog's completion branch must check **all N flags** — not just the last one found. If node 1 only checks the second item's flag, a player who finds that item first can skip the first step entirely. Fix: add a chained condition node between "all found" and the completion path that checks each remaining flag and redirects to a "you still need X" response if any is missing.
 - **`ENEMY_ABILITIES` key uniqueness**: `ENEMY_ABILITIES` in `stats.js` is a plain JS object literal — duplicate keys silently overwrite with no error. When multiple enemies share a generic ability name (e.g. `strategic_pivot`), prefix each key with the enemy name (`chief_strategic_pivot`) to avoid silent collisions. Always grep for the key before adding a new ability.
+- **JSON imports require `with { type: 'json' }`**: Node.js 24 (used by the editor server) requires the import attribute on all JSON imports. Vite 7 also supports it. Any file that does `import x from './foo.json'` must use `import x from './foo.json' with { type: 'json' }` — otherwise the editor server fails to load that module via dynamic import. Current files: `stats.js`, `shop.js`, `characters.js`, `Room.js`.
+- **Buff duration off-by-one**: `processTurnStart()` fires at the *start* of the player's turn before they act. The removal threshold is `< 0` (not `<= 0`) so a buff at `duration: 0` survives the current turn and expires after it. A buff with `buffDuration: 3` in `balance.json` therefore provides 3 full player turns of benefit. Do not change the threshold back to `<= 0`.
 - **NPC `dialogId` overrides act routing**: `_getDialogId()` returns the NPC's hardcoded `dialogId` before it reaches the act-based table (line ~1130 in `ExplorationState`). If an NPC entry has `dialogId: 'foo'`, it will always show that dialog regardless of act. To re-enable act routing for a previously hardcoded NPC, add a new room entry with the right `condition` and **no** `dialogId`.
 - **`_getDialogId()` Janitor priority chain** (fires before hardcoded `dialogId` check): (1) Janitor riddles — only at `actIndex >= 3` AND `met_janitor` AND `read_janitor_act3`; without `read_janitor_act3` the riddles are suppressed so `janitor_act3` can fire first. (2) Intro bypass — if `npc.dialogId === 'janitor_intro'` and `met_janitor`, routes to `janitor_return` instead. Use explicit `dialogId: 'janitor_return'` on room entries where routing should produce the return dialog; never rely on `janitor_intro` as a proxy.
 - **Executive floor Act 5 gate**: `_changeRoom()` blocks `executive_floor` when `restructuring_defeated` is set but `corporate_lawyer_defeated` is not (the gauntlet is in progress). Toast: "The elevator won't open. Someone's waiting for you in the lobby." The gate is not present before `restructuring_defeated` is set (Acts 1–4) or after `corporate_lawyer_defeated` is set. Do not add a separate `gatedRooms` entry — the check is an explicit conditional before the main gate table.
@@ -162,6 +206,10 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **Act-scoped flags**: When a flag (e.g. `janet_rallied`) is set in an earlier act and reused in a later act's objective counter, it will appear pre-satisfied. Use act-specific flag names (e.g. `janet_act6_rallied`) for any flag that must only be set within a specific act's flow.
 - **Objective display supports HTML**: `_getStoryObjective()` return values are injected as `innerHTML` in `_setQuest()`, so `<br>`, `<b>`, etc. work in the HUD panel. The toast notification strips all HTML tags before display — use `.replace(/<br>/gi, ' ').replace(/<[^>]+>/g, '')` pattern already in `_setQuest()`.
 - **Large furniture alignment**: `blockRect(tileX, tileZ, w, h)` blocks tiles starting at `(tileX, tileZ)` and extending in the +x/+z direction. For furniture wider than ~3 tiles, design the mesh with its origin at the left-front corner (not centered) and place it at the left-front tile coordinate so visual and collision match. Add footprint to `FURNITURE_FOOTPRINTS` in `Room.js`.
+- **Room location display names**: `_updateLocationDisplay()` in `ExplorationState.js` uses a hardcoded `names` lookup (around line 1624). The room data `name` field is completely ignored. When adding a new room or renaming one, add an entry to this lookup — otherwise the raw room ID is shown in the HUD.
+- **Canvas texture pattern for furniture screens**: Use `new THREE.CanvasTexture(canvas)` with `texture.minFilter = THREE.LinearFilter` and `texture.generateMipmaps = false` for crisp 2D procedural displays (stock tickers, data panels, movie screens, etc.). Draw content via the HTML5 Canvas 2D API before passing to the texture.
+- **Z-fighting on PlaneGeometry overlays**: A `PlaneGeometry` screen placed flush against a `BoxGeometry` face will flicker (z-fighting) whenever they share the same world z. Fix: push the plane's z past every box face it overlaps, including front faces of inner trim boxes. Remove `THREE.DoubleSide` — it doesn't prevent z-fighting and forces both faces to render. Check all BoxGeometry components: `z_center + depth/2` gives the front face world position; the plane must exceed the maximum of all these.
+- **Furniture rotation convention**: `rotation` in room data sets `mesh.rotation.y` in radians. `rotation: 0` faces north (toward −z). `Math.PI` faces south. `Math.PI/2` faces east. `-Math.PI/2` (or `Math.PI * 1.5`) faces west. The isometric camera angle means east/west rotations look different from what you'd expect in a top-down view — test in-game.
 - **Roguelite XP**: Fixed at 60–120 based on client wealth tier `t` (0–1 normalised against `MAX_ASSET`). Formula: `Math.round(60 + t * 60)` in `scaleEnemyStats()` in `ClientGenerator.js`. Not player-level scaled. Client data (including `xpReward`) is serialised into the `currentClient` player flag at generation time, so XP formula changes only affect newly generated clients. **Post-game (after `algorithm_defeated`)**: `generateClient` draws from `POST_GAME_CLIENT_TYPES` (assets 20M–100M), `MAX_ASSET` raises to 100M, and XP shifts to `Math.round(200 + t * 150)` (200–350). First post-game reception entry fires a one-time Diane toast (gated on `postGameReceptionUnlocked` flag). **HP variance**: `scaleEnemyStats()` multiplies `maxHP` by a random factor of `0.70–1.30` so clients at similar wealth tiers feel distinct. **Whale client roll**: 5% chance on every non-post-game reception visit to spawn a whale client (100M–250M assets, drawn from `POST_GAME_CLIENT_TYPES`, uses post-game XP/stat scaling). Crypto volatility is suppressed for whale rolls. AUM earned from a whale follows the same `max(50, floor(assets × 0.01))` formula.
 
 ## Key Story Flags

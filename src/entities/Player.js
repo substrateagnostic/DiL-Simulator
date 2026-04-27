@@ -22,7 +22,7 @@ export class Player {
     // Upgrade system
     this.upgradePoints = 0;
     this.deaths = 0;
-    this.unlockedAbilities = new Set(['file_motion', 'coffee_break', 'stall']); // starters
+    this.unlockedAbilities = new Set(['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check']); // starters
     // Cosmetic equipment: { hat: null, glasses: null, badge: null, accessory: null }
     this.equipped = {};
     for (const slot of COSMETIC_SLOTS) this.equipped[slot] = null;
@@ -274,9 +274,9 @@ export class Player {
     this.upgradePoints = data.upgradePoints || 0;
     this.deaths = data.deaths || 0;
     if (data.stats?.aum !== undefined) this.stats.aum = data.stats.aum;
-    this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break', 'stall']);
+    this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check']);
     // Ensure tier-0 starters are always present regardless of save age
-    ['file_motion', 'coffee_break', 'stall'].forEach(id => this.unlockedAbilities.add(id));
+    ['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check'].forEach(id => this.unlockedAbilities.add(id));
     if (data.equipped) {
       this.equipped = { ...data.equipped };
       // Rebuild mesh to show saved cosmetics

@@ -1,3 +1,151 @@
+# Session Handoff — April 26, 2026
+
+## What Was Done This Session (Session 5)
+
+Balance/room/character editor, combat bug fixes, quest gate fixes, and menu keyboard navigation.
+
+---
+
+### Balance & Room Editor (`npm run editor`)
+
+New developer tool: `npm run editor` starts a Node.js HTTP server at **http://localhost:3747** serving a single-page editor UI with 9 tabs:
+
+- **Player** — edit base stats (maxHP, maxMP, ATK, DEF, SPD)
+- **Abilities** — edit every player ability's cost, power, heal amount, buff/debuff duration, momentum gain
+- **Enemies** — edit all 19 enemies' maxHP, ATK, DEF, SPD, XP reward
+- **Shop** — edit all shop item prices
+- **Rooms** — top-down canvas grid of any room; click furniture/NPCs to select; edit X, Z, rotation with preset buttons (N/E/S/W); purple dot = override active; saves to `room-overrides.json`
+- **Combat Sim** — pick player level + enemy + shop upgrade counts → simulate 1000 fights → see win rate, damage/turn, turns-to-kill, full player/enemy stat summary
+- **XP Curve** — bar chart + table of all 15 level thresholds, XP gap per level, reception fights needed, story XP reachable (green = reachable via story alone)
+- **Encounters** — read-only table of all 20 encounters with boss badge, can-flee, pre/post dialog IDs
+- **Characters** — native color pickers for all 27 character configs (body, pants, shirt, tie, skin, hair); saves to `character-overrides.json`
+- **Diff** — colored git diff of all override files vs HEAD
+
+**Ctrl+S** saves the current tab. **Save** buttons are per-section. **Publish to GitHub** runs `git add` + `git commit` + `git push` for all three override files.
+
+**Server**: `scripts/editor.js` — plain Node.js `http` module, no dependencies. Dynamically imports `rooms/index.js`, `encounters/index.js`, and `characters.js` at runtime via `pathToFileURL`.
+
+**Three override JSON files** (all in `src/data/`):
+- `balance.json` — player stats, enemy stats, ability stats, shop prices. Read by `stats.js` and `shop.js` at module load time; overrides are applied via `Object.assign`.
+- `room-overrides.json` — per-room furniture and NPC position/rotation overrides, keyed by furniture array index. Applied in `Room.build()` before `_placeFurniture()`.
+- `character-overrides.json` — per-character color field overrides. Applied at the bottom of `characters.js` via `Object.assign` loop.
+
+**`with { type: 'json' }` import syntax** — Node.js 24 requires the import attribute on JSON imports; Vite 7 supports it too. All four game files that import JSON now use this syntax: `stats.js`, `shop.js`, `characters.js`, `Room.js`.
+
+---
+
+### Combat Buff Duration Bug Fix
+
+**`processTurnStart()` in `CombatEngine.js`** decremented durations and removed buffs at `<= 0`. Since it fires at the *start* of the player's turn before they act, a 3-turn buff was expiring after 2 player turns (counter hit 0 during player turn 3, removed before the turn happened). Fix: threshold changed `<= 0` → `< 0` so the buff persists until it reaches −1, giving the full advertised duration.
+
+---
+
+### Buff/Debuff Status Pills in Combat HUD
+
+**`CombatHUD`** now renders active buff/debuff pills below the player stat bars:
+- Green pills (`buff-positive`) for player buffs showing stat deltas and remaining turns
+- Red pills (`buff-debuff`) for debuffs on the enemy
+- Teal pills (`buff-enemy`) for buffs on the enemy
+
+New method: `hud.updateBuffStatus(playerBuffs, enemyBuffs)`. Called from `CombatState._enablePlayerInput()` and `CombatState._updateHUD()`. The `combat-stats-wrapper` div wraps both `statsEl` and `buffStatusEl` with `flex-direction: column`.
+
+Duration displays as `b.duration + 1` (post-fix semantics: a buff at `duration: 2` has 3 turns remaining).
+
+---
+
+### Quest Gate Fixes
+
+- **IT server room vault code** — `server_vault_code` interactable (x:5, z:3, the `server_rack` at the far end of the room) was accessible from the start of the game, letting players find Vault Code 3 in Act 1. Added `condition: { flag: 'vault_accessible' }` — now only visible after Act 4 janitor dialog.
+- **Stat-boost motivational posters** — all 10 `quest_atk_*` / `quest_def_*` posters scattered across rooms got `condition: { flag: 'retry_karen' }` so they're invisible until the roguelite tutorial phase begins. Players were finding them before the poster mechanic was introduced.
+
+---
+
+### Menu Arrow Key Navigation
+
+**`MenuState`** Abilities and Cosmetics overlays now support keyboard navigation:
+- Up/Down arrows (or W/S) move the selection
+- Enter/Space confirms selection
+- Escape closes the overlay
+- Selected item auto-scrolls into view
+
+Implementation: `_abilitySelectedIndex`, `_abilityCount`, `_abilityActions` array built during `_renderAbilities()`; `_cosmeticSelectedIndex`, `_cosmeticCount`, `_cosmeticActions` built during `_renderCosmetics()`. The `update()` method handles both overlays before routing to standard exploration input.
+
+---
+
+# Session Handoff — April 19, 2026
+
+## What Was Done This Session (Session 3)
+
+Penthouse suite visual overhaul: movie screen in The Reef & Reel, full Private Lounge redesign, NASA mission control Analytics Suite, and expanded penthouse layout fixes.
+
+---
+
+### The Reef & Reel (formerly Aquarium Suite)
+
+- Replaced middle `aquariumWall` with a `movieScreen` showing a procedural dusk cityscape canvas: sky gradient, moon, city silhouette, lit windows, wet street reflections, lone figure, film grain, and letterbox bars.
+- Room renamed from "Aquarium Suite" to **"The Reef & Reel"** — name mapping added to `_updateLocationDisplay()` in `ExplorationState.js`.
+- Room ambient light changed from cold blue (0x0077dd) to warm (0xffeedd) to match the cinema mood.
+- `movieScreen` added to `NO_BLOCK` in `Room.js`.
+
+**Z-fighting fix:** Screen `PlaneGeometry` placed at `z:0.18`, pushed in front of the rim face (z:0.15) and gold trim strips (z:0.17). `DoubleSide` removed.
+
+---
+
+### Private Lounge (penthouse_bar)
+
+Expanded room from 14×8 to **18×12**. Complete furniture overhaul:
+
+- **`neonSign()`** — "TRUST ISSUES" hot-pink canvas with chrome border and `PointLight(0xff0099)`. Two signs flanking the bar on the north wall.
+- **`humidor()`** — Mahogany cabinet with glass front, interior amber glow (0xcc7700), 2 shelves of cigars, side stand with ashtray and lit cigar (ember `emissiveIntensity:1.0`). Placed NW, rotated `Math.PI/2` to face the room.
+- **`leatherArmchair()`** — Oxblood leather (0x4a1208), wing-back, brass nail-heads, turned wooden legs. Two chairs flanking the cigar lounge.
+- **`coffeeTable()`** — Low glass-top table with whisky tumbler and cocktail glass. One between cigar chairs, one per VIP booth.
+- **`pokerTable()`** — Octagonal `CylinderGeometry(1.0,1.0,0.72,8)`, green felt, cream `TorusGeometry` rail, 5 player positions with cards and chips, 5 built-in chairs. NE corner.
+- **`poolTable()`** — Pool lamp/rod/overLight removed per previous session; lamp was re-confirmed removed this session.
+- VIP booth couches: L-shaped pairs (wall-side + front-facing) on SW and SE with coffee tables.
+
+Exits updated to accommodate expanded width (`x:17, z:5–6`). Player spawn moved to `x:15, z:6`.
+
+---
+
+### Analytics Suite (penthouse_analytics)
+
+Replaced desk, chair, and three `dataVizPanel` screens with:
+
+- **`megaAnalyticsScreen()`** — 12.5-wide wall screen (`PlaneGeometry`), 1536×256 canvas with 3 panels: market data + line graphs, network topology, system status bars + log. `z:0.08` to avoid z-fighting with trim front face.
+- **NASA mission control arc** — 5 `missionControlDesk` consoles in a gentle z-curve (x: 3,5,7,9,11 / z: 3.2,3.6,3.8,3.6,3.2), all `rotation:0` (facing north). 5 `operatorChair` chairs 1.2 units behind each console (z: 4.4,4.8,5.0,4.8,4.4).
+
+**New furniture assets:**
+- **`missionControlDesk()`** — Gunmetal console (0x2a2e35), angled monitor deck (`rotation.x=-0.42`), two emissive screens, 5 indicator lights with chrome rings, button grid, keyboard strip, built-in `PointLight(0x002244)`.
+- **`operatorChair()`** — Futuristic 5-point star base, single column, narrow seat, tall back with headrest wings, blue LED strips on back edges and headrest top.
+
+Both added to `NO_BLOCK` in `Room.js`.
+
+**Arc layout rule:** Console mesh is 1.28 units wide. Center-to-center x-spacing must be ≥ 2.0 units to avoid visual overlap. All consoles use `rotation:0` so they uniformly face the screen.
+
+---
+
+### Expanded Penthouse (penthouse_expanded)
+
+- **Putting green removed** — the `puttingGreen` furniture entry deleted entirely.
+- **Desk cluster moved** — from `x:9–11` to `x:13–15` (near server racks) so it no longer blocks the north exit door.
+- **`algorithm_terminal` interactable** — x moved from 10 → 14 to match new desk position.
+- **Conference table chairs** — moved from `x:15/19` to `x:16/18` so they sit flush against the table rather than floating 1–2 tiles away.
+
+---
+
+### Location Display Names
+
+Added to `_updateLocationDisplay()` names lookup in `ExplorationState.js`:
+
+```js
+penthouse_expanded: 'Penthouse',
+penthouse_aquarium: 'The Reef & Reel',
+penthouse_analytics: 'Analytics Suite',
+penthouse_bar: 'Private Lounge',
+```
+
+---
+
 # Session Handoff — April 18, 2026
 
 ## What Was Done This Session (Session 2)
@@ -394,7 +542,5 @@ Full audit and bug-fix pass on Acts 5–7 and all six Alex IT subquests, plus th
 
 ## Known Issues / Future Work
 
-- **Ross post-regional dialog** (`ross_returned`) written but not deeply integrated into story flow
-- **Vault room**: needs redesign with bomb door entrance, bank lockboxes
-- **Archive room**: more/taller file cabinets, fix monitor direction
+- **Combat character models**: every enemy reads as the same blocky humanoid in close-up. Silhouette differentiation per enemy type (Grandma: hunched/shorter; Chad: wider; The Algorithm: floating monitor instead of head), accessories/clothing detail, and hit/flinch animations would make fights feel more distinct.
 - **Full expansion plan**: see `.claude/plans/eager-nibbling-shannon.md` for Phases 1–9 (create `.claude/plans/` directory first)

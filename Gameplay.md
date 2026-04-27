@@ -40,16 +40,16 @@ After defeating The Algorithm, a **Renovations** tab appears in the Supply Shop.
 | `renovation_projection_wall` | Conference Room | Smart Projection Wall | Full AV display wall |
 | `renovation_corner_office` | Ross's Office | Corner Office Renovation | Grand paintings and executive furnishings |
 | `renovation_trophy_wall` | The Board Room | Victory Trophy Wall | Trophy cases, stock ticker, whiskey wall |
-| `renovation_penthouse` | The Penthouse | Executive Suite Upgrade | **10M AUM** — unlocks three wing rooms: Aquarium Suite, Analytics Suite, Cocktail Bar |
+| `renovation_penthouse` | The Penthouse | Executive Suite Upgrade | **10M AUM** — unlocks three wing rooms: The Reef & Reel, Analytics Suite, Private Lounge |
 
 ### Penthouse Expansion
 
 Purchasing `renovation_penthouse` transforms the penthouse into a four-room hub:
 
-- **Main Hub** (penthouse_expanded, 22×16): Executive space with kitchen, desk, putting green, server racks, and exits to all three wings.
-- **Aquarium Suite** (penthouse_aquarium): Three floor-to-ceiling aquarium walls with clownfish, blue tang, and goldfish canvas sprites. Two couches face the tanks. Popcorn popper in the corner.
-- **Analytics Suite** (penthouse_analytics): Three live data visualization panels showing TRUST DEPT stats. Analyst workstation.
-- **Cocktail Bar** (penthouse_bar): Full bar counter with marble top, purple-backlit liquor wall, and three leather bar stools.
+- **Penthouse** (penthouse_expanded, 22×16): Executive hub with kitchen, desk cluster near server racks, conference table, and exits to all three wings.
+- **The Reef & Reel** (penthouse_aquarium): Two flanking aquarium walls and a floor-to-ceiling movie screen showing a dusk cityscape scene. Warm ambient lighting. Popcorn popper in the corner.
+- **Analytics Suite** (penthouse_analytics): 12.5-wide mega screen across the north wall with live market data, network topology, and system status panels. Five gunmetal mission control consoles in a gentle arc with futuristic operator chairs — NASA-style.
+- **Private Lounge** (penthouse_bar, 18×12): Full bar with marble top and purple-backlit liquor wall. Two neon "TRUST ISSUES" signs. NW cigar lounge with humidor, leather armchairs, and coffee table. NE poker table (octagonal, 5 seats). Central pool table. Two VIP booth areas with L-shaped couches and coffee tables.
 
 ---
 

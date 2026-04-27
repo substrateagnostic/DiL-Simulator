@@ -104,3 +104,6 @@ export const LAYERS = {
   CHARACTERS: 0.02,
   EFFECTS: 0.03,
 };
+
+// Dev mode — append ?dev to the URL to enable (e.g. localhost:5173/?dev)
+export const DEV_MODE = new URLSearchParams(window.location.search).has('dev');

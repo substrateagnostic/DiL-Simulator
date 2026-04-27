@@ -18,7 +18,7 @@ class InputManagerClass {
   _onKeyDown(e) {
     if (!this.enabled) return;
     // Prevent default for game keys
-    const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'e', 'Enter', 'Escape', ' '];
+    const gameKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'w', 'a', 's', 'd', 'e', 'Enter', 'Escape', ' ', '`', 'F2'];
     if (gameKeys.includes(e.key)) {
       e.preventDefault();
     }

@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRUST ISSUES — Editor</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#0d0d14; --surface:#16161f; --surface2:#1e1e2e; --border:#2a2a3d;
+  --accent:#e94560; --accent2:#53a8b6; --text:#e0e0f0; --muted:#777799;
+  --green:#44dd88; --yellow:#ffd700; --purple:#cc88ff; --orange:#ff9944;
+}
+body { background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; font-size:14px; }
+header { background:var(--surface); border-bottom:2px solid var(--accent); padding:12px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; }
+header h1 { font-size:15px; font-weight:700; color:var(--accent); letter-spacing:1px; }
+header span { color:var(--muted); font-size:11px; }
+.toolbar { display:flex; gap:8px; align-items:center; }
+
+button { cursor:pointer; border:none; border-radius:4px; padding:7px 14px; font-size:12px; font-weight:600; transition:opacity .15s; }
+button:hover { opacity:.85; } button:active { opacity:.7; }
+.btn-save    { background:var(--accent2); color:#fff; }
+.btn-publish { background:var(--accent);  color:#fff; }
+.btn-build   { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-apply   { background:var(--yellow);  color:#111; }
+.btn-reset   { background:transparent; color:var(--muted); border:1px solid var(--border); }
+.btn-rooms   { background:var(--purple); color:#111; }
+.btn-chars   { background:var(--orange); color:#111; }
+.btn-refresh { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+
+/* Tabs */
+.tabs { display:flex; flex-wrap:wrap; gap:1px; background:var(--surface); border-bottom:1px solid var(--border); padding:0 16px; }
+.tab { padding:10px 16px; cursor:pointer; border-bottom:3px solid transparent; color:var(--muted); font-size:12px; font-weight:600; transition:color .15s,border-color .15s; user-select:none; }
+.tab:hover { color:var(--text); }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+.content { padding:20px; max-width:1300px; margin:0 auto; }
+.panel { display:none; }
+.panel.active { display:block; }
+h2 { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; }
+
+/* Balance fields */
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; }
+.field { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:10px; }
+.field label { display:block; font-size:10px; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px; }
+.field input[type=number] { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:14px; padding:5px 8px; outline:none; }
+.field input[type=number]:focus { border-color:var(--accent2); }
+.field input.changed { border-color:var(--yellow); color:var(--yellow); }
+.enemy-card,.ability-card,.shop-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px; }
+.enemy-card h3 { font-size:12px; font-weight:700; color:var(--accent2); margin-bottom:10px; }
+.ability-card h3 { font-size:12px; font-weight:700; color:var(--yellow); margin-bottom:10px; }
+.shop-card h3 { font-size:11px; font-weight:700; color:var(--green); margin-bottom:8px; }
+.enemy-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+.ability-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:7px; }
+.enemy-grid .field,.ability-grid .field { padding:7px; }
+.enemies-list  { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; }
+.abilities-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+.shop-list     { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; }
+
+/* Rooms */
+.rooms-header { display:flex; align-items:center; gap:14px; margin-bottom:14px; flex-wrap:wrap; }
+.rooms-header label { font-size:11px; color:var(--muted); text-transform:uppercase; }
+select { background:var(--surface); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:4px; font-size:12px; outline:none; cursor:pointer; }
+select:focus { border-color:var(--accent2); }
+.rooms-body { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start; }
+#room-canvas { display:block; border:1px solid var(--border); border-radius:6px; cursor:crosshair; max-width:100%; user-select:none; }
+.canvas-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:7px; }
+.legend-item { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--muted); }
+.legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.room-list-wrap { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.room-list-header { padding:9px 12px; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); background:var(--surface2); }
+#room-item-list { height:420px; overflow-y:auto; }
+.item-section-title { padding:5px 12px; font-size:10px; font-weight:700; color:var(--accent2); background:var(--bg); text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+.room-list-item { display:flex; align-items:center; gap:7px; padding:6px 12px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04); font-size:11px; transition:background .1s; }
+.room-list-item:hover { background:var(--surface2); }
+.room-list-item.selected { background:rgba(255,215,0,.08); border-left:3px solid var(--yellow); padding-left:9px; }
+.room-list-item.overridden { background:rgba(204,136,255,.05); }
+.item-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.item-label { flex:1; }
+.item-pos { color:var(--muted); font-size:10px; font-family:monospace; }
+.override-badge { font-size:10px; color:var(--purple); }
+#edit-panel { margin-top:16px; background:var(--surface); border:1px solid var(--yellow); border-radius:8px; padding:16px; }
+#edit-panel h3 { font-size:12px; color:var(--yellow); margin-bottom:12px; font-weight:700; }
+.edit-row { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:12px; }
+.edit-field { display:flex; flex-direction:column; gap:4px; }
+.edit-field label { font-size:10px; color:var(--muted); text-transform:uppercase; }
+.edit-field input { background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:13px; padding:6px 9px; outline:none; width:95px; }
+.edit-field input:focus { border-color:var(--yellow); }
+.orig { font-size:9px; color:var(--muted); }
+.edit-actions { display:flex; gap:8px; }
+.rot-presets { display:flex; gap:5px; margin-top:3px; }
+.rot-preset { padding:2px 7px; font-size:10px; background:var(--surface2); border:1px solid var(--border); color:var(--muted); border-radius:3px; cursor:pointer; font-weight:600; }
+.rot-preset:hover { border-color:var(--yellow); color:var(--yellow); }
+
+/* Combat sim */
+.combat-controls { display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; }
+.combat-controls .edit-field input { width:80px; }
+.sim-results { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; margin-bottom:24px; }
+.sim-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px; text-align:center; }
+.sim-card .sim-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.sim-card .sim-value { font-size:22px; font-weight:700; color:var(--text); }
+.sim-card.good .sim-value { color:var(--green); }
+.sim-card.warn .sim-value { color:var(--yellow); }
+.sim-card.bad  .sim-value { color:var(--accent); }
+.xp-section h2 { margin-bottom:12px; }
+#xp-canvas { display:block; border:1px solid var(--border); border-radius:6px; }
+.xp-table-wrap { overflow-x:auto; margin-top:14px; }
+.xp-table { border-collapse:collapse; width:100%; font-size:11px; }
+.xp-table th { background:var(--surface2); color:var(--muted); padding:7px 10px; text-align:left; text-transform:uppercase; font-size:10px; letter-spacing:.5px; border-bottom:1px solid var(--border); }
+.xp-table td { padding:6px 10px; border-bottom:1px solid rgba(255,255,255,.04); }
+.xp-table tr:hover td { background:var(--surface2); }
+
+/* Encounters */
+.enc-table { border-collapse:collapse; width:100%; font-size:12px; }
+.enc-table th { background:var(--surface2); color:var(--muted); padding:8px 12px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); position:sticky; top:0; }
+.enc-table td { padding:7px 12px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:middle; }
+.enc-table tr:hover td { background:var(--surface); }
+.enc-badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10px; font-weight:700; }
+.badge-yes { background:rgba(68,221,136,.15); color:var(--green); border:1px solid rgba(68,221,136,.3); }
+.badge-no  { background:rgba(233,69,96,.12); color:var(--accent); border:1px solid rgba(233,69,96,.3); }
+.badge-boss{ background:rgba(255,215,0,.12); color:var(--yellow); border:1px solid rgba(255,215,0,.3); }
+.dialog-id { font-family:monospace; font-size:10px; color:var(--accent2); }
+
+/* Characters */
+.chars-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.char-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px; }
+.char-card h3 { font-size:13px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.char-palette { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.char-color-field { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.char-color-field label { font-size:9px; color:var(--muted); text-transform:uppercase; text-align:center; }
+.char-color-field input[type=color] { width:36px; height:28px; border:none; border-radius:4px; cursor:pointer; padding:2px; background:var(--bg); border:1px solid var(--border); }
+.char-color-field input[type=color].changed { border-color:var(--yellow); box-shadow:0 0 6px rgba(255,215,0,.3); }
+.char-color-field input[type=color].null-val { opacity:.3; cursor:not-allowed; }
+.char-info { font-size:10px; color:var(--muted); margin-top:6px; }
+.char-override-badge { font-size:9px; color:var(--purple); border:1px solid var(--purple); padding:1px 6px; border-radius:8px; }
+
+/* Diff */
+.diff-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+#diff-output { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; font-family:monospace; font-size:12px; line-height:1.6; white-space:pre-wrap; overflow-x:auto; min-height:200px; }
+.diff-add  { color:#66ff88; }
+.diff-del  { color:#ff6688; }
+.diff-hunk { color:var(--accent2); }
+.diff-meta { color:var(--muted); }
+
+/* Console */
+#console-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:100; align-items:center; justify-content:center; }
+#console-overlay.visible { display:flex; }
+#console-box { background:var(--surface); border:2px solid var(--border); border-radius:10px; width:700px; max-width:96vw; padding:20px; }
+#console-box h3 { font-size:13px; color:var(--accent); margin-bottom:12px; }
+#console-output { background:var(--bg); border:1px solid var(--border); border-radius:6px; padding:12px; font-family:monospace; font-size:12px; color:var(--green); white-space:pre-wrap; min-height:120px; max-height:360px; overflow-y:auto; }
+#console-close { margin-top:12px; background:var(--surface2); color:var(--text); border:1px solid var(--border); float:right; }
+
+/* Toast */
+.toast { position:fixed; bottom:20px; right:20px; background:var(--surface); border:1px solid var(--green); color:var(--green); padding:9px 16px; border-radius:6px; font-size:12px; font-weight:600; opacity:0; transition:opacity .3s; pointer-events:none; z-index:200; }
+.toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>TRUST ISSUES — Balance &amp; Room Editor</h1>
+    <span>Ctrl+S to save current tab</span>
+  </div>
+  <div class="toolbar">
+    <button class="btn-build" onclick="runBuild()">Build</button>
+    <button class="btn-save" onclick="saveCurrentTab()">Save</button>
+    <button class="btn-publish" onclick="publishToGitHub()">Publish to GitHub</button>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('player',this)">Player</div>
+  <div class="tab" onclick="switchTab('abilities',this)">Abilities</div>
+  <div class="tab" onclick="switchTab('enemies',this)">Enemies</div>
+  <div class="tab" onclick="switchTab('shop',this)">Shop</div>
+  <div class="tab" onclick="switchTab('rooms',this)">Rooms</div>
+  <div class="tab" onclick="switchTab('combat',this)">Combat Sim</div>
+  <div class="tab" onclick="switchTab('encounters',this)">Encounters</div>
+  <div class="tab" onclick="switchTab('characters',this)">Characters</div>
+  <div class="tab" onclick="switchTab('diff',this)">Diff</div>
+</div>
+
+<div class="content">
+
+<!-- ── Player ── -->
+<div class="panel active" id="panel-player">
+  <h2>Player Base Stats</h2>
+  <div class="grid" id="player-fields"></div>
+</div>
+
+<!-- ── Abilities ── -->
+<div class="panel" id="panel-abilities">
+  <h2>Player Abilities</h2>
+  <div class="abilities-list" id="abilities-fields"></div>
+</div>
+
+<!-- ── Enemies ── -->
+<div class="panel" id="panel-enemies">
+  <h2>Enemies</h2>
+  <div class="enemies-list" id="enemies-fields"></div>
+</div>
+
+<!-- ── Shop ── -->
+<div class="panel" id="panel-shop">
+  <h2>Shop Prices (AUM)</h2>
+  <div class="shop-list" id="shop-fields"></div>
+</div>
+
+<!-- ── Rooms ── -->
+<div class="panel" id="panel-rooms">
+  <div class="rooms-header">
+    <label for="room-select">Room</label>
+    <select id="room-select" onchange="onRoomSelect()"><option value="">— Select Room —</option></select>
+    <span class="item-pos" id="room-dims"></span>
+    <button class="btn-rooms" onclick="saveRoomOverrides()" style="margin-left:auto">Save Room Overrides</button>
+  </div>
+  <div class="rooms-body">
+    <div>
+      <canvas id="room-canvas" width="220" height="160"></canvas>
+      <div class="canvas-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#8B5E3C"></div>Desk/Table</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#4466aa"></div>Seating</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#445566"></div>Structure</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#226688"></div>Tech</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#336633"></div>Decor</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#cc4488"></div>NPC</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div>Selected</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#cc88ff"></div>Overridden</div>
+      </div>
+    </div>
+    <div class="room-list-wrap">
+      <div class="room-list-header">Furniture &amp; NPCs — click to select</div>
+      <div id="room-item-list"></div>
+    </div>
+  </div>
+  <div id="edit-panel" style="display:none">
+    <h3 id="edit-title"></h3>
+    <div class="edit-row">
+      <div class="edit-field"><label>X (tile)</label><input type="number" id="edit-x" step="0.1"><div class="orig" id="edit-x-orig"></div></div>
+      <div class="edit-field"><label>Z (tile)</label><input type="number" id="edit-z" step="0.1"><div class="orig" id="edit-z-orig"></div></div>
+      <div class="edit-field">
+        <label>Rotation (deg)</label>
+        <input type="number" id="edit-rot" step="1">
+        <div class="orig" id="edit-rot-orig"></div>
+        <div class="rot-presets">
+          <div class="rot-preset" onclick="setRot(0)">N 0°</div>
+          <div class="rot-preset" onclick="setRot(90)">E 90°</div>
+          <div class="rot-preset" onclick="setRot(180)">S 180°</div>
+          <div class="rot-preset" onclick="setRot(270)">W 270°</div>
+        </div>
+      </div>
+    </div>
+    <div class="edit-actions">
+      <button class="btn-apply" onclick="applyEdit()">Apply Override</button>
+      <button class="btn-reset" onclick="resetEdit()">Reset to Default</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Combat Sim ── -->
+<div class="panel" id="panel-combat">
+  <div class="combat-controls">
+    <div class="edit-field">
+      <label>Player Level</label>
+      <input type="number" id="sim-level" value="1" min="1" max="15" step="1">
+    </div>
+    <div class="edit-field">
+      <label>Enemy</label>
+      <select id="sim-enemy" style="width:220px"></select>
+    </div>
+    <div class="edit-field">
+      <label>ATK upgrades (×3)</label>
+      <input type="number" id="sim-atk-up" value="0" min="0" max="3" step="1">
+    </div>
+    <div class="edit-field">
+      <label>DEF upgrades (×3)</label>
+      <input type="number" id="sim-def-up" value="0" min="0" max="3" step="1">
+    </div>
+    <div class="edit-field">
+      <label>HP upgrades (×20)</label>
+      <input type="number" id="sim-hp-up" value="0" min="0" max="3" step="1">
+    </div>
+    <div class="edit-field">
+      <label>Iterations</label>
+      <input type="number" id="sim-iters" value="1000" min="100" max="5000" step="100">
+    </div>
+    <button class="btn-apply" onclick="runSim()" style="align-self:flex-end">Simulate</button>
+  </div>
+  <div class="sim-results" id="sim-results"></div>
+
+  <div class="xp-section">
+    <h2>XP Curve — Level Progression</h2>
+    <canvas id="xp-canvas" width="800" height="220"></canvas>
+    <div class="xp-table-wrap">
+      <table class="xp-table" id="xp-table"></table>
+    </div>
+  </div>
+</div>
+
+<!-- ── Encounters ── -->
+<div class="panel" id="panel-encounters">
+  <h2>All Encounter Configs (read-only)</h2>
+  <div style="overflow-x:auto">
+    <table class="enc-table" id="enc-table">
+      <thead><tr>
+        <th>Encounter ID</th><th>Enemy ID</th><th>Can Flee</th><th>Story?</th><th>Pre-Dialog</th><th>Post-Dialog</th>
+      </tr></thead>
+      <tbody id="enc-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Characters ── -->
+<div class="panel" id="panel-characters">
+  <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+    <h2 style="margin:0">Character Colors</h2>
+    <button class="btn-chars" onclick="saveCharOverrides()">Save Character Overrides</button>
+    <span style="font-size:11px;color:var(--muted)">Changes apply in-game on next dev server reload</span>
+  </div>
+  <div class="chars-grid" id="chars-grid"></div>
+</div>
+
+<!-- ── Diff ── -->
+<div class="panel" id="panel-diff">
+  <div class="diff-header">
+    <h2 style="margin:0">Uncommitted Changes vs HEAD</h2>
+    <button class="btn-refresh" onclick="loadDiff()">Refresh</button>
+    <span style="font-size:11px;color:var(--muted)">balance.json · room-overrides.json · character-overrides.json</span>
+  </div>
+  <div id="diff-output">Loading...</div>
+</div>
+
+</div><!-- .content -->
+
+<!-- Console overlay -->
+<div id="console-overlay">
+  <div id="console-box">
+    <h3 id="console-title">Output</h3>
+    <pre id="console-output"></pre>
+    <button id="console-close" onclick="closeConsole()">Close</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let balance = null, origBalance = null;
+let roomOverrides = {}, currentRoom = null, selectedItem = null, dragState = null;
+let charConfigs = {}, charOverrides = {}, origCharOverrides = {};
+let currentTab = 'player';
+const CELL = 22;
+
+// ═══════════════════════════════════════════════════════════════
+// LABELS
+// ═══════════════════════════════════════════════════════════════
+const ENEMY_LABELS = {
+  intern:'Intern', karen:'Karen (Boss)', chad:'Chad (Boss)', grandma:'Grandma (Boss)',
+  compliance:'Compliance Auditor', regional:'Regional Manager', ross_boss:"Ross's Boss",
+  reception_client:'Reception Client', security_guard:'Security Guard', hr_rep:'HR Rep',
+  restructuring_analyst:'Restructuring Analyst', brand_consultant:'Brand Consultant',
+  data_analytics_lead:'Data Analytics Lead', chief_of_restructuring:'Chief of Restructuring',
+  corporate_lawyer:'Corporate Lawyer', rachel_boss:'Rachel (Boss)', cfos_assistant:"CFO's Assistant",
+  regional_director:'Regional Director', algorithm:'THE ALGORITHM'
+};
+const ABILITY_LABELS = {
+  file_motion:'File a Motion', coffee_break:'Coffee Break', stall:'Stall',
+  cite_precedent:'Cite Precedent', cc_all:'CC All', due_diligence:'Due Diligence',
+  billable_hours:'Billable Hours', per_my_last_email:'Per My Last Email',
+  forensic_audit:'Forensic Audit', fiduciary_shield:'Fiduciary Shield',
+  whistleblower:'Whistleblower', power_of_attorney:'Power of Attorney',
+  root_access:'Root Access', firewall:'Firewall',
+  temporal_audit:'Temporal Audit', notarized_strike:'Notarized Strike',
+  invoke_charter:'Invoke Charter'
+};
+const SHOP_LABELS = {
+  antacid:'Antacid', coffee_large:'Large Coffee', energy_drink:'Energy Drink',
+  stress_ball:'Stress Ball', upgrade_assertiveness:'Assertiveness Training',
+  upgrade_composure:'Composure Workshop', upgrade_patience:'Mindfulness Retreat',
+  upgrade_efficiency:'Efficiency Seminar', decor_plant:'Office Plant',
+  decor_keyboard:'Mechanical Keyboard', decor_coffee_machine:'Premium Coffee Machine',
+  decor_motivational_poster:'"Hang in There" Poster'
+};
+const STAT_LABELS = {
+  maxHP:'Max HP', maxMP:'Max Coffee', atk:'ATK', def:'DEF', spd:'SPD',
+  xpReward:'XP Reward', cost:'MP Cost', power:'Power', healAmount:'Heal Amount',
+  buffDuration:'Buff Duration (turns)', debuffDuration:'Debuff Duration (turns)', momentumGain:'Momentum Gain', price:'Price (AUM)'
+};
+const TYPE_COLORS = {
+  desk:'#8B5E3C', grandDesk:'#8B5E3C', conferenceTable:'#7B4E2C', boardroomTable:'#7B4E2C',
+  pokerTable:'#7B4E2C', kitchenIsland:'#7B4E2C', kitchenCounter:'#7B4E2C',
+  chair:'#4466aa', executiveChair:'#4466aa', couch:'#3355aa', leatherArmchair:'#3355aa', operatorChair:'#3355aa',
+  cubicleWall:'#445566', staircase:'#445566', stairFlight:'#445566', elevatorDoors:'#445566', vaultDoor:'#445566',
+  fileCabinet:'#664455', fileCabinetLow:'#664455', fileCabinetLateral:'#664455', safeDepositBox:'#664455',
+  serverRack:'#226688', printer:'#226688', smartBoard:'#226688', whiteboard:'#226688',
+  fridge:'#228866', vendingMachine:'#228866', coffeeMachine:'#228866', espressoMachine:'#228866',
+  receptionDesk:'#774422', receptionDeskMarble:'#774422',
+  plant:'#336633', plantTall:'#336633', plantSucculent:'#336633', deskPlant:'#336633', deskPlantSucculent:'#336633', marblePlanter:'#336633',
+  motivationalPoster:'#555533', oilPainting:'#555533', abstractPainting:'#555533',
+  car:'#334455', carSUV:'#334455', carSports:'#334455', andrewsCar:'#cc4422',
+  credenza:'#7B4E2C', cornerBar:'#7B4E2C',
+  aquariumWall:'#1155aa', movieScreen:'#444466', megaAnalyticsScreen:'#444466',
+};
+const COLOR_FIELD_LABELS = { bodyColor:'Body', pantsColor:'Pants', shirtColor:'Shirt', tieColor:'Tie', skinColor:'Skin', hairColor:'Hair' };
+const XP_TABLE = [0,325,775,1375,2175,3250,4700,6650,9275,12825,17625,24100,32850,44650,60650];
+const LEVEL_GROWTH = { maxHP:12, maxMP:10, atk:2, def:2, spd:1 };
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+async function init() {
+  const [balRes, ovRes, charRes, charOvRes] = await Promise.all([
+    fetch('/api/balance'), fetch('/api/room-overrides'),
+    fetch('/api/characters'), fetch('/api/character-overrides'),
+  ]);
+  balance = await balRes.json();
+  origBalance = JSON.parse(JSON.stringify(balance));
+  roomOverrides = await ovRes.json();
+  charConfigs = await charRes.json();
+  charOverrides = await charOvRes.json();
+  origCharOverrides = JSON.parse(JSON.stringify(charOverrides));
+
+  renderBalance();
+  renderCharacters();
+  populateSimEnemySelect();
+  renderXPCurve();
+  drawEmptyCanvas();
+
+  // Room selector
+  const roomsRes = await fetch('/api/rooms');
+  const rooms = await roomsRes.json();
+  const sel = document.getElementById('room-select');
+  rooms.forEach(r => {
+    const o = document.createElement('option');
+    o.value = r.id;
+    o.textContent = (r.name || r.id) + ` (${r.width}×${r.height})`;
+    sel.appendChild(o);
+  });
+
+  // Encounters
+  const encRes = await fetch('/api/encounters');
+  renderEncounters(await encRes.json());
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BALANCE
+// ═══════════════════════════════════════════════════════════════
+function renderBalance() { renderPlayer(); renderAbilities(); renderEnemies(); renderShop(); }
+
+function renderPlayer() {
+  const el = document.getElementById('player-fields'); el.innerHTML = '';
+  for (const [k, v] of Object.entries(balance.player))
+    el.appendChild(makeBField('player', null, k, v, origBalance.player[k]));
+}
+function renderAbilities() {
+  const el = document.getElementById('abilities-fields'); el.innerHTML = '';
+  for (const [id, data] of Object.entries(balance.abilities)) {
+    const card = div('ability-card'); card.innerHTML = `<h3>${ABILITY_LABELS[id]||id}</h3>`;
+    const grid = div('ability-grid');
+    for (const [s, v] of Object.entries(data)) grid.appendChild(makeBField('abilities', id, s, v, origBalance.abilities[id][s]));
+    card.appendChild(grid); el.appendChild(card);
+  }
+}
+function renderEnemies() {
+  const el = document.getElementById('enemies-fields'); el.innerHTML = '';
+  for (const [id, data] of Object.entries(balance.enemies)) {
+    const card = div('enemy-card'); card.innerHTML = `<h3>${ENEMY_LABELS[id]||id.replace(/_/g,' ')}</h3>`;
+    const grid = div('enemy-grid');
+    for (const [s, v] of Object.entries(data)) grid.appendChild(makeBField('enemies', id, s, v, origBalance.enemies[id][s]));
+    card.appendChild(grid); el.appendChild(card);
+  }
+}
+function renderShop() {
+  const el = document.getElementById('shop-fields'); el.innerHTML = '';
+  for (const [id, data] of Object.entries(balance.shop)) {
+    const card = div('shop-card'); card.innerHTML = `<h3>${SHOP_LABELS[id]||id.replace(/_/g,' ')}</h3>`;
+    card.appendChild(makeBField('shop', id, 'price', data.price, origBalance.shop[id].price));
+    el.appendChild(card);
+  }
+}
+function makeBField(section, key, stat, value, orig) {
+  const d = div('field');
+  const lbl = document.createElement('label'); lbl.textContent = STAT_LABELS[stat]||stat;
+  const inp = document.createElement('input'); inp.type='number'; inp.value=value; inp.dataset.orig=orig;
+  inp.addEventListener('input', () => {
+    const v = Number(inp.value);
+    if (key) balance[section][key][stat]=v; else balance[section][stat]=v;
+    inp.classList.toggle('changed', v !== Number(inp.dataset.orig));
+  });
+  d.appendChild(lbl); d.appendChild(inp); return d;
+}
+async function saveBalance() {
+  const r = await post('/api/balance', balance);
+  if (r.ok) {
+    origBalance = JSON.parse(JSON.stringify(balance));
+    document.querySelectorAll('input.changed').forEach(i=>i.classList.remove('changed'));
+    showToast('Balance saved');
+    renderXPCurve(); // re-render in case stats changed
+  } else showToast('Save failed');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ROOMS
+// ═══════════════════════════════════════════════════════════════
+function getRoomOv() { return currentRoom ? (roomOverrides[currentRoom.id]||{}) : {}; }
+function getEff(cat, i) { const b=currentRoom[cat][i], o=getRoomOv()[cat]?.[String(i)]; return o?{...b,...o}:{...b}; }
+function typeColor(t) { return TYPE_COLORS[t]||'#666688'; }
+
+async function onRoomSelect() {
+  const id = document.getElementById('room-select').value;
+  if (!id) { currentRoom=null; drawEmptyCanvas(); renderItemList(); hideEditPanel(); return; }
+  currentRoom = await (await fetch('/api/rooms/'+id)).json();
+  selectedItem = null;
+  document.getElementById('room-dims').textContent = `${currentRoom.width}×${currentRoom.height} tiles`;
+  hideEditPanel(); renderCanvas(); renderItemList();
+}
+function drawEmptyCanvas() {
+  const c=document.getElementById('room-canvas'); c.width=220; c.height=160;
+  const ctx=c.getContext('2d'); ctx.fillStyle='#1a1a28'; ctx.fillRect(0,0,220,160);
+  ctx.fillStyle='#555577'; ctx.font='12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('Select a room to begin',110,80);
+}
+function renderCanvas() {
+  if (!currentRoom) { drawEmptyCanvas(); return; }
+  const W=currentRoom.width, H=currentRoom.height, c=document.getElementById('room-canvas');
+  c.width=W*CELL; c.height=H*CELL;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#1a1a28'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.strokeStyle='#252535'; ctx.lineWidth=0.5;
+  for(let x=0;x<=W;x++){ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,H*CELL);ctx.stroke();}
+  for(let z=0;z<=H;z++){ctx.beginPath();ctx.moveTo(0,z*CELL);ctx.lineTo(W*CELL,z*CELL);ctx.stroke();}
+  ctx.strokeStyle='#3a3a55'; ctx.lineWidth=1.5; ctx.strokeRect(0.75,0.75,W*CELL-1.5,H*CELL-1.5);
+  const ov=getRoomOv();
+  (currentRoom.furniture||[]).forEach((item,i) => {
+    const e=getEff('furniture',i); const sel=selectedItem?.category==='furniture'&&selectedItem.index===i;
+    drawDot(ctx,e.x,e.z,typeColor(item.type),sel,!!ov.furniture?.[i],item.type[0]?.toUpperCase()||'?');
+  });
+  (currentRoom.npcs||[]).forEach((npc,i) => {
+    const e=getEff('npcs',i); const sel=selectedItem?.category==='npcs'&&selectedItem.index===i;
+    drawDot(ctx,e.x,e.z,'#cc4488',sel,!!ov.npcs?.[i],'★');
+  });
+}
+function drawDot(ctx,x,z,color,sel,ov,lbl) {
+  const px=x*CELL, pz=z*CELL, r=CELL*0.36;
+  ctx.fillStyle=ov?'#2a2810':'#1e1e2e';
+  ctx.beginPath(); ctx.arc(px,pz,r,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle=sel?'#ffd700':ov?'#cc88ff':color; ctx.lineWidth=sel?2.5:1.5;
+  ctx.beginPath(); ctx.arc(px,pz,r,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle=sel?'#ffd700':color;
+  ctx.font=`${Math.floor(CELL*.42)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(lbl,px,pz);
+}
+function canvasToTile(e) {
+  const c = document.getElementById('room-canvas');
+  const rect = c.getBoundingClientRect();
+  return {
+    mx: (e.clientX - rect.left) * (c.width  / rect.width)  / CELL,
+    mz: (e.clientY - rect.top)  * (c.height / rect.height) / CELL,
+  };
+}
+function nearestItem(mx, mz) {
+  let best = null, bd = Infinity;
+  (currentRoom.furniture||[]).forEach((_,i)=>{const ef=getEff('furniture',i);const d=Math.hypot(ef.x-mx,ef.z-mz);if(d<bd){bd=d;best={category:'furniture',index:i};}});
+  (currentRoom.npcs||[]).forEach((_,i)=>{const ef=getEff('npcs',i);const d=Math.hypot(ef.x-mx,ef.z-mz);if(d<bd){bd=d;best={category:'npcs',index:i};}});
+  return { best, bd };
+}
+function stageDragPosition(cat, i, nx, nz) {
+  const base = currentRoom[cat][i];
+  if (!roomOverrides[currentRoom.id]) roomOverrides[currentRoom.id] = {};
+  if (!roomOverrides[currentRoom.id][cat]) roomOverrides[currentRoom.id][cat] = {};
+  const prev = roomOverrides[currentRoom.id][cat][String(i)] || {};
+  const entry = { ...prev };
+  if (Math.abs(nx - base.x) > 0.001) entry.x = nx; else delete entry.x;
+  if (Math.abs(nz - base.z) > 0.001) entry.z = nz; else delete entry.z;
+  if (Object.keys(entry).length) roomOverrides[currentRoom.id][cat][String(i)] = entry;
+  else { delete roomOverrides[currentRoom.id][cat][String(i)]; }
+}
+
+const _rcanvas = document.getElementById('room-canvas');
+
+_rcanvas.addEventListener('mousedown', function(e) {
+  if (!currentRoom) return;
+  const { mx, mz } = canvasToTile(e);
+  const { best, bd } = nearestItem(mx, mz);
+  if (!best || bd >= 1.5) return;
+  e.preventDefault();
+  selectItem(best.category, best.index);
+  const ef = getEff(best.category, best.index);
+  dragState = { category: best.category, index: best.index, ox: ef.x - mx, oz: ef.z - mz };
+  _rcanvas.style.cursor = 'grabbing';
+});
+
+_rcanvas.addEventListener('mousemove', function(e) {
+  if (dragState) return;
+  if (!currentRoom) return;
+  const { mx, mz } = canvasToTile(e);
+  const { bd } = nearestItem(mx, mz);
+  _rcanvas.style.cursor = bd < 1.5 ? 'grab' : 'crosshair';
+});
+
+window.addEventListener('mousemove', function(e) {
+  if (!dragState || !currentRoom) return;
+  e.preventDefault();
+  const { mx, mz } = canvasToTile(e);
+  const nx = Math.max(0, Math.min(currentRoom.width,  Math.round((mx + dragState.ox) * 2) / 2));
+  const nz = Math.max(0, Math.min(currentRoom.height, Math.round((mz + dragState.oz) * 2) / 2));
+  stageDragPosition(dragState.category, dragState.index, nx, nz);
+  document.getElementById('edit-x').value = nx;
+  document.getElementById('edit-z').value = nz;
+  renderCanvas();
+}, { passive: false });
+
+window.addEventListener('mouseup', function() {
+  if (!dragState) return;
+  dragState = null;
+  _rcanvas.style.cursor = 'crosshair';
+  renderItemList();
+  showToast('Override staged — click Save Room Overrides');
+});
+function renderItemList() {
+  const el=document.getElementById('room-item-list'); el.innerHTML='';
+  if (!currentRoom) return;
+  const ov=getRoomOv();
+  if (currentRoom.furniture?.length) {
+    el.appendChild(sectionTitle(`Furniture (${currentRoom.furniture.length})`));
+    currentRoom.furniture.forEach((item,i)=>el.appendChild(makeListRow('furniture',i,item.type,ov.furniture?.[i])));
+  }
+  if (currentRoom.npcs?.length) {
+    el.appendChild(sectionTitle(`NPCs (${currentRoom.npcs.length})`));
+    currentRoom.npcs.forEach((npc,i)=>el.appendChild(makeListRow('npcs',i,npc.id,ov.npcs?.[i])));
+  }
+}
+function makeListRow(cat,i,lbl,hasOv) {
+  const ef=getEff(cat,i), sel=selectedItem?.category===cat&&selectedItem.index===i;
+  const d=div(`room-list-item${sel?' selected':''}${hasOv?' overridden':''}`);
+  d.onclick=()=>selectItem(cat,i);
+  const dot=document.createElement('span'); dot.className='item-dot'; dot.style.background=cat==='npcs'?'#cc4488':typeColor(lbl);
+  const label=document.createElement('span'); label.className='item-label'; label.textContent=lbl;
+  const pos=document.createElement('span'); pos.className='item-pos'; pos.textContent=`(${ef.x}, ${ef.z})`;
+  d.appendChild(dot); d.appendChild(label); d.appendChild(pos);
+  if (hasOv) { const b=document.createElement('span'); b.className='override-badge'; b.textContent='✎'; d.appendChild(b); }
+  return d;
+}
+function selectItem(cat,i) {
+  selectedItem={category:cat,index:i}; renderCanvas(); renderItemList();
+  showEditPanel(cat,i);
+  const sel=document.getElementById('room-item-list').querySelector('.selected');
+  if(sel) sel.scrollIntoView({block:'nearest'});
+}
+function showEditPanel(cat,i) {
+  const base=currentRoom[cat][i], eff=getEff(cat,i);
+  const rotKey=cat==='npcs'?'facing':'rotation';
+  const effRot=Math.round((eff[rotKey]??0)*180/Math.PI);
+  const baseRot=Math.round((base[rotKey]??0)*180/Math.PI);
+  document.getElementById('edit-panel').style.display='';
+  document.getElementById('edit-title').textContent=`${cat==='npcs'?'★ NPC':'◆ Furniture'} #${i}: ${cat==='npcs'?base.id:base.type}`;
+  document.getElementById('edit-x').value=eff.x??'';
+  document.getElementById('edit-z').value=eff.z??'';
+  document.getElementById('edit-rot').value=effRot;
+  document.getElementById('edit-x-orig').textContent=`default: ${base.x}`;
+  document.getElementById('edit-z-orig').textContent=`default: ${base.z}`;
+  document.getElementById('edit-rot-orig').textContent=`default: ${baseRot}°`;
+}
+function hideEditPanel() { document.getElementById('edit-panel').style.display='none'; }
+function setRot(deg) { document.getElementById('edit-rot').value=deg; }
+function applyEdit() {
+  if (!selectedItem||!currentRoom) return;
+  const {category:cat,index:i}=selectedItem, base=currentRoom[cat][i];
+  const x=parseFloat(document.getElementById('edit-x').value);
+  const z=parseFloat(document.getElementById('edit-z').value);
+  const rot=parseFloat(document.getElementById('edit-rot').value)*Math.PI/180;
+  const rotKey=cat==='npcs'?'facing':'rotation';
+  const baseRot=base[rotKey]??0;
+  const entry={};
+  if(!isNaN(x)&&Math.abs(x-base.x)>0.001) entry.x=x;
+  if(!isNaN(z)&&Math.abs(z-base.z)>0.001) entry.z=z;
+  if(!isNaN(rot)&&Math.abs(rot-baseRot)>0.001) entry[rotKey]=rot;
+  if(!roomOverrides[currentRoom.id]) roomOverrides[currentRoom.id]={};
+  if(!roomOverrides[currentRoom.id][cat]) roomOverrides[currentRoom.id][cat]={};
+  if(Object.keys(entry).length>0) roomOverrides[currentRoom.id][cat][String(i)]=entry;
+  else delete roomOverrides[currentRoom.id][cat][String(i)];
+  renderCanvas(); renderItemList(); showEditPanel(cat,i);
+  showToast('Override staged — click Save Room Overrides');
+}
+function resetEdit() {
+  if(!selectedItem||!currentRoom) return;
+  const {category:cat,index:i}=selectedItem;
+  if(roomOverrides[currentRoom.id]?.[cat]) delete roomOverrides[currentRoom.id][cat][String(i)];
+  renderCanvas(); renderItemList(); showEditPanel(cat,i); showToast('Reset to default');
+}
+async function saveRoomOverrides() {
+  const r=await post('/api/room-overrides',roomOverrides);
+  if(r.ok) showToast('Room overrides saved'); else showToast('Save failed');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// COMBAT SIM
+// ═══════════════════════════════════════════════════════════════
+function populateSimEnemySelect() {
+  if (!balance) return;
+  const sel=document.getElementById('sim-enemy');
+  sel.innerHTML='';
+  for(const [id] of Object.entries(balance.enemies)) {
+    const o=document.createElement('option'); o.value=id; o.textContent=ENEMY_LABELS[id]||id.replace(/_/g,' ');
+    sel.appendChild(o);
+  }
+}
+function getPlayerStats(level) {
+  const b=balance.player, atkUp=Number(document.getElementById('sim-atk-up').value)||0;
+  const defUp=Number(document.getElementById('sim-def-up').value)||0;
+  const hpUp=Number(document.getElementById('sim-hp-up').value)||0;
+  return {
+    maxHP: b.maxHP + (level-1)*LEVEL_GROWTH.maxHP + hpUp*20,
+    atk:   b.atk  + (level-1)*LEVEL_GROWTH.atk   + atkUp*3,
+    def:   b.def  + (level-1)*LEVEL_GROWTH.def   + defUp*3,
+    spd:   b.spd  + (level-1)*LEVEL_GROWTH.spd,
+  };
+}
+function calcDmg(atk, def) {
+  const raw=atk*1.5 - def*0.5;
+  return Math.max(1, Math.floor(raw + Math.floor(Math.random()*7)-3));
+}
+function runSim() {
+  const level=Number(document.getElementById('sim-level').value)||1;
+  const enemyId=document.getElementById('sim-enemy').value;
+  const iters=Number(document.getElementById('sim-iters').value)||1000;
+  if(!enemyId||!balance) return;
+  const p=getPlayerStats(level);
+  const e=balance.enemies[enemyId];
+  let wins=0, totalTurns=0, pDmgTotal=0, eDmgTotal=0, pTurnCount=0, eTurnCount=0;
+  for(let i=0;i<iters;i++) {
+    let pHP=p.maxHP, eHP=e.maxHP, turns=0;
+    const pFirst=p.spd>=e.spd;
+    while(pHP>0&&eHP>0&&turns<300) {
+      turns++;
+      const pd=calcDmg(p.atk,e.def); const ed=calcDmg(e.atk,p.def);
+      if(pFirst) {
+        eHP-=pd; pDmgTotal+=pd; pTurnCount++;
+        if(eHP<=0)break;
+        pHP-=ed; eDmgTotal+=ed; eTurnCount++;
+      } else {
+        pHP-=ed; eDmgTotal+=ed; eTurnCount++;
+        if(pHP<=0)break;
+        eHP-=pd; pDmgTotal+=pd; pTurnCount++;
+      }
+    }
+    if(eHP<=0) wins++;
+    totalTurns+=turns;
+  }
+  const wr=wins/iters, avgT=totalTurns/iters;
+  const pDpr=pDmgTotal/pTurnCount, eDpr=eDmgTotal/eTurnCount;
+  const ttke=e.maxHP/pDpr, ttkp=p.maxHP/eDpr;
+  const simEl=document.getElementById('sim-results');
+  simEl.innerHTML='';
+  function card(label,value,cls='') {
+    simEl.innerHTML+=`<div class="sim-card ${cls}"><div class="sim-label">${label}</div><div class="sim-value">${value}</div></div>`;
+  }
+  const wrPct=Math.round(wr*100);
+  card('Win Rate', wrPct+'%', wrPct>=70?'good':wrPct>=40?'warn':'bad');
+  card('Avg Turns', avgT.toFixed(1));
+  card('Player DMG/Turn', pDpr.toFixed(1));
+  card('Enemy DMG/Turn', eDpr.toFixed(1));
+  card('Turns to Kill Enemy', ttke.toFixed(1), ttke<=avgT*0.9?'good':'');
+  card('Enemy Turns to Kill You', ttkp.toFixed(1), ttkp>=avgT*1.1?'good':ttkp<avgT*0.6?'bad':'warn');
+  card('Player HP', p.maxHP);
+  card('Enemy HP', e.maxHP);
+  card('Player ATK', p.atk); card('Player DEF', p.def);
+  card('Enemy ATK', e.atk); card('Enemy DEF', e.def);
+}
+
+// ── XP Curve ─────────────────────────────────────────────────
+function renderXPCurve() {
+  // Canvas chart
+  const canvas=document.getElementById('xp-canvas');
+  const ctx=canvas.getContext('2d');
+  const W=canvas.width, H=canvas.height, PAD={l:50,r:20,t:20,b:40};
+  const chartW=W-PAD.l-PAD.r, chartH=H-PAD.t-PAD.b;
+  ctx.fillStyle='#1a1a28'; ctx.fillRect(0,0,W,H);
+  const maxXP=XP_TABLE[XP_TABLE.length-1];
+  ctx.strokeStyle='#2a2a3d'; ctx.lineWidth=0.5;
+  for(let i=0;i<=5;i++) {
+    const y=PAD.t+chartH*(1-i/5);
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(PAD.l+chartW,y); ctx.stroke();
+    ctx.fillStyle='#555577'; ctx.font='10px sans-serif'; ctx.textAlign='right'; ctx.textBaseline='middle';
+    ctx.fillText(Math.round(maxXP*i/5/1000)+'k',PAD.l-6,y);
+  }
+  // Bars
+  const bw=chartW/XP_TABLE.length*0.75, gap=chartW/XP_TABLE.length;
+  XP_TABLE.forEach((xp,i) => {
+    const barH=chartH*(xp/maxXP);
+    const x=PAD.l+i*gap+(gap-bw)/2;
+    const g=ctx.createLinearGradient(0,PAD.t+chartH-barH,0,PAD.t+chartH);
+    g.addColorStop(0,'#53a8b6'); g.addColorStop(1,'#1a3a45');
+    ctx.fillStyle=g;
+    ctx.fillRect(x,PAD.t+chartH-barH,bw,barH);
+    ctx.fillStyle='#aaa'; ctx.font='9px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
+    ctx.fillText(i+1,x+bw/2,PAD.t+chartH+4);
+  });
+  ctx.fillStyle='#777799'; ctx.font='11px sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Level', PAD.l+chartW/2, H-4);
+
+  // Table
+  const tbl=document.getElementById('xp-table');
+  tbl.innerHTML=`<thead><tr>
+    <th>Level</th><th>Total XP</th><th>XP to Next</th><th>Gap vs Prev</th>
+    <th>Reception fights (~65XP)</th><th>Story XP</th>
+  </tr></thead><tbody></tbody>`;
+  const tbody=tbl.querySelector('tbody');
+  let storyXP=0;
+  const storyXPPerBoss=[25,150,200,250,200,150,200,160,150,180,220,250,450,180,350,500];
+  for(let i=0;i<XP_TABLE.length;i++) {
+    const gap=i<XP_TABLE.length-1?XP_TABLE[i+1]-XP_TABLE[i]:'-';
+    const fights=i<XP_TABLE.length-1?Math.ceil(gap/65):'-';
+    if(i<storyXPPerBoss.length) storyXP+=storyXPPerBoss[i];
+    const tr=document.createElement('tr');
+    const lvlColor=XP_TABLE[i]<=storyXP?'#44dd88':'#ffd700';
+    tr.innerHTML=`<td style="color:${lvlColor};font-weight:700">${i+1}</td>
+      <td>${XP_TABLE[i].toLocaleString()}</td>
+      <td>${typeof gap==='number'?gap.toLocaleString():gap}</td>
+      <td>${i>0?((XP_TABLE[i]-XP_TABLE[i-1]-XP_TABLE[Math.max(0,i-1)]+XP_TABLE[Math.max(0,i-2)])||'—'):'-'}</td>
+      <td>${fights}</td>
+      <td style="color:${XP_TABLE[i]<=storyXP?'#44dd88':'#e94560'}">${storyXP.toLocaleString()}</td>`;
+    tbody.appendChild(tr);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ENCOUNTERS
+// ═══════════════════════════════════════════════════════════════
+function renderEncounters(list) {
+  const STORY_BOSSES=new Set(['karen','chad','grandma','compliance','regional','ross_boss','rachel_boss','chief_of_restructuring','corporate_lawyer','cfos_assistant','regional_director','algorithm']);
+  const tbody=document.getElementById('enc-tbody');
+  tbody.innerHTML='';
+  list.forEach(e => {
+    const tr=document.createElement('tr');
+    const isBoss=STORY_BOSSES.has(e.enemyId);
+    tr.innerHTML=`
+      <td style="font-family:monospace;font-size:11px;color:var(--accent2)">${e.id}</td>
+      <td>${ENEMY_LABELS[e.enemyId]||e.enemyId}</td>
+      <td><span class="enc-badge ${e.canFlee?'badge-yes':'badge-no'}">${e.canFlee?'Yes':'No'}</span></td>
+      <td>${isBoss?'<span class="enc-badge badge-boss">Boss</span>':''}</td>
+      <td class="dialog-id">${e.preDialogId||'—'}</td>
+      <td class="dialog-id">${e.postDialogId||'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHARACTERS
+// ═══════════════════════════════════════════════════════════════
+function numToHex(n) {
+  if(n===null||n===undefined) return null;
+  return '#'+n.toString(16).padStart(6,'0');
+}
+function hexToNum(h) { return parseInt(h.replace('#',''),16); }
+
+function renderCharacters() {
+  const el=document.getElementById('chars-grid'); el.innerHTML='';
+  for(const [id,cfg] of Object.entries(charConfigs)) {
+    const hasOv=!!charOverrides[id];
+    const card=div('char-card');
+    card.innerHTML=`<h3>${cfg.name}${hasOv?` <span class="char-override-badge">overridden</span>`:''}</h3>`;
+    const palette=div('char-palette');
+    for(const [field,label] of Object.entries(COLOR_FIELD_LABELS)) {
+      const baseVal=cfg[field];
+      const ovVal=charOverrides[id]?.[field];
+      const currentVal=ovVal??baseVal;
+      const hex=numToHex(currentVal);
+      const wrap=div('char-color-field');
+      const lbl=document.createElement('label'); lbl.textContent=label;
+      const inp=document.createElement('input'); inp.type='color';
+      if(hex===null) { inp.value='#888888'; inp.classList.add('null-val'); inp.disabled=true; }
+      else {
+        inp.value=hex;
+        const origHex=numToHex(baseVal);
+        inp.dataset.orig=origHex;
+        if(ovVal!==undefined&&ovVal!==null) inp.classList.add('changed');
+        inp.addEventListener('input', ()=>{
+          if(!charOverrides[id]) charOverrides[id]={};
+          charOverrides[id][field]=hexToNum(inp.value);
+          inp.classList.toggle('changed', inp.value!==inp.dataset.orig);
+          // Update override badge
+          const h3=card.querySelector('h3');
+          if(!h3.querySelector('.char-override-badge')) h3.innerHTML+=` <span class="char-override-badge">overridden</span>`;
+        });
+      }
+      wrap.appendChild(lbl); wrap.appendChild(inp); palette.appendChild(wrap);
+    }
+    const info=div('char-info');
+    info.textContent=`Style: ${cfg.hairStyle||'—'} · Accessories: ${cfg.accessories?.join(', ')||'none'}`;
+    card.appendChild(palette); card.appendChild(info); el.appendChild(card);
+  }
+}
+async function saveCharOverrides() {
+  const r=await post('/api/character-overrides',charOverrides);
+  if(r.ok) { origCharOverrides=JSON.parse(JSON.stringify(charOverrides)); showToast('Character overrides saved'); }
+  else showToast('Save failed');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DIFF
+// ═══════════════════════════════════════════════════════════════
+async function loadDiff() {
+  const el=document.getElementById('diff-output');
+  el.innerHTML='Loading...';
+  const res=await fetch('/api/diff');
+  const raw=await res.text();
+  if(!raw||raw==='(no uncommitted changes)') { el.innerHTML='<span style="color:var(--green)">No uncommitted changes.</span>'; return; }
+  el.innerHTML=raw.split('\n').map(line=>{
+    const esc=line.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    if(line.startsWith('+')&&!line.startsWith('+++')) return `<span class="diff-add">${esc}</span>`;
+    if(line.startsWith('-')&&!line.startsWith('---')) return `<span class="diff-del">${esc}</span>`;
+    if(line.startsWith('@@')) return `<span class="diff-hunk">${esc}</span>`;
+    if(line.startsWith('diff ')||line.startsWith('index ')||line.startsWith('---')||line.startsWith('+++')) return `<span class="diff-meta">${esc}</span>`;
+    return esc;
+  }).join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TABS / GLOBAL
+// ═══════════════════════════════════════════════════════════════
+function switchTab(name, el) {
+  currentTab=name;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='rooms'&&currentRoom) renderCanvas();
+  if(name==='diff') loadDiff();
+  if(name==='combat') renderXPCurve();
+}
+function saveCurrentTab() {
+  if(['player','abilities','enemies','shop'].includes(currentTab)) saveBalance();
+  else if(currentTab==='rooms') saveRoomOverrides();
+  else if(currentTab==='characters') saveCharOverrides();
+  else showToast('Nothing to save on this tab');
+}
+document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCurrentTab();} });
+
+async function publishToGitHub() {
+  openConsole('Publishing to GitHub...');
+  document.getElementById('console-output').textContent=await(await fetch('/api/publish',{method:'POST'})).text();
+}
+async function runBuild() {
+  openConsole('Building...');
+  document.getElementById('console-output').textContent=await(await fetch('/api/build',{method:'POST'})).text();
+}
+function openConsole(t) { document.getElementById('console-title').textContent=t; document.getElementById('console-output').textContent='Working...'; document.getElementById('console-overlay').classList.add('visible'); }
+function closeConsole() { document.getElementById('console-overlay').classList.remove('visible'); }
+function showToast(msg) { const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+
+// ── Helpers ───────────────────────────────────────────────────
+function div(cls) { const d=document.createElement('div'); d.className=cls; return d; }
+function sectionTitle(t) { const d=div('item-section-title'); d.textContent=t; return d; }
+async function post(url,data) { return fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}); }
+
+init();
+</script>
+</body>
+</html>

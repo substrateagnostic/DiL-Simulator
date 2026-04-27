@@ -576,7 +576,7 @@ export class CombatEngine {
 
     for (let i = entity.buffs.length - 1; i >= 0; i--) {
       entity.buffs[i].duration--;
-      if (entity.buffs[i].duration <= 0) {
+      if (entity.buffs[i].duration < 0) {
         results.push({ type: 'buff_expire', name: entity.buffs[i].name });
         entity.buffs.splice(i, 1);
       }

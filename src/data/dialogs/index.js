@@ -833,7 +833,7 @@ export const DIALOGS = {
     /* 5 */ { type: 'text', speaker: 'Andrew', text: "How do I get that?" },
     /* 6 */ { type: 'text', speaker: 'Ross', text: "The reception desk. Prospective clients come in all day. Handle their cases, win the fights, build up your skills." },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "TIP: Go to the Reception area and interact with the desk to take on clients. Each win earns XP and AUM currency." },
-    /* 8 */ { type: 'text', speaker: 'Ross', text: "Handle 3 clients. Get yourself to Level 3. Then go back to Karen — at that level you'll actually have a fighting chance." },
+    /* 8 */ { type: 'text', speaker: 'Ross', text: "Handle 3 clients. Get yourself to Level 3. Then head back to the conference room and face Karen again — at that level you'll actually have a fighting chance." },
     /* 9  */ { type: 'text', speaker: 'Ross', text: "Oh — and check the motivational posters around the building. Sounds dumb, but they're actually worth reading. Trust me." },
     /* 10 */ { type: 'text', speaker: 'Ross', text: "Also, there's an old Stagecoach Stampede cabinet in the break room. Don't laugh — if you can hit 500 distance, that thing gives you +5 Composure and +5 Assertiveness. Permanent." },
     /* 11 */ { type: 'text', speaker: 'Ross', text: "One more thing. I've dealt with the Hendersons before. Let me save you some pain." },

@@ -9,6 +9,7 @@ import { ITEMS, ENEMY_ABILITIES, ENEMY_STATS, ANDREW_TAUNTS, XP_TABLE } from '..
 import { AchievementManager } from '../core/AchievementManager.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
+import { DEV_MODE } from '../utils/constants.js';
 
 export class CombatState {
   constructor(stateManager, player, enemyId, onEnd, enemyOverrides = {}) {
@@ -144,6 +145,7 @@ export class CombatState {
       _xpTable: XP_TABLE,
     });
     this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
+    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy.buffs);
   }
 
   _handleAction(action) {
@@ -824,6 +826,7 @@ export class CombatState {
       _xpTable: XP_TABLE,
     });
     this.hud.updateEnemyHP(this.engine.enemy.hp, this.engine.enemy.maxHP);
+    this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy.buffs);
   }
 
   _spawnDamageNumber(text, type, target = 'enemy') {
@@ -927,7 +930,7 @@ export class CombatState {
     };
 
     const keyHandler = (e) => {
-      if (e.code === 'Space' || e.code === 'Enter') {
+      if (e.code === 'Space' || e.code === 'Enter' || e.code === 'KeyE') {
         e.preventDefault();
         document.removeEventListener('keydown', keyHandler);
         resolve();
@@ -1087,7 +1090,7 @@ export class CombatState {
             <div class="gamble-option-desc">${o.desc}</div>
           </div>`).join('')}
       </div>
-      <div class="minigame-hint">↑↓ navigate · ENTER confirm</div>
+      <div class="minigame-hint">↑↓/WS navigate · ENTER/E confirm</div>
     `;
     document.getElementById('ui-overlay').appendChild(selOverlay);
 
@@ -1110,9 +1113,9 @@ export class CombatState {
     });
 
     const selHandler = (e) => {
-      if (e.code === 'ArrowUp')   { selIdx = Math.max(0, selIdx - 1); updateSel(); e.preventDefault(); }
-      if (e.code === 'ArrowDown') { selIdx = Math.min(LENGTH_OPTIONS.length - 1, selIdx + 1); updateSel(); e.preventDefault(); }
-      if (e.code === 'Enter' || e.code === 'Space') {
+      if (e.code === 'ArrowUp'   || e.code === 'KeyW') { selIdx = Math.max(0, selIdx - 1); updateSel(); e.preventDefault(); }
+      if (e.code === 'ArrowDown' || e.code === 'KeyS') { selIdx = Math.min(LENGTH_OPTIONS.length - 1, selIdx + 1); updateSel(); e.preventDefault(); }
+      if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') {
         e.preventDefault();
         confirmSelection();
       }
@@ -1160,14 +1163,16 @@ export class CombatState {
         onComplete(baseMultiplier * (correct / sequence.length));
       }, 3000);
 
+      const WASD_TO_ARROW = { KeyW: 'ArrowUp', KeyS: 'ArrowDown', KeyA: 'ArrowLeft', KeyD: 'ArrowRight' };
       keyHandler = (e) => {
         if (!inputPhase || inputIndex >= sequence.length) return;
-        const validCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyF'];
+        const validCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyF', 'KeyW', 'KeyA', 'KeyS', 'KeyD'];
         if (!validCodes.includes(e.code)) return;
         e.preventDefault();
 
+        const pressedCode = WASD_TO_ARROW[e.code] || e.code;
         const el = keyEls[inputIndex];
-        if (e.code === sequence[inputIndex].code) {
+        if (pressedCode === sequence[inputIndex].code) {
           correct++;
           el.textContent = sequence[inputIndex].label;
           el.classList.add('correct');
@@ -1230,7 +1235,7 @@ export class CombatState {
     const keyHandler = (e) => {
       if (e.code === 'ArrowUp')   { sel = Math.max(0, sel - 1); updateSel(); e.preventDefault(); }
       if (e.code === 'ArrowDown') { sel = Math.min(options.length - 1, sel + 1); updateSel(); e.preventDefault(); }
-      if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); resolve(options[sel].risk); }
+      if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') { e.preventDefault(); resolve(options[sel].risk); }
       if (e.code === 'Escape') { document.removeEventListener('keydown', keyHandler); overlay.remove(); this._startPlayerTurn(); }
     };
     document.addEventListener('keydown', keyHandler);
@@ -1369,7 +1374,19 @@ export class CombatState {
           AudioManager.playSfx('cancel');
         }
       }
+      if (DEV_MODE && InputManager.isJustPressed('`')) {
+        this._devInstantWin();
+      }
     }
+  }
+
+  _devInstantWin() {
+    this.inputEnabled = false;
+    this.hud.disableInput();
+    this.engine.enemy.hp = 0;
+    this.engine.result = 'victory';
+    this.hud.showMessage('[DEV] Instant win');
+    setTimeout(() => this._handleResult(), 800);
   }
 
   pause() {

@@ -38,10 +38,19 @@ export class CombatHUD {
     const panel = document.createElement('div');
     panel.className = 'combat-player-panel';
 
+    const statsWrapper = document.createElement('div');
+    statsWrapper.className = 'combat-stats-wrapper';
+
     this.statsEl = document.createElement('div');
     this.statsEl.className = 'combat-stats';
     this._updateStats(playerStats);
-    panel.appendChild(this.statsEl);
+    statsWrapper.appendChild(this.statsEl);
+
+    this.buffStatusEl = document.createElement('div');
+    this.buffStatusEl.className = 'combat-buff-status';
+    statsWrapper.appendChild(this.buffStatusEl);
+
+    panel.appendChild(statsWrapper);
 
     this.menuEl = document.createElement('div');
     this.menuEl.className = 'combat-actions';
@@ -243,6 +252,22 @@ export class CombatHUD {
       const fill = this.enemyInfo.querySelector('.combat-enemy-hp-fill');
       if (fill) fill.style.width = `${Math.max(0, (hp / maxHP) * 100)}%`;
     }
+  }
+
+  updateBuffStatus(playerBuffs = [], enemyBuffs = []) {
+    if (!this.buffStatusEl) return;
+    const statLabel = s => ({ atk: 'ATK', def: 'DEF', spd: 'SPD', mp: 'Coffee' }[s] || s.toUpperCase());
+    const pills = [];
+    for (const b of playerBuffs) {
+      const parts = Object.entries(b.stats).map(([s, v]) => `${v > 0 ? '+' : ''}${v} ${statLabel(s)}`).join(' ');
+      pills.push(`<span class="combat-buff-pill buff-positive">${b.name}${parts ? ` (${parts})` : ''} · ${b.duration + 1}T</span>`);
+    }
+    for (const b of enemyBuffs) {
+      const isDebuff = Object.values(b.stats).some(v => v < 0);
+      const parts = Object.entries(b.stats).map(([s, v]) => `${v > 0 ? '+' : ''}${v} ${statLabel(s)}`).join(' ');
+      pills.push(`<span class="combat-buff-pill ${isDebuff ? 'buff-debuff' : 'buff-enemy'}">${b.name}${parts ? ` (${parts})` : ''} · ${b.duration + 1}T</span>`);
+    }
+    this.buffStatusEl.innerHTML = pills.join('');
   }
 
   updateTelegraph(hint) {

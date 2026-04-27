@@ -15,6 +15,47 @@
   gap: 20px;
 }
 
+.combat-stats-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.combat-buff-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 0;
+}
+
+.combat-buff-pill {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 7px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.buff-positive {
+  background: rgba(68, 255, 68, 0.12);
+  border-color: rgba(68, 255, 68, 0.5);
+  color: #88ff88;
+}
+
+.buff-debuff {
+  background: rgba(233, 69, 96, 0.12);
+  border-color: rgba(233, 69, 96, 0.5);
+  color: #ff8899;
+}
+
+.buff-enemy {
+  background: rgba(83, 168, 182, 0.12);
+  border-color: rgba(83, 168, 182, 0.5);
+  color: #88ccdd;
+}
+
 .combat-stats {
   background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
   border: 3px solid #0f3460;
