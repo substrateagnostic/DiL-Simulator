@@ -454,11 +454,24 @@ export class ExplorationState {
           }, 800);
         }
 
-        // Gauntlet fight 4: Data Analytics Lead — executive floor, first gatekeeper
-        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_combat) {
+        // Gauntlet fight 4: Data Analytics Duo — Lead + CFO's Assistant on executive floor
+        // (replaces the solo Data Analytics Lead encounter; party from player.party comes along)
+        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_duo_intro) {
           this.player.setFlag('data_lead_fight_started');
           setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['data_analytics_combat'], this.player, this.stateManager, 'data_analytics_combat');
+            const dialogState = new DialogState(DIALOGS['data_analytics_duo_intro'], this.player, this.stateManager, 'data_analytics_duo_intro');
+            this.stateManager.push(dialogState);
+          }, 800);
+        }
+
+        // Alex from IT recruitment: triggers when Andrew enters the IT office after the trio fight
+        if (roomId === 'it_office'
+            && this.player.getFlag('restructuring_trio_defeated')
+            && !this.player.getFlag('alex_it_recruit_offered')
+            && DIALOGS.alex_it_recruit) {
+          this.player.setFlag('alex_it_recruit_offered');
+          setTimeout(() => {
+            const dialogState = new DialogState(DIALOGS['alex_it_recruit'], this.player, this.stateManager, 'alex_it_recruit');
             this.stateManager.push(dialogState);
           }, 800);
         }
@@ -1223,6 +1236,14 @@ export class ExplorationState {
     if (interactable.dialogId === 'andrews_desk' && this.player.getFlag('grandma_defeated') && !this.player.getFlag('branch_chosen')) {
       return 'branch_decision';
     }
+    // Water cooler doubles as the team huddle hub once any ally is recruited.
+    // Reverts to its normal water_cooler dialog before the trio fight, and
+    // any time you have no recruited teammates around.
+    if (interactable.dialogId === 'water_cooler'
+        && this.player.party && this.player.party.length > 0
+        && DIALOGS.team_chat_hub) {
+      return 'team_chat_hub';
+    }
     return interactable.dialogId;
   }
 
@@ -1481,6 +1502,21 @@ export class ExplorationState {
       if (id === 'isaiah' && !this.player.getFlag('social_eng_started') && DIALOGS.social_engineering_1) return 'social_engineering_1';
       if (id === 'diane' && this.player.getFlag('social_eng_started') && !this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_2) return 'social_engineering_2';
       if (id === 'intern' && this.player.getFlag('social_eng_diane') && DIALOGS.social_engineering_3) return 'social_engineering_3';
+    }
+
+    // Ally recruitment: triggered after the trio fight when Andrew talks to recruitable team members
+    if (id === 'isaiah'
+        && this.player.getFlag('restructuring_trio_defeated')
+        && !this.player.getFlag('isaiah_recruited')
+        && !this.player.getFlag('isaiah_documents_shared')
+        && DIALOGS.isaiah_recruit) {
+      return 'isaiah_recruit';
+    }
+    if (id === 'diane'
+        && this.player.getFlag('diane_act6_rallied')
+        && !this.player.getFlag('diane_recruited')
+        && DIALOGS.diane_recruit) {
+      return 'diane_recruit';
     }
 
     if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;

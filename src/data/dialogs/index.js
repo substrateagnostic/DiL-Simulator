@@ -1926,6 +1926,121 @@ export const DIALOGS = {
     /* 10 */ { type: 'end' },
   ],
 
+  // ── Alex from IT recruitment ───────────────────────────────────────
+  // Triggered when Andrew enters the IT office after the trio fight, before
+  // heading up to the executive floor. Alex has been guerilla-warring the
+  // Restructuring Team's reformat order with `rm -rf`.
+  alex_it_recruit: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Alex from IT is standing on a chair, holding a network cable like a bullwhip." },
+    /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Andrew. Hi. Don't ask about the chair." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "What happened?" },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "A consultant tried to reimage every workstation on this floor. I unplugged the rack. Then I unplugged HIM." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "He's going to come back with reinforcements. And a manager. I need to come with you." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Look — I'm not a fighter. But I have root on every box in this building. That counts." },
+    /* 6  */ { type: 'choice', prompt: 'Bring Alex along?', choices: [
+      { text: '"Glad to have you. Welcome to the team."', next: 7 },
+      { text: '"I work better alone."', next: 12 },
+    ] },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Hell yes. Let me grab my laptop and a Red Bull." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'alex_it_recruited', value: true, next: 9 },
+    /* 9  */ { type: 'action', action: 'recruit_ally', ally: 'alex_it', next: 10 },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "Alex closes 47 browser tabs. The fans on his laptop slow down for the first time in weeks." },
+    /* 11 */ { type: 'end' },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "...okay. Cool. I'll be down here. Yelling at packets. If you change your mind, the door's open." },
+    /* 13 */ { type: 'end' },
+  ],
+
+  // ── Isaiah recruitment ─────────────────────────────────────────────
+  // Triggered after the trio fight when Andrew talks to Isaiah at his desk.
+  isaiah_recruit: [
+    /* 0  */ { type: 'text', speaker: 'Isaiah', text: "I saw what you did downstairs. The whole department saw." },
+    /* 1  */ { type: 'text', speaker: 'Isaiah', text: "Andrew, you know I run ops. I keep paper. I file things in triplicate. I take notes during meetings nobody else takes notes during." },
+    /* 2  */ { type: 'text', speaker: 'Isaiah', text: "I have nine years of receipts on Rachel. NINE." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Why didn't you say anything before?" },
+    /* 4  */ { type: 'text', speaker: 'Isaiah', text: "Because I didn't think anyone would do anything with it. I was wrong. I want in." },
+    /* 5  */ { type: 'choice', prompt: 'Recruit Isaiah?', choices: [
+      { text: '"We need everything you have. You\'re in."', next: 6 },
+      { text: '"Just send me the documents. Stay safe down here."', next: 11 },
+    ] },
+    /* 6  */ { type: 'text', speaker: 'Isaiah', text: "You won't regret it. I packed a go-bag last Tuesday. I had a feeling." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'isaiah_recruited', value: true, next: 8 },
+    /* 8  */ { type: 'action', action: 'recruit_ally', ally: 'isaiah', next: 9 },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "Isaiah picks up a binder labeled 'CONTINGENCIES.' It is alarmingly heavy." },
+    /* 10 */ { type: 'end' },
+    /* 11 */ { type: 'text', speaker: 'Isaiah', text: "Okay. I'll send the encrypted folder to your work email. Don't let anything happen to that printout." },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'isaiah_documents_shared', value: true, next: 13 },
+    /* 13 */ { type: 'end' },
+  ],
+
+  // ── Diane recruitment (formalizes ally-form for combat) ────────────
+  // Hooked into the Act 6 ally rally chain. Existing diane_act6 dialog already
+  // set diane_act6_rallied; this step adds the actual combat recruit.
+  diane_recruit: [
+    /* 0  */ { type: 'text', speaker: 'Diane', text: "I've been documenting Rachel's policy violations since I started in HR." },
+    /* 1  */ { type: 'text', speaker: 'Diane', text: "I'm not just sharing the file with you, Andrew. I'm walking up there with you." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "You're sure?" },
+    /* 3  */ { type: 'text', speaker: 'Diane', text: "Andrew. I am one of three people in this building who has read the entire employee handbook. I am SURE." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'diane_recruited', value: true, next: 5 },
+    /* 5  */ { type: 'action', action: 'recruit_ally', ally: 'diane', next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  // ── Data Analytics duo ─────────────────────────────────────────────
+  // Replaces the solo Data Analytics Lead. Now the Lead has a CFO's Assistant
+  // tagging along — the metric-pusher and the budget-cutter.
+  data_analytics_duo_intro: [
+    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "I told the CFO's office you'd come up. They wanted to be here for it." },
+    /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "Per Q3 projections, your department represents a 94% drag on synergies. We're going to need that resolved before the board vote." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "You're a finance assistant. You don't run trust." },
+    /* 3  */ { type: 'text', speaker: "CFO's Assistant", text: "Correct. I run COSTS. And you're a line item with a red number next to it." },
+    /* 4  */ { type: 'text', speaker: 'Data Analytics Lead', text: "We've consolidated the analysis. We'd like to walk you through it. Personally." },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'data_analytics_duo', next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  data_analytics_duo_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "My model... has rejected my model. This is bad for my model." },
+    /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "I'm... I'm going to need to escalate this. To my direct supervisor. Who is currently in the Bahamas." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "They retreat toward the elevators. The Lead is still muttering about confidence intervals." },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true, next: 4 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'cfos_assistant_defeated', value: true, next: 5 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_fight_started', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  // ── Team chat hub: out-of-combat conversations ─────────────────────
+  // Cycles through ally-specific lines based on which allies are recruited.
+  // Acts as a Mass Effect-style "talk to your squad between missions" beat.
+  team_chat_hub: [
+    /* 0  */ { type: 'choice', prompt: 'Who do you want to talk to?', choices: [
+      { text: 'Janet',         next: 1, requires: 'janet_recruited' },
+      { text: 'Alex from IT',  next: 5, requires: 'alex_it_recruited' },
+      { text: 'Isaiah',        next: 9, requires: 'isaiah_recruited' },
+      { text: 'Diane',         next: 13, requires: 'diane_recruited' },
+      { text: 'Just check in with the team. Nothing specific.', next: 17 },
+      { text: 'Get back to work.', next: 19 },
+    ] },
+    /* 1  */ { type: 'text', speaker: 'Janet', text: "Andrew. You doing okay?" },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "I keep thinking about the Henderson account. Three generations of grandparents trusted us with that. The minute Rachel got the keys to this branch, she was looking for ways to liquidate it." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "We're not just defending a department, you know. We're defending a promise." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "I know. That's why I'm not done.", next: 0 },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. So I rolled the badge audit logs. Nine of the new hires didn't badge in through reception. Rachel issued them direct from the executive floor." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "That's not a hiring freeze. That's a private army." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "I screenshotted everything. Three places. One of them is a Tor hidden service. Don't ask." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "...I won't.", next: 0 },
+    /* 9  */ { type: 'text', speaker: 'Isaiah', text: "I want to say something out loud. Then I want to write it down." },
+    /* 10 */ { type: 'text', speaker: 'Isaiah', text: "I've worked here eleven years. I've watched seven boss types come through. Most of them just wanted the title. Rachel is the first one who wanted the building." },
+    /* 11 */ { type: 'text', speaker: 'Isaiah', text: "Whatever happens upstairs — I'm glad you came back. I almost gave up on this place last year. Then you didn't." },
+    /* 12 */ { type: 'text', speaker: 'Andrew', text: "We're getting it back, Isaiah.", next: 0 },
+    /* 13 */ { type: 'text', speaker: 'Diane', text: "Tell me you're sleeping." },
+    /* 14 */ { type: 'text', speaker: 'Diane', text: "I'm not joking. The only thing standing between this branch and a hostile dissolution is your ability to make sound decisions on the executive floor. So tell me you're sleeping." },
+    /* 15 */ { type: 'text', speaker: 'Andrew', text: "...I'm trying." },
+    /* 16 */ { type: 'text', speaker: 'Diane', text: "Try harder. Coffee is not a substitute for REM. — Anyway. The handbook does have a clause for emergency board recall. I bookmarked it.", next: 0 },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "The team is getting ready for what's coming. Janet's making coffee. Alex is hunched over a laptop. Isaiah is filing something. Diane is already on a call." },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: "It feels, briefly, like a real team.", next: 0 },
+    /* 19 */ { type: 'end' },
+  ],
+
   restructuring_combat: [
     /* 0  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Ah. Andrew, is it? I've heard about you. The 'disruptive element.'" },
     /* 1  */ { type: 'text', speaker: 'Restructuring Analyst', text: "I've been reviewing your department's metrics. Your efficiency ratio is 0.34. Industry standard is 0.78." },
