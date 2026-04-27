@@ -464,8 +464,8 @@ export class ExplorationState {
           }, 800);
         }
 
-        // Alex from IT recruitment: triggers when Andrew enters the IT office after the trio fight
-        if (roomId === 'it_office'
+        // Alex from IT recruitment: triggers when Andrew enters the server room after the trio fight
+        if (roomId === 'server_room'
             && this.player.getFlag('restructuring_trio_defeated')
             && !this.player.getFlag('alex_it_recruit_offered')
             && DIALOGS.alex_it_recruit) {
@@ -1517,6 +1517,21 @@ export class ExplorationState {
         && !this.player.getFlag('diane_recruited')
         && DIALOGS.diane_recruit) {
       return 'diane_recruit';
+    }
+
+    // Alex from IT — Badge Audit personal mission (post-recruit, before Act 7)
+    if (id === 'alex_it'
+        && this.player.getFlag('alex_it_recruited')
+        && !this.player.getFlag('act6_complete')
+        && DIALOGS.alex_badge_audit_offer
+        && (!this.player.getFlag('alex_badge_audit_complete') || !this.player.getFlag(`read_alex_it_act${act}`))) {
+      // While the personal mission is active OR done but the player hasn't seen it yet, prefer it
+      if (this.player.getFlag('alex_has_patch_log') && !this.player.getFlag('alex_badge_audit_complete')) {
+        return 'alex_badge_audit_return';
+      }
+      if (!this.player.getFlag('alex_badge_audit_complete')) {
+        return 'alex_badge_audit_offer';
+      }
     }
 
     if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;

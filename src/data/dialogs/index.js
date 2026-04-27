@@ -2008,6 +2008,59 @@ export const DIALOGS = {
     /* 6  */ { type: 'end' },
   ],
 
+  // ── Alex from IT — Personal Mission: "Badge Audit" ─────────────────
+  // Unlocked after recruit. Andrew helps Alex trace where the Restructuring
+  // Team's badges were issued from. Reward: free unlock of `kernel_panic`
+  // (Alex's tier-2 AoE) + 200 XP + small backstory beat about Alex's roots.
+  alex_badge_audit_offer: [
+    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 12, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'alex_badge_audit_started', ifTrue: 10, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. Got a minute? I've been pulling badge logs since the trio went down." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Every Restructuring goon who came in this week was issued from a single workstation. Not HR. Not Reception. Somewhere upstairs." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I can't get the source from a remote query — Rachel's office IP is air-gapped. But if YOU could go up to the IT closet and pull the physical patch panel logs, I can correlate them." },
+    /* 5  */ { type: 'choice', prompt: 'Help Alex trace the badges?', choices: [
+      { text: '"On it. Where do I look?"', next: 6 },
+      { text: '"Later. Big stuff happening upstairs."', next: 9 },
+    ] },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "IT closet is off the it_office. Look for a server rack labeled 'PATCH-3' — it has a sticker that says 'DO NOT TOUCH 4ever'. That's the one." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'alex_badge_audit_started', value: true, next: 8 },
+    /* 8  */ { type: 'end' },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. No worries. The logs aren't going anywhere. Find me when you can." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Did you get to the IT closet yet? Server rack PATCH-3 — has the 'DO NOT TOUCH' sticker." },
+    /* 11 */ { type: 'end' },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Thanks again for the patch panel pull. I'll never forget where I was when I confirmed Rachel was the source. The break room. Eating a peanut." },
+    /* 13 */ { type: 'end' },
+  ],
+
+  alex_badge_audit_pull: [
+    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 8, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'alex_badge_audit_started', ifTrue: 2, ifFalse: 7 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Server rack PATCH-3. The 'DO NOT TOUCH 4ever' sticker has been laminated, suggesting it has been touched." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "You pull the patch panel log — a hand-written notebook taped to the inside of the rack door. The last entry reads: 'CABLE 47 → EXEC FLOOR (R. SVP). UNLABELED. JOE WAS HERE.'" },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "You photograph the page with your phone. Alex will know what to do with this." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'alex_has_patch_log', value: true, next: 6 },
+    /* 6  */ { type: 'end' },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A server rack labeled PATCH-3. There is a faded sticker. Whatever Alex needs in here, you don't have a reason to look — yet.", next: 6 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The patch panel sits quietly. You already gave Alex what he needed.", next: 6 },
+  ],
+
+  alex_badge_audit_return: [
+    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 12, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'alex_has_patch_log', ifTrue: 2, ifFalse: 11 },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Got the patch log. Cable 47 — 'R. SVP'. Rachel." },
+    /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "She physically ran a cable from her office to the badge issuer. That's not a corporate workflow. That's a CONSPIRACY." },
+    /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Joe was here, huh. Joe is a maintenance guy who retired in 2019. So Rachel had this set up for at least four years." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Andrew. You just gave me what I've been chasing for half a year. Let me show you something." },
+    /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "I built this little script for emergencies. Hard reboot the whole building. I never thought I'd actually USE it. But for a moment like this — yeah. Take it." },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'alex_badge_audit_complete', value: true, next: 8 },
+    /* 8  */ { type: 'action', action: 'give_xp', xp: 200, next: 9 },
+    /* 9  */ { type: 'action', action: 'unlock_ally_ability', ally: 'alex_it', ability: 'kernel_panic', next: 10 },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "Alex teaches you the Kernel Panic command. He's beaming." },
+    /* 11 */ { type: 'end' },
+    /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Did you find PATCH-3? The 'DO NOT TOUCH' sticker is the one.", next: 11 },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Still riding the high from cracking that conspiracy. We made history in a server closet.", next: 11 },
+  ],
+
   // ── Team chat hub: out-of-combat conversations ─────────────────────
   // Cycles through ally-specific lines based on which allies are recruited.
   // Acts as a Mass Effect-style "talk to your squad between missions" beat.

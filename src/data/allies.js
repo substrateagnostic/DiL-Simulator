@@ -43,7 +43,7 @@ export const ALLY_STATS = {
     growthFactor: 0.8,
     abilities: ['ddos_email', 'ssh_in', 'force_quit', 'backup_restore', 'kernel_panic', 'ticket_close'],
     starterAbilities: ['ddos_email', 'ssh_in', 'force_quit'],
-    recruitedRoom: 'it_office',
+    recruitedRoom: 'server_room',
   },
   isaiah: {
     name: 'Isaiah',

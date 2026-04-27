@@ -257,6 +257,14 @@ export class DialogState {
         break;
       }
 
+      case 'unlock_ally_ability': {
+        if (node.ally && node.ability) {
+          this.player.unlockAllyAbility(node.ally, node.ability);
+        }
+        AudioManager.playSfx('confirm');
+        break;
+      }
+
       default:
         console.warn(`DialogState: Unknown action "${node.action}" at index ${this.currentIndex}`);
         break;
