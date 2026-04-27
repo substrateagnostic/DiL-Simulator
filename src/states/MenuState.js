@@ -4,6 +4,7 @@ import { SaveManager } from '../core/SaveManager.js';
 import { EventBus } from '../core/EventBus.js';
 import { BESTIARY_DATA } from '../data/bestiary.js';
 import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE } from '../data/stats.js';
+import { ALLY_STATS, ALLY_ABILITIES } from '../data/allies.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 
@@ -452,6 +453,32 @@ export class MenuState {
     pointsDiv.innerHTML = `Upgrade Points: <span class="abilities-points-value">${this.player.upgradePoints}</span>`;
     panel.appendChild(pointsDiv);
 
+    // Character tabs — Andrew + each recruited ally
+    const characterTabs = this._buildCharacterTabs();
+    if (characterTabs.length > 1) {
+      panel.appendChild(this._renderCharacterTabs(characterTabs));
+    }
+
+    // Active character determines which ability list we render
+    const active = this._abilityActiveActor || 'andrew';
+    if (active !== 'andrew' && ALLY_STATS[active]) {
+      // Render ally ability tree
+      panel.appendChild(this._renderAllyAbilities(active));
+
+      const back = document.createElement('div');
+      back.className = 'menu-item';
+      back.style.marginTop = '16px';
+      back.textContent = 'Back';
+      back.addEventListener('click', () => this._closeAbilities());
+      panel.appendChild(back);
+
+      this.abilitiesOverlay.innerHTML = '';
+      this.abilitiesOverlay.appendChild(panel);
+      const sel = this.abilitiesOverlay.querySelector('.ability-card.selected');
+      if (sel) sel.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      return;
+    }
+
     const grid = document.createElement('div');
     grid.className = 'abilities-grid';
 
@@ -607,6 +634,147 @@ export class MenuState {
 
   _rerenderAbilities() {
     this._renderAbilities();
+  }
+
+  _buildCharacterTabs() {
+    const tabs = [{ id: 'andrew', name: 'Andrew' }];
+    for (const allyId of (this.player.party || [])) {
+      const cfg = ALLY_STATS[allyId];
+      if (cfg) tabs.push({ id: allyId, name: cfg.name });
+    }
+    return tabs;
+  }
+
+  _renderCharacterTabs(tabs) {
+    const wrap = document.createElement('div');
+    wrap.className = 'abilities-character-tabs';
+    const active = this._abilityActiveActor || 'andrew';
+    for (const t of tabs) {
+      const btn = document.createElement('div');
+      btn.className = `abilities-character-tab${t.id === active ? ' active' : ''}`;
+      btn.textContent = t.name;
+      btn.addEventListener('click', () => {
+        this._abilityActiveActor = t.id;
+        this._abilitySelectedIndex = 0;
+        this._rerenderAbilities();
+        AudioManager.playSfx('cursor');
+      });
+      wrap.appendChild(btn);
+    }
+    return wrap;
+  }
+
+  _renderAllyAbilities(allyId) {
+    const grid = document.createElement('div');
+    grid.className = 'abilities-grid';
+
+    const cfg = ALLY_STATS[allyId];
+    const state = this.player.allyState[allyId];
+    if (!cfg || !state) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding:20px;text-align:center;color:#888';
+      empty.textContent = 'Ally state not initialized.';
+      grid.appendChild(empty);
+      return grid;
+    }
+
+    // Show ally header
+    const header = document.createElement('div');
+    header.className = 'abilities-ally-header';
+    const eff = this.player.getAllyEffectiveStats(allyId);
+    header.innerHTML = `
+      <div class="abilities-ally-name">${cfg.name} <span class="abilities-ally-role">— ${cfg.role}</span></div>
+      <div class="abilities-ally-stats">HP ${eff.maxHP} · Coffee ${eff.maxMP} · ATK ${eff.atk} · DEF ${eff.def} · SPD ${eff.spd}</div>
+    `;
+    grid.appendChild(header);
+
+    // Starter abilities
+    const starters = cfg.starterAbilities || [];
+    const starterLabel = document.createElement('div');
+    starterLabel.className = 'abilities-tier-label';
+    starterLabel.textContent = 'STARTER';
+    grid.appendChild(starterLabel);
+
+    let itemIndex = 0;
+    this._abilityActions = [];
+
+    for (const abilityId of starters) {
+      const ability = ALLY_ABILITIES[abilityId];
+      if (!ability) continue;
+      const idx = itemIndex++;
+      const card = document.createElement('div');
+      card.className = `ability-card unlocked${idx === this._abilitySelectedIndex ? ' selected' : ''}`;
+      card.innerHTML = `
+        <div class="ability-card-header">
+          <span class="ability-name">${ability.name}</span>
+          <span class="ability-unlocked-badge">LEARNED</span>
+        </div>
+        <div class="ability-desc">${ability.description}</div>
+        <div class="ability-meta">
+          <span>${(ability.type || '').toUpperCase()}</span>
+          <span>${ability.cost || 0} Coffee</span>
+          ${ability.power ? `<span>Power: ${ability.power}</span>` : ''}
+          ${ability.healAmount ? `<span>+${ability.healAmount} HP</span>` : ''}
+          ${ability.tag ? `<span style="color:#88aacc">[${ability.tag}]</span>` : ''}
+        </div>
+      `;
+      this._abilityActions.push(null);
+      grid.appendChild(card);
+    }
+
+    // Unlockable abilities (not in starterAbilities)
+    const unlockables = (cfg.abilities || []).filter(id => !starters.includes(id));
+    if (unlockables.length > 0) {
+      const tierLabel = document.createElement('div');
+      tierLabel.className = 'abilities-tier-label';
+      tierLabel.textContent = 'UNLOCKABLE';
+      grid.appendChild(tierLabel);
+
+      for (const abilityId of unlockables) {
+        const ability = ALLY_ABILITIES[abilityId];
+        if (!ability) continue;
+        const idx = itemIndex++;
+        const isUnlocked = state.unlockedAbilities.includes(abilityId);
+        const canUnlock = !isUnlocked && this.player.canUnlockAllyAbility(allyId, abilityId);
+
+        const card = document.createElement('div');
+        card.className = `ability-card${isUnlocked ? ' unlocked' : canUnlock ? ' available' : ' locked'}${idx === this._abilitySelectedIndex ? ' selected' : ''}`;
+        card.innerHTML = `
+          <div class="ability-card-header">
+            <span class="ability-name">${ability.name}</span>
+            ${isUnlocked ? '<span class="ability-unlocked-badge">LEARNED</span>' : '<span class="ability-cost-badge">1 PT</span>'}
+          </div>
+          <div class="ability-desc">${ability.description}</div>
+          <div class="ability-meta">
+            <span>${(ability.type || '').toUpperCase()}</span>
+            <span>${ability.cost || 0} Coffee</span>
+            ${ability.power ? `<span>Power: ${ability.power}</span>` : ''}
+            ${ability.healAmount ? `<span>+${ability.healAmount} HP</span>` : ''}
+            ${ability.tag ? `<span style="color:#88aacc">[${ability.tag}]</span>` : ''}
+          </div>
+        `;
+        if (canUnlock) {
+          card.addEventListener('click', () => {
+            this._abilitySelectedIndex = idx;
+            if (this.player.spendPointOnAllyAbility(allyId, abilityId)) {
+              AudioManager.playSfx('confirm');
+            }
+            this._rerenderAbilities();
+          });
+          this._abilityActions.push(() => {
+            this.player.spendPointOnAllyAbility(allyId, abilityId);
+            AudioManager.playSfx('confirm');
+            this._rerenderAbilities();
+          });
+        } else {
+          this._abilityActions.push(null);
+        }
+        grid.appendChild(card);
+      }
+    }
+
+    this._abilityCount = itemIndex;
+    return grid;
   }
 
   _closeAbilities() {

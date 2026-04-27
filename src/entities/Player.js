@@ -294,6 +294,26 @@ export class Player {
     return true;
   }
 
+  // Returns true if the player can unlock this non-starter ally ability right now
+  // (ally is recruited, ability is in pool, not already unlocked, has upgrade points).
+  canUnlockAllyAbility(allyId, abilityId) {
+    const cfg = ALLY_STATS[allyId];
+    if (!cfg) return false;
+    if (!this.allyState[allyId]) return false;
+    if (!cfg.abilities.includes(abilityId)) return false;
+    if (this.allyState[allyId].unlockedAbilities.includes(abilityId)) return false;
+    if (this.upgradePoints < 1) return false;
+    return true;
+  }
+
+  // Spend 1 upgrade point to teach an ally a new ability from their pool.
+  spendPointOnAllyAbility(allyId, abilityId) {
+    if (!this.canUnlockAllyAbility(allyId, abilityId)) return false;
+    this.upgradePoints -= 1;
+    this.unlockAllyAbility(allyId, abilityId);
+    return true;
+  }
+
   // Add item to inventory
   addItem(id, quantity = 1) {
     const existing = this.inventory.find(i => i.id === id);

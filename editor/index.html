@@ -27,6 +27,68 @@ button:hover { opacity:.85; } button:active { opacity:.7; }
 .btn-rooms   { background:var(--purple); color:#111; }
 .btn-chars   { background:var(--orange); color:#111; }
 .btn-refresh { background:var(--surface2); color:var(--text); border:1px solid var(--border); }
+.btn-help    { background:transparent; color:var(--accent2); border:1px solid var(--accent2); padding:5px 10px; font-size:11px; }
+.btn-help:hover { background:var(--accent2); color:#fff; }
+.btn-add     { background:var(--green); color:#111; }
+.btn-danger  { background:transparent; color:var(--accent); border:1px solid var(--accent); padding:4px 8px; font-size:11px; }
+
+/* Status indicator */
+.status-pill { display:inline-flex; align-items:center; gap:6px; font-size:10px; color:var(--muted); padding:4px 9px; border:1px solid var(--border); border-radius:12px; background:var(--surface2); margin-right:6px; }
+.status-dot { width:7px; height:7px; border-radius:50%; background:var(--green); }
+.status-dot.dirty { background:var(--yellow); box-shadow:0 0 6px rgba(255,215,0,.5); }
+
+/* Allies / encounters cards */
+.ally-card, .enc-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:14px; }
+.ally-card h3, .enc-card h3 { font-size:13px; font-weight:700; color:var(--accent2); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.ally-card h3 .badge, .enc-card h3 .badge { font-size:9px; color:var(--purple); border:1px solid var(--purple); padding:1px 6px; border-radius:8px; font-weight:600; }
+.ally-stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-bottom:10px; }
+.ally-abilities-list { margin-top:10px; border-top:1px solid var(--border); padding-top:10px; }
+.ally-abilities-list h4 { font-size:11px; color:var(--yellow); text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; }
+.ability-edit-row { display:grid; grid-template-columns:140px repeat(auto-fill,minmax(110px,1fr)); gap:6px; align-items:end; padding:6px 0; border-bottom:1px dashed rgba(255,255,255,.05); }
+.ability-edit-row .ability-id { font-family:monospace; font-size:11px; color:var(--accent2); padding-bottom:4px; }
+.ability-edit-row label { font-size:9px; color:var(--muted); text-transform:uppercase; }
+.ability-edit-row input, .ability-edit-row select { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:3px; color:var(--text); font-size:11px; padding:4px 6px; outline:none; }
+.ability-edit-row input.changed, .ability-edit-row select.changed { border-color:var(--yellow); color:var(--yellow); }
+.text-field { display:flex; flex-direction:column; gap:4px; }
+.text-field label { font-size:10px; color:var(--muted); text-transform:uppercase; }
+.text-field input, .text-field select { background:var(--bg); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:12px; padding:6px 9px; outline:none; }
+.text-field input.changed, .text-field select.changed { border-color:var(--yellow); color:var(--yellow); }
+.enc-row-fields { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:10px; }
+.enc-row-fields .text-field input { font-size:11px; }
+.checkbox-field { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text); }
+.checkbox-field input { width:16px; height:16px; }
+
+/* Combat sim multiselect */
+.multiselect { background:var(--bg); border:1px solid var(--border); border-radius:4px; padding:6px; max-height:120px; overflow-y:auto; min-width:180px; }
+.multiselect label { display:flex; align-items:center; gap:6px; font-size:11px; padding:2px 0; cursor:pointer; color:var(--text); }
+.multiselect input[type=checkbox] { width:13px; height:13px; }
+.locked-row { display:flex; align-items:center; gap:6px; font-size:11px; padding:2px 0; color:var(--muted); }
+
+/* Dialogs viewer */
+.dialogs-body { display:grid; grid-template-columns:280px 1fr; gap:14px; align-items:start; }
+.dialog-sidebar { background:var(--surface); border:1px solid var(--border); border-radius:8px; max-height:600px; overflow-y:auto; }
+.dialog-sidebar-search { padding:9px 12px; border-bottom:1px solid var(--border); background:var(--surface2); }
+.dialog-sidebar-search input { width:100%; background:var(--bg); border:1px solid var(--border); color:var(--text); padding:6px 8px; border-radius:4px; font-size:11px; outline:none; }
+.dialog-list-item { padding:6px 12px; cursor:pointer; font-size:11px; font-family:monospace; color:var(--accent2); border-bottom:1px solid rgba(255,255,255,.04); transition:background .1s; }
+.dialog-list-item:hover { background:var(--surface2); }
+.dialog-list-item.selected { background:rgba(255,215,0,.08); border-left:3px solid var(--yellow); padding-left:9px; color:var(--yellow); }
+.dialog-table { width:100%; border-collapse:collapse; font-size:11px; }
+.dialog-table th { background:var(--surface2); color:var(--muted); padding:7px 10px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); position:sticky; top:0; }
+.dialog-table td { padding:6px 10px; border-bottom:1px solid rgba(255,255,255,.04); vertical-align:top; word-break:break-word; }
+.dialog-table tr:hover td { background:var(--surface); }
+.dialog-table .col-idx { width:48px; font-family:monospace; color:var(--muted); }
+.dialog-table .col-type { width:80px; font-family:monospace; color:var(--accent2); font-size:10px; text-transform:uppercase; }
+.dialog-table .col-speaker { width:140px; color:var(--purple); font-size:10px; }
+.dialog-table .col-next { width:60px; color:var(--yellow); font-family:monospace; }
+
+/* Help modal */
+#help-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.85); z-index:150; align-items:center; justify-content:center; }
+#help-overlay.visible { display:flex; }
+#help-box { background:var(--surface); border:2px solid var(--accent2); border-radius:10px; width:600px; max-width:96vw; padding:24px; }
+#help-box h3 { font-size:14px; color:var(--accent2); margin-bottom:14px; text-transform:uppercase; letter-spacing:1px; }
+#help-box p { font-size:13px; line-height:1.6; margin-bottom:12px; color:var(--text); }
+#help-box code { background:var(--bg); padding:1px 5px; border-radius:3px; font-family:monospace; font-size:11px; color:var(--yellow); }
+#help-box .help-close { margin-top:8px; background:var(--surface2); color:var(--text); border:1px solid var(--border); float:right; }
 
 /* Tabs */
 .tabs { display:flex; flex-wrap:wrap; gap:1px; background:var(--surface); border-bottom:1px solid var(--border); padding:0 16px; }
@@ -159,10 +221,15 @@ select:focus { border-color:var(--accent2); }
 
 <header>
   <div>
-    <h1>TRUST ISSUES — Balance &amp; Room Editor</h1>
+    <h1>TRUST ISSUES — Content Editor</h1>
     <span>Ctrl+S to save current tab</span>
   </div>
   <div class="toolbar">
+    <span class="status-pill" id="status-pill" title="Override files awaiting publish">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">checking…</span>
+    </span>
+    <button class="btn-help" onclick="openHelp()">? Help</button>
     <button class="btn-build" onclick="runBuild()">Build</button>
     <button class="btn-save" onclick="saveCurrentTab()">Save</button>
     <button class="btn-publish" onclick="publishToGitHub()">Publish to GitHub</button>
@@ -173,11 +240,13 @@ select:focus { border-color:var(--accent2); }
   <div class="tab active" onclick="switchTab('player',this)">Player</div>
   <div class="tab" onclick="switchTab('abilities',this)">Abilities</div>
   <div class="tab" onclick="switchTab('enemies',this)">Enemies</div>
+  <div class="tab" onclick="switchTab('allies',this)">Allies</div>
   <div class="tab" onclick="switchTab('shop',this)">Shop</div>
   <div class="tab" onclick="switchTab('rooms',this)">Rooms</div>
   <div class="tab" onclick="switchTab('combat',this)">Combat Sim</div>
   <div class="tab" onclick="switchTab('encounters',this)">Encounters</div>
   <div class="tab" onclick="switchTab('characters',this)">Characters</div>
+  <div class="tab" onclick="switchTab('dialogs',this)">Dialogs</div>
   <div class="tab" onclick="switchTab('diff',this)">Diff</div>
 </div>
 
@@ -199,6 +268,16 @@ select:focus { border-color:var(--accent2); }
 <div class="panel" id="panel-enemies">
   <h2>Enemies</h2>
   <div class="enemies-list" id="enemies-fields"></div>
+</div>
+
+<!-- ── Allies ── -->
+<div class="panel" id="panel-allies">
+  <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+    <h2 style="margin:0">Party Allies</h2>
+    <button class="btn-chars" onclick="saveAllyOverrides()">Save Ally Overrides</button>
+    <span style="font-size:11px;color:var(--muted)">Stats and abilities for Andrew's recruitable party members.</span>
+  </div>
+  <div id="allies-list"></div>
 </div>
 
 <!-- ── Shop ── -->
@@ -266,8 +345,14 @@ select:focus { border-color:var(--accent2); }
       <input type="number" id="sim-level" value="1" min="1" max="15" step="1">
     </div>
     <div class="edit-field">
-      <label>Enemy</label>
-      <select id="sim-enemy" style="width:220px"></select>
+      <label>Enemies (multi-select)</label>
+      <div class="multiselect" id="sim-enemies"></div>
+    </div>
+    <div class="edit-field">
+      <label>Party (Andrew + allies)</label>
+      <div class="multiselect" id="sim-party">
+        <div class="locked-row"><input type="checkbox" checked disabled>Andrew (always)</div>
+      </div>
     </div>
     <div class="edit-field">
       <label>ATK upgrades (×3)</label>
@@ -300,15 +385,13 @@ select:focus { border-color:var(--accent2); }
 
 <!-- ── Encounters ── -->
 <div class="panel" id="panel-encounters">
-  <h2>All Encounter Configs (read-only)</h2>
-  <div style="overflow-x:auto">
-    <table class="enc-table" id="enc-table">
-      <thead><tr>
-        <th>Encounter ID</th><th>Enemy ID</th><th>Can Flee</th><th>Story?</th><th>Pre-Dialog</th><th>Post-Dialog</th>
-      </tr></thead>
-      <tbody id="enc-tbody"></tbody>
-    </table>
+  <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+    <h2 style="margin:0">Encounter Configs</h2>
+    <button class="btn-chars" onclick="saveEncounterOverrides()">Save Encounter Overrides</button>
+    <button class="btn-add" onclick="addEncounter()">+ Add Encounter</button>
+    <span style="font-size:11px;color:var(--muted)">For multi-combatant fights, use the enemyIds list (comma-separated).</span>
   </div>
+  <div id="encounters-list"></div>
 </div>
 
 <!-- ── Characters ── -->
@@ -321,12 +404,28 @@ select:focus { border-color:var(--accent2); }
   <div class="chars-grid" id="chars-grid"></div>
 </div>
 
+<!-- ── Dialogs (read-only) ── -->
+<div class="panel" id="panel-dialogs">
+  <h2>Dialog Trees (read-only)</h2>
+  <div class="dialogs-body">
+    <div class="dialog-sidebar">
+      <div class="dialog-sidebar-search">
+        <input type="text" id="dialog-search" placeholder="Filter dialog id…" oninput="renderDialogList()">
+      </div>
+      <div id="dialog-list"></div>
+    </div>
+    <div id="dialog-viewer">
+      <div style="color:var(--muted);font-size:12px;padding:20px;text-align:center;">Select a dialog from the list.</div>
+    </div>
+  </div>
+</div>
+
 <!-- ── Diff ── -->
 <div class="panel" id="panel-diff">
   <div class="diff-header">
     <h2 style="margin:0">Uncommitted Changes vs HEAD</h2>
     <button class="btn-refresh" onclick="loadDiff()">Refresh</button>
-    <span style="font-size:11px;color:var(--muted)">balance.json · room-overrides.json · character-overrides.json</span>
+    <span style="font-size:11px;color:var(--muted)">balance · rooms · characters · allies · encounters</span>
   </div>
   <div id="diff-output">Loading...</div>
 </div>
@@ -341,6 +440,29 @@ select:focus { border-color:var(--accent2); }
     <button id="console-close" onclick="closeConsole()">Close</button>
   </div>
 </div>
+
+<!-- Help modal -->
+<div id="help-overlay" onclick="if(event.target===this)closeHelp()">
+  <div id="help-box">
+    <h3>How the editor works</h3>
+    <p>
+      Every tab here writes changes to JSON <em>override files</em> in <code>src/data/</code>
+      (<code>balance.json</code>, <code>room-overrides.json</code>, <code>character-overrides.json</code>,
+      <code>ally-overrides.json</code>, <code>encounter-overrides.json</code>). The game loads its base
+      data from JS modules and then merges your overrides on top — so anything you tweak here is a small,
+      reviewable diff, never a giant rewrite. Hit <strong>Save</strong> (or Ctrl+S) on each tab, then refresh
+      the dev-server tab in your browser to see it in-game.
+    </p>
+    <p>
+      When you're happy with a batch of changes, click <strong>Publish to GitHub</strong>. That stages the
+      five override files, commits them with a stock message, and pushes to <code>main</code>. The yellow
+      dot in the top bar means there are uncommitted edits waiting to be published; the green dot means
+      everything's clean. Use the <strong>Diff</strong> tab to preview exactly what will be committed.
+    </p>
+    <button class="help-close" onclick="closeHelp()">Got it</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -350,8 +472,15 @@ select:focus { border-color:var(--accent2); }
 let balance = null, origBalance = null;
 let roomOverrides = {}, currentRoom = null, selectedItem = null, dragState = null;
 let charConfigs = {}, charOverrides = {}, origCharOverrides = {};
+let allyData = { stats: {}, abilities: {}, patterns: {} };
+let allyOverrides = { stats: {}, abilities: {} };
+let encountersList = [], encounterOverrides = {};
+let dialogIds = [], selectedDialogId = null;
 let currentTab = 'player';
 const CELL = 22;
+const ABILITY_TYPES = ['attack', 'attack_aoe', 'heal_ally', 'buff_party', 'debuff', 'buff'];
+const ABILITY_TAGS = ['', 'legal', 'social', 'audit', 'technical'];
+const ALLY_STAT_FIELDS = ['maxHP', 'maxMP', 'atk', 'def', 'spd', 'growthFactor'];
 
 // ═══════════════════════════════════════════════════════════════
 // LABELS
@@ -411,9 +540,11 @@ const LEVEL_GROWTH = { maxHP:12, maxMP:10, atk:2, def:2, spd:1 };
 // INIT
 // ═══════════════════════════════════════════════════════════════
 async function init() {
-  const [balRes, ovRes, charRes, charOvRes] = await Promise.all([
+  const [balRes, ovRes, charRes, charOvRes, allyRes, allyOvRes, encOvRes, dlgRes] = await Promise.all([
     fetch('/api/balance'), fetch('/api/room-overrides'),
     fetch('/api/characters'), fetch('/api/character-overrides'),
+    fetch('/api/allies'), fetch('/api/ally-overrides'),
+    fetch('/api/encounter-overrides'), fetch('/api/dialogs'),
   ]);
   balance = await balRes.json();
   origBalance = JSON.parse(JSON.stringify(balance));
@@ -421,12 +552,20 @@ async function init() {
   charConfigs = await charRes.json();
   charOverrides = await charOvRes.json();
   origCharOverrides = JSON.parse(JSON.stringify(charOverrides));
+  allyData = await allyRes.json();
+  allyOverrides = await allyOvRes.json();
+  if (!allyOverrides.stats) allyOverrides.stats = {};
+  if (!allyOverrides.abilities) allyOverrides.abilities = {};
+  encounterOverrides = await encOvRes.json();
+  dialogIds = await dlgRes.json();
 
   renderBalance();
   renderCharacters();
-  populateSimEnemySelect();
+  renderAllies();
+  populateSimSelectors();
   renderXPCurve();
   drawEmptyCanvas();
+  renderDialogList();
 
   // Room selector
   const roomsRes = await fetch('/api/rooms');
@@ -441,7 +580,12 @@ async function init() {
 
   // Encounters
   const encRes = await fetch('/api/encounters');
-  renderEncounters(await encRes.json());
+  encountersList = await encRes.json();
+  renderEncounters();
+
+  // Status pill — dirty file indicator (refresh periodically).
+  refreshStatus();
+  setInterval(refreshStatus, 5000);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -498,6 +642,7 @@ async function saveBalance() {
     document.querySelectorAll('input.changed').forEach(i=>i.classList.remove('changed'));
     showToast('Balance saved');
     renderXPCurve(); // re-render in case stats changed
+    refreshStatus();
   } else showToast('Save failed');
 }
 
@@ -692,83 +837,153 @@ function resetEdit() {
 }
 async function saveRoomOverrides() {
   const r=await post('/api/room-overrides',roomOverrides);
-  if(r.ok) showToast('Room overrides saved'); else showToast('Save failed');
+  if(r.ok) { showToast('Room overrides saved'); refreshStatus(); } else showToast('Save failed');
 }
 
 // ═══════════════════════════════════════════════════════════════
-// COMBAT SIM
+// COMBAT SIM (multi-combatant)
 // ═══════════════════════════════════════════════════════════════
-function populateSimEnemySelect() {
+function populateSimSelectors() {
   if (!balance) return;
-  const sel=document.getElementById('sim-enemy');
-  sel.innerHTML='';
-  for(const [id] of Object.entries(balance.enemies)) {
-    const o=document.createElement('option'); o.value=id; o.textContent=ENEMY_LABELS[id]||id.replace(/_/g,' ');
-    sel.appendChild(o);
+  // Enemies multi-select
+  const eSel = document.getElementById('sim-enemies');
+  eSel.innerHTML = '';
+  for (const [id] of Object.entries(balance.enemies)) {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = id; cb.dataset.kind = 'enemy';
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(' ' + (ENEMY_LABELS[id] || id.replace(/_/g, ' '))));
+    eSel.appendChild(lbl);
+  }
+  // Default-check the first enemy so the sim always has something to fight.
+  const firstE = eSel.querySelector('input[type=checkbox]');
+  if (firstE) firstE.checked = true;
+
+  // Allies multi-select (Andrew is locked-on)
+  const pSel = document.getElementById('sim-party');
+  // Keep the locked Andrew row; clear out only the dynamic checkboxes.
+  pSel.querySelectorAll('label').forEach(l => l.remove());
+  for (const [id, cfg] of Object.entries(allyData.stats || {})) {
+    const lbl = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.value = id; cb.dataset.kind = 'ally';
+    lbl.appendChild(cb);
+    lbl.appendChild(document.createTextNode(' ' + (cfg.name || id)));
+    pSel.appendChild(lbl);
   }
 }
-function getPlayerStats(level) {
-  const b=balance.player, atkUp=Number(document.getElementById('sim-atk-up').value)||0;
-  const defUp=Number(document.getElementById('sim-def-up').value)||0;
-  const hpUp=Number(document.getElementById('sim-hp-up').value)||0;
+
+function getPlayerSimStats(level) {
+  const b = balance.player;
+  const atkUp = Number(document.getElementById('sim-atk-up').value) || 0;
+  const defUp = Number(document.getElementById('sim-def-up').value) || 0;
+  const hpUp  = Number(document.getElementById('sim-hp-up').value)  || 0;
   return {
+    name: 'Andrew',
     maxHP: b.maxHP + (level-1)*LEVEL_GROWTH.maxHP + hpUp*20,
+    hp:    b.maxHP + (level-1)*LEVEL_GROWTH.maxHP + hpUp*20,
     atk:   b.atk  + (level-1)*LEVEL_GROWTH.atk   + atkUp*3,
     def:   b.def  + (level-1)*LEVEL_GROWTH.def   + defUp*3,
     spd:   b.spd  + (level-1)*LEVEL_GROWTH.spd,
+    side: 'party',
   };
 }
-function calcDmg(atk, def) {
-  const raw=atk*1.5 - def*0.5;
-  return Math.max(1, Math.floor(raw + Math.floor(Math.random()*7)-3));
+
+function getAllySimStats(allyId, level) {
+  const cfg = allyData.stats[allyId] || {};
+  const gf = cfg.growthFactor ?? 0.8;
+  const maxHP = (cfg.maxHP || 100) + Math.round((level-1)*LEVEL_GROWTH.maxHP*gf);
+  return {
+    name: cfg.name || allyId,
+    maxHP, hp: maxHP,
+    atk: (cfg.atk || 10) + Math.round((level-1)*LEVEL_GROWTH.atk*gf),
+    def: (cfg.def || 10) + Math.round((level-1)*LEVEL_GROWTH.def*gf),
+    spd: (cfg.spd || 8)  + Math.round((level-1)*LEVEL_GROWTH.spd*gf),
+    side: 'party',
+  };
 }
+
+function getEnemySimStats(enemyId) {
+  const e = balance.enemies[enemyId] || {};
+  return {
+    name: ENEMY_LABELS[enemyId] || enemyId,
+    maxHP: e.maxHP || 100, hp: e.maxHP || 100,
+    atk: e.atk || 10, def: e.def || 8, spd: e.spd || 8,
+    side: 'enemy',
+  };
+}
+
+function calcDmg(atk, def) {
+  const raw = atk*1.5 - def*0.5;
+  return Math.max(1, Math.floor(raw + Math.floor(Math.random()*7) - 3));
+}
+
 function runSim() {
-  const level=Number(document.getElementById('sim-level').value)||1;
-  const enemyId=document.getElementById('sim-enemy').value;
-  const iters=Number(document.getElementById('sim-iters').value)||1000;
-  if(!enemyId||!balance) return;
-  const p=getPlayerStats(level);
-  const e=balance.enemies[enemyId];
-  let wins=0, totalTurns=0, pDmgTotal=0, eDmgTotal=0, pTurnCount=0, eTurnCount=0;
-  for(let i=0;i<iters;i++) {
-    let pHP=p.maxHP, eHP=e.maxHP, turns=0;
-    const pFirst=p.spd>=e.spd;
-    while(pHP>0&&eHP>0&&turns<300) {
+  if (!balance) return;
+  const level = Number(document.getElementById('sim-level').value) || 1;
+  const iters = Number(document.getElementById('sim-iters').value) || 1000;
+
+  const enemyIds = Array.from(document.querySelectorAll('#sim-enemies input:checked')).map(c => c.value);
+  const allyIds  = Array.from(document.querySelectorAll('#sim-party input:checked'))
+    .filter(c => !c.disabled).map(c => c.value);
+  if (!enemyIds.length) { showToast('Pick at least one enemy'); return; }
+
+  let wins = 0, totalTurns = 0, partyDmg = 0, enemyDmg = 0, partyHits = 0, enemyHits = 0;
+  for (let i = 0; i < iters; i++) {
+    // Build fresh combatants each iteration.
+    const party = [getPlayerSimStats(level), ...allyIds.map(id => getAllySimStats(id, level))];
+    const enemies = enemyIds.map(getEnemySimStats);
+    // Build a shared turn order sorted by spd (descending). Tie-break: party first.
+    const all = [...party.map((c,i)=>({c,team:'party',idx:i})), ...enemies.map((c,i)=>({c,team:'enemy',idx:i}))];
+    all.sort((a,b) => (b.c.spd - a.c.spd) || (a.team === 'party' ? -1 : 1));
+
+    let turns = 0;
+    while (party.some(p=>p.hp>0) && enemies.some(e=>e.hp>0) && turns < 300) {
       turns++;
-      const pd=calcDmg(p.atk,e.def); const ed=calcDmg(e.atk,p.def);
-      if(pFirst) {
-        eHP-=pd; pDmgTotal+=pd; pTurnCount++;
-        if(eHP<=0)break;
-        pHP-=ed; eDmgTotal+=ed; eTurnCount++;
-      } else {
-        pHP-=ed; eDmgTotal+=ed; eTurnCount++;
-        if(pHP<=0)break;
-        eHP-=pd; pDmgTotal+=pd; pTurnCount++;
+      for (const slot of all) {
+        const me = slot.c;
+        if (me.hp <= 0) continue;
+        const targets = (slot.team === 'party' ? enemies : party).filter(t => t.hp > 0);
+        if (!targets.length) break;
+        const tgt = targets[Math.floor(Math.random()*targets.length)];
+        const d = calcDmg(me.atk, tgt.def);
+        tgt.hp -= d;
+        if (slot.team === 'party') { partyDmg += d; partyHits++; }
+        else { enemyDmg += d; enemyHits++; }
       }
     }
-    if(eHP<=0) wins++;
-    totalTurns+=turns;
+    if (enemies.every(e => e.hp <= 0)) wins++;
+    totalTurns += turns;
   }
-  const wr=wins/iters, avgT=totalTurns/iters;
-  const pDpr=pDmgTotal/pTurnCount, eDpr=eDmgTotal/eTurnCount;
-  const ttke=e.maxHP/pDpr, ttkp=p.maxHP/eDpr;
-  const simEl=document.getElementById('sim-results');
-  simEl.innerHTML='';
-  function card(label,value,cls='') {
-    simEl.innerHTML+=`<div class="sim-card ${cls}"><div class="sim-label">${label}</div><div class="sim-value">${value}</div></div>`;
+
+  const wr = wins/iters, avgT = totalTurns/iters;
+  const partyDpr = partyHits ? partyDmg/partyHits : 0;
+  const enemyDpr = enemyHits ? enemyDmg/enemyHits : 0;
+  const totalEnemyHP = enemyIds.reduce((s,id)=>s + (balance.enemies[id]?.maxHP||0), 0);
+  const sample = [getPlayerSimStats(level), ...allyIds.map(id => getAllySimStats(id, level))];
+  const totalPartyHP = sample.reduce((s,c)=>s + c.maxHP, 0);
+  const ttke = partyDpr ? totalEnemyHP / (partyDpr * sample.length) : Infinity;
+  const ttkp = enemyDpr ? totalPartyHP / (enemyDpr * enemies_count(enemyIds)) : Infinity;
+
+  const simEl = document.getElementById('sim-results');
+  simEl.innerHTML = '';
+  function card(label, value, cls = '') {
+    simEl.innerHTML += `<div class="sim-card ${cls}"><div class="sim-label">${label}</div><div class="sim-value">${value}</div></div>`;
   }
-  const wrPct=Math.round(wr*100);
-  card('Win Rate', wrPct+'%', wrPct>=70?'good':wrPct>=40?'warn':'bad');
+  const wrPct = Math.round(wr*100);
+  card('Win Rate', wrPct + '%', wrPct >= 70 ? 'good' : wrPct >= 40 ? 'warn' : 'bad');
   card('Avg Turns', avgT.toFixed(1));
-  card('Player DMG/Turn', pDpr.toFixed(1));
-  card('Enemy DMG/Turn', eDpr.toFixed(1));
-  card('Turns to Kill Enemy', ttke.toFixed(1), ttke<=avgT*0.9?'good':'');
-  card('Enemy Turns to Kill You', ttkp.toFixed(1), ttkp>=avgT*1.1?'good':ttkp<avgT*0.6?'bad':'warn');
-  card('Player HP', p.maxHP);
-  card('Enemy HP', e.maxHP);
-  card('Player ATK', p.atk); card('Player DEF', p.def);
-  card('Enemy ATK', e.atk); card('Enemy DEF', e.def);
+  card('Party DMG/Hit', partyDpr.toFixed(1));
+  card('Enemy DMG/Hit', enemyDpr.toFixed(1));
+  card('Party Size', sample.length);
+  card('Enemy Count', enemyIds.length);
+  card('Total Party HP', totalPartyHP);
+  card('Total Enemy HP', totalEnemyHP);
+  card('Est. Rounds to Kill Enemies', ttke.toFixed(1), ttke <= avgT*0.9 ? 'good' : '');
+  card('Est. Rounds to Wipe Party', ttkp.toFixed(1), ttkp >= avgT*1.1 ? 'good' : ttkp < avgT*0.6 ? 'bad' : 'warn');
 }
+function enemies_count(ids) { return ids.length || 1; }
 
 // ── XP Curve ─────────────────────────────────────────────────
 function renderXPCurve() {
@@ -827,24 +1042,374 @@ function renderXPCurve() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// ENCOUNTERS
+// ENCOUNTERS (editable)
 // ═══════════════════════════════════════════════════════════════
-function renderEncounters(list) {
-  const STORY_BOSSES=new Set(['karen','chad','grandma','compliance','regional','ross_boss','rachel_boss','chief_of_restructuring','corporate_lawyer','cfos_assistant','regional_director','algorithm']);
-  const tbody=document.getElementById('enc-tbody');
-  tbody.innerHTML='';
-  list.forEach(e => {
-    const tr=document.createElement('tr');
-    const isBoss=STORY_BOSSES.has(e.enemyId);
-    tr.innerHTML=`
-      <td style="font-family:monospace;font-size:11px;color:var(--accent2)">${e.id}</td>
-      <td>${ENEMY_LABELS[e.enemyId]||e.enemyId}</td>
-      <td><span class="enc-badge ${e.canFlee?'badge-yes':'badge-no'}">${e.canFlee?'Yes':'No'}</span></td>
-      <td>${isBoss?'<span class="enc-badge badge-boss">Boss</span>':''}</td>
-      <td class="dialog-id">${e.preDialogId||'—'}</td>
-      <td class="dialog-id">${e.postDialogId||'—'}</td>`;
-    tbody.appendChild(tr);
+function getEncounterEffective(id) {
+  const base = encountersList.find(e => e.id === id) || { id };
+  const ov = encounterOverrides[id] || {};
+  return { ...base, ...ov };
+}
+
+function renderEncounters() {
+  const el = document.getElementById('encounters-list');
+  el.innerHTML = '';
+  const allIds = new Set(encountersList.map(e => e.id));
+  for (const k of Object.keys(encounterOverrides || {})) {
+    if (!k.startsWith('_')) allIds.add(k);
+  }
+  for (const id of allIds) el.appendChild(makeEncounterCard(id));
+}
+
+function makeEncounterCard(id) {
+  const eff = getEncounterEffective(id);
+  const ov = encounterOverrides[id] || {};
+  const isOverridden = !!encounterOverrides[id];
+  const isCustom = !encountersList.find(e => e.id === id);
+
+  const card = div('enc-card');
+  const h3 = document.createElement('h3');
+  h3.innerHTML = `<span style="font-family:monospace">${id}</span>${isOverridden ? ' <span class="badge">overridden</span>' : ''}${isCustom ? ' <span class="badge" style="color:var(--green);border-color:var(--green)">custom</span>' : ''}`;
+  card.appendChild(h3);
+
+  const grid = div('enc-row-fields');
+
+  // enemyId (single)
+  const enemyOpts = ['', ...Object.keys(balance.enemies || {})];
+  grid.appendChild(makeSelectField('Enemy ID (single)', eff.enemyId || '', enemyOpts, v => stageEnc(id, 'enemyId', v || null)));
+  // enemyIds (comma list)
+  grid.appendChild(makeTextField('Enemy IDs (comma sep, multi)', Array.isArray(eff.enemyIds) ? eff.enemyIds.join(', ') : '', v => {
+    const list = v.split(',').map(s => s.trim()).filter(Boolean);
+    stageEnc(id, 'enemyIds', list.length ? list : null);
+  }));
+  // partyIds (comma list)
+  grid.appendChild(makeTextField('Party IDs (comma sep)', Array.isArray(eff.partyIds) ? eff.partyIds.join(', ') : '', v => {
+    const list = v.split(',').map(s => s.trim()).filter(Boolean);
+    stageEnc(id, 'partyIds', list.length ? list : null);
+  }));
+  // canFlee
+  const flee = div('text-field');
+  const fleeLbl = document.createElement('label'); fleeLbl.textContent = 'Can Flee';
+  const fleeCb = document.createElement('label'); fleeCb.className = 'checkbox-field';
+  const fleeInp = document.createElement('input'); fleeInp.type = 'checkbox'; fleeInp.checked = !!eff.canFlee;
+  fleeInp.addEventListener('change', () => stageEnc(id, 'canFlee', fleeInp.checked));
+  fleeCb.appendChild(fleeInp); fleeCb.appendChild(document.createTextNode(' canFlee'));
+  flee.appendChild(fleeLbl); flee.appendChild(fleeCb); grid.appendChild(flee);
+
+  // pre/post dialogs
+  grid.appendChild(makeTextField('preDialogId', eff.preDialogId || '', v => stageEnc(id, 'preDialogId', v || null)));
+  grid.appendChild(makeTextField('postDialogId', eff.postDialogId || '', v => stageEnc(id, 'postDialogId', v || null)));
+
+  card.appendChild(grid);
+
+  if (isOverridden || isCustom) {
+    const actions = document.createElement('div');
+    actions.style.marginTop = '10px';
+    const reset = document.createElement('button');
+    reset.className = 'btn-danger';
+    reset.textContent = isCustom ? 'Delete Encounter' : 'Reset to Default';
+    reset.onclick = () => {
+      delete encounterOverrides[id];
+      renderEncounters();
+      showToast('Encounter override cleared');
+    };
+    actions.appendChild(reset);
+    card.appendChild(actions);
+  }
+
+  return card;
+}
+
+function stageEnc(id, field, value) {
+  if (!encounterOverrides[id]) encounterOverrides[id] = {};
+  if (value === null || value === '' || (Array.isArray(value) && !value.length)) {
+    delete encounterOverrides[id][field];
+  } else {
+    encounterOverrides[id][field] = value;
+  }
+  if (Object.keys(encounterOverrides[id]).length === 0) delete encounterOverrides[id];
+}
+
+function addEncounter() {
+  const id = (prompt('New encounter id (lowercase_with_underscores):') || '').trim();
+  if (!id) return;
+  if (encountersList.find(e => e.id === id) || encounterOverrides[id]) {
+    showToast('Encounter id already exists'); return;
+  }
+  encounterOverrides[id] = { enemyId: '', canFlee: true };
+  renderEncounters();
+}
+
+async function saveEncounterOverrides() {
+  const r = await post('/api/encounter-overrides', encounterOverrides);
+  if (r.ok) showToast('Encounter overrides saved'); else showToast('Save failed');
+  refreshStatus();
+}
+
+function makeTextField(labelText, value, onChange) {
+  const w = div('text-field');
+  const lbl = document.createElement('label'); lbl.textContent = labelText;
+  const inp = document.createElement('input'); inp.type = 'text'; inp.value = value;
+  inp.addEventListener('input', () => onChange(inp.value));
+  w.appendChild(lbl); w.appendChild(inp);
+  return w;
+}
+
+function makeSelectField(labelText, value, options, onChange) {
+  const w = div('text-field');
+  const lbl = document.createElement('label'); lbl.textContent = labelText;
+  const sel = document.createElement('select');
+  for (const opt of options) {
+    const o = document.createElement('option');
+    o.value = opt; o.textContent = opt || '— none —';
+    if (opt === value) o.selected = true;
+    sel.appendChild(o);
+  }
+  sel.addEventListener('change', () => onChange(sel.value));
+  w.appendChild(lbl); w.appendChild(sel);
+  return w;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ALLIES
+// ═══════════════════════════════════════════════════════════════
+function getAllyEffectiveStats(id) {
+  return { ...(allyData.stats[id] || {}), ...((allyOverrides.stats || {})[id] || {}) };
+}
+
+function getAllyEffectiveAbility(id) {
+  return { ...(allyData.abilities[id] || {}), ...((allyOverrides.abilities || {})[id] || {}) };
+}
+
+function renderAllies() {
+  const el = document.getElementById('allies-list');
+  el.innerHTML = '';
+  const allyIds = new Set([...Object.keys(allyData.stats || {}), ...Object.keys(allyOverrides.stats || {})]);
+  for (const id of allyIds) el.appendChild(makeAllyCard(id));
+}
+
+function makeAllyCard(id) {
+  const eff = getAllyEffectiveStats(id);
+  const ov = (allyOverrides.stats || {})[id] || {};
+  const card = div('ally-card');
+  const h3 = document.createElement('h3');
+  h3.innerHTML = `${eff.name || id} <span style="color:var(--muted);font-weight:400;font-size:11px;">(${id})${eff.role ? ' — ' + eff.role : ''}</span>${Object.keys(ov).length ? ' <span class="badge">overridden</span>' : ''}`;
+  card.appendChild(h3);
+
+  // Numeric stats grid
+  const sg = div('ally-stats-grid');
+  for (const f of ALLY_STAT_FIELDS) {
+    sg.appendChild(makeAllyStatField(id, f, eff[f], (allyData.stats[id] || {})[f]));
+  }
+  card.appendChild(sg);
+
+  // Abilities (full pool) and starter abilities — stored as comma-separated strings
+  const lists = div('ally-stats-grid');
+  const fullPool = (eff.abilities || []).join(', ');
+  lists.appendChild(makeTextField('abilities (full pool, comma sep)', fullPool, v => {
+    const arr = v.split(',').map(s => s.trim()).filter(Boolean);
+    stageAllyStat(id, 'abilities', arr);
+  }));
+  const starters = (eff.starterAbilities || []).join(', ');
+  lists.appendChild(makeTextField('starterAbilities (comma sep)', starters, v => {
+    const arr = v.split(',').map(s => s.trim()).filter(Boolean);
+    stageAllyStat(id, 'starterAbilities', arr);
+  }));
+  card.appendChild(lists);
+
+  // Per-ability editor for the abilities this ally references.
+  const abilSection = div('ally-abilities-list');
+  const h4 = document.createElement('h4'); h4.textContent = 'Abilities';
+  abilSection.appendChild(h4);
+
+  const usedAbilityIds = (eff.abilities && eff.abilities.length) ? eff.abilities : Object.keys(allyData.abilities);
+  for (const aid of usedAbilityIds) {
+    abilSection.appendChild(makeAbilityEditRow(aid));
+  }
+  card.appendChild(abilSection);
+  return card;
+}
+
+function makeAllyStatField(allyId, field, currentVal, baseVal) {
+  const w = div('text-field');
+  const lbl = document.createElement('label'); lbl.textContent = field;
+  const inp = document.createElement('input');
+  inp.type = (field === 'growthFactor') ? 'number' : 'number';
+  if (field === 'growthFactor') inp.step = '0.05';
+  inp.value = currentVal ?? '';
+  if (currentVal !== baseVal && baseVal !== undefined) inp.classList.add('changed');
+  inp.addEventListener('input', () => {
+    const v = inp.value === '' ? null : Number(inp.value);
+    stageAllyStat(allyId, field, v);
+    inp.classList.toggle('changed', v !== baseVal);
   });
+  w.appendChild(lbl); w.appendChild(inp);
+  return w;
+}
+
+function makeAbilityEditRow(abilityId) {
+  const eff = getAllyEffectiveAbility(abilityId);
+  const base = allyData.abilities[abilityId] || {};
+  const row = div('ability-edit-row');
+
+  const idCell = document.createElement('div');
+  idCell.className = 'ability-id';
+  idCell.textContent = abilityId + (eff.name ? ` · ${eff.name}` : '');
+  row.appendChild(idCell);
+
+  // cost (number)
+  row.appendChild(makeAbilityField(abilityId, 'cost', eff.cost ?? '', base.cost, 'number'));
+  // power (number, optional — heal/buff abilities don't have it)
+  row.appendChild(makeAbilityField(abilityId, 'power', eff.power ?? '', base.power, 'number'));
+  // type (select)
+  row.appendChild(makeAbilitySelect(abilityId, 'type', eff.type || '', base.type, ABILITY_TYPES));
+  // tag (select)
+  row.appendChild(makeAbilitySelect(abilityId, 'tag', eff.tag || '', base.tag, ABILITY_TAGS));
+  // buffDuration / debuffDuration / healAmount (compact extras)
+  if (eff.buffDuration !== undefined || ['buff_party', 'buff'].includes(eff.type)) {
+    row.appendChild(makeAbilityField(abilityId, 'buffDuration', eff.buffDuration ?? '', base.buffDuration, 'number'));
+  }
+  if (eff.debuffDuration !== undefined || eff.type === 'debuff') {
+    row.appendChild(makeAbilityField(abilityId, 'debuffDuration', eff.debuffDuration ?? '', base.debuffDuration, 'number'));
+  }
+  if (eff.healAmount !== undefined || eff.type === 'heal_ally') {
+    row.appendChild(makeAbilityField(abilityId, 'healAmount', eff.healAmount ?? '', base.healAmount, 'number'));
+  }
+  return row;
+}
+
+function makeAbilityField(abilityId, field, currentVal, baseVal, type) {
+  const w = div('text-field');
+  const lbl = document.createElement('label'); lbl.textContent = field;
+  const inp = document.createElement('input'); inp.type = type;
+  inp.value = currentVal ?? '';
+  if (currentVal !== baseVal && baseVal !== undefined) inp.classList.add('changed');
+  inp.addEventListener('input', () => {
+    const v = inp.value === '' ? null : (type === 'number' ? Number(inp.value) : inp.value);
+    stageAllyAbility(abilityId, field, v);
+    inp.classList.toggle('changed', v !== (baseVal ?? null));
+  });
+  w.appendChild(lbl); w.appendChild(inp);
+  return w;
+}
+
+function makeAbilitySelect(abilityId, field, currentVal, baseVal, options) {
+  const w = div('text-field');
+  const lbl = document.createElement('label'); lbl.textContent = field;
+  const sel = document.createElement('select');
+  for (const opt of options) {
+    const o = document.createElement('option'); o.value = opt; o.textContent = opt || '— none —';
+    if (opt === currentVal) o.selected = true;
+    sel.appendChild(o);
+  }
+  if (currentVal !== baseVal && baseVal !== undefined) sel.classList.add('changed');
+  sel.addEventListener('change', () => {
+    stageAllyAbility(abilityId, field, sel.value || null);
+    sel.classList.toggle('changed', sel.value !== (baseVal || ''));
+  });
+  w.appendChild(lbl); w.appendChild(sel);
+  return w;
+}
+
+function stageAllyStat(allyId, field, value) {
+  if (!allyOverrides.stats) allyOverrides.stats = {};
+  if (!allyOverrides.stats[allyId]) allyOverrides.stats[allyId] = {};
+  const baseVal = (allyData.stats[allyId] || {})[field];
+  const sameAsBase = JSON.stringify(value) === JSON.stringify(baseVal) || value === null || value === '' || (Array.isArray(value) && !value.length && !Array.isArray(baseVal));
+  if (sameAsBase) delete allyOverrides.stats[allyId][field];
+  else allyOverrides.stats[allyId][field] = value;
+  if (!Object.keys(allyOverrides.stats[allyId]).length) delete allyOverrides.stats[allyId];
+}
+
+function stageAllyAbility(abilityId, field, value) {
+  if (!allyOverrides.abilities) allyOverrides.abilities = {};
+  if (!allyOverrides.abilities[abilityId]) allyOverrides.abilities[abilityId] = {};
+  const baseVal = (allyData.abilities[abilityId] || {})[field];
+  const sameAsBase = value === baseVal || (value === null && baseVal === undefined);
+  if (sameAsBase) delete allyOverrides.abilities[abilityId][field];
+  else allyOverrides.abilities[abilityId][field] = value;
+  if (!Object.keys(allyOverrides.abilities[abilityId]).length) delete allyOverrides.abilities[abilityId];
+}
+
+async function saveAllyOverrides() {
+  const r = await post('/api/ally-overrides', allyOverrides);
+  if (r.ok) showToast('Ally overrides saved'); else showToast('Save failed');
+  refreshStatus();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DIALOGS (read-only)
+// ═══════════════════════════════════════════════════════════════
+function renderDialogList() {
+  const el = document.getElementById('dialog-list');
+  if (!el) return;
+  const filter = (document.getElementById('dialog-search')?.value || '').toLowerCase();
+  el.innerHTML = '';
+  for (const id of dialogIds) {
+    if (filter && !id.toLowerCase().includes(filter)) continue;
+    const row = div('dialog-list-item');
+    if (id === selectedDialogId) row.classList.add('selected');
+    row.textContent = id;
+    row.onclick = () => loadDialog(id);
+    el.appendChild(row);
+  }
+}
+
+async function loadDialog(id) {
+  selectedDialogId = id;
+  renderDialogList();
+  const viewer = document.getElementById('dialog-viewer');
+  viewer.innerHTML = '<div style="color:var(--muted);padding:14px;">Loading…</div>';
+  const res = await fetch('/api/dialogs/' + encodeURIComponent(id));
+  if (!res.ok) { viewer.innerHTML = '<div style="color:var(--accent);padding:14px;">Not found</div>'; return; }
+  const data = await res.json();
+  renderDialogTable(data.id, data.nodes);
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderDialogTable(id, nodes) {
+  const viewer = document.getElementById('dialog-viewer');
+  let html = `<h3 style="font-family:monospace;color:var(--accent2);margin-bottom:10px;">${escHtml(id)} <span style="color:var(--muted);font-weight:400;font-size:11px;">${nodes.length} nodes</span></h3>`;
+  html += '<table class="dialog-table"><thead><tr>'
+    + '<th class="col-idx">#</th><th class="col-type">Type</th><th class="col-speaker">Speaker / Action</th>'
+    + '<th>Text / Detail</th><th class="col-next">Next</th>'
+    + '</tr></thead><tbody>';
+  nodes.forEach((node, i) => {
+    let speaker = '';
+    let detail = '';
+    let nextStr = node.next !== undefined ? String(node.next) : '';
+    if (node.type === 'text') {
+      speaker = node.speaker || '';
+      detail = escHtml(node.text || '');
+    } else if (node.type === 'choice') {
+      speaker = node.speaker || '';
+      const prompt = node.prompt || node.text || '';
+      const choices = (node.choices || []).map(c => `→ ${escHtml(c.text)} <span style="color:var(--yellow)">[${c.next ?? '+1'}]</span>${c.flag ? ` <span style="color:var(--purple)">flag:${c.flag}</span>` : ''}`).join('<br>');
+      detail = `<strong>${escHtml(prompt)}</strong><br>${choices}`;
+    } else if (node.type === 'condition') {
+      speaker = `flag: ${node.flag || ''}`;
+      detail = `ifTrue → ${node.ifTrue}, ifFalse → ${node.ifFalse}`;
+    } else if (node.type === 'action') {
+      speaker = node.action || '';
+      const params = Object.entries(node).filter(([k]) => !['type','action','next'].includes(k));
+      detail = params.map(([k,v]) => `<code style="background:var(--bg);padding:1px 5px;border-radius:3px;">${k}=${escHtml(JSON.stringify(v))}</code>`).join(' ');
+    } else if (node.type === 'end') {
+      detail = '<em style="color:var(--muted)">— end —</em>';
+    } else {
+      detail = escHtml(JSON.stringify(node));
+    }
+    html += `<tr>
+      <td class="col-idx">${i}</td>
+      <td class="col-type">${escHtml(node.type || '?')}</td>
+      <td class="col-speaker">${escHtml(speaker)}</td>
+      <td>${detail}</td>
+      <td class="col-next">${nextStr}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  viewer.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -895,7 +1460,7 @@ function renderCharacters() {
 }
 async function saveCharOverrides() {
   const r=await post('/api/character-overrides',charOverrides);
-  if(r.ok) { origCharOverrides=JSON.parse(JSON.stringify(charOverrides)); showToast('Character overrides saved'); }
+  if(r.ok) { origCharOverrides=JSON.parse(JSON.stringify(charOverrides)); showToast('Character overrides saved'); refreshStatus(); }
   else showToast('Save failed');
 }
 
@@ -930,12 +1495,39 @@ function switchTab(name, el) {
   if(name==='rooms'&&currentRoom) renderCanvas();
   if(name==='diff') loadDiff();
   if(name==='combat') renderXPCurve();
+  if(name==='allies') renderAllies();
+  if(name==='encounters') renderEncounters();
+  if(name==='dialogs') renderDialogList();
 }
 function saveCurrentTab() {
   if(['player','abilities','enemies','shop'].includes(currentTab)) saveBalance();
   else if(currentTab==='rooms') saveRoomOverrides();
   else if(currentTab==='characters') saveCharOverrides();
+  else if(currentTab==='allies') saveAllyOverrides();
+  else if(currentTab==='encounters') saveEncounterOverrides();
   else showToast('Nothing to save on this tab');
+}
+function openHelp() { document.getElementById('help-overlay').classList.add('visible'); }
+function closeHelp() { document.getElementById('help-overlay').classList.remove('visible'); }
+
+async function refreshStatus() {
+  try {
+    const res = await fetch('/api/diff-status');
+    if (!res.ok) return;
+    const status = await res.json();
+    const dirty = Object.entries(status).filter(([_, v]) => v).map(([p]) => p.split('/').pop());
+    const dot = document.getElementById('status-dot');
+    const txt = document.getElementById('status-text');
+    if (dirty.length) {
+      dot.classList.add('dirty');
+      txt.textContent = `${dirty.length} unpublished file${dirty.length === 1 ? '' : 's'}`;
+      document.getElementById('status-pill').title = 'Pending: ' + dirty.join(', ');
+    } else {
+      dot.classList.remove('dirty');
+      txt.textContent = 'all clean';
+      document.getElementById('status-pill').title = 'No uncommitted overrides';
+    }
+  } catch (e) { /* ignore */ }
 }
 document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCurrentTab();} });
 
