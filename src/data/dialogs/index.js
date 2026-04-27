@@ -1895,7 +1895,8 @@ export const DIALOGS = {
     /* 7  */ { type: 'text', speaker: 'Janet', text: "I'm going with you. They came for our department. We answer together — or we answer alone, and they pick us off one by one." },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true, next: 9 },
     /* 9  */ { type: 'action', action: 'set_flag', flag: 'janet_recruited', value: true, next: 10 },
-    /* 10 */ { type: 'end' },
+    /* 10 */ { type: 'action', action: 'recruit_ally', ally: 'janet', next: 11 },
+    /* 11 */ { type: 'end' },
   ],
 
   // Act 5 — Restructuring Trio (Brand Consultant + Restructuring Analyst + Corporate Lawyer all at once)

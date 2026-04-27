@@ -5,9 +5,16 @@
 // Built-in heuristics override the pattern: heal preference if any ally < 40% HP,
 // AoE preference when 2+ alive enemies. CombatEngine handles target picking.
 
+// `abilities` is the FULL pool — used for ability-tree display and gating.
+// `starterAbilities` is what the ally has unlocked when recruited; the rest must
+// be unlocked via upgrade points in the menu (same flow as Andrew).
+// `growthFactor` (default 0.8) scales LEVEL_GROWTH stat gains so allies trail
+// Andrew slightly. `tags` are thematic hints used by AI / dialogue.
 export const ALLY_STATS = {
   janet: {
     name: 'Janet',
+    role: 'Senior Trust Officer',
+    tags: ['social', 'audit'],
     maxHP: 220,
     hp: 220,
     maxMP: 80,
@@ -15,7 +22,9 @@ export const ALLY_STATS = {
     atk: 13,
     def: 11,
     spd: 9,
-    abilities: ['nope_email', 'rally_team', 'group_complaint', 'fact_check'],
+    growthFactor: 0.85,
+    abilities: ['nope_email', 'rally_team', 'group_complaint', 'fact_check', 'binder_slam', 'pto_request'],
+    starterAbilities: ['nope_email', 'rally_team', 'fact_check'],
   },
 };
 
@@ -72,6 +81,31 @@ export const ALLY_ABILITIES = {
       'Janet: "Receipts." She has them.',
     ],
   },
+  // Janet — tier 2 unlocks
+  binder_slam: {
+    name: 'Binder Slam',
+    description: 'Drop a 4-inch policy binder on a desk. The whole floor flinches.',
+    cost: 28,
+    power: 28,
+    type: 'attack',
+    tag: 'audit',
+    messages: [
+      'Janet THUMPS the policy binder onto the desk. Pages settle.',
+      'Janet: "Page. Forty. Seven."',
+    ],
+  },
+  pto_request: {
+    name: 'PTO Request',
+    description: 'Force the meeting to take a break. Restores party MP.',
+    cost: 30,
+    type: 'heal_ally',
+    healAmount: 0,
+    mpHealAmount: 30,
+    messages: [
+      'Janet announces a five-minute break. Coffee is brewed. Lawsuits cool.',
+    ],
+  },
+
   // Reserved for future allies (heal example, kept here for reference)
   break_room_visit: {
     name: 'Break Room Visit',

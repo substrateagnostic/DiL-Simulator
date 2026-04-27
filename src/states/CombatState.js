@@ -24,10 +24,21 @@ export class CombatState {
     this.enemyIdsList = (this.encounterConfig.enemyIds && this.encounterConfig.enemyIds.length > 0)
       ? [...this.encounterConfig.enemyIds]
       : [this.encounterConfig.enemyId || enemyId];
-    // Resolve party list — partyIds in encounter, fallback to player.flags['recruited_*'] (future), default Andrew alone
-    this.partyIdsList = (this.encounterConfig.partyIds && this.encounterConfig.partyIds.length > 0)
-      ? [...this.encounterConfig.partyIds]
-      : [];
+    // Resolve party list:
+    //   1. Encounter `partyIds` overrides (forced narrative party, e.g. trio fight forces Janet)
+    //   2. `player.party` — recruited, persistent allies
+    //   3. Empty (Andrew alone)
+    // Encounter also supports `noParty: true` to force a solo fight regardless of recruits.
+    if (this.encounterConfig.noParty) {
+      this.partyIdsList = [];
+    } else if (this.encounterConfig.partyIds && this.encounterConfig.partyIds.length > 0) {
+      this.partyIdsList = [...this.encounterConfig.partyIds];
+    } else if (this.player?.party && this.player.party.length > 0) {
+      // Cap to a reasonable number to keep the scene readable
+      this.partyIdsList = this.player.party.slice(0, 2);
+    } else {
+      this.partyIdsList = [];
+    }
     this.partyCharIds = ['andrew', ...this.partyIdsList]; // for the scene (visual)
     // The "primary" enemy — used for backdrop colors / ENEMY_STATS lookup for legacy code
     this.actualEnemyId = this.enemyIdsList[0];
@@ -55,12 +66,27 @@ export class CombatState {
     // Build scene with all enemies + the party
     this.scene.setCombatants(this.enemyIdsList, this.partyCharIds, this.player);
 
-    // Build engine
+    // Build engine. Per-ally overrides bring level-scaled stats + unlocked abilities + persisted HP/MP.
+    const partyOverrides = {};
+    for (const allyId of this.partyIdsList) {
+      const eff = this.player.getAllyEffectiveStats(allyId);
+      const persisted = this.player.allyState[allyId] || {};
+      const unlocked = this.player.getAllyUnlockedAbilities(allyId);
+      if (eff) {
+        partyOverrides[allyId] = {
+          maxHP: eff.maxHP, maxMP: eff.maxMP,
+          atk: eff.atk, def: eff.def, spd: eff.spd,
+          hp: persisted.hp ?? eff.maxHP,
+          mp: persisted.mp ?? eff.maxMP,
+          unlockedAbilities: unlocked.length > 0 ? unlocked : (eff.starterAbilities || eff.abilities),
+        };
+      }
+    }
     this.engine = new CombatEngine(
       this.player.getCombatStats(),
       this.actualEnemyId,
       this.enemyOverrides,
-      { enemyIds: this.enemyIdsList, partyIds: this.partyIdsList }
+      { enemyIds: this.enemyIdsList, partyIds: this.partyIdsList, partyOverrides }
     );
 
     // Backdrop colors keyed by primary enemy (legacy mapping)
@@ -126,30 +152,57 @@ export class CombatState {
   }
 
   // ── Round / turn flow ─────────────────────────────────────────────────
+  // Build a single SPD-sorted turn queue mixing allies and enemies (BG3-style interleave).
+  // Each entry: { kind: 'ally' | 'enemy', index: number, spd: number }.
+  // Stable secondary sort: allies before enemies on tie (player-friendly).
   _startRound() {
-    // Build SPD-sorted queue of alive allies for this round
-    const alive = this.engine.allies
-      .map((a, i) => ({ a, i }))
-      .filter(({ a }) => a.hp > 0)
-      .sort((x, y) => (this.engine._getEffective(y.a).spd) - (this.engine._getEffective(x.a).spd));
-    this._allyTurnQueue = alive.map(({ i }) => i);
-    this._processNextAllyTurn();
+    const queue = [];
+    this.engine.allies.forEach((a, i) => {
+      if (a.hp > 0) queue.push({ kind: 'ally', index: i, spd: this.engine._getEffective(a).spd });
+    });
+    this.engine.enemies.forEach((e, i) => {
+      if (e.hp > 0) queue.push({ kind: 'enemy', index: i, spd: this.engine._getEffective(e).spd });
+    });
+    queue.sort((x, y) => {
+      if (y.spd !== x.spd) return y.spd - x.spd;
+      // Tiebreaker: allies act before enemies
+      if (x.kind !== y.kind) return x.kind === 'ally' ? -1 : 1;
+      return 0;
+    });
+    this._turnQueue = queue;
+    this._processNextTurn();
   }
 
-  _processNextAllyTurn() {
+  // Compatibility shim — older flow referenced this as the "next ally" — now it's just the next combatant.
+  _processNextAllyTurn() { return this._processNextTurn(); }
+
+  _processNextTurn() {
     if (this.engine.isOver) {
       this._handleResult();
       return;
     }
-    if (this._allyTurnQueue.length === 0) {
-      // All allies acted — start enemy phase
-      this._startEnemyPhase();
+    // Drop entries for combatants that died before their turn came up
+    while (this._turnQueue.length > 0) {
+      const next = this._turnQueue[0];
+      const entity = next.kind === 'ally' ? this.engine.allies[next.index] : this.engine.enemies[next.index];
+      if (entity && entity.hp > 0) break;
+      this._turnQueue.shift();
+    }
+    if (this._turnQueue.length === 0) {
+      // Round complete — start a new one
+      this._startRound();
       return;
     }
-    this._activeAllyIndex = this._allyTurnQueue.shift();
+    const next = this._turnQueue.shift();
+    if (next.kind === 'enemy') {
+      this._runInterleavedEnemyTurn(next.index);
+      return;
+    }
+    // Ally turn
+    this._activeAllyIndex = next.index;
     const ally = this.engine.allies[this._activeAllyIndex];
     if (!ally || ally.hp <= 0) {
-      this._processNextAllyTurn();
+      this._processNextTurn();
       return;
     }
     this.hud.setActiveAlly(this._activeAllyIndex, this._buildPartyView());
@@ -164,7 +217,7 @@ export class CombatState {
       // Stunned actors skip their turn
       if (ally.stunnedThisTurn) {
         this.hud.showMessage(`${ally.name} is stunned!`);
-        setTimeout(() => this._processNextAllyTurn(), 1200);
+        setTimeout(() => this._processNextTurn(), 1200);
         return;
       }
       if (this._activeAllyIndex === 0) {
@@ -179,6 +232,90 @@ export class CombatState {
     } else {
       continueTurn();
     }
+  }
+
+  // Wraps _processNextEnemyTurn for the interleaved queue — runs ONE enemy then yields
+  // back to the main turn loop instead of draining the whole enemy phase.
+  _runInterleavedEnemyTurn(enemyIndex) {
+    const enemy = this.engine.enemies[enemyIndex];
+    if (!enemy || enemy.hp <= 0) {
+      this._processNextTurn();
+      return;
+    }
+    this.phase = 'enemy_phase';
+    this.inputEnabled = false;
+    this.hud.disableInput();
+
+    const effects = this.engine.processTurnStart(enemy);
+    const proceed = () => {
+      if (this.engine.isOver) { this._handleResult(); return; }
+      this._runSingleEnemyTurnInterleaved(enemyIndex);
+    };
+    if (effects.length > 0) this._showEffects(effects, proceed, 'enemy');
+    else proceed();
+  }
+
+  // Same as _runSingleEnemyTurn but the post-completion call goes to _processNextTurn (interleaved)
+  _runSingleEnemyTurnInterleaved(enemyIndex) {
+    setTimeout(() => {
+      const result = this.engine.enemyTurn(enemyIndex);
+      if (!result) {
+        this._processNextTurn();
+        return;
+      }
+
+      if (result.type === 'blocked') {
+        this.hud.showMessage(result.message);
+        AudioManager.playSfx('confirm');
+        this.particles.burst({ x: 0, y: 1, z: 4 }, 15, 0x4488ff, 3, 0.8);
+        this._refreshHUD();
+        setTimeout(() => this._processNextTurn(), 1500);
+        return;
+      }
+
+      if (result.message) this.hud.showMessage(result.message);
+
+      if (result.damage) {
+        this.scene.enemyAttackAnim(enemyIndex);
+        const targetAllyIndex = result.targetAllyIndex ?? 0;
+        setTimeout(() => {
+          this.scene.shake(result.critical ? 0.8 : 0.4);
+          if (result.braced) {
+            this.scene.flash(0x4488ff, 0.15);
+            this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0x4488ff, 3, 0.9);
+            this.hud.showMessage('BRACED! Damage halved! Retaliate available!');
+            setTimeout(() => this._fireTaunt('brace_success'), 400);
+            AchievementManager.check(this.player, { event: 'brace_success' });
+          } else {
+            this.scene.flash(0xff0000, 0.1);
+            this.particles.burst({ x: 0, y: 1, z: 4 }, 12, 0xff0000, 2, 0.6);
+            if (result.critical) setTimeout(() => this._fireTaunt('enemy_crit'), 400);
+            this.scene.allyHurtAnim(targetAllyIndex);
+          }
+          AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
+          this._spawnDamageNumberForAlly(result.damage, result.critical ? 'critical' : 'damage', targetAllyIndex);
+          this._refreshHUD();
+          if (this.engine.posterJustTriggered) {
+            this.engine.posterJustTriggered = false;
+            setTimeout(() => {
+              this.scene.flash(0xffdd00, 0.4);
+              this.particles.burst({ x: 0, y: 1.2, z: 4 }, 25, 0xffdd00, 3, 1.0);
+              this.hud.showMessage('HANG IN THERE! Survived at 1 HP!');
+            }, 300);
+          }
+        }, 200);
+      } else if (result.healAmount) {
+        AudioManager.playSfx('heal');
+        this._spawnDamageNumberAtEnemy(`+${result.healAmount}`, 'heal', enemyIndex);
+        this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44ff44, 2, 1.0);
+      }
+
+      this._refreshHUD();
+      setTimeout(() => {
+        if (this.engine.isOver) this._handleResult();
+        else this._processNextTurn();
+      }, 1700);
+    }, 400);
   }
 
   _enablePlayerInput() {
@@ -442,11 +579,12 @@ export class CombatState {
       } else if (result.doubleTurn) {
         const msg = result.debuffAmount ? 'Enemy DEF reduced! Double turn!' : 'Double turn!';
         this.hud.showMessage(msg);
-        // Re-queue the player at the front for an extra action
-        this._allyTurnQueue.unshift(this._activeAllyIndex);
-        setTimeout(() => this._processNextAllyTurn(), 600);
+        // Re-insert this ally at the front of the interleaved turn queue for an extra action
+        const ally = this.engine.allies[this._activeAllyIndex];
+        if (ally) this._turnQueue.unshift({ kind: 'ally', index: this._activeAllyIndex, spd: this.engine._getEffective(ally).spd });
+        setTimeout(() => this._processNextTurn(), 600);
       } else {
-        this._processNextAllyTurn();
+        this._processNextTurn();
       }
     }, result.skipsTurn ? 800 : delay);
   }
@@ -871,116 +1009,6 @@ export class CombatState {
     }
   }
 
-  // ── Enemy phase ──────────────────────────────────────────────────────
-  _startEnemyPhase() {
-    this.phase = 'enemy_phase';
-    this.inputEnabled = false;
-    this.hud.disableInput();
-
-    // Build SPD-sorted queue of alive enemies
-    const alive = this.engine.enemies
-      .map((e, i) => ({ e, i }))
-      .filter(({ e }) => e.hp > 0)
-      .sort((x, y) => (this.engine._getEffective(y.e).spd) - (this.engine._getEffective(x.e).spd));
-    this._enemyTurnQueue = alive.map(({ i }) => i);
-
-    this._processNextEnemyTurn();
-  }
-
-  _processNextEnemyTurn() {
-    if (this.engine.isOver) {
-      this._handleResult();
-      return;
-    }
-    if (this._enemyTurnQueue.length === 0) {
-      // Round complete — back to allies
-      this._startRound();
-      return;
-    }
-    const enemyIndex = this._enemyTurnQueue.shift();
-    const enemy = this.engine.enemies[enemyIndex];
-    if (!enemy || enemy.hp <= 0) {
-      this._processNextEnemyTurn();
-      return;
-    }
-
-    const effects = this.engine.processTurnStart(enemy);
-    const continueTurn = () => {
-      if (this.engine.isOver) {
-        this._handleResult();
-        return;
-      }
-      this._runSingleEnemyTurn(enemyIndex);
-    };
-
-    if (effects.length > 0) {
-      this._showEffects(effects, continueTurn, 'enemy');
-    } else {
-      continueTurn();
-    }
-  }
-
-  _runSingleEnemyTurn(enemyIndex) {
-    setTimeout(() => {
-      const result = this.engine.enemyTurn(enemyIndex);
-      if (!result) {
-        this._processNextEnemyTurn();
-        return;
-      }
-
-      if (result.type === 'blocked') {
-        this.hud.showMessage(result.message);
-        AudioManager.playSfx('confirm');
-        this.particles.burst({ x: 0, y: 1, z: 4 }, 15, 0x4488ff, 3, 0.8);
-        this._refreshHUD();
-        setTimeout(() => this._processNextEnemyTurn(), 1500);
-        return;
-      }
-
-      if (result.message) this.hud.showMessage(result.message);
-
-      if (result.damage) {
-        this.scene.enemyAttackAnim(enemyIndex);
-        setTimeout(() => {
-          this.scene.shake(result.critical ? 0.8 : 0.4);
-          if (result.braced) {
-            this.scene.flash(0x4488ff, 0.15);
-            this.particles.burst({ x: 0, y: 1.2, z: 4 }, 20, 0x4488ff, 3, 0.9);
-            this.hud.showMessage('BRACED! Damage halved! Retaliate available!');
-            setTimeout(() => this._fireTaunt('brace_success'), 400);
-            AchievementManager.check(this.player, { event: 'brace_success' });
-          } else {
-            this.scene.flash(0xff0000, 0.1);
-            this.particles.burst({ x: 0, y: 1, z: 4 }, 12, 0xff0000, 2, 0.6);
-            if (result.critical) setTimeout(() => this._fireTaunt('enemy_crit'), 400);
-            this.scene.allyHurtAnim(0);
-          }
-          AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
-          this._spawnDamageNumberForAlly(result.damage, result.critical ? 'critical' : 'damage', 0);
-          this._refreshHUD();
-          if (this.engine.posterJustTriggered) {
-            this.engine.posterJustTriggered = false;
-            setTimeout(() => {
-              this.scene.flash(0xffdd00, 0.4);
-              this.particles.burst({ x: 0, y: 1.2, z: 4 }, 25, 0xffdd00, 3, 1.0);
-              this.hud.showMessage('HANG IN THERE! Survived at 1 HP!');
-            }, 300);
-          }
-        }, 200);
-      } else if (result.healAmount) {
-        AudioManager.playSfx('heal');
-        this._spawnDamageNumberAtEnemy(`+${result.healAmount}`, 'heal', enemyIndex);
-        this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44ff44, 2, 1.0);
-      }
-
-      this._refreshHUD();
-      setTimeout(() => {
-        if (this.engine.isOver) this._handleResult();
-        else this._processNextEnemyTurn();
-      }, 1700);
-    }, 400);
-  }
-
   // ── Result handling ──────────────────────────────────────────────────
   _handleResult() {
     this.phase = 'result';
@@ -996,6 +1024,13 @@ export class CombatState {
         this.hud.showMessage(`Victory! +${xp} XP`);
         this.player.stats.hp = this.player.stats.maxHP;
         this.player.stats.mp = this.player.stats.maxMP;
+        // Restore allies to full after victory (matches Andrew's restoration). Persisted to allyState.
+        for (let i = 1; i < this.engine.allies.length; i++) {
+          const ally = this.engine.allies[i];
+          if (!ally.allyId || !this.player.allyState[ally.allyId]) continue;
+          this.player.allyState[ally.allyId].hp = ally.maxHP;
+          this.player.allyState[ally.allyId].mp = ally.maxMP;
+        }
         const levels = this.player.gainXP(xp);
         if (levels.length > 0) {
           AchievementManager.check(this.player, { event: 'level_up' });

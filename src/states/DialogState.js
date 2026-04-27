@@ -236,6 +236,12 @@ export class DialogState {
         break;
       }
 
+      case 'recruit_ally': {
+        if (node.ally) this.player.addAlly(node.ally);
+        AudioManager.playSfx('confirm');
+        break;
+      }
+
       default:
         console.warn(`DialogState: Unknown action "${node.action}" at index ${this.currentIndex}`);
         break;

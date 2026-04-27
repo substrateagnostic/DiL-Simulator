@@ -69,11 +69,21 @@ export class CombatEngine {
   _buildAlly(allyId, overrides = {}) {
     const cfg = ALLY_STATS[allyId];
     if (!cfg) return null;
+    // overrides may be: { hp, mp, maxHP, maxMP, atk, def, spd, abilities, unlockedAbilities }
+    // Effective stats (level-scaled) come in via overrides — fall back to base config.
+    const maxHP = overrides.maxHP ?? cfg.maxHP;
+    const maxMP = overrides.maxMP ?? cfg.maxMP;
     return {
       ...cfg,
-      ...overrides,
-      hp: overrides.hp ?? cfg.hp ?? cfg.maxHP,
-      mp: overrides.mp ?? cfg.mp ?? cfg.maxMP,
+      maxHP,
+      maxMP,
+      atk: overrides.atk ?? cfg.atk,
+      def: overrides.def ?? cfg.def,
+      spd: overrides.spd ?? cfg.spd,
+      // Active ability pool — defaults to unlocked starters; engine reads from this when picking abilities
+      abilities: overrides.abilities ?? overrides.unlockedAbilities ?? cfg.starterAbilities ?? cfg.abilities,
+      hp: Math.min(maxHP, overrides.hp ?? cfg.hp ?? maxHP),
+      mp: Math.min(maxMP, overrides.mp ?? cfg.mp ?? maxMP),
       buffs: [],
       dots: [],
       stunned: 0,
@@ -575,12 +585,25 @@ export class CombatEngine {
       return { type: 'blocked', message: `Blocked! ${enemy.name}'s action was nullified!`, enemyIndex };
     }
 
-    const eStats = this._getEffective(enemy);
-    const pStats = this._getEffective(this.player);
     const abilityId = enemy.telegraphedAbility ?? this._pickEnemyAbility(enemy);
     enemy.telegraphedAbility = null;
     const previousAbilityId = enemy.lastAbility;
-    const result = this._executeEnemyAbility(enemy, abilityId, eStats, pStats, previousAbilityId);
+
+    // Pick an ally target (aggro). Confuse/counter/heal/buff/repeat are special and stay player-centric.
+    const ability = ENEMY_ABILITIES[abilityId];
+    const targetingType = ability?.type;
+    let target = this.player;
+    let targetAllyIndex = 0;
+    const allySensitive = ['attack', 'dot', 'debuff', 'stun', 'silence', 'summon'];
+    if (allySensitive.includes(targetingType)) {
+      target = this._pickEnemyTarget();
+      targetAllyIndex = this.allies.indexOf(target);
+    }
+    enemy.lastTargetAllyIndex = targetAllyIndex;
+
+    const eStats = this._getEffective(enemy);
+    const tStats = this._getEffective(target);
+    const result = this._executeEnemyAbility(enemy, abilityId, eStats, tStats, previousAbilityId, target);
 
     if (abilityId && ENEMY_ABILITIES[abilityId]?.type !== 'repeat') {
       enemy.lastAbility = abilityId;
@@ -588,7 +611,20 @@ export class CombatEngine {
 
     this.turnCount++;
     this._checkDefeat();
-    return result ? { ...result, enemyIndex, enemyName: enemy.name } : null;
+    return result ? { ...result, enemyIndex, enemyName: enemy.name, targetAllyIndex, targetAllyName: target.name } : null;
+  }
+
+  // Pick which ally an enemy attacks. 60% bias toward Andrew (the player main),
+  // otherwise lowest-HP-ratio alive ally. Allies with `protected > 0` get
+  // weighted lower; allies that are dead are excluded.
+  _pickEnemyTarget() {
+    const alive = this.allies.filter(a => a.hp > 0);
+    if (alive.length === 0) return this.player;
+    if (alive.length === 1) return alive[0];
+    // Andrew bias
+    if (alive.includes(this.player) && Math.random() < 0.55) return this.player;
+    // Otherwise pick lowest HP ratio — gang up on the wounded
+    return alive.slice().sort((a, b) => (a.hp / a.maxHP) - (b.hp / b.maxHP))[0];
   }
 
   // Pre-roll telegraphed abilities for ALL alive enemies — call at start of player phase
@@ -600,37 +636,38 @@ export class CombatEngine {
     return this.enemies.map(e => e.telegraphedAbility);
   }
 
-  // Single-enemy backward-compat: used by CombatState._getTelegraphHint via this.engine.enemy.vulnerable etc.
-  // The new HUD will display per-enemy hints.
-  _executeEnemyAbility(enemy, abilityId, eStats, pStats, previousAbilityId = null) {
+  // Per-target enemy-ability execution.
+  // `target` is the ally being acted on (defaults to Andrew). pStats == effective stats of target.
+  // Bracing/retaliateReady only applies when target IS Andrew (it's a player-input mechanic).
+  _executeEnemyAbility(enemy, abilityId, eStats, pStats, previousAbilityId = null, target = this.player) {
     const ability = ENEMY_ABILITIES[abilityId];
     if (!ability) {
-      const dmg = this._calcDamage(eStats.atk, 10, pStats.def, this.player);
-      this.player.hp = Math.max(0, this.player.hp - dmg.damage);
-      return { type: 'attack', damage: dmg.damage, critical: dmg.critical, message: `${enemy.name} attacks!` };
+      const dmg = this._calcDamage(eStats.atk, 10, pStats.def, target);
+      target.hp = Math.max(0, target.hp - dmg.damage);
+      return { type: 'attack', damage: dmg.damage, critical: dmg.critical, message: `${enemy.name} attacks ${target.isPlayer ? 'you' : target.name}!` };
     }
 
     let result = { type: ability.type, abilityName: ability.name, message: pickMessage(ability.messages || ability.message) };
 
     switch (ability.type) {
       case 'attack': {
-        const dmg = this._calcDamage(eStats.atk, ability.power, pStats.def, this.player);
+        const dmg = this._calcDamage(eStats.atk, ability.power, pStats.def, target);
         let finalDamage = dmg.damage;
         let braced = false;
-        if (this.player.bracing) {
+        if (target.isPlayer && this.player.bracing) {
           finalDamage = Math.floor(finalDamage * 0.5);
           this.player.bracing = false;
           braced = true;
           this.player.retaliateReady = true;
         }
-        this.player.hp = Math.max(0, this.player.hp - finalDamage);
+        target.hp = Math.max(0, target.hp - finalDamage);
         result.damage = finalDamage;
         result.critical = dmg.critical;
         result.braced = braced;
         break;
       }
       case 'dot': {
-        this.player.dots.push({
+        target.dots.push({
           damage: ability.power,
           duration: ability.duration,
           name: ability.name,
@@ -645,7 +682,7 @@ export class CombatEngine {
         break;
       }
       case 'debuff': {
-        this.player.buffs.push({
+        target.buffs.push({
           stats: ability.debuff,
           duration: ability.duration,
           name: ability.name,
@@ -653,13 +690,18 @@ export class CombatEngine {
         break;
       }
       case 'confuse': {
+        // Confuse always centers on Andrew — it's a player-only UI mechanic
         this.player.confused = Math.max(this.player.confused, ability.duration);
         enemy.vulnerable = 1;
         enemy.confuseCooldown = 3;
         break;
       }
       case 'stun': {
-        this.player.stunned = Math.max(this.player.stunned, ability.duration);
+        target.stunned = Math.max(target.stunned, ability.duration);
+        break;
+      }
+      case 'silence': {
+        target.silenced = Math.max(target.silenced, ability.duration);
         break;
       }
       case 'counter': {
@@ -668,28 +710,28 @@ export class CombatEngine {
       }
       case 'repeat': {
         if (previousAbilityId && previousAbilityId !== abilityId) {
-          const repeated = this._executeEnemyAbility(enemy, previousAbilityId, eStats, pStats, previousAbilityId);
+          const repeated = this._executeEnemyAbility(enemy, previousAbilityId, eStats, pStats, previousAbilityId, target);
           if (repeated) {
             repeated.message = `${pickMessage(ability.messages || ability.message)} ${repeated.message}`.trim();
             return repeated;
           }
         }
-        const dmg = this._calcDamage(eStats.atk, 15, pStats.def, this.player);
-        this.player.hp = Math.max(0, this.player.hp - dmg.damage);
+        const dmg = this._calcDamage(eStats.atk, 15, pStats.def, target);
+        target.hp = Math.max(0, target.hp - dmg.damage);
         result.damage = dmg.damage;
         result.message = `${pickMessage(ability.messages || ability.message)} It devolves into a louder basic attack.`;
         break;
       }
       case 'summon': {
-        const dmg = this._calcDamage(eStats.atk, ability.power || 8, pStats.def, this.player);
+        const dmg = this._calcDamage(eStats.atk, ability.power || 8, pStats.def, target);
         let finalDamage = dmg.damage;
         let braced = false;
-        if (this.player.bracing) {
+        if (target.isPlayer && this.player.bracing) {
           finalDamage = Math.floor(finalDamage * 0.5);
           this.player.bracing = false;
           braced = true;
         }
-        this.player.hp = Math.max(0, this.player.hp - finalDamage);
+        target.hp = Math.max(0, target.hp - finalDamage);
         result.damage = finalDamage;
         result.braced = braced;
         break;
