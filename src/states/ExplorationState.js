@@ -13,7 +13,7 @@ import { DIALOGS } from '../data/dialogs/index.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { TransitionOverlay } from '../ui/TransitionOverlay.js';
 import { generateClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
-import { ENEMY_STATS, XP_TABLE } from '../data/stats.js';
+import { ENEMY_STATS, XP_TABLE, PLAYER_ABILITIES } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
 import { SaveManager } from '../core/SaveManager.js';
@@ -107,6 +107,7 @@ export class ExplorationState {
     this.nearestInteractable = null;
     this._pendingCombat = null;
     this._pendingDialog = null;
+    this._devUnlockedRooms = new Set(); // dev-only gate bypass, never touches player flags
 
     // Quest tracking
     this.activeQuests = [];
@@ -128,6 +129,7 @@ export class ExplorationState {
     this._loadRoom(this.player.currentRoom);
     this._updateLocationDisplay(this.player.currentRoom);
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
+    if (DEV_MODE) this._connectLiveEditor();
 
     this._listeners.push(
       EventBus.on('start-combat', (data) => {
@@ -170,7 +172,29 @@ export class ExplorationState {
         this._dismissUpgradeTooltip();
       }),
       EventBus.on('flag-set', ({ key, value }) => {
-        this._refreshStoryProgress();
+        // ── Story flag prerequisites (DEV_MODE enforcement) ──────────────
+        // Authoritative table of what must be true before a critical flag can fire.
+        // Any violation is a routing bug — fix it at the source, not here.
+        if (DEV_MODE) {
+          const FLAG_PREREQS = {
+            act3_complete:            ['has_archive_evidence'],
+            act4_complete:            ['has_charter'],
+            act5_complete:            ['board_room_accessible'],
+            act6_complete:            ['janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied', 'ross_speech_ready', 'grandma_ally', 'diane_evidence', 'isaiah_evidence', 'has_rolex'],
+            penthouse_entered:        ['act6_complete'],
+            cfos_defeated:            ['penthouse_entered'],
+            regional_director_defeated: ['cfos_defeated'],
+            algorithm_defeated:       ['regional_director_defeated'],
+          };
+          const prereqs = FLAG_PREREQS[key];
+          if (prereqs) {
+            const missing = prereqs.filter(f => !this.player.getFlag(f));
+            if (missing.length > 0) {
+              console.warn(`[FLAG PREREQ BUG] '${key}' set without: ${missing.join(', ')}`);
+            }
+          }
+        }
+
         // Alex IT router: chain into the chosen dialog after router ends
         // Only queue pending dialogs when flags are set to truthy values — not when cleared
         if (key === 'alex_story_chosen' && value) {
@@ -292,23 +316,33 @@ export class ExplorationState {
           });
         }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
-        if (key === 'penthouse_entered') {
+        // Each step requires the previous to be confirmed so a stray flag can't skip ahead.
+        if (key === 'penthouse_entered' && this.player.getFlag('act6_complete')) {
           this._pendingDialog = 'cfos_assistant_combat';
         }
-        if (key === 'cfos_defeated') {
+        if (key === 'cfos_defeated' && this.player.getFlag('penthouse_entered')) {
           this._pendingDialog = 'regional_director_combat';
         }
-        if (key === 'regional_director_defeated') {
+        if (key === 'regional_director_defeated' && this.player.getFlag('cfos_defeated')) {
           this._pendingDialog = 'algorithm_combat';
         }
-        // Act 6 → 7 transition: all allies rallied + rolex = penthouse unlocks
-        if (key === 'has_rolex') {
-          this.player.setFlag('act6_complete', true);
-          // Reward for completing all Act 6 prep (allies + evidence + rolex)
-          const levels = this.player.gainXP(500);
-          this._updateMiniStats();
-          this._showToast('Team assembled, evidence secured. +500 XP', 'objective');
-          if (levels.length > 0) AudioManager.playSfx('levelup');
+        // Act 6 → 7 transition: ALL prerequisites must be met — Rolex alone is not enough.
+        // Check fires whenever any of these flags land so the transition is immediate
+        // regardless of which one the player completes last.
+        const ACT6_PREREQS = [
+          'janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied',
+          'ross_speech_ready', 'grandma_ally',
+          'diane_evidence', 'isaiah_evidence',
+          'has_rolex',
+        ];
+        if (ACT6_PREREQS.includes(key) && !this.player.getFlag('act6_complete')) {
+          if (ACT6_PREREQS.every(f => this.player.getFlag(f))) {
+            this.player.setFlag('act6_complete', true);
+            const levels = this.player.gainXP(500);
+            this._updateMiniStats();
+            this._showToast('Team assembled, evidence secured. +500 XP', 'objective');
+            if (levels.length > 0) AudioManager.playSfx('levelup');
+          }
         }
         if (key === 'has_charter') {
           this._showToast('You have the 1947 Charter! Its power resonates through the building.', 'item');
@@ -423,8 +457,11 @@ export class ExplorationState {
           }
         }
 
+        // Dev bypass — skip all gate checks for this room
+        const _devBypass = DEV_MODE && this._devUnlockedRooms.has(roomId);
+
         // HR Department: HR rep blocks entry until defeated
-        if (roomId === 'hr_department' && !this.player.getFlag('defeated_hr_rep')) {
+        if (!_devBypass && roomId === 'hr_department' && !this.player.getFlag('defeated_hr_rep')) {
           if (DIALOGS.hr_rep_combat) {
             setTimeout(() => {
               const dialogState = new DialogState(DIALOGS['hr_rep_combat'], this.player, this.stateManager, 'hr_rep_combat');
@@ -513,6 +550,21 @@ export class ExplorationState {
       unsub();
     }
     this._listeners = [];
+    if (this._devEventSource) { this._devEventSource.close(); this._devEventSource = null; }
+  }
+
+  _connectLiveEditor() {
+    if (this._devEventSource) this._devEventSource.close();
+    this._devEventSource = new EventSource('http://localhost:3747/api/live');
+    this._devEventSource.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'move' && msg.roomId === this.player.currentRoom) {
+          this.roomManager.liveMove(msg.category, msg.index, msg.x, msg.z);
+        }
+      } catch {}
+    };
+    this._devEventSource.onerror = () => {};
   }
 
   pause() {
@@ -594,6 +646,29 @@ export class ExplorationState {
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
       }
+
+      // DEV: warn when a routing-sensitive NPC id appears outside its canonical room(s).
+      // A routing-sensitive id without an explicit dialogId will be processed by _getDialogId()
+      // story logic — if it's the wrong character this silently produces wrong dialog.
+      if (DEV_MODE && roomData?.npcs) {
+        const CANONICAL_ROOMS = {
+          janitor:    new Set(['archive', 'stairwell']),
+          alex_it:    new Set(['server_room', 'cubicle_farm', 'it_office']),
+          janet:      new Set(['cubicle_farm']),
+          karen:      new Set(['conference_room']),
+          ross:       new Set(['ross_office', 'executive_floor', 'conference_room', 'ross_office_large']),
+          intern:     new Set(['cubicle_farm']),
+          isaiah:     new Set(['cubicle_farm']),
+          diane:      new Set(['reception']),
+          compliance: new Set(['executive_floor']),
+        };
+        for (const npc of roomData.npcs) {
+          const canonical = CANONICAL_ROOMS[npc.id];
+          if (canonical && !canonical.has(actualId) && !npc.dialogId) {
+            console.warn(`[NPC ROUTING BUG] Room '${actualId}': NPC id='${npc.id}' is outside its canonical room(s) and has no dialogId — _getDialogId() story routing will fire on this character. Add a dialogId or rename the NPC.`);
+          }
+        }
+      }
     }
   }
 
@@ -610,15 +685,17 @@ export class ExplorationState {
       penthouse_bar: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
     };
 
+    const _devBypassGate = DEV_MODE && this._devUnlockedRooms.has(targetRoom);
+
     // Block executive floor while the corporate lawyer is active and undefeated
-    if (targetRoom === 'executive_floor'
+    if (!_devBypassGate && targetRoom === 'executive_floor'
       && this.player.getFlag('restructuring_defeated')
       && !this.player.getFlag('corporate_lawyer_defeated')) {
       this._showToast("The elevator won't open. Someone's waiting for you in the lobby.", 'info');
       return;
     }
     const gate = gatedRooms[targetRoom];
-    if (gate && !this.player.getFlag(gate.flag)) {
+    if (!_devBypassGate && gate && !this.player.getFlag(gate.flag)) {
       this._showToast(gate.message, 'info');
       return;
     }
@@ -1385,7 +1462,8 @@ export class ExplorationState {
     }
 
     // Janet act4 rally takes priority over lunch thief dialogId overrides
-    if (id === 'janet' && act >= 4 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
+    // maxAct < 6: in Act 6+ the rally is no longer relevant
+    if (id === 'janet' && act >= 4 && act < 6 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
       return 'janet_act4';
     }
 
@@ -1483,17 +1561,16 @@ export class ExplorationState {
     }
 
     // Compliance crossword — only after Alex has pointed the player to the archive
-    if (id === 'compliance' && act >= 3 && this.player.getFlag('alex_it_act3_done') && !this.player.getFlag('compliance_crossword_done') && DIALOGS.compliance_crossword) {
+    // maxAct < 6: archive password is irrelevant once Act 5 is complete
+    if (id === 'compliance' && act >= 3 && act < 6 && this.player.getFlag('alex_it_act3_done') && !this.player.getFlag('compliance_crossword_done') && DIALOGS.compliance_crossword) {
       return 'compliance_crossword';
     }
 
-    // Ross post-Karen debrief: required before Chad fight
-    if (id === 'ross' && this.player.getFlag('karen_defeated') && !this.player.getFlag('ross_post_karen')) {
+    // Ross post-Karen/Chad debriefs: Act 2 beats, irrelevant once Act 4+ begins
+    if (id === 'ross' && act < 5 && this.player.getFlag('karen_defeated') && !this.player.getFlag('ross_post_karen')) {
       return 'ross_post_karen';
     }
-
-    // Ross post-Chad debrief: required before Grandma fight
-    if (id === 'ross' && this.player.getFlag('chad_defeated') && !this.player.getFlag('ross_post_chad')) {
+    if (id === 'ross' && act < 5 && this.player.getFlag('chad_defeated') && !this.player.getFlag('ross_post_chad')) {
       return 'ross_post_chad';
     }
 
@@ -1523,15 +1600,10 @@ export class ExplorationState {
     if (id === 'alex_it'
         && this.player.getFlag('alex_it_recruited')
         && !this.player.getFlag('act6_complete')
-        && DIALOGS.alex_badge_audit_offer
-        && (!this.player.getFlag('alex_badge_audit_complete') || !this.player.getFlag(`read_alex_it_act${act}`))) {
-      // While the personal mission is active OR done but the player hasn't seen it yet, prefer it
-      if (this.player.getFlag('alex_has_patch_log') && !this.player.getFlag('alex_badge_audit_complete')) {
-        return 'alex_badge_audit_return';
-      }
-      if (!this.player.getFlag('alex_badge_audit_complete')) {
-        return 'alex_badge_audit_offer';
-      }
+        && !this.player.getFlag('alex_badge_audit_complete')
+        && DIALOGS.alex_badge_audit_offer) {
+      if (this.player.getFlag('alex_has_patch_log')) return 'alex_badge_audit_return';
+      return 'alex_badge_audit_offer';
     }
 
     // Isaiah — The Receipts personal mission (post-recruit, before Act 7)
@@ -1574,6 +1646,12 @@ export class ExplorationState {
       return 'team_pre_intro';
     }
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
+    // Act-aware return dialogs — highest applicable act wins, falls back to base _return
+    if (act >= 7 && DIALOGS[`${id}_return_a7`]) return `${id}_return_a7`;
+    if (act >= 6 && DIALOGS[`${id}_return_a6`]) return `${id}_return_a6`;
+    if (act >= 5 && DIALOGS[`${id}_return_a5`]) return `${id}_return_a5`;
+    if (act >= 4 && DIALOGS[`${id}_return_a4`]) return `${id}_return_a4`;
+    if (act >= 3 && DIALOGS[`${id}_return_a3`]) return `${id}_return_a3`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
     if (act >= 7 && DIALOGS[`${id}_act7`]) return `${id}_act7`;
     if (act >= 6 && DIALOGS[`${id}_act6`]) return `${id}_act6`;
@@ -1789,7 +1867,6 @@ export class ExplorationState {
 
     // Act 6
     if (this.player.getFlag('act5_complete')) {
-      if (this.player.getFlag('has_rolex')) return 'Enter the Penthouse — you have the Janitor\'s Rolex';
       const allyFlags = [
         { flag: 'janet_act6_rallied',  label: 'Janet' },
         { flag: 'diane_act6_rallied',  label: 'Diane' },
@@ -1805,13 +1882,15 @@ export class ExplorationState {
       const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
       const rallied = allyFlags.length - missingAllies.length;
       const evidence = evidenceFlags.length - missingEvidence.length;
+      // Show what's still missing — Rolex is only the final step once everything else is done
       if (rallied < 5 || evidence < 2) {
         const lines = [`Prepare for the finale (${rallied}/5 allies, ${evidence}/2 evidence)`];
         if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
         if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
         return lines.join('<br>');
       }
-      return 'Get the Janitor\'s Rolex';
+      if (!this.player.getFlag('has_rolex')) return 'Get the Janitor\'s Rolex';
+      return 'Preparing for the finale...'; // brief state before act6_complete fires
     }
 
     // Act 5
@@ -2421,12 +2500,20 @@ export class ExplorationState {
       background: '#0a0a14', border: '2px solid #e94560',
       padding: '20px', zIndex: '9999',
       fontFamily: 'monospace', color: '#e94560',
-      minWidth: '420px',
+      minWidth: '520px', maxHeight: '85vh', overflowY: 'auto',
     });
     panel.innerHTML = `
       <div style="font-size:13px;letter-spacing:2px;margin-bottom:12px">[DEV] PANEL</div>
       <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">SAVE SCUM</div>
       <div id="dev-save-slots"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">PLAYER STATS</div>
+      <div id="dev-stats"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">ABILITIES</div>
+      <div id="dev-abilities" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">QUICK REWARDS</div>
+      <div id="dev-rewards"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">ROOM ACCESS</div>
+      <div id="dev-rooms"></div>
       <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">QUEST SKIP</div>
       <div id="dev-preset-list"></div>
       <div style="margin-top:10px;font-size:10px;color:#444">ESC to close &middot; quest flags are cumulative &middot; some dialogs may replay</div>
@@ -2494,6 +2581,297 @@ export class ExplorationState {
     };
 
     _renderSaveSlots();
+
+    // ── Player Stats ───────────────────────────────────────────────
+    const statsContainer = panel.querySelector('#dev-stats');
+
+    const _statRow = (label, getValue, setValue, min, max, step = 1) => {
+      const row = document.createElement('div');
+      Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0' });
+
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'font-size:10px;color:#bbb;width:90px;flex-shrink:0';
+      lbl.textContent = label;
+      row.appendChild(lbl);
+
+      const dec = document.createElement('button');
+      dec.textContent = '−';
+      Object.assign(dec.style, _btnStyle('#666'));
+
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.value = getValue();
+      inp.min = min; inp.max = max; inp.step = step;
+      Object.assign(inp.style, {
+        width: '54px', background: '#111', border: '1px solid #333',
+        color: '#fff', fontFamily: 'monospace', fontSize: '11px',
+        textAlign: 'center', padding: '2px 4px',
+      });
+
+      const inc = document.createElement('button');
+      inc.textContent = '+';
+      Object.assign(inc.style, _btnStyle('#666'));
+
+      const fullBtn = document.createElement('button');
+      fullBtn.textContent = 'Full';
+      Object.assign(fullBtn.style, _btnStyle('#4488ff'));
+
+      const apply = (val) => {
+        const clamped = Math.max(min, Math.min(max, Math.round(val)));
+        setValue(clamped);
+        inp.value = clamped;
+      };
+      dec.addEventListener('click', () => apply(getValue() - step));
+      inc.addEventListener('click', () => apply(getValue() + step));
+      fullBtn.addEventListener('click', () => apply(max));
+      inp.addEventListener('change', () => apply(Number(inp.value)));
+
+      row.appendChild(dec);
+      row.appendChild(inp);
+      row.appendChild(inc);
+      row.appendChild(fullBtn);
+      return row;
+    };
+
+    // Level row
+    const levelRow = document.createElement('div');
+    Object.assign(levelRow.style, { display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0' });
+    const levelLbl = document.createElement('span');
+    levelLbl.style.cssText = 'font-size:10px;color:#bbb;width:90px;flex-shrink:0';
+    levelLbl.textContent = 'Level';
+    const levelDisp = document.createElement('span');
+    const _refreshLevelDisp = () => {
+      const lv = this.player.stats.level;
+      const xp = this.player.stats.xp;
+      const next = XP_TABLE[lv] ?? '—';
+      levelDisp.textContent = `Lv ${lv}  (${xp} / ${next} XP)`;
+    };
+    levelDisp.style.cssText = 'font-size:10px;color:#fff;flex:1';
+    _refreshLevelDisp();
+    const lvUpBtn = document.createElement('button');
+    lvUpBtn.textContent = '+1 Lv';
+    Object.assign(lvUpBtn.style, _btnStyle('#e94560'));
+    lvUpBtn.addEventListener('click', () => {
+      const lv = this.player.stats.level;
+      if (lv >= XP_TABLE.length) return;
+      const needed = XP_TABLE[lv] - this.player.stats.xp;
+      this.player.gainXP(Math.max(1, needed));
+      _refreshLevelDisp();
+      this._showToast(`[DEV] Level ${this.player.stats.level}`, 'objective');
+    });
+    const lvMaxBtn = document.createElement('button');
+    lvMaxBtn.textContent = 'Max';
+    Object.assign(lvMaxBtn.style, _btnStyle('#ff8844'));
+    lvMaxBtn.addEventListener('click', () => {
+      const target = XP_TABLE.length;
+      while (this.player.stats.level < target) {
+        const needed = XP_TABLE[this.player.stats.level] - this.player.stats.xp;
+        this.player.gainXP(Math.max(1, needed));
+      }
+      _refreshLevelDisp();
+      this._showToast(`[DEV] Level ${this.player.stats.level}`, 'objective');
+    });
+    levelRow.appendChild(levelLbl);
+    levelRow.appendChild(levelDisp);
+    levelRow.appendChild(lvUpBtn);
+    levelRow.appendChild(lvMaxBtn);
+    statsContainer.appendChild(levelRow);
+
+    statsContainer.appendChild(_statRow(
+      'HP (Patience)',
+      () => this.player.stats.hp,
+      (v) => { this.player.stats.hp = v; },
+      0, this.player.stats.maxHP, 10,
+    ));
+    statsContainer.appendChild(_statRow(
+      'Coffee (MP)',
+      () => this.player.stats.mp,
+      (v) => { this.player.stats.mp = v; },
+      0, this.player.stats.maxMP, 10,
+    ));
+    statsContainer.appendChild(_statRow(
+      'AUM',
+      () => this.player.stats.aum,
+      (v) => { this.player.stats.aum = v; },
+      0, 999_000_000, 100_000,
+    ));
+
+    // ── Abilities ─────────────────────────────────────────────────
+    const abilitiesContainer = panel.querySelector('#dev-abilities');
+    const _renderAbilities = () => {
+      abilitiesContainer.innerHTML = '';
+      for (const [id, ab] of Object.entries(PLAYER_ABILITIES)) {
+        const unlocked = this.player.unlockedAbilities.has(id);
+        const btn = document.createElement('button');
+        btn.textContent = ab.name;
+        Object.assign(btn.style, {
+          background: unlocked ? '#1a3a1a' : '#1a1a2e',
+          border: `1px solid ${unlocked ? '#44ff88' : '#333'}`,
+          color: unlocked ? '#44ff88' : '#666',
+          padding: '3px 8px', fontFamily: 'monospace', fontSize: '9px',
+          cursor: 'pointer',
+        });
+        btn.title = `${ab.description}\nTier ${ab.tier ?? 0} · ${ab.tag ?? ab.type}`;
+        btn.addEventListener('click', () => {
+          if (unlocked) {
+            this.player.unlockedAbilities.delete(id);
+          } else {
+            this.player.unlockedAbilities.add(id);
+          }
+          _renderAbilities();
+        });
+        abilitiesContainer.appendChild(btn);
+      }
+    };
+    _renderAbilities();
+
+    // ── Quick Rewards ─────────────────────────────────────────────
+    const rewardsContainer = panel.querySelector('#dev-rewards');
+
+    const ATK_POSTERS = ['quest_atk_1','quest_atk_2','quest_atk_3','quest_atk_4','quest_atk_5'];
+    const DEF_POSTERS = ['quest_def_1','quest_def_2','quest_def_3','quest_def_4','quest_def_5'];
+
+    const _renderRewards = () => {
+      rewardsContainer.innerHTML = '';
+
+      // Poster side quests
+      const atkLeft = ATK_POSTERS.filter(id => !this.player.flags[id + '_done']).length;
+      const defLeft = DEF_POSTERS.filter(id => !this.player.flags[id + '_done']).length;
+      const postersLeft = atkLeft + defLeft;
+      const postersAllDone = postersLeft === 0;
+
+      const posterRow = document.createElement('div');
+      Object.assign(posterRow.style, { display: 'flex', alignItems: 'center', gap: '8px', margin: '3px 0' });
+
+      const posterLbl = document.createElement('span');
+      posterLbl.style.cssText = 'font-size:10px;color:#bbb;flex:1';
+      posterLbl.textContent = postersAllDone
+        ? 'Poster quests — all claimed'
+        : `Poster quests — ${postersLeft} remaining (ATK×${atkLeft} DEF×${defLeft})`;
+      posterRow.appendChild(posterLbl);
+
+      const posterBtn = document.createElement('button');
+      posterBtn.textContent = postersAllDone ? '✓ Done' : 'Claim All';
+      Object.assign(posterBtn.style, {
+        background: postersAllDone ? '#1a3a1a' : '#1a1a2e',
+        border: `1px solid ${postersAllDone ? '#44ff88' : '#e9a020'}`,
+        color: postersAllDone ? '#44ff88' : '#e9a020',
+        padding: '3px 10px', fontFamily: 'monospace', fontSize: '10px',
+        cursor: postersAllDone ? 'default' : 'pointer', minWidth: '80px',
+      });
+      if (!postersAllDone) {
+        posterBtn.addEventListener('click', () => {
+          ATK_POSTERS.forEach(id => {
+            if (!this.player.flags[id + '_done']) {
+              this.player.flags[id + '_done'] = true;
+              this.player.stats.atk = Math.max(1, (this.player.stats.atk || 0) + 1);
+              this.player.gainXP(300);
+            }
+          });
+          DEF_POSTERS.forEach(id => {
+            if (!this.player.flags[id + '_done']) {
+              this.player.flags[id + '_done'] = true;
+              this.player.stats.def = Math.max(1, (this.player.stats.def || 0) + 1);
+              this.player.gainXP(150);
+            }
+          });
+          this._showToast(`[DEV] Posters claimed — ATK+${atkLeft} DEF+${defLeft}`, 'objective');
+          _renderRewards();
+        });
+      }
+      posterRow.appendChild(posterBtn);
+      rewardsContainer.appendChild(posterRow);
+
+      // Arcade 500 distance milestone
+      const arcadeDone = this.player.getFlag('arcade_armored');
+      const arcadeRow = document.createElement('div');
+      Object.assign(arcadeRow.style, { display: 'flex', alignItems: 'center', gap: '8px', margin: '3px 0' });
+
+      const arcadeLbl = document.createElement('span');
+      arcadeLbl.style.cssText = 'font-size:10px;color:#bbb;flex:1';
+      arcadeLbl.textContent = arcadeDone
+        ? 'Arcade 500 distance — unlocked'
+        : 'Arcade 500 distance (Armored Coach + milestones)';
+      arcadeRow.appendChild(arcadeLbl);
+
+      const arcadeBtn = document.createElement('button');
+      arcadeBtn.textContent = arcadeDone ? '✓ Done' : 'Unlock';
+      Object.assign(arcadeBtn.style, {
+        background: arcadeDone ? '#1a3a1a' : '#1a1a2e',
+        border: `1px solid ${arcadeDone ? '#44ff88' : '#e9a020'}`,
+        color: arcadeDone ? '#44ff88' : '#e9a020',
+        padding: '3px 10px', fontFamily: 'monospace', fontSize: '10px',
+        cursor: arcadeDone ? 'default' : 'pointer', minWidth: '80px',
+      });
+      if (!arcadeDone) {
+        arcadeBtn.addEventListener('click', () => {
+          this.player.flags['arcade_gold_wheels'] = true;
+          this.player.flags['arcade_fancy_roof']  = true;
+          this.player.flags['arcade_armored']     = true;
+          const cur = this.player.getFlag('arcade_highscore') || 0;
+          if (cur < 500) this.player.flags['arcade_highscore'] = 500;
+          this._showToast('[DEV] Arcade 500 distance unlocked', 'objective');
+          _renderRewards();
+        });
+      }
+      arcadeRow.appendChild(arcadeBtn);
+      rewardsContainer.appendChild(arcadeRow);
+    };
+    _renderRewards();
+
+    // ── Room Access ───────────────────────────────────────────────
+    // Uses _devUnlockedRooms — never touches player flags, never fires flag-set events.
+    const roomsContainer = panel.querySelector('#dev-rooms');
+
+    const ROOM_ENTRIES = [
+      { label: 'Archive',              id: 'archive' },
+      { label: 'HR Department',        id: 'hr_department' },
+      { label: 'Vault',                id: 'vault' },
+      { label: 'Board Room',           id: 'board_room' },
+      { label: 'Executive Floor',      id: 'executive_floor' },
+      { label: 'Penthouse',            id: 'penthouse' },
+      { label: 'Penthouse Wings',      id: '_penthouse_wings' }, // virtual — unlocks all three
+    ];
+
+    const _renderRooms = () => {
+      roomsContainer.innerHTML = '';
+      ROOM_ENTRIES.forEach(entry => {
+        const unlocked = entry.id === '_penthouse_wings'
+          ? this._devUnlockedRooms.has('penthouse_aquarium')
+          : this._devUnlockedRooms.has(entry.id);
+
+        const row = document.createElement('div');
+        Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '8px', margin: '3px 0' });
+
+        const lbl = document.createElement('span');
+        lbl.style.cssText = 'font-size:10px;color:#bbb;width:150px;flex-shrink:0';
+        lbl.textContent = entry.label;
+        row.appendChild(lbl);
+
+        const btn = document.createElement('button');
+        btn.textContent = unlocked ? '✓ Bypassed' : '✗ Gated';
+        Object.assign(btn.style, {
+          background: unlocked ? '#1a3a1a' : '#1a1a2e',
+          border: `1px solid ${unlocked ? '#44ff88' : '#e94560'}`,
+          color: unlocked ? '#44ff88' : '#e94560',
+          padding: '3px 10px', fontFamily: 'monospace', fontSize: '10px',
+          cursor: 'pointer', minWidth: '90px',
+        });
+        btn.addEventListener('click', () => {
+          if (entry.id === '_penthouse_wings') {
+            ['penthouse_aquarium', 'penthouse_analytics', 'penthouse_bar'].forEach(id => {
+              unlocked ? this._devUnlockedRooms.delete(id) : this._devUnlockedRooms.add(id);
+            });
+          } else {
+            unlocked ? this._devUnlockedRooms.delete(entry.id) : this._devUnlockedRooms.add(entry.id);
+          }
+          _renderRooms();
+        });
+        row.appendChild(btn);
+        roomsContainer.appendChild(row);
+      });
+    };
+    _renderRooms();
 
     const list = panel.querySelector('#dev-preset-list');
     PRESETS.forEach(preset => {

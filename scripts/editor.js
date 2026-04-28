@@ -36,6 +36,14 @@ const TRACKED_PATHS = [
 // ── Module cache ──────────────────────────────────────────────────
 let _rooms = null, _encounters = null, _characters = null, _allies = null, _dialogs = null;
 
+// ── Live preview (SSE) ────────────────────────────────────────────
+let sseClients = [];
+function broadcast(data) {
+  const msg = `data: ${JSON.stringify(data)}\n\n`;
+  sseClients = sseClients.filter(c => !c.destroyed);
+  sseClients.forEach(c => { try { c.write(msg); } catch {} });
+}
+
 async function imp(relPath) {
   const url = pathToFileURL(path.join(ROOT, relPath)).href;
   return import(url);
@@ -44,6 +52,7 @@ async function imp(relPath) {
 async function getRooms()      { if (!_rooms)      { _rooms      = (await imp('src/data/rooms/index.js')).ROOMS;             } return _rooms; }
 async function getEncounters() { if (!_encounters) { _encounters = (await imp('src/data/encounters/index.js')).ENCOUNTERS;   } return _encounters; }
 async function getCharacters() { if (!_characters) { _characters = (await imp('src/data/characters.js')).CHARACTER_CONFIGS; } return _characters; }
+async function getDialogs()    { if (!_dialogs)    { _dialogs    = (await imp('src/data/dialogs/index.js')).DIALOGS;         } return _dialogs; }
 async function getAllies() {
   if (!_allies) {
     const mod = await imp('src/data/allies.js');
@@ -51,7 +60,6 @@ async function getAllies() {
   }
   return _allies;
 }
-async function getDialogs() { if (!_dialogs) { _dialogs = (await imp('src/data/dialogs/index.js')).DIALOGS; } return _dialogs; }
 
 // ── File helpers ──────────────────────────────────────────────────
 const readJson  = p => JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -145,7 +153,8 @@ const server = http.createServer(async (req, res) => {
       json(res, {
         id: room.id, name: room.name, width: room.width, height: room.height,
         furniture: (room.furniture || []).map(f => ({ type: f.type, x: f.x, z: f.z, rotation: f.rotation ?? null, y: f.y ?? null })),
-        npcs: (room.npcs || []).map(n => ({ id: n.id, x: n.x, z: n.z, facing: n.facing ?? null })),
+        npcs: (room.npcs || []).map(n => ({ id: n.id, x: n.x, z: n.z, facing: n.facing ?? null, condition: n.condition ?? null })),
+        exits: (room.exits || []).map(e => ({ x: e.x, z: e.z, targetRoom: e.targetRoom ?? null })),
       });
     } catch (e) { json(res, { error: String(e) }, 500); }
     return;
@@ -154,6 +163,25 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET'  && pathname === '/api/room-overrides') return json(res, readJson(ROOM_OVERRIDES_PATH));
   if (req.method === 'POST' && pathname === '/api/room-overrides') {
     try { writeJson(ROOM_OVERRIDES_PATH, JSON.parse(await readBody(req))); json(res, { ok: true }); }
+    catch (e) { json(res, { error: String(e) }, 400); }
+    return;
+  }
+
+  // ── Live preview ──────────────────────────────────────────────
+  if (req.method === 'GET' && pathname === '/api/live') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.write('data: {"type":"connected"}\n\n');
+    sseClients.push(res);
+    req.on('close', () => { sseClients = sseClients.filter(c => c !== res); });
+    return;
+  }
+  if (req.method === 'POST' && pathname === '/api/live-move') {
+    try { broadcast({ type: 'move', ...JSON.parse(await readBody(req)) }); json(res, { ok: true }); }
     catch (e) { json(res, { error: String(e) }, 400); }
     return;
   }
@@ -220,11 +248,22 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // ── Dialogs (read-only) ───────────────────────────────────────
+  // ── Dialogs ───────────────────────────────────────────────────
   if (req.method === 'GET' && pathname === '/api/dialogs') {
     try {
       const dialogs = await getDialogs();
-      json(res, Object.keys(dialogs));
+      const summary = {};
+      for (const [id, nodes] of Object.entries(dialogs)) {
+        const speakers = [...new Set(nodes.filter(n => n.speaker).map(n => n.speaker))];
+        const firstText = nodes.find(n => n.type === 'text' || n.type === 'choice');
+        const text = firstText?.text || firstText?.prompt || '';
+        summary[id] = {
+          nodeCount: nodes.length,
+          speakers,
+          firstText: text.slice(0, 80),
+        };
+      }
+      json(res, summary);
     } catch (e) { json(res, { error: String(e) }, 500); }
     return;
   }
@@ -234,9 +273,9 @@ const server = http.createServer(async (req, res) => {
     try {
       const dialogs = await getDialogs();
       const id = decodeURIComponent(dialogMatch[1]);
-      const nodes = dialogs[id];
-      if (!nodes) return json(res, { error: 'Not found' }, 404);
-      json(res, { id, nodes });
+      const dialog = dialogs[id];
+      if (!dialog) return json(res, { error: 'Not found' }, 404);
+      json(res, dialog);
     } catch (e) { json(res, { error: String(e) }, 500); }
     return;
   }

@@ -126,6 +126,9 @@ select { background:var(--surface); border:1px solid var(--border); color:var(--
 select:focus { border-color:var(--accent2); }
 .rooms-body { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start; }
 #room-canvas { display:block; border:1px solid var(--border); border-radius:6px; cursor:crosshair; max-width:100%; user-select:none; }
+.canvas-wrap { display:inline-block; }
+.canvas-info { display:flex; align-items:center; gap:12px; margin-bottom:6px; font-size:11px; color:var(--muted); }
+#zoom-display { font-size:11px; color:var(--accent2); font-weight:700; min-width:38px; }
 .canvas-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:7px; }
 .legend-item { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--muted); }
 .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
@@ -153,6 +156,69 @@ select:focus { border-color:var(--accent2); }
 .rot-presets { display:flex; gap:5px; margin-top:3px; }
 .rot-preset { padding:2px 7px; font-size:10px; background:var(--surface2); border:1px solid var(--border); color:var(--muted); border-radius:3px; cursor:pointer; font-weight:600; }
 .rot-preset:hover { border-color:var(--yellow); color:var(--yellow); }
+
+/* Flag Simulator */
+.flag-toggle-btn {
+  padding:4px 10px; font-size:11px; font-weight:600; border-radius:12px;
+  background:var(--surface2); border:1px solid var(--border); color:var(--muted);
+  cursor:pointer; transition:all .15s;
+}
+.flag-toggle-btn.active {
+  background:rgba(83,168,182,.2); border-color:var(--accent2); color:var(--accent2);
+}
+.flag-toggle-btn:hover { border-color:var(--text); color:var(--text); }
+#flag-npc-results { display:flex; flex-wrap:wrap; gap:8px; }
+.flag-npc-chip {
+  display:flex; align-items:center; gap:6px; padding:4px 10px;
+  border-radius:12px; font-size:11px; border:1px solid var(--border);
+}
+.flag-npc-chip.visible { background:rgba(68,221,136,.1); border-color:rgba(68,221,136,.3); color:var(--green); }
+.flag-npc-chip.hidden  { background:rgba(233,69,96,.08); border-color:rgba(233,69,96,.3); color:var(--muted); text-decoration:line-through; }
+
+/* Dialog browser */
+.dialog-search-wrap { margin-bottom:12px; }
+.dialog-search-wrap input {
+  width:100%; background:var(--bg); border:1px solid var(--border); border-radius:6px;
+  color:var(--text); font-size:13px; padding:8px 12px; outline:none;
+}
+.dialog-search-wrap input:focus { border-color:var(--accent2); }
+#dialog-list { display:flex; flex-direction:column; gap:6px; }
+.dialog-entry {
+  background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden;
+}
+.dialog-entry-header {
+  display:flex; align-items:center; gap:10px; padding:10px 14px;
+  cursor:pointer; user-select:none; transition:background .1s;
+}
+.dialog-entry-header:hover { background:var(--surface2); }
+.dialog-entry-id { font-family:monospace; font-size:12px; color:var(--accent2); flex:1; }
+.dialog-entry-meta { display:flex; gap:8px; align-items:center; font-size:10px; color:var(--muted); }
+.dialog-node-count { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:1px 7px; }
+.dialog-speakers { color:var(--orange); }
+.dialog-snippet { font-size:10px; color:var(--muted); font-style:italic; padding:0 14px 10px; }
+.dialog-nodes { padding:10px 14px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:5px; }
+.dialog-node {
+  border-radius:5px; padding:7px 10px; font-size:11px; border-left:3px solid transparent;
+  background:var(--surface2);
+}
+.dialog-node.type-text      { border-left-color:#53a8b6; }
+.dialog-node.type-choice    { border-left-color:#ffd700; }
+.dialog-node.type-action    { border-left-color:#44dd88; }
+.dialog-node.type-condition { border-left-color:#cc88ff; }
+.dialog-node.type-end       { border-left-color:#555577; }
+.dialog-node-idx { font-size:9px; color:var(--muted); margin-right:6px; font-family:monospace; }
+.dialog-node-type {
+  font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+  margin-right:6px; padding:1px 5px; border-radius:3px;
+}
+.dialog-node.type-text      .dialog-node-type { color:#53a8b6; }
+.dialog-node.type-choice    .dialog-node-type { color:#ffd700; }
+.dialog-node.type-action    .dialog-node-type { color:#44dd88; }
+.dialog-node.type-condition .dialog-node-type { color:#cc88ff; }
+.dialog-node.type-end       .dialog-node-type { color:#555577; }
+.dialog-node-speaker { color:var(--orange); font-weight:600; margin-right:4px; font-size:10px; }
+.dialog-node-text { color:var(--text); }
+.dialog-node-detail { font-size:10px; color:var(--muted); margin-top:3px; font-family:monospace; }
 
 /* Combat sim */
 .combat-controls { display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-bottom:20px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; }
@@ -222,7 +288,7 @@ select:focus { border-color:var(--accent2); }
 <header>
   <div>
     <h1>TRUST ISSUES — Content Editor</h1>
-    <span>Ctrl+S to save current tab</span>
+    <span>Ctrl+S to save current tab · R to rotate selected · Ctrl+Z/Y to undo/redo</span>
   </div>
   <div class="toolbar">
     <span class="status-pill" id="status-pill" title="Override files awaiting publish">
@@ -296,20 +362,33 @@ select:focus { border-color:var(--accent2); }
   </div>
   <div class="rooms-body">
     <div>
-      <canvas id="room-canvas" width="220" height="160"></canvas>
-      <div class="canvas-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#8B5E3C"></div>Desk/Table</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#4466aa"></div>Seating</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#445566"></div>Structure</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#226688"></div>Tech</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#336633"></div>Decor</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#cc4488"></div>NPC</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div>Selected</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#cc88ff"></div>Overridden</div>
+      <div class="canvas-wrap">
+        <div class="canvas-info">
+          <span>Scroll to zoom</span>
+          <span id="zoom-display">100%</span>
+          <span style="color:var(--muted);font-size:10px">R = rotate · Ctrl+Z/Y = undo/redo</span>
+        </div>
+        <canvas id="room-canvas" width="220" height="160"></canvas>
+        <div class="canvas-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#8B5E3C"></div>Desk/Table</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#4466aa"></div>Seating</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#445566"></div>Structure</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#226688"></div>Tech</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#336633"></div>Decor</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#cc4488"></div>NPC</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#664455"></div>NPC (hidden)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div>Selected</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#cc88ff"></div>Overridden</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#00cc66;border-radius:2px"></div>Exit</div>
+        </div>
       </div>
     </div>
     <div class="room-list-wrap">
       <div class="room-list-header">Furniture &amp; NPCs — click to select</div>
+      <div style="padding:5px 8px;border-bottom:1px solid var(--border);background:var(--surface2)">
+        <input id="item-search" type="text" placeholder="Filter…" oninput="renderItemList()"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:11px;padding:4px 8px;outline:none">
+      </div>
       <div id="room-item-list"></div>
     </div>
   </div>
@@ -334,6 +413,17 @@ select:focus { border-color:var(--accent2); }
       <button class="btn-apply" onclick="applyEdit()">Apply Override</button>
       <button class="btn-reset" onclick="resetEdit()">Reset to Default</button>
     </div>
+  </div>
+
+  <!-- Flag Simulator -->
+  <div id="flag-sim-section" style="display:none;margin-top:16px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+      <h2 style="margin:0">Flag Simulator</h2>
+      <span style="font-size:11px;color:var(--muted)">Toggle flags to preview NPC visibility</span>
+      <button class="btn-reset" onclick="clearSimFlags()">Clear All</button>
+    </div>
+    <div id="flag-toggles" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px"></div>
+    <div id="flag-npc-results"></div>
   </div>
 </div>
 
@@ -404,20 +494,16 @@ select:focus { border-color:var(--accent2); }
   <div class="chars-grid" id="chars-grid"></div>
 </div>
 
-<!-- ── Dialogs (read-only) ── -->
+<!-- ── Dialogs ── -->
 <div class="panel" id="panel-dialogs">
-  <h2>Dialog Trees (read-only)</h2>
-  <div class="dialogs-body">
-    <div class="dialog-sidebar">
-      <div class="dialog-sidebar-search">
-        <input type="text" id="dialog-search" placeholder="Filter dialog id…" oninput="renderDialogList()">
-      </div>
-      <div id="dialog-list"></div>
-    </div>
-    <div id="dialog-viewer">
-      <div style="color:var(--muted);font-size:12px;padding:20px;text-align:center;">Select a dialog from the list.</div>
-    </div>
+  <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+    <h2 style="margin:0">Dialog Browser</h2>
+    <span style="font-size:11px;color:var(--muted)" id="dialog-count"></span>
   </div>
+  <div class="dialog-search-wrap">
+    <input type="text" id="dialog-search" placeholder="Search by ID, speaker, or text..." oninput="renderDialogBrowser(this.value)">
+  </div>
+  <div id="dialog-list"><span style="color:var(--muted);font-size:12px">Loading...</span></div>
 </div>
 
 <!-- ── Diff ── -->
@@ -470,7 +556,7 @@ select:focus { border-color:var(--accent2); }
 // STATE
 // ═══════════════════════════════════════════════════════════════
 let balance = null, origBalance = null;
-let roomOverrides = {}, currentRoom = null, selectedItem = null, dragState = null;
+let roomOverrides = {}, currentRoom = null, selectedItem = null, dragState = null, _liveThrottle = 0;
 let charConfigs = {}, charOverrides = {}, origCharOverrides = {};
 let allyData = { stats: {}, abilities: {}, patterns: {} };
 let allyOverrides = { stats: {}, abilities: {} };
@@ -481,6 +567,215 @@ const CELL = 22;
 const ABILITY_TYPES = ['attack', 'attack_aoe', 'heal_ally', 'buff_party', 'debuff', 'buff'];
 const ABILITY_TAGS = ['', 'legal', 'social', 'audit', 'technical'];
 const ALLY_STAT_FIELDS = ['maxHP', 'maxMP', 'atk', 'def', 'spd', 'growthFactor'];
+
+// ── Zoom ─────────────────────────────────────────────────────
+let zoomLevel = 1.0;
+function cellPx() { return Math.round(CELL * zoomLevel); }
+
+// ── Undo/Redo ─────────────────────────────────────────────────
+let undoStack = [], redoStack = [];
+function pushUndo() {
+  if (!currentRoom) return;
+  const snap = JSON.parse(JSON.stringify(roomOverrides[currentRoom.id] || {}));
+  undoStack.push(snap);
+  redoStack = [];
+  if (undoStack.length > 50) undoStack.shift();
+}
+function undo() {
+  if (!currentRoom || !undoStack.length) return;
+  const current = JSON.parse(JSON.stringify(roomOverrides[currentRoom.id] || {}));
+  redoStack.push(current);
+  const snap = undoStack.pop();
+  applyUndoRedo(snap);
+  showToast('Undone');
+}
+function redo() {
+  if (!currentRoom || !redoStack.length) return;
+  const current = JSON.parse(JSON.stringify(roomOverrides[currentRoom.id] || {}));
+  undoStack.push(current);
+  const snap = redoStack.pop();
+  applyUndoRedo(snap);
+  showToast('Redone');
+}
+function applyUndoRedo(snapshot) {
+  if (Object.keys(snapshot).length === 0) {
+    delete roomOverrides[currentRoom.id];
+  } else {
+    roomOverrides[currentRoom.id] = snapshot;
+  }
+  renderCanvas();
+  renderItemList();
+  if (selectedItem) showEditPanel(selectedItem.category, selectedItem.index);
+}
+
+// ── Flag Simulator ────────────────────────────────────────────
+let simFlags = {};
+function isNPCVisible(npc) {
+  if (!npc.condition) return true;
+  if (npc.condition.flag && !simFlags[npc.condition.flag]) return false;
+  if (npc.condition.notFlag && simFlags[npc.condition.notFlag]) return false;
+  return true;
+}
+function renderFlagSim() {
+  if (!currentRoom) return;
+  // Collect all unique flags from NPC conditions
+  const allFlags = new Set();
+  (currentRoom.npcs || []).forEach(npc => {
+    if (npc.condition?.flag) allFlags.add(npc.condition.flag);
+    if (npc.condition?.notFlag) allFlags.add(npc.condition.notFlag);
+  });
+  const togglesEl = document.getElementById('flag-toggles');
+  togglesEl.innerHTML = '';
+  if (allFlags.size === 0) {
+    togglesEl.innerHTML = '<span style="font-size:11px;color:var(--muted)">No conditional NPCs in this room.</span>';
+  } else {
+    [...allFlags].sort().forEach(flag => {
+      const btn = document.createElement('button');
+      btn.className = 'flag-toggle-btn' + (simFlags[flag] ? ' active' : '');
+      btn.textContent = flag;
+      btn.onclick = () => {
+        simFlags[flag] = !simFlags[flag];
+        renderFlagSim();
+        renderCanvas();
+      };
+      togglesEl.appendChild(btn);
+    });
+  }
+  // NPC visibility results
+  const resultsEl = document.getElementById('flag-npc-results');
+  resultsEl.innerHTML = '';
+  (currentRoom.npcs || []).forEach((npc, i) => {
+    if (!npc.condition) return;
+    const vis = isNPCVisible(npc);
+    const chip = document.createElement('div');
+    chip.className = 'flag-npc-chip ' + (vis ? 'visible' : 'hidden');
+    chip.textContent = npc.id + ' #' + i;
+    resultsEl.appendChild(chip);
+  });
+}
+function clearSimFlags() {
+  simFlags = {};
+  renderFlagSim();
+  renderCanvas();
+}
+
+// ── Dialog Browser ────────────────────────────────────────────
+let dialogSummary = {}, expandedDialogs = new Set();
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+async function loadDialogs() {
+  document.getElementById('dialog-list').innerHTML = '<span style="color:var(--muted);font-size:12px">Loading...</span>';
+  try {
+    const res = await fetch('/api/dialogs');
+    dialogSummary = await res.json();
+    document.getElementById('dialog-count').textContent = Object.keys(dialogSummary).length + ' dialogs';
+    renderDialogBrowser(document.getElementById('dialog-search').value || '');
+  } catch(e) {
+    document.getElementById('dialog-list').innerHTML = '<span style="color:var(--accent);font-size:12px">Failed to load dialogs: ' + esc(String(e)) + '</span>';
+  }
+}
+function renderDialogBrowser(filter) {
+  filter = (filter || '').toLowerCase().trim();
+  const el = document.getElementById('dialog-list');
+  el.innerHTML = '';
+  const entries = Object.entries(dialogSummary).filter(([id, info]) => {
+    if (!filter) return true;
+    if (id.toLowerCase().includes(filter)) return true;
+    if (info.speakers.some(s => s.toLowerCase().includes(filter))) return true;
+    if (info.firstText.toLowerCase().includes(filter)) return true;
+    return false;
+  });
+  if (entries.length === 0) {
+    el.innerHTML = '<span style="color:var(--muted);font-size:12px">No dialogs match.</span>';
+    return;
+  }
+  entries.forEach(([id, info]) => {
+    const entry = document.createElement('div');
+    entry.className = 'dialog-entry';
+    const header = document.createElement('div');
+    header.className = 'dialog-entry-header';
+    header.innerHTML = `
+      <span class="dialog-entry-id">${esc(id)}</span>
+      <div class="dialog-entry-meta">
+        <span class="dialog-node-count">${info.nodeCount} nodes</span>
+        ${info.speakers.length ? `<span class="dialog-speakers">${info.speakers.map(esc).join(', ')}</span>` : ''}
+      </div>
+    `;
+    const snippet = document.createElement('div');
+    snippet.className = 'dialog-snippet';
+    snippet.textContent = info.firstText ? '"' + info.firstText + (info.firstText.length >= 80 ? '…' : '') + '"' : '';
+
+    const nodesEl = document.createElement('div');
+    nodesEl.className = 'dialog-nodes';
+    nodesEl.style.display = expandedDialogs.has(id) ? '' : 'none';
+
+    header.onclick = async () => {
+      if (expandedDialogs.has(id)) {
+        expandedDialogs.delete(id);
+        nodesEl.style.display = 'none';
+      } else {
+        expandedDialogs.add(id);
+        nodesEl.style.display = '';
+        if (!nodesEl.dataset.loaded) {
+          nodesEl.innerHTML = '<span style="color:var(--muted);font-size:11px">Loading nodes...</span>';
+          try {
+            const r = await fetch('/api/dialogs/' + encodeURIComponent(id));
+            const nodes = await r.json();
+            nodesEl.innerHTML = '';
+            renderDialogNodes(nodesEl, nodes);
+            nodesEl.dataset.loaded = '1';
+          } catch(e2) {
+            nodesEl.innerHTML = '<span style="color:var(--accent)">Failed to load</span>';
+          }
+        }
+      }
+    };
+
+    entry.appendChild(header);
+    if (info.firstText) entry.appendChild(snippet);
+    entry.appendChild(nodesEl);
+
+    // If already expanded and loaded, populate immediately
+    if (expandedDialogs.has(id) && nodesEl.dataset.loaded) {
+      // already rendered
+    }
+    el.appendChild(entry);
+  });
+}
+function renderDialogNodes(el, nodes) {
+  nodes.forEach((node, i) => {
+    const t = node.type || 'text';
+    const d = document.createElement('div');
+    d.className = 'dialog-node type-' + t;
+    let content = `<span class="dialog-node-idx">#${i}</span><span class="dialog-node-type">${esc(t)}</span>`;
+    if (node.speaker) content += `<span class="dialog-node-speaker">${esc(node.speaker)}:</span>`;
+    const mainText = node.text || node.prompt || node.action || '';
+    if (mainText) content += `<span class="dialog-node-text">${esc(mainText.slice(0, 120))}${mainText.length > 120 ? '…' : ''}</span>`;
+    d.innerHTML = content;
+    // Extra detail line for interesting properties
+    const details = [];
+    if (node.next !== undefined) details.push('→ ' + node.next);
+    if (node.flag) details.push('flag: ' + node.flag);
+    if (node.ifTrue !== undefined) details.push('ifTrue: ' + node.ifTrue);
+    if (node.ifFalse !== undefined) details.push('ifFalse: ' + node.ifFalse);
+    if (node.choices) details.push('choices: ' + node.choices.length);
+    if (node.item) details.push('item: ' + node.item);
+    if (node.stat) details.push('stat: ' + node.stat + (node.amount !== undefined ? ' +' + node.amount : ''));
+    if (node.xp) details.push('xp: ' + node.xp);
+    if (details.length) {
+      const det = document.createElement('div');
+      det.className = 'dialog-node-detail';
+      det.textContent = details.join(' · ');
+      d.appendChild(det);
+    }
+    el.appendChild(d);
+  });
+}
 
 // ═══════════════════════════════════════════════════════════════
 // LABELS
@@ -655,11 +950,19 @@ function typeColor(t) { return TYPE_COLORS[t]||'#666688'; }
 
 async function onRoomSelect() {
   const id = document.getElementById('room-select').value;
+  const searchEl = document.getElementById('item-search');
+  if (searchEl) searchEl.value = '';
   if (!id) { currentRoom=null; drawEmptyCanvas(); renderItemList(); hideEditPanel(); return; }
   currentRoom = await (await fetch('/api/rooms/'+id)).json();
   selectedItem = null;
+  undoStack = []; redoStack = [];
+  simFlags = {};
   document.getElementById('room-dims').textContent = `${currentRoom.width}×${currentRoom.height} tiles`;
-  hideEditPanel(); renderCanvas(); renderItemList();
+  document.getElementById('flag-sim-section').style.display = '';
+  hideEditPanel();
+  renderCanvas();
+  renderItemList();
+  renderFlagSim();
 }
 function drawEmptyCanvas() {
   const c=document.getElementById('room-canvas'); c.width=220; c.height=160;
@@ -669,14 +972,34 @@ function drawEmptyCanvas() {
 }
 function renderCanvas() {
   if (!currentRoom) { drawEmptyCanvas(); return; }
+  const cp = cellPx();
   const W=currentRoom.width, H=currentRoom.height, c=document.getElementById('room-canvas');
-  c.width=W*CELL; c.height=H*CELL;
+  c.width=W*cp; c.height=H*cp;
   const ctx=c.getContext('2d');
+
+  // Update zoom display
+  document.getElementById('zoom-display').textContent = Math.round(zoomLevel*100)+'%';
+
   ctx.fillStyle='#1a1a28'; ctx.fillRect(0,0,c.width,c.height);
   ctx.strokeStyle='#252535'; ctx.lineWidth=0.5;
-  for(let x=0;x<=W;x++){ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,H*CELL);ctx.stroke();}
-  for(let z=0;z<=H;z++){ctx.beginPath();ctx.moveTo(0,z*CELL);ctx.lineTo(W*CELL,z*CELL);ctx.stroke();}
-  ctx.strokeStyle='#3a3a55'; ctx.lineWidth=1.5; ctx.strokeRect(0.75,0.75,W*CELL-1.5,H*CELL-1.5);
+  for(let x=0;x<=W;x++){ctx.beginPath();ctx.moveTo(x*cp,0);ctx.lineTo(x*cp,H*cp);ctx.stroke();}
+  for(let z=0;z<=H;z++){ctx.beginPath();ctx.moveTo(0,z*cp);ctx.lineTo(W*cp,z*cp);ctx.stroke();}
+  ctx.strokeStyle='#3a3a55'; ctx.lineWidth=1.5; ctx.strokeRect(0.75,0.75,W*cp-1.5,H*cp-1.5);
+
+  // Draw exit tiles
+  (currentRoom.exits||[]).forEach(ex => {
+    ctx.fillStyle='rgba(0,200,100,0.15)';
+    ctx.fillRect((ex.x-0.5)*cp, (ex.z-0.5)*cp, cp, cp);
+    ctx.strokeStyle='#00cc66'; ctx.lineWidth=1;
+    ctx.strokeRect((ex.x-0.5)*cp, (ex.z-0.5)*cp, cp, cp);
+    if (cp >= 18 && ex.targetRoom) {
+      ctx.fillStyle='#00cc66';
+      ctx.font=`${Math.max(8,Math.floor(cp*0.28))}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('→', ex.x*cp, ex.z*cp);
+    }
+  });
+
   const ov=getRoomOv();
   (currentRoom.furniture||[]).forEach((item,i) => {
     const e=getEff('furniture',i); const sel=selectedItem?.category==='furniture'&&selectedItem.index===i;
@@ -684,25 +1007,56 @@ function renderCanvas() {
   });
   (currentRoom.npcs||[]).forEach((npc,i) => {
     const e=getEff('npcs',i); const sel=selectedItem?.category==='npcs'&&selectedItem.index===i;
-    drawDot(ctx,e.x,e.z,'#cc4488',sel,!!ov.npcs?.[i],'★');
+    const visible = isNPCVisible(npc);
+    const npcColor = visible ? '#cc4488' : '#664455';
+    drawDot(ctx,e.x,e.z,npcColor,sel,!!ov.npcs?.[i],'★');
+    // Draw facing arrow
+    drawFacingArrow(ctx, e.x, e.z, e.facing ?? npc.facing ?? 0);
   });
 }
 function drawDot(ctx,x,z,color,sel,ov,lbl) {
-  const px=x*CELL, pz=z*CELL, r=CELL*0.36;
+  const cp=cellPx(), px=x*cp, pz=z*cp, r=cp*0.36;
   ctx.fillStyle=ov?'#2a2810':'#1e1e2e';
   ctx.beginPath(); ctx.arc(px,pz,r,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle=sel?'#ffd700':ov?'#cc88ff':color; ctx.lineWidth=sel?2.5:1.5;
   ctx.beginPath(); ctx.arc(px,pz,r,0,Math.PI*2); ctx.stroke();
   ctx.fillStyle=sel?'#ffd700':color;
-  ctx.font=`${Math.floor(CELL*.42)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`${Math.floor(cp*.42)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(lbl,px,pz);
 }
+function drawFacingArrow(ctx, x, z, angle) {
+  const cp = cellPx();
+  const px = x * cp, pz = z * cp;
+  const len = cp * 0.48;
+  // Game convention: 0=north/-z, π/2=east/+x
+  const dx = Math.sin(angle) * len;
+  const dz = -Math.cos(angle) * len;
+  const ex = px + dx, ez = pz + dz;
+  ctx.strokeStyle = '#ff9944';
+  ctx.lineWidth = Math.max(1, cp * 0.07);
+  ctx.beginPath();
+  ctx.moveTo(px, pz);
+  ctx.lineTo(ex, ez);
+  ctx.stroke();
+  // Arrowhead
+  const headLen = Math.max(3, cp * 0.18);
+  const ang = Math.atan2(dz, dx);
+  const a1 = ang + Math.PI * 0.75;
+  const a2 = ang - Math.PI * 0.75;
+  ctx.beginPath();
+  ctx.moveTo(ex, ez);
+  ctx.lineTo(ex + Math.cos(a1)*headLen, ez + Math.sin(a1)*headLen);
+  ctx.moveTo(ex, ez);
+  ctx.lineTo(ex + Math.cos(a2)*headLen, ez + Math.sin(a2)*headLen);
+  ctx.stroke();
+}
 function canvasToTile(e) {
+  const cp = cellPx();
   const c = document.getElementById('room-canvas');
   const rect = c.getBoundingClientRect();
   return {
-    mx: (e.clientX - rect.left) * (c.width  / rect.width)  / CELL,
-    mz: (e.clientY - rect.top)  * (c.height / rect.height) / CELL,
+    mx: (e.clientX - rect.left) * (c.width  / rect.width)  / cp,
+    mz: (e.clientY - rect.top)  * (c.height / rect.height) / cp,
   };
 }
 function nearestItem(mx, mz) {
@@ -731,6 +1085,7 @@ _rcanvas.addEventListener('mousedown', function(e) {
   const { best, bd } = nearestItem(mx, mz);
   if (!best || bd >= 1.5) return;
   e.preventDefault();
+  pushUndo(); // once per drag, before drag starts
   selectItem(best.category, best.index);
   const ef = getEff(best.category, best.index);
   dragState = { category: best.category, index: best.index, ox: ef.x - mx, oz: ef.z - mz };
@@ -745,16 +1100,35 @@ _rcanvas.addEventListener('mousemove', function(e) {
   _rcanvas.style.cursor = bd < 1.5 ? 'grab' : 'crosshair';
 });
 
+// Zoom via scroll wheel
+_rcanvas.addEventListener('wheel', function(e) {
+  if (!currentRoom) return;
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  zoomLevel = Math.max(0.4, Math.min(4.0, Math.round((zoomLevel + delta) * 10) / 10));
+  renderCanvas();
+}, { passive: false });
+
 window.addEventListener('mousemove', function(e) {
   if (!dragState || !currentRoom) return;
   e.preventDefault();
   const { mx, mz } = canvasToTile(e);
-  const nx = Math.max(0, Math.min(currentRoom.width,  Math.round((mx + dragState.ox) * 2) / 2));
-  const nz = Math.max(0, Math.min(currentRoom.height, Math.round((mz + dragState.oz) * 2) / 2));
+  const nx = Math.max(0, Math.min(currentRoom.width,  Math.round((mx + dragState.ox) * 4) / 4));
+  const nz = Math.max(0, Math.min(currentRoom.height, Math.round((mz + dragState.oz) * 4) / 4));
   stageDragPosition(dragState.category, dragState.index, nx, nz);
   document.getElementById('edit-x').value = nx;
   document.getElementById('edit-z').value = nz;
   renderCanvas();
+  // Broadcast live position to game (throttled to ~20fps)
+  const _now = Date.now();
+  if (_now - _liveThrottle > 50) {
+    _liveThrottle = _now;
+    fetch('/api/live-move', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId: currentRoom.id, category: dragState.category, index: dragState.index, x: nx, z: nz }),
+    }).catch(() => {});
+  }
 }, { passive: false });
 
 window.addEventListener('mouseup', function() {
@@ -768,13 +1142,23 @@ function renderItemList() {
   const el=document.getElementById('room-item-list'); el.innerHTML='';
   if (!currentRoom) return;
   const ov=getRoomOv();
-  if (currentRoom.furniture?.length) {
-    el.appendChild(sectionTitle(`Furniture (${currentRoom.furniture.length})`));
-    currentRoom.furniture.forEach((item,i)=>el.appendChild(makeListRow('furniture',i,item.type,ov.furniture?.[i])));
+  const q=(document.getElementById('item-search')?.value||'').toLowerCase().trim();
+  const furniture=currentRoom.furniture||[], npcs=currentRoom.npcs||[];
+  const ff=furniture.map((item,i)=>({item,i})).filter(({item})=>!q||item.type.toLowerCase().includes(q));
+  const fn=npcs.map((npc,i)=>({npc,i})).filter(({npc})=>!q||npc.id.toLowerCase().includes(q));
+  if (ff.length) {
+    const label=q&&ff.length<furniture.length?`Furniture (${ff.length}/${furniture.length})`:`Furniture (${furniture.length})`;
+    el.appendChild(sectionTitle(label));
+    ff.forEach(({item,i})=>el.appendChild(makeListRow('furniture',i,item.type,ov.furniture?.[i])));
   }
-  if (currentRoom.npcs?.length) {
-    el.appendChild(sectionTitle(`NPCs (${currentRoom.npcs.length})`));
-    currentRoom.npcs.forEach((npc,i)=>el.appendChild(makeListRow('npcs',i,npc.id,ov.npcs?.[i])));
+  if (fn.length) {
+    const label=q&&fn.length<npcs.length?`NPCs (${fn.length}/${npcs.length})`:`NPCs (${npcs.length})`;
+    el.appendChild(sectionTitle(label));
+    fn.forEach(({npc,i})=>el.appendChild(makeListRow('npcs',i,npc.id,ov.npcs?.[i])));
+  }
+  if (q&&!ff.length&&!fn.length) {
+    const d=div(''); d.style.cssText='padding:12px;font-size:11px;color:var(--muted);text-align:center';
+    d.textContent='No matches'; el.appendChild(d);
   }
 }
 function makeListRow(cat,i,lbl,hasOv) {
@@ -812,6 +1196,7 @@ function hideEditPanel() { document.getElementById('edit-panel').style.display='
 function setRot(deg) { document.getElementById('edit-rot').value=deg; }
 function applyEdit() {
   if (!selectedItem||!currentRoom) return;
+  pushUndo();
   const {category:cat,index:i}=selectedItem, base=currentRoom[cat][i];
   const x=parseFloat(document.getElementById('edit-x').value);
   const z=parseFloat(document.getElementById('edit-z').value);
@@ -831,6 +1216,7 @@ function applyEdit() {
 }
 function resetEdit() {
   if(!selectedItem||!currentRoom) return;
+  pushUndo();
   const {category:cat,index:i}=selectedItem;
   if(roomOverrides[currentRoom.id]?.[cat]) delete roomOverrides[currentRoom.id][cat][String(i)];
   renderCanvas(); renderItemList(); showEditPanel(cat,i); showToast('Reset to default');
@@ -1474,12 +1860,12 @@ async function loadDiff() {
   const raw=await res.text();
   if(!raw||raw==='(no uncommitted changes)') { el.innerHTML='<span style="color:var(--green)">No uncommitted changes.</span>'; return; }
   el.innerHTML=raw.split('\n').map(line=>{
-    const esc=line.replace(/&/g,'&amp;').replace(/</g,'&lt;');
-    if(line.startsWith('+')&&!line.startsWith('+++')) return `<span class="diff-add">${esc}</span>`;
-    if(line.startsWith('-')&&!line.startsWith('---')) return `<span class="diff-del">${esc}</span>`;
-    if(line.startsWith('@@')) return `<span class="diff-hunk">${esc}</span>`;
-    if(line.startsWith('diff ')||line.startsWith('index ')||line.startsWith('---')||line.startsWith('+++')) return `<span class="diff-meta">${esc}</span>`;
-    return esc;
+    const escaped=line.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    if(line.startsWith('+')&&!line.startsWith('+++')) return `<span class="diff-add">${escaped}</span>`;
+    if(line.startsWith('-')&&!line.startsWith('---')) return `<span class="diff-del">${escaped}</span>`;
+    if(line.startsWith('@@')) return `<span class="diff-hunk">${escaped}</span>`;
+    if(line.startsWith('diff ')||line.startsWith('index ')||line.startsWith('---')||line.startsWith('+++')) return `<span class="diff-meta">${escaped}</span>`;
+    return escaped;
   }).join('\n');
 }
 
@@ -1497,7 +1883,7 @@ function switchTab(name, el) {
   if(name==='combat') renderXPCurve();
   if(name==='allies') renderAllies();
   if(name==='encounters') renderEncounters();
-  if(name==='dialogs') renderDialogList();
+  if(name==='dialogs') loadDialogs();
 }
 function saveCurrentTab() {
   if(['player','abilities','enemies','shop'].includes(currentTab)) saveBalance();
@@ -1505,6 +1891,7 @@ function saveCurrentTab() {
   else if(currentTab==='characters') saveCharOverrides();
   else if(currentTab==='allies') saveAllyOverrides();
   else if(currentTab==='encounters') saveEncounterOverrides();
+  else if(currentTab==='dialogs') showToast('Nothing to save on this tab');
   else showToast('Nothing to save on this tab');
 }
 function openHelp() { document.getElementById('help-overlay').classList.add('visible'); }
@@ -1529,7 +1916,22 @@ async function refreshStatus() {
     }
   } catch (e) { /* ignore */ }
 }
-document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCurrentTab();} });
+document.addEventListener('keydown', e => {
+  // Ctrl+S
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCurrentTab(); return;}
+  // Ctrl+Z — undo
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'){e.preventDefault();undo(); return;}
+  // Ctrl+Y or Ctrl+Shift+Z — redo
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key==='z'))){e.preventDefault();redo(); return;}
+  // R — rotate selected item 90°
+  if((e.key==='r'||e.key==='R')&&currentTab==='rooms'&&selectedItem&&!e.ctrlKey&&!e.metaKey) {
+    e.preventDefault();
+    const rotInput=document.getElementById('edit-rot');
+    const cur=parseFloat(rotInput.value)||0;
+    rotInput.value=(cur+90)%360;
+    applyEdit();
+  }
+});
 
 async function publishToGitHub() {
   openConsole('Publishing to GitHub...');

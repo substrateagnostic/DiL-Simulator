@@ -933,6 +933,131 @@ export const DIALOGS = {
   ],
 
   // --------------------------------------------------------------------------
+  // Act-aware return dialogs (_return_aN)
+  // These replace the flat _return fallback at higher act thresholds.
+  // Each is a short repeatable ambient line — in character, contextually grounded.
+  // --------------------------------------------------------------------------
+
+  // JANET
+  janet_return_a3: [
+    { type: 'text', speaker: 'Janet', text: "You know what I've noticed? The building gets quieter the deeper you go. Like it's paying attention." },
+    { type: 'text', speaker: 'Janet', text: "Or maybe I've just been here too long." },
+    { type: 'end' },
+  ],
+  janet_return_a5: [
+    { type: 'text', speaker: 'Janet', text: "Those restructuring consultants have been giving me the look. The 'your position is under review' look." },
+    { type: 'text', speaker: 'Janet', text: "I've outlasted four SVPs. I'll outlast them too." },
+    { type: 'end' },
+  ],
+  janet_return_a6: [
+    { type: 'text', speaker: 'Janet', text: "Board meeting tomorrow. Thirty-two years and this is the first time I've been asked to testify for the department." },
+    { type: 'text', speaker: 'Janet', text: "Make it count." },
+    { type: 'end' },
+  ],
+  janet_return_a7: [
+    { type: 'text', speaker: 'Janet', text: "Whatever's in that penthouse — you come back down." },
+    { type: 'text', speaker: 'Janet', text: "That's the job. You go up. You come back down." },
+    { type: 'end' },
+  ],
+
+  // ALEX FROM IT
+  alex_it_return_a3: [
+    { type: 'text', speaker: 'Alex from IT', text: "That encrypted partition keeps growing. Every time I think I've mapped it, there's another layer." },
+    { type: 'text', speaker: 'Alex from IT', text: "Whatever they've been hiding, it's been accumulating for a long time." },
+    { type: 'end' },
+  ],
+  alex_it_return_a5: [
+    { type: 'text', speaker: 'Alex from IT', text: "The restructuring consultants keep requesting server access. I keep telling them we're in maintenance." },
+    { type: 'text', speaker: 'Alex from IT', text: "Week three. They've stopped asking. Good." },
+    { type: 'end' },
+  ],
+  alex_it_return_a6: [
+    { type: 'text', speaker: 'Alex from IT', text: "Badge logs, patch history, the encrypted partition — every thread points up. To the penthouse." },
+    { type: 'text', speaker: 'Alex from IT', text: "Whatever's running up there has been running longer than Rachel. Factor that in." },
+    { type: 'end' },
+  ],
+  alex_it_return_a7: [
+    { type: 'text', speaker: 'Alex from IT', text: "I'm running interference from down here. Buying you time on their network." },
+    { type: 'text', speaker: 'Alex from IT', text: "Don't let The Algorithm run a diagnostic on you. Trust me on that one." },
+    { type: 'end' },
+  ],
+
+  // INTERN
+  intern_return_a3: [
+    { type: 'text', speaker: 'The Intern', text: "Is it just me or does the building feel different lately? Like the hallways are watching?" },
+    { type: 'text', speaker: 'The Intern', text: "Ross said I'm 'picking up on enterprise resonance.' I wrote it down. I still don't know what it means." },
+    { type: 'end' },
+  ],
+  intern_return_a5: [
+    { type: 'text', speaker: 'The Intern', text: "I fought in the cubicle farm, Andrew. With a stapler. I am not the same person I was." },
+    { type: 'text', speaker: 'The Intern', text: "Ross says I'm now 'junior trust operations support staff.' I think I got promoted? Nobody confirmed it." },
+    { type: 'end' },
+  ],
+  intern_return_a6: [
+    { type: 'text', speaker: 'The Intern', text: "I'm on slide 34 of 47. The transitions are really coming together." },
+    { type: 'text', speaker: 'The Intern', text: "I'll be here. Unpaidly supporting the cause." },
+    { type: 'end' },
+  ],
+
+  // DIANE
+  diane_return_a4: [
+    { type: 'text', speaker: 'Diane', text: "I've worked reception for eleven years. I know when something is about to break." },
+    { type: 'text', speaker: 'Diane', text: "Something is about to break." },
+    { type: 'end' },
+  ],
+  diane_return_a5: [
+    { type: 'text', speaker: 'Diane', text: "The restructuring consultants keep walking past my desk without saying good morning." },
+    { type: 'text', speaker: 'Diane', text: "That tells you everything you need to know about what they think of us." },
+    { type: 'end' },
+  ],
+  diane_return_a6: [
+    { type: 'text', speaker: 'Diane', text: "You get the documents?" },
+    { type: 'text', speaker: 'Diane', text: "Board meeting's tomorrow at 4. I cleared my afternoon. This ends one way or another." },
+    { type: 'end' },
+  ],
+
+  // ISAIAH
+  isaiah_return_a3: [
+    { type: 'text', speaker: 'Isaiah', text: "I've been pulling operational records back to 2018. You'd be surprised what shows up if you look long enough." },
+    { type: 'text', speaker: 'Isaiah', text: "Or maybe you wouldn't. You seem like someone who looks." },
+    { type: 'end' },
+  ],
+  isaiah_return_a5: [
+    { type: 'text', speaker: 'Isaiah', text: "Eleven years. I have eleven years of receipts, Andrew." },
+    { type: 'text', speaker: 'Isaiah', text: "When this is over, someone is going to have a very bad audit." },
+    { type: 'end' },
+  ],
+  isaiah_return_a6: [
+    { type: 'text', speaker: 'Isaiah', text: "23 breached agreements. Triple-checked. The board has no defense if they see this." },
+    { type: 'text', speaker: 'Isaiah', text: "Ready when you are." },
+    { type: 'end' },
+  ],
+
+  // ROSS (also adding base ross_return which didn't exist)
+  ross_return: [
+    { type: 'text', speaker: 'Ross', text: "Circle back with me after you've touched base on the Henderson action items." },
+    { type: 'text', speaker: 'Ross', text: "And remember: every challenge is a learnable moment." },
+    { type: 'end' },
+  ],
+  ross_return_a4: [
+    { type: 'text', speaker: 'Ross', text: "Twenty years in this industry. I thought I understood how it worked." },
+    { type: 'text', speaker: 'Ross', text: "Keep going. I'll cover things here." },
+    { type: 'end' },
+  ],
+  ross_return_a6: [
+    { type: 'text', speaker: 'Ross', text: "The speech is ready. I haven't been genuinely ready for something since 2003." },
+    { type: 'text', speaker: 'Ross', text: "Reminds me why I got into this. Before the synergy." },
+    { type: 'end' },
+  ],
+
+  // JANITOR
+  janitor_return_a6: [
+    { type: 'text', speaker: 'Mysterious Janitor', text: "Strange to look at my wrist and see nothing there." },
+    { type: 'text', speaker: 'Mysterious Janitor', text: "Seventy-nine years is a long time to carry something. Hand it to the right person and it weighs nothing at all." },
+    { type: 'end' },
+  ],
+
+  // --------------------------------------------------------------------------
   // Post-combat victory dialogs
   // --------------------------------------------------------------------------
   karen_defeated: [
@@ -1303,6 +1428,25 @@ export const DIALOGS = {
     { type: 'text', speaker: 'Narrator', text: 'For a moment you consider driving away. Starting a new life. Becoming a park ranger or something.' },
     { type: 'text', speaker: 'Narrator', text: 'But your student loans won\'t pay themselves. And also, your keys are inside the building. Classic.' },
     { type: 'end' },
+  ],
+
+  garage_worker: [
+    /* 0 */ { type: 'condition', flag: 'met_garage_worker', ifTrue: 8, ifFalse: 1 },
+    /* 1 */ { type: 'text', speaker: 'Parking Attendant', text: "Hey. You work upstairs? Trust department?" },
+    /* 2 */ { type: 'text', speaker: 'Andrew', text: "Yeah. Just started." },
+    /* 3 */ { type: 'text', speaker: 'Parking Attendant', text: "That your hatchback in spot 4C? The grey one?" },
+    /* 4 */ { type: 'text', speaker: 'Andrew', text: "...Yes." },
+    /* 5 */ { type: 'text', speaker: 'Parking Attendant', text: "I thought it was abandoned. I almost had it towed three times. Nice car though. Character." },
+    /* 6 */ { type: 'text', speaker: 'Andrew', text: "Thanks." },
+    /* 7 */ { type: 'action', action: 'set_flag', flag: 'met_garage_worker', value: true, next: 12 },
+    /* 8 */ { type: 'choice', prompt: 'The parking attendant nods at you with the quiet authority of someone who has seen everything come and go from this building.', choices: [
+      { text: "Anything weird going on lately?", next: 9 },
+      { text: "Just passing through.", next: 11 },
+    ]},
+    /* 9 */ { type: 'text', speaker: 'Parking Attendant', text: "Weird? Lady in a white Audi has been parking in the fire lane every Tuesday for two years. I've put 47 notices on her windshield. 47. She takes them off without reading them. That's weird." },
+    /* 10 */ { type: 'text', speaker: 'Parking Attendant', text: "Other than that? People come, people go. Cars stay. Cars are honest. They're where you left them.", next: 12 },
+    /* 11 */ { type: 'text', speaker: 'Parking Attendant', text: "Yeah. That's what they all say.", next: 12 },
+    /* 12 */ { type: 'end' },
   ],
 
   janitor_closet: [

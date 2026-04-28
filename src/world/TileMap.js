@@ -59,6 +59,22 @@ export class TileMap {
     return this.interactData[`${Math.floor(x)},${Math.floor(z)}`] || null;
   }
 
+  // Move an interactable from one tile to another — used by live editor preview.
+  // Only acts when fromX/fromZ and toX/toZ are in different tiles.
+  moveInteractable(fromX, fromZ, toX, toZ) {
+    const fx = Math.floor(fromX), fz = Math.floor(fromZ);
+    const tx = Math.floor(toX),   tz = Math.floor(toZ);
+    if (fx === tx && fz === tz) return;
+    const key = `${fx},${fz}`;
+    const data = this.interactData[key];
+    if (!data) return;
+    delete this.interactData[key];
+    const oldIdx = this._idx(fx, fz);
+    if (oldIdx >= 0 && this.grid[oldIdx] === 2) this.grid[oldIdx] = 0;
+    this.set(tx, tz, 2);
+    this.interactData[`${tx},${tz}`] = data;
+  }
+
   // Check if player can move to position (with sub-tile precision)
   canMove(x, z, radius = 0.2) {
     // Check all four corners of the bounding circle approximation

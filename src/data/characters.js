@@ -69,6 +69,17 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: ['clipboard'],
   },
+  garage_worker: {
+    name: 'Parking Attendant',
+    bodyColor: 0xf5c200,   // hi-vis safety yellow vest
+    pantsColor: 0x1a2a4a,  // dark navy work pants
+    shirtColor: 0x2a4a6a,  // dark blue shirt (visible at collar)
+    tieColor: null,
+    skinColor: COLORS.SKIN_MEDIUM,
+    hairColor: 0x1a2a4a,   // dark navy cap (matches pants)
+    hairStyle: 'backwards_cap',
+    accessories: ['clipboard', 'name_tag'],
+  },
   janitor: {
     name: 'Mysterious Janitor',
     bodyColor: 0x4a5a6a, // Jumpsuit

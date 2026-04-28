@@ -789,7 +789,7 @@ export const ROOMS = {
       { type: 'carSports', x: 12, z: 6, rotation: Math.PI / 2 },
     ],
     npcs: [
-      { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage
+      { id: 'garage_worker', x: 12, z: 9, facing: Math.PI, dialogId: 'garage_worker', movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },
     ],
     exits: [
       // NORTH exits -> Reception

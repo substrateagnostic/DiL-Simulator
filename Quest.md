@@ -102,20 +102,26 @@ All quests, objectives, and rewards.
 
 | # | Objective |
 |---|-----------|
-| 1 | Defeat the Brand Consultant |
-| 2 | Defeat the Restructuring Analyst |
-| 3 | Defeat the Corporate Lawyer |
-| 4 | Access the Board Room |
-| 5 | Confront Rachel in the Board Room |
+| 1 | Defeat the Restructuring Trio in the Cubicle Farm (Janet joins as ally) |
+| 2 | Access the Executive Floor |
+| 3 | Defeat the Data Analytics Duo |
+| 4 | Defeat the Chief of Restructuring |
+| 5 | Access the Board Room |
+| 6 | Confront Rachel in the Board Room |
 
 **Combat rewards** (in order):
-| Enemy | XP | HP | Notes |
-|-------|----|----|-------|
-| Restructuring Analyst | **70 XP** | 80 | Can flee: no |
-| Brand Consultant | **65 XP** | 70 | Can flee: yes |
-| Corporate Lawyer | **120 XP** | 130 | Can flee: no |
-| Data Analytics Lead | **90 XP** | 330 | Can flee: no. Triggers on executive floor after Corporate Lawyer defeated. |
-| Chief of Restructuring | **130 XP** | 465 | Can flee: no. Triggers on executive floor after Data Analytics Lead defeated. |
+| Encounter | Enemies | XP | Notes |
+|-----------|---------|-----|-------|
+| `restructuring_trio` | Brand Consultant + Restructuring Analyst + Corporate Lawyer | **255 XP total** | Multi-enemy. Janet auto-joins as ally. Can flee: no. |
+| `data_analytics_duo` | Data Analytics Lead + CFO's Assistant | **~160 XP total** | Multi-enemy, exec floor. Can flee: no. |
+| `chief_of_restructuring` | Chief of Restructuring | **130 XP** | Solo, exec floor after duo. Can flee: no. |
+| `rachel_boss` | Rachel | **300 XP** | Board Room finale. Epilogue branches based on voice profile (see below). Can flee: no. |
+
+**Rachel epilogue branches** (all converge on `act5_complete`):
+- **Default** — universal victory celebration
+- **Charter Read** — `witness_charter_read` set: rhetorical-kill epilogue, old board member switches sides
+- **Steadied** — `andrew_steadied` set (via Litigator-high team chat branch): Janet — "You're still you."
+- **Hardened** — `andrew_hardened` set: Andrew watches himself from a professional distance
 
 ---
 
@@ -127,8 +133,10 @@ All quests, objectives, and rewards.
 | 1 | Rally the team for the board meeting |
 | 2 | Gather evidence against Rachel |
 | 3 | Get Ross to prepare his speech |
-| 4 | Recruit Grandma Henderson as ally |
+| 4 | Recruit allies — Janet, Alex from IT, Isaiah, Diane, and Grandma Henderson |
 | 5 | Get the Janitor's Rolex |
+
+> Once any ally is recruited, the water cooler becomes a **Team Chat Hub** with a chat option per recruited ally.
 
 **Combat reward:**
 | Boss | XP | Notes |
@@ -245,6 +253,23 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | 4 | Wait for the patch to deploy |
 
 **Reward:** Ability unlocked — **Invoke Charter** *(Read the 1947 charter aloud, Power 100 — devastating to bad-faith enemies)*
+
+---
+
+### Badge Audit
+*Alex has been quietly auditing the badge-access logs. He needs someone to pull a patch log from a specific server rack.*
+
+> **Unlocks after:** Recruiting Alex from IT (`alex_recruited` flag).
+
+| Step | What to do |
+|------|-----------|
+| 1 | Talk to Alex in the IT Office (`alex_badge_audit_offer` dialog) |
+| 2 | Go to the Server Room and inspect rack **PATCH-3** *(look for the "DO NOT TOUCH 4ever" sticker — visible only after quest is accepted)* |
+| 3 | Return to Alex with the patch log (`alex_badge_audit_return` dialog) |
+
+**Reward:** Alex's **Kernel Panic** ability unlocked for free (no upgrade point cost) + **200 XP**.
+
+The patch log reveals Rachel has had a physical cable running from her office to the badge issuer for at least four years — concrete evidence the conspiracy predates the visible restructuring push.
 
 ---
 
