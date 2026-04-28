@@ -303,14 +303,23 @@ export class ExplorationState {
         if (key === 'regional_director_defeated') {
           this._pendingDialog = 'algorithm_combat';
         }
-        // Act 6 → 7 transition: all allies rallied + rolex = penthouse unlocks
-        if (key === 'has_rolex') {
-          this.player.setFlag('act6_complete', true);
-          // Reward for completing all Act 6 prep (allies + evidence + rolex)
-          const levels = this.player.gainXP(500);
-          this._updateMiniStats();
-          this._showToast('Team assembled, evidence secured. +500 XP', 'objective');
-          if (levels.length > 0) AudioManager.playSfx('levelup');
+        // Act 6 → 7 transition: ALL prerequisites must be met — Rolex alone is not enough.
+        // Check fires whenever any of these flags land so the transition is immediate
+        // regardless of which one the player completes last.
+        const ACT6_PREREQS = [
+          'janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied',
+          'ross_speech_ready', 'grandma_ally',
+          'diane_evidence', 'isaiah_evidence',
+          'has_rolex',
+        ];
+        if (ACT6_PREREQS.includes(key) && !this.player.getFlag('act6_complete')) {
+          if (ACT6_PREREQS.every(f => this.player.getFlag(f))) {
+            this.player.setFlag('act6_complete', true);
+            const levels = this.player.gainXP(500);
+            this._updateMiniStats();
+            this._showToast('Team assembled, evidence secured. +500 XP', 'objective');
+            if (levels.length > 0) AudioManager.playSfx('levelup');
+          }
         }
         if (key === 'has_charter') {
           this._showToast('You have the 1947 Charter! Its power resonates through the building.', 'item');
@@ -1811,7 +1820,6 @@ export class ExplorationState {
 
     // Act 6
     if (this.player.getFlag('act5_complete')) {
-      if (this.player.getFlag('has_rolex')) return 'Enter the Penthouse — you have the Janitor\'s Rolex';
       const allyFlags = [
         { flag: 'janet_act6_rallied',  label: 'Janet' },
         { flag: 'diane_act6_rallied',  label: 'Diane' },
@@ -1827,13 +1835,15 @@ export class ExplorationState {
       const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
       const rallied = allyFlags.length - missingAllies.length;
       const evidence = evidenceFlags.length - missingEvidence.length;
+      // Show what's still missing — Rolex is only the final step once everything else is done
       if (rallied < 5 || evidence < 2) {
         const lines = [`Prepare for the finale (${rallied}/5 allies, ${evidence}/2 evidence)`];
         if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
         if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
         return lines.join('<br>');
       }
-      return 'Get the Janitor\'s Rolex';
+      if (!this.player.getFlag('has_rolex')) return 'Get the Janitor\'s Rolex';
+      return 'Preparing for the finale...'; // brief state before act6_complete fires
     }
 
     // Act 5
