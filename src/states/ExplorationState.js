@@ -13,7 +13,7 @@ import { DIALOGS } from '../data/dialogs/index.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { TransitionOverlay } from '../ui/TransitionOverlay.js';
 import { generateClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
-import { ENEMY_STATS, XP_TABLE } from '../data/stats.js';
+import { ENEMY_STATS, XP_TABLE, PLAYER_ABILITIES } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
 import { SaveManager } from '../core/SaveManager.js';
@@ -2437,12 +2437,16 @@ export class ExplorationState {
       background: '#0a0a14', border: '2px solid #e94560',
       padding: '20px', zIndex: '9999',
       fontFamily: 'monospace', color: '#e94560',
-      minWidth: '420px',
+      minWidth: '520px', maxHeight: '85vh', overflowY: 'auto',
     });
     panel.innerHTML = `
       <div style="font-size:13px;letter-spacing:2px;margin-bottom:12px">[DEV] PANEL</div>
       <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">SAVE SCUM</div>
       <div id="dev-save-slots"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">PLAYER STATS</div>
+      <div id="dev-stats"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">ABILITIES</div>
+      <div id="dev-abilities" style="display:flex;flex-wrap:wrap;gap:4px"></div>
       <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">QUEST SKIP</div>
       <div id="dev-preset-list"></div>
       <div style="margin-top:10px;font-size:10px;color:#444">ESC to close &middot; quest flags are cumulative &middot; some dialogs may replay</div>
@@ -2510,6 +2514,143 @@ export class ExplorationState {
     };
 
     _renderSaveSlots();
+
+    // ── Player Stats ───────────────────────────────────────────────
+    const statsContainer = panel.querySelector('#dev-stats');
+
+    const _statRow = (label, getValue, setValue, min, max, step = 1) => {
+      const row = document.createElement('div');
+      Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0' });
+
+      const lbl = document.createElement('span');
+      lbl.style.cssText = 'font-size:10px;color:#bbb;width:90px;flex-shrink:0';
+      lbl.textContent = label;
+      row.appendChild(lbl);
+
+      const dec = document.createElement('button');
+      dec.textContent = '−';
+      Object.assign(dec.style, _btnStyle('#666'));
+
+      const inp = document.createElement('input');
+      inp.type = 'number';
+      inp.value = getValue();
+      inp.min = min; inp.max = max; inp.step = step;
+      Object.assign(inp.style, {
+        width: '54px', background: '#111', border: '1px solid #333',
+        color: '#fff', fontFamily: 'monospace', fontSize: '11px',
+        textAlign: 'center', padding: '2px 4px',
+      });
+
+      const inc = document.createElement('button');
+      inc.textContent = '+';
+      Object.assign(inc.style, _btnStyle('#666'));
+
+      const fullBtn = document.createElement('button');
+      fullBtn.textContent = 'Full';
+      Object.assign(fullBtn.style, _btnStyle('#4488ff'));
+
+      const apply = (val) => {
+        const clamped = Math.max(min, Math.min(max, Math.round(val)));
+        setValue(clamped);
+        inp.value = clamped;
+      };
+      dec.addEventListener('click', () => apply(getValue() - step));
+      inc.addEventListener('click', () => apply(getValue() + step));
+      fullBtn.addEventListener('click', () => apply(max));
+      inp.addEventListener('change', () => apply(Number(inp.value)));
+
+      row.appendChild(dec);
+      row.appendChild(inp);
+      row.appendChild(inc);
+      row.appendChild(fullBtn);
+      return row;
+    };
+
+    // Level row
+    const levelRow = document.createElement('div');
+    Object.assign(levelRow.style, { display: 'flex', alignItems: 'center', gap: '6px', margin: '4px 0' });
+    const levelLbl = document.createElement('span');
+    levelLbl.style.cssText = 'font-size:10px;color:#bbb;width:90px;flex-shrink:0';
+    levelLbl.textContent = 'Level';
+    const levelDisp = document.createElement('span');
+    const _refreshLevelDisp = () => {
+      const lv = this.player.stats.level;
+      const xp = this.player.stats.xp;
+      const next = XP_TABLE[lv] ?? '—';
+      levelDisp.textContent = `Lv ${lv}  (${xp} / ${next} XP)`;
+    };
+    levelDisp.style.cssText = 'font-size:10px;color:#fff;flex:1';
+    _refreshLevelDisp();
+    const lvUpBtn = document.createElement('button');
+    lvUpBtn.textContent = '+1 Lv';
+    Object.assign(lvUpBtn.style, _btnStyle('#e94560'));
+    lvUpBtn.addEventListener('click', () => {
+      const lv = this.player.stats.level;
+      if (lv >= XP_TABLE.length) return;
+      const needed = XP_TABLE[lv] - this.player.stats.xp;
+      this.player.gainXP(Math.max(1, needed));
+      _refreshLevelDisp();
+      this._showToast(`[DEV] Level ${this.player.stats.level}`, 'objective');
+    });
+    const lvMaxBtn = document.createElement('button');
+    lvMaxBtn.textContent = 'Max';
+    Object.assign(lvMaxBtn.style, _btnStyle('#ff8844'));
+    lvMaxBtn.addEventListener('click', () => {
+      const target = XP_TABLE.length;
+      while (this.player.stats.level < target) {
+        const needed = XP_TABLE[this.player.stats.level] - this.player.stats.xp;
+        this.player.gainXP(Math.max(1, needed));
+      }
+      _refreshLevelDisp();
+      this._showToast(`[DEV] Level ${this.player.stats.level}`, 'objective');
+    });
+    levelRow.appendChild(levelLbl);
+    levelRow.appendChild(levelDisp);
+    levelRow.appendChild(lvUpBtn);
+    levelRow.appendChild(lvMaxBtn);
+    statsContainer.appendChild(levelRow);
+
+    statsContainer.appendChild(_statRow(
+      'HP (Patience)',
+      () => this.player.stats.hp,
+      (v) => { this.player.stats.hp = v; },
+      0, this.player.stats.maxHP, 10,
+    ));
+    statsContainer.appendChild(_statRow(
+      'Coffee (MP)',
+      () => this.player.stats.mp,
+      (v) => { this.player.stats.mp = v; },
+      0, this.player.stats.maxMP, 10,
+    ));
+
+    // ── Abilities ─────────────────────────────────────────────────
+    const abilitiesContainer = panel.querySelector('#dev-abilities');
+    const _renderAbilities = () => {
+      abilitiesContainer.innerHTML = '';
+      for (const [id, ab] of Object.entries(PLAYER_ABILITIES)) {
+        const unlocked = this.player.unlockedAbilities.has(id);
+        const btn = document.createElement('button');
+        btn.textContent = ab.name;
+        Object.assign(btn.style, {
+          background: unlocked ? '#1a3a1a' : '#1a1a2e',
+          border: `1px solid ${unlocked ? '#44ff88' : '#333'}`,
+          color: unlocked ? '#44ff88' : '#666',
+          padding: '3px 8px', fontFamily: 'monospace', fontSize: '9px',
+          cursor: 'pointer',
+        });
+        btn.title = `${ab.description}\nTier ${ab.tier ?? 0} · ${ab.tag ?? ab.type}`;
+        btn.addEventListener('click', () => {
+          if (unlocked) {
+            this.player.unlockedAbilities.delete(id);
+          } else {
+            this.player.unlockedAbilities.add(id);
+          }
+          _renderAbilities();
+        });
+        abilitiesContainer.appendChild(btn);
+      }
+    };
+    _renderAbilities();
 
     const list = panel.querySelector('#dev-preset-list');
     PRESETS.forEach(preset => {
