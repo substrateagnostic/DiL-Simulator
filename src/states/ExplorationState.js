@@ -107,6 +107,7 @@ export class ExplorationState {
     this.nearestInteractable = null;
     this._pendingCombat = null;
     this._pendingDialog = null;
+    this._devUnlockedRooms = new Set(); // dev-only gate bypass, never touches player flags
 
     // Quest tracking
     this.activeQuests = [];
@@ -424,8 +425,11 @@ export class ExplorationState {
           }
         }
 
+        // Dev bypass — skip all gate checks for this room
+        const _devBypass = DEV_MODE && this._devUnlockedRooms.has(roomId);
+
         // HR Department: HR rep blocks entry until defeated
-        if (roomId === 'hr_department' && !this.player.getFlag('defeated_hr_rep')) {
+        if (!_devBypass && roomId === 'hr_department' && !this.player.getFlag('defeated_hr_rep')) {
           if (DIALOGS.hr_rep_combat) {
             setTimeout(() => {
               const dialogState = new DialogState(DIALOGS['hr_rep_combat'], this.player, this.stateManager, 'hr_rep_combat');
@@ -626,15 +630,17 @@ export class ExplorationState {
       penthouse_bar: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
     };
 
+    const _devBypassGate = DEV_MODE && this._devUnlockedRooms.has(targetRoom);
+
     // Block executive floor while the corporate lawyer is active and undefeated
-    if (targetRoom === 'executive_floor'
+    if (!_devBypassGate && targetRoom === 'executive_floor'
       && this.player.getFlag('restructuring_defeated')
       && !this.player.getFlag('corporate_lawyer_defeated')) {
       this._showToast("The elevator won't open. Someone's waiting for you in the lobby.", 'info');
       return;
     }
     const gate = gatedRooms[targetRoom];
-    if (gate && !this.player.getFlag(gate.flag)) {
+    if (!_devBypassGate && gate && !this.player.getFlag(gate.flag)) {
       this._showToast(gate.message, 'info');
       return;
     }
@@ -2655,75 +2661,36 @@ export class ExplorationState {
     _renderAbilities();
 
     // ── Room Access ───────────────────────────────────────────────
+    // Uses _devUnlockedRooms — never touches player flags, never fires flag-set events.
     const roomsContainer = panel.querySelector('#dev-rooms');
 
-    // Each entry: { label, check(), unlock(), lock() }
-    const ROOM_GATES = [
-      {
-        label: 'Archive',
-        check: () => this.player.getFlag('archive_accessible'),
-        unlock: () => this.player.setFlag('archive_accessible', true),
-        lock:   () => { this.player.flags['archive_accessible'] = false; },
-      },
-      {
-        label: 'HR Department',
-        check: () => this.player.getFlag('hr_accessible'),
-        // also set defeated_hr_rep so the HR rep doesn't block entry
-        unlock: () => { this.player.setFlag('hr_accessible', true); this.player.setFlag('defeated_hr_rep', true); },
-        lock:   () => { this.player.flags['hr_accessible'] = false; this.player.flags['defeated_hr_rep'] = false; },
-      },
-      {
-        label: 'Vault',
-        check: () => this.player.getFlag('vault_accessible'),
-        unlock: () => this.player.setFlag('vault_accessible', true),
-        lock:   () => { this.player.flags['vault_accessible'] = false; },
-      },
-      {
-        label: 'Board Room',
-        check: () => this.player.getFlag('board_room_accessible'),
-        unlock: () => this.player.setFlag('board_room_accessible', true),
-        lock:   () => { this.player.flags['board_room_accessible'] = false; },
-      },
-      {
-        label: 'Executive Floor',
-        check: () => this.player.getFlag('branch_chosen'),
-        unlock: () => this.player.setFlag('branch_chosen', true),
-        lock:   () => { this.player.flags['branch_chosen'] = false; },
-      },
-      {
-        label: 'Exec Floor (Act 5 lock)',
-        check: () => this.player.getFlag('corporate_lawyer_defeated'),
-        unlock: () => this.player.setFlag('corporate_lawyer_defeated', true),
-        lock:   () => { this.player.flags['corporate_lawyer_defeated'] = false; },
-      },
-      {
-        label: 'Penthouse',
-        check: () => this.player.getFlag('act6_complete'),
-        unlock: () => this.player.setFlag('act6_complete', true),
-        lock:   () => { this.player.flags['act6_complete'] = false; },
-      },
-      {
-        label: 'Penthouse Wings',
-        check: () => this.player.getFlag('renovation_penthouse'),
-        unlock: () => this.player.setFlag('renovation_penthouse', true),
-        lock:   () => { this.player.flags['renovation_penthouse'] = false; },
-      },
+    const ROOM_ENTRIES = [
+      { label: 'Archive',              id: 'archive' },
+      { label: 'HR Department',        id: 'hr_department' },
+      { label: 'Vault',                id: 'vault' },
+      { label: 'Board Room',           id: 'board_room' },
+      { label: 'Executive Floor',      id: 'executive_floor' },
+      { label: 'Penthouse',            id: 'penthouse' },
+      { label: 'Penthouse Wings',      id: '_penthouse_wings' }, // virtual — unlocks all three
     ];
 
     const _renderRooms = () => {
       roomsContainer.innerHTML = '';
-      ROOM_GATES.forEach(gate => {
-        const unlocked = gate.check();
+      ROOM_ENTRIES.forEach(entry => {
+        const unlocked = entry.id === '_penthouse_wings'
+          ? this._devUnlockedRooms.has('penthouse_aquarium')
+          : this._devUnlockedRooms.has(entry.id);
+
         const row = document.createElement('div');
         Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '8px', margin: '3px 0' });
 
         const lbl = document.createElement('span');
         lbl.style.cssText = 'font-size:10px;color:#bbb;width:150px;flex-shrink:0';
-        lbl.textContent = gate.label;
+        lbl.textContent = entry.label;
         row.appendChild(lbl);
 
         const btn = document.createElement('button');
-        btn.textContent = unlocked ? '✓ Unlocked' : '✗ Locked';
+        btn.textContent = unlocked ? '✓ Bypassed' : '✗ Gated';
         Object.assign(btn.style, {
           background: unlocked ? '#1a3a1a' : '#1a1a2e',
           border: `1px solid ${unlocked ? '#44ff88' : '#e94560'}`,
@@ -2732,7 +2699,13 @@ export class ExplorationState {
           cursor: 'pointer', minWidth: '90px',
         });
         btn.addEventListener('click', () => {
-          if (unlocked) { gate.lock(); } else { gate.unlock(); }
+          if (entry.id === '_penthouse_wings') {
+            ['penthouse_aquarium', 'penthouse_analytics', 'penthouse_bar'].forEach(id => {
+              unlocked ? this._devUnlockedRooms.delete(id) : this._devUnlockedRooms.add(id);
+            });
+          } else {
+            unlocked ? this._devUnlockedRooms.delete(entry.id) : this._devUnlockedRooms.add(entry.id);
+          }
           _renderRooms();
         });
         row.appendChild(btn);
