@@ -1462,7 +1462,8 @@ export class ExplorationState {
     }
 
     // Janet act4 rally takes priority over lunch thief dialogId overrides
-    if (id === 'janet' && act >= 4 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
+    // maxAct < 6: in Act 6+ the rally is no longer relevant
+    if (id === 'janet' && act >= 4 && act < 6 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
       return 'janet_act4';
     }
 
@@ -1560,17 +1561,16 @@ export class ExplorationState {
     }
 
     // Compliance crossword — only after Alex has pointed the player to the archive
-    if (id === 'compliance' && act >= 3 && this.player.getFlag('alex_it_act3_done') && !this.player.getFlag('compliance_crossword_done') && DIALOGS.compliance_crossword) {
+    // maxAct < 6: archive password is irrelevant once Act 5 is complete
+    if (id === 'compliance' && act >= 3 && act < 6 && this.player.getFlag('alex_it_act3_done') && !this.player.getFlag('compliance_crossword_done') && DIALOGS.compliance_crossword) {
       return 'compliance_crossword';
     }
 
-    // Ross post-Karen debrief: required before Chad fight
-    if (id === 'ross' && this.player.getFlag('karen_defeated') && !this.player.getFlag('ross_post_karen')) {
+    // Ross post-Karen/Chad debriefs: Act 2 beats, irrelevant once Act 4+ begins
+    if (id === 'ross' && act < 5 && this.player.getFlag('karen_defeated') && !this.player.getFlag('ross_post_karen')) {
       return 'ross_post_karen';
     }
-
-    // Ross post-Chad debrief: required before Grandma fight
-    if (id === 'ross' && this.player.getFlag('chad_defeated') && !this.player.getFlag('ross_post_chad')) {
+    if (id === 'ross' && act < 5 && this.player.getFlag('chad_defeated') && !this.player.getFlag('ross_post_chad')) {
       return 'ross_post_chad';
     }
 
@@ -1646,6 +1646,12 @@ export class ExplorationState {
       return 'team_pre_intro';
     }
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
+    // Act-aware return dialogs — highest applicable act wins, falls back to base _return
+    if (act >= 7 && DIALOGS[`${id}_return_a7`]) return `${id}_return_a7`;
+    if (act >= 6 && DIALOGS[`${id}_return_a6`]) return `${id}_return_a6`;
+    if (act >= 5 && DIALOGS[`${id}_return_a5`]) return `${id}_return_a5`;
+    if (act >= 4 && DIALOGS[`${id}_return_a4`]) return `${id}_return_a4`;
+    if (act >= 3 && DIALOGS[`${id}_return_a3`]) return `${id}_return_a3`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
     if (act >= 7 && DIALOGS[`${id}_act7`]) return `${id}_act7`;
     if (act >= 6 && DIALOGS[`${id}_act6`]) return `${id}_act6`;
