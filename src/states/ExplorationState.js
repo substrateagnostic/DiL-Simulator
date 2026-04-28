@@ -2630,6 +2630,12 @@ export class ExplorationState {
       (v) => { this.player.stats.mp = v; },
       0, this.player.stats.maxMP, 10,
     ));
+    statsContainer.appendChild(_statRow(
+      'AUM',
+      () => this.player.stats.aum,
+      (v) => { this.player.stats.aum = v; },
+      0, 999_000_000, 100_000,
+    ));
 
     // ── Abilities ─────────────────────────────────────────────────
     const abilitiesContainer = panel.querySelector('#dev-abilities');
