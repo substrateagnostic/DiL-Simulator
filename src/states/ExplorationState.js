@@ -172,7 +172,29 @@ export class ExplorationState {
         this._dismissUpgradeTooltip();
       }),
       EventBus.on('flag-set', ({ key, value }) => {
-        this._refreshStoryProgress();
+        // ── Story flag prerequisites (DEV_MODE enforcement) ──────────────
+        // Authoritative table of what must be true before a critical flag can fire.
+        // Any violation is a routing bug — fix it at the source, not here.
+        if (DEV_MODE) {
+          const FLAG_PREREQS = {
+            act3_complete:            ['has_archive_evidence'],
+            act4_complete:            ['has_charter'],
+            act5_complete:            ['board_room_accessible'],
+            act6_complete:            ['janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied', 'ross_speech_ready', 'grandma_ally', 'diane_evidence', 'isaiah_evidence', 'has_rolex'],
+            penthouse_entered:        ['act6_complete'],
+            cfos_defeated:            ['penthouse_entered'],
+            regional_director_defeated: ['cfos_defeated'],
+            algorithm_defeated:       ['regional_director_defeated'],
+          };
+          const prereqs = FLAG_PREREQS[key];
+          if (prereqs) {
+            const missing = prereqs.filter(f => !this.player.getFlag(f));
+            if (missing.length > 0) {
+              console.warn(`[FLAG PREREQ BUG] '${key}' set without: ${missing.join(', ')}`);
+            }
+          }
+        }
+
         // Alex IT router: chain into the chosen dialog after router ends
         // Only queue pending dialogs when flags are set to truthy values — not when cleared
         if (key === 'alex_story_chosen' && value) {
@@ -294,13 +316,14 @@ export class ExplorationState {
           });
         }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
-        if (key === 'penthouse_entered') {
+        // Each step requires the previous to be confirmed so a stray flag can't skip ahead.
+        if (key === 'penthouse_entered' && this.player.getFlag('act6_complete')) {
           this._pendingDialog = 'cfos_assistant_combat';
         }
-        if (key === 'cfos_defeated') {
+        if (key === 'cfos_defeated' && this.player.getFlag('penthouse_entered')) {
           this._pendingDialog = 'regional_director_combat';
         }
-        if (key === 'regional_director_defeated') {
+        if (key === 'regional_director_defeated' && this.player.getFlag('cfos_defeated')) {
           this._pendingDialog = 'algorithm_combat';
         }
         // Act 6 → 7 transition: ALL prerequisites must be met — Rolex alone is not enough.
@@ -622,6 +645,29 @@ export class ExplorationState {
       const roomData = this.roomManager.getRoomData(actualId);
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
+      }
+
+      // DEV: warn when a routing-sensitive NPC id appears outside its canonical room(s).
+      // A routing-sensitive id without an explicit dialogId will be processed by _getDialogId()
+      // story logic — if it's the wrong character this silently produces wrong dialog.
+      if (DEV_MODE && roomData?.npcs) {
+        const CANONICAL_ROOMS = {
+          janitor:    new Set(['archive', 'stairwell']),
+          alex_it:    new Set(['server_room', 'cubicle_farm', 'it_office']),
+          janet:      new Set(['cubicle_farm']),
+          karen:      new Set(['conference_room']),
+          ross:       new Set(['ross_office', 'executive_floor', 'conference_room', 'ross_office_large']),
+          intern:     new Set(['cubicle_farm']),
+          isaiah:     new Set(['cubicle_farm']),
+          diane:      new Set(['reception']),
+          compliance: new Set(['executive_floor']),
+        };
+        for (const npc of roomData.npcs) {
+          const canonical = CANONICAL_ROOMS[npc.id];
+          if (canonical && !canonical.has(actualId) && !npc.dialogId) {
+            console.warn(`[NPC ROUTING BUG] Room '${actualId}': NPC id='${npc.id}' is outside its canonical room(s) and has no dialogId — _getDialogId() story routing will fire on this character. Add a dialogId or rename the NPC.`);
+          }
+        }
       }
     }
   }
@@ -1554,15 +1600,10 @@ export class ExplorationState {
     if (id === 'alex_it'
         && this.player.getFlag('alex_it_recruited')
         && !this.player.getFlag('act6_complete')
-        && DIALOGS.alex_badge_audit_offer
-        && (!this.player.getFlag('alex_badge_audit_complete') || !this.player.getFlag(`read_alex_it_act${act}`))) {
-      // While the personal mission is active OR done but the player hasn't seen it yet, prefer it
-      if (this.player.getFlag('alex_has_patch_log') && !this.player.getFlag('alex_badge_audit_complete')) {
-        return 'alex_badge_audit_return';
-      }
-      if (!this.player.getFlag('alex_badge_audit_complete')) {
-        return 'alex_badge_audit_offer';
-      }
+        && !this.player.getFlag('alex_badge_audit_complete')
+        && DIALOGS.alex_badge_audit_offer) {
+      if (this.player.getFlag('alex_has_patch_log')) return 'alex_badge_audit_return';
+      return 'alex_badge_audit_offer';
     }
 
     // Isaiah — The Receipts personal mission (post-recruit, before Act 7)
