@@ -1305,6 +1305,25 @@ export const DIALOGS = {
     { type: 'end' },
   ],
 
+  garage_worker: [
+    /* 0 */ { type: 'condition', flag: 'met_garage_worker', ifTrue: 8, ifFalse: 1 },
+    /* 1 */ { type: 'text', speaker: 'Parking Attendant', text: "Hey. You work upstairs? Trust department?" },
+    /* 2 */ { type: 'text', speaker: 'Andrew', text: "Yeah. Just started." },
+    /* 3 */ { type: 'text', speaker: 'Parking Attendant', text: "That your hatchback in spot 4C? The grey one?" },
+    /* 4 */ { type: 'text', speaker: 'Andrew', text: "...Yes." },
+    /* 5 */ { type: 'text', speaker: 'Parking Attendant', text: "I thought it was abandoned. I almost had it towed three times. Nice car though. Character." },
+    /* 6 */ { type: 'text', speaker: 'Andrew', text: "Thanks." },
+    /* 7 */ { type: 'action', action: 'set_flag', flag: 'met_garage_worker', value: true, next: 12 },
+    /* 8 */ { type: 'choice', prompt: 'The parking attendant nods at you with the quiet authority of someone who has seen everything come and go from this building.', choices: [
+      { text: "Anything weird going on lately?", next: 9 },
+      { text: "Just passing through.", next: 11 },
+    ]},
+    /* 9 */ { type: 'text', speaker: 'Parking Attendant', text: "Weird? Lady in a white Audi has been parking in the fire lane every Tuesday for two years. I've put 47 notices on her windshield. 47. She takes them off without reading them. That's weird." },
+    /* 10 */ { type: 'text', speaker: 'Parking Attendant', text: "Other than that? People come, people go. Cars stay. Cars are honest. They're where you left them.", next: 12 },
+    /* 11 */ { type: 'text', speaker: 'Parking Attendant', text: "Yeah. That's what they all say.", next: 12 },
+    /* 12 */ { type: 'end' },
+  ],
+
   janitor_closet: [
     { type: 'text', speaker: 'Narrator', text: 'A janitor\'s supply closet that is... suspiciously well-appointed.' },
     { type: 'text', speaker: 'Narrator', text: 'Inside: a mop, industrial cleaner, and... a mahogany bookshelf with first-edition business books?' },
