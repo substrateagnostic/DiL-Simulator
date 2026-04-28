@@ -2447,6 +2447,8 @@ export class ExplorationState {
       <div id="dev-stats"></div>
       <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">ABILITIES</div>
       <div id="dev-abilities" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">ROOM ACCESS</div>
+      <div id="dev-rooms"></div>
       <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">QUEST SKIP</div>
       <div id="dev-preset-list"></div>
       <div style="margin-top:10px;font-size:10px;color:#444">ESC to close &middot; quest flags are cumulative &middot; some dialogs may replay</div>
@@ -2651,6 +2653,93 @@ export class ExplorationState {
       }
     };
     _renderAbilities();
+
+    // ── Room Access ───────────────────────────────────────────────
+    const roomsContainer = panel.querySelector('#dev-rooms');
+
+    // Each entry: { label, check(), unlock(), lock() }
+    const ROOM_GATES = [
+      {
+        label: 'Archive',
+        check: () => this.player.getFlag('archive_accessible'),
+        unlock: () => this.player.setFlag('archive_accessible', true),
+        lock:   () => { this.player.flags['archive_accessible'] = false; },
+      },
+      {
+        label: 'HR Department',
+        check: () => this.player.getFlag('hr_accessible'),
+        // also set defeated_hr_rep so the HR rep doesn't block entry
+        unlock: () => { this.player.setFlag('hr_accessible', true); this.player.setFlag('defeated_hr_rep', true); },
+        lock:   () => { this.player.flags['hr_accessible'] = false; this.player.flags['defeated_hr_rep'] = false; },
+      },
+      {
+        label: 'Vault',
+        check: () => this.player.getFlag('vault_accessible'),
+        unlock: () => this.player.setFlag('vault_accessible', true),
+        lock:   () => { this.player.flags['vault_accessible'] = false; },
+      },
+      {
+        label: 'Board Room',
+        check: () => this.player.getFlag('board_room_accessible'),
+        unlock: () => this.player.setFlag('board_room_accessible', true),
+        lock:   () => { this.player.flags['board_room_accessible'] = false; },
+      },
+      {
+        label: 'Executive Floor',
+        check: () => this.player.getFlag('branch_chosen'),
+        unlock: () => this.player.setFlag('branch_chosen', true),
+        lock:   () => { this.player.flags['branch_chosen'] = false; },
+      },
+      {
+        label: 'Exec Floor (Act 5 lock)',
+        check: () => this.player.getFlag('corporate_lawyer_defeated'),
+        unlock: () => this.player.setFlag('corporate_lawyer_defeated', true),
+        lock:   () => { this.player.flags['corporate_lawyer_defeated'] = false; },
+      },
+      {
+        label: 'Penthouse',
+        check: () => this.player.getFlag('act6_complete'),
+        unlock: () => this.player.setFlag('act6_complete', true),
+        lock:   () => { this.player.flags['act6_complete'] = false; },
+      },
+      {
+        label: 'Penthouse Wings',
+        check: () => this.player.getFlag('renovation_penthouse'),
+        unlock: () => this.player.setFlag('renovation_penthouse', true),
+        lock:   () => { this.player.flags['renovation_penthouse'] = false; },
+      },
+    ];
+
+    const _renderRooms = () => {
+      roomsContainer.innerHTML = '';
+      ROOM_GATES.forEach(gate => {
+        const unlocked = gate.check();
+        const row = document.createElement('div');
+        Object.assign(row.style, { display: 'flex', alignItems: 'center', gap: '8px', margin: '3px 0' });
+
+        const lbl = document.createElement('span');
+        lbl.style.cssText = 'font-size:10px;color:#bbb;width:150px;flex-shrink:0';
+        lbl.textContent = gate.label;
+        row.appendChild(lbl);
+
+        const btn = document.createElement('button');
+        btn.textContent = unlocked ? '✓ Unlocked' : '✗ Locked';
+        Object.assign(btn.style, {
+          background: unlocked ? '#1a3a1a' : '#1a1a2e',
+          border: `1px solid ${unlocked ? '#44ff88' : '#e94560'}`,
+          color: unlocked ? '#44ff88' : '#e94560',
+          padding: '3px 10px', fontFamily: 'monospace', fontSize: '10px',
+          cursor: 'pointer', minWidth: '90px',
+        });
+        btn.addEventListener('click', () => {
+          if (unlocked) { gate.lock(); } else { gate.unlock(); }
+          _renderRooms();
+        });
+        row.appendChild(btn);
+        roomsContainer.appendChild(row);
+      });
+    };
+    _renderRooms();
 
     const list = panel.querySelector('#dev-preset-list');
     PRESETS.forEach(preset => {
