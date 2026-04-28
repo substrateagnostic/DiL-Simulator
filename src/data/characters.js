@@ -71,14 +71,14 @@ export const CHARACTER_CONFIGS = {
   },
   garage_worker: {
     name: 'Parking Attendant',
-    bodyColor: 0xe87722,   // hi-vis orange vest
-    pantsColor: 0x334455,  // dark navy work pants
-    shirtColor: null,
+    bodyColor: 0xf5c200,   // hi-vis safety yellow vest
+    pantsColor: 0x1a2a4a,  // dark navy work pants
+    shirtColor: 0x2a4a6a,  // dark blue shirt (visible at collar)
     tieColor: null,
     skinColor: COLORS.SKIN_MEDIUM,
-    hairColor: COLORS.HAIR_BROWN,
-    hairStyle: 'short',
-    accessories: [],
+    hairColor: 0x1a2a4a,   // dark navy cap (matches pants)
+    hairStyle: 'backwards_cap',
+    accessories: ['clipboard', 'name_tag'],
   },
   janitor: {
     name: 'Mysterious Janitor',
