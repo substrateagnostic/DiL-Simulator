@@ -2453,6 +2453,8 @@ export class ExplorationState {
       <div id="dev-stats"></div>
       <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">ABILITIES</div>
       <div id="dev-abilities" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">QUICK REWARDS</div>
+      <div id="dev-rewards"></div>
       <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">ROOM ACCESS</div>
       <div id="dev-rooms"></div>
       <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">QUEST SKIP</div>
@@ -2665,6 +2667,100 @@ export class ExplorationState {
       }
     };
     _renderAbilities();
+
+    // ── Quick Rewards ─────────────────────────────────────────────
+    const rewardsContainer = panel.querySelector('#dev-rewards');
+
+    const ATK_POSTERS = ['quest_atk_1','quest_atk_2','quest_atk_3','quest_atk_4','quest_atk_5'];
+    const DEF_POSTERS = ['quest_def_1','quest_def_2','quest_def_3','quest_def_4','quest_def_5'];
+
+    const _renderRewards = () => {
+      rewardsContainer.innerHTML = '';
+
+      // Poster side quests
+      const atkLeft = ATK_POSTERS.filter(id => !this.player.flags[id + '_done']).length;
+      const defLeft = DEF_POSTERS.filter(id => !this.player.flags[id + '_done']).length;
+      const postersLeft = atkLeft + defLeft;
+      const postersAllDone = postersLeft === 0;
+
+      const posterRow = document.createElement('div');
+      Object.assign(posterRow.style, { display: 'flex', alignItems: 'center', gap: '8px', margin: '3px 0' });
+
+      const posterLbl = document.createElement('span');
+      posterLbl.style.cssText = 'font-size:10px;color:#bbb;flex:1';
+      posterLbl.textContent = postersAllDone
+        ? 'Poster quests — all claimed'
+        : `Poster quests — ${postersLeft} remaining (ATK×${atkLeft} DEF×${defLeft})`;
+      posterRow.appendChild(posterLbl);
+
+      const posterBtn = document.createElement('button');
+      posterBtn.textContent = postersAllDone ? '✓ Done' : 'Claim All';
+      Object.assign(posterBtn.style, {
+        background: postersAllDone ? '#1a3a1a' : '#1a1a2e',
+        border: `1px solid ${postersAllDone ? '#44ff88' : '#e9a020'}`,
+        color: postersAllDone ? '#44ff88' : '#e9a020',
+        padding: '3px 10px', fontFamily: 'monospace', fontSize: '10px',
+        cursor: postersAllDone ? 'default' : 'pointer', minWidth: '80px',
+      });
+      if (!postersAllDone) {
+        posterBtn.addEventListener('click', () => {
+          ATK_POSTERS.forEach(id => {
+            if (!this.player.flags[id + '_done']) {
+              this.player.flags[id + '_done'] = true;
+              this.player.stats.atk = Math.max(1, (this.player.stats.atk || 0) + 1);
+              this.player.gainXP(300);
+            }
+          });
+          DEF_POSTERS.forEach(id => {
+            if (!this.player.flags[id + '_done']) {
+              this.player.flags[id + '_done'] = true;
+              this.player.stats.def = Math.max(1, (this.player.stats.def || 0) + 1);
+              this.player.gainXP(150);
+            }
+          });
+          this._showToast(`[DEV] Posters claimed — ATK+${atkLeft} DEF+${defLeft}`, 'objective');
+          _renderRewards();
+        });
+      }
+      posterRow.appendChild(posterBtn);
+      rewardsContainer.appendChild(posterRow);
+
+      // Arcade 500 distance milestone
+      const arcadeDone = this.player.getFlag('arcade_armored');
+      const arcadeRow = document.createElement('div');
+      Object.assign(arcadeRow.style, { display: 'flex', alignItems: 'center', gap: '8px', margin: '3px 0' });
+
+      const arcadeLbl = document.createElement('span');
+      arcadeLbl.style.cssText = 'font-size:10px;color:#bbb;flex:1';
+      arcadeLbl.textContent = arcadeDone
+        ? 'Arcade 500 distance — unlocked'
+        : 'Arcade 500 distance (Armored Coach + milestones)';
+      arcadeRow.appendChild(arcadeLbl);
+
+      const arcadeBtn = document.createElement('button');
+      arcadeBtn.textContent = arcadeDone ? '✓ Done' : 'Unlock';
+      Object.assign(arcadeBtn.style, {
+        background: arcadeDone ? '#1a3a1a' : '#1a1a2e',
+        border: `1px solid ${arcadeDone ? '#44ff88' : '#e9a020'}`,
+        color: arcadeDone ? '#44ff88' : '#e9a020',
+        padding: '3px 10px', fontFamily: 'monospace', fontSize: '10px',
+        cursor: arcadeDone ? 'default' : 'pointer', minWidth: '80px',
+      });
+      if (!arcadeDone) {
+        arcadeBtn.addEventListener('click', () => {
+          this.player.flags['arcade_gold_wheels'] = true;
+          this.player.flags['arcade_fancy_roof']  = true;
+          this.player.flags['arcade_armored']     = true;
+          const cur = this.player.getFlag('arcade_highscore') || 0;
+          if (cur < 500) this.player.flags['arcade_highscore'] = 500;
+          this._showToast('[DEV] Arcade 500 distance unlocked', 'objective');
+          _renderRewards();
+        });
+      }
+      arcadeRow.appendChild(arcadeBtn);
+      rewardsContainer.appendChild(arcadeRow);
+    };
+    _renderRewards();
 
     // ── Room Access ───────────────────────────────────────────────
     // Uses _devUnlockedRooms — never touches player flags, never fires flag-set events.
