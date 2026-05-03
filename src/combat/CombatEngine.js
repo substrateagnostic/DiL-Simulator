@@ -123,6 +123,8 @@ export class CombatEngine {
       exposed: 0,
       protected: 0,
       vulnerable: 0,
+      silenced: 0,
+      silencedThisTurn: false,
       confuseCooldown: 0,
       telegraphedAbility: null,
       abilityIndex: 0,
@@ -519,9 +521,20 @@ export class CombatEngine {
         // Pick the most-wounded ally (excluding fully-healthy)
         const candidates = this.aliveAllies().slice().sort((a, b) => (a.hp / a.maxHP) - (b.hp / b.maxHP));
         const tgt = candidates[0] || ally;
-        const heal = ability.healAmount || 30;
-        tgt.hp = Math.min(tgt.maxHP, tgt.hp + heal);
-        result = { ...result, healAmount: heal, healTargetAllyIndex: this.allies.indexOf(tgt), healTargetName: tgt.name };
+        const heal = ability.healAmount || 0;
+        if (heal > 0) tgt.hp = Math.min(tgt.maxHP, tgt.hp + heal);
+        if (ability.mpHealAmount) {
+          for (const a of this.aliveAllies()) {
+            a.mp = Math.min(a.maxMP, a.mp + ability.mpHealAmount);
+          }
+        }
+        result = {
+          ...result,
+          healAmount: heal,
+          mpHealAmount: ability.mpHealAmount || 0,
+          healTargetAllyIndex: this.allies.indexOf(tgt),
+          healTargetName: tgt.name,
+        };
         break;
       }
       case 'buff_party': {
@@ -536,6 +549,13 @@ export class CombatEngine {
         if (!target) return null;
         target.buffs.push({ stats: ability.debuffAmount, duration: ability.debuffDuration || 2, name: ability.name });
         result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration || 2, targetIndex: this.enemies.indexOf(target) };
+        break;
+      }
+      case 'silence': {
+        const target = this._pickAllyAttackTarget(ally);
+        if (!target) return null;
+        target.silenced = Math.max(target.silenced || 0, ability.duration || 2);
+        result = { ...result, duration: ability.duration || 2, targetIndex: this.enemies.indexOf(target) };
         break;
       }
     }
@@ -586,6 +606,12 @@ export class CombatEngine {
 
     // Counter expires at start of any enemy turn
     this.counterActive = false;
+
+    if (enemy.silencedThisTurn) {
+      enemy.telegraphedAbility = null;
+      this.turnCount++;
+      return { type: 'silenced', message: `${enemy.name} is force-quit and loses the turn.`, enemyIndex };
+    }
 
     // blockNext consumes only the FIRST enemy turn that comes after it
     if (this.player.blockNext) {
@@ -697,6 +723,16 @@ export class CombatEngine {
           duration: ability.duration,
           name: ability.name,
         });
+        break;
+      }
+      case 'buff': {
+        enemy.buffs.push({
+          stats: ability.buff,
+          duration: ability.duration || 1,
+          name: ability.name,
+        });
+        result.buffAmount = ability.buff;
+        result.duration = ability.duration || 1;
         break;
       }
       case 'confuse': {
@@ -897,6 +933,9 @@ export class CombatEngine {
       entity.stunnedThisTurn = entity.stunned > 0;
       entity.confusedThisTurn = entity.confused > 0;
     }
+    if (isEnemySide) {
+      entity.silencedThisTurn = entity.silenced > 0;
+    }
 
     for (let i = entity.dots.length - 1; i >= 0; i--) {
       const dot = entity.dots[i];
@@ -928,6 +967,14 @@ export class CombatEngine {
         entity.silencedThisTurn = true;
         entity.silenced--;
         results.push({ type: 'silenced', message: 'Silenced! Can only use basic attacks.' });
+      } else {
+        entity.silencedThisTurn = false;
+      }
+    }
+    if (isEnemySide) {
+      if (entity.silencedThisTurn) {
+        entity.silenced--;
+        results.push({ type: 'silenced', message: `${entity.name} is silenced.` });
       } else {
         entity.silencedThisTurn = false;
       }

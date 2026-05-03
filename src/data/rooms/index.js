@@ -1440,8 +1440,8 @@ export const ROOMS = {
     npcs: [],
     exits: [
       // WEST → back to Penthouse
-      { x: 0, z: 3, targetRoom: 'penthouse', spawnX: 20, spawnZ: 7 },
-      { x: 0, z: 4, targetRoom: 'penthouse', spawnX: 20, spawnZ: 8 },
+      { x: 0, z: 3, targetRoom: 'penthouse_expanded', spawnX: 20, spawnZ: 7 },
+      { x: 0, z: 4, targetRoom: 'penthouse_expanded', spawnX: 20, spawnZ: 8 },
     ],
     interactables: [],
     playerSpawn: { x: 8, z: 6 },
@@ -1487,8 +1487,8 @@ export const ROOMS = {
     npcs: [],
     exits: [
       // SOUTH → back to Penthouse
-      { x: 6, z: 7, targetRoom: 'penthouse', spawnX: 8,  spawnZ: 1 },
-      { x: 7, z: 7, targetRoom: 'penthouse', spawnX: 9,  spawnZ: 1 },
+      { x: 6, z: 7, targetRoom: 'penthouse_expanded', spawnX: 8,  spawnZ: 1 },
+      { x: 7, z: 7, targetRoom: 'penthouse_expanded', spawnX: 9,  spawnZ: 1 },
     ],
     interactables: [],
     playerSpawn: { x: 7, z: 6 },
@@ -1557,8 +1557,8 @@ export const ROOMS = {
     npcs: [],
     exits: [
       // EAST → back to Penthouse
-      { x: 17, z: 5, targetRoom: 'penthouse', spawnX: 1, spawnZ: 10 },
-      { x: 17, z: 6, targetRoom: 'penthouse', spawnX: 1, spawnZ: 11 },
+      { x: 17, z: 5, targetRoom: 'penthouse_expanded', spawnX: 1, spawnZ: 10 },
+      { x: 17, z: 6, targetRoom: 'penthouse_expanded', spawnX: 1, spawnZ: 11 },
     ],
     interactables: [],
     playerSpawn: { x: 15, z: 6 },

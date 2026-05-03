@@ -45,6 +45,46 @@ export const DIALOGS = {
     /* 1 */ { type: 'end' },
   ],
 
+  neutral_npc: [
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: "They don't have anything urgent to say right now." },
+    /* 1 */ { type: 'end' },
+  ],
+
+  neutral_janet: [
+    /* 0 */ { type: 'text', speaker: 'Janet', text: "One crisis at a time, hon." },
+    /* 1 */ { type: 'end' },
+  ],
+
+  neutral_alex_it: [
+    /* 0 */ { type: 'text', speaker: 'Alex from IT', text: "Not a great time. Something is blinking that should not be blinking." },
+    /* 1 */ { type: 'end' },
+  ],
+
+  neutral_intern: [
+    /* 0 */ { type: 'text', speaker: 'The Intern', text: "I'm on standby! I don't know for what, but I'm ready." },
+    /* 1 */ { type: 'end' },
+  ],
+
+  neutral_isaiah: [
+    /* 0 */ { type: 'text', speaker: 'Isaiah', text: "I'm keeping the files moving. Let me know if you need anything specific." },
+    /* 1 */ { type: 'end' },
+  ],
+
+  neutral_diane: [
+    /* 0 */ { type: 'text', speaker: 'Diane', text: "Front desk is quiet for the moment. Enjoy it while it lasts." },
+    /* 1 */ { type: 'end' },
+  ],
+
+  neutral_ross: [
+    /* 0 */ { type: 'text', speaker: 'Ross', text: "Circle back with me when the timing is right, buddy." },
+    /* 1 */ { type: 'end' },
+  ],
+
+  neutral_janitor: [
+    /* 0 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Some conversations arrive when they're ready." },
+    /* 1 */ { type: 'end' },
+  ],
+
   // --------------------------------------------------------------------------
   // JANET -- The wine-tumbler-wielding trust officer
   // --------------------------------------------------------------------------

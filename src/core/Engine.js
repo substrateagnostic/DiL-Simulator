@@ -6,12 +6,12 @@ class EngineClass {
     this.renderer = null;
     this.scene = null;
     this.camera = null;
-    this.clock = null;
     this.canvas = null;
     this.width = 0;
     this.height = 0;
     this.running = false;
     this._updateCallback = null;
+    this._lastFrameTime = 0;
   }
 
   init() {
@@ -27,7 +27,7 @@ class EngineClass {
     this.renderer.setSize(this.width, this.height);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
 
@@ -44,8 +44,7 @@ class EngineClass {
       0.1, 1000
     );
 
-    // Clock
-    this.clock = new THREE.Clock();
+    this._lastFrameTime = 0;
 
     // Resize handler
     window.addEventListener('resize', () => this._onResize());
@@ -101,7 +100,7 @@ class EngineClass {
 
   start() {
     this.running = true;
-    this.clock.start();
+    this._lastFrameTime = performance.now();
     this._loop();
   }
 
@@ -113,7 +112,9 @@ class EngineClass {
     if (!this.running) return;
     requestAnimationFrame(() => this._loop());
 
-    const dt = Math.min(this.clock.getDelta(), 0.05); // Cap delta at 50ms
+    const now = performance.now();
+    const dt = Math.min((now - this._lastFrameTime) / 1000, 0.05); // Cap delta at 50ms
+    this._lastFrameTime = now;
     if (this._updateCallback) {
       this._updateCallback(dt);
     }

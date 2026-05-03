@@ -170,7 +170,10 @@ export class CombatHUD {
       if (p.hp <= 0) item.classList.add('dead');
       item.innerHTML = `
         <span class="combat-party-name">${p.name}</span>
-        <div class="combat-party-hp-bar"><div class="combat-party-hp-fill" style="width:${p.maxHP > 0 ? (p.hp / p.maxHP) * 100 : 0}%"></div></div>
+        <div class="combat-party-bars">
+          <div class="combat-party-hp-bar"><div class="combat-party-hp-fill" style="width:${p.maxHP > 0 ? (p.hp / p.maxHP) * 100 : 0}%"></div></div>
+          <div class="combat-party-mp-bar"><div class="combat-party-mp-fill" style="width:${p.maxMP > 0 ? (p.mp / p.maxMP) * 100 : 0}%"></div></div>
+        </div>
         <span class="combat-party-hp-num">${p.hp}/${p.maxHP}</span>
       `;
       this.partyRowEl.appendChild(item);
