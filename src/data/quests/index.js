@@ -156,6 +156,15 @@ export const QUESTS = {
       { id: 4, objective: 'Return to Alex with all three artifacts' },
     ],
   },
+  printers_soul: {
+    id: 'printers_soul',
+    name: "Printer's Soul",
+    stages: [
+      { id: 0, objective: 'Help Alex investigate the printer background process' },
+      { id: 1, objective: 'Find the firmware disk and connect to the printer' },
+      { id: 2, objective: 'Return to Alex with the computation logs' },
+    ],
+  },
   final_patch: {
     id: 'final_patch',
     name: 'The Unauthorized Patch',

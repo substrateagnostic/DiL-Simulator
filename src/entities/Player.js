@@ -376,12 +376,14 @@ export class Player {
   }
 
   deserialize(data) {
-    Object.assign(this.stats, data.stats);
-    this.inventory = data.inventory.map(i => ({ ...i }));
-    this.flags = { ...data.flags };
-    this.questStates = { ...data.questStates };
-    this.position = { ...data.position };
-    this.currentRoom = data.currentRoom;
+    Object.assign(this.stats, data.stats || {});
+    this.inventory = Array.isArray(data.inventory)
+      ? data.inventory.map(i => ({ ...i }))
+      : STARTING_INVENTORY.map(i => ({ ...i }));
+    this.flags = { ...(data.flags || {}) };
+    this.questStates = { ...(data.questStates || {}) };
+    this.position = { x: 0, z: 0, ...(data.position || {}) };
+    this.currentRoom = data.currentRoom || 'parking_garage';
     this.actIndex = data.actIndex || 0;
     this.upgradePoints = data.upgradePoints || 0;
     this.deaths = data.deaths || 0;

@@ -15,9 +15,16 @@ class AudioManagerClass {
     this._musicNodes = [];       // active oscillators/sources for current track
     this._musicTimer = null;     // loop scheduling timer
     this._musicStartTime = 0;
+    this._pendingTrack = null;
   }
 
   init() {
+    // Web Audio contexts should be created after a user gesture. Keep init()
+    // side-effect-light so page load does not trigger autoplay warnings.
+  }
+
+  _ensureContext() {
+    if (this.ctx || typeof window === 'undefined') return !!this.ctx;
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     this.masterGain = this.ctx.createGain();
     this.masterGain.connect(this.ctx.destination);
@@ -29,17 +36,24 @@ class AudioManagerClass {
     this.sfxGain = this.ctx.createGain();
     this.sfxGain.gain.value = this.sfxVolume;
     this.sfxGain.connect(this.masterGain);
+    return true;
   }
 
   resume() {
+    this._ensureContext();
     if (this.ctx && this.ctx.state === 'suspended') {
       this.ctx.resume();
+    }
+    if (this._pendingTrack) {
+      const track = this._pendingTrack;
+      this._pendingTrack = null;
+      this.playMusic(track);
     }
   }
 
   // Simple synth SFX
   playSfx(type) {
-    if (!this.ctx || this.muted) return;
+    if (!this._ensureContext() || this.muted) return;
     this.resume();
 
     switch (type) {
@@ -814,7 +828,10 @@ class AudioManagerClass {
    * is a no-op. If a different track is playing, cross-fade into the new one.
    */
   playMusic(trackId) {
-    if (!this.ctx) return;
+    if (!this.ctx) {
+      this._pendingTrack = trackId;
+      return;
+    }
     this.resume();
 
     // Already playing this track — no-op

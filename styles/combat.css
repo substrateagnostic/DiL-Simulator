@@ -311,9 +311,16 @@
   color: #88aacc;
 }
 
-.combat-party-hp-bar {
+.combat-party-bars {
   flex: 1;
-  height: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.combat-party-hp-bar,
+.combat-party-mp-bar {
+  height: 7px;
   background: #111;
   border-radius: 3px;
   overflow: hidden;
@@ -323,6 +330,12 @@
 .combat-party-hp-fill {
   height: 100%;
   background: linear-gradient(90deg, #44aa66, #66cc88);
+  transition: width 0.4s ease;
+}
+
+.combat-party-mp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #0f3460, #53a8b6);
   transition: width 0.4s ease;
 }
 
@@ -378,6 +391,11 @@
 .floating-damage.critical {
   font-size: 36px;
   color: #ffff00;
+}
+
+.floating-damage.status {
+  font-size: 20px;
+  color: #88ccff;
 }
 
 @keyframes floatUp {

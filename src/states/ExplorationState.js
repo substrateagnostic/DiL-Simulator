@@ -20,6 +20,7 @@ import { SaveManager } from '../core/SaveManager.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { DEV_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
+import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
 
 const INTERACTION_OFFSETS = [
   [0, 0],
@@ -349,6 +350,7 @@ export class ExplorationState {
         }
         // Wire quest completion flags to ability unlock system
         const questFlagMap = {
+          quest_anomaly_347_complete: 'anomaly_347',
           quest_legacy_admin_complete: 'legacy_admin',
           quest_network_ghost_complete: 'network_ghost',
           quest_daves_legacy_complete: 'daves_legacy',
@@ -830,8 +832,13 @@ export class ExplorationState {
               const clientRaw = this.player.getFlag('currentClient');
               if (clientRaw) {
                 let clientData;
-              try { clientData = JSON.parse(clientRaw); } catch { clientData = null; }
-              if (!clientData) return;
+                try { clientData = JSON.parse(clientRaw); } catch { clientData = null; }
+                if (!clientData) {
+                  this.player.setFlag('currentClient', null);
+                  this._autoSave(false);
+                  this._scheduleNextClient();
+                  return;
+                }
                 setTimeout(() => {
                   const reviewState = new ClientReviewState(
                     this.stateManager,
@@ -1023,7 +1030,6 @@ export class ExplorationState {
       this.player.stats.aum = (this.player.stats.aum || 0) + aumEarned;
       this._updateMiniStats();
       AchievementManager.check(this.player, { event: 'client_accepted', assets: clientData.assets, attributes: clientData.attributes });
-      this._autoSave(false);
 
       this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned.`, 'item');
       this._checkBossAnger();
@@ -1037,6 +1043,7 @@ export class ExplorationState {
     }
 
     this.player.setFlag('currentClient', null);
+    this._autoSave(false);
 
     // Quarterly review every 5 accepted clients
     const portfolioCount = this.player.getFlag('portfolioClients') || 0;
@@ -1385,7 +1392,7 @@ export class ExplorationState {
         return;
       }
 
-      const dialogId = this._getDialogId(npc);
+      const dialogId = this._getNpcDialogId(npc);
       const dialog = DIALOGS[dialogId];
 
       if (dialog) {
@@ -1428,6 +1435,20 @@ export class ExplorationState {
     if (exit) {
       this._changeRoom(exit.data.targetRoom, exit.data.spawnX, exit.data.spawnZ);
     }
+  }
+
+  _getNpcDialogId(npc) {
+    return this._getValidNpcDialogId(npc, this._getDialogId(npc));
+  }
+
+  _getValidNpcDialogId(npc, dialogId) {
+    if (isDialogValidForQuestStage(this.player, dialogId)) {
+      return dialogId;
+    }
+
+    const neutralId = `neutral_${npc.id}`;
+    if (DIALOGS[neutralId]) return neutralId;
+    return DIALOGS.neutral_npc ? 'neutral_npc' : dialogId;
   }
 
   _getDialogId(npc) {
@@ -2331,7 +2352,7 @@ export class ExplorationState {
         nearExit.data.targetRoom === 'executive_floor' ? 'Ride elevator' : 'Go through'
       );
     } else if (nearNPC) {
-      const dialogId = this._getDialogId(nearNPC);
+      const dialogId = this._getNpcDialogId(nearNPC);
       const isRead = this.player.getFlag(`read_${dialogId}`);
       this._showInteractPrompt(`Talk to ${nearNPC.name}`, isRead);
     } else if (this._shouldPrioritizeExit(nearExit, nearInteractable)) {

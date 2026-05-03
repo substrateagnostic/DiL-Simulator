@@ -76,10 +76,11 @@ class Game {
       if (saveData) {
         this.explorationState.player.deserialize(saveData);
         // Reload the room the player was in
+        const position = saveData.position || this.explorationState.player.position;
         this.explorationState._loadRoom(
-          saveData.currentRoom,
-          saveData.position.x,
-          saveData.position.z
+          saveData.currentRoom || this.explorationState.player.currentRoom,
+          position.x,
+          position.z
         );
         this.explorationState.syncFromPlayerState();
       }

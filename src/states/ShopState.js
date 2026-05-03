@@ -27,6 +27,8 @@ export class ShopState {
   exit() {
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);
     this.root = null;
+    if (window.__shopCat) delete window.__shopCat;
+    if (window.__shopBuy) delete window.__shopBuy;
   }
 
   pause() { }
@@ -230,11 +232,11 @@ export class ShopState {
       this.player.setFlag(item.flag, true);
       this.player.gainXP(2000);
       this._flash(`${item.name} complete! +2000 XP`, '#ffd700');
-      SaveManager.save(this.player.serialize());
       EventBus.emit('renovation-purchased');
     }
 
     this.player.setFlag(`bought_category_${item.category}`, true);
+    SaveManager.save(this.player.serialize());
     AchievementManager.check(this.player, { event: 'shop_purchase' });
     this._render();
   }

@@ -248,7 +248,7 @@ export class CombatState {
     };
 
     if (effects.length > 0) {
-      this._showEffects(effects, continueTurn, this._activeAllyIndex === 0 ? 'player' : 'enemy');
+      this._showEffects(effects, continueTurn, { side: 'ally', index: this._activeAllyIndex });
     } else {
       continueTurn();
     }
@@ -438,7 +438,13 @@ export class CombatState {
             a.mp = Math.min(a.maxMP, a.mp + ability.mpHealAmount);
           }
         }
-        result = { ...result, healAmount: heal, healTargetAllyIndex: this.engine.allies.indexOf(tgt), healTargetName: tgt.name };
+        result = {
+          ...result,
+          healAmount: heal,
+          mpHealAmount: ability.mpHealAmount || 0,
+          healTargetAllyIndex: this.engine.allies.indexOf(tgt),
+          healTargetName: tgt.name,
+        };
         break;
       }
       case 'buff_party': {
@@ -492,7 +498,7 @@ export class CombatState {
       if (this.engine.isOver) { this._handleResult(); return; }
       this._runSingleEnemyTurnInterleaved(enemyIndex);
     };
-    if (effects.length > 0) this._showEffects(effects, proceed, 'enemy');
+    if (effects.length > 0) this._showEffects(effects, proceed, { side: 'enemy', index: enemyIndex });
     else proceed();
   }
 
@@ -679,7 +685,12 @@ export class CombatState {
 
     if (result.type === 'ally_heal_ally') {
       AudioManager.playSfx('heal');
-      this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', result.healTargetAllyIndex ?? 0);
+      const label = result.healAmount > 0
+        ? `+${result.healAmount}`
+        : result.mpHealAmount > 0
+          ? `+${result.mpHealAmount} Coffee`
+          : '+0';
+      this._spawnDamageNumberForAlly(label, 'heal', result.healTargetAllyIndex ?? 0);
       return 1100;
     }
 
@@ -688,6 +699,15 @@ export class CombatState {
       const ti = result.targetIndex ?? 0;
       this.scene.flash(0xffaa44, 0.08);
       this.particles.burst({ x: 0, y: 1.4, z: 0 }, 14, 0xffaa44, 2.5, 0.7);
+      return 1000;
+    }
+
+    if (result.type === 'ally_silence') {
+      AudioManager.playSfx('confirm');
+      const ti = result.targetIndex ?? 0;
+      this.scene.flash(0x88ccff, 0.08);
+      this.particles.burst({ x: 0, y: 1.4, z: 0 }, 16, 0x88ccff, 2.5, 0.7);
+      this._spawnDamageNumberAtEnemy('SILENCED', 'status', ti);
       return 1000;
     }
 
@@ -1485,14 +1505,17 @@ export class CombatState {
     else this._spawnDamageNumberForAlly(text, type, this._activeAllyIndex);
   }
 
-  _showEffects(effects, callback, target = 'player') {
+  _showEffects(effects, callback, target = { side: 'ally', index: 0 }) {
+    const targetInfo = typeof target === 'string'
+      ? { side: target === 'enemy' ? 'enemy' : 'ally', index: 0 }
+      : target;
     let delay = 0;
     for (const effect of effects) {
       setTimeout(() => {
         if (effect.type === 'dot') {
           this.scene.flash(0x880088, 0.1);
-          if (target === 'player') this._spawnDamageNumberForAlly(effect.damage, 'damage', this._activeAllyIndex);
-          else this._spawnDamageNumberAtEnemy(effect.damage, 'damage', 0);
+          if (targetInfo.side === 'enemy') this._spawnDamageNumberAtEnemy(effect.damage, 'damage', targetInfo.index || 0);
+          else this._spawnDamageNumberForAlly(effect.damage, 'damage', targetInfo.index || 0);
           this.hud.showMessage(`${effect.name}: ${effect.damage} damage!`);
         } else if (effect.type === 'buff_expire') {
           this.hud.showMessage(`${effect.name} wore off!`);

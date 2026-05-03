@@ -3,6 +3,7 @@ import { EventBus } from '../core/EventBus.js';
 import { AudioManager } from '../core/AudioManager.js';
 import { DialogBox } from '../ui/DialogBox.js';
 import { ITEMS } from '../data/items.js';
+import { getDialogQuestGate, getQuestStage, isStageInRange } from '../utils/dialogGating.js';
 
 /**
  * DialogState - Game state for displaying dialog trees.
@@ -30,11 +31,14 @@ export class DialogState {
     this.player = player;
     this.stateManager = stateManager;
     this.dialogId = dialogId;
+    this.dialogGate = getDialogQuestGate(dialogId);
+    this.questStageAtStart = getQuestStage(player);
 
     this.dialogBox = new DialogBox();
     this.currentIndex = 0;
     this.waitingForInput = false;
     this.active = false;
+    this.shownAnyNode = false;
   }
 
   // --- State interface ---
@@ -90,6 +94,15 @@ export class DialogState {
     }
 
     const node = this.dialogTree[this.currentIndex];
+    if (!this._isNodeValidForQuestStage(node)) {
+      this.currentIndex = node.fallback !== undefined
+        ? node.fallback
+        : node.next !== undefined
+          ? node.next
+          : this.currentIndex + 1;
+      this._processNode();
+      return;
+    }
 
     switch (node.type) {
       case 'text':
@@ -124,6 +137,7 @@ export class DialogState {
    * Display a text node -- speaker name and typewriter text.
    */
   _showTextNode(node) {
+    this.shownAnyNode = true;
     this.dialogBox.show(node.speaker || 'Narrator', node.text);
 
     // Set up advance callback
@@ -148,8 +162,21 @@ export class DialogState {
       .filter(({ choice }) => {
         if (choice.requires && !this.player.getFlag(choice.requires)) return false;
         if (choice.requiresNot && this.player.getFlag(choice.requiresNot)) return false;
+        if (!this._isNodeValidForQuestStage(choice)) return false;
         return true;
       });
+
+    if (filteredChoices.length === 0) {
+      this.currentIndex = node.fallback !== undefined
+        ? node.fallback
+        : node.next !== undefined
+          ? node.next
+          : this.currentIndex + 1;
+      this._processNode();
+      return;
+    }
+
+    this.shownAnyNode = true;
 
     // Map filtered choices to DialogBox format
     const boxChoices = filteredChoices.map(({ choice }, displayIdx) => ({
@@ -203,6 +230,18 @@ export class DialogState {
     this._processNode();
   }
 
+  _isNodeValidForQuestStage(node) {
+    if (!node) return true;
+    const minQuestStage = node.minQuestStage ?? this.dialogGate?.min;
+    const maxQuestStage = node.maxQuestStage ?? this.dialogGate?.max;
+    if (minQuestStage === undefined && maxQuestStage === undefined) return true;
+    return isStageInRange(
+      this.questStageAtStart,
+      minQuestStage ?? 0,
+      maxQuestStage ?? Infinity
+    );
+  }
+
   /**
    * Action node - execute side effect and continue.
    */
@@ -234,7 +273,11 @@ export class DialogState {
         break;
 
       case 'quest_update':
-        EventBus.emit('quest-update', { quest: node.quest, objective: node.objective, status: node.status });
+        EventBus.emit('quest-update', {
+          quest: node.quest,
+          objective: node.objective ?? node.stage,
+          status: node.status,
+        });
         break;
 
       case 'give_xp': {
@@ -280,7 +323,7 @@ export class DialogState {
    */
   _endDialog() {
     this.active = false;
-    if (this.dialogId) {
+    if (this.dialogId && this.shownAnyNode) {
       this.player.setFlag(`read_${this.dialogId}`, true);
     }
     EventBus.emit('dialog-end');
