@@ -799,3 +799,34 @@
   from { transform: scale(0.85); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* ── Mobile: compact combat HUD ──────────────────────────────────────── */
+@media (max-width: 700px), (max-height: 540px) {
+  .combat-player-panel {
+    padding: 0 10px calc(10px + env(safe-area-inset-bottom, 0px));
+    gap: 10px;
+  }
+  .combat-actions {
+    padding: 8px;
+    gap: 5px;
+    min-width: min(210px, 60vw);
+  }
+  .combat-action-btn {
+    font-size: 16px;
+    padding: 8px 10px;
+  }
+  .combat-stats {
+    padding: 8px 10px;
+    min-width: 150px;
+  }
+  .combat-stats-name {
+    font-size: 9px;
+  }
+  .combat-stat-label,
+  .combat-stat-value {
+    font-size: 11px;
+  }
+  .combat-buff-pill {
+    font-size: 9px;
+  }
+}

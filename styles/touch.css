@@ -266,14 +266,15 @@
 
 /* Landscape-specific: ensure HUD elements don't overlap touch controls */
 @media (orientation: landscape) and (pointer: coarse) {
-  /* Push dialog container above touch controls */
+  /* Dialog stays bottom-anchored — it's narrower than the gap between
+     the dpad and A/B now, and tapping the box itself advances it */
   .dialog-container {
-    bottom: 170px !important;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
-  /* Combat panel needs space above touch controls */
+  /* Combat panel clears the A/B buttons without eating the stage */
   .combat-player-panel {
-    padding-bottom: 170px !important;
+    padding-bottom: 88px !important;
   }
 
   /* Shrink HUD elements on mobile */

@@ -535,6 +535,9 @@ export class ExplorationState {
 
   pause() {
     this.paused = true;
+    // A stale "Go through"/"Talk to" prompt shouldn't float over combat
+    // or dialogs pushed on top of us
+    this._hideInteractPrompt();
   }
 
   resume() {

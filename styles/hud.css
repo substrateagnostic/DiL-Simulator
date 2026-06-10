@@ -347,3 +347,80 @@
 }
 
 @keyframes achievementSlide { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── Mobile: portrait phones — compact HUD, the game gets the screen ── */
+@media (max-width: 700px) {
+  .hud-location {
+    font-size: 9px;
+    padding: 6px 10px;
+  }
+  .hud-mini-stats {
+    font-size: 9px;
+    gap: 4px;
+  }
+  .hud-quest-tracker {
+    max-width: 46vw;
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+  .hud-quest-title {
+    font-size: 9px;
+  }
+  .hud-quest-objective,
+  .hud-side-quest-name,
+  .hud-side-quest-objective,
+  .hud-quest-optional {
+    font-size: 11px;
+  }
+  /* Side quests are desktop garnish — reclaim the screen on phones */
+  .hud-side-quest-title,
+  .hud-side-quest-entry {
+    display: none;
+  }
+  .inner-monologue {
+    font-size: 13px;
+    max-width: 80vw;
+  }
+  .interact-prompt {
+    font-size: 13px;
+    padding: 8px 14px;
+    bottom: calc(150px + env(safe-area-inset-bottom, 0px)); /* clear touch buttons */
+  }
+}
+
+/* ── Mobile: landscape phones — shrink everything, hide the optional ── */
+@media (max-height: 540px) and (pointer: coarse) {
+  .hud-location {
+    font-size: 9px;
+    padding: 5px 9px;
+  }
+  .hud-mini-stats {
+    font-size: 9px;
+  }
+  .hud-quest-tracker {
+    max-width: 34vw;
+    font-size: 10px;
+    padding: 6px 9px;
+  }
+  .hud-quest-title {
+    font-size: 8px;
+  }
+  .hud-quest-objective {
+    font-size: 11px;
+  }
+  .hud-side-quest-title,
+  .hud-side-quest-entry,
+  .hud-quest-optional,
+  .hud-quest-divider {
+    display: none;
+  }
+  .inner-monologue {
+    font-size: 12px;
+  }
+  .interact-prompt {
+    font-size: 12px;
+    padding: 6px 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: 50%;
+  }
+}

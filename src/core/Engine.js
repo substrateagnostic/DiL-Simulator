@@ -41,9 +41,11 @@ class EngineClass {
     // (rooms sit ~20-35 units from camera; buildings 40-80)
     this.scene.fog = new THREE.Fog(0x14142a, 42, 88);
 
-    // Orthographic camera for isometric view
+    // Orthographic camera for isometric view (zoom adapts to viewport —
+    // phones in portrait need a wider world view, landscape phones a
+    // tighter one, or rooms render postage-stamp sized)
     const aspect = this.width / this.height;
-    const zoom = 12;
+    const zoom = this._zoomForViewport();
     this.camera = new THREE.OrthographicCamera(
       -zoom * aspect, zoom * aspect,
       zoom, -zoom,
@@ -187,11 +189,20 @@ class EngineClass {
     this._flicker = !!c.flicker;
   }
 
+  // Viewport-aware ortho zoom. Desktop: the classic 12. Portrait phones:
+  // scale up so ~14 world units stay visible horizontally. Short landscape
+  // viewports: shrink so rooms don't dwindle.
+  _zoomForViewport() {
+    const aspect = this.width / this.height;
+    if (aspect < 1) return Math.min(16, 7 / aspect);
+    return this.height < 540 ? 8 : 12;
+  }
+
   _onResize() {
     this.width = window.innerWidth;
     this.height = window.innerHeight;
     const aspect = this.width / this.height;
-    const zoom = 12;
+    const zoom = this._zoomForViewport();
 
     this.camera.left = -zoom * aspect;
     this.camera.right = zoom * aspect;

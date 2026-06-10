@@ -111,3 +111,83 @@
   font-family: 'Press Start 2P', cursive;
   font-size: 12px;
 }
+
+/* Long passages never bleed off-screen — scroll inside the box instead */
+.dialog-text {
+  max-height: 34vh;
+  overflow-y: auto;
+}
+
+/* ── Mobile: portrait phones ─────────────────────────────────────────── */
+@media (max-width: 700px) {
+  .dialog-container {
+    width: 94%;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+  .dialog-box {
+    padding: 12px 14px 18px;
+  }
+  .dialog-text {
+    font-size: 19px;
+    line-height: 1.3;
+    min-height: 40px;
+    max-height: 30vh;
+  }
+  .dialog-speaker {
+    font-size: 9px;
+    top: -12px;
+  }
+  .dialog-choice {
+    font-size: 17px;
+    padding: 8px 10px;
+  }
+  .dialog-choices {
+    margin-top: 10px;
+    gap: 5px;
+    max-height: 32vh;
+    overflow-y: auto;
+  }
+  .dialog-portrait {
+    width: 76px !important;
+    height: 76px !important;
+    top: -88px !important;
+  }
+}
+
+/* ── Mobile: landscape phones (short viewports) — keep the play area
+   visible: narrower box, tighter text, hard height cap ──────────────── */
+@media (max-height: 540px) {
+  .dialog-container {
+    width: min(74%, 620px);
+    bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .dialog-box {
+    padding: 10px 14px 16px;
+  }
+  .dialog-text {
+    font-size: 17px;
+    line-height: 1.25;
+    min-height: 28px;
+    max-height: 26vh;
+  }
+  .dialog-speaker {
+    font-size: 9px;
+    top: -12px;
+  }
+  .dialog-choice {
+    font-size: 15px;
+    padding: 5px 10px;
+  }
+  .dialog-choices {
+    margin-top: 8px;
+    gap: 4px;
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+  .dialog-portrait {
+    width: 64px !important;
+    height: 64px !important;
+    top: -74px !important;
+    left: 0 !important;
+  }
+}
