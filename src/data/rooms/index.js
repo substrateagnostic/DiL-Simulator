@@ -35,6 +35,7 @@ export const ROOMS = {
     floorColor: 0xc8bfa9,
     floorPattern: 'carpet',
     walls: true,
+    lighting: { flicker: true },
     furniture: [
       // ============================================================
       // NORTH CUBICLE ROW  (back walls at z=2, desks at z=3)
@@ -294,6 +295,7 @@ export const ROOMS = {
     height: 12,
     floorColor: 0xd8d0c0,
     walls: true,
+    lighting: { ambient: 0xfff2e2, ambientIntensity: 0.58, dir: 0xffeecc, dirIntensity: 0.72 },
     furniture: [
       // === Kitchen counter along north wall ===
       { type: 'fridge',       x: 1, z: 0.5, rotation: 0, condition: { notFlag: 'renovation_catering_fridge' } },
@@ -583,6 +585,7 @@ export const ROOMS = {
     height: 10,
     floorColor: 0x2a2a3a,  // dark floor
     walls: true,
+    lighting: { ambient: 0x9fb2cc, ambientIntensity: 0.56, dir: 0xbcd4ee, dirIntensity: 0.66 },
     lights: [
       { type: 'point', color: 0x00ff44, intensity: 0.6, x: 1, y: 2, z: 3, distance: 6 },
       { type: 'point', color: 0x00ff44, intensity: 0.6, x: 3, y: 2, z: 3, distance: 6 },
@@ -759,6 +762,7 @@ export const ROOMS = {
     height: 10,
     floorColor: 0x888888,  // concrete gray
     walls: true,
+    lighting: { ambient: 0xb8c0cc, ambientIntensity: 0.42, dir: 0xcfd8e2, dirIntensity: 0.6, flicker: true },
     furniture: [
       // === Parking spots (floor markings) ===
       { type: 'parkingSpot', x: 1,  z: 2, rotation: Math.PI / 2 },
@@ -813,6 +817,7 @@ export const ROOMS = {
     height: 12,
     floorColor: 0x6b5335,  // dark hardwood
     walls: true,
+    lighting: { ambient: 0xe8eeff, ambientIntensity: 0.52, dir: 0xdde6ff, dirIntensity: 0.85 },
     furniture: [
       // === Grand executive desk (north-center, imposing) ===
       { type: 'grandDesk', x: 8, z: 3, rotation: Math.PI },
@@ -923,6 +928,7 @@ export const ROOMS = {
     height: 20,
     floorColor: 0xc0b8a8,
     walls: true,
+    lighting: { ambient: 0xaab4c0, ambientIntensity: 0.42, dir: 0xc8d2dc, dirIntensity: 0.55, flicker: true },
     furniture: [
       // Motivational poster on west wall
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
@@ -956,6 +962,7 @@ export const ROOMS = {
     height: 10,
     floorColor: 0x8a7a6a,
     walls: true,
+    lighting: { ambient: 0xc8b294, ambientIntensity: 0.46, dir: 0xe2cfa0, dirIntensity: 0.58 },
     furniture: [
       // Rows of file cabinets — all facing south (toward player)
       // West bank
@@ -1114,6 +1121,7 @@ export const ROOMS = {
     height: 8,
     floorColor: 0x3a3a4a,
     walls: true,
+    lighting: { ambient: 0x9aa4c0, ambientIntensity: 0.5, dir: 0xb4c0dd, dirIntensity: 0.62 },
     lights: [
       { type: 'point', color: 0x8888ff, intensity: 0.5, x: 4, y: 2, z: 4, distance: 8 },
     ],
@@ -1156,6 +1164,7 @@ export const ROOMS = {
     height: 12,
     floorPattern: 'hardwood',
     walls: true,
+    lighting: { ambient: 0xffe9c4, ambientIntensity: 0.48, dir: 0xffddaa, dirIntensity: 0.7 },
     furniture: [
       // ── Grand boardroom table (left-edge at x:4, z:4 — spans x:4–12, z:4–6) ──
       { type: 'boardroomTable', x: 4, z: 4 },
@@ -1241,6 +1250,7 @@ export const ROOMS = {
     floorColor: 0x1a0a2e,
     floorPattern: 'hardwood',
     walls: true,
+    lighting: { ambient: 0xe0c0e8, ambientIntensity: 0.45, dir: 0xcc99dd, dirIntensity: 0.6 },
     lights: [
       // Signature purple-blue wash
       { type: 'point', color: 0x4444ff, intensity: 0.7, x: 4,  y: 2.5, z: 4, distance: 9  },
@@ -1331,6 +1341,7 @@ export const ROOMS = {
     floorColor: 0x1a0a2e,
     floorPattern: 'hardwood',
     walls: true,
+    lighting: { ambient: 0xe0c0e8, ambientIntensity: 0.45, dir: 0xcc99dd, dirIntensity: 0.6 },
     lights: [
       // Purple-blue wash across larger space
       { type: 'point', color: 0x4444ff, intensity: 0.7, x: 4,  y: 2.5, z: 4,  distance: 10 },

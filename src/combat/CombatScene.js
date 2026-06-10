@@ -263,7 +263,7 @@ export class CombatScene {
     const originalMaterials = [];
     const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
     entry.group.traverse(child => {
-      if (child.isMesh) {
+      if (child.isMesh && !child.userData.noFlash) {
         originalMaterials.push({ mesh: child, material: child.material });
         child.material = whiteMat;
       }

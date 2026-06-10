@@ -348,7 +348,25 @@ export function buildCharacter(config, options = {}) {
     }
   });
 
+  _addBlobShadow(group, 0.3 * Math.max(ws, 1));
+
   return group;
+}
+
+// Soft contact shadow that follows the character — grounds them far better
+// than the mushy directional shadow map at this scale.
+function _addBlobShadow(group, radius) {
+  const blob = new THREE.Mesh(
+    new THREE.CircleGeometry(radius, 20),
+    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false })
+  );
+  blob.rotation.x = -Math.PI / 2;
+  blob.position.y = 0.015;
+  blob.renderOrder = 1;
+  blob.userData.noFlash = true;     // excluded from combat white-flash
+  blob.castShadow = false;
+  blob.receiveShadow = false;
+  group.add(blob);
 }
 
 // The Algorithm — a floating obsidian slab with a living screen face.
@@ -447,6 +465,8 @@ function buildMonolith(config, options = {}) {
       child.receiveShadow = true;
     }
   });
+
+  _addBlobShadow(group, 0.45);
 
   return group;
 }

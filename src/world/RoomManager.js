@@ -5,6 +5,7 @@ import { NPC } from '../entities/NPC.js';
 import { EntityManager } from '../entities/EntityManager.js';
 import { TransitionOverlay } from '../ui/TransitionOverlay.js';
 import { EventBus } from '../core/EventBus.js';
+import { Engine } from '../core/Engine.js';
 
 export class RoomManager {
   constructor(scene) {
@@ -43,6 +44,9 @@ export class RoomManager {
     // Add room geometry to scene
     this.roomGroup = room.group;
     this.mainScene.add(this.roomGroup);
+
+    // Per-room mood lighting (falls back to default office rig)
+    Engine.applyRoomLighting(room.data.lighting);
 
     // Set up NPCs
     this.entityManager.clear();
