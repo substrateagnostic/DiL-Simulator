@@ -108,3 +108,10 @@ fixtures (`fixture=act65`).
 - Daemon at Rack 7: interactable wired (server_room 3,4, algorithm_defeated gate). Dialog STAGED
   in .claude/plans/daemon-dialog.snippet.js — merge into dialogs/index.js (before final };,
   drop the export wrapper) AFTER the P7 agent finishes, then npm run check, commit, delete snippet.
+
+## FINAL: all phases P0-P7 complete (94c9f1e). Sprint 2 done.
+Daemon dialog merged (full KEEP/TERMINATE version), snippet deleted. Ghost tower extends
+six storeys down. Voice pass committed after diff review. Morning checklist for Alex:
+open screenshots/contact/index.html, then play: city chapter end-to-end (act6 save or
+fixture=act6 + has_rolex via FLAGS tab), the Daemon at Rack 7 (post-game), one Henderson
+fight for the new combat feel.
