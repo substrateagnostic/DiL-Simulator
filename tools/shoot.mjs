@@ -8,7 +8,7 @@
 // in main.js (window.__shotReady signal). Writes an index.html contact sheet.
 
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 
 const BASE = process.env.SHOOT_BASE || 'http://localhost:5173';
@@ -76,10 +76,23 @@ const run = async () => {
     }
   }
 
-  // Contact sheet
-  const cells = results.map(r => r.ok
-    ? `<figure><img src="${r.name}.png" loading="lazy"><figcaption>${r.name}</figcaption></figure>`
-    : `<figure class="fail"><figcaption>✗ ${r.name}<br><small>${r.err}</small></figcaption></figure>`
+  // Contact sheet — built from EVERYTHING on disk, not just this run,
+  // so --only spot-checks refresh single tiles without clobbering the
+  // rest of the gallery. Tiles updated this run get a marker.
+  const updated = new Set(results.filter(r => r.ok).map(r => `${r.name}.png`));
+  const allShots = readdirSync(OUT)
+    .filter(f => f.endsWith('.png'))
+    .sort((a, b) => a.localeCompare(b));
+  const cells = allShots.map(f => {
+    const fresh = updated.has(f);
+    const when = new Date(statSync(join(OUT, f)).mtimeMs).toLocaleString();
+    return `<figure${fresh ? ' class="fresh"' : ''}>
+      <img src="${f}" loading="lazy">
+      <figcaption>${f.replace('.png', '')}${fresh ? ' <b>● updated</b>' : ''}<small> — ${when}</small></figcaption>
+    </figure>`;
+  }).join('\n');
+  const failures = results.filter(r => !r.ok).map(r =>
+    `<figure class="fail"><figcaption>✗ ${r.name}<br><small>${r.err}</small></figcaption></figure>`
   ).join('\n');
   writeFileSync(join(OUT, 'index.html'), `<!doctype html>
 <meta charset="utf-8"><title>TRUST ISSUES contact sheet</title>
@@ -87,11 +100,15 @@ const run = async () => {
   body{background:#0a0a14;color:#ddd;font-family:monospace;margin:16px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:12px}
   figure{margin:0;border:1px solid #333;padding:6px;background:#11111e}
+  figure.fresh{border-color:#53a8b6}
   img{width:100%;display:block}
   figcaption{padding:6px 2px;font-size:13px;color:#53a8b6}
+  figcaption small{color:#556;display:block}
+  figcaption b{color:#7be0a0}
   .fail{border-color:#e94560;color:#e94560;min-height:80px}
 </style>
-<h1>Contact sheet — ${new Date().toISOString()}</h1>
+<h1>Contact sheet — ${allShots.length} shots — ${new Date().toISOString()}</h1>
+${failures ? `<h2 style="color:#e94560">Failures this run</h2><div class="grid">${failures}</div>` : ''}
 <div class="grid">${cells}</div>`);
 
   await browser.close();
