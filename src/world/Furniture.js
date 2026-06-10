@@ -146,9 +146,11 @@ export const Furniture = {
 
   monitor() {
     const group = new THREE.Group();
-    // Screen — random office content (spreadsheet/email/code/chart)
+    // Screen — random office content (spreadsheet/email/code/chart).
+    // ~1 in 25 monitors whispers. The building talks through whatever
+    // is plugged in.
     const variants = ['spreadsheet', 'spreadsheet', 'email', 'code', 'chart'];
-    const variant = variants[Math.floor(Math.random() * variants.length)];
+    const variant = Math.random() < 0.04 ? 'whisper' : variants[Math.floor(Math.random() * variants.length)];
     const screenGeo = new THREE.BoxGeometry(0.5, 0.32, 0.02);
     const screen = new THREE.Mesh(
       screenGeo,

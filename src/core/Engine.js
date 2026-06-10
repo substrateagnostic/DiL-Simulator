@@ -78,6 +78,12 @@ class EngineClass {
       this.cityBackdrop = new CityBackdrop(this.scene);
       if (this._pendingTimeOfDay) this.cityBackdrop.setTimeOfDay(this._pendingTimeOfDay);
     });
+
+    // The ghost of the building around the current room
+    import('../effects/BuildingShell.js').then(({ BuildingShell }) => {
+      this.buildingShell = new BuildingShell(this.scene);
+      if (this._pendingShellRoom) this.buildingShell.buildFor(this._pendingShellRoom);
+    });
   }
 
   // Story-driven time of day — drives the city backdrop palette + fog.

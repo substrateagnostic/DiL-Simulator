@@ -675,6 +675,9 @@ export const ROOMS = {
       // Alex from IT — Badge Audit personal mission: PATCH-3 server rack ("DO NOT TOUCH 4ever")
       { x: 5, z: 5, type: 'server_rack', dialogId: 'alex_badge_audit_pull', condition: { flag: 'alex_badge_audit_started' } },
       { x: 6, z: 7, type: 'alex_it_desk', dialogId: 'alex_it_desk' },
+      // The Daemon at Rack 7 — post-game. It reconciles timestamps. The
+      // timestamps have always been fine.
+      { x: 3, z: 4, type: 'daemon_terminal', dialogId: 'daemon_rack7', condition: { flag: 'algorithm_defeated' } },
       // Side quest interactables
       { x: 3, z: 0, type: 'poster', dialogId: 'quest_atk_4', condition: { flag: 'retry_karen' } },
       { x: 0, z: 7, type: 'poster', dialogId: 'quest_def_4', condition: { flag: 'retry_karen' } },

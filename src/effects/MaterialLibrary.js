@@ -215,7 +215,7 @@ export const Materials = {
       ctx.moveTo(14, 60);
       bars.forEach((bh, i) => ctx.lineTo(26 + i * 17, 62 - bh * 0.8));
       ctx.stroke();
-    } else { // spreadsheet
+    } else { // spreadsheet (and its rare 'whisper' twin)
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, 128, 80);
       ctx.fillStyle = '#2a7a4a';
@@ -230,8 +230,16 @@ export const Materials = {
           if ((r * 7 + col) % 3 === 0) ctx.fillRect(2 + col * 18, 12 + r * 8, 10, 2);
         }
       }
-      ctx.fillStyle = '#cc3344';
-      ctx.fillRect(2 + 4 * 18, 12 + 5 * 8, 10, 2); // the cell that's wrong
+      if (variant === 'whisper') {
+        // One cell, very occasionally, is not a number. The building
+        // talks through whatever is plugged in. Most people never notice.
+        ctx.fillStyle = '#1a8a4a';
+        ctx.font = 'bold 7px monospace';
+        ctx.fillText('REMEMBERED', 2 + 2 * 18, 12 + 5 * 8 + 3);
+      } else {
+        ctx.fillStyle = '#cc3344';
+        ctx.fillRect(2 + 4 * 18, 12 + 5 * 8, 10, 2); // the cell that's wrong
+      }
     }
 
     const tex = new THREE.CanvasTexture(c);

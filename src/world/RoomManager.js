@@ -48,6 +48,11 @@ export class RoomManager {
     // Per-room mood lighting (falls back to default office rig)
     Engine.applyRoomLighting(room.data.lighting);
 
+    // Rebuild the ghost building shell around this room (handles the
+    // first-load race before the lazy module resolves)
+    if (Engine.buildingShell) Engine.buildingShell.buildFor(room.data);
+    else Engine._pendingShellRoom = room.data;
+
     // Set up NPCs
     this.entityManager.clear();
     const npcData = room.getNPCData();
