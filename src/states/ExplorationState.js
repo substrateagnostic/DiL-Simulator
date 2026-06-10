@@ -21,6 +21,7 @@ import { AchievementManager } from '../core/AchievementManager.js';
 import { DEV_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
 import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
+import { showDevPanel } from '../ui/DevPanel.js';
 
 const INTERACTION_OFFSETS = [
   [0, 0],
@@ -2200,8 +2201,13 @@ export class ExplorationState {
   update(dt) {
     if (this.paused) return;
 
-    if (DEV_MODE && InputManager.isJustPressed('f2') && !document.getElementById('dev-panel')) {
-      this._showDevPanel();
+    if (DEV_MODE && InputManager.isJustPressed('f2')) {
+      const existing = document.getElementById('dev-panel');
+      if (existing) {
+        existing._devClose();
+      } else {
+        this._showDevPanel();
+      }
     }
 
     // Act 5 — Restructuring Trio: 3v2 multi-combatant fight (Andrew + Janet vs all three analysts).
@@ -2304,248 +2310,6 @@ export class ExplorationState {
   }
 
   _showDevPanel() {
-    const _fmtTime = (ts) => {
-      if (!ts) return '—';
-      const diff = Math.floor((Date.now() - ts) / 1000);
-      if (diff < 60) return `${diff}s ago`;
-      if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-      if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-      return new Date(ts).toLocaleDateString();
-    };
-
-    const _slotLabel = (slot) => {
-      const info = SaveManager.getSaveInfo(slot);
-      const active = SaveManager.getActiveSlot() === slot ? ' ★' : '';
-      if (!info) return `Slot ${slot}${active}  —  empty`;
-      return `Slot ${slot}${active}  |  Lv ${info.level}  |  ${info.currentRoom}  |  ${_fmtTime(info.timestamp)}`;
-    };
-
-    const PRESETS = [
-      {
-        label: 'Act 1 — Briefing Complete',
-        flags: {
-          checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
-          read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
-          defeated_intern: true, briefing_complete: true, branch_chosen: true,
-        },
-      },
-      {
-        label: 'Act 3 — Hendersons Defeated',
-        flags: {
-          checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
-          read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
-          defeated_intern: true, briefing_complete: true, branch_chosen: true,
-          retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
-          ross_post_karen: true, chad_defeated: true, defeated_chad: true,
-          grandma_defeated: true, defeated_grandma: true,
-          defeated_compliance: true, defeated_regional: true, defeated_ross_boss: true,
-          act2_complete: true,
-        },
-      },
-      {
-        label: 'Act 4 — Archive Evidence Found',
-        flags: {
-          checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
-          read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
-          defeated_intern: true, briefing_complete: true, branch_chosen: true,
-          retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
-          ross_post_karen: true, chad_defeated: true, defeated_chad: true,
-          grandma_defeated: true, defeated_grandma: true,
-          defeated_compliance: true, defeated_regional: true, defeated_ross_boss: true,
-          act2_complete: true,
-          knows_server_secret: true, alex_it_act3_done: true,
-          has_archive_password: true, has_archive_evidence: true,
-          act3_complete: true,
-        },
-      },
-      {
-        label: 'Act 5 — Charter Recovered',
-        flags: {
-          checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
-          read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
-          defeated_intern: true, briefing_complete: true, branch_chosen: true,
-          retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
-          ross_post_karen: true, chad_defeated: true, defeated_chad: true,
-          grandma_defeated: true, defeated_grandma: true,
-          defeated_compliance: true, defeated_regional: true, defeated_ross_boss: true,
-          act2_complete: true,
-          knows_server_secret: true, alex_it_act3_done: true,
-          has_archive_password: true, has_archive_evidence: true,
-          act3_complete: true,
-          met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
-          has_charter: true, act4_complete: true,
-        },
-      },
-      {
-        label: 'Act 6 — Rachel Defeated',
-        flags: {
-          checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
-          read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
-          defeated_intern: true, briefing_complete: true, branch_chosen: true,
-          retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
-          ross_post_karen: true, chad_defeated: true, defeated_chad: true,
-          grandma_defeated: true, defeated_grandma: true,
-          defeated_compliance: true, defeated_regional: true, defeated_ross_boss: true,
-          act2_complete: true,
-          knows_server_secret: true, alex_it_act3_done: true,
-          has_archive_password: true, has_archive_evidence: true,
-          act3_complete: true,
-          met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
-          has_charter: true, act4_complete: true,
-          act5_triggered: true, janet_recruited: true,
-          restructuring_trio_started: true, restructuring_trio_defeated: true,
-          brand_consultant_fight_started: true, brand_consultant_defeated: true,
-          restructuring_fight_started: true, restructuring_analyst_defeated: true, restructuring_defeated: true,
-          data_lead_fight_started: true, data_lead_defeated: true,
-          chief_fight_started: true, chief_restructuring_defeated: true,
-          corporate_lawyer_defeated: true, board_room_accessible: true,
-          rachel_fight_started: true, act5_complete: true,
-        },
-      },
-      {
-        label: 'Act 7 — Penthouse Unlocked',
-        flags: {
-          checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
-          read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
-          defeated_intern: true, briefing_complete: true, branch_chosen: true,
-          retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
-          ross_post_karen: true, chad_defeated: true, defeated_chad: true,
-          grandma_defeated: true, defeated_grandma: true,
-          defeated_compliance: true, defeated_regional: true, defeated_ross_boss: true,
-          act2_complete: true,
-          knows_server_secret: true, alex_it_act3_done: true,
-          has_archive_password: true, has_archive_evidence: true,
-          act3_complete: true,
-          met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
-          has_charter: true, act4_complete: true,
-          act5_triggered: true, janet_recruited: true,
-          restructuring_trio_started: true, restructuring_trio_defeated: true,
-          brand_consultant_fight_started: true, brand_consultant_defeated: true,
-          restructuring_fight_started: true, restructuring_analyst_defeated: true, restructuring_defeated: true,
-          data_lead_fight_started: true, data_lead_defeated: true,
-          chief_fight_started: true, chief_restructuring_defeated: true,
-          corporate_lawyer_defeated: true, board_room_accessible: true,
-          rachel_fight_started: true, act5_complete: true,
-          janet_rallied: true, diane_rallied: true, ross_rallied: true,
-          janet_act6_rallied: true, diane_act6_rallied: true, diane_evidence: true,
-          read_janitor_act3: true,
-          has_rolex: true, act6_complete: true,
-        },
-      },
-    ];
-
-    const panel = document.createElement('div');
-    panel.id = 'dev-panel';
-    Object.assign(panel.style, {
-      position: 'fixed', top: '50%', left: '50%',
-      transform: 'translate(-50%, -50%)',
-      background: '#0a0a14', border: '2px solid #e94560',
-      padding: '20px', zIndex: '9999',
-      fontFamily: 'monospace', color: '#e94560',
-      minWidth: '420px',
-    });
-    panel.innerHTML = `
-      <div style="font-size:13px;letter-spacing:2px;margin-bottom:12px">[DEV] PANEL</div>
-      <div style="font-size:10px;color:#888;letter-spacing:1px;margin-bottom:6px">SAVE SCUM</div>
-      <div id="dev-save-slots"></div>
-      <div style="margin:14px 0 6px;border-top:1px solid #222;padding-top:12px;font-size:10px;color:#888;letter-spacing:1px">QUEST SKIP</div>
-      <div id="dev-preset-list"></div>
-      <div style="margin-top:10px;font-size:10px;color:#444">ESC to close &middot; quest flags are cumulative &middot; some dialogs may replay</div>
-    `;
-    document.body.appendChild(panel);
-
-    const _btnStyle = (accent) => ({
-      background: '#1a1a2e', border: `1px solid ${accent || '#333'}`,
-      color: accent ? '#fff' : '#aaa', padding: '4px 10px',
-      fontFamily: 'monospace', fontSize: '10px',
-      cursor: 'pointer', marginLeft: '6px',
-    });
-
-    const _renderSaveSlots = () => {
-      const container = panel.querySelector('#dev-save-slots');
-      container.innerHTML = '';
-      for (let slot = 1; slot <= SaveManager.getSlotCount(); slot++) {
-        const info = SaveManager.getSaveInfo(slot);
-        const row = document.createElement('div');
-        Object.assign(row.style, {
-          display: 'flex', alignItems: 'center',
-          margin: '3px 0', padding: '5px 8px',
-          background: SaveManager.getActiveSlot() === slot ? '#1a1a3a' : '#111',
-          border: `1px solid ${SaveManager.getActiveSlot() === slot ? '#e94560' : '#222'}`,
-        });
-
-        const label = document.createElement('span');
-        label.style.cssText = 'flex:1;font-size:10px;color:#bbb';
-        label.textContent = _slotLabel(slot);
-        row.appendChild(label);
-
-        const saveBtn = document.createElement('button');
-        saveBtn.textContent = 'Save';
-        Object.assign(saveBtn.style, _btnStyle('#4488ff'));
-        saveBtn.addEventListener('click', () => {
-          SaveManager.setActiveSlot(slot);
-          SaveManager.save(this.player.serialize(), slot);
-          _renderSaveSlots();
-          this._showToast(`[DEV] Saved to slot ${slot}`, 'objective');
-        });
-        row.appendChild(saveBtn);
-
-        const loadBtn = document.createElement('button');
-        loadBtn.textContent = 'Load';
-        Object.assign(loadBtn.style, _btnStyle(info ? '#44ff88' : null));
-        loadBtn.disabled = !info;
-        if (!info) loadBtn.style.opacity = '0.3';
-        loadBtn.addEventListener('click', () => {
-          if (!info) return;
-          const saveData = SaveManager.load(slot);
-          if (!saveData) return;
-          SaveManager.setActiveSlot(slot);
-          this.player.deserialize(saveData);
-          this._loadRoom(saveData.currentRoom, saveData.position?.x, saveData.position?.z);
-          this.syncFromPlayerState();
-          this.paused = false;
-          panel.remove();
-          document.removeEventListener('keydown', closeHandler);
-          this._showToast(`[DEV] Loaded slot ${slot}`, 'objective');
-        });
-        row.appendChild(loadBtn);
-
-        container.appendChild(row);
-      }
-    };
-
-    _renderSaveSlots();
-
-    const list = panel.querySelector('#dev-preset-list');
-    PRESETS.forEach(preset => {
-      const btn = document.createElement('button');
-      btn.textContent = preset.label;
-      Object.assign(btn.style, {
-        display: 'block', width: '100%', margin: '3px 0',
-        background: '#1a1a2e', border: '1px solid #333',
-        color: '#ccc', padding: '7px 10px',
-        fontFamily: 'monospace', fontSize: '11px',
-        cursor: 'pointer', textAlign: 'left',
-      });
-      btn.addEventListener('mouseover', () => { btn.style.borderColor = '#e94560'; btn.style.color = '#fff'; });
-      btn.addEventListener('mouseout',  () => { btn.style.borderColor = '#333';    btn.style.color = '#ccc'; });
-      btn.addEventListener('click', () => {
-        Object.assign(this.player.flags, preset.flags);
-        this._syncActFromFlags();
-        this._refreshStoryProgress(true);
-        panel.remove();
-        document.removeEventListener('keydown', closeHandler);
-        this._showToast(`[DEV] ${preset.label}`, 'objective');
-      });
-      list.appendChild(btn);
-    });
-
-    const closeHandler = (e) => {
-      if (e.key === 'Escape') {
-        panel.remove();
-        document.removeEventListener('keydown', closeHandler);
-      }
-    };
-    document.addEventListener('keydown', closeHandler);
+    showDevPanel(this);
   }
 }

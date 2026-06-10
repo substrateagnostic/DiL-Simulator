@@ -246,4 +246,4 @@ Critical flags that are easy to get wrong (not derivable from a single file):
 - `HANDOFF.md` — recent bug fixes and known issues; check at session start.
 - `Quest.md` — full quest list with objectives and XP rewards. Authoritative source for story structure and side quest steps.
 - `Gameplay.md` — roguelite loop, item reference, achievements, cosmetics, and combat attributes. Authoritative source for those systems.
-- `.claude/plans/eager-nibbling-shannon.md` — expansion plans (Phases 1–9). Create `.claude/plans/` if it doesn't exist yet.
+- `ROADMAP.md` — visual overhaul + engagement + release plan (June 2026). Authoritative forward plan; includes Playwright playtest harness notes and the F2 dev panel rewrite spec.
