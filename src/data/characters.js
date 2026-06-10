@@ -308,6 +308,131 @@ export const CHARACTER_CONFIGS = {
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
   },
 
+  // ── Act 6½ city cast ──────────────────────────────────────────────
+  delia: {
+    name: 'Delia Okafor',
+    bodyColor: 0x7a5a6a,        // plum cardigan
+    pantsColor: 0x3a3642,
+    shirtColor: 0xe8e0d0,
+    tieColor: null,
+    skinColor: COLORS.SKIN_DARK,
+    hairColor: 0xc8c4bc,        // silver locs
+    hairStyle: 'bun',
+    accessories: ['glasses'],
+    heightScale: 0.9, hunch: 0.08, headScale: 1.05,
+  },
+  parking_enforcer: {
+    name: 'Officer Reyes',
+    bodyColor: 0x2a4a6a,        // municipal blue
+    pantsColor: 0x1a2a3a,
+    shirtColor: null,
+    tieColor: null,
+    skinColor: COLORS.SKIN_DARK,
+    hairColor: COLORS.HAIR_DARK,
+    hairStyle: 'backwards_cap',
+    accessories: ['clipboard'],
+    widthScale: 1.15, browAngle: -0.15,
+  },
+  networking_guy: {
+    name: 'The Networking Guy',
+    bodyColor: 0x3a6a8a,        // quarter-zip
+    pantsColor: 0x4a4a52,
+    shirtColor: 0xe8e8e8,
+    tieColor: null,
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_BROWN,
+    hairStyle: 'slick',
+    accessories: ['bluetooth_earpiece'],
+    taper: 1.25, mouthWidth: 1.3,
+  },
+  bus_driver: {
+    name: 'Marlene',
+    bodyColor: 0x4a4a5a,        // transit authority gray
+    pantsColor: 0x2a2a32,
+    shirtColor: 0xc8d0d8,
+    tieColor: null,
+    skinColor: COLORS.SKIN,
+    hairColor: 0xb84a2a,        // henna red
+    hairStyle: 'bun',
+    accessories: ['sunglasses'],
+    widthScale: 1.1,
+  },
+  records_clerk: {
+    name: 'The Clerk',
+    bodyColor: 0x5a5a52,        // archival beige-gray
+    pantsColor: 0x3a3a34,
+    shirtColor: 0xe8e4d8,
+    tieColor: 0x6a5a3a,
+    skinColor: 0xe8d0b0,        // indoor pallor
+    hairColor: 0x8a8478,
+    hairStyle: 'slick',
+    accessories: ['glasses'],
+    heightScale: 1.04, widthScale: 0.85, browAngle: 0.05,
+  },
+  diner_regular: {
+    name: 'Earl',
+    bodyColor: 0x6a4a3a,        // flannel brown
+    pantsColor: 0x3a3e44,
+    shirtColor: null,
+    tieColor: null,
+    skinColor: COLORS.SKIN,
+    hairColor: COLORS.HAIR_GRAY,
+    hairStyle: 'short',
+    beard: true,
+    beardColor: 0xb8b0a0,
+    accessories: ['coffee_mug'],
+    widthScale: 1.12, hunch: 0.08,
+  },
+  barista: {
+    name: 'Jules',
+    bodyColor: 0x3a4a3a,        // forest apron
+    pantsColor: 0x2a2a32,
+    shirtColor: 0xd8d4c8,
+    tieColor: null,
+    skinColor: COLORS.SKIN_DARK,
+    hairColor: 0x1a1a22,
+    hairStyle: 'bun',
+    accessories: [],
+    heightScale: 0.96,
+  },
+  // The Firm — they move like a school of fish
+  firm_partner: {
+    name: 'The Firm (Partner)',
+    bodyColor: 0x16161e,
+    pantsColor: 0x16161e,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0x8a8a92,
+    skinColor: COLORS.SKIN,
+    hairColor: 0x6a6a72,
+    hairStyle: 'slick',
+    accessories: ['tablet'],
+    heightScale: 1.08, widthScale: 0.9, browAngle: -0.1,
+  },
+  firm_associate: {
+    name: 'The Firm (Associate)',
+    bodyColor: 0x1a1a24,
+    pantsColor: 0x1a1a24,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0x8a8a92,
+    skinColor: COLORS.SKIN,
+    hairColor: 0x3a3a42,
+    hairStyle: 'slick',
+    accessories: ['clipboard'],
+    heightScale: 1.02, widthScale: 0.88, browAngle: -0.1,
+  },
+  firm_paralegal: {
+    name: 'The Firm (Paralegal)',
+    bodyColor: 0x20202a,
+    pantsColor: 0x20202a,
+    shirtColor: COLORS.SHIRT_WHITE,
+    tieColor: 0x8a8a92,
+    skinColor: COLORS.SKIN,
+    hairColor: 0x4a4a52,
+    hairStyle: 'bob',
+    accessories: ['glasses'],
+    heightScale: 0.96, widthScale: 0.85, browAngle: -0.1,
+  },
+
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
   reception_client: {
     name: 'Prospective Client',

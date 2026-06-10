@@ -1312,6 +1312,142 @@ export const Furniture = {
     return group;
   },
 
+  // ── Act 6½ city furniture ──────────────────────────────────────────
+
+  lamppost() {
+    const group = new THREE.Group();
+    const poleMat = Materials.custom(0x2a3038);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 2.6, 6), poleMat);
+    pole.position.y = 1.3;
+    group.add(pole);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 0.05), poleMat);
+    arm.position.set(0.22, 2.55, 0);
+    group.add(arm);
+    const lamp = new THREE.Mesh(
+      new THREE.BoxGeometry(0.22, 0.08, 0.14),
+      Materials.custom(0xffe2a8, { emissive: 0xffd890, emissiveIntensity: 0.9 })
+    );
+    lamp.position.set(0.42, 2.5, 0);
+    group.add(lamp);
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+    return group;
+  },
+
+  hydrant() {
+    const group = new THREE.Group();
+    const red = Materials.custom(0xbb2222);
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.12, 0.42, 7), red);
+    body.position.y = 0.21;
+    group.add(body);
+    const cap = new THREE.Mesh(new THREE.IcosahedronGeometry(0.09, 0), red);
+    cap.position.y = 0.45;
+    group.add(cap);
+    for (const side of [-1, 1]) {
+      const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.1, 6), red);
+      nozzle.rotation.z = Math.PI / 2;
+      nozzle.position.set(side * 0.13, 0.28, 0);
+      group.add(nozzle);
+    }
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+    return group;
+  },
+
+  bench() {
+    const group = new THREE.Group();
+    const wood = Materials.custom(0x6a4e2e);
+    const iron = Materials.custom(0x222428);
+    for (let i = 0; i < 3; i++) {
+      const slat = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.04, 0.1), wood);
+      slat.position.set(0, 0.42, -0.12 + i * 0.12);
+      group.add(slat);
+    }
+    for (let i = 0; i < 2; i++) {
+      const back = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.04), wood);
+      back.position.set(0, 0.62 + i * 0.14, -0.2);
+      group.add(back);
+    }
+    for (const side of [-1, 1]) {
+      const legFront = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.42, 0.05), iron);
+      legFront.position.set(side * 0.6, 0.21, 0.12);
+      group.add(legFront);
+      const legBack = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.82, 0.05), iron);
+      legBack.position.set(side * 0.6, 0.41, -0.18);
+      group.add(legBack);
+    }
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  busStopSign() {
+    const group = new THREE.Group();
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.2, 6), Materials.custom(0x3a4048));
+    pole.position.y = 1.1;
+    group.add(pole);
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 48;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#1a4a8a';
+    ctx.fillRect(0, 0, 64, 48);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 18px monospace';
+    ctx.fillText('BUS', 16, 22);
+    ctx.font = '11px monospace';
+    ctx.fillText('5:15', 18, 38);
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.42, 0.32),
+      new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide })
+    );
+    sign.position.y = 2.0;
+    group.add(sign);
+    group.traverse(m => { if (m.isMesh) { m.castShadow = true; } });
+    return group;
+  },
+
+  newspaperBox(variant) {
+    const group = new THREE.Group();
+    const color = typeof variant === 'number' ? variant : 0x2255aa;
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.6, 0.35), Materials.custom(color));
+    body.position.y = 0.45;
+    group.add(body);
+    const legs = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.25), Materials.custom(0x222428));
+    legs.position.y = 0.08;
+    group.add(legs);
+    const windowMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.28, 0.22),
+      new THREE.MeshBasicMaterial({ color: 0xccd8e2 })
+    );
+    windowMesh.position.set(0, 0.55, 0.18);
+    group.add(windowMesh);
+    group.traverse(m => { if (m.isMesh) { m.castShadow = true; } });
+    return group;
+  },
+
+  // Diner booth: two facing benches + a table. Faces +z by default.
+  dinerBooth() {
+    const group = new THREE.Group();
+    const vinyl = Materials.custom(0x8a2a2a);
+    const tableMat = Materials.custom(0xe8e2d4);
+    for (const side of [-1, 1]) {
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 1.0), vinyl);
+      seat.position.set(side * 0.85, 0.225, 0);
+      group.add(seat);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 1.0), vinyl);
+      back.position.set(side * 1.12, 0.5, 0);
+      group.add(back);
+    }
+    const table = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.9), tableMat);
+    table.position.y = 0.72;
+    group.add(table);
+    const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.09, 0.7, 6), Materials.custom(0x55585e));
+    pedestal.position.y = 0.35;
+    group.add(pedestal);
+    group.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    return group;
+  },
+
   // Overhead cable tray — runs along x; rotate PI/2 to run along z.
   // Sagging cable bundles hang beneath. NO_BLOCK.
   cableTray() {

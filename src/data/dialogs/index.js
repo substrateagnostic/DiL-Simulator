@@ -3977,4 +3977,264 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Nobody mops alone, kid.", next: 14 },
     /* 14 */ { type: 'end' },
   ],
+
+  // ==========================================================================
+  // ACT 6½ — THE COUNTERSIGNATURE
+  // The charter is real. The seal is not on it. One afternoon, one city.
+  // ==========================================================================
+
+  // The penthouse elevator rejects the charter; Ross calls; the Janitor
+  // is suddenly there, the way he always is. Sets city_unlocked.
+  charter_challenge: [
+    /* 0  */ { type: 'action', action: 'set_flag', flag: 'read_charter_challenge', value: true, next: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The elevator panel scans the 1947 charter for the second time, with the air of a machine double-checking something it already enjoyed rejecting once." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "SEAL NOT RECOGNIZED. FILING CHALLENGE LODGED — OUTSIDE COUNSEL, 9:14 AM. RESPONSE WINDOW CLOSES 5:00 PM." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "It's the original charter. It's seventy-seven years old. What does it want, a receipt?" },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Your phone rings. It is Ross. You can hear him sweating." },
+    /* 5  */ { type: 'text', speaker: 'Ross', text: "Andrew! Great. Fantastic. Small thing. Tiny thing. Rachel's old lawyers filed a challenge this morning — the charter's missing its Recorder's seal. Article 9. I'm looking at it right now. There's a... circle where a seal should be.", mood: 'worried' },
+    /* 6  */ { type: 'text', speaker: 'Ross', text: "Legal says we need the Recorder or a living deputy to certify by five o'clock or the whole thing's decorative. Like a diploma. Or my title.", mood: 'worried' },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "Ross, the Recorder's office stopped sealing charters by hand decades ago. Where am I supposed to find a living deputy?" },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "A mop, somewhere behind you, stops mopping." },
+    /* 9  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 10, ifFalse: 12 },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "...Okafor. D. Okafor. Page in your ledger — 'eleven years, moved her desk fourteen times.' She was the Deputy Recorder, wasn't she." },
+    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Delia. 1981 to 2009. The building broke her. The city didn't. You'll find her where the city keeps its good ones.", next: 13 },
+    /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Delia Okafor. Deputy Recorder, 1981 to 2009. The building broke her. The city didn't." },
+    /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Don't have her address. The Hall of Records would — they keep records of their own people same as everyone's. Ask the Clerk. Bring patience. Not the stat. The real kind." },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "He produces a key you have never seen before and unlocks the garage's south door, which you have also never seen before. Daylight comes in like it's been waiting." },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'city_unlocked', value: true, next: 16 },
+    /* 16 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Fennimore Avenue. Hall of Records is north side. Watch out for parking enforcement — Reyes is having a good month." },
+    /* 17 */ { type: 'end' },
+  ],
+
+  // ── Hall of Records: the Form 11-C chain (Borges with a queue rope) ──
+  // Janitor-riddle retry pattern: wrong form -> back of the queue, try again.
+  records_clerk_form11c: [
+    /* 0  */ { type: 'condition', flag: 'form_11c_done', ifTrue: 16, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'form_11c_attempted', ifTrue: 5, ifFalse: 2 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'form_11c_attempted', value: true, next: 3 },
+    /* 3  */ { type: 'text', speaker: 'The Clerk', text: "Welcome to the Hall of Records. The Hall contains all records. This is not a boast. It is a burden. State your request in the form of a form." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "I'm looking for a person. Delia Okafor — she was the Deputy Recorder. I need her current filing address." },
+    /* 5  */ { type: 'text', speaker: 'The Clerk', text: "Personnel records of Recorder's-office personnel are themselves records, recorded by the recorded. To request the record of a recorder, you require...", next: 6 },
+    /* 6  */ { type: 'choice', prompt: 'Which form?', choices: [
+      { text: 'Form 11-C — Request for Records of Requests for Records', next: 9 },
+      { text: 'Form 7-A — Request for Records', next: 7 },
+      { text: 'Form 30-F — Freedom of Information (Local)', next: 8 },
+    ] },
+    /* 7  */ { type: 'text', speaker: 'The Clerk', text: "Form 7-A requests records. Mrs. Okafor is not a record. Mrs. Okafor MADE records. The distinction is the entire architecture of civilization. Back of the queue.", next: 15 },
+    /* 8  */ { type: 'text', speaker: 'The Clerk', text: "Form 30-F liberates information. Information about Mrs. Okafor is not imprisoned. It is filed. These are opposites. Back of the queue.", next: 15 },
+    /* 9  */ { type: 'text', speaker: 'The Clerk', text: "...Form 11-C. Yes." },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "The Clerk looks at you the way a librarian looks at someone returning a book early and undamaged. It is the warmest expression the Hall permits." },
+    /* 11 */ { type: 'text', speaker: 'The Clerk', text: "Delia Okafor. Deputy Recorder, retired. No filing address on record — by her own request, filed correctly, which I respected enormously. However. Her lunch is a matter of public routine.", mood: 'smug' },
+    /* 12 */ { type: 'text', speaker: 'The Clerk', text: "Lucky's, on Fennimore. Booth four. Twelve-ten to one-forty, daily, federal holidays included. She has the patty melt. The Hall does not record why." },
+    /* 13 */ { type: 'action', action: 'set_flag', flag: 'form_11c_done', value: true, next: 14 },
+    /* 14 */ { type: 'action', action: 'give_xp', xp: 150, next: 17 },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "You go to the back of the queue. The queue is three feet long and entirely you. It still takes something out of you.", next: 17 },
+    /* 16 */ { type: 'text', speaker: 'The Clerk', text: "Booth four. Twelve-ten to one-forty. If she has moved to the counter, something is wrong with the world, and the Hall will want a memo.", next: 17 },
+    /* 17 */ { type: 'end' },
+  ],
+
+  // Optional: the deep stacks — the 1947 founding file
+  deep_stacks_file: [
+    /* 0  */ { type: 'condition', flag: 'deep_stacks_done', ifTrue: 7, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The deep stacks. The light here is older. A drawer labeled 'CHARTERS — MUNICIPAL — 1947' slides open with the sound of a long exhale." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Inside: the founding file of Vaults Fargo Branch No. 1. Architect's drawings. A loan ledger. A photograph of nine people on marble steps, squinting into a future they look entirely unprepared for." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "On the back of the photograph, in fountain pen: 'First day. Nobody knew where anything was. We decided that whoever stayed would learn.'" },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "Whoever stayed would learn. Seventy-seven years and the job description hasn't changed once." },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'deep_stacks_done', value: true, next: 6 },
+    /* 6  */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 2, next: 8 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The founding file rests. The nine people on the steps keep squinting at their future, which is now your present, which is somehow comforting and not.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "Some perspective settles into your shoulders and decides to stay. Composure +2. (+150... no. The perspective is the reward. Fine: also some XP.)", next: 10 },
+    /* 9  */ { type: 'end' },
+    /* 10 */ { type: 'action', action: 'give_xp', xp: 150, next: 9 },
+  ],
+
+  // ── Lucky's: Delia, booth 4. The test. ──────────────────────────────
+  delia_booth4: [
+    /* 0  */ { type: 'condition', flag: 'delia_moved', ifTrue: 20, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'met_delia', ifTrue: 6, ifFalse: 2 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'met_delia', value: true, next: 3 },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "Booth four. A woman with silver locs and reading glasses on a beaded chain is finishing a patty melt with the unhurried precision of someone who has outlasted every deadline that ever mattered." },
+    /* 4  */ { type: 'text', speaker: 'Delia Okafor', text: "You're from the building." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "It is not a question. You have not said anything. You are not wearing a name tag. She knows the way weather knows." },
+    /* 6  */ { type: 'text', speaker: 'Delia Okafor', text: "Sit down, then. You walk like the elevator just told you no. They always send someone when the elevator says no." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "Mrs. Okafor — I have the 1947 charter. The original. Corporate counsel challenged the seal this morning, and Article 9 says—" },
+    /* 8  */ { type: 'text', speaker: 'Delia Okafor', text: "I know what Article 9 says. I sealed four hundred and twelve documents under Article 9. I remember every one, which is not a gift, before you ask." },
+    /* 9  */ { type: 'text', speaker: 'Delia Okafor', text: "So here is my question, young man, and I'd take a breath before answering, because I'll know." },
+    /* 10 */ { type: 'text', speaker: 'Delia Okafor', text: "Twenty-eight floors of that building came down on people like me for forty years. Moved our desks. Lost our forms. Called it modernizing. Where was everybody? Why didn't anyone come when it was us?", mood: 'angry' },
+    /* 11 */ { type: 'choice', prompt: 'Answer her.', choices: [
+      { text: '"I didn\'t know. I know now."', next: 13 },
+      { text: '"I\'m here now — that has to count."', next: 12 },
+      { text: '"The charter protects everyone, including you."', next: 12 },
+    ] },
+    /* 12 */ { type: 'text', speaker: 'Delia Okafor', text: "Mm. That's an answer you practiced in the car. Come back when you can answer plain. The patty melt takes twenty minutes — you have time.", next: 19 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "Delia sets down her fork. She takes off the reading glasses, which is, you understand somehow, a ceremony." },
+    /* 14 */ { type: 'text', speaker: 'Delia Okafor', text: "Didn't know. Knows now. That's the whole human condition in six words, and most people never get to the second half." },
+    /* 15 */ { type: 'text', speaker: 'Delia Okafor', text: "I kept my seal. Seventeen years I kept it, oiled, wrapped, in the one place that building never thought to look — the FIRST branch. Box 0001. My mother banked there when they wouldn't let her bank most places." },
+    /* 16 */ { type: 'text', speaker: 'Delia Okafor', text: "It's a coffee shop now. The Roastery. East end of Fennimore. The vault's still in the basement because marble doesn't take buyouts. I'll meet you there — I don't walk fast, but I walk certain." },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'delia_moved', value: true, next: 18 },
+    /* 18 */ { type: 'action', action: 'give_xp', xp: 200, next: 19 },
+    /* 19 */ { type: 'end' },
+    /* 20 */ { type: 'text', speaker: 'Narrator', text: "Booth four sits empty. The waitress has already cleared it, but nobody has taken it. Nobody will for a while. Some booths are load-bearing.", next: 19 },
+  ],
+
+  // Delia at the Roastery, pointing you down
+  delia_roastery: [
+    /* 0  */ { type: 'text', speaker: 'Delia Okafor', text: "Look at this place. They put an oat-milk menu where the notary window was. My mother would have laughed for a week." },
+    /* 1  */ { type: 'text', speaker: 'Delia Okafor', text: "Basement stairs are behind the bar. Jules knows — I showed them my old key once and they've treated me like the building's grandmother ever since. Which I suppose I am." },
+    /* 2  */ { type: 'text', speaker: 'Delia Okafor', text: "Box 0001. Low row, center. The key's been on my ring since 2009 — here. Don't drop it. It's older than your department." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "She hands you a brass key worn smooth as river stone. It is heavier than it looks. Most things down here are." },
+    /* 4  */ { type: 'end' },
+  ],
+
+  // The barista guards the basement (until Delia vouches)
+  barista_vault: [
+    /* 0  */ { type: 'condition', flag: 'delia_moved', ifTrue: 3, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The barista — JULES, per a name tag with a hand-drawn bee on it — clocks you looking at the basement door." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "\"Staff only. It's mostly oat milk and a very old vault down there. Yes, a real one. No, you can't.\"", next: 5 },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "Jules nods you toward the basement door before you ask. \"Miss Delia called ahead. Door's open. Mind the third step — it predates the concept of safety.\"" },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "\"Also if you see the popcorn machine down there, that's ours, we're hiding it from the health inspector. You saw nothing.\"" },
+    /* 5  */ { type: 'end' },
+  ],
+
+  // Box 0001 — the seal, and the ambush. has_recorder_seal chains to the
+  // Firm fight via the flag-set listener in ExplorationState.
+  vault_box_0001: [
+    /* 0  */ { type: 'condition', flag: 'has_recorder_seal', ifTrue: 9, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'delia_moved', ifTrue: 3, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Deposit box 0001. The first box in the first vault. Whatever is in it has waited a long time and can keep waiting for someone with a key.", next: 10 },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The brass key turns like it was oiled yesterday. Because, you realize, it effectively was — seventeen years of someone caring for a thing she never expected to use again." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Inside: a bundle wrapped in newspaper dated March 2009. Within the newspaper, the Recorder's seal of the City — brass, embossing arm intact, heavy as a verdict." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Seventeen years. She kept it working for seventeen years for a day she didn't believe would come." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'has_recorder_seal', value: true, next: 7 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Behind you, three sets of identical footsteps descend the stairs in perfect synchronization, which is not a thing footsteps should be able to do." },
+    /* 8  */ { type: 'end' },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "Box 0001 stands open and empty, except for the 2009 newspaper. The crossword is half-finished. In pen.", next: 8 },
+    /* 10 */ { type: 'end' },
+  ],
+
+  // The Firm — service of process, mid-cutscene (the rude part is the point)
+  the_firm_ambush: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Three lawyers in three identical suits stand in formation at the foot of the stairs. They move like a school of fish that passed the bar." },
+    /* 1  */ { type: 'text', speaker: 'The Firm', text: "Mr. Galle. We represent—" },
+    /* 2  */ { type: 'text', speaker: 'The Firm', text: "—interests formerly aligned with—" },
+    /* 3  */ { type: 'text', speaker: 'The Firm', text: "—a party you defenestrated. Professionally speaking." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "It's Andrew. And I'm mid-errand, so if you could just—" },
+    /* 5  */ { type: 'text', speaker: 'The Firm', text: "You've been—" },
+    /* 6  */ { type: 'text', speaker: 'The Firm', text: "—served." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "An envelope hits you mid-sentence. They served you DURING YOUR LINE. There is no lower thing a lawyer can do, and all three of them know it, and none of them care." },
+    /* 8  */ { type: 'text', speaker: 'The Firm', text: "Surrender the seal. Our motion to quash your charter is calendared for five o'clock, and we bill travel time.", mood: 'smug' },
+    /* 9  */ { type: 'action', action: 'start_combat', encounter: 'the_firm', next: 10 },
+    /* 10 */ { type: 'end' },
+  ],
+
+  the_firm_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The Firm retreats up the stairs in formation, slightly less synchronized than they came down. One of them is billing this. You can tell." },
+    /* 1  */ { type: 'text', speaker: 'The Firm', text: "This will be—" },
+    /* 2  */ { type: 'text', speaker: 'The Firm', text: "—reflected in—" },
+    /* 3  */ { type: 'text', speaker: 'The Firm', text: "—our invoice." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Unhurried footsteps on the stairs. Delia Okafor surveys the scattered exhibits, the dented envelope, you, and the seal in your hands." },
+    /* 5  */ { type: 'text', speaker: 'Delia Okafor', text: "Hm. They sent The Firm. You know you've filed something true when they send The Firm." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "She takes the charter. She takes the seal. She inks the die with a little circular motion, like stirring tea. She breathes on the brass once, for reasons that predate explanation." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Stamp." },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "Two seconds. After everything — the queue, the forms, the patty melt, the lawyers — it takes two seconds. Bureaucracy's final joke is that the right stamp was always this easy in the right hands." },
+    /* 9  */ { type: 'text', speaker: 'Delia Okafor', text: "Witnessed and sealed, per Article 9, by the Recorder's living deputy. Let them calendar THAT.", mood: 'smug' },
+    /* 10 */ { type: 'text', speaker: 'Delia Okafor', text: "Take it home, Andrew-who-knows-now. And tell the man with the mop... tell him Delia says the building doesn't win. It never did. It just takes the long way to lose." },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'charter_certified', value: true, next: 12 },
+    /* 12 */ { type: 'action', action: 'give_xp', xp: 400, next: 13 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "The charter is certified. The elevator is going to have to think of a new excuse." },
+    /* 14 */ { type: 'end' },
+  ],
+
+  // Delia's epilogue at the Roastery (post-certification)
+  delia_epilogue: [
+    /* 0  */ { type: 'text', speaker: 'Delia Okafor', text: "I'm having them frame the newspaper. The 2009 one. Jules is going to hang it where the interest-rate board used to be." },
+    /* 1  */ { type: 'text', speaker: 'Delia Okafor', text: "Go on. Buildings don't fix themselves. Lord knows we let them try." },
+    /* 2  */ { type: 'end' },
+  ],
+
+  // ── Side: Officer Reyes / the Meter War ─────────────────────────────
+  parking_enforcer_intro: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Officer Reyes of Parking Enforcement looks at you. Then at the curb. Then at you. You are not parked. Somehow this makes it worse." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "\"Pedestrians loitering in a loading zone,\" she says, already writing, \"is a gray area. I specialize in gray areas.\"" },
+    /* 2  */ { type: 'choice', prompt: 'Contest the citation?', choices: [
+      { text: 'Contest it. On the record. Right now.', next: 4 },
+      { text: 'Walk away (you cannot win city hall)', next: 3 },
+    ] },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "You walk away. The ticket follows you anyway, in spirit. Somewhere, a small fine accrues interest.", next: 6 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Reyes smiles for the first time in what the city's records would confirm is nine years." },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'parking_enforcer', next: 6 },
+    /* 6  */ { type: 'end' },
+  ],
+
+  parking_enforcer_defeated: [
+    /* 0  */ { type: 'condition', flag: 'meter_war_2', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'meter_war_1', ifTrue: 3, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Reyes tears up the citation — slowly, into even quarters, filing each piece in a different pocket. \"Round one,\" she says. \"Nobody takes round one.\"", next: 7 },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "Reyes consults her ledger. \"Twice. Huh.\" She chalks a small, grudging mark on the curb. It might be respect. It is shaped like a tally.", next: 8 },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Reyes holsters the chalk. \"Three appeals upheld. You know what that makes you?\" She hands you a laminated card: HONORARY GRAY AREA. \"Park anywhere. I'll look away. Once.\"" },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'meter_war_done', value: true, next: 6 },
+    /* 6  */ { type: 'action', action: 'modify_stat', stat: 'spd', amount: 2, next: 10 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'meter_war_1', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'meter_war_2', value: true, next: 9 },
+    /* 9  */ { type: 'action', action: 'give_xp', xp: 90, next: 11 },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "Bureaucratic Efficiency +2. You have beaten city hall. Nobody beats city hall. Do not tell anyone, or everyone will want to.", next: 11 },
+    /* 11 */ { type: 'end' },
+  ],
+
+  // ── Side: The Networking Guy ────────────────────────────────────────
+  networking_guy_intro: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A man in a quarter-zip materializes beside you with the smooth inevitability of a calendar invite you never accepted." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "\"Hey! Big fan of your space. Trust stuff, right? I'm actually building something adjacent to that. Do you have literally fifteen minutes?\"" },
+    /* 2  */ { type: 'choice', prompt: 'Do you have literally fifteen minutes?', choices: [
+      { text: '"No." (combat)', next: 3 },
+      { text: '"...How adjacent?" (combat, but slower)', next: 3 },
+    ] },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "It does not matter what you said. He heard 'tell me everything.' He is already sharing his screen. Outdoors. You must end this." },
+    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'networking_guy', next: 5 },
+    /* 5  */ { type: 'end' },
+  ],
+
+  networking_guy_defeated: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The Networking Guy concedes graciously. \"This was great. I'm going to mention you on the pod.\" The threat lands harder than any of his attacks did." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "Three days from now, you will receive a LinkedIn connection request with no note. You already know you will accept it. Everyone does. This is how he wins." },
+    /* 2  */ { type: 'action', action: 'give_xp', xp: 85, next: 3 },
+    /* 3  */ { type: 'end' },
+  ],
+
+  // ── Side: The 5:15 Crosstown ────────────────────────────────────────
+  bus_driver_515: [
+    /* 0  */ { type: 'condition', flag: 'bus515_done', ifTrue: 12, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'bus515_started', ifTrue: 10, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The driver — MARLENE, per twenty-two years of service pins arranged like campaign medals — is parked, engine off, staring at the middle distance." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "\"Twenty-two years,\" she says, to you or the windshield, \"this bus has never once been early. Late, sure. Early, never. Early is impossible. The 5:15 is a LAW.\"" },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "\"Today? Four minutes early. Every light on Fennimore went green at once. All nine of them. I checked my mirrors like something was chasing me.\"" },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "...Every light. At once. Toward the records hall, by any chance?" },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "\"Toward the records hall.\" Marlene looks at you properly for the first time. \"You're from that building, aren't you. The one downtown that's... you know.\" She makes a gesture that means 'alive' in every language." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "\"Tell you what. My transfer ledger slid under seat 12 when I braked for the miracle. Fish it out for me and I'll consider the universe even.\"" },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'bus515_started', value: true, next: 9 },
+    /* 9  */ { type: 'end' },
+    /* 10 */ { type: 'condition', flag: 'bus515_ledger_found', ifTrue: 13, ifFalse: 11 },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "\"Seat 12. It's the one with the gum that's older than the gum under the other seats.\"", next: 9 },
+    /* 12 */ { type: 'text', speaker: 'Narrator', text: "Marlene taps two fingers on the fare box — transit blessing. \"The 5:15 runs on time now. Exactly on time. I haven't decided how I feel about it.\"", next: 9 },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: "You hand over the ledger. Marlene flips to today's page, where her own handwriting reads 4 MINUTES EARLY (?!), and underneath, in different ink she swears isn't hers: 'You're welcome. Go help him.'" },
+    /* 14 */ { type: 'text', speaker: 'Narrator', text: "Neither of you says anything for a moment. The building has long arms. Marlene hands you two energy drinks from her cooler. \"For the road. His road, apparently.\"" },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'bus515_done', value: true, next: 16 },
+    /* 16 */ { type: 'action', action: 'give_item', item: 'energy_drink', quantity: 2, next: 17 },
+    /* 17 */ { type: 'action', action: 'give_xp', xp: 150, next: 9 },
+  ],
+
+  bus_transfer_ledger: [
+    /* 0  */ { type: 'condition', flag: 'bus515_ledger_found', ifTrue: 4, ifFalse: 1 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "Under seat 12: one transfer ledger, one petrified glove, and gum from an administration nobody misses. You take the ledger. Only the ledger." },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'bus515_ledger_found', value: true, next: 3 },
+    /* 3  */ { type: 'end' },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Just the glove and the gum now. They seem happy together.", next: 3 },
+  ],
+
+  // ── Diner color ─────────────────────────────────────────────────────
+  diner_regular_chat: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Earl has been at this counter since before the counter. He nods at your suit. \"Building's still standing, then.\" He says it like a score update for a game he stopped following on purpose." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "\"You want advice? The patty melt. And whatever Delia tells you, do it in that order.\"" },
+    /* 2  */ { type: 'end' },
+  ],
 };

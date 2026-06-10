@@ -304,6 +304,10 @@ export class ExplorationState {
             this.stateManager.push(arcadeState);
           });
         }
+        // Act 6½: pulling the seal from box 0001 triggers The Firm's ambush
+        if (key === 'has_recorder_seal') {
+          this._pendingDialog = 'the_firm_ambush';
+        }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
         if (key === 'penthouse_entered') {
           this._pendingDialog = 'cfos_assistant_combat';
@@ -633,6 +637,7 @@ export class ExplorationState {
       vault: { flag: 'vault_accessible', message: "The vault door is sealed shut. You need more information." },
       board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
       penthouse: { flag: 'act6_complete', message: "The staircase to the Penthouse is sealed. You need the Janitor's Rolex." },
+      city_street: { flag: 'city_unlocked', message: "The garage door is down. You've never had a reason to open it." },
       penthouse_aquarium: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
       penthouse_analytics: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
       penthouse_bar: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
@@ -643,6 +648,22 @@ export class ExplorationState {
       && this.player.getFlag('restructuring_defeated')
       && !this.player.getFlag('corporate_lawyer_defeated')) {
       this._showToast("The elevator won't open. Someone's waiting for you in the lobby.", 'info');
+      return;
+    }
+
+    // Act 6½ — the penthouse elevator rejects the uncertified charter.
+    // First rejection fires the charter_challenge dialog (Ross's call,
+    // the Janitor's tip about Delia) which sets city_unlocked.
+    if (targetRoom === 'penthouse'
+      && this.player.getFlag('act6_complete')
+      && !this.player.getFlag('charter_certified')) {
+      this._showToast('The elevator scans the charter. A red light: SEAL NOT RECOGNIZED.', 'info');
+      if (!this.player.getFlag('read_charter_challenge') && DIALOGS.charter_challenge) {
+        setTimeout(() => {
+          const dialogState = new DialogState(DIALOGS.charter_challenge, this.player, this.stateManager, 'charter_challenge');
+          this.stateManager.push(dialogState);
+        }, 700);
+      }
       return;
     }
     const gate = gatedRooms[targetRoom];
@@ -1828,6 +1849,12 @@ export class ExplorationState {
       penthouse_aquarium: 'The Reef & Reel',
       penthouse_analytics: 'Analytics Suite',
       penthouse_bar: 'Private Lounge',
+      city_street: 'Fennimore Avenue',
+      transit_bus: 'The 5:15 Crosstown',
+      records_hall: 'Hall of Records',
+      luckys_diner: "Lucky's",
+      old_branch: 'The Roastery',
+      old_vault: 'The First Vault',
     };
     if (this.locationElement) {
       this.locationElement.textContent = names[roomId] || roomId;
@@ -1890,6 +1917,16 @@ export class ExplorationState {
     // Game complete
     if (this.player.getFlag('algorithm_defeated')) {
       return 'The story is over. Thank you for playing.';
+    }
+
+    // Act 6½ — The Countersignature (charter must be sealed before the penthouse)
+    if (this.player.getFlag('act6_complete') && !this.player.getFlag('charter_certified')) {
+      if (!this.player.getFlag('city_unlocked')) return 'Take the charter to the Penthouse elevator';
+      if (this.player.getFlag('has_recorder_seal')) return 'Bring Delia the seal — finish this';
+      if (this.player.getFlag('delia_moved')) return 'The Roastery, east end of Fennimore — box 0001 in the first vault';
+      if (this.player.getFlag('met_delia')) return "Sit with Delia. Listen. She'll tell you when she's done";
+      if (this.player.getFlag('form_11c_done')) return "Find Delia Okafor — Lucky's Diner, booth 4";
+      return 'The city: Hall of Records, north off Fennimore Avenue — ask for Form 11-C';
     }
 
     // Act 7

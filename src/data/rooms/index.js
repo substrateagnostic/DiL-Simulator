@@ -815,6 +815,9 @@ export const ROOMS = {
       // NORTH exits -> Reception
       { x: 6, z: 0, targetRoom: 'reception', spawnX: 6, spawnZ: 6 },
       { x: 7, z: 0, targetRoom: 'reception', spawnX: 7, spawnZ: 6 },
+      // SOUTH — the garage door to the street (Act 6½, gated on city_unlocked)
+      { x: 6, z: 9, targetRoom: 'city_street', spawnX: 12, spawnZ: 10 },
+      { x: 7, z: 9, targetRoom: 'city_street', spawnX: 13, spawnZ: 10 },
     ],
     interactables: [
       { x: 4, z: 6, type: 'andrews_car', dialogId: 'andrews_car' },
@@ -1607,6 +1610,305 @@ export const ROOMS = {
     ],
     interactables: [],
     playerSpawn: { x: 15, z: 6 },
+  },
+
+  // ==========================================================
+  // ACT 6½ — THE COUNTERSIGNATURE (the city outside)
+  // ==========================================================
+
+  // ----------------------------------------------------------
+  // C1. FENNIMORE AVENUE — 26x12 outdoor street hub
+  // ----------------------------------------------------------
+  city_street: {
+    id: 'city_street',
+    name: 'Fennimore Avenue',
+    width: 26,
+    height: 12,
+    floorColor: 0x6a6e74,  // sidewalk concrete
+    walls: true,
+    lighting: { ambient: 0xffe8c8, ambientIntensity: 0.72, dir: 0xffd8a0, dirIntensity: 0.95 },
+    furniture: [
+      // Street dressing along the north building line
+      { type: 'lamppost', x: 3,  z: 1 },
+      { type: 'lamppost', x: 9,  z: 1 },
+      { type: 'lamppost', x: 15, z: 1 },
+      { type: 'lamppost', x: 21, z: 1 },
+      { type: 'hydrant',  x: 6,  z: 1.4 },
+      { type: 'newspaperBox', x: 11.6, z: 1.3, variant: 0x2255aa },
+      { type: 'newspaperBox', x: 12.2, z: 1.3, variant: 0xcc8822 },
+      { type: 'newspaperBox', x: 12.8, z: 1.3, variant: 0xbb2233 },
+      { type: 'bench', x: 17, z: 1.4 },
+      { type: 'bench', x: 19, z: 1.4 },
+      { type: 'busStopSign', x: 20.4, z: 1.3 },
+      { type: 'trashCan', x: 16.2, z: 1.4 },
+      // Parked cars along the south curb
+      { type: 'car', x: 3,  z: 10, rotation: Math.PI / 2 },
+      { type: 'car', x: 8,  z: 10, rotation: Math.PI / 2 },
+      { type: 'car', x: 13, z: 10, rotation: Math.PI / 2 },
+      { type: 'car', x: 18, z: 10, rotation: Math.PI / 2 },
+      { type: 'car', x: 23, z: 10, rotation: Math.PI / 2 },
+      // A planter or two of civic optimism
+      { type: 'plant', x: 7.5, z: 1.4 },
+      { type: 'plant', x: 14.2, z: 1.4 },
+    ],
+    npcs: [
+      // Parking Enforcement Officer Reyes — patrols the curb (optional fight)
+      { id: 'parking_enforcer', x: 10, z: 8, facing: Math.PI / 2, movement: { type: 'patrol', waypoints: [{ x: 4, z: 8 }, { x: 22, z: 8 }] }, dialogId: 'parking_enforcer_intro', condition: { notFlag: 'meter_war_done' } },
+      // The Networking Guy — has a podcast (optional fight)
+      { id: 'networking_guy', x: 18, z: 4, facing: Math.PI, movement: { type: 'wander', radius: 2 }, dialogId: 'networking_guy_intro', condition: { notFlag: 'defeated_networking_guy' } },
+    ],
+    exits: [
+      // SOUTH → back into the parking garage
+      { x: 12, z: 11, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
+      { x: 13, z: 11, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
+      // NORTH (west end) → Hall of Records
+      { x: 5, z: 0, targetRoom: 'records_hall', spawnX: 9, spawnZ: 12 },
+      // NORTH (east end) → Lucky's Diner
+      { x: 18, z: 0, targetRoom: 'luckys_diner', spawnX: 6, spawnZ: 7 },
+      // EAST → the old branch (The Roastery)
+      { x: 25, z: 5, targetRoom: 'old_branch', spawnX: 1, spawnZ: 5 },
+      // WEST → the 5:15 crosstown (optional)
+      { x: 0, z: 5, targetRoom: 'transit_bus', spawnX: 1, spawnZ: 2 },
+    ],
+    interactables: [],
+    playerSpawn: { x: 12, z: 9 },
+  },
+
+  // ----------------------------------------------------------
+  // C2. THE 5:15 CROSSTOWN — 12x5 bus interior (optional)
+  // ----------------------------------------------------------
+  transit_bus: {
+    id: 'transit_bus',
+    name: 'The 5:15 Crosstown',
+    width: 12,
+    height: 5,
+    floorColor: 0x3a3e44,
+    walls: true,
+    lighting: { ambient: 0xd8e0e8, ambientIntensity: 0.6, dir: 0xc8d4e0, dirIntensity: 0.6, flicker: true },
+    furniture: [
+      // Bench seating along both walls
+      { type: 'bench', x: 2, z: 0.8 },
+      { type: 'bench', x: 4, z: 0.8 },
+      { type: 'bench', x: 6, z: 0.8 },
+      { type: 'bench', x: 8, z: 0.8 },
+      { type: 'bench', x: 2, z: 4.2, rotation: Math.PI },
+      { type: 'bench', x: 4, z: 4.2, rotation: Math.PI },
+      { type: 'bench', x: 8, z: 4.2, rotation: Math.PI },
+      // Driver's seat up front
+      { type: 'chair', x: 10.5, z: 1, rotation: -Math.PI / 2 },
+      { type: 'monitor', x: 11.2, z: 1, rotation: -Math.PI / 2 },
+    ],
+    npcs: [
+      { id: 'bus_driver', x: 10.5, z: 2.2, facing: -Math.PI / 2, dialogId: 'bus_driver_515', interactRange: 1.6 },
+    ],
+    exits: [
+      { x: 0, z: 2, targetRoom: 'city_street', spawnX: 2, spawnZ: 5 },
+    ],
+    interactables: [
+      // The transfer ledger wedged under seat 12 (side quest)
+      { x: 6, z: 4, type: 'transfer_ledger', dialogId: 'bus_transfer_ledger', condition: { flag: 'bus515_started' } },
+    ],
+    playerSpawn: { x: 1, z: 2 },
+  },
+
+  // ----------------------------------------------------------
+  // C3. HALL OF RECORDS — 18x14, Borges with a queue rope
+  // ----------------------------------------------------------
+  records_hall: {
+    id: 'records_hall',
+    name: 'Hall of Records',
+    width: 18,
+    height: 14,
+    floorColor: 0x9a9284,
+    floorPattern: 'hardwood',
+    walls: true,
+    lighting: { ambient: 0xd8cfb8, ambientIntensity: 0.5, dir: 0xe8dfc0, dirIntensity: 0.62 },
+    lights: [
+      { type: 'point', color: 0xffe8b8, intensity: 1.1, x: 9, y: 3, z: 7, distance: 14 },
+    ],
+    windows: [
+      { wall: 'north', from: 13, to: 16, sky: 'day' },
+    ],
+    furniture: [
+      // The stacks — towering ranks of records (dark wood cabinets)
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 1, z: 1 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 2, z: 1 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 3, z: 1 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 4, z: 1 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 5, z: 1 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 1, z: 3 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 2, z: 3 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 3, z: 3 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 4, z: 3 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 5, z: 3 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 1, z: 5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 2, z: 5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 3, z: 5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 4, z: 5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 5, z: 5 },
+      // Deep stacks (west rear) — optional lore run
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1, z: 8 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 2, z: 8 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1, z: 10 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 2, z: 10 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1, z: 12 },
+      // The Clerk's desk — center, unavoidable, eternal
+      { type: 'receptionDesk', x: 9, z: 6, rotation: Math.PI },
+      { type: 'chair', x: 9, z: 5, rotation: 0 },
+      { type: 'monitor', x: 9.5, z: 5.7 },
+      { type: 'deskPlantSucculent', x: 10.2, z: 5.8 },
+      // Queue posts (trash cans standing in as stanchions of bureaucracy)
+      { type: 'trashCan', x: 7, z: 9 },
+      { type: 'trashCan', x: 9, z: 9 },
+      { type: 'trashCan', x: 11, z: 9 },
+      // East reading tables
+      { type: 'desk', x: 14, z: 4, rotation: 0 },
+      { type: 'chair', x: 14, z: 5, rotation: Math.PI },
+      { type: 'desk', x: 14, z: 9, rotation: 0 },
+      { type: 'chair', x: 14, z: 10, rotation: Math.PI },
+      { type: 'motivationalPoster', x: 16, z: 0.1 },
+    ],
+    npcs: [
+      { id: 'records_clerk', x: 9, z: 5, facing: Math.PI, sitting: true, dialogId: 'records_clerk_form11c', interactRange: 2.0 },
+    ],
+    exits: [
+      { x: 9, z: 13, targetRoom: 'city_street', spawnX: 5, spawnZ: 1 },
+      { x: 10, z: 13, targetRoom: 'city_street', spawnX: 5, spawnZ: 1 },
+    ],
+    interactables: [
+      // Deep stacks: the 1947 founding file (optional, after Form 11-C)
+      { x: 1, z: 11, type: 'deep_stacks', dialogId: 'deep_stacks_file', condition: { flag: 'form_11c_done' } },
+    ],
+    playerSpawn: { x: 9, z: 12 },
+  },
+
+  // ----------------------------------------------------------
+  // C4. LUCKY'S DINER — 12x8, warm, booth 4 is the important one
+  // ----------------------------------------------------------
+  luckys_diner: {
+    id: 'luckys_diner',
+    name: "Lucky's",
+    width: 12,
+    height: 8,
+    floorColor: 0xc8b89a,
+    walls: true,
+    lighting: { ambient: 0xffe2b8, ambientIntensity: 0.66, dir: 0xffd8a8, dirIntensity: 0.72 },
+    windows: [
+      { wall: 'north', from: 1, to: 3, sky: 'day' },
+    ],
+    furniture: [
+      // Counter along the north wall with stools (lounge bar repurposed)
+      { type: 'loungeBar', x: 7.5, z: 0.8, rotation: 0 },
+      // Booths along the west wall
+      { type: 'dinerBooth', x: 1.4, z: 2, rotation: Math.PI / 2 },
+      { type: 'dinerBooth', x: 1.4, z: 4, rotation: Math.PI / 2 },
+      { type: 'dinerBooth', x: 1.4, z: 6, rotation: Math.PI / 2 },  // booth 4. yes, the third one. ask Delia.
+      // South booths
+      { type: 'dinerBooth', x: 5, z: 6.4 },
+      { type: 'dinerBooth', x: 8, z: 6.4 },
+      // Pie case (fridge standing in, proudly)
+      { type: 'fridge', x: 11, z: 1 },
+      { type: 'coffeeMachine', x: 10, z: 0.8 },
+    ],
+    npcs: [
+      // Delia Okafor, booth 4, holding court
+      { id: 'delia', x: 2.4, z: 6, facing: Math.PI / 2, sitting: true, dialogId: 'delia_booth4', interactRange: 2.0, condition: { notFlag: 'delia_moved' } },
+      // The counter regular
+      { id: 'diner_regular', x: 6, z: 1.8, facing: 0, dialogId: 'diner_regular_chat' },
+    ],
+    exits: [
+      { x: 6, z: 7, targetRoom: 'city_street', spawnX: 18, spawnZ: 1 },
+    ],
+    interactables: [],
+    playerSpawn: { x: 6, z: 6 },
+  },
+
+  // ----------------------------------------------------------
+  // C5. THE ROASTERY (née VAULTS FARGO No. 1) — 14x10
+  // ----------------------------------------------------------
+  old_branch: {
+    id: 'old_branch',
+    name: 'The Roastery',
+    width: 14,
+    height: 10,
+    floorColor: 0xb8a488,
+    floorPattern: 'hardwood',
+    walls: true,
+    lighting: { ambient: 0xffd8b0, ambientIntensity: 0.6, dir: 0xffc898, dirIntensity: 0.68 },
+    windows: [
+      { wall: 'north', from: 8, to: 11, sky: 'day' },
+    ],
+    furniture: [
+      // Espresso bar where the teller line used to be
+      { type: 'loungeBar', x: 4, z: 1, rotation: 0 },
+      { type: 'coffeeMachine', x: 2, z: 0.8 },
+      { type: 'coffeeMachine', x: 6, z: 0.8 },
+      // 1947 marble: grand painting + the old teller window frames
+      { type: 'grandPainting', x: 12.5, z: 0.4 },
+      // Cafe tables (desks + chairs in casual arrangement)
+      { type: 'coffeeTable', x: 3, z: 5 },
+      { type: 'chair', x: 3, z: 6, rotation: Math.PI },
+      { type: 'chair', x: 3, z: 4, rotation: 0 },
+      { type: 'coffeeTable', x: 7, z: 5.5 },
+      { type: 'chair', x: 7, z: 6.5, rotation: Math.PI },
+      { type: 'coffeeTable', x: 10, z: 4 },
+      { type: 'chair', x: 10, z: 5, rotation: Math.PI },
+      { type: 'leatherArmchair', x: 11.5, z: 7, rotation: -Math.PI / 2 },
+      { type: 'plant', x: 0.8, z: 8.8 },
+      { type: 'plant', x: 13, z: 8.8 },
+    ],
+    npcs: [
+      // The barista who knows about the basement
+      { id: 'barista', x: 4, z: 2.2, facing: Math.PI, dialogId: 'barista_vault', interactRange: 1.8 },
+      // Delia relocates here once she decides to get the seal
+      { id: 'delia', x: 11.5, z: 6, facing: -Math.PI / 2, dialogId: 'delia_roastery', condition: { flag: 'delia_moved', notFlag: 'has_recorder_seal' } },
+    ],
+    exits: [
+      { x: 0, z: 5, targetRoom: 'city_street', spawnX: 24, spawnZ: 5 },
+      // Basement stairs (behind the bar, gated by the barista dialog)
+      { x: 13, z: 9, targetRoom: 'old_vault', spawnX: 1, spawnZ: 1 },
+    ],
+    interactables: [],
+    playerSpawn: { x: 1, z: 5 },
+  },
+
+  // ----------------------------------------------------------
+  // C6. THE FIRST VAULT — 8x8, 1947 marble, box 0001
+  // ----------------------------------------------------------
+  old_vault: {
+    id: 'old_vault',
+    name: 'The First Vault',
+    width: 8,
+    height: 8,
+    floorColor: 0x8a8278,
+    walls: true,
+    lighting: { ambient: 0xc8b89a, ambientIntensity: 0.42, dir: 0xd8c8a8, dirIntensity: 0.5 },
+    lights: [
+      { type: 'point', color: 0xffd890, intensity: 1.2, x: 4, y: 2.4, z: 4, distance: 9 },
+    ],
+    furniture: [
+      // The original deposit boxes — 1947 ironwork
+      { type: 'lockbox', x: 0.875, z: 0.2, rotation: 0, variant: 1.75 },
+      { type: 'lockbox', x: 2.625, z: 0.2, rotation: 0, variant: 1.75 },
+      { type: 'lockbox', x: 4.375, z: 0.2, rotation: 0, variant: 1.75 },
+      { type: 'lockbox', x: 6.125, z: 0.2, rotation: 0, variant: 1.75 },
+      { type: 'lockbox', x: 7.36, z: 0.875, rotation: -Math.PI / 2, variant: 1.75 },
+      { type: 'lockbox', x: 7.36, z: 2.625, rotation: -Math.PI / 2, variant: 1.75 },
+      // Roastery storage creeping in — the present invading the past
+      { type: 'fileCabinet', variant: 0x6a5238, x: 1, z: 6.8 },
+      { type: 'fileCabinet', variant: 0x6a5238, x: 2, z: 6.8 },
+      { type: 'popcornPopper', x: 6.5, z: 6.5 },
+      { type: 'cobweb', x: 7.4, z: 0.6 },
+    ],
+    npcs: [],
+    exits: [
+      { x: 0, z: 1, targetRoom: 'old_branch', spawnX: 12, spawnZ: 8 },
+    ],
+    interactables: [
+      // Box 0001 — Delia's seal, oiled and waiting since 2009
+      { x: 4, z: 1, type: 'box_0001', dialogId: 'vault_box_0001' },
+    ],
+    playerSpawn: { x: 1, z: 1 },
   },
 };
 

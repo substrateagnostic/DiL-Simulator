@@ -24,7 +24,7 @@ const ROOMS = [
   // Act 6½ city rooms (no-op until they exist)
   'city_street', 'transit_bus', 'records_hall', 'luckys_diner', 'old_branch', 'old_vault',
 ];
-const FIGHTS = ['intern', 'karen', 'chad', 'grandma', 'compliance', 'rachel_boss', 'algorithm'];
+const FIGHTS = ['intern', 'karen', 'chad', 'grandma', 'compliance', 'rachel_boss', 'algorithm', 'the_firm', 'parking_enforcer'];
 
 const shots = [
   ...ROOMS.map(r => ({ name: `room-${r}`, url: `${BASE}/?dev&fixture=${fixture}&shot=${r}&hud=0`, wait: 1500 })),

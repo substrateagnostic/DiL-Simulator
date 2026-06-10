@@ -117,6 +117,27 @@ export const ENCOUNTERS = {
     postDialogId: 'rachel_boss_defeated',
     canFlee: false,
   },
+  // ── Act 6½ — The Countersignature ─────────────────────────────────
+  parking_enforcer: {
+    enemyId: 'parking_enforcer',
+    preDialogId: 'parking_enforcer_intro',
+    postDialogId: 'parking_enforcer_defeated',
+    canFlee: true,
+  },
+  networking_guy: {
+    enemyId: 'networking_guy',
+    preDialogId: 'networking_guy_intro',
+    postDialogId: 'networking_guy_defeated',
+    canFlee: true,
+  },
+  // The Firm ambushes in the old vault as the seal comes out — 3v1+party.
+  the_firm: {
+    enemyIds: ['firm_partner', 'firm_associate', 'firm_paralegal'],
+    preDialogId: 'the_firm_ambush',
+    postDialogId: 'the_firm_defeated',
+    canFlee: false,
+    boss: true,
+  },
   cfos_assistant: {
     enemyId: 'cfos_assistant',
     preDialogId: 'cfos_assistant_combat',

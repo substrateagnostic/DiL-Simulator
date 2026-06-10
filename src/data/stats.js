@@ -518,12 +518,143 @@ export const ENEMY_STATS = {
       { hpThreshold: 0, abilities: ['total_optimization', 'algorithmic_trading', 'predictive_model', 'process_termination', 'pattern_recognition'] },
     ],
   },
+
+  // ── Act 6½ — The Countersignature (the city) ────────────────────────
+  parking_enforcer: {
+    name: 'Officer Reyes, Parking Enforcement',
+    maxHP: 380,
+    hp: 380,
+    atk: 16,
+    def: 12,
+    spd: 12,
+    xpReward: 90,
+    abilities: ['enforcer_citation', 'enforcer_chalk', 'enforcer_boot'],
+    weakness: 'legal', resistance: 'social',
+  },
+  networking_guy: {
+    name: 'The Networking Guy',
+    maxHP: 320,
+    hp: 320,
+    atk: 13,
+    def: 8,
+    spd: 14,
+    xpReward: 85,
+    abilities: ['networking_pitch', 'networking_coffee_chat', 'networking_synergy'],
+    weakness: 'social', resistance: null,
+  },
+  firm_partner: {
+    name: 'The Firm — Partner',
+    maxHP: 520,
+    hp: 520,
+    atk: 19,
+    def: 14,
+    spd: 12,
+    xpReward: 160,
+    abilities: ['firm_service', 'firm_injunction', 'firm_billable_blitz'],
+    weakness: 'legal', resistance: 'social',
+  },
+  firm_associate: {
+    name: 'The Firm — Associate',
+    maxHP: 420,
+    hp: 420,
+    atk: 16,
+    def: 11,
+    spd: 14,
+    xpReward: 120,
+    abilities: ['firm_motion', 'firm_discovery_dump', 'firm_objection'],
+    weakness: 'audit', resistance: null,
+  },
+  firm_paralegal: {
+    name: 'The Firm — Paralegal',
+    maxHP: 360,
+    hp: 360,
+    atk: 12,
+    def: 13,
+    spd: 16,
+    xpReward: 110,
+    abilities: ['firm_filing', 'firm_exhibit', 'firm_continuance'],
+    weakness: 'social', resistance: 'audit',
+  },
 };
 
 // Pick a random message from an array, or return the string if it's not an array
 export function pickMessage(msg) {
   return Array.isArray(msg) ? msg[Math.floor(Math.random() * msg.length)] : msg;
 }
+
+// ── Act 6½ city enemy abilities (appended to ENEMY_ABILITIES below) ──
+const CITY_ABILITIES = {
+  // Officer Reyes, Parking Enforcement
+  enforcer_citation: { name: 'Citation', power: 18, type: 'attack', tag: 'legal', messages: [
+    '"Code 14-211(b). Standing in a no-standing zone." You were not standing in a zone. You were standing in a conversation.',
+    'Reyes writes the ticket without looking down. The pen never stops moving.',
+    '"You can contest it downtown." She says "downtown" the way other people say "purgatory."',
+  ]},
+  enforcer_chalk: { name: 'Chalk Mark', power: 0, type: 'debuff', debuff: { spd: -5 }, duration: 2, messages: [
+    'Reyes chalks your shoe. You are now being timed.',
+    '"Two-hour limit." She taps her watch. The watch has no face.',
+    'A chalk line appears across your path. Crossing it feels expensive.',
+  ]},
+  enforcer_boot: { name: 'The Boot', power: 26, type: 'attack', messages: [
+    'Reyes deploys The Boot. You are not a car. The Boot does not care.',
+    '"Immobilization is standard procedure for repeat offenders." You have never met her before.',
+  ]},
+
+  // The Networking Guy
+  networking_pitch: { name: 'Elevator Pitch', power: 14, type: 'attack', tag: 'social', messages: [
+    '"So what I\'m building is basically Uber for trusts." The pitch physically hurts.',
+    '"I see you\'re in fiduciary. We should jam on that." Jam. He says jam.',
+    'He hands you a business card. It is somehow still warm.',
+  ]},
+  networking_coffee_chat: { name: 'Quick Coffee?', power: 6, type: 'dot', duration: 3, messages: [
+    '"Just fifteen minutes of your time" begins consuming hours of your life.',
+    'The coffee chat has no agenda and no end. Your Patience drains on a schedule.',
+    '"Let me share my screen real quick." You are outdoors. He finds a way.',
+  ]},
+  networking_synergy: { name: 'Synergy', power: 0, type: 'buff', buff: { atk: 6, spd: 4 }, duration: 2, messages: [
+    '"This is exactly the kind of cross-pollination I\'m here for!" He grows stronger off the buzzwords.',
+    'He says "win-win" and visibly levels up.',
+  ]},
+
+  // The Firm — they finish each other's service of process
+  firm_service: { name: 'Service of Process', power: 22, type: 'attack', tag: 'legal', messages: [
+    '"You\'ve been—" "—served." The envelope hits like a closing argument.',
+    'Three hands present one document. It is warm from the courthouse printer.',
+    '"Consider yourself—" "—noticed." "—formally." They bow in sequence.',
+  ]},
+  firm_injunction: { name: 'Emergency Injunction', power: 0, type: 'debuff', debuff: { atk: -6, def: -4 }, duration: 2, messages: [
+    '"We have obtained—" "—an emergency order—" "—enjoining your confidence."',
+    'A judge somewhere signs something. You feel it in your Composure.',
+  ]},
+  firm_billable_blitz: { name: 'Billable Blitz', power: 30, type: 'attack', messages: [
+    'The Firm moves as one. Six minutes of fury, billed as a full hour.',
+    '"Our rate increased—" "—when you made us—" "—come downtown."',
+  ]},
+  firm_motion: { name: 'Motion to Compel', power: 18, type: 'attack', tag: 'legal', messages: [
+    'The Associate files a motion at your face.',
+    '"Compelling." The word is a weapon and a review of your performance.',
+  ]},
+  firm_discovery_dump: { name: 'Discovery Dump', power: 7, type: 'dot', duration: 3, messages: [
+    'Forty thousand pages of discovery arrive. Some are relevant. Finding out which is your problem now.',
+    'The Associate produces documents. And produces. And produces.',
+  ]},
+  firm_objection: { name: 'Objection', power: 0, type: 'debuff', debuff: { atk: -5 }, duration: 2, messages: [
+    '"Objection." To what? "To that."',
+    'The Associate objects to your entire approach, generally and with prejudice.',
+  ]},
+  firm_filing: { name: 'Expedited Filing', power: 15, type: 'attack', messages: [
+    'The Paralegal files faster than you can read. The stapler sounds like a metronome.',
+    'Tabs. Color-coded tabs everywhere. You are being organized into submission.',
+  ]},
+  firm_exhibit: { name: 'Exhibit A', power: 0, type: 'debuff', debuff: { def: -6 }, duration: 2, messages: [
+    'The Paralegal holds up Exhibit A. It is a photograph of you, looking unprepared.',
+    '"Let the record show." The record shows.',
+  ]},
+  firm_continuance: { name: 'Motion for Continuance', power: 0, type: 'heal', healAmount: 60, messages: [
+    'The Paralegal buys time the way only a paralegal can: legitimately.',
+    '"We request a brief recess." The Firm regroups, hydrates, bills for it.',
+  ]},
+};
 
 // Enemy ability definitions
 export const ENEMY_ABILITIES = {
@@ -962,6 +1093,9 @@ export const ENEMY_ABILITIES = {
 };
 
 // Andrew's in-combat quips
+// Merge the Act 6½ city abilities (declared above pickMessage)
+Object.assign(ENEMY_ABILITIES, CITY_ABILITIES);
+
 export const ANDREW_TAUNTS = {
   crit: [
     "That's going in the quarterly report.",

@@ -17,4 +17,10 @@ export const BESTIARY_DATA = {
   cfos_assistant: { name: "CFO's Assistant", category: 'Boss', quip: 'Had my severance pre-drafted. Efficient, I\'ll give them that.' },
   regional_director: { name: 'Regional Director', category: 'Boss', quip: 'His time was worth $4,200/hour. Mine was priceless.' },
   algorithm: { name: 'The Algorithm', category: 'Final Boss', quip: 'It missed the one variable that matters: trust.' },
+  // ── Act 6½ — the city ──
+  parking_enforcer: { name: 'Officer Reyes, Parking Enforcement', category: 'Municipal', quip: 'Has never lost an appeal. Has never granted one either.' },
+  networking_guy: { name: 'The Networking Guy', category: 'Hazard', quip: 'His podcast has four listeners. Three are his mother.' },
+  firm_partner: { name: 'The Firm — Partner', category: 'Litigation', quip: 'Bills in six-minute increments. Blinks in six-minute increments.' },
+  firm_associate: { name: 'The Firm — Associate', category: 'Litigation', quip: 'Has not seen the sun since the bar exam.' },
+  firm_paralegal: { name: 'The Firm — Paralegal', category: 'Litigation', quip: 'The only one of the three who knows where anything is.' },
 };

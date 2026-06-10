@@ -36,12 +36,13 @@ function toon(color, opts = {}) {
   const key = `${color}_${opts.stops || 3}_${opts.emissive || 0}_${opts.smooth ? 's' : 'f'}`;
   if (cache[key]) return cache[key];
 
+  // NOTE: MeshToonMaterial ignores flatShading (three r183) — the low-poly
+  // faceted look is carried by geometry choice instead (icosahedron heads,
+  // hex/pentagon cylinders, low segment counts). The `smooth` opt is kept
+  // in the cache key for future material-level experiments.
   const mat = new THREE.MeshToonMaterial({
     color: new THREE.Color(color),
     gradientMap: (opts.stops === 4) ? gradientMap4 : gradientMap3,
-    // Flat shading is the house style — faceted low-poly, Necropolis-adjacent.
-    // Pass { smooth: true } for the rare surface that should stay soft.
-    flatShading: !opts.smooth,
   });
 
   if (opts.emissive) {
