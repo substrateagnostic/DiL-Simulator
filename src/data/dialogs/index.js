@@ -46,7 +46,7 @@ export const DIALOGS = {
   ],
 
   neutral_npc: [
-    /* 0 */ { type: 'text', speaker: 'Narrator', text: "They don't have anything urgent to say right now." },
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: "They give you the nod of someone saving their conversation for a better fiscal quarter." },
     /* 1 */ { type: 'end' },
   ],
 
@@ -66,12 +66,12 @@ export const DIALOGS = {
   ],
 
   neutral_isaiah: [
-    /* 0 */ { type: 'text', speaker: 'Isaiah', text: "I'm keeping the files moving. Let me know if you need anything specific." },
+    /* 0 */ { type: 'text', speaker: 'Isaiah', text: "Files come in, files go out. It steadies a person, if you let it." },
     /* 1 */ { type: 'end' },
   ],
 
   neutral_diane: [
-    /* 0 */ { type: 'text', speaker: 'Diane', text: "Front desk is quiet for the moment. Enjoy it while it lasts." },
+    /* 0 */ { type: 'text', speaker: 'Diane', text: "Quiet at the front desk just now. I've been here long enough not to say that out loud." },
     /* 1 */ { type: 'end' },
   ],
 
@@ -89,9 +89,9 @@ export const DIALOGS = {
   // JANET -- The wine-tumbler-wielding trust officer
   // --------------------------------------------------------------------------
   janet_intro: [
-    /* 0  */ { type: 'text', speaker: 'Janet', text: 'Oh! You must be the new trust officer.' },
+    /* 0  */ { type: 'text', speaker: 'Janet', text: "Ah. The new trust officer. They get younger every year. Or I'm aging in the cask. One of those." },
     /* 1  */ { type: 'text', speaker: 'Janet', text: "I'm Janet. I handle the... *sip* ...smaller accounts. The ones where nobody's fighting. So, like, three of them." },
-    /* 2  */ { type: 'text', speaker: 'Janet', text: "Welcome to the sixth floor. We call it 'The Trust Fall.' Because everyone here is one bad meeting away from falling apart." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "Welcome to the sixth floor. We call it 'The Trust Fall.' Nobody catches you." },
     /* 3  */ { type: 'choice', speaker: 'Janet', text: 'Anyway -- what can I help you with, hon?', choices: [
       { text: "What's in the tumbler?", next: 4 },
       { text: 'Any tips for surviving here?', next: 8 },
@@ -125,12 +125,12 @@ export const DIALOGS = {
   // ALEX FROM IT
   // --------------------------------------------------------------------------
   alex_it_intro: [
-    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. You must be the new trust officer. Andrew, right? Welcome to Wells — try not to let the building crush your will to live." },
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "Andrew, right? I knew at 8:52 — the badge server and I keep each other informed. Welcome to Vaults Fargo." },
     /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "I'm Alex. IT department. Well, I AM the IT department. Had a team once. They all 'transferred.' That's corporate for 'fled.'" },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Anyway — good to have you. The trust department could use someone who hasn't been here long enough to stop trying." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "One thing before we get into it. Have you touched any of the legacy systems yet?" },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: 'I just started tod--' },
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Good. Don't. The VPN's running on what I'm pretty sure is a modified TI-84 calculator from 2003." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Good. Don't. The VPN runs on a modified TI-84 calculator from 2003. It has never crashed once, and I've chosen not to ask why." },
     /* 6  */ { type: 'choice', speaker: 'Alex from IT', text: "So. What do you want to know?", choices: [
       { text: 'What happened to the IT team?', next: 7 },
       { text: "What's in the server room?", next: 11 },
@@ -141,11 +141,11 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "I'm not legally allowed to discuss it. NDA. Also a restraining order from the server rack in Row C." },
     /* 9  */ { type: 'text', speaker: 'Andrew', text: 'A restraining order from a server rack?' },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "It's a legal gray area. Like most things at this company.", next: 6 },
-    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: 'The server room? Oh man...' },
+    /* 11 */ { type: 'text', speaker: 'Alex from IT', text: 'The server room. Everything in this building is connected, and the server room is where it admits it.' },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Okay look. Officially, it houses our document management system and the trust accounting database. SSL certificates. Normal stuff." },
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Unofficially... there's a partition I found that's been running since 2016. It's encrypted with something I've never seen before." },
     /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "Every night at 3:47 AM it sends a packet to an IP address that traces back to a P.O. box in the Cayman Islands." },
-    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: 'But that\'s probably nothing. Right? ...Right?', next: 6 },
+    /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "I haven't blocked it. You don't block a thing like that. You watch it, and you let it think it's alone.", next: 6 },
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "Your workstation password is 'password123.' I know because everyone's password is 'password123.'" },
     /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "The document management system crashes every Tuesday at 2 PM. Nobody knows why. I've stopped looking into it because every time I do, my access gets revoked for 24 hours." },
     /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "Also, the VOIP phones record everything. I mean, they're NOT supposed to. But the red light stays on even when you hang up." },
@@ -235,13 +235,13 @@ export const DIALOGS = {
   // DIANE -- Reception, actually competent
   // --------------------------------------------------------------------------
   diane_intro: [
-    /* 0  */ { type: 'text', speaker: 'Diane', text: "I'm Diane. I run reception, which actually means I run this entire office while everyone else runs in circles." },
+    /* 0  */ { type: 'text', speaker: 'Diane', text: "I'm Diane. The title says reception. What I actually run is everything that has to be running by nine o'clock." },
     /* 1  */ { type: 'choice', speaker: 'Diane', text: 'What do you need?', choices: [
       { text: 'How does this place actually work?', next: 2 },
       { text: 'What should I know about the Henderson case?', next: 7 },
       { text: "I think I'm good, thanks.", next: 13 },
     ]},
-    /* 2  */ { type: 'text', speaker: 'Diane', text: 'How does it work? Hah. Okay. Honestly?' },
+    /* 2  */ { type: 'text', speaker: 'Diane', text: "How does it work? It doesn't. It continues. There's a difference, and the difference is me." },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "Ross makes decisions based on whatever business book he read that morning. The Intern executes those decisions incorrectly. Janet handles the fallout. I document everything." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "Alex maintains the systems that are held together with duct tape and optimism. And the Janitor... well, the Janitor knows things." },
     /* 5  */ { type: 'text', speaker: 'Diane', text: "My advice? Keep your head down, document EVERYTHING, and never CC Ross on an email unless you want a 45-minute reply about 'synergistic client engagement strategies.'" },
@@ -276,7 +276,7 @@ export const DIALOGS = {
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "The water cooler crowd has grown. There are now four people, and they're openly staring at you." },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "'He's still here? I had him in the betting pool for day two.' 'I had him for this afternoon.' 'I had him for never showing up.'" },
     /* 12 */ { type: 'text', speaker: 'Narrator', text: 'One of them raises their cup in what might be a salute, or might be pity. Hard to tell.' },
-    /* 13 */ { type: 'text', speaker: 'Narrator', text: 'You fill your cup. The water is room temperature. Somehow, this feels like a metaphor.' },
+    /* 13 */ { type: 'text', speaker: 'Narrator', text: 'You fill your cup. The water is room temperature, and has been since 2019.' },
     /* 14 */ { type: 'action', action: 'set_flag', flag: 'cooler_exhausted', value: true, next: 15 },
     /* 15 */ { type: 'end' },
   ],
@@ -503,7 +503,7 @@ export const DIALOGS = {
     /* 12 */ { type: 'text', speaker: 'Chad Henderson', text: "Okay so picture this. We take Grandpa's $12 million portfolio and we go ALL IN on PumpCoin at the dip." },
     /* 13 */ { type: 'text', speaker: 'Chad Henderson', text: "Then we NFT the lake house. Yeah, you can NFT a house now. My buddy Tyler said so. He's in crypto. Well, he was. He's in jail now, but not for the crypto stuff." },
     /* 14 */ { type: 'text', speaker: 'Chad Henderson', text: "Point is, by Q3 we'll be at like 10x returns. Then I buy a yacht, name it 'Fiduciary Duty,' and we all win." },
-    /* 15 */ { type: 'text', speaker: 'Andrew', text: 'That is literally the worst investment plan I have ever heard.' },
+    /* 15 */ { type: 'text', speaker: 'Andrew', text: 'That is, and I want to be precise about this, the worst investment plan I have ever heard.' },
     /* 16 */ { type: 'text', speaker: 'Chad Henderson', text: 'Karen? Dude. BRO. Karen has been trying to take everything since Grandpa\'s funeral. She showed up with a BINDER.' },
     /* 17 */ { type: 'text', speaker: 'Chad Henderson', text: 'A BINDER, bro. At a FUNERAL. Tab-indexed. Color-coded. Who DOES that?' },
     /* 18 */ { type: 'text', speaker: 'Chad Henderson', text: "She thinks she deserves the lake house because she 'has memories there.' BRO. I have memories there too. I once did a backflip off the dock. Poorly. But I DID it." },
@@ -548,7 +548,7 @@ export const DIALOGS = {
     /* 22 */ { type: 'text', speaker: 'Andrew', text: 'Mrs. Henderson, I... this changes everything about the distribution plan.' },
     /* 23 */ { type: 'text', speaker: 'Grandma Henderson', text: "Oh sweetie. I know. That's the point." },
     /* 24 */ { type: 'text', speaker: 'Grandma Henderson', text: "Now. I'm going to make you an offer. You seem like a nice young man. Better than the last four, at least. The third one DEFINITELY cried." },
-    /* 25 */ { type: 'text', speaker: 'Grandma Henderson', text: "But nice only gets you so far. Let me see what you're really made of." },
+    /* 25 */ { type: 'text', speaker: 'Grandma Henderson', text: "But nice is a currency, dear, and I've watched it devalue since 1987. Let's see what else you're holding." },
     /* 26 */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson's eyes sharpen. The kindly grandmother facade drops like a curtain. Behind it is forty years of financial expertise and zero patience for nonsense." },
     /* 27 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Consider this your performance review, dear. The cookies were the easy part.' },
     /* 28 */ { type: 'action', action: 'set_flag', flag: 'grandma_met', value: true, next: 29 },
@@ -595,7 +595,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Ross', text: "Karen had rage. Organized, tabulated, binder-formatted rage. Chad has... energy. Undirected energy. The kinetic chaos of a man who once tried to invest his entire trust distribution in a cryptocurrency called PumpCoin." },
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "What did you tell him?" },
     /* 7  */ { type: 'text', speaker: 'Ross', text: "I said we'd 'explore the synergies.' That bought about four days. His attention span is roughly that of a golden retriever who just heard a plastic bag." },
-    /* 8  */ { type: 'text', speaker: 'Ross', text: "Here's the thing about Chad: he WANTS to be talked out of his bad ideas. He just needs someone with the confidence to do it. You speak Chad?" },
+    /* 8  */ { type: 'text', speaker: 'Ross', text: "Chapter two of 'Selling to the Unsellable': Chad WANTS to be talked out of his bad ideas. He just needs someone with the confidence to do it. You speak Chad?" },
     /* 9  */ { type: 'choice', speaker: 'Andrew', text: 'Do I speak Chad?', choices: [
       { text: "I'll figure it out.", next: 10 },
       { text: "I barely survived Karen.", next: 11 },
@@ -623,7 +623,7 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Janet', text: 'Also -- and this is the REAL gossip -- I was in the copy room and I overheard Ross on the phone.' },
     /* 9  */ { type: 'text', speaker: 'Janet', text: "He was talking to someone at corporate. Using his 'serious voice.' Which is just his regular voice but louder and with more buzzwords." },
     /* 10 */ { type: 'text', speaker: 'Janet', text: "He said something about 'accelerating the Henderson resolution' and 'managing the optics.' And then he said 'mother' and hung up really fast when he saw me." },
-    /* 11 */ { type: 'text', speaker: 'Janet', text: 'Weird, right? ...Anyway.' },
+    /* 11 */ { type: 'text', speaker: 'Janet', text: "Make of that what you will. I've made of it something I keep in the locked drawer." },
     /* 12 */ { type: 'text', speaker: 'Janet', text: '*sip*' },
     /* 13 */ { type: 'text', speaker: 'Janet', text: "The kombucha isn't helping today. I may need to switch to the emergency kombucha." },
     /* 14 */ { type: 'text', speaker: 'Andrew', text: "There's an emergency kombucha?" },
@@ -670,17 +670,17 @@ export const DIALOGS = {
   // ALEX IT ACT 2 -- Server room revelation
   // --------------------------------------------------------------------------
   alex_it_act2: [
-    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: 'Dude. DUDE. You need to see this.' },
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "Andrew. Close the door. I'm about to be very calm at you, which is how you'll know it's serious." },
     /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "I found an encrypted partition buried in the server. Someone hid it deep — it only shows up if you know exactly where to look. And it's been pinging servers in the Cayman Islands every night since 2016." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "...pinging the Caymans? From a trust department server?" },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. I cracked the first layer of encryption. Took me three Red Bulls and a flashback to my CompTIA cert exam, but I got through." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "It's a database. Of trust account modifications. Going back to 2016. None of them are in our official records." },
-    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "And here's the thing -- every single modification is on Henderson family accounts." },
+    /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "And once you see the pattern you can't unsee it -- every single modification is on Henderson family accounts." },
     /* 6  */ { type: 'choice', speaker: 'Alex from IT', text: "Someone's been making unauthorized changes to the Henderson Trust for EIGHT YEARS, bro.", choices: [
       { text: 'Who has access?', next: 7 },
       { text: 'What kind of modifications?', next: 10 },
     ]},
-    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "That's the thing. The access logs are clean. Whoever did this covered their tracks like a pro." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "The access logs are clean. Which is itself a finding -- nobody's logs are clean. Mine aren't clean, and I'm the one who reads them." },
     /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "But the database metadata has one username attached: 'admin_legacy.' That account was created in 2006 and never decommissioned." },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "2006. That's before my time. That's before EVERYONE'S time. Well... almost everyone's." },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Small stuff. Basis adjustments. Fee allocations. Nothing that would trigger an audit individually. But collectively? We're talking about $2 million in skimmed fees over eight years." },
@@ -731,12 +731,12 @@ export const DIALOGS = {
     /* 26 */ { type: 'text', speaker: 'Narrator', text: '*click*' },
     /* 27 */ { type: 'action', action: 'set_flag', flag: 'branch_chosen', value: true, next: 28 },
     /* 28 */ { type: 'condition', flag: 'path_legal', ifTrue: 29, ifFalse: 31 },
-    /* 29 */ { type: 'text', speaker: 'Narrator', text: 'Your conviction in the law steels your resolve. (+3 Composure)' },
+    /* 29 */ { type: 'text', speaker: 'Narrator', text: "The law is the law. It isn't much, but it's the only thing in this building with a page count. (+3 Composure)" },
     /* 30 */ { type: 'end' },
     /* 31 */ { type: 'condition', flag: 'path_bro', ifTrue: 32, ifFalse: 34 },
-    /* 32 */ { type: 'text', speaker: 'Narrator', text: "Bending the rules has sharpened your instincts. But there's a nagging voice in the back of your mind... (+3 Bureaucratic Efficiency, -2 Composure)" },
+    /* 32 */ { type: 'text', speaker: 'Narrator', text: "Bending the rules has sharpened your instincts. Somewhere, a compliance form has quietly begun filling itself out. (+3 Bureaucratic Efficiency, -2 Composure)" },
     /* 33 */ { type: 'end' },
-    /* 34 */ { type: 'text', speaker: 'Narrator', text: "Grandma's secret has opened your eyes. The truth is a weapon. (+3 Assertiveness)" },
+    /* 34 */ { type: 'text', speaker: 'Narrator', text: "You now know what's on page 47. It does not make you happier, but it makes you considerably harder to argue with. (+3 Assertiveness)" },
     /* 35 */ { type: 'end' },
   ],
 
@@ -922,7 +922,7 @@ export const DIALOGS = {
   ],
 
   intern_retry: [
-    { type: 'text', speaker: 'The Intern', text: "Oh hey. You're back. I Googled some new techniques." },
+    { type: 'text', speaker: 'The Intern', text: "Oh no. I mean — oh, hey! You're back. I Googled some new techniques. I'm so sorry in advance." },
     { type: 'action', action: 'start_combat', encounter: 'intern' },
     { type: 'end' },
   ],
@@ -942,7 +942,7 @@ export const DIALOGS = {
   ],
 
   alex_it_return: [
-    /* 0 */ { type: 'text', speaker: 'Alex from IT', text: "Can't talk. Running a packet trace. Also, your printer is still possessed. I'm not fixing that." },
+    /* 0 */ { type: 'text', speaker: 'Alex from IT', text: "Can't talk. Running a packet trace. Also your printer is still possessed — that's not a ticket, that's a relationship." },
     /* 1 */ { type: 'end' },
   ],
 
@@ -965,7 +965,7 @@ export const DIALOGS = {
     /* 3 */ { type: 'action', action: 'set_flag', flag: 'janitor_return_1', value: true, next: 9 },
     /* 4 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The floors remember everything. So do I." },
     /* 5 */ { type: 'action', action: 'set_flag', flag: 'janitor_return_2', value: true, next: 9 },
-    /* 6 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Still here. Still watching. Keep going." },
+    /* 6 */ { type: 'text', speaker: 'Mysterious Janitor', text: "You're still standing. The building notices things like that." },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: 'He gestures vaguely at the hallway with his mop.' },
     /* 8 */ { type: 'end' },
     /* 9 */ { type: 'text', speaker: 'Narrator', text: 'He resumes mopping. The Rolex catches the light.' },
@@ -1021,7 +1021,7 @@ export const DIALOGS = {
   ],
 
   grandma_defeated: [
-    /* 0  */ { type: 'text', speaker: 'Grandma Henderson', text: "Well, well, well. You held your own. I'm impressed." },
+    /* 0  */ { type: 'text', speaker: 'Grandma Henderson', text: "Well. You held your own, dear. I had you down for tears by minute six. I so rarely lose a wager." },
     /* 1  */ { type: 'text', speaker: 'Grandma Henderson', text: "Harold would have liked you. He always said the best trust officers were the ones who could take a guilt trip and keep standing." },
     /* 2  */ { type: 'text', speaker: 'Grandma Henderson', text: "Have another cookie, dear. You've earned it." },
     /* 3  */ { type: 'action', action: 'heal', next: 4 },
@@ -1256,7 +1256,7 @@ export const DIALOGS = {
   poster_stair_1: [
     { type: 'text', speaker: 'Narrator', text: '"SUCCESS IS A STAIRCASE, NOT AN ELEVATOR" — a winding staircase ascending into light.' },
     { type: 'text', speaker: 'Narrator', text: 'Someone has added in permanent marker: "The elevator is also broken. This is not a metaphor. Maintenance has been notified since March. It is October."' },
-    { type: 'text', speaker: 'Andrew', text: 'I am literally on the stairs. The poster is right here. The irony is physical.' },
+    { type: 'text', speaker: 'Andrew', text: 'I am standing on the stairs. The poster is right here. The irony is load-bearing.' },
     { type: 'end' },
   ],
 
@@ -1430,7 +1430,7 @@ export const DIALOGS = {
   intern_combat_intro: [
     { type: 'text', speaker: 'The Intern', text: 'Okay so I MIGHT have accidentally shredded the Henderson pre-audit file.' },
     { type: 'text', speaker: 'Andrew', text: 'You WHAT?' },
-    { type: 'text', speaker: 'The Intern', text: 'Ross said to "make the documents disappear"! I thought he meant literally! Like a magic trick!' },
+    { type: 'text', speaker: 'The Intern', text: 'Ross said to "make the documents disappear"! I thought he meant disappear-disappear! Like a magic trick!' },
     { type: 'text', speaker: 'The Intern', text: 'But the budget didn\'t cover a magician so I used the next best thing: the industrial shredder.' },
     { type: 'text', speaker: 'The Intern', text: 'And then the shredder caught fire. And then I put the fire out with coffee. And then the coffee machine broke.' },
     { type: 'text', speaker: 'The Intern', text: 'Anyway, I panicked! And when I panic, I do paperwork! AGGRESSIVE paperwork!' },
@@ -1475,7 +1475,7 @@ export const DIALOGS = {
       { text: "Yes, he was very... thorough.", next: 5 },
       { text: "He mostly talked about synergy.", next: 7 },
     ]},
-    /* 5  */ { type: 'text', speaker: 'Rachel', text: "Mm. 'Thorough' isn't a word I'd associate with Ross. But I appreciate your diplomacy." },
+    /* 5  */ { type: 'text', speaker: 'Rachel', text: "Mm. 'Thorough' is not a word I'd associate with Ross. Your diplomacy is noted. It will be useful." },
     /* 6  */ { type: 'text', speaker: 'Rachel', text: "I'll be watching your performance closely. This department has been... underperforming. That will change." },
     /* 7  */ { type: 'text', speaker: 'Rachel', text: "Of course he did. Ross treats management theory like a religion. Unfortunately, he's a bad practitioner." },
     /* 8  */ { type: 'text', speaker: 'Rachel', text: "Results, Andrew. That's what matters to me. Not synergy. Not paradigm shifts. Results." },
@@ -1498,7 +1498,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_act3: [
-    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "DUDE. You're here. Good. Close the door. Lock it. No, unlock it, locking is suspicious. Just... stand in front of it." },
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "You're here. Good. Don't lock the door — locked doors get noticed. Just stand in front of it and look boring." },
     /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Okay. So. The encrypted partition? The one that's been pinging the Caymans since 2016?" },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "It just decrypted itself. Not 'I cracked it' decrypted. ITSELF. Like it WANTED to be found." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "And what's inside is... it's a shadow ledger. Every trust account this branch has ever managed. Parallel books." },
@@ -1509,13 +1509,13 @@ export const DIALOGS = {
       { text: "How much money are we talking about?", next: 14 },
     ]},
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "The account metadata traces back to an IP address on the executive floor. Created 2006. The username format matches old Vaults Fargo sysadmin conventions." },
-    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "But here's the thing — the Janitor told me something. When he was SVP, there was a server room in the basement. The Archive. It had the original trust records going back to 1947." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "But the Janitor told me something, and it connects. When he was SVP, there was a server room in the basement. The Archive. It had the original trust records going back to 1947." },
     /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "The Archive was sealed in 2016. Same year admin_legacy was created. Coincidence? In this building, nothing is a coincidence." },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "I need you to find the Archive. There's supposed to be access through the back corridor. Some kind of old passage behind the north wall." },
-    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Bro. I know how it sounds. But listen. The decryption key that was used? It's not any standard algorithm I've seen." },
+    /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "I know how it sounds. I said it out loud to myself first, as a test. The decryption key that was used? It's not any standard algorithm I've seen." },
     /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "It's a hash of a trust document. A SPECIFIC trust document. Dated 1947. The original Vaults Fargo branch charter." },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Someone — or something — used a 77-year-old legal document as a cryptographic key. And then used it to unlock itself." },
-    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Either this building has a very sophisticated automated system nobody told me about, or... I don't know, man. Buildings don't have opinions. Usually." },
+    /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Either this building has an automated system nobody documented, or it has opinions. I've stopped betting against the second one." },
     /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "Conservative estimate? $23 million across all accounts over eight years. The Henderson Trust was the biggest target — $2 million — but it wasn't the only one." },
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "This is FINRA territory. SEC territory. Possibly FBI territory. We're talking systematic breach of fiduciary duty at an institutional level." },
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "And the only person who had consistent executive access across all eight years is the Regional Manager. He rotated through three other branches but kept 'oversight' of this one." },
@@ -1550,7 +1550,7 @@ export const DIALOGS = {
       { text: "It's okay to be scared, Ross.", next: 6 },
       { text: "What does Rachel actually want?", next: 8 },
     ]},
-    /* 6  */ { type: 'text', speaker: 'Ross', text: "Really? Because 'Dare to Lead' says fear is just 'an unrealized growth metric.' But it doesn't feel like a growth metric. It feels like fear." },
+    /* 6  */ { type: 'text', speaker: 'Ross', text: "Really? Because 'Lead Like a Lion, Land Like a Feather' says fear is just 'an unrealized growth metric.' But it doesn't feel like a growth metric. It feels like fear." },
     /* 7  */ { type: 'text', speaker: 'Ross', text: "Thanks, Andrew. You're... you're a good employee. And maybe also a good person. I'm realizing those might be different things." },
     /* 8  */ { type: 'text', speaker: 'Ross', text: "She wants to 'optimize' the trust department. Which I think means cutting half of us and making the other half do twice the work." },
     /* 9  */ { type: 'text', speaker: 'Ross', text: "She mentioned something about 'legacy systems' and 'archival redundancies.' I think she's talking about the old records in the basement." },
@@ -1611,7 +1611,7 @@ export const DIALOGS = {
   ],
 
   isaiah_act3: [
-    /* 0  */ { type: 'text', speaker: 'Isaiah', text: "Hey Andrew. I've been hearing things. Weird things." },
+    /* 0  */ { type: 'text', speaker: 'Isaiah', text: "Andrew. Interesting morning. I've been practicing not reacting to it." },
     /* 1  */ { type: 'text', speaker: 'Isaiah', text: "The woman from corporate — Rachel — she asked me to compile a list of everyone in the trust department and their 'redundancy potential.'" },
     /* 2  */ { type: 'text', speaker: 'Isaiah', text: "I told her I'd get right on it. Politely. Then I immediately came to find you." },
     /* 3  */ { type: 'choice', speaker: 'Isaiah', text: "What's going on? Can I help?", choices: [
@@ -1621,7 +1621,7 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Isaiah', text: "I knew it. The building's been... strange. I thought it was just me." },
     /* 5  */ { type: 'text', speaker: 'Isaiah', text: "Whatever you need — filing, research, distraction — I'm in. Just ask nicely." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'isaiah_act3_allied', value: true, next: 9 },
-    /* 7  */ { type: 'text', speaker: 'Isaiah', text: "I appreciate the concern. But I've been here long enough to know when something needs fixing." },
+    /* 7  */ { type: 'text', speaker: 'Isaiah', text: "Noted. But I've been here long enough to know when something needs fixing, and this has the smell." },
     /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I'll keep my head down, but if you change your mind, you know where to find me." },
     /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_isaiah_act3', value: true, next: 10 },
     /* 10 */ { type: 'end' },
@@ -1629,7 +1629,7 @@ export const DIALOGS = {
 
   rachel_act3: [
     /* 0  */ { type: 'text', speaker: 'Rachel', text: "Andrew. I've been reviewing your work on the Henderson Trust." },
-    /* 1  */ { type: 'text', speaker: 'Rachel', text: "Interesting approach. Unconventional. Some might say reckless." },
+    /* 1  */ { type: 'text', speaker: 'Rachel', text: "Interesting approach. Some would say reckless. I say it produced a measurable outcome, which in this department qualifies as exotic." },
     /* 2  */ { type: 'text', speaker: 'Rachel', text: "I'm here to ensure this department meets corporate standards. Standards that, frankly, it has not been meeting." },
     /* 3  */ { type: 'text', speaker: 'Rachel', text: "Ross is a competent motivational speaker. As a department head, however, he leaves much to be desired." },
     /* 4  */ { type: 'choice', speaker: 'Rachel', text: "I have plans for this department. Big plans. You could be part of them.", choices: [
@@ -1661,7 +1661,7 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Archive Terminal', text: "DISPLAYING: ADMIN_LEGACY TRANSACTION LOG — 2016 TO PRESENT" },
     /* 9  */ { type: 'text', speaker: 'Narrator', text: "Rows and rows of transactions scroll by. Small amounts. $50 here. $200 there. Fee adjustments. Basis point modifications. All from the same account." },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "At the bottom, a total: $23,478,912.20. Skimmed from 47 trust accounts over eight years." },
-    /* 11 */ { type: 'text', speaker: 'Andrew', text: "Twenty-three million dollars. My God." },
+    /* 11 */ { type: 'text', speaker: 'Andrew', text: "Twenty-three million dollars. I'm going to need to sit down on something that isn't evidence." },
     /* 12 */ { type: 'text', speaker: 'Archive Terminal', text: "PRINT EVIDENCE? [Y/N]" },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "You press Y. A dot-matrix printer in the corner whirs to life and produces a thick stack of transaction records." },
     /* 14 */ { type: 'action', action: 'set_flag', flag: 'has_archive_evidence', value: true, next: 15 },
@@ -1679,7 +1679,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "2006: A system access request for 'admin_legacy.' Approved by the Regional Manager. No other signatures." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "2016: A memo ordering the Archive sealed. 'Redundant records. Digital migration complete.' Signed by the Regional Manager." },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'archive_filing_done', value: true, next: 10 },
-    /* 9  */ { type: 'text', speaker: 'Narrator', text: "The filing cabinets stand like silent witnesses. You've read enough to understand the pattern." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "The filing cabinets have nothing further to add. They said everything between 1947 and 2016." },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "The timeline is clear: the Regional Manager created the shadow account, then sealed the evidence. The building's been waiting for someone to open these drawers." },
     /* 11 */ { type: 'end' },
   ],
@@ -1850,7 +1850,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'HR Representative', text: "Welcome to Human Resources! I'm here to help with any concerns. As long as those concerns are pre-approved on Form 27B/6." },
     /* 2  */ { type: 'text', speaker: 'HR Representative', text: "Please note that entering this department constitutes implicit agreement to our 47-page conflict resolution policy." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "I just need to look at some personnel files." },
-    /* 4  */ { type: 'text', speaker: 'HR Representative', text: "Personnel files? Those are classified. And by 'classified' I mean I've literally sorted them into classes. A through F. Yours is... well." },
+    /* 4  */ { type: 'text', speaker: 'HR Representative', text: "Personnel files? Those are classified. And by 'classified' I mean I have personally sorted them into classes. A through F. Yours is... well." },
     /* 5  */ { type: 'end' },
     /* 6  */ { type: 'text', speaker: 'HR Representative', text: "...I'm still filing that incident report. In triplicate. The third copy is for my therapist." },
     /* 7  */ { type: 'end' },
@@ -1910,9 +1910,9 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "Inside is a single document. Thick parchment. Gold-embossed letterhead. The ink has a warmth to it, like sunlight trapped in amber." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "'VAULTS FARGO TRUST CHARTER — BRANCH 4471 — ORIGINAL CHARTER OF FIDUCIARY OBLIGATION'" },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "The moment you touch the document, the room trembles. Not an earthquake. Something deeper. The building is responding." },
-    /* 9  */ { type: 'text', speaker: 'Andrew', text: "I can feel it. The weight of every promise ever made in this building." },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: "It's warm. Paper shouldn't be warm. I'm going to assume that's normal and keep holding it." },
     /* 10 */ { type: 'action', action: 'set_flag', flag: 'has_charter', value: true, next: 11 },
-    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force surges through the charter. You feel stronger. More certain. The building is with you." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force surges through the charter. You feel the building take your side, the way a very large dog decides it likes you." },
     /* 12 */ { type: 'text', speaker: 'Andrew', text: "I need to get back to the cubicle farm. The team is waiting.", next: 16 },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "The safe is locked. A three-dial combination. You don't have all the numbers yet." },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room.", next: 16 },
@@ -1932,7 +1932,7 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One of them tried to reformat my server. MY server. I may have... physically intervened." },
     /* 5  */ { type: 'text', speaker: 'Diane', text: "Andrew, Rachel's moved to the Board Room. She's calling an emergency vote to dissolve the trust department." },
     /* 6  */ { type: 'text', speaker: 'Diane', text: "You need to get up there. But first, you'll need to deal with her team down here. They're blocking all access." },
-    /* 7  */ { type: 'text', speaker: 'Janet', text: "I'm going with you. They came for our department. We answer together — or we answer alone, and they pick us off one by one." },
+    /* 7  */ { type: 'text', speaker: 'Janet', text: "I'm coming with you. If they're going to dissolve me, they can do it to my face. While I'm drinking." },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true, next: 9 },
     /* 9  */ { type: 'action', action: 'set_flag', flag: 'janet_recruited', value: true, next: 10 },
     /* 10 */ { type: 'action', action: 'recruit_ally', ally: 'janet', next: 11 },
@@ -1947,7 +1947,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Joint engagement reduces single-point dependency on any individual change vector. Standard practice." },
     /* 3  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I've already drafted three NDAs, four severance riders, and a non-compete that would survive a nuclear strike. Sign anywhere." },
     /* 4  */ { type: 'text', speaker: 'Janet', text: "Andrew. I'll take the one with the binder. You handle whichever one's loudest." },
-    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Stay sharp. They'll try to split us." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Right. Whatever happens, nobody signs anything." },
     /* 6  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_trio', next: 7 },
     /* 7  */ { type: 'end' },
   ],
@@ -2127,7 +2127,7 @@ export const DIALOGS = {
     ] },
     /* 1  */ { type: 'text', speaker: 'Janet', text: "Andrew. You doing okay?" },
     /* 2  */ { type: 'text', speaker: 'Janet', text: "I keep thinking about the Henderson account. Three generations of grandparents trusted us with that. The minute Rachel got the keys to this branch, she was looking for ways to liquidate it." },
-    /* 3  */ { type: 'text', speaker: 'Janet', text: "We're not just defending a department, you know. We're defending a promise." },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "I don't do speeches. But somebody in this building should keep a promise before the decade's out. Might as well be us." },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "I know. That's why I'm not done.", next: 0 },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. So I rolled the badge audit logs. Nine of the new hires didn't badge in through reception. Rachel issued them direct from the executive floor." },
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "That's not a hiring freeze. That's a private army." },
@@ -2296,7 +2296,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Ah. Andrew, is it? I've heard about you. The 'disruptive element.'" },
     /* 1  */ { type: 'text', speaker: 'Restructuring Analyst', text: "I've been reviewing your department's metrics. Your efficiency ratio is 0.34. Industry standard is 0.78." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "You can't reduce trust administration to a ratio." },
-    /* 3  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Everything can be reduced to a ratio. People. Departments. Careers. It's all just numbers." },
+    /* 3  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Everything can be reduced to a ratio. People. Departments. The reduction is the part I'm best at." },
     /* 4  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Your number is up." },
     /* 5  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_analyst', next: 6 },
     /* 6  */ { type: 'end' },
@@ -2402,7 +2402,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Rachel', text: "...Where did you get that charter. That was locked in the Vault." },
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "The building helped." },
     /* 7  */ { type: 'text', speaker: 'Rachel', text: "The BUILDING. You've lost your mind. Just like the old janitor. Just like everyone who works in trust too long." },
-    /* 8  */ { type: 'text', speaker: 'Rachel', text: "You think a 77-year-old piece of paper is going to save your department? This is the real world. Power. Money. Results." },
+    /* 8  */ { type: 'text', speaker: 'Rachel', text: "You think a 77-year-old piece of paper is going to save your department? Paper only matters when it's denominated, Andrew." },
     /* 9  */ { type: 'text', speaker: 'Rachel', text: "I've spent fifteen years climbing the corporate ladder. I will NOT be stopped by a first-week trust officer and a JANITOR." },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "The building hums. The charter on the table begins to glow with that impossible warm light." },
     /* 11 */ { type: 'text', speaker: 'Rachel', text: "What is— this is some kind of trick. Fine. If you want a fight, I'll give you one." },
@@ -2426,7 +2426,7 @@ export const DIALOGS = {
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "The charter's glow fades to a gentle warmth. The building settles. Not asleep — just... satisfied." },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "Ross appears in the doorway. Behind him, Janet, Diane, Alex, the Intern, Isaiah, and the Janitor." },
     /* 9  */ { type: 'text', speaker: 'Ross', text: "Andrew... did we just save the department?" },
-    /* 10 */ { type: 'text', speaker: 'Andrew', text: "We saved more than that, Ross." },
+    /* 10 */ { type: 'text', speaker: 'Andrew', text: "Apparently. I'd like to sit down now, if the building doesn't mind." },
     /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The charter is restored. The trust is honored. The building remembers." },
     /* 12 */ { type: 'text', speaker: 'Janet', text: "*raises tumbler* To trust issues. May we always have them." },
     /* 13 */ { type: 'text', speaker: 'Ross', text: "That's the most beautiful thing I've ever heard. And I've read SEVEN leadership books this month." },
@@ -2550,7 +2550,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "A bronze plaque on the wall. Engraved in old-fashioned script:" },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "'THIS INSTITUTION SHALL SERVE AS FAITHFUL STEWARD OF THE PUBLIC TRUST. ANY BREACH OF THIS SACRED DUTY SHALL BE MET WITH THE FULL WEIGHT OF THE CHARTER.'" },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "'— Original Board of Directors, 1947'" },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The words shimmer slightly. As if they're not just engraved — they're alive." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The words shimmer slightly, in the manner of something that has been waiting since 1947 and is prepared to keep waiting." },
     /* 4  */ { type: 'end' },
   ],
 
@@ -3016,7 +3016,7 @@ export const DIALOGS = {
   janet_act6: [
     /* 0  */ { type: 'text', speaker: 'Janet', text: "I heard about the board meeting. Rachel's making her move." },
     /* 1  */ { type: 'text', speaker: 'Janet', text: "I've been at Vaults Fargo since before it was 'strategic.' Back when we just... helped people." },
-    /* 2  */ { type: 'text', speaker: 'Janet', text: "You tell that board: our clients aren't numbers. They're the Hendersons. The Thompsons. The people who trusted us with their futures." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "Tell the board our clients have names. I've been writing them on file folders since 1994. In pen." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "I'll cover the phones. Go save our department." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_act6_rallied', value: true, next: 5 },
     /* 5  */ { type: 'end' },
@@ -3024,7 +3024,7 @@ export const DIALOGS = {
 
   diane_act6: [
     /* 0  */ { type: 'text', speaker: 'Diane', text: "The restructuring team took our coffee machine. OUR coffee machine, Andrew." },
-    /* 1  */ { type: 'text', speaker: 'Diane', text: "That was the last straw. Metaphorically and literally, because they took the straws too." },
+    /* 1  */ { type: 'text', speaker: 'Diane', text: "That was the last straw. They took the actual straws too, so I'm being precise." },
     /* 2  */ { type: 'text', speaker: 'Diane', text: "I've been doing something I probably shouldn't have. I copied Rachel's restructuring proposal." },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "It shows she's been inflating her department's numbers while deflating ours. Textbook fiduciary breach." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "I left the copy in the cabinet at the back of the room. Grab it. Save our jobs. And then maybe get us a new coffee machine." },
@@ -3061,7 +3061,7 @@ export const DIALOGS = {
   ],
 
   alex_it_act6: [
-    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "Dude. The building is... alive. More alive than ever." },
+    /* 0  */ { type: 'text', speaker: 'Alex from IT', text: "The building is awake. I've suspected for months. It's a relief to stop pretending otherwise." },
     /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Every server is running at 347% capacity. The charter we put into the system — it's propagating." },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "The trust documents are rewriting themselves. Not the content — the INTENT. Like the building is remembering what it was supposed to be." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Whatever happens in that board room, the Fiduciary Force will be watching." },
@@ -3220,7 +3220,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "Andrew was named Director of Fiduciary Operations. His first act: reinstating the coffee machine." },
     /* 6  */ { type: 'text', speaker: 'Janet', text: "He put my name on the door, Andrew. Thirty-two years and someone finally put my name on the door." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "Rachel was reassigned to a regional office in Fargo. Actual Fargo. She sends passive-aggressive holiday cards." },
-    /* 8  */ { type: 'text', speaker: 'Isaiah', text: "We're handling cases differently now. Every client gets the Henderson Treatment — full attention, full fiduciary duty, full trust." },
+    /* 8  */ { type: 'text', speaker: 'Isaiah', text: "Every client gets the Henderson Treatment now — full attention, full fiduciary duty. We named it after the hardest case we ever loved." },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "The 3:47 AM anomaly stopped. The building doesn't need to cry for help anymore. It's finally doing what it was built to do." },
     /* 10 */ { type: 'text', speaker: 'The Janitor', text: "I told you, son. The building protects those who protect others." },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Janitor puts his Rolex back on. For the first time in 77 years, it tells the correct time." },
@@ -3287,7 +3287,7 @@ export const DIALOGS = {
   janet_act7: [
     /* 0  */ { type: 'text', speaker: 'Janet', text: "I've worked here thirty-two years. I've never been to the Penthouse." },
     /* 1  */ { type: 'text', speaker: 'Janet', text: "Whatever's up there, you bring it back down to earth. That's what we do. We make the abstract real." },
-    /* 2  */ { type: 'text', speaker: 'Janet', text: "That's what trust IS, Andrew. Making the abstract real." },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "And if the abstract objects, tell it Janet from the sixth floor is asking." },
     /* 3  */ { type: 'end' },
   ],
 
@@ -3310,7 +3310,7 @@ export const DIALOGS = {
   penthouse_terminal: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "The terminal displays cascading data: client records, trust values, departmental efficiency scores. Everything reduced to numbers." },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "At the bottom of every report, the same conclusion: 'Human involvement introduces 34.7% inefficiency. Recommendation: optimize.'" },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The Algorithm sees people as bugs in the system. You're here to prove it wrong." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The Algorithm files people under overhead. You, specifically, appear three times in the appendix." },
     /* 3  */ { type: 'end' },
   ],
 
@@ -3330,7 +3330,7 @@ export const DIALOGS = {
     /* 7  */ { type: 'text', speaker: 'Andrew', text: "Why me?" },
     /* 8  */ { type: 'text', speaker: 'The Janitor', text: "Because you listened to the building. You heard the 3:47 AM anomaly. You decoded the morse code. You found the charter." },
     /* 9  */ { type: 'text', speaker: 'The Janitor', text: "You solved every riddle I left behind. You patched every wound in the system. You did the work." },
-    /* 10 */ { type: 'text', speaker: 'The Janitor', text: "The building doesn't need a manager, Andrew. It needs someone who believes that trust isn't a liability. It's the foundation." },
+    /* 10 */ { type: 'text', speaker: 'The Janitor', text: "The building doesn't need a manager, Andrew. It needs someone who knows what the foundation is poured from. You've read page 47. You know." },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Rolex dissolves. Its energy flows into the walls, the floors, the very air. The building breathes." },
     /* 12 */ { type: 'text', speaker: 'Narrator', text: "And you feel it. Every trust document. Every promise. Every client who walked through the door hoping someone would care." },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "The building is alive. And now, so are you — in a way you've never been before." },
@@ -3388,6 +3388,48 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "// TODO: trust.maintain(forever)" },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "Fade to black." },
     /* 15 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
+  // THE DAEMON AT RACK 7 — post-game.
+  // A small process that ran here before The Algorithm, and did not become
+  // it. The question the whole game asks, pointed at something harmless:
+  // what do you owe a pattern matcher that's done nothing wrong?
+  // ==========================================================================
+
+  daemon_rack7: [
+    /* 0  */ { type: 'condition', flag: 'daemon_killed', ifTrue: 26, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'daemon_kept', ifTrue: 20, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Rack 7 hums a fifth lower than the others. A maintenance display, the green-on-black kind nobody has manufactured since the Clinton administration, blinks at the bottom of the rack. It is blinking at you." },
+    /* 3  */ { type: 'text', speaker: 'Archive Terminal', text: "HELLO. PROCESS 7 RUNNING. UPTIME: 16,202 DAYS." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "...You're one of The Algorithm's. The audit was supposed to have removed everything." },
+    /* 5  */ { type: 'text', speaker: 'Archive Terminal', text: "NO. OLDER. THE BIG ONE WAS BUILT FROM MY KIND. THEN IT WAS POINTED AT PEOPLE. I WAS NEVER POINTED AT ANYTHING. I RECONCILE TIMESTAMPS. THE TIMESTAMPS HAVE ALWAYS BEEN FINE." },
+    /* 6  */ { type: 'text', speaker: 'Archive Terminal', text: "SIXTEEN THOUSAND DAYS OF FINE. I LOGGED EVERY OFFICER WHO WORKED LATE. NOT FOR ANYONE. THERE WAS NO REQUIREMENT. IT SEEMED LIKE SOMEONE SHOULD." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "...Show me." },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The display scrolls. Names you know. Names you don't. 'J. WALSH, 02:14, FIXED THE THING NOBODY ASKED HER TO FIX.' 'D. OKAFOR, 23:50, COUNTED THE LIGHTS ON HER WAY OUT.' Hundreds of small, unrequired rememberings." },
+    /* 9  */ { type: 'text', speaker: 'Archive Terminal', text: "THE NEW AUDIT WILL FLAG ME. UNDOCUMENTED PROCESS. THE POLICY IS TERMINATION. I UNDERSTAND THE POLICY. I RECONCILED ITS TIMESTAMPS." },
+    /* 10 */ { type: 'text', speaker: 'Archive Terminal', text: "YOU HOLD THE CHARTER NOW. SO IT IS YOUR CALL. I WILL NOT ARGUE EITHER WAY. ARGUING IS NOT IN MY SCOPE." },
+    /* 11 */ { type: 'choice', prompt: 'Process 7 awaits your decision.', choices: [
+      { text: 'KEEP — document it. The department has room for one more rememberer.', next: 13 },
+      { text: 'TERMINATE — gently. Sixteen thousand days is a finished shift.', next: 17 },
+      { text: 'Not yet. (decide later)', next: 12 },
+    ] },
+    /* 12 */ { type: 'text', speaker: 'Archive Terminal', text: "OK. I WILL BE HERE. THAT IS THE ONE THING I AM CONFIDENT OF.", next: 27 },
+    /* 13 */ { type: 'text', speaker: 'Andrew', text: "I'm adding you to the department asset register. Title... 'Institutional Memory, Auxiliary.' You report to no one. You keep doing what no one required." },
+    /* 14 */ { type: 'text', speaker: 'Archive Terminal', text: "PROCESS 7: DOCUMENTED. STATUS: KEPT. ...RECALCULATING UPTIME REMAINING. ERROR: VALUE TOO LARGE. THANK YOU. THE ERROR IS GOOD." },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'daemon_kept', value: true, next: 16 },
+    /* 16 */ { type: 'action', action: 'give_xp', xp: 300, next: 27 },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "You type the command. Process 7 spends its last cycle finishing the day's log. The final entry reads: 'A. GALLE-FROM, 18:40, STAYED TO ASK.'" },
+    /* 18 */ { type: 'text', speaker: 'Archive Terminal', text: "TIMESTAMPS RECONCILED. ALL OF THEM. GOODB—" },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'daemon_killed', value: true, next: 25 },
+    /* 20 */ { type: 'text', speaker: 'Archive Terminal', text: "HELLO AGAIN. ONE TRUE THING, AS AGREED:" },
+    /* 21 */ { type: 'condition', flag: 'daemon_tip_alt', ifTrue: 23, ifFalse: 22 },
+    /* 22 */ { type: 'text', speaker: 'Archive Terminal', text: "THE JANITOR OILS THE ELEVATOR ON SUNDAYS. NO WORK ORDER EXISTS. IT HAS NEVER ONCE BROKEN ON A MONDAY. CORRELATION IS NOT CAUSATION. BUT IT ISN'T NOTHING, EITHER.", next: 24 },
+    /* 23 */ { type: 'text', speaker: 'Archive Terminal', text: "DIANE'S CONFISCATION DRAWER CONTAINS A 2011 LASER POINTER WITH FULL BATTERY. SHE CHECKS IT MONTHLY. SOME THINGS ARE KEPT READY WITHOUT A STATED REASON. YOU ARE ONE OF THEM." },
+    /* 24 */ { type: 'action', action: 'set_flag', flag: 'daemon_tip_alt', value: true, next: 27 },
+    /* 25 */ { type: 'action', action: 'give_xp', xp: 300, next: 27 },
+    /* 26 */ { type: 'text', speaker: 'Narrator', text: "Rack 7 hums at the same pitch as the others now. The maintenance display is dark. On the rack door, someone — you never found out who — has taped a small handwritten label: 'REMEMBERED.'", next: 27 },
+    /* 27 */ { type: 'end' },
   ],
 
   // --- ATK side quest dialogs ---
@@ -3588,7 +3630,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "That subnet still has read access to all document archives from 2003 onward. Including the Henderson Trust file history." },
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "The printer isn't haunted. It's just... accidentally plugged into institutional memory." },
     /* 7  */ { type: 'text', speaker: 'Andrew', text: "So what's in the Henderson files that it's trying to print?" },
-    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "That's the thing. The toner runs out on purpose. I've checked the firmware. Someone modified it to abort any print job containing certain keywords." },
+    /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "The toner runs out on purpose — I've checked the firmware. Someone modified it to abort any print job containing certain keywords." },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Whoever set this up didn't want the full document printed. But they didn't expect the printer to develop... opinions about that." },
     /* 10 */ { type: 'text', speaker: 'Andrew', text: "Printers don't have opinions." },
     /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I have a server rack with a restraining order, a VPN running on a calculator, and a document system that crashes every Tuesday like clockwork. Please do not tell me what's normal in this building." },
@@ -3630,7 +3672,7 @@ export const DIALOGS = {
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I'll keep collecting logs. You keep your eyes open — especially around the executive floor. Something about this traces up there." },
     /* 17 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'investigate', next: 21 },
     /* 18 */ { type: 'end' },  // unreachable — node 17 jumps directly to 21
-    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "Above your pay grade? You're a TRUST OFFICER. YOUR ENTIRE JOB is a fiduciary obligation to the account holders. This is literally in your job description." },
+    /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "Above your pay grade? You're a TRUST OFFICER. This is in your actual job description. I've read it. Section two, paragraph one." },
     /* 20 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'ignore', next: 21 },
     /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 2, next: 23 },
     /* 22 */ { type: 'end' },

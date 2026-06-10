@@ -48,17 +48,20 @@ export class BuildingShell {
     const cx = (w - 1) / 2;      // room center in world units
     const cz = (h - 1) / 2;
 
-    // ── Ghost floor slabs above and below ──────────────────────────────
-    const slabMat = new THREE.MeshBasicMaterial({
-      color: BLUEPRINT, transparent: true, opacity: 0.05,
-      depthWrite: false, side: THREE.DoubleSide,
-    });
+    // ── Ghost floor slabs — two above, and all the way down to the
+    // city's street level so the tower has real depth below you ────────
     const slabGeo = new THREE.PlaneGeometry(fw, fh);
     const edgeGeo = new THREE.EdgesGeometry(slabGeo);
+    const LEVELS = [2, 1, -1, -2, -3, -4, -5, -6]; // -6 ≈ tower bases (~ -20)
 
-    for (const level of [-2, -1, 1, 2]) {
+    for (const level of LEVELS) {
       const y = level * STOREY + (level > 0 ? 0.4 : 0); // upper floors clear the walls
-      const slab = new THREE.Mesh(slabGeo, slabMat);
+      const depthFade = Math.max(0.25, 1 - (Math.abs(level) - 1) * 0.18);
+
+      const slab = new THREE.Mesh(slabGeo, new THREE.MeshBasicMaterial({
+        color: BLUEPRINT, transparent: true, opacity: 0.05 * depthFade,
+        depthWrite: false, side: THREE.DoubleSide,
+      }));
       slab.rotation.x = -Math.PI / 2;
       slab.position.set(cx, y, cz);
       group.add(slab);
@@ -67,7 +70,7 @@ export class BuildingShell {
         edgeGeo,
         new THREE.LineBasicMaterial({
           color: BLUEPRINT, transparent: true,
-          opacity: Math.abs(level) === 1 ? 0.22 : 0.1,
+          opacity: 0.22 * depthFade,
         })
       );
       outline.rotation.x = -Math.PI / 2;
@@ -75,14 +78,16 @@ export class BuildingShell {
       group.add(outline);
     }
 
-    // ── Corner columns spanning the visible storeys ────────────────────
+    // ── Corner columns spanning the full ghost tower ───────────────────
+    const topY = 2 * STOREY + 0.8;
+    const botY = -6 * STOREY;
     const colMat = new THREE.MeshBasicMaterial({
       color: BLUEPRINT, transparent: true, opacity: 0.1, depthWrite: false,
     });
-    const colGeo = new THREE.BoxGeometry(0.22, STOREY * 4 + 0.8, 0.22);
+    const colGeo = new THREE.BoxGeometry(0.22, topY - botY, 0.22);
     for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
       const col = new THREE.Mesh(colGeo, colMat);
-      col.position.set(cx + sx * fw / 2, 0.2, cz + sz * fh / 2);
+      col.position.set(cx + sx * fw / 2, (topY + botY) / 2, cz + sz * fh / 2);
       group.add(col);
     }
 
