@@ -33,12 +33,15 @@ const gradientMap4 = createGradientMap(4);
 const cache = {};
 
 function toon(color, opts = {}) {
-  const key = `${color}_${opts.stops || 3}_${opts.emissive || 0}`;
+  const key = `${color}_${opts.stops || 3}_${opts.emissive || 0}_${opts.smooth ? 's' : 'f'}`;
   if (cache[key]) return cache[key];
 
   const mat = new THREE.MeshToonMaterial({
     color: new THREE.Color(color),
     gradientMap: (opts.stops === 4) ? gradientMap4 : gradientMap3,
+    // Flat shading is the house style — faceted low-poly, Necropolis-adjacent.
+    // Pass { smooth: true } for the rare surface that should stay soft.
+    flatShading: !opts.smooth,
   });
 
   if (opts.emissive) {

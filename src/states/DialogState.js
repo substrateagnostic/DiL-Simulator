@@ -138,6 +138,7 @@ export class DialogState {
    */
   _showTextNode(node) {
     this.shownAnyNode = true;
+    if (node.mood) EventBus.emit('dialog-mood', { speaker: node.speaker, mood: node.mood });
     this.dialogBox.show(node.speaker || 'Narrator', node.text, null, undefined, node.mood);
 
     // Set up advance callback

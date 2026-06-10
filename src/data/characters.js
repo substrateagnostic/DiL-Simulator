@@ -40,11 +40,13 @@ export const CHARACTER_CONFIGS = {
     name: 'Alex from IT',
     bodyColor: COLORS.HAWAIIAN,
     pantsColor: 0x5a5a3a,
-    shirtColor: null,
+    shirtColor: 0x8a6a4a, // plaid flannel under the hawaiian
     tieColor: null,
-    skinColor: COLORS.SKIN_DARK,
-    hairColor: COLORS.HAIR_DARK,
+    skinColor: COLORS.SKIN,
+    hairColor: 0x9a7a4a, // sandy brown
     hairStyle: 'short',
+    beard: true,
+    beardColor: 0x8a5f38, // ginger-brown
     accessories: [],
   },
   intern: {
@@ -79,6 +81,8 @@ export const CHARACTER_CONFIGS = {
     skinColor: COLORS.SKIN_DARK,
     hairColor: COLORS.HAIR_GRAY,
     hairStyle: 'short',
+    beard: true,
+    beardColor: 0xd8d4c8, // white stubble
     accessories: ['mop', 'gold_rolex'],
     hunch: 0.16, heightScale: 0.96,
   },

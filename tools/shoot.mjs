@@ -43,15 +43,21 @@ const run = async () => {
     try {
       await page.goto(shot.url, { waitUntil: 'domcontentloaded' });
       await page.waitForFunction(() => window.__shotReady === true, { timeout: 20000 });
-      // Clear any auto-fired dialogs/toasts before capturing (room shots only —
-      // fights need their input loop untouched). Keys held ~90ms so
-      // InputManager's per-frame isJustPressed sees them.
+      // Clear any auto-fired dialogs before capturing (room shots only —
+      // fights need their input loop untouched). Enter advances dialogs and
+      // selects Resume if a menu is somehow open; held ~90ms so
+      // InputManager's per-frame isJustPressed sees it.
       if (!shot.url.includes('fight=')) {
-        for (let i = 0; i < 3; i++) {
-          await page.keyboard.down('Escape');
+        for (let i = 0; i < 10; i++) {
+          const busy = await page.evaluate(() => {
+            const t = document.body.innerText;
+            return t.includes('[ESC] Exit') || t.includes('EMPLOYEE PORTAL');
+          });
+          if (!busy) break;
+          await page.keyboard.down('Enter');
           await page.waitForTimeout(90);
-          await page.keyboard.up('Escape');
-          await page.waitForTimeout(250);
+          await page.keyboard.up('Enter');
+          await page.waitForTimeout(300);
         }
       }
       await page.waitForTimeout(shot.wait);

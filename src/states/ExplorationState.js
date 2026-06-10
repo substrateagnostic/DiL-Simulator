@@ -132,6 +132,11 @@ export class ExplorationState {
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
 
     this._listeners.push(
+      // Dialog mood → facial expression on the NPC being talked to
+      EventBus.on('dialog-mood', ({ mood }) => {
+        const expr = { angry: 'angry', smug: 'smug', worried: 'worried', defeated: 'hurt' }[mood];
+        if (expr) this.nearestNPC?.animator?.setExpression(expr, 5);
+      }),
       EventBus.on('start-combat', (data) => {
         const encounterId = typeof data === 'string' ? data : data.encounter;
         this._pendingCombat = encounterId;

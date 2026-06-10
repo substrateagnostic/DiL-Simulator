@@ -32,7 +32,7 @@ export class CombatScene {
 
   _setup() {
     this.camera.position.set(0, 1.5, 5);
-    this.camera.lookAt(0, 0.8, 0);
+    this.camera.lookAt(0, 0.95, 0);
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.5);
     this.scene.add(ambient);
@@ -133,7 +133,9 @@ export class CombatScene {
       const group = buildCharacter(config, { detailed: true });
       const animator = new CharacterAnimator(group);
       const pos = positions[i];
-      const scale = enemyIds.length === 1 ? 2.2 : 1.85;
+      // Caricature heads run bigger — slightly smaller stage scale keeps
+      // faces in frame
+      const scale = enemyIds.length === 1 ? 1.9 : 1.6;
       group.position.set(pos.x + 5.0, 0, pos.z);
       group.scale.setScalar(scale);
       group.rotation.y = Math.PI;
@@ -276,6 +278,7 @@ export class CombatScene {
   enemyAttackAnim(idx = 0) {
     const entry = this.enemyGroups[idx];
     if (!entry) return;
+    entry.animator?.setExpression('angry', 1.4);
     const startZ = entry.baseZ;
     const startX = entry.baseX;
     const startRotY = entry.baseRotY;
@@ -306,6 +309,7 @@ export class CombatScene {
   enemyHurtAnim(idx = 0) {
     const entry = this.enemyGroups[idx];
     if (!entry) return;
+    entry.animator?.setExpression('hurt', 0.9);
     this.flashEnemy(0.15, idx);
     const startX = entry.baseX;
     const s = entry.baseScale;
@@ -330,6 +334,9 @@ export class CombatScene {
   enemyDefeatAnim(idx = 0) {
     const entry = this.enemyGroups[idx];
     if (!entry) return;
+    entry.animator?.setExpression('hurt', 999);
+    // If that was the last one standing, the party celebrates
+    for (const a of this.allyGroups) a.animator?.setExpression('victory', 3.5);
     const startY = entry.group.position.y;
     const startRot = entry.group.rotation.z;
     const startScale = entry.baseScale;
@@ -353,6 +360,7 @@ export class CombatScene {
       this.flash(0xffffff, 0.06);
       return;
     }
+    entry.animator?.setExpression('angry', 0.8);
     const startX = entry.baseX;
     const startZ = entry.baseZ;
     const startRotY = entry.baseRotY;
@@ -443,6 +451,7 @@ export class CombatScene {
   allyHurtAnim(allyIndex = 0) {
     const entry = this.allyGroups[allyIndex];
     if (!entry) return;
+    entry.animator?.setExpression('hurt', 0.9);
     const startX = entry.baseX;
     entry.group.position.x = startX - 0.2;
     setTimeout(() => {
