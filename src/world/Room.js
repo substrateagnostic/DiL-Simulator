@@ -62,6 +62,7 @@ const NO_BLOCK = new Set([
   'stockTicker', 'scaledModel', 'whiskeyWall',
   'aquariumWall', 'movieScreen', 'dataVizPanel', 'megaAnalyticsScreen', 'loungeBar',
   'couch', 'popcornPopper', 'neonSign', 'coffeeTable', 'leatherArmchair', 'operatorChair',
+  'cableTray', 'monitorWall', 'aisleGlow',
 ]);
 
 export class Room {

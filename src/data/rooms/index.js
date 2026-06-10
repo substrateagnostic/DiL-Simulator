@@ -595,12 +595,20 @@ export const ROOMS = {
     walls: true,
     lighting: { ambient: 0x9fb2cc, ambientIntensity: 0.56, dir: 0xbcd4ee, dirIntensity: 0.66 },
     lights: [
-      { type: 'point', color: 0x00ff44, intensity: 0.6, x: 1, y: 2, z: 3, distance: 6 },
-      { type: 'point', color: 0x00ff44, intensity: 0.6, x: 3, y: 2, z: 3, distance: 6 },
-      { type: 'point', color: 0x00ff44, intensity: 0.6, x: 5, y: 2, z: 3, distance: 6 },
+      { type: 'point', color: 0x00ff44, intensity: 0.5, x: 1, y: 2, z: 3, distance: 6 },
+      { type: 'point', color: 0x2255ff, intensity: 0.9, x: 2, y: 1.4, z: 3, distance: 6 },  // cold aisle
+      { type: 'point', color: 0xff5511, intensity: 0.9, x: 4, y: 1.4, z: 3, distance: 6 },  // hot aisle
       { type: 'point', color: 0x4488ff, intensity: 0.8, x: 6, y: 2, z: 7, distance: 8 },
     ],
     furniture: [
+      // === Hot/cold aisle treatment + overhead cable trays ===
+      { type: 'aisleGlow', x: 2, z: 3, variant: 0x2244cc },
+      { type: 'aisleGlow', x: 4, z: 3, variant: 0xcc4411 },
+      { type: 'cableTray', x: 2, z: 3, rotation: Math.PI / 2 },
+      { type: 'cableTray', x: 4, z: 3, rotation: Math.PI / 2 },
+      // Alex's den monitor wall, arm-mounted above the desk, facing him
+      { type: 'monitorWall', x: 6, z: 6.3, rotation: Math.PI },
+
       // === Row 1 of server racks (west side) ===
       { type: 'serverRack', x: 1, z: 1, rotation: 0 },
       { type: 'serverRack', x: 1, z: 2, rotation: 0 },
@@ -974,41 +982,45 @@ export const ROOMS = {
     height: 10,
     floorColor: 0x8a7a6a,
     walls: true,
-    lighting: { ambient: 0xc8b294, ambientIntensity: 0.46, dir: 0xe2cfa0, dirIntensity: 0.58 },
+    lighting: { ambient: 0xb89a78, ambientIntensity: 0.4, dir: 0xd8c290, dirIntensity: 0.5 },
+    lights: [
+      // One hanging bulb over the center aisle — the rest is dust and memory
+      { type: 'point', color: 0xffcc77, intensity: 1.4, x: 5.5, y: 2.4, z: 4, distance: 9 },
+    ],
     furniture: [
       // Rows of file cabinets — all facing south (toward player)
       // West bank
-      { type: 'fileCabinet', x: 1, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 2, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 3, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 4, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 1, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 2, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 3, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 4, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 1, z: 5, rotation: 0 },
-      { type: 'fileCabinet', x: 2, z: 5, rotation: 0 },
-      { type: 'fileCabinet', x: 3, z: 5, rotation: 0 },
-      { type: 'fileCabinet', x: 4, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 5, rotation: 0 },
       // East bank
-      { type: 'fileCabinet', x: 7, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 8, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 9, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 10, z: 1, rotation: 0 },
-      { type: 'fileCabinet', x: 7, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 8, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 9, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 10, z: 3, rotation: 0 },
-      { type: 'fileCabinet', x: 7, z: 5, rotation: 0 },
-      { type: 'fileCabinet', x: 8, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 7, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 8, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 9, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 10, z: 1, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 7, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 8, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 9, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 10, z: 3, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 7, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 8, z: 5, rotation: 0 },
       // West cluster — south extension (NPC paces x:3-7, so x:1-2 safe)
-      { type: 'fileCabinet', x: 1, z: 7, rotation: 0 },
-      { type: 'fileCabinet', x: 2, z: 7, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 7, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 7, rotation: 0 },
       // South wall — west side (facing north into room)
-      { type: 'fileCabinet', x: 1, z: 8, rotation: Math.PI },
-      { type: 'fileCabinet', x: 2, z: 8, rotation: Math.PI },
-      { type: 'fileCabinet', x: 3, z: 8, rotation: Math.PI },
-      { type: 'fileCabinet', x: 4, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 8, rotation: Math.PI },
       // Desk with terminal in far corner
       { type: 'desk', x: 10, z: 7, rotation: -Math.PI / 2 },
       { type: 'monitor', x: 10.3, z: 7, rotation: -Math.PI / 2 },

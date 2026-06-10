@@ -296,10 +296,11 @@ export const Furniture = {
     return group;
   },
 
-  fileCabinet() {
+  // variant: optional hex color for the cabinet body (archive uses dark wood)
+  fileCabinet(variant) {
     const group = new THREE.Group();
     const bodyGeo = new THREE.BoxGeometry(0.4, 1.0, 0.5);
-    const body = new THREE.Mesh(bodyGeo, Materials.metal());
+    const body = new THREE.Mesh(bodyGeo, typeof variant === 'number' ? Materials.custom(variant) : Materials.metal());
     body.position.y = 0.5;
     group.add(body);
     // Drawer handles
@@ -1246,22 +1247,151 @@ export const Furniture = {
 
   serverRack() {
     const group = new THREE.Group();
+    // Frame with side rails
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(0.6, 1.8, 0.5),
-      Materials.custom(0x1a1a1a)
+      Materials.custom(0x14161c)
     );
     body.position.y = 0.9;
     group.add(body);
-    // Blinking lights
-    for (let i = 0; i < 6; i++) {
-      const light = new THREE.Mesh(
-        new THREE.SphereGeometry(0.012, 4, 4),
-        Materials.custom(i % 2 === 0 ? 0x00ff00 : 0x00aa00, { emissive: 0x00ff00, emissiveIntensity: 0.8 })
+    const railMat = Materials.custom(0x2a2e38);
+    for (const side of [-1, 1]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.84, 0.54), railMat);
+      rail.position.set(side * 0.29, 0.9, 0);
+      group.add(rail);
+    }
+    // Feet
+    const footGeo = new THREE.BoxGeometry(0.08, 0.06, 0.08);
+    for (const [fx, fz] of [[-0.24, -0.2], [0.24, -0.2], [-0.24, 0.2], [0.24, 0.2]]) {
+      const foot = new THREE.Mesh(footGeo, railMat);
+      foot.position.set(fx, 0.03, fz);
+      group.add(foot);
+    }
+    // Front panel: canvas of rack units — vents, LED rows, cable jacks.
+    // Three cached variants so aisles don't look cloned.
+    const variant = Math.floor(Math.random() * 3);
+    const key = `rack_panel_${variant}`;
+    if (!Furniture._rackPanels) Furniture._rackPanels = {};
+    if (!Furniture._rackPanels[key]) {
+      const c = document.createElement('canvas');
+      c.width = 64; c.height = 192;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#0c0e14';
+      ctx.fillRect(0, 0, 64, 192);
+      let y = 4;
+      while (y < 186) {
+        const unitH = [10, 14, 22][Math.floor(Math.random() * 3)];
+        if (y + unitH > 186) break;
+        ctx.fillStyle = '#181c26';
+        ctx.fillRect(3, y, 58, unitH - 2);
+        if (unitH >= 14) {
+          // Vent slits
+          ctx.fillStyle = '#0a0c10';
+          for (let vy = y + 3; vy < y + unitH - 5; vy += 3) ctx.fillRect(6, vy, 30, 1);
+        }
+        // LED cluster
+        const ledColors = ['#22ff66', '#22ff66', '#ffaa22', '#2266ff', '#ff3344'];
+        for (let i = 0; i < 4; i++) {
+          ctx.fillStyle = Math.random() < 0.75 ? ledColors[Math.floor(Math.random() * ledColors.length)] : '#1a2a1a';
+          ctx.fillRect(42 + (i % 2) * 6, y + 3 + Math.floor(i / 2) * 5, 3, 3);
+        }
+        y += unitH;
+      }
+      const tex = new THREE.CanvasTexture(c);
+      tex.minFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      Furniture._rackPanels[key] = tex;
+    }
+    const panel = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.52, 1.7),
+      new THREE.MeshBasicMaterial({ map: Furniture._rackPanels[key] })
+    );
+    panel.position.set(0, 0.9, 0.26);
+    group.add(panel);
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+    return group;
+  },
+
+  // Overhead cable tray — runs along x; rotate PI/2 to run along z.
+  // Sagging cable bundles hang beneath. NO_BLOCK.
+  cableTray() {
+    const group = new THREE.Group();
+    const trayMat = Materials.custom(0x3a3e48);
+    const tray = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.06, 0.32), trayMat);
+    tray.position.y = 2.1;
+    group.add(tray);
+    for (const side of [-1, 1]) {
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.1, 0.03), trayMat);
+      lip.position.set(0, 2.14, side * 0.15);
+      group.add(lip);
+    }
+    // Cables in the tray + sagging drops
+    const cableColors = [0x2255cc, 0xcc8822, 0x22aa66, 0xcc3344];
+    for (let i = 0; i < 4; i++) {
+      const run = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.02, 0.02, 4.4, 5),
+        Materials.custom(cableColors[i])
       );
-      light.position.set(-0.2 + (i % 3) * 0.1, 0.5 + Math.floor(i / 3) * 0.6, 0.255);
-      group.add(light);
+      run.rotation.z = Math.PI / 2;
+      run.position.set(0, 2.14, -0.1 + i * 0.07);
+      group.add(run);
+    }
+    for (let i = 0; i < 3; i++) {
+      const sag = new THREE.Mesh(
+        new THREE.TorusGeometry(0.22, 0.018, 5, 10, Math.PI),
+        Materials.custom(cableColors[i % cableColors.length])
+      );
+      sag.position.set(-1.5 + i * 1.5, 2.08, 0);
+      sag.rotation.z = Math.PI; // bow downward
+      group.add(sag);
     }
     group.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+    return group;
+  },
+
+  // Alex's den: 2x3 wall of mismatched monitors on a mount frame. NO_BLOCK.
+  monitorWall() {
+    const group = new THREE.Group();
+    const frameMat = Materials.custom(0x222630);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.04, 1.4, 6), frameMat);
+    pole.position.y = 0.7;
+    group.add(pole);
+    const crossbar = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.05, 0.05), frameMat);
+    crossbar.position.y = 1.35;
+    group.add(crossbar);
+    const variants = ['code', 'chart', 'spreadsheet', 'code', 'email', 'code'];
+    for (let i = 0; i < 6; i++) {
+      const col = i % 3, row = Math.floor(i / 3);
+      const bezel = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.38, 0.04), Materials.monitor());
+      const x = (col - 1) * 0.59;
+      const y = 1.16 + row * 0.41;
+      bezel.position.set(x, y, 0.02);
+      // The top-right one is crooked. It has always been crooked.
+      if (i === 5) bezel.rotation.z = 0.05;
+      group.add(bezel);
+      const screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(0.5, 0.32),
+        new THREE.MeshBasicMaterial({ map: Materials.officeScreen(variants[i]) })
+      );
+      screen.position.set(x, y, 0.045);
+      if (i === 5) screen.rotation.z = 0.05;
+      group.add(screen);
+    }
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+    return group;
+  },
+
+  // Emissive floor strip for hot/cold server aisles. variant = hex color.
+  aisleGlow(variant) {
+    const color = typeof variant === 'number' ? variant : 0x2244cc;
+    const strip = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.5, 4.6),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.32, depthWrite: false })
+    );
+    strip.rotation.x = -Math.PI / 2;
+    strip.position.y = 0.012;
+    const group = new THREE.Group();
+    group.add(strip);
     return group;
   },
 

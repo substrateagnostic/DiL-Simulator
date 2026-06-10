@@ -47,8 +47,8 @@ const run = async () => {
       // fights need their input loop untouched). Enter advances dialogs and
       // selects Resume if a menu is somehow open; held ~90ms so
       // InputManager's per-frame isJustPressed sees it.
-      if (!shot.url.includes('fight=')) {
-        for (let i = 0; i < 10; i++) {
+      const clearPopups = async () => {
+        for (let i = 0; i < 12; i++) {
           const busy = await page.evaluate(() => {
             const t = document.body.innerText;
             return t.includes('[ESC] Exit') || t.includes('EMPLOYEE PORTAL');
@@ -59,8 +59,11 @@ const run = async () => {
           await page.keyboard.up('Enter');
           await page.waitForTimeout(300);
         }
-      }
+      };
+      if (!shot.url.includes('fight=')) await clearPopups();
       await page.waitForTimeout(shot.wait);
+      // Some room dialogs auto-fire on a delay — clear again before capture
+      if (!shot.url.includes('fight=')) await clearPopups();
       const file = join(OUT, `${shot.name}.png`);
       await page.screenshot({ path: file });
       results.push({ name: shot.name, ok: true });
