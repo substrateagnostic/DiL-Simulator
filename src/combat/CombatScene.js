@@ -22,6 +22,11 @@ export class CombatScene {
     this.flashTimer = 0;
     this.flashColor = null;
     this._basePos = { x: 0, y: 1.5, z: 5 };
+    // Hit feel
+    this.freezeTimer = 0;     // hit-stop: freezes all animation briefly on big hits
+    this._punchT = 1;         // camera punch-in progress (1 = idle)
+    this._punchAmount = 0;
+    this._introT = 1;         // enemy slide-in progress (1 = done)
     this._setup();
   }
 
@@ -129,12 +134,14 @@ export class CombatScene {
       const animator = new CharacterAnimator(group);
       const pos = positions[i];
       const scale = enemyIds.length === 1 ? 2.2 : 1.85;
-      group.position.set(pos.x, 0, pos.z);
+      group.position.set(pos.x + 5.0, 0, pos.z);
       group.scale.setScalar(scale);
       group.rotation.y = Math.PI;
       this.scene.add(group);
-      this.enemyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: Math.PI, baseScale: scale, characterId: id });
+      this.enemyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: Math.PI, baseScale: scale, characterId: id, introDelay: i * 0.12 });
     }
+    // Enemies slide in from stage right over ~half a second
+    this._introT = 0;
 
     // Place party on the front stage
     const partyPositions = this._allyPositions(partyIds.length);
@@ -207,7 +214,27 @@ export class CombatScene {
     u.uColor4.value.set(c4);
   }
 
-  shake(intensity = 0.5) { this.shakeAmount = intensity; }
+  // Shake doubles as the central "hit feel" dispatcher: big hits also get
+  // hit-stop and a camera punch-in, so every existing call site gains juice.
+  shake(intensity = 0.5) {
+    this.shakeAmount = intensity;
+    if (intensity >= 1.0) {
+      this.hitStop(0.11);
+      this.punchIn(0.7);
+    } else if (intensity >= 0.6) {
+      this.hitStop(0.07);
+      this.punchIn(0.4);
+    }
+  }
+
+  // Freeze all combat animation for `seconds` — reads as impact weight
+  hitStop(seconds = 0.08) { this.freezeTimer = Math.max(this.freezeTimer, seconds); }
+
+  // Quick camera dolly toward the stage, easing back out over ~0.35s
+  punchIn(amount = 0.5) {
+    this._punchAmount = amount;
+    this._punchT = 0;
+  }
 
   flash(color = 0xffffff, duration = 0.15) {
     this.flashColor = new THREE.Color(color);
@@ -252,18 +279,28 @@ export class CombatScene {
     const startZ = entry.baseZ;
     const startX = entry.baseX;
     const startRotY = entry.baseRotY;
-    entry.group.position.z = startZ - 0.3;
+    const s = entry.baseScale;
+    // Anticipation: rear back and coil for 220ms...
+    entry.group.position.z = startZ - 0.55;
+    entry.group.rotation.x = -0.12;
+    entry.group.scale.set(s * 1.04, s * 0.94, s * 1.04);
     setTimeout(() => {
       if (!entry.group.parent) return;
-      entry.group.position.z = startZ + 1.5;
+      // ...then lunge hard into the player's space
+      entry.group.position.z = startZ + 1.7;
       entry.group.position.x = startX + 0.15;
       entry.group.rotation.y = startRotY + 0.08;
+      entry.group.rotation.x = 0.1;
+      entry.group.scale.set(s * 0.97, s * 1.05, s * 0.97);
       setTimeout(() => {
+        if (!entry.group.parent) return;
         entry.group.position.z = startZ;
         entry.group.position.x = startX;
         entry.group.rotation.y = startRotY;
-      }, 180);
-    }, 60);
+        entry.group.rotation.x = 0;
+        entry.group.scale.setScalar(s);
+      }, 190);
+    }, 220);
   }
 
   enemyHurtAnim(idx = 0) {
@@ -271,12 +308,22 @@ export class CombatScene {
     if (!entry) return;
     this.flashEnemy(0.15, idx);
     const startX = entry.baseX;
-    entry.group.position.x = startX + 0.2;
+    const s = entry.baseScale;
+    // Knockback + squash flinch
+    entry.group.position.x = startX + 0.25;
+    entry.group.rotation.z = -0.07;
+    entry.group.scale.set(s * 1.07, s * 0.9, s * 1.07);
     setTimeout(() => {
-      if (entry.group.parent) entry.group.position.x = startX - 0.15;
+      if (!entry.group.parent) return;
+      entry.group.position.x = startX - 0.15;
+      entry.group.rotation.z = 0.04;
+      entry.group.scale.set(s * 0.97, s * 1.04, s * 0.97);
       setTimeout(() => {
-        if (entry.group.parent) entry.group.position.x = startX;
-      }, 100);
+        if (!entry.group.parent) return;
+        entry.group.position.x = startX;
+        entry.group.rotation.z = 0;
+        entry.group.scale.setScalar(s);
+      }, 110);
     }, 100);
   }
 
@@ -407,14 +454,52 @@ export class CombatScene {
   }
 
   update(dt) {
+    // Hit-stop: freeze everything briefly so big hits land with weight
+    if (this.freezeTimer > 0) {
+      this.freezeTimer -= dt;
+      return;
+    }
+
     this.time += dt;
 
     if (this.bgMesh && this.bgMesh.material.uniforms) {
       this.bgMesh.material.uniforms.uTime.value = this.time;
     }
 
+    // Enemy intro slide-in from stage right (staggered). Each enemy stops
+    // being driven the moment it lands so combat anims can take over.
+    if (this._introT < 1.5) {
+      this._introT += dt;
+      for (const e of this.enemyGroups) {
+        const t = (this._introT - e.introDelay) / 0.5;
+        if (t >= 1 || t < 0) {
+          if (t >= 1 && !e._landed) {
+            e._landed = true;
+            e.group.position.x = e.baseX;
+          }
+          continue;
+        }
+        const ease = 1 - Math.pow(1 - t, 3);
+        e.group.position.x = e.baseX + (1 - ease) * 5.0;
+      }
+    }
+
     for (const e of this.enemyGroups) e.animator?.update(dt);
     for (const a of this.allyGroups) a.animator?.update(dt);
+
+    // The Algorithm hovers and slowly sways
+    for (let i = 0; i < this.enemyGroups.length; i++) {
+      const e = this.enemyGroups[i];
+      if (e.group.isMonolith) {
+        // Hover only — rotation belongs to CharacterAnimator's facing lerp
+        e.group.position.y = 0.2 + Math.sin(this.time * 1.8 + i) * 0.12;
+        if (e.group.screenFace) {
+          // Eye pulse via subtle scale breathing on the screen
+          const p = 1 + Math.sin(this.time * 3.2) * 0.012;
+          e.group.screenFace.scale.set(p, p, 1);
+        }
+      }
+    }
 
     // Pulse the target marker
     if (this.targetMarker && this.targetMarker.visible) {
@@ -423,16 +508,23 @@ export class CombatScene {
       this.targetMarker.rotation.z += dt * 1.2;
     }
 
+    // Camera punch-in: snap toward the stage, ease back out
+    let punchZ = 0;
+    if (this._punchT < 1) {
+      this._punchT = Math.min(this._punchT + dt / 0.35, 1);
+      punchZ = this._punchAmount * (1 - this._punchT) * (1 - this._punchT);
+    }
+
     if (this.shakeAmount > 0.01) {
       this.camera.position.set(
         this._basePos.x + (Math.random() - 0.5) * this.shakeAmount,
         this._basePos.y + (Math.random() - 0.5) * this.shakeAmount * 0.5,
-        this._basePos.z
+        this._basePos.z - punchZ
       );
       this.shakeAmount *= 0.88;
     } else {
       this.shakeAmount = 0;
-      this.camera.position.set(this._basePos.x, this._basePos.y, this._basePos.z);
+      this.camera.position.set(this._basePos.x, this._basePos.y, this._basePos.z - punchZ);
     }
 
     if (this.flashTimer > 0) {

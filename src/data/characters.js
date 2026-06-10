@@ -57,6 +57,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: ['name_tag'],
+    widthScale: 1.18, heightScale: 0.92, headScale: 1.05,
   },
   diane: {
     name: 'Diane',
@@ -79,6 +80,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_GRAY,
     hairStyle: 'short',
     accessories: ['mop', 'gold_rolex'],
+    hunch: 0.16, heightScale: 0.96,
   },
   karen: {
     name: 'Karen Henderson',
@@ -90,6 +92,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BLONDE,
     hairStyle: 'karen',
     accessories: ['purse'],
+    hunch: 0.14, headScale: 1.05,
   },
   chad: {
     name: 'Chad Henderson',
@@ -101,6 +104,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BLONDE,
     hairStyle: 'backwards_cap',
     accessories: ['protein_shake'],
+    widthScale: 1.35, heightScale: 1.06, headScale: 0.92,
   },
   grandma: {
     name: 'Grandma Henderson',
@@ -112,6 +116,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_WHITE,
     hairStyle: 'shawl',
     accessories: ['cane'],
+    heightScale: 0.76, hunch: 0.38, widthScale: 1.12, headScale: 1.12,
   },
   compliance: {
     name: 'Compliance Auditor',
@@ -134,6 +139,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_GRAY,
     hairStyle: 'short',
     accessories: ['golf_putter'],
+    widthScale: 1.15, heightScale: 1.04,
   },
   ross_boss: {
     name: 'Ross (Unhinged)',
@@ -156,6 +162,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: 0xc0c0c0, // Silver
     hairStyle: 'bob',
     accessories: ['tablet', 'pearl_earrings'],
+    heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
   },
   isaiah: {
     name: 'Isaiah',
@@ -189,6 +196,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: [],
+    widthScale: 1.28, heightScale: 1.08, headScale: 0.95,
   },
   cfos_assistant: {
     name: 'CFO\'s Assistant',
@@ -200,6 +208,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'slick',
     accessories: ['glasses'],
+    heightScale: 1.02, widthScale: 0.88,
   },
   regional_director: {
     name: 'Regional Director',
@@ -211,17 +220,19 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: [],
+    heightScale: 1.1, widthScale: 1.12,
   },
   algorithm: {
     name: 'The Algorithm',
-    bodyColor: 0x001a33, // Dark digital blue
+    build: 'monolith', // floating obsidian slab — not a person, never was
+    bodyColor: 0x001a33,
     pantsColor: 0x001020,
-    shirtColor: 0x00aaff, // Glowing blue
+    shirtColor: 0x00aaff,
     tieColor: null,
-    skinColor: 0x88ccff, // Pale digital skin
-    hairColor: 0x00ffff, // Cyan hair
+    skinColor: 0x88ccff,
+    hairColor: 0x00ffff,
     hairStyle: 'short',
-    accessories: ['glasses'],
+    accessories: [],
   },
   // Act 5 restructuring team
   brand_consultant: {
@@ -278,6 +289,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_WHITE,
     hairStyle: 'short',
     accessories: ['clipboard'],
+    heightScale: 1.12, widthScale: 1.06,
   },
   rachel_boss: {
     name: 'Rachel, SVP',
@@ -289,6 +301,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: 0xc0c0c0, // silver
     hairStyle: 'bob',
     accessories: ['tablet', 'pearl_earrings'],
+    heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
   },
 
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
