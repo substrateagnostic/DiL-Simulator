@@ -1,3 +1,30 @@
+# Session Handoff — June 10, 2026 (Overnight Sprint, Session 6)
+
+Ten phases shipped in one overnight session. Full plan + status: `.claude/plans/overnight-sprint-2026-06-10.md`. Forward roadmap: `ROADMAP.md` (root).
+
+## What Was Done
+
+1. **Dev panel V2** (`src/ui/DevPanel.js`, F2 in `?dev`) — tabs: SAVES / SKIP / TELEPORT (gate-bypassing room jump) / FIGHT (all encounters) / FLAGS (inspect/set/clear) / CHEATS (XP/AUM/heal/items), live status bar with room + tile coords. F2 toggles closed.
+2. **V2 combat overhaul** — silhouette params (`heightScale/widthScale/headScale/hunch`) per character in `characters.js`; The Algorithm is a floating obsidian **monolith** with code-rain screen (`build: 'monolith'`); hit-stop + camera punch-in dispatched from `CombatScene.shake()` thresholds; attack anticipation/lunge; squash flinch; staggered enemy slide-in intros. New hair styles `bob`/`slick`; new accessories `glasses`/`tablet`/`pearl_earrings`.
+3. **V3 lighting/post** — `EffectComposer` + bloom in Engine (shared by combat via swapped RenderPass refs); per-room `lighting` block (ambient/dir/flicker) applied in `RoomManager.loadRoom`; blueprint-grid void backdrop; blob contact shadows under characters (`userData.noFlash` guards combat white-flash).
+4. **V4 materials** — data-driven `windows` (skyline canvas day/dusk/night) in 6 rooms; baseboards + crown trim on all wall segments (`_addWallSegment` now returns an array); monitors show spreadsheet/email/code/chart canvases; desk clutter; floor pattern contrast raised.
+5. **V5 animation** — squash/stretch body bob, blinks (leftEye/rightEye refs), additive walk lean, chunkier CHAR proportions.
+6. **V1 portraits** — JRPG portrait slot in DialogBox (auto-detects `src/assets/portraits/*.png`; `mood` field on dialog nodes → `<stem>_<mood>.png` with fallback). All 15 cast portraits generated via Codex $imagegen2 (style prefix locked in `art/PROMPTS.md`), 1024² raws in `art/portraits_raw/` (gitignored), 256² runtime committed.
+7. **Arcade overhaul** — Andrew drives the coach; dust/landing/collect particles; day-night cycle; clouds + ground detail; Lawsuit Hawk (flying, duck under); Gold Watch collectible; near-miss +5; jump buffer + coyote time; exploration HUD hidden during play.
+8. **C1 roguelite** — combat mutators from client attributes (thorns/volatile/compound — handled in `CombatEngine._calcDamage` + `processTurnStart`); **Negotiate** button in ClientReviewState (ATK-scaled, 1.5×/0.75× AUM); personal bests in Stats tab (`pb_*` flags); whale referral chain (`whale_referral_pending`).
+9. **C2 personal missions** — Janet "The Vacancy" (Gary's timesheet, cubicle farm NE; rewards Binder Slam) and Janitor "The Names" (vault ledger, post-Rolex; +15 maxMP). Pattern matches existing Badge Audit/Receipts/Handbook missions.
+10. **C3 New Game+** — menu entry post-`algorithm_defeated`; carries AUM/abilities/upgrade points/cosmetics/records/arcade; resets story; `ng_plus` flag scales enemies ×1.4 HP/×1.3 ATK/×1.2 DEF/×1.25 XP in `CombatEngine._buildEnemy` (before overrides, so scripted fights stay scripted).
+
+## New gotchas
+
+- **Playwright testing**: keys must be `down → ~90ms → up` (plain press lands inside one frame and `isJustPressed` misses it). Combat can be force-started from console: `(await import('/src/core/EventBus.js')).EventBus.emit('start-combat', id)` then `emit('dialog-end')`.
+- **`ENEMY_STATS.reception_client.mutators`** is always set (possibly `[]`) by `generateClient` — stale mutators must not leak between clients.
+- **Monolith builds** expose stub limb groups so `CharacterAnimator` no-ops; don't drive `rotation.y` on them outside the animator's facing lerp (the screen will face away).
+- **`_addWallSegment` returns an array** (wall + baseboard + crown) — callers spread into the fade-mesh lists.
+- **Portrait additions need zero code** — drop `<stem>.png` (256²) into `src/assets/portraits/`; stems map from speaker names in `DialogBox.PORTRAIT_KEYS`.
+
+---
+
 # Session Handoff — April 26, 2026
 
 ## What Was Done This Session (Session 5)

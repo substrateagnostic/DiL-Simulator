@@ -13,16 +13,27 @@ file, then continue at the first non-✅ phase. Dev server may already be runnin
 
 | # | Phase | State | Commit |
 |---|-------|-------|--------|
-| 1 | F2 dev panel rewrite | 🔨 in progress | — |
-| 2 | V2 combat overhaul (silhouettes, hit feel, arenas, intros) | pending | — |
-| 3 | V3 lighting & post (rigs, blob shadows, bloom, void) | pending | — |
-| 4 | V4 materials & environment (trim, windows, furniture) | pending | — |
-| 5 | V5 character proportions & animation | pending | — |
-| 6 | V1 dialog portraits (imagegen pipeline + DialogBox slot) | pending | — |
-| 7 | Arcade overhaul (graphics + gameplay depth) | pending | — |
-| 8 | C1 roguelite deepening | pending | — |
-| 9 | C2 ally personal missions ×4 | pending | — |
-| 10 | C3 New Game+ | pending | — |
+| 1 | F2 dev panel rewrite | ✅ done | 0da00f4 |
+| 2 | V2 combat overhaul (silhouettes, hit feel, arenas, intros) | ✅ done | aec1387 |
+| 3 | V3 lighting & post (rigs, blob shadows, bloom, void) | ✅ done | 406f8e3 |
+| 4 | V4 materials & environment (trim, windows, furniture) | ✅ done | 6eaf8f0 |
+| 5 | V5 character proportions & animation | ✅ done | 98d059f |
+| 6 | V1 dialog portraits — all 15 generated, 256² runtime, verified in-game | ✅ done | be15775 + 548568c |
+| 7 | Arcade overhaul (graphics + gameplay depth) | ✅ done | 2f64945 |
+| 8 | C1 roguelite deepening | ✅ done | b73ebcc |
+| 9 | C2 ally missions (Janet Vacancy + Janitor Names; Alex/Isaiah/Diane already existed) | ✅ done | ed6e819 |
+| 10 | C3 New Game+ | ✅ done | 9187332 |
+
+## SPRINT COMPLETE — all 10 phases shipped (June 10, 2026)
+
+Follow-ups spotted during the sprint (not blocking):
+- Combat HUD could show mutator badges during reception fights (currently toast-only)
+- NG+ taunt variants would be a fun writing pass
+- Thorns mutator chip damage is visible on the HP bar but doesn't float a number
+- Playwright MCP viewport keeps collapsing to 359×202 on page reloads — re-set
+  viewport via browser_resize after every goto when verifying
+- Karen's hunch + shawl-sized hair could use a once-over in the editor's
+  Characters tab if Alex dislikes the look
 
 ## Phase implementation notes (fill in as built)
 
