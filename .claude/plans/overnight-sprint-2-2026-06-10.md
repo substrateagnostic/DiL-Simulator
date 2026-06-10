@@ -15,13 +15,29 @@ countersignature-design.md → WRITING.md, then continue at first non-✅ phase.
 
 | # | Phase | State | Commit |
 |---|-------|-------|--------|
-| P0 | Docs (this file, WRITING.md, countersignature-design.md) | 🔨 | — |
-| P1 | Screenshot pipeline: tools/shoot.mjs + ?dev fixture/shot params | pending | — |
-| P2 | Low-poly caricature characters + faces + expression system | pending | — |
-| P3 | Environment unification: flat-shading pass, IT room rework, archive mood | pending | — |
-| P4 | World outside: city backdrop, cloud shadows, act time-of-day | pending | — |
-| P5 | Act 6½ The Countersignature (6 rooms, 4 encounters, full dialog) | pending | — |
-| P6 | Art batch: delia.png + mood variants (karen/ross/janet/alex_it/rachel/janitor) | pending | — |
+| P0 | Docs (this file, WRITING.md, countersignature-design.md) | ✅ | 9294173 |
+| P1 | Screenshot pipeline: tools/shoot.mjs + ?dev fixture/shot params | ✅ 31/31 | 6c9aa47 |
+| P2 | Low-poly caricature characters + faces + expression system | ✅ | 812c960 |
+| P3 | Environment: server room rework, archive mood, new IT furniture | DONE | 7ebd7f7 |
+
+**P2 addenda:** Alex feedback applied — faces squish down under hair/hats (FACE_DROP map);
+held accessories anchor to computed handY/handX (cane plants, mop has a head); grandma shawl
+= hood + rim + chin knot. PENDING: alex_it portrait regen (late-30s, sandy hair + ginger beard,
+Dirk Gently serenity — prompt rev 2 in art/PROMPTS.md) queued for after the mood batch finishes;
+ALSO regen alex_it_angry/_smug/_worried with the new base. Mood-batch raws committed at 1024 —
+downscale to 256 (HANDOFF PowerShell snippet) and recommit when batch completes.
+| P4 | World outside: city backdrop, cloud shadows, act time-of-day | DONE | 65804d7 |
+| P5 | Act 6.5 The Countersignature (6 rooms, The Firm 3v1, full dialog, gates/objectives) | DONE | 3bcfd50 |
+| P6 | Art: Delia + 15 mood variants + alex_it rev 2, normalized 256px (34 portraits, 4.2MB) | DONE | 243cef3 |
+| P7 | STRETCH: voice-anchor refinement of existing dialog — bg agent running at session end. Protocol: review git diff src/data/dialogs/index.js (spot-check ~10 dialogs vs WRITING.md), npm run check, then commit. Agent must NOT touch structure/indices. If corrupted: git checkout -- the file and redo in chunks. | RUNNING bg | — |
+
+## Known follow-ups (not blocking)
+- City street uses standard perimeter walls — low curbs + facade strips would read more outdoors.
+- MeshToonMaterial ignores flatShading (three r183) — faceted look is geometry-driven for now.
+- Combat camera could frame 3v1 slightly wider (Firm heads near top edge).
+- charter_challenge hardcodes "Mr. Galle" — fun nod; confirm Alex approves.
+- Delia mood portraits not generated (base only — fallback works).
+- City chapter + whale referral untested end-to-end by a human.
 
 ## Phase notes (fill as built)
 
