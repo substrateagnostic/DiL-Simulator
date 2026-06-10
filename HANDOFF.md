@@ -1,3 +1,50 @@
+# Session Handoff — June 10–11, 2026 (Sprint 2 + Mobile, Session 7)
+
+Full detail: `.claude/plans/overnight-sprint-2-2026-06-10.md` (status, gotchas, follow-ups) and
+`.claude/plans/countersignature-design.md` (city chapter design). **Live on Vercel** —
+trustissues.alexgallefrom.io auto-deploys from origin/main.
+
+## What Was Done (the "100-day" run)
+
+1. **Screenshot pipeline** — `npm run shoot` (tools/shoot.mjs): headless 1920×1080 captures of
+   every room + boss into `screenshots/contact/index.html`. In-game fixtures:
+   `?dev&fixture=act7&shot=server_room` / `&fight=karen` / `&hud=0`. This replaces MCP-browser
+   verification entirely.
+2. **Low-poly caricature characters** — CharacterBuilder v3: icosahedron heads, hex-cylinder
+   torsos (taper param), real faces (brows/nose/jaw/5 swappable mouths), expression rig
+   (`CharacterAnimator.setExpression`) wired to combat events + dialog `mood`. Faces drop under
+   hair/hats (FACE_DROP map); held accessories anchor to computed hand positions; beard support
+   (alex_it, janitor, Earl).
+3. **Environment** — server room reworked (hot/cold aisles, cable trays, Alex's 6-monitor wall,
+   rack LED canvas panels), archive darkened (dark-wood cabinets, single hanging bulb).
+4. **The world outside** — CityBackdrop (64 towers, lit windows, beacons, car streaks, cloud
+   shadows) + BuildingShell (blueprint ghost tower around every interior room, six storeys deep,
+   warm ghost rooms beyond every exit). Time-of-day advances by act (Engine.setTimeOfDay).
+5. **Act 6½ — The Countersignature** — mandatory city chapter between the Rolex and the
+   penthouse (`charter_certified` now gates penthouse). Six rooms, Delia Okafor, the Form 11-C
+   chain, The Firm 3v1 boss, three optional sides. Garage south exit gated on `city_unlocked`.
+6. **WRITING.md** — voice bible (anchors per character; Alex IT = Dirk Gently per Alex). A
+   58-line refinement pass over legacy dialog landed via reviewed subagent diff.
+7. **Portraits** — 34 total at 256² (Delia, mood variants ×15, alex_it rev 2 modeled on the
+   co-creator — NEVER pass his reference photo to codex; textual description in art/PROMPTS.md).
+8. **Claude's additions** — whisper monitors (~4% show REMEMBERED) and the Daemon at Rack 7
+   (post-game KEEP/TERMINATE encounter, server room x:3 z:4).
+9. **Mobile pass** — adaptive ortho zoom (`Engine._zoomForViewport`: portrait ≈ 7/aspect,
+   landscape <540px = 8, desktop 12); dialog max-height + inner scroll (bleed impossible);
+   removed legacy `bottom:170px !important` in touch.css that floated dialogs mid-screen;
+   compact HUD/combat variants; safe-area insets; stale interact prompt hidden on pause().
+
+## New gotchas (Session 7)
+
+- **MeshToonMaterial ignores flatShading** — the low-poly look is geometry-driven.
+- **touch.css landscape overrides use `!important`** — check there first for mobile layout bugs.
+- **Monolith/animator**: never drive `rotation.y` on combat models outside the animator's
+  facing lerp (the Algorithm's screen will face away).
+- **ENEMY_ABILITIES city kit** is in `CITY_ABILITIES` (stats.js), merged via Object.assign.
+- **`_startFixture`** (main.js) is DEV_MODE-only and uses save slot 3 as scratch.
+
+---
+
 # Session Handoff — June 10, 2026 (Overnight Sprint, Session 6)
 
 Ten phases shipped in one overnight session. Full plan + status: `.claude/plans/overnight-sprint-2026-06-10.md`. Forward roadmap: `ROADMAP.md` (root).
