@@ -87,7 +87,7 @@ export class CombatState {
       this.player.getCombatStats(),
       this.actualEnemyId,
       this.enemyOverrides,
-      { enemyIds: this.enemyIdsList, partyIds: this.partyIdsList, partyOverrides }
+      { enemyIds: this.enemyIdsList, partyIds: this.partyIdsList, partyOverrides, ngPlus: !!this.player.getFlag?.('ng_plus') }
     );
 
     // Reasonable Doubt: unlock the Charter voice in the Rachel fight if the

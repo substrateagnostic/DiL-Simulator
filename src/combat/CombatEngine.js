@@ -27,7 +27,7 @@ export class CombatEngine {
       const eid = enemyIds[i];
       // Apply enemyOverrides only to the enemy whose id matches the original arg
       const overrides = (eid === enemyId) ? enemyOverrides : (opts.enemyOverrides?.[eid] || {});
-      const enemy = this._buildEnemy(eid, overrides);
+      const enemy = this._buildEnemy(eid, overrides, !!opts.ngPlus);
       if (enemy) this.enemies.push(enemy);
     }
 
@@ -109,14 +109,23 @@ export class CombatEngine {
     };
   }
 
-  _buildEnemy(enemyId, overrides = {}) {
+  _buildEnemy(enemyId, overrides = {}, ngPlus = false) {
     const base = ENEMY_STATS[enemyId];
     if (!base) return null;
+    // New Game+ scaling — applied before overrides so scripted fights
+    // (e.g. first-Karen atk:999) keep their explicit values
+    const scaled = ngPlus ? {
+      maxHP: Math.round((base.maxHP || 100) * 1.4),
+      atk: Math.round((base.atk || 10) * 1.3),
+      def: Math.round((base.def || 5) * 1.2),
+      xpReward: Math.round((base.xpReward || 0) * 1.25),
+    } : {};
     return {
       ...base,
+      ...scaled,
       ...overrides,
       enemyId,
-      hp: overrides.hp ?? base.hp ?? base.maxHP,
+      hp: overrides.hp ?? scaled.maxHP ?? base.hp ?? base.maxHP,
       buffs: [],
       dots: [],
       lastAbility: null,

@@ -7,6 +7,7 @@ import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE } from '../data/stats.js';
 import { ALLY_STATS, ALLY_ABILITIES } from '../data/allies.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { AchievementManager } from '../core/AchievementManager.js';
+import { Player } from '../entities/Player.js';
 
 export class MenuState {
   constructor(stateManager, player) {
@@ -15,6 +16,11 @@ export class MenuState {
     this.element = null;
     this.selectedIndex = 0;
     this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Achievements', 'Stats', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    // New Game+ unlocks after the Algorithm falls
+    if (player.getFlag('algorithm_defeated')) {
+      this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
+    }
+    this._ngPlusArmed = false;
     this.achievementsOverlay = null;
     this.controlsOverlay = null;
     this.audioOverlay = null;
@@ -42,6 +48,7 @@ export class MenuState {
       'Save Game':      { tag: '[SYS]',      tagColor: '#44cc88', section: 'SETTINGS' },
       'Controls':       { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
       'Audio Settings': { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
+      'New Game+':      { tag: '[NG+]',      tagColor: '#ffaa44', section: null },
       'Quit to Title':  { tag: '[EXIT]',     tagColor: '#e94560', section: null },
     };
 
@@ -185,10 +192,56 @@ export class MenuState {
       case 'Audio Settings':
         this._showAudioSettings();
         break;
+      case 'New Game+':
+        this._startNewGamePlus();
+        break;
       case 'Quit to Title':
         EventBus.emit('quit-to-title');
         break;
     }
+  }
+
+  // New Game+: story resets to Monday morning; you keep AUM, abilities,
+  // cosmetics, records, and the arcade. Enemies hit 30% harder.
+  // Two-press confirm — the first press arms it.
+  _startNewGamePlus() {
+    const items = this.element.querySelectorAll('.menu-item');
+    const idx = this.menuItems.indexOf('New Game+');
+    if (!this._ngPlusArmed) {
+      this._ngPlusArmed = true;
+      if (items[idx]) {
+        items[idx].style.color = '#ffaa44';
+        items[idx].innerHTML = items[idx].innerHTML.replace('New Game+', 'New Game+ — press again to restart the week');
+      }
+      return;
+    }
+
+    const data = this.player.serialize();
+    const freshData = new Player().serialize();
+
+    // Carry: currency, identity, growth, records, arcade — not story
+    freshData.stats.aum = data.stats.aum || 0;
+    freshData.deaths = data.deaths || 0;
+    freshData.equipped = { ...data.equipped };
+    freshData.unlockedAbilities = data.unlockedAbilities;
+    freshData.upgradePoints = data.upgradePoints;
+    freshData.questStates = data.questStates;
+
+    const CARRY_PREFIXES = ['arcade_', 'bestiary_', 'pb_'];
+    const cosmeticFlags = (Array.isArray(COSMETICS) ? COSMETICS : Object.values(COSMETICS))
+      .map(c => c.unlock?.flag)
+      .filter(Boolean);
+    freshData.flags = {};
+    for (const [k, v] of Object.entries(data.flags || {})) {
+      if (v && (CARRY_PREFIXES.some(p => k.startsWith(p)) || cosmeticFlags.includes(k))) {
+        freshData.flags[k] = v;
+      }
+    }
+    freshData.flags.ng_plus = true;
+    freshData.flags.ng_plus_count = (data.flags?.ng_plus_count || 0) + 1;
+
+    SaveManager.save(freshData);
+    window.location.reload();
   }
 
   _saveGame() {
