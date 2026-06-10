@@ -1628,6 +1628,29 @@ export class ExplorationState {
       return 'diane_handbook_offer';
     }
 
+    // Janet — The Vacancy personal mission (post-recruit, before Act 7)
+    if (id === 'janet'
+        && this.player.getFlag('janet_recruited')
+        && !this.player.getFlag('act6_complete')
+        && DIALOGS.janet_vacancy_offer
+        && !this.player.getFlag('janet_vacancy_complete')) {
+      if (this.player.getFlag('janet_has_timesheet')) {
+        return 'janet_vacancy_return';
+      }
+      return 'janet_vacancy_offer';
+    }
+
+    // Janitor — The Names personal mission (after the Rolex changes hands)
+    if (id === 'janitor'
+        && this.player.getFlag('has_rolex')
+        && DIALOGS.janitor_names_offer
+        && !this.player.getFlag('janitor_names_complete')) {
+      if (this.player.getFlag('janitor_has_ledger')) {
+        return 'janitor_names_return';
+      }
+      return 'janitor_names_offer';
+    }
+
     if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
     if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;

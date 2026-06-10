@@ -268,6 +268,8 @@ export const ROOMS = {
       { x: 15, z: 12, type: 'water_cooler', dialogId: 'water_cooler' },
       { x: 12, z: 2, type: 'printer', dialogId: 'printer_interact' },
       { x: 3, z: 10, type: 'andrews_desk', dialogId: 'andrews_desk' },
+      // Janet — The Vacancy: Gary's buried desk in the NE "supply nook"
+      { x: 16, z: 3, type: 'gary_desk', dialogId: 'janet_vacancy_search', condition: { flag: 'janet_vacancy_started' } },
       // Motivational posters
       { x: 7,  z: 0,  type: 'poster', dialogId: 'poster_cf_1' },
       { x: 6,  z: 15, type: 'poster', dialogId: 'poster_cf_2' },
@@ -1160,6 +1162,8 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 4, z: 1, type: 'safe_deposit_boxes', dialogId: 'vault_boxes' },
+      // Janitor — The Names: ledger hidden behind the low-left deposit box frame
+      { x: 1, z: 6, type: 'ledger_hiding_spot', dialogId: 'janitor_names_search', condition: { flag: 'janitor_names_started' } },
     ],
     playerSpawn: { x: 1, z: 4 },
   },

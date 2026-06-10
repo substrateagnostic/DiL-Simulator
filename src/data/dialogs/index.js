@@ -3863,4 +3863,118 @@ export const DIALOGS = {
     /* 18 */ { type: 'action', action: 'unlock_ally_ability', ally: 'diane', ability: 'termination_letter', next: 19 },
     /* 19 */ { type: 'text', speaker: 'Narrator', text: "Diane walks you through the Termination Letter — a formal compliance action that, when filed correctly, carries the full weight of the original charter. She knows every clause.", next: 16 },
   ],
+
+  // ==========================================================================
+  // JANET — Personal Mission: "The Vacancy"
+  // Reward: free unlock of `binder_slam` + 250 XP
+  // ==========================================================================
+
+  janet_vacancy_offer: [
+    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 14, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'janet_vacancy_started', ifTrue: 12, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Janet', text: "You know what, since we're apparently doing honesty now: I need a favor. It's about Gary." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "I don't think I've met Gary." },
+    /* 4  */ { type: 'text', speaker: 'Janet', text: "You haven't. Gary left in March 2019. Transferred to the Scottsdale branch. There was a cake. Lemon. I remember because I bought it." },
+    /* 5  */ { type: 'text', speaker: 'Janet', text: "HR never processed his departure. The vacancy form needs his final timesheet attached, and his final timesheet was on his desk, and his desk became the supply nook, and the form has been 'pending documentation' for six years." },
+    /* 6  */ { type: 'text', speaker: 'Janet', text: "I have been doing Gary's accounts since 2019. Unofficially. On top of mine. Because the system thinks Gary still works here, so the work routes to his desk, and his desk routes to me." },
+    /* 7  */ { type: 'choice', prompt: "Help Janet close the Gary vacancy?", choices: [
+      { text: '"Six YEARS? Where\'s the timesheet?"', next: 8 },
+      { text: '"I\'ll dig it up when I can."', next: 11 },
+    ] },
+    /* 8  */ { type: 'text', speaker: 'Janet', text: "Northeast cubicle row — the one everyone calls the supply nook. Check under the printer paper. Nobody has moved that stack since the Obama administration." },
+    /* 9  */ { type: 'text', speaker: 'Janet', text: "If you find a coffee mug that says 'GARY', do not touch it. It has achieved structural integrity." },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'janet_vacancy_started', value: true, next: 13 },
+    /* 11 */ { type: 'text', speaker: 'Janet', text: "Sure. It's waited six years. It can wait for you specifically.", next: 13 },
+    /* 12 */ { type: 'text', speaker: 'Janet', text: "Supply nook, northeast row. Under the printer paper. Avoid the mug.", next: 13 },
+    /* 13 */ { type: 'end' },
+    /* 14 */ { type: 'text', speaker: 'Janet', text: "One job. I have ONE job now. I keep opening my task queue just to look at it.", next: 13 },
+  ],
+
+  janet_vacancy_search: [
+    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 8, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'janet_vacancy_started', ifTrue: 2, ifFalse: 7 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The supply nook. Under a geological stratum of printer paper: a desk. On the desk: a timesheet, a 2019 desk calendar open to March, and a mug that says 'GARY'. The mug has contents. The contents have texture." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The timesheet's final entry, in fading ballpoint: 'Friday — 4.5 hrs. Knocked off early. Cake thing. Bye everyone, it was fine.'" },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "'It was fine.' Six years of Janet's life because nobody stapled this to a form." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "You take the timesheet. You do not touch the mug. The mug appears to notice." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'janet_has_timesheet', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "The supply nook. Reams of paper, a dead plant, and the faint sense of a workstation that gave up. Nothing you need right now.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "Gary's old desk. The paper is still here. The mug is still here. The timesheet is filed and free.", next: 9 },
+    /* 9  */ { type: 'end' },
+  ],
+
+  janet_vacancy_return: [
+    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 12, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'janet_has_timesheet', ifTrue: 2, ifFalse: 11 },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "One timesheet. Last entry March 2019: 'Bye everyone, it was fine.'" },
+    /* 3  */ { type: 'text', speaker: 'Janet', text: "That is the most Gary sentence ever committed to paper." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Janet pulls a six-year-old vacancy form from her cardigan pocket. It is folded into eighths. She has been carrying it." },
+    /* 5  */ { type: 'text', speaker: 'Janet', text: "Timesheet. Attached. Form. Complete. Vacancy. DECLARED." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "She staples it with the violence of six unpaid years. Somewhere in the payroll system, a ghost is finally laid to rest." },
+    /* 7  */ { type: 'text', speaker: 'Janet', text: "You know what I learned doing two jobs? Leverage. When you're holding everything, you learn exactly how much everything weighs. Let me show you something about binders." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janet_vacancy_complete', value: true, next: 9 },
+    /* 9  */ { type: 'action', action: 'give_xp', xp: 250, next: 13 },
+    /* 10 */ { type: 'text', speaker: 'Janet', text: "(This node intentionally left blank, like Gary's chair.)", next: 14 },
+    /* 11 */ { type: 'text', speaker: 'Janet', text: "Supply nook. Northeast row. Under the paper. The mug is load-bearing — leave it.", next: 14 },
+    /* 12 */ { type: 'text', speaker: 'Janet', text: "One job. Still feels illegal.", next: 14 },
+    /* 13 */ { type: 'action', action: 'unlock_ally_ability', ally: 'janet', ability: 'binder_slam', next: 15 },
+    /* 14 */ { type: 'end' },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "Janet demonstrates the Binder Slam on Gary's timesheet stack. The sound echoes. Somewhere upstairs, a consultant flinches without knowing why.", next: 14 },
+  ],
+
+  // ==========================================================================
+  // JANITOR — Personal Mission: "The Names"
+  // Post-Rolex. Reward: +15 max Coffee + 250 XP
+  // ==========================================================================
+
+  janitor_names_offer: [
+    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 13, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'janitor_names_started', ifTrue: 11, ifFalse: 2 },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "You still have the watch? Good. Watch was never the valuable thing I kept in this building anyway." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "There's a ledger. Green cover, water stain shaped like Ohio. I started it in '81. Every name that came through this department — and what the building did to them." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "When Rachel's people started sweeping floors, I hid it in the Vault. Behind the deposit boxes, low left. Then they pulled my Vault clearance. Said custodial staff didn't need 'asset-level access.'" },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Forty-five years of names sitting in the dark. I'd like them back." },
+    /* 6  */ { type: 'choice', prompt: "Retrieve the Janitor's ledger?", choices: [
+      { text: '"Behind the deposit boxes. On it."', next: 7 },
+      { text: '"Why keep a list like that?"', next: 9 },
+    ] },
+    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Low left. You'll need to reach behind the frame. Mind the dust — that dust is older than you." },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janitor_names_started', value: true, next: 12 },
+    /* 9  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Because the building forgets. That's its whole trick. It wears people down and then it forgets them, and the next one in the chair thinks they're the first. Somebody has to keep the receipts." },
+    /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Low left, behind the deposit boxes. When you're ready.", next: 8 },
+    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Vault. Deposit boxes. Low left, behind the frame. Green cover, Ohio-shaped stain.", next: 12 },
+    /* 12 */ { type: 'end' },
+    /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Page one-twelve. Don't think I forgot. Nobody mops alone.", next: 12 },
+  ],
+
+  janitor_names_search: [
+    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 8, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'janitor_names_started', ifTrue: 2, ifFalse: 7 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Behind the deposit box frame, low left, wrapped in a 1998 plastic bag from a hardware store that no longer exists: a green ledger. The water stain is, in fact, shaped exactly like Ohio." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "You shouldn't read it. You read one page. 'D. OKAFOR — 11 yrs — they moved her desk 14 times until she quit. Good elbows. Fixed the ice machine once. REMEMBERED.'" },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Every entry ends the same way. REMEMBERED. REMEMBERED. REMEMBERED. Hundreds of them." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "It's not a grudge list. It's a memorial." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'janitor_has_ledger', value: true, next: 9 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Deposit boxes, floor to ceiling. The dust behind the low-left frame is undisturbed. You have no reason to reach in there.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The space behind the frame is empty now. Just younger dust.", next: 9 },
+    /* 9  */ { type: 'end' },
+  ],
+
+  janitor_names_return: [
+    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 13, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'janitor_has_ledger', ifTrue: 2, ifFalse: 12 },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Green cover. Ohio stain. I read one page — I'm sorry. D. Okafor. Good elbows." },
+    /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Delia. The ice machine never worked right again after she left. Neither did the fourth floor, but nobody writes that down except me." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "He takes the ledger like it weighs more than it does. Opens to a fresh page. Writes for a long moment, shielding the words with his hand like a kid taking a test." },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "There. Page one-twelve. First entry in the new section." },
+    /* 6  */ { type: 'text', speaker: 'Andrew', text: "What's the new section?" },
+    /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "'THE ONES WHO STAYED.' You're the first name in it. Don't make me move you to the old section." },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "He hands you his spare thermos. Steel, dented, older than the lobby. 'Real capacity,' he says. 'Not that drip-tray stuff upstairs.' Your Coffee reserves permanently increase." },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'janitor_names_complete', value: true, next: 10 },
+    /* 10 */ { type: 'action', action: 'give_xp', xp: 250, next: 11 },
+    /* 11 */ { type: 'action', action: 'modify_stat', stat: 'maxMP', amount: 15, next: 14 },
+    /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Vault. Low left, behind the deposit box frame. Green cover. You'll know it by the Ohio.", next: 14 },
+    /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Nobody mops alone, kid.", next: 14 },
+    /* 14 */ { type: 'end' },
+  ],
 };
