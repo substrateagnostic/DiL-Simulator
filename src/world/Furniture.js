@@ -35,6 +35,37 @@ export const Furniture = {
     panel.position.set(0, 0.47, depth/2 - 0.04);
     group.add(panel);
 
+    // Desk clutter — every desk gets a slightly different mess
+    const paperGeo = new THREE.BoxGeometry(0.16, 0.004, 0.22);
+    const paperCount = 1 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < paperCount; i++) {
+      const paper = new THREE.Mesh(paperGeo, Materials.paper());
+      paper.position.set(
+        (Math.random() - 0.5) * (width - 0.4),
+        0.744 + i * 0.005,
+        (Math.random() - 0.5) * (depth - 0.3)
+      );
+      paper.rotation.y = (Math.random() - 0.5) * 0.7;
+      group.add(paper);
+    }
+    if (Math.random() < 0.5) {
+      const sticky = new THREE.Mesh(
+        new THREE.BoxGeometry(0.06, 0.003, 0.06),
+        Materials.custom(0xf2e26a)
+      );
+      sticky.position.set((Math.random() - 0.5) * (width - 0.3), 0.744, (Math.random() - 0.5) * (depth - 0.25));
+      sticky.rotation.y = (Math.random() - 0.5) * 0.9;
+      group.add(sticky);
+    }
+    if (Math.random() < 0.4) {
+      const mug = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.035, 0.03, 0.07, 8),
+        Math.random() < 0.5 ? Materials.mug() : Materials.mugRed()
+      );
+      mug.position.set((Math.random() - 0.5) * (width - 0.35), 0.775, (Math.random() - 0.5) * (depth - 0.3));
+      group.add(mug);
+    }
+
     return group;
   },
 
@@ -115,9 +146,14 @@ export const Furniture = {
 
   monitor() {
     const group = new THREE.Group();
-    // Screen
+    // Screen — random office content (spreadsheet/email/code/chart)
+    const variants = ['spreadsheet', 'spreadsheet', 'email', 'code', 'chart'];
+    const variant = variants[Math.floor(Math.random() * variants.length)];
     const screenGeo = new THREE.BoxGeometry(0.5, 0.32, 0.02);
-    const screen = new THREE.Mesh(screenGeo, Materials.monitorScreen());
+    const screen = new THREE.Mesh(
+      screenGeo,
+      new THREE.MeshBasicMaterial({ map: Materials.officeScreen(variant) })
+    );
     screen.position.y = 0.94;
     screen.position.z = 0.007;
     group.add(screen);

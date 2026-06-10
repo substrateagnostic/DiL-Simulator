@@ -245,7 +245,7 @@ export class Room {
       for (let x = 0; x < w; x++) {
         if (exitTiles.has(x)) {
           if (segStart !== null) {
-            meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, x - 1, zPos, 'h'));
+            meshes.push(...this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, x - 1, zPos, 'h'));
             segStart = null;
           }
         } else {
@@ -253,7 +253,7 @@ export class Room {
         }
       }
       if (segStart !== null) {
-        meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, w - 1, zPos, 'h'));
+        meshes.push(...this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, w - 1, zPos, 'h'));
       }
       return meshes;
     };
@@ -265,7 +265,7 @@ export class Room {
       for (let z = 0; z < h; z++) {
         if (exitTiles.has(z)) {
           if (segStart !== null) {
-            meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, z - 1, xPos, 'v'));
+            meshes.push(...this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, z - 1, xPos, 'v'));
             segStart = null;
           }
         } else {
@@ -273,7 +273,7 @@ export class Room {
         }
       }
       if (segStart !== null) {
-        meshes.push(this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, h - 1, xPos, 'v'));
+        meshes.push(...this._addWallSegment(wallMat, wallHeight, wallThickness, segStart, h - 1, xPos, 'v'));
       }
       return meshes;
     };
@@ -304,6 +304,9 @@ export class Room {
     this._addExitMarkers();
     this._addDoorFrames(w, h, wallHeight);
 
+    // Windows with skyline views (data-driven: room.windows)
+    this._addWindows(w, h, wallThickness);
+
     // Perimeter tiles are NOT blocked — out-of-bounds checks in
     // TileMap.canMove() already prevent the player from leaving the grid,
     // so blocking the perimeter row/column just creates an invisible
@@ -318,24 +321,95 @@ export class Room {
    */
   _addWallSegment(wallMat, wallHeight, wallThickness, from, to, fixedPos, orientation) {
     const count = to - from + 1;
-    let mesh;
+    const baseMat = Materials.custom(0x9a9078);   // baseboard — darker than wall
+    const crownMat = Materials.custom(0xf4eee0);  // crown — lighter than wall
+    const meshes = [];
+    let mesh, base, crown;
     if (orientation === 'h') {
       const segWidth = count * TILE_SIZE;
-      const geo = new THREE.BoxGeometry(segWidth, wallHeight, wallThickness);
-      mesh = new THREE.Mesh(geo, wallMat);
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(segWidth, wallHeight, wallThickness), wallMat);
       const centerX = ((from + to) / 2) * TILE_SIZE;
       mesh.position.set(centerX, wallHeight / 2, fixedPos);
+      base = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.16, wallThickness + 0.06), baseMat);
+      base.position.set(centerX, 0.08, fixedPos);
+      crown = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.07, wallThickness + 0.04), crownMat);
+      crown.position.set(centerX, wallHeight - 0.035, fixedPos);
     } else {
       const segHeight = count * TILE_SIZE;
-      const geo = new THREE.BoxGeometry(wallThickness, wallHeight, segHeight);
-      mesh = new THREE.Mesh(geo, wallMat);
+      mesh = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, segHeight), wallMat);
       const centerZ = ((from + to) / 2) * TILE_SIZE;
       mesh.position.set(fixedPos, wallHeight / 2, centerZ);
+      base = new THREE.Mesh(new THREE.BoxGeometry(wallThickness + 0.06, 0.16, segHeight), baseMat);
+      base.position.set(fixedPos, 0.08, centerZ);
+      crown = new THREE.Mesh(new THREE.BoxGeometry(wallThickness + 0.04, 0.07, segHeight), crownMat);
+      crown.position.set(fixedPos, wallHeight - 0.035, centerZ);
     }
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    this.scene.add(mesh);
-    return mesh;
+    for (const m of [mesh, base, crown]) {
+      m.castShadow = true;
+      m.receiveShadow = true;
+      this.scene.add(m);
+      meshes.push(m);
+    }
+    return meshes;
+  }
+
+  /**
+   * Windows with a skyline view. Data-driven via room.windows:
+   *   { wall: 'north'|'west'|'east', from, to, sky: 'day'|'dusk'|'night' }
+   * from/to are tile indices along the wall. Keep ranges clear of exits.
+   */
+  _addWindows(w, h, wallThickness) {
+    if (!this.data.windows) return;
+    const frameMat = Materials.custom(0x4a4438);
+    const sillMat = Materials.custom(0xf4eee0);
+
+    for (const win of this.data.windows) {
+      const span = (win.to - win.from + 1) * TILE_SIZE;
+      const winW = span - 0.35;
+      const winH = 1.15;
+      const centerY = 1.5;
+      const center = ((win.from + win.to) / 2) * TILE_SIZE;
+      const viewTex = Materials.skyline(win.sky || 'day');
+
+      const group = new THREE.Group();
+      // Frame
+      const frame = new THREE.Mesh(new THREE.BoxGeometry(winW + 0.12, winH + 0.12, 0.07), frameMat);
+      group.add(frame);
+      // Sill
+      const sill = new THREE.Mesh(new THREE.BoxGeometry(winW + 0.2, 0.05, 0.16), sillMat);
+      sill.position.set(0, -(winH / 2 + 0.06), 0.04);
+      group.add(sill);
+      // Mullions (vertical divider per ~1.2 units)
+      const mullCount = Math.max(0, Math.round(winW / 1.2) - 1);
+      for (let m = 1; m <= mullCount; m++) {
+        const mull = new THREE.Mesh(new THREE.BoxGeometry(0.04, winH, 0.05), frameMat);
+        mull.position.set(-winW / 2 + (m * winW) / (mullCount + 1), 0, 0.015);
+        group.add(mull);
+      }
+      // The view itself (in front of every frame face — no z-fighting)
+      const view = new THREE.Mesh(
+        new THREE.PlaneGeometry(winW, winH),
+        new THREE.MeshBasicMaterial({ map: viewTex })
+      );
+      view.position.z = 0.045;
+      group.add(view);
+
+      // Position against the wall's inner face
+      if (win.wall === 'north') {
+        group.position.set(center, centerY, -TILE_SIZE / 2 + wallThickness / 2 + 0.05);
+      } else if (win.wall === 'west') {
+        group.position.set(-TILE_SIZE / 2 + wallThickness / 2 + 0.05, centerY, center);
+        group.rotation.y = Math.PI / 2;
+      } else if (win.wall === 'east') {
+        group.position.set((w - 1) * TILE_SIZE + TILE_SIZE / 2 - wallThickness / 2 - 0.05, centerY, center);
+        group.rotation.y = -Math.PI / 2;
+      } else if (win.wall === 'south') {
+        group.position.set(center, centerY, (h - 1) * TILE_SIZE + TILE_SIZE / 2 - wallThickness / 2 - 0.05);
+        group.rotation.y = Math.PI;
+      }
+      group.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = false; } });
+      this.scene.add(group);
+    }
   }
 
   /**

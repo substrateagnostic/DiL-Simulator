@@ -36,6 +36,10 @@ export const ROOMS = {
     floorPattern: 'carpet',
     walls: true,
     lighting: { flicker: true },
+    windows: [
+      { wall: 'north', from: 2, to: 5, sky: 'day' },
+      { wall: 'north', from: 14, to: 17, sky: 'day' },
+    ],
     furniture: [
       // ============================================================
       // NORTH CUBICLE ROW  (back walls at z=2, desks at z=3)
@@ -296,6 +300,7 @@ export const ROOMS = {
     floorColor: 0xd8d0c0,
     walls: true,
     lighting: { ambient: 0xfff2e2, ambientIntensity: 0.58, dir: 0xffeecc, dirIntensity: 0.72 },
+    windows: [{ wall: 'west', from: 2, to: 4, sky: 'day' }],
     furniture: [
       // === Kitchen counter along north wall ===
       { type: 'fridge',       x: 1, z: 0.5, rotation: 0, condition: { notFlag: 'renovation_catering_fridge' } },
@@ -507,6 +512,7 @@ export const ROOMS = {
     height: 8,
     floorColor: 0x4a6741,  // same carpet as boss office
     walls: true,
+    windows: [{ wall: 'north', from: 7, to: 10, sky: 'day' }],
     furniture: [
       // === Conference table (big, central) ===
       { type: 'conferenceTable', x: 6, z: 4, rotation: 0 },
@@ -818,6 +824,10 @@ export const ROOMS = {
     floorColor: 0x6b5335,  // dark hardwood
     walls: true,
     lighting: { ambient: 0xe8eeff, ambientIntensity: 0.52, dir: 0xdde6ff, dirIntensity: 0.85 },
+    windows: [
+      { wall: 'north', from: 2, to: 5, sky: 'dusk' },
+      { wall: 'north', from: 10, to: 13, sky: 'dusk' },
+    ],
     furniture: [
       // === Grand executive desk (north-center, imposing) ===
       { type: 'grandDesk', x: 8, z: 3, rotation: Math.PI },
@@ -1165,6 +1175,10 @@ export const ROOMS = {
     floorPattern: 'hardwood',
     walls: true,
     lighting: { ambient: 0xffe9c4, ambientIntensity: 0.48, dir: 0xffddaa, dirIntensity: 0.7 },
+    windows: [
+      { wall: 'west', from: 3, to: 5, sky: 'dusk' },
+      { wall: 'west', from: 7, to: 9, sky: 'dusk' },
+    ],
     furniture: [
       // ── Grand boardroom table (left-edge at x:4, z:4 — spans x:4–12, z:4–6) ──
       { type: 'boardroomTable', x: 4, z: 4 },
@@ -1251,6 +1265,10 @@ export const ROOMS = {
     floorPattern: 'hardwood',
     walls: true,
     lighting: { ambient: 0xe0c0e8, ambientIntensity: 0.45, dir: 0xcc99dd, dirIntensity: 0.6 },
+    windows: [
+      { wall: 'north', from: 3, to: 6, sky: 'night' },
+      { wall: 'north', from: 9, to: 12, sky: 'night' },
+    ],
     lights: [
       // Signature purple-blue wash
       { type: 'point', color: 0x4444ff, intensity: 0.7, x: 4,  y: 2.5, z: 4, distance: 9  },

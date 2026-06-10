@@ -114,7 +114,7 @@ export const Materials = {
     ctx.fillRect(0, 0, size, size);
 
     // Subtle grain streaks
-    ctx.strokeStyle = 'rgba(160,120,60,0.18)';
+    ctx.strokeStyle = 'rgba(160,120,60,0.32)';
     ctx.lineWidth = 0.8;
     for (let i = 0; i < 28; i++) {
       const x = Math.random() * size;
@@ -127,7 +127,7 @@ export const Materials = {
     }
 
     // Plank seams — horizontal lines every ~32px (long-side of planks)
-    ctx.strokeStyle = 'rgba(100,70,30,0.35)';
+    ctx.strokeStyle = 'rgba(100,70,30,0.55)';
     ctx.lineWidth = 1.2;
     for (let y = 32; y < size; y += 32) {
       ctx.beginPath();
@@ -162,6 +162,151 @@ export const Materials = {
     });
   },
 
+  // Office monitor screen content — cached canvas textures.
+  // Variants: 'spreadsheet' | 'email' | 'code' | 'chart'
+  officeScreen(variant = 'spreadsheet') {
+    const key = `screen_${variant}`;
+    if (cache[key]) return cache[key];
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 80;
+    const ctx = c.getContext('2d');
+
+    if (variant === 'code') {
+      ctx.fillStyle = '#10141c';
+      ctx.fillRect(0, 0, 128, 80);
+      const colors = ['#6ae28a', '#56b6c2', '#c678dd', '#e5c07b', '#abb2bf'];
+      for (let i = 0; i < 11; i++) {
+        const y = 6 + i * 7;
+        const indent = 4 + (i % 4) * 8;
+        const len = 30 + ((i * 37) % 70);
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fillRect(indent, y, len, 2.5);
+      }
+    } else if (variant === 'email') {
+      ctx.fillStyle = '#f4f6f8';
+      ctx.fillRect(0, 0, 128, 80);
+      ctx.fillStyle = '#3a5dae';
+      ctx.fillRect(0, 0, 128, 12);
+      ctx.fillStyle = '#dde4ec';
+      ctx.fillRect(0, 12, 34, 68);
+      for (let i = 0; i < 6; i++) {
+        const y = 18 + i * 10;
+        ctx.fillStyle = i === 1 ? '#cfe0f4' : '#ffffff';
+        ctx.fillRect(37, y - 4, 88, 9);
+        ctx.fillStyle = '#9aa4b2';
+        ctx.fillRect(40, y - 1, 50 + (i * 13) % 30, 2);
+      }
+    } else if (variant === 'chart') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 128, 80);
+      ctx.strokeStyle = '#c8d0d8';
+      ctx.beginPath(); ctx.moveTo(14, 6); ctx.lineTo(14, 68); ctx.lineTo(120, 68); ctx.stroke();
+      const bars = [22, 38, 30, 50, 44, 58];
+      bars.forEach((bh, i) => {
+        ctx.fillStyle = i % 2 ? '#53a8b6' : '#e94560';
+        ctx.fillRect(20 + i * 17, 68 - bh, 11, bh);
+      });
+      ctx.strokeStyle = '#2a8a4a';
+      ctx.beginPath();
+      ctx.moveTo(14, 60);
+      bars.forEach((bh, i) => ctx.lineTo(26 + i * 17, 62 - bh * 0.8));
+      ctx.stroke();
+    } else { // spreadsheet
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, 128, 80);
+      ctx.fillStyle = '#2a7a4a';
+      ctx.fillRect(0, 0, 128, 9);
+      ctx.strokeStyle = '#d0d8e0';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= 128; x += 18) { ctx.beginPath(); ctx.moveTo(x, 9); ctx.lineTo(x, 80); ctx.stroke(); }
+      for (let y = 9; y <= 80; y += 8) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(128, y); ctx.stroke(); }
+      ctx.fillStyle = '#444c55';
+      for (let r = 0; r < 8; r++) {
+        for (let col = 0; col < 7; col++) {
+          if ((r * 7 + col) % 3 === 0) ctx.fillRect(2 + col * 18, 12 + r * 8, 10, 2);
+        }
+      }
+      ctx.fillStyle = '#cc3344';
+      ctx.fillRect(2 + 4 * 18, 12 + 5 * 8, 10, 2); // the cell that's wrong
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    cache[key] = tex;
+    return tex;
+  },
+
+  // City skyline seen through windows — cached per time-of-day variant.
+  skyline(variant = 'day') {
+    const key = `skyline_${variant}`;
+    if (cache[key]) return cache[key];
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 128;
+    const ctx = c.getContext('2d');
+
+    const skies = {
+      day:  ['#9cc4e4', '#d8e6f2'],
+      dusk: ['#3a1a52', '#ff9a56'],
+      night:['#060a1e', '#101830'],
+    };
+    const [topCol, botCol] = skies[variant] || skies.day;
+    const grad = ctx.createLinearGradient(0, 0, 0, 128);
+    grad.addColorStop(0, topCol);
+    grad.addColorStop(1, botCol);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 128);
+
+    if (variant === 'dusk') {
+      // Low sun
+      ctx.fillStyle = 'rgba(255,200,120,0.9)';
+      ctx.beginPath(); ctx.arc(190, 92, 12, 0, Math.PI * 2); ctx.fill();
+    }
+    if (variant === 'night') {
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      for (let i = 0; i < 24; i++) {
+        ctx.fillRect((i * 47) % 256, (i * 23) % 60, 1, 1);
+      }
+      ctx.fillStyle = '#e8e4d8';
+      ctx.beginPath(); ctx.arc(210, 26, 9, 0, Math.PI * 2); ctx.fill();
+    }
+
+    // Building silhouettes — two depth layers
+    const buildingCol = variant === 'day' ? '#7e93a8' : variant === 'dusk' ? '#241335' : '#0c1019';
+    const backCol     = variant === 'day' ? '#92a8bc' : variant === 'dusk' ? '#382050' : '#121826';
+    let x = 0;
+    ctx.fillStyle = backCol;
+    while (x < 256) {
+      const bw = 18 + (x * 7) % 22;
+      const bh = 34 + (x * 13) % 36;
+      ctx.fillRect(x, 128 - bh - 14, bw, bh + 14);
+      x += bw + 4;
+    }
+    x = -8;
+    ctx.fillStyle = buildingCol;
+    while (x < 256) {
+      const bw = 22 + (x * 11) % 26;
+      const bh = 22 + (x * 17) % 50;
+      ctx.fillRect(x, 128 - bh, bw, bh);
+      // Lit windows
+      const litChance = variant === 'day' ? 0.12 : variant === 'dusk' ? 0.4 : 0.55;
+      ctx.fillStyle = variant === 'day' ? 'rgba(230,240,250,0.7)' : 'rgba(255,200,90,0.85)';
+      for (let wy = 128 - bh + 4; wy < 122; wy += 7) {
+        for (let wx = x + 3; wx < x + bw - 3; wx += 6) {
+          if (((wx * 31 + wy * 17) % 100) / 100 < litChance) ctx.fillRect(wx, wy, 3, 3);
+        }
+      }
+      ctx.fillStyle = buildingCol;
+      x += bw + 6;
+    }
+
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    cache[key] = tex;
+    return tex;
+  },
+
   // Carpet pattern — canvas texture with a repeating loop-pile grid
   carpetPattern(w, h, color) {
     const size = 128;
@@ -173,9 +318,9 @@ export const Materials = {
     const r = (color >> 16) & 0xff;
     const g = (color >> 8) & 0xff;
     const b = color & 0xff;
-    const dr = Math.max(0, r - 28);
-    const dg = Math.max(0, g - 28);
-    const db = Math.max(0, b - 28);
+    const dr = Math.max(0, r - 46);
+    const dg = Math.max(0, g - 46);
+    const db = Math.max(0, b - 46);
 
     // Base fill
     ctx.fillStyle = `rgb(${r},${g},${b})`;
