@@ -101,3 +101,10 @@ fixtures (`fixture=act65`).
 - Monolith: never drive rotation.y outside the animator.
 - Portraits: drop 256² PNG in src/assets/portraits/, stem map in DialogBox.PORTRAIT_KEYS.
 - NG+ scaling lives in CombatEngine._buildEnemy (before overrides).
+
+## Night-cap additions (post-P6, committed 55d6dcf)
+- BuildingShell: blueprint ghost tower around every interior room + warm ghost rooms beyond exits.
+- Whisper monitors (~4%: one spreadsheet cell reads REMEMBERED).
+- Daemon at Rack 7: interactable wired (server_room 3,4, algorithm_defeated gate). Dialog STAGED
+  in .claude/plans/daemon-dialog.snippet.js — merge into dialogs/index.js (before final };,
+  drop the export wrapper) AFTER the P7 agent finishes, then npm run check, commit, delete snippet.
