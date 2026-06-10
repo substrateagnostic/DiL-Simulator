@@ -200,7 +200,15 @@ export class CombatEngine {
       effective = effective || 'vulnerable';
     }
 
-    return { damage, critical, effective };
+    // Roguelite mutator: Billable Hours — every hit you land on a litigious
+    // client chips your Patience. Never lethal (floors at 1 HP).
+    let thorns = 0;
+    if (isEnemy && target.mutators?.some(m => m.id === 'thorns')) {
+      thorns = 4;
+      this.player.hp = Math.max(1, this.player.hp - thorns);
+    }
+
+    return { damage, critical, effective, thorns };
   }
 
   _getEffective(entity) {
@@ -982,6 +990,24 @@ export class CombatEngine {
 
     if (isEnemySide && entity.confuseCooldown > 0) {
       entity.confuseCooldown--;
+    }
+
+    // Roguelite mutators (reception clients only)
+    if (isEnemySide && entity.mutators?.length && entity.hp > 0) {
+      for (const mut of entity.mutators) {
+        if (mut.id === 'volatile') {
+          // Market Mood — Assertiveness swings ±30% every turn
+          if (entity.baseAtk === undefined) entity.baseAtk = entity.atk;
+          entity.atk = Math.max(4, Math.round(entity.baseAtk * (0.7 + Math.random() * 0.6)));
+        } else if (mut.id === 'compound') {
+          // Compound Interest — money makes money
+          const heal = Math.ceil(entity.maxHP * 0.02);
+          if (entity.hp < entity.maxHP) {
+            entity.hp = Math.min(entity.maxHP, entity.hp + heal);
+            results.push({ type: 'status_expire', message: `${mut.label}: ${entity.name} recovers ${heal}.` });
+          }
+        }
+      }
     }
 
     if (entity.exposed > 0) {

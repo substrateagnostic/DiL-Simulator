@@ -1154,6 +1154,22 @@ export class MenuState {
           <span style="color:#888;font-size:18px">Times Defeated</span>
           <span style="color:#888;font-size:18px">${this.player.deaths || 0}</span>
         </div>
+        ${(this.player.getFlag('pb_richest_client') || this.player.getFlag('pb_accept_streak')) ? `
+        <div style="border-top:1px solid #1a2a3a;margin-top:14px;padding-top:10px">
+          <div style="color:#53a8b6;font-size:14px;letter-spacing:1px;margin-bottom:6px">RECEPTION RECORDS</div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:#8aa;font-size:16px">Richest Client Signed</span>
+            <span style="color:#ffd700;font-size:16px">$${(this.player.getFlag('pb_richest_client') || 0).toLocaleString()}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="color:#8aa;font-size:16px">Best Single Commission</span>
+            <span style="color:#ffd700;font-size:16px">${(this.player.getFlag('pb_best_aum_single') || 0).toLocaleString()} AUM</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="color:#8aa;font-size:16px">Longest Accept Streak</span>
+            <span style="color:#ffd700;font-size:16px">${this.player.getFlag('pb_accept_streak') || 0}</span>
+          </div>
+        </div>` : ''}
       </div>
       <div style="margin-top:16px;color:#888;font-size:15px">Enter / Esc to close</div>
     `;

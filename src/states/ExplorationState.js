@@ -774,7 +774,7 @@ export class ExplorationState {
                     this.stateManager,
                     this.player,
                     clientData,
-                    (accepted) => this._onClientDecision(accepted, clientData)
+                    (accepted, opts) => this._onClientDecision(accepted, clientData, opts)
                   );
                   this.stateManager.push(reviewState);
                 }, 500);
@@ -901,10 +901,20 @@ export class ExplorationState {
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
-      client = generateClient(null, this.player.stats.level, postGame);
+      // Whale referral: a signed whale sent a friend (guaranteed whale-tier)
+      const referral = !postGame && this.player.getFlag('whale_referral_pending');
+      if (referral) this.player.setFlag('whale_referral_pending', false);
+      client = generateClient(null, this.player.stats.level, postGame, !!referral);
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
-      setTimeout(() => this._showToast(`New client waiting: ${client.name}`, 'objective'), 600);
+      const intro = referral ? `The referral came through: ${client.name}` : `New client waiting: ${client.name}`;
+      setTimeout(() => this._showToast(intro, 'objective'), 600);
+    }
+
+    // Surface combat mutators before the fight
+    if (client.mutators?.length) {
+      const labels = client.mutators.map(m => `${m.label} — ${m.desc}`).join('  ·  ');
+      setTimeout(() => this._showToast(`⚠ ${labels}`, 'info'), 1500);
     }
   }
 
@@ -941,13 +951,15 @@ export class ExplorationState {
     this._startCombat('reception_client');
   }
 
-  _onClientDecision(accepted, clientData) {
+  _onClientDecision(accepted, clientData, opts = {}) {
     // Track chain state if this client is part of a beneficiary chain
     this._updateChainState(clientData, accepted);
 
     if (accepted) {
       this._applyClientAcceptBuff(clientData);
-      const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + clientData.netAngerDelta));
+      // Failed negotiation: the client complained upstairs
+      const negotiationAnger = opts.negotiated && !opts.success ? 1 : 0;
+      const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + clientData.netAngerDelta + negotiationAnger));
       this.player.setFlag('bossAnger', anger);
 
       this.player.setFlag('portfolioClients', (this.player.getFlag('portfolioClients') || 0) + 1);
@@ -955,19 +967,49 @@ export class ExplorationState {
       this.player.setFlag('portfolioFees',    (this.player.getFlag('portfolioFees')    || 0) + clientData.annualFees);
       this._updatePortfolioDisplay();
 
-      // Award AUM currency (player's spending money) — 1% of assets, minimum 50
-      const aumEarned = Math.max(50, Math.floor(clientData.assets * 0.01));
+      // Award AUM currency (player's spending money) — 1% of assets, minimum 50.
+      // Negotiation gamble: 1.5x on success, 0.75x on failure.
+      let aumEarned = Math.max(50, Math.floor(clientData.assets * 0.01));
+      if (opts.negotiated) aumEarned = Math.floor(aumEarned * (opts.success ? 1.5 : 0.75));
       this.player.stats.aum = (this.player.stats.aum || 0) + aumEarned;
       this._updateMiniStats();
       AchievementManager.check(this.player, { event: 'client_accepted', assets: clientData.assets, attributes: clientData.attributes });
 
-      this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned.`, 'item');
+      // Personal bests (shown in the Stats tab)
+      if (clientData.assets > (this.player.getFlag('pb_richest_client') || 0)) {
+        this.player.setFlag('pb_richest_client', clientData.assets);
+      }
+      if (aumEarned > (this.player.getFlag('pb_best_aum_single') || 0)) {
+        this.player.setFlag('pb_best_aum_single', aumEarned);
+      }
+      const streak = (this.player.getFlag('pb_accept_streak_cur') || 0) + 1;
+      this.player.setFlag('pb_accept_streak_cur', streak);
+      if (streak > (this.player.getFlag('pb_accept_streak') || 0)) {
+        this.player.setFlag('pb_accept_streak', streak);
+      }
+
+      // A signed whale refers a friend — next client is guaranteed whale-tier
+      if (clientData.isWhale && !this.player.getFlag('whale_referral_pending')) {
+        this.player.setFlag('whale_referral_pending', true);
+        setTimeout(() => this._showToast(
+          'Diane: "They\'re already on the phone raving about you. Expect a referral."', 'info'
+        ), 2200);
+      }
+
+      if (opts.negotiated && opts.success) {
+        this._showToast(`Negotiated premium fees! ${clientData.name} onboarded at +${aumEarned.toLocaleString()} AUM.`, 'item');
+      } else if (opts.negotiated) {
+        this._showToast(`They haggled you down. +${aumEarned.toLocaleString()} AUM — and the boss heard about it.`, 'info');
+      } else {
+        this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned.`, 'item');
+      }
       this._checkBossAnger();
     } else {
       // Declining bad clients reduces anger slightly; declining good ones has no benefit
       const declineDelta = clientData.netAngerDelta > 0 ? -1 : 1;
       const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + declineDelta));
       this.player.setFlag('bossAnger', anger);
+      this.player.setFlag('pb_accept_streak_cur', 0);
       AchievementManager.check(this.player, { event: 'client_declined' });
       this._showToast(`Client declined.`, 'info');
     }

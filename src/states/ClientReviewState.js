@@ -35,6 +35,7 @@ export class ClientReviewState {
 
     const fmtDollars = (n) => '$' + n.toLocaleString();
     const fmtPct = (r) => (r * 100).toFixed(1) + '%';
+    const negotiateChancePct = Math.round(this._negotiateChance() * 100);
     const angerBar = '█'.repeat(Math.min(10, anger)) + '░'.repeat(Math.max(0, 10 - anger));
     const deltaStr = c.netAngerDelta > 0 ? `+${c.netAngerDelta}` : `${c.netAngerDelta}`;
     const deltaCls = c.netAngerDelta > 0 ? 'delta-bad' : c.netAngerDelta < 0 ? 'delta-good' : 'delta-neutral';
@@ -104,39 +105,66 @@ export class ClientReviewState {
           <button class="cr-btn cr-accept cr-focused" id="cr-accept">
             <span class="cr-btn-key">←</span> Accept
           </button>
+          <button class="cr-btn cr-negotiate" id="cr-negotiate" style="border-color:#daa520;color:#daa520">
+            Negotiate (${negotiateChancePct}%)
+          </button>
           <button class="cr-btn cr-decline" id="cr-decline">
             Decline <span class="cr-btn-key">→</span>
           </button>
         </div>
-        <div class="cr-hint">Arrow Keys to select · Enter to confirm</div>
+        <div class="cr-hint">Arrow Keys to select · Enter to confirm · Negotiate: +50% fees or the boss hears about it</div>
       </div>
     `;
 
     overlay.appendChild(el);
     this._el = el;
 
-    const acceptBtn = el.querySelector('#cr-accept');
-    const declineBtn = el.querySelector('#cr-decline');
+    const buttons = [
+      el.querySelector('#cr-accept'),
+      el.querySelector('#cr-negotiate'),
+      el.querySelector('#cr-decline'),
+    ];
+    const focusBtn = (i) => {
+      this._focusIndex = i;
+      buttons.forEach((b, j) => b.classList.toggle('cr-focused', j === i));
+    };
 
     this._keyHandler = (e) => {
       if (e.key === 'ArrowLeft') {
-        this._focusIndex = 0;
-        acceptBtn.classList.add('cr-focused');
-        declineBtn.classList.remove('cr-focused');
+        focusBtn(Math.max(0, this._focusIndex - 1));
       } else if (e.key === 'ArrowRight') {
-        this._focusIndex = 1;
-        declineBtn.classList.add('cr-focused');
-        acceptBtn.classList.remove('cr-focused');
+        focusBtn(Math.min(buttons.length - 1, this._focusIndex + 1));
       } else if (e.key === 'Enter' || e.key === 'e' || e.key === 'E') {
-        this._decide(this._focusIndex === 0);
+        this._confirm();
       } else if (e.key === 'Escape') {
         this._decide(false);
       }
     };
 
     window.addEventListener('keydown', this._keyHandler);
-    acceptBtn.addEventListener('click', () => this._decide(true));
-    declineBtn.addEventListener('click', () => this._decide(false));
+    buttons[0].addEventListener('click', () => this._decide(true));
+    buttons[1].addEventListener('click', () => this._negotiate());
+    buttons[2].addEventListener('click', () => this._decide(false));
+  }
+
+  _confirm() {
+    if (this._focusIndex === 0) this._decide(true);
+    else if (this._focusIndex === 1) this._negotiate();
+    else this._decide(false);
+  }
+
+  // Push for premium fees. Assertiveness-scaled coin flip:
+  // win — accept at 1.5x AUM; lose — accept at 0.75x and +1 extra boss anger.
+  _negotiate() {
+    const chance = this._negotiateChance();
+    const success = Math.random() < chance;
+    this.stateManager.pop();
+    this.onDecision(true, { negotiated: true, success });
+  }
+
+  _negotiateChance() {
+    const atk = this.player.getCombatStats?.().atk ?? this.player.stats.atk ?? 12;
+    return Math.min(0.85, 0.40 + atk * 0.01);
   }
 
   _decide(accepted) {

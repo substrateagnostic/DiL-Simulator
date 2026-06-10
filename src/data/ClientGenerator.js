@@ -375,17 +375,20 @@ function scaleEnemyStats(assets, playerLevel = 1, postGame = false) {
   };
 }
 
-export function generateClient(overrideLastName, playerLevel = 1, postGame = false) {
+export function generateClient(overrideLastName, playerLevel = 1, postGame = false, forceWhale = false) {
   let pool = postGame ? POST_GAME_CLIENT_TYPES : CLIENT_TYPES;
   let typeDef = pick(pool);
   const lastName = overrideLastName || pick(LAST_NAMES);
   const firstName = pick(FIRST_NAMES);
   const name = `${firstName} ${lastName}`;
 
-  // 5% chance of a pre-algorithm whale client (100M+ AUM) — rare big fish
-  let isWhale = false;
-  if (!postGame && Math.random() < 0.05) {
+  // 5% chance of a pre-algorithm whale client (100M+ AUM) — rare big fish.
+  // forceWhale: a signed whale referred a friend (whale_referral_pending flag).
+  let isWhale = forceWhale;
+  if (!postGame && !isWhale && Math.random() < 0.05) {
     isWhale = true;
+    typeDef = pick(POST_GAME_CLIENT_TYPES);
+  } else if (forceWhale) {
     typeDef = pick(POST_GAME_CLIENT_TYPES);
   }
 
@@ -413,6 +416,20 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
   const attributes = [...posAttrs, ...negAttrs];
   const netAngerDelta = attributes.reduce((sum, a) => sum + a.angerDelta, 0);
 
+  // Combat mutators — some attributes change how the fight itself plays.
+  // Always set (even empty) — ENEMY_STATS.reception_client is mutated in
+  // place between fights and stale mutators must not leak.
+  const mutators = [];
+  if (attributes.some(a => a.id === 'litigious')) {
+    mutators.push({ id: 'thorns', label: 'Billable Hours', desc: 'Every hit you land costs 4 Patience in legal fees' });
+  }
+  if (attributes.some(a => a.id === 'day_trader' || a.id === 'fomo')) {
+    mutators.push({ id: 'volatile', label: 'Market Mood', desc: 'Their Assertiveness swings wildly every turn' });
+  }
+  if (assets >= 5_000_000) {
+    mutators.push({ id: 'compound', label: 'Compound Interest', desc: 'Recovers 2% Patience every turn' });
+  }
+
   const scaled = scaleEnemyStats(assets, playerLevel, postGame || isWhale);
   const enemyStats = {
     name,
@@ -423,6 +440,7 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
     spd: scaled.spd,
     xpReward: scaled.xpReward,
     abilities: [...typeDef.abilities],
+    mutators,
   };
 
   const visualConfig = generateVisualConfig(firstName, typeDef.type);
@@ -439,8 +457,10 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
     attributes,
     netAngerDelta,
     enemyStats,
+    mutators,
     chainEligible: !!typeDef.chainEligible,
     isPostGame: postGame || isWhale,
+    isWhale,
   };
 }
 
