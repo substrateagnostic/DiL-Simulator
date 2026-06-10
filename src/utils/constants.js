@@ -62,10 +62,10 @@ export const PLAYER = {
 
 // Character dimensions
 export const CHAR = {
-  BODY_WIDTH: 0.35,
-  BODY_HEIGHT: 0.6,
-  BODY_DEPTH: 0.25,
-  HEAD_RADIUS: 0.2,
+  BODY_WIDTH: 0.37,
+  BODY_HEIGHT: 0.58,
+  BODY_DEPTH: 0.26,
+  HEAD_RADIUS: 0.225,
   LEG_WIDTH: 0.13,
   LEG_HEIGHT: 0.35,
   ARM_WIDTH: 0.1,

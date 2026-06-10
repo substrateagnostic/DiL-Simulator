@@ -10,6 +10,12 @@ export class CharacterAnimator {
     this.isWalking = false;
     this.isSitting = false;
     this.facingAngle = 0; // radians
+    // Blink state
+    this._blinkIn = 1.5 + Math.random() * 3.5;
+    this._blinkDur = 0;
+    // Our additive contribution to group.rotation.x (walk lean) —
+    // tracked separately so combat animations can own rotation.x too.
+    this._appliedLean = 0;
   }
 
   setWalking(walking) {
@@ -59,12 +65,37 @@ export class CharacterAnimator {
     const bounce = this.isWalking ? ANIM.WALK_BOUNCE : ANIM.IDLE_BOUNCE;
     const ta = t * speed;
 
-    // Body bob
+    // Body bob with squash & stretch (breathing at idle, springy on walk)
     if (this.group.body) {
       const baseY = this.group.body.userData.baseY || this.group.body.position.y;
       if (!this.group.body.userData.baseY) this.group.body.userData.baseY = baseY;
-      this.group.body.position.y = baseY + Math.sin(ta) * bounce;
+      const phase = Math.sin(ta);
+      this.group.body.position.y = baseY + phase * bounce;
+      const squash = phase * bounce * 1.8;
+      this.group.body.scale.y = 1 + squash;
+      this.group.body.scale.x = 1 - squash * 0.5;
+      this.group.body.scale.z = 1 - squash * 0.5;
     }
+
+    // Blink — eyes squeeze shut for ~0.12s every few seconds
+    if (this.group.leftEye && this.group.rightEye) {
+      if (this._blinkDur > 0) {
+        this._blinkDur -= dt;
+        const s = this._blinkDur > 0 ? 0.12 : 1;
+        this.group.leftEye.scale.y = s;
+        this.group.rightEye.scale.y = s;
+        if (this._blinkDur <= 0) this._blinkIn = 1.5 + Math.random() * 3.5;
+      } else {
+        this._blinkIn -= dt;
+        if (this._blinkIn <= 0) this._blinkDur = 0.12;
+      }
+    }
+
+    // Walk lean — additive so combat anims can also drive rotation.x
+    const leanTarget = this.isWalking ? 0.07 : 0;
+    const newLean = this._appliedLean + (leanTarget - this._appliedLean) * Math.min(dt * 10, 1);
+    this.group.rotation.x += newLean - this._appliedLean;
+    this._appliedLean = newLean;
 
     // Head bob (slight)
     if (this.group.head) {
