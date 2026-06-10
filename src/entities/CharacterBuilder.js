@@ -292,10 +292,11 @@ export function buildCharacter(config, options = {}) {
       hair.position.set(0, headY + 0.02, headZ);
       group.add(hair);
     } else if (config.hairStyle === 'karen') {
-      // Angular bob sits back off the face so brows/eyes stay readable
-      const hairGeo = new THREE.BoxGeometry(dims.headR * 2.2, dims.headR * 1.15, dims.headR * 1.6);
+      // Angular bob sits back off the face so brows/eyes stay readable.
+      // Tall enough that the crown never pokes through (head top ≈ 1.08R).
+      const hairGeo = new THREE.BoxGeometry(dims.headR * 2.2, dims.headR * 1.35, dims.headR * 1.6);
       const hair = new THREE.Mesh(hairGeo, hairMat);
-      hair.position.set(0, headY + dims.headR * 0.3, headZ - dims.headR * 0.25);
+      hair.position.set(0, headY + dims.headR * 0.5, headZ - dims.headR * 0.25);
       group.add(hair);
       // Bangs shelf above the brows
       const bangsGeo = new THREE.BoxGeometry(dims.headR * 1.7, dims.headR * 0.3, dims.headR * 0.5);
@@ -324,10 +325,11 @@ export function buildCharacter(config, options = {}) {
       back.position.set(0, headY - dims.headR * 0.1, headZ - dims.headR - 0.01);
       group.add(back);
     } else if (config.hairStyle === 'slick') {
-      const slickGeo = new THREE.SphereGeometry(dims.headR + 0.025, headSegments, headRings, 0, Math.PI * 2, 0, Math.PI * 0.5);
+      // Flattened dome pulled back — raised so the crown stays covered
+      const slickGeo = new THREE.SphereGeometry(dims.headR + 0.03, headSegments, headRings, 0, Math.PI * 2, 0, Math.PI * 0.55);
       const slick = new THREE.Mesh(slickGeo, hairMat);
-      slick.scale.set(1, 0.7, 1.15);
-      slick.position.set(0, headY + 0.045, headZ - 0.03);
+      slick.scale.set(1, 0.85, 1.15);
+      slick.position.set(0, headY + 0.06, headZ - 0.03);
       group.add(slick);
     } else if (config.hairStyle === 'bun') {
       const hairBase = new THREE.SphereGeometry(dims.headR + 0.025, headSegments, headRings, 0, Math.PI * 2, 0, Math.PI * 0.55);
@@ -342,6 +344,12 @@ export function buildCharacter(config, options = {}) {
       const cap = new THREE.Mesh(capGeo, hairMat);
       cap.position.set(0, headY + dims.headR * 0.5, headZ);
       group.add(cap);
+      // Dome so the scalp doesn't poke through above the cap band
+      const domeGeo = new THREE.SphereGeometry(dims.headR + 0.035, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.5);
+      const dome = new THREE.Mesh(domeGeo, hairMat);
+      dome.scale.y = 0.65;
+      dome.position.set(0, headY + dims.headR * 0.5, headZ);
+      group.add(dome);
       const brimGeo = new THREE.BoxGeometry(0.16, 0.025, 0.13);
       const brim = new THREE.Mesh(brimGeo, hairMat);
       brim.position.set(0, headY + dims.headR * 0.45, headZ - dims.headR - 0.035);
