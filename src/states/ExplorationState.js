@@ -285,11 +285,17 @@ export class ExplorationState {
             this.stateManager.push(dialogState);
           }, 2000);
         }
-        // Arcade minigame launch
+        // Arcade minigame launch — hide the exploration HUD while playing
         if (key === 'launch_arcade') {
           this.player.setFlag('launch_arcade', false);
           import('./ArcadeState.js').then(({ ArcadeState }) => {
+            if (this.hudElement) this.hudElement.style.display = 'none';
             const arcadeState = new ArcadeState(this.stateManager, this.player);
+            const origExit = arcadeState.exit.bind(arcadeState);
+            arcadeState.exit = () => {
+              origExit();
+              if (this.hudElement) this.hudElement.style.display = '';
+            };
             this.stateManager.push(arcadeState);
           });
         }

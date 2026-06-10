@@ -27,12 +27,22 @@ const OBSTACLE_TYPES = [
   { id: 'falling_memo', height: 0.3, width: 0.8, action: 'duck', color: 0xffeecc, falling: true },
   { id: 'filing_cabinet', height: 0.8, width: 0.9, action: 'jump', color: 0x888888 },
   { id: 'tumbleweed', height: 0.5, width: 0.5, action: 'jump', color: 0xaa8844, stompable: true, rolling: true },
+  { id: 'lawsuit_hawk', height: 0.5, width: 0.7, action: 'duck', color: 0x553322, flying: true },
 ];
 
 const COLLECTIBLE_TYPES = [
   { id: 'trust_document', points: 10, color: 0xffd700, size: 0.4 },
   { id: 'coffee_cup', points: 5, color: 0x8b4513, size: 0.3, speedBoost: true },
   { id: 'charter_fragment', points: 50, color: 0xffaa00, size: 0.5, rare: true, glow: true },
+  { id: 'gold_watch', points: 25, color: 0xffd700, size: 0.35, glow: true },
+];
+
+// Sky/light keyframes — the run cycles through a full day every ~400 distance
+const DAY_CYCLE = [
+  { top: 0x4488cc, bot: 0xffcc88, light: 1.0 },  // morning
+  { top: 0x3a78c8, bot: 0xaaddff, light: 1.05 }, // noon
+  { top: 0x7733aa, bot: 0xff8866, light: 0.8 },  // dusk
+  { top: 0x0a1033, bot: 0x223355, light: 0.45 }, // night
 ];
 
 // Platform types that spawn floating platforms to jump to
@@ -85,7 +95,16 @@ export class ArcadeState {
     this.groundTiles = [];
     this.mountains = [];
     this.cacti = [];
+    this.clouds = [];
+    this.groundDetail = [];
     this.sun = null;
+
+    // Juice
+    this.particles = [];
+    this._dustTimer = 0;
+    this._wasGrounded = true;
+    this._coyote = 0;
+    this._jumpBuffer = 0;
 
     // Wheels for rotation
     this.wheels = [];
@@ -136,6 +155,14 @@ export class ArcadeState {
     if (this.hudEl) { this.hudEl.remove(); this.hudEl = null; }
     if (this.gameOverEl) { this.gameOverEl.remove(); this.gameOverEl = null; }
     if (this.milestonePopup) { this.milestonePopup.remove(); this.milestonePopup = null; }
+
+    // Particles
+    for (const p of this.particles) {
+      this.scene.remove(p.mesh);
+      p.geo.dispose();
+      p.mat.dispose();
+    }
+    this.particles = [];
 
     // Dispose Three.js
     this._geometries.forEach(g => g.dispose());
@@ -210,6 +237,9 @@ export class ArcadeState {
     const dirLight = new THREE.DirectionalLight(0xffeedd, 0.8);
     dirLight.position.set(5, 8, 5);
     this.scene.add(dirLight);
+    this.ambientLight = ambient;
+    this.dirLight = dirLight;
+    this.skyMat = skyMat;
   }
 
   _onResize() {
@@ -383,6 +413,34 @@ export class ArcadeState {
     this._geometries.push(hitchGeo);
     this._materials.push(hitchMat);
 
+    // Driver — Andrew, white-knuckling the reins on the front bench
+    const driver = new THREE.Group();
+    const dBodyGeo = new THREE.BoxGeometry(0.26, 0.32, 0.2);
+    const dBodyMat = new THREE.MeshToonMaterial({ color: 0x2c3e6b });
+    const dBody = new THREE.Mesh(dBodyGeo, dBodyMat);
+    dBody.position.y = 0.16;
+    driver.add(dBody);
+    const dHeadGeo = new THREE.SphereGeometry(0.12, 10, 8);
+    const dHeadMat = new THREE.MeshToonMaterial({ color: 0xf5c6a0 });
+    const dHead = new THREE.Mesh(dHeadGeo, dHeadMat);
+    dHead.position.y = 0.42;
+    driver.add(dHead);
+    const dHairGeo = new THREE.SphereGeometry(0.13, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55);
+    const dHairMat = new THREE.MeshToonMaterial({ color: 0x4a3728 });
+    const dHair = new THREE.Mesh(dHairGeo, dHairMat);
+    dHair.position.y = 0.44;
+    driver.add(dHair);
+    const dArmGeo = new THREE.BoxGeometry(0.3, 0.06, 0.06);
+    const dArm = new THREE.Mesh(dArmGeo, dBodyMat);
+    dArm.position.set(0.18, 0.22, 0);
+    dArm.rotation.z = -0.25;
+    driver.add(dArm);
+    this._geometries.push(dBodyGeo, dHeadGeo, dHairGeo, dArmGeo);
+    this._materials.push(dBodyMat, dHeadMat, dHairMat);
+    driver.position.set(0.75, 1.45, 0);
+    this.coach.add(driver);
+    this.driver = driver;
+
     this.coach.add(horseGroup);
     this.horses = horseGroup;
 
@@ -458,6 +516,25 @@ export class ArcadeState {
       this.cacti.push(cactus);
       this.scene.add(cactus);
     }
+
+    // Clouds (slow parallax layer) — toon-lit, kept under the bloom threshold
+    const cloudGeo = new THREE.SphereGeometry(0.6, 8, 6);
+    const cloudMat = new THREE.MeshToonMaterial({ color: 0xdde4ee, transparent: true, opacity: 0.85 });
+    this._geometries.push(cloudGeo);
+    this._materials.push(cloudMat);
+    for (let i = 0; i < 5; i++) {
+      const cloud = new THREE.Group();
+      const puffs = 2 + Math.floor(Math.random() * 2);
+      for (let p = 0; p <= puffs; p++) {
+        const puff = new THREE.Mesh(cloudGeo, cloudMat);
+        puff.position.set(p * 0.7 - puffs * 0.35, (p % 2) * 0.2, 0);
+        puff.scale.set(1 + Math.random() * 0.5, 0.55, 0.8);
+        cloud.add(puff);
+      }
+      cloud.position.set(-18 + i * 9 + Math.random() * 4, 2.5 + Math.random() * 2.5, -11);
+      this.clouds.push(cloud);
+      this.scene.add(cloud);
+    }
   }
 
   _buildGround() {
@@ -486,6 +563,28 @@ export class ArcadeState {
       line.position.set(i * 60, GROUND_Y + 0.01, -1.95);
       this.scene.add(line);
       this.groundTiles.push(line);
+    }
+
+    // Scattered rocks/cracks scrolling at full speed — sells the motion
+    const rockGeo = new THREE.BoxGeometry(0.18, 0.07, 0.3);
+    const rockMat = new THREE.MeshToonMaterial({ color: 0xa8895f });
+    const crackGeo = new THREE.PlaneGeometry(0.5, 0.06);
+    const crackMat = new THREE.MeshToonMaterial({ color: 0xb59a6c });
+    this._geometries.push(rockGeo, crackGeo);
+    this._materials.push(rockMat, crackMat);
+    for (let i = 0; i < 14; i++) {
+      let detail;
+      if (i % 2 === 0) {
+        detail = new THREE.Mesh(rockGeo, rockMat);
+        detail.position.set(-14 + i * 4 + Math.random() * 3, GROUND_Y + 0.04, -1.4 + Math.random() * 2.6);
+      } else {
+        detail = new THREE.Mesh(crackGeo, crackMat);
+        detail.rotation.x = -Math.PI / 2;
+        detail.rotation.z = Math.random() * Math.PI;
+        detail.position.set(-14 + i * 4 + Math.random() * 3, GROUND_Y + 0.015, -1.2 + Math.random() * 2.4);
+      }
+      this.groundDetail.push(detail);
+      this.scene.add(detail);
     }
   }
 
@@ -690,6 +789,35 @@ export class ArcadeState {
       const inner = new THREE.Mesh(innerGeo, innerMat);
       inner.position.y = 0.25;
       group.add(inner);
+
+    } else if (typeDef.id === 'lawsuit_hawk') {
+      // Process server with wings — swoops at neck height; duck under it
+      const bodyGeo = new THREE.BoxGeometry(0.45, 0.25, 0.25);
+      const bodyMat = new THREE.MeshToonMaterial({ color: typeDef.color });
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      group.add(body);
+      const beakGeo = new THREE.ConeGeometry(0.07, 0.2, 6);
+      const beakMat = new THREE.MeshToonMaterial({ color: 0xddaa22 });
+      const beak = new THREE.Mesh(beakGeo, beakMat);
+      beak.rotation.z = Math.PI / 2;
+      beak.position.set(-0.3, 0, 0);
+      group.add(beak);
+      // Envelope clutched in talons (the lawsuit)
+      const envGeo = new THREE.BoxGeometry(0.3, 0.18, 0.02);
+      const envMat = new THREE.MeshToonMaterial({ color: 0xf5f0e0 });
+      const env = new THREE.Mesh(envGeo, envMat);
+      env.position.set(0, -0.22, 0);
+      group.add(env);
+      // Wings (animated in update)
+      const wingGeo = new THREE.BoxGeometry(0.5, 0.04, 0.3);
+      const wingMat = new THREE.MeshToonMaterial({ color: 0x442a1a });
+      const leftWing = new THREE.Mesh(wingGeo, wingMat);
+      leftWing.position.set(0.1, 0.12, -0.2);
+      group.add(leftWing);
+      const rightWing = new THREE.Mesh(wingGeo, wingMat);
+      rightWing.position.set(0.1, 0.12, 0.2);
+      group.add(rightWing);
+      group.userData.wings = [leftWing, rightWing];
     }
 
     return group;
@@ -721,6 +849,18 @@ export class ArcadeState {
       const steam = new THREE.Mesh(steamGeo, steamMat);
       steam.position.y = 0.2;
       group.add(steam);
+
+    } else if (typeDef.id === 'gold_watch') {
+      // The Janitor would approve
+      const ringGeo = new THREE.TorusGeometry(0.14, 0.045, 8, 16);
+      const ringMat = new THREE.MeshToonMaterial({ color: typeDef.color, emissive: 0x664400, emissiveIntensity: 0.4 });
+      const ring = new THREE.Mesh(ringGeo, ringMat);
+      group.add(ring);
+      const faceGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.03, 12);
+      const faceMat = new THREE.MeshToonMaterial({ color: 0xfff8e0 });
+      const face = new THREE.Mesh(faceGeo, faceMat);
+      face.rotation.x = Math.PI / 2;
+      group.add(face);
 
     } else if (typeDef.id === 'charter_fragment') {
       const geo = new THREE.BoxGeometry(typeDef.size, typeDef.size, typeDef.size * 0.3);
@@ -761,10 +901,12 @@ export class ArcadeState {
   // ---- SPAWNING ----
 
   _spawnObstacle() {
-    const pool = [...OBSTACLE_TYPES];
+    // Hawks only appear once the run is going (distance 80+)
+    const pool = OBSTACLE_TYPES.filter(t => t.id !== 'lawsuit_hawk' || this.distance > 80);
     if (this.scrollSpeed > 8) pool.push(OBSTACLE_TYPES[2]); // more memos at speed
     if (this.scrollSpeed > 12) pool.push(OBSTACLE_TYPES[2]);
     if (this.distance > 50) pool.push(OBSTACLE_TYPES[4]); // tumbleweeds after 50
+    if (this.distance > 150) pool.push(OBSTACLE_TYPES[5]); // extra hawks late
 
     const typeDef = pool[Math.floor(Math.random() * pool.length)];
     const mesh = this._createObstacle(typeDef);
@@ -772,6 +914,8 @@ export class ArcadeState {
     let y = GROUND_Y;
     if (typeDef.falling) {
       y = GROUND_Y + 2.0 + Math.random() * 0.5;
+    } else if (typeDef.flying) {
+      y = GROUND_Y + 1.0 + Math.random() * 0.3; // neck height — duck or be high
     }
 
     mesh.position.set(SPAWN_X, y, 0);
@@ -785,8 +929,10 @@ export class ArcadeState {
       width: typeDef.width,
       height: typeDef.height,
       falling: typeDef.falling || false,
+      flying: typeDef.flying || false,
       stompable: typeDef.stompable || false,
       stomped: false,
+      passed: false,
     });
   }
 
@@ -795,7 +941,9 @@ export class ArcadeState {
     const roll = Math.random();
     if (roll < 0.05) {
       typeDef = COLLECTIBLE_TYPES[2]; // charter fragment (rare)
-    } else if (roll < 0.35) {
+    } else if (roll < 0.17) {
+      typeDef = COLLECTIBLE_TYPES[3]; // gold watch
+    } else if (roll < 0.42) {
       typeDef = COLLECTIBLE_TYPES[1]; // coffee cup
     } else {
       typeDef = COLLECTIBLE_TYPES[0]; // trust document
@@ -853,6 +1001,9 @@ export class ArcadeState {
       if (obs.falling) {
         obsBottom = obs.y - 0.15;
         obsTop = obs.y + 0.15;
+      } else if (obs.flying) {
+        obsBottom = obs.y - 0.25;
+        obsTop = obs.y + 0.25;
       } else {
         obsBottom = GROUND_Y;
         obsTop = GROUND_Y + obs.height;
@@ -878,6 +1029,7 @@ export class ArcadeState {
           this.stompCombo++;
           const comboPoints = 15 * this.stompCombo;
           this.score += comboPoints;
+          this._burst(obs.x, GROUND_Y + 0.5, 0xffaa44, 10);
           this._flashStomp(comboPoints);
 
           // Remove stomped enemy after a moment
@@ -940,6 +1092,7 @@ export class ArcadeState {
           this.speedBoostTimer = 2.0;
         }
 
+        this._burst(col.x, col.y, col.typeDef.color, 8);
         this._flashCollect();
       }
     }
@@ -951,6 +1104,61 @@ export class ArcadeState {
     setTimeout(() => {
       if (this.scene) this.scene.background = origColor;
     }, 80);
+  }
+
+  // ---- PARTICLES ----
+
+  _spawnParticle(x, y, color, opts = {}) {
+    const size = opts.size || 0.07 + Math.random() * 0.07;
+    const geo = new THREE.PlaneGeometry(size, size);
+    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: opts.opacity ?? 0.7, depthWrite: false });
+    const m = new THREE.Mesh(geo, mat);
+    m.position.set(x, y, 0.4);
+    m.rotation.z = Math.random() * Math.PI;
+    this.scene.add(m);
+    const life = opts.life ?? 0.45;
+    this.particles.push({
+      mesh: m, mat, geo,
+      vx: opts.vx ?? (-1.2 - Math.random() * 0.8),
+      vy: opts.vy ?? (0.4 + Math.random() * 1.2),
+      life, maxLife: life,
+    });
+  }
+
+  _burst(x, y, color, count = 8) {
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2;
+      this._spawnParticle(x, y, color, {
+        vx: Math.cos(a) * (1.5 + Math.random()),
+        vy: Math.sin(a) * (1.5 + Math.random()) + 0.5,
+        life: 0.5, opacity: 0.9,
+      });
+    }
+  }
+
+  _updateParticles(dt) {
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i];
+      p.life -= dt;
+      p.mesh.position.x += p.vx * dt;
+      p.mesh.position.y += p.vy * dt;
+      p.vy -= 2.8 * dt;
+      p.mat.opacity = Math.max(0, (p.life / p.maxLife) * 0.8);
+      if (p.life <= 0) {
+        this.scene.remove(p.mesh);
+        p.geo.dispose();
+        p.mat.dispose();
+        this.particles.splice(i, 1);
+      }
+    }
+  }
+
+  _showBonusText(text) {
+    const el = document.createElement('div');
+    el.className = 'arcade-stomp-text';
+    el.textContent = text;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 700);
   }
 
   _flashStomp(points) {
@@ -1040,17 +1248,28 @@ export class ArcadeState {
       || InputManager.isJustPressed('w');
     const wantsDuck = InputManager.isDown('arrowdown') || InputManager.isDown('s');
 
-    if (wantsJump) {
-      if (!this.isJumping) {
-        // First jump
+    // Jump buffering + coyote time — the run should feel fair at speed
+    if (wantsJump) this._jumpBuffer = 0.12;
+    else this._jumpBuffer = Math.max(0, this._jumpBuffer - dt);
+    if (!this.isJumping) this._coyote = 0.08;
+    else this._coyote = Math.max(0, this._coyote - dt);
+
+    if (this._jumpBuffer > 0) {
+      if (!this.isJumping || this._coyote > 0) {
+        // First jump (grounded or just walked off a platform)
         this.isJumping = true;
         this.coachVelocityY = JUMP_VELOCITY;
         this.isDucking = false;
         this.hasDoubleJumped = false;
+        this._jumpBuffer = 0;
+        this._coyote = 0;
       } else if (!this.hasDoubleJumped) {
         // Double jump!
         this.hasDoubleJumped = true;
         this.coachVelocityY = DOUBLE_JUMP_VELOCITY;
+        this._jumpBuffer = 0;
+        // Air puff
+        this._burst(COACH_X, this.coachY + GROUND_Y + 0.1, 0xffffff, 5);
       }
     }
 
@@ -1145,6 +1364,48 @@ export class ArcadeState {
       }
     }
 
+    // Clouds (slowest layer)
+    for (const cloud of this.clouds) {
+      cloud.position.x -= effectiveSpeed * dt * 0.08;
+      if (cloud.position.x < -24) cloud.position.x += 48;
+    }
+
+    // Ground detail scrolls at full speed
+    for (const detail of this.groundDetail) {
+      detail.position.x -= effectiveSpeed * dt;
+      if (detail.position.x < -18) detail.position.x += 36 + Math.random() * 6;
+    }
+
+    // Day-night cycle — full day every ~400 distance
+    const phase = (this.distance / 400) % 1;
+    const seg = phase * DAY_CYCLE.length;
+    const i0 = Math.floor(seg) % DAY_CYCLE.length;
+    const i1 = (i0 + 1) % DAY_CYCLE.length;
+    const f = seg - Math.floor(seg);
+    const k0 = DAY_CYCLE[i0], k1 = DAY_CYCLE[i1];
+    if (this.skyMat) {
+      this.skyMat.uniforms.topColor.value.set(k0.top).lerp(new THREE.Color(k1.top), f);
+      this.skyMat.uniforms.bottomColor.value.set(k0.bot).lerp(new THREE.Color(k1.bot), f);
+    }
+    const lightLevel = k0.light + (k1.light - k0.light) * f;
+    if (this.dirLight) this.dirLight.intensity = 0.8 * lightLevel;
+    if (this.ambientLight) this.ambientLight.intensity = 0.45 + 0.25 * lightLevel;
+
+    // Dust trail while grounded
+    if (!this.isJumping && !this.isDucking) {
+      this._dustTimer -= dt;
+      if (this._dustTimer <= 0) {
+        this._spawnParticle(COACH_X - 1.0, GROUND_Y + 0.12, 0xc8a878);
+        this._dustTimer = 0.07;
+      }
+    }
+    // Landing puff
+    if (this._wasGrounded === false && !this.isJumping) {
+      this._burst(COACH_X, GROUND_Y + 0.12, 0xd8b888, 7);
+    }
+    this._wasGrounded = !this.isJumping;
+    this._updateParticles(dt);
+
     // ---- WHEEL ROTATION ----
     const wheelRotSpeed = effectiveSpeed * 3;
     for (const wheel of this.wheels) {
@@ -1201,6 +1462,30 @@ export class ArcadeState {
       // Tumbleweed roll
       if (obs.typeDef.rolling && !obs.stomped) {
         obs.mesh.rotation.z -= effectiveSpeed * dt * 2;
+      }
+
+      // Hawk: flies faster than the world scrolls, wings flap, slight bob
+      if (obs.flying) {
+        obs.x -= effectiveSpeed * dt * 0.5;
+        obs.mesh.position.x = obs.x;
+        obs.mesh.position.y = obs.y + Math.sin(Date.now() * 0.008 + obs.x) * 0.08;
+        const wings = obs.mesh.userData.wings;
+        if (wings) {
+          const flap = Math.sin(Date.now() * 0.02) * 0.55;
+          wings[0].rotation.x = -flap;
+          wings[1].rotation.x = flap;
+        }
+      }
+
+      // Near-miss bonus: cleared it airborne with little room to spare
+      if (!obs.passed && !obs.stomped && obs.x + obs.width / 2 < COACH_X - 1.2) {
+        obs.passed = true;
+        const coachBottom = this.coachY + GROUND_Y;
+        const obsTop = (obs.flying || obs.falling) ? obs.y + 0.25 : GROUND_Y + obs.height;
+        if (this.isJumping && coachBottom - obsTop < 0.45 && coachBottom - obsTop > -0.05) {
+          this.score += 5;
+          this._showBonusText('CLOSE! +5');
+        }
       }
 
       if (obs.x < DESPAWN_X) {
