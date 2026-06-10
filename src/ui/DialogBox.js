@@ -39,6 +39,49 @@ const SPEAKER_COLORS = {
   'Archive Terminal':   '#4cc9f0',
 };
 
+// Speaker → portrait file stem. Any `<stem>.png` (or `<stem>_<mood>.png`)
+// dropped into src/assets/portraits/ is picked up automatically at build time.
+const PORTRAIT_KEYS = {
+  'Andrew': 'andrew',
+  'Alex': 'alex_it',
+  'Alex (Unhinged)': 'alex_it',
+  'Janet': 'janet',
+  'The Intern': 'intern',
+  'Mysterious Janitor': 'janitor',
+  'The Janitor': 'janitor',
+  'Karen Henderson': 'karen',
+  'Chad Henderson': 'chad',
+  'Grandma Henderson': 'grandma',
+  'Compliance Auditor': 'compliance',
+  'Regional Manager': 'regional',
+  'Ross': 'ross',
+  'Diane': 'diane',
+  'Diane (Front Desk)': 'diane',
+  'Isaiah': 'isaiah',
+  'Rachel': 'rachel',
+  'Rachel, SVP': 'rachel',
+  'Brand Consultant': 'brand_consultant',
+  'Restructuring Analyst': 'restructuring_analyst',
+  'Chief of Restructuring': 'chief_of_restructuring',
+  'Corporate Lawyer': 'corporate_lawyer',
+  'Data Analytics Lead': 'data_analytics_lead',
+  'HR Representative': 'hr_rep',
+  'Security Guard': 'security_guard',
+  "CFO's Assistant": 'cfos_assistant',
+  'Regional Director': 'regional_director',
+  'The Algorithm': 'algorithm',
+  'Printer': 'printer',
+};
+
+// Bundled portrait images (empty object until art lands — that's fine)
+const PORTRAIT_FILES = import.meta.glob('../assets/portraits/*.png', { eager: true, query: '?url', import: 'default' });
+function portraitUrl(stem) {
+  for (const [path, url] of Object.entries(PORTRAIT_FILES)) {
+    if (path.endsWith(`/${stem}.png`)) return url;
+  }
+  return null;
+}
+
 export class DialogBox {
   constructor() {
     this.overlay = document.getElementById('ui-overlay');
@@ -97,6 +140,18 @@ export class DialogBox {
     this.choicesEl.className = 'dialog-choices';
     this.choicesEl.style.display = 'none';
 
+    // Portrait — floats above the box's left edge, JRPG style
+    this.portraitEl = document.createElement('img');
+    this.portraitEl.className = 'dialog-portrait';
+    this.portraitEl.style.cssText = `
+      position: absolute; left: 4px; top: -134px;
+      width: 120px; height: 120px;
+      border: 2px solid #e94560; border-radius: 4px;
+      background: #0a0a14;
+      display: none; pointer-events: none;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.55);
+    `;
+
     this.escHintEl = document.createElement('div');
     this.escHintEl.className = 'dialog-esc-hint';
     this.escHintEl.textContent = ('ontouchstart' in window) ? '[B] Exit' : '[ESC] Exit';
@@ -106,6 +161,7 @@ export class DialogBox {
       color: rgba(255,255,255,0.35); pointer-events: none;
     `;
 
+    this.box.appendChild(this.portraitEl);
     this.box.appendChild(this.speakerEl);
     this.box.appendChild(this.textEl);
     this.box.appendChild(this.choicesEl);
@@ -132,13 +188,40 @@ export class DialogBox {
    * @param {Array|null} choices - Optional array of { text, id } objects
    * @param {number} speed - ms per character (default TEXT_SPEED.NORMAL)
    */
-  show(speaker, text, choices = null, speed = TEXT_SPEED.NORMAL) {
+  show(speaker, text, choices = null, speed = TEXT_SPEED.NORMAL, mood = null) {
     this._createElements();
 
     // Speaker tag
     this.speakerEl.textContent = speaker;
     const speakerColor = SPEAKER_COLORS[speaker] || '#e94560';
     this.speakerEl.style.background = speakerColor;
+
+    // Portrait (mood variant falls back to base, base falls back to hidden)
+    const portraitKey = PORTRAIT_KEYS[speaker];
+    let pUrl = null;
+    if (portraitKey) {
+      if (mood) pUrl = portraitUrl(`${portraitKey}_${mood}`);
+      if (!pUrl) pUrl = portraitUrl(portraitKey);
+    }
+    if (pUrl) {
+      if (this.portraitEl.dataset.url !== pUrl) {
+        this.portraitEl.src = pUrl;
+        this.portraitEl.dataset.url = pUrl;
+        // Punch-in on speaker change
+        this.portraitEl.style.transition = 'none';
+        this.portraitEl.style.transform = 'translateY(8px)';
+        this.portraitEl.style.opacity = '0.3';
+        requestAnimationFrame(() => {
+          this.portraitEl.style.transition = 'transform 0.14s ease-out, opacity 0.14s ease-out';
+          this.portraitEl.style.transform = 'translateY(0)';
+          this.portraitEl.style.opacity = '1';
+        });
+      }
+      this.portraitEl.style.display = '';
+    } else {
+      this.portraitEl.style.display = 'none';
+      this.portraitEl.dataset.url = '';
+    }
 
     // Reset typewriter
     this.fullText = text;

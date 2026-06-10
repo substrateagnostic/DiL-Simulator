@@ -138,7 +138,7 @@ export class DialogState {
    */
   _showTextNode(node) {
     this.shownAnyNode = true;
-    this.dialogBox.show(node.speaker || 'Narrator', node.text);
+    this.dialogBox.show(node.speaker || 'Narrator', node.text, null, undefined, node.mood);
 
     // Set up advance callback
     this.dialogBox.onAdvance = () => {
@@ -184,7 +184,7 @@ export class DialogState {
       id: displayIdx,
     }));
 
-    this.dialogBox.show(node.speaker || 'Narrator', node.prompt || node.text || '', boxChoices);
+    this.dialogBox.show(node.speaker || 'Narrator', node.prompt || node.text || '', boxChoices, undefined, node.mood);
 
     // Set up choice callback
     this.dialogBox.onChoice = (choiceIndex) => {
