@@ -37,6 +37,9 @@ class EngineClass {
     // Scene — the void around rooms is a faint blueprint of the building
     this.scene = new THREE.Scene();
     this.scene.background = this._createVoidBackdrop();
+    // Distance fog fades the city backdrop without touching the room
+    // (rooms sit ~20-35 units from camera; buildings 40-80)
+    this.scene.fog = new THREE.Fog(0x14142a, 42, 88);
 
     // Orthographic camera for isometric view
     const aspect = this.width / this.height;
@@ -69,6 +72,19 @@ class EngineClass {
 
     // Lighting
     this._setupLighting();
+
+    // The city outside (lazy import avoids a cycle; fire-and-forget)
+    import('../effects/CityBackdrop.js').then(({ CityBackdrop }) => {
+      this.cityBackdrop = new CityBackdrop(this.scene);
+      if (this._pendingTimeOfDay) this.cityBackdrop.setTimeOfDay(this._pendingTimeOfDay);
+    });
+  }
+
+  // Story-driven time of day — drives the city backdrop palette + fog.
+  // Room interior rigs stay authoritative (applyRoomLighting).
+  setTimeOfDay(key) {
+    if (this.cityBackdrop) this.cityBackdrop.setTimeOfDay(key);
+    else this._pendingTimeOfDay = key;
   }
 
   _createVoidBackdrop() {
@@ -210,6 +226,8 @@ class EngineClass {
       if (Math.random() < 0.0015) f *= 0.72;
       this._dirLight.intensity = this._baseDirIntensity * f;
     }
+
+    this.cityBackdrop?.update(dt);
 
     if (this._updateCallback) {
       this._updateCallback(dt);

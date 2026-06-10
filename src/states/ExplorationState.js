@@ -595,9 +595,23 @@ export class ExplorationState {
     return roomId;
   }
 
+  // Story act → time of day for the world outside the windows.
+  // City chapter rooms are always golden hour (the one nice afternoon).
+  _applyTimeOfDay(roomId) {
+    const CITY_ROOMS = ['city_street', 'transit_bus', 'records_hall', 'luckys_diner', 'old_branch', 'old_vault'];
+    if (CITY_ROOMS.includes(roomId)) {
+      Engine.setTimeOfDay('goldenhour');
+      return;
+    }
+    const act = this.player.actIndex || 0;
+    const TOD_BY_ACT = ['morning', 'morning', 'morning', 'afternoon', 'afternoon', 'dusk', 'night', 'predawn'];
+    Engine.setTimeOfDay(TOD_BY_ACT[Math.min(act, TOD_BY_ACT.length - 1)]);
+  }
+
   _loadRoom(roomId, spawnX, spawnZ) {
     const actualId = this._resolveRoomId(roomId);
     const result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
+    this._applyTimeOfDay(roomId);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
@@ -657,6 +671,7 @@ export class ExplorationState {
 
     const actualRoom = this._resolveRoomId(targetRoom);
     const result = this.roomManager.loadRoom(actualRoom, spawnX, spawnZ, this.player.flags);
+    this._applyTimeOfDay(targetRoom);
     if (result) {
       this.tileMap = result.tileMap;
       this.player.setPosition(result.spawnX, result.spawnZ);
