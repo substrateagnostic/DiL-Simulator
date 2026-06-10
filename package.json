@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "editor": "node scripts/editor.js",
+    "shoot": "node tools/shoot.mjs",
     "validate:data": "node scripts/validate-data.mjs",
     "check": "npm run validate:data && npm run build"
   },
@@ -17,5 +18,8 @@
   "dependencies": {
     "three": "^0.183.2",
     "vite": "^7.3.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }

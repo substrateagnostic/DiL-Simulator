@@ -9,6 +9,7 @@ import { ExplorationState } from './states/ExplorationState.js';
 import { PostProcessing } from './effects/PostProcessing.js';
 import { updateTweens } from './utils/tween.js';
 import { TouchControls } from './ui/TouchControls.js';
+import { DEV_MODE } from './utils/constants.js';
 
 class Game {
   constructor() {
@@ -26,8 +27,15 @@ class Game {
     this.postProcessing.init();
     this.touchControls.init();
 
-    // Start with title screen
-    this._showTitle();
+    // Screenshot-pipeline fixtures (?dev&fixture=act5&shot=server_room&hud=0
+    // or &fight=karen) boot straight into a deterministic game state.
+    const params = new URLSearchParams(window.location.search);
+    if (DEV_MODE && (params.has('fixture') || params.has('shot') || params.has('fight'))) {
+      this._startFixture(params);
+    } else {
+      // Start with title screen
+      this._showTitle();
+    }
 
     // Listen for quit to title (use once-style by removing previous)
     this._quitHandler = () => {
@@ -63,6 +71,41 @@ class Game {
       this._startGame(mode, slot);
     });
     this.stateManager.push(titleState);
+  }
+
+  // Deterministic boot for tools/shoot.mjs. Dev-only; never reachable in
+  // normal play (DEV_MODE gate). Uses save slot 3 as scratch space.
+  async _startFixture(params) {
+    const { DEV_PRESETS } = await import('./ui/DevPanel.js');
+    SaveManager.setActiveSlot(3);
+    this.explorationState = new ExplorationState(this.stateManager);
+    this.stateManager.push(this.explorationState);
+    const ex = this.explorationState;
+
+    const fixtureKey = params.get('fixture');
+    const preset = DEV_PRESETS.find(p => p.key === fixtureKey);
+    if (preset) {
+      Object.assign(ex.player.flags, preset.flags);
+      if (fixtureKey === 'act7') ex.player.gainXP(5000); // arrive at a sane level
+      ex._syncActFromFlags();
+      ex._refreshStoryProgress(true);
+    }
+
+    const shot = params.get('shot');
+    if (shot) {
+      ex._loadRoom(shot);
+      ex._updateLocationDisplay(shot);
+    }
+    if (params.get('hud') === '0' && ex.hudElement) {
+      ex.hudElement.style.display = 'none';
+    }
+    const fight = params.get('fight');
+    if (fight) {
+      setTimeout(() => ex._startCombat(fight), 700);
+    }
+
+    // Ready signal for the shoot harness (after the scene settles)
+    setTimeout(() => { window.__shotReady = true; }, fight ? 3500 : 1200);
   }
 
   _startGame(mode, slot = 1) {

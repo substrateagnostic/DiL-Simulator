@@ -9,8 +9,9 @@ import { ITEMS } from '../data/items.js';
 // Tabs: SAVES (save scum) | SKIP (act presets) | TELEPORT | FIGHT | FLAGS | CHEATS.
 // All actions operate on the live ExplorationState instance passed in.
 
-const PRESETS = [
+export const DEV_PRESETS = [
   {
+    key: 'act1',
     label: 'Act 1 — Briefing Complete',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
@@ -19,6 +20,7 @@ const PRESETS = [
     },
   },
   {
+    key: 'act3',
     label: 'Act 3 — Hendersons Defeated',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
@@ -32,6 +34,7 @@ const PRESETS = [
     },
   },
   {
+    key: 'act4',
     label: 'Act 4 — Archive Evidence Found',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
@@ -48,6 +51,7 @@ const PRESETS = [
     },
   },
   {
+    key: 'act5',
     label: 'Act 5 — Charter Recovered',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
@@ -66,6 +70,7 @@ const PRESETS = [
     },
   },
   {
+    key: 'act6',
     label: 'Act 6 — Rachel Defeated',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
@@ -92,6 +97,7 @@ const PRESETS = [
     },
   },
   {
+    key: 'act7',
     label: 'Act 7 — Penthouse Unlocked',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
@@ -243,7 +249,7 @@ export function showDevPanel(ex) {
     note.style.cssText = 'font-size:9px;color:#666;margin-bottom:6px';
     note.textContent = 'Presets are cumulative. Some narrative read-flags are not included — a few dialogs may replay.';
     content.appendChild(note);
-    PRESETS.forEach(preset => {
+    DEV_PRESETS.forEach(preset => {
       const b = _btn(preset.label, null, () => {
         Object.assign(ex.player.flags, preset.flags);
         ex._syncActFromFlags();
