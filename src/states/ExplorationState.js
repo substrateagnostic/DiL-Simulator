@@ -817,6 +817,19 @@ export class ExplorationState {
       && !this.player.getFlag('defeated_karen');
     const enemyOverrides = isFirstKaren ? { atk: 999 } : {};
 
+    // Quarterly-review leverage (logic-sweep MAJOR #11): the review
+    // promised your book of business would matter against Rachel.
+    // Strong portfolio blunts her case; a weak one is her exhibit A.
+    if (encounterId === 'rachel_boss' && ENEMY_STATS.rachel_boss) {
+      const base = ENEMY_STATS.rachel_boss;
+      if (this.player.getFlag('portfolio_strong')) {
+        enemyOverrides.atk = Math.max(1, Math.round(base.atk * 0.85));
+        enemyOverrides.def = Math.max(1, Math.round(base.def * 0.85));
+      } else if (this.player.getFlag('portfolio_weak')) {
+        enemyOverrides.atk = Math.round(base.atk * 1.1);
+      }
+    }
+
     // Grandma's cookies debuff: -5 ATK, -2 DEF for this fight only
     const cookieDebuff = encounterId === 'grandma' && this.player.getFlag('took_grandma_cookie');
     let savedAtk, savedDef;
@@ -1219,15 +1232,20 @@ export class ExplorationState {
     // Determine grade color
     const gradeColor = health.score >= 80 ? '#4ade80' : health.score >= 55 ? '#facc15' : '#f87171';
 
-    // Portfolio health affects story: good portfolio = ammo against Rachel in Act 5+
+    // Portfolio health affects story: good portfolio = ammo against Rachel
+    // in Act 5+. Consumed by the rachel_boss fight (_startCombat applies
+    // enemy stat overrides + rachel_boss_combat branches on the flags) —
+    // logic-sweep MAJOR #11. Latest review wins.
     const act = this.player.actIndex || 1;
     let storyNote = '';
-    if (act >= 5 && health.score >= 70) {
-      storyNote = '<div class="qr-story-note">Your strong portfolio gives you leverage against Rachel\'s restructuring arguments.</div>';
-      this.player.setFlag('portfolio_strong', true);
-    } else if (act >= 5 && health.score < 40) {
-      storyNote = '<div class="qr-story-note qr-story-warn">Rachel will use your weak portfolio as evidence for restructuring.</div>';
-      this.player.setFlag('portfolio_strong', false);
+    if (act >= 5) {
+      this.player.setFlag('portfolio_strong', health.score >= 70);
+      this.player.setFlag('portfolio_weak', health.score < 40);
+      if (health.score >= 70) {
+        storyNote = '<div class="qr-story-note">Your strong portfolio gives you leverage against Rachel\'s restructuring arguments.</div>';
+      } else if (health.score < 40) {
+        storyNote = '<div class="qr-story-note qr-story-warn">Rachel will use your weak portfolio as evidence for restructuring.</div>';
+      }
     }
 
     // Reward or penalty based on grade

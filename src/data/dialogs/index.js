@@ -2406,9 +2406,18 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Rachel', text: "I've spent fifteen years climbing the corporate ladder. I will NOT be stopped by a first-week trust officer and a JANITOR." },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "The building hums. The charter on the table begins to glow with that impossible warm light." },
     /* 11 */ { type: 'text', speaker: 'Rachel', text: "What is— this is some kind of trick. Fine. If you want a fight, I'll give you one." },
-    /* 12 */ { type: 'text', speaker: 'Rachel', text: "I am Rachel, SVP of Strategic Operations. I have a Harvard MBA, a corner office, and ZERO patience for corporate fairy tales." },
+    /* 12 */ { type: 'text', speaker: 'Rachel', text: "I am Rachel, SVP of Strategic Operations. I have a Harvard MBA, a corner office, and ZERO patience for corporate fairy tales.", next: 15 },
     /* 13 */ { type: 'action', action: 'start_combat', encounter: 'rachel_boss', next: 14 },
     /* 14 */ { type: 'end' },
+    // Quarterly-review leverage (logic-sweep MAJOR #11): the flags are
+    // consumed mechanically in _startCombat (enemy stat overrides) —
+    // these lines tell the player it's happening.
+    /* 15 */ { type: 'condition', flag: 'portfolio_strong', ifTrue: 16, ifFalse: 18 },
+    /* 16 */ { type: 'text', speaker: 'Rachel', text: "...I reviewed your book of business, by the way. Clean acquisitions, defensible fee structure. It's annoying. It's going to be a footnote in my report.", next: 17 },
+    /* 17 */ { type: 'text', speaker: 'Narrator', text: "She says 'footnote' like it costs her something. Your portfolio is load-bearing — Rachel's arguments have visible cracks. (Rachel's stats are reduced.)", next: 13 },
+    /* 18 */ { type: 'condition', flag: 'portfolio_weak', ifTrue: 19, ifFalse: 13 },
+    /* 19 */ { type: 'text', speaker: 'Rachel', text: "And I reviewed your book of business. Underperforming. Undercapitalized. Exhibit A, Andrew. You built my case FOR me.", next: 20 },
+    /* 20 */ { type: 'text', speaker: 'Narrator', text: "She slides a copy of your quarterly review across the table like a subpoena. It lands harder than it should. (Rachel's attack is increased.)", next: 13 },
   ],
 
   rachel_boss_defeated: [
