@@ -16,8 +16,8 @@ post-process pass** (Bayer dither + film grain + per-act color grade, settings t
 | P2 | Near-wall auto-fade | DONE | (pushed) |
 | P3 | Elevator ride overlay (doors/LED/ding) | DONE | (pushed) |
 | P4 | RetroPass + street ground fog + desktop zoom 10.5 | DONE | (pushed) |
-| P5 | Character refinement (cloth canvas textures, silhouette) | NEXT SESSION | — |
-| P6 | Fixtures common-sense pass | NEXT SESSION (do with P8 majors) | — |
+| P5 | Character cloth + silhouette | DONE | 54d8e0f |
+| P6 | Fixtures pass (windows/posters/overlaps) | DONE | 67a9347+3c8cb20+139bad5 |
 | P7 | Settings menu (volumes, text speed, retro/shake toggles) | DONE | (pushed) |
 | P8 | Logic sweep: report DONE (s5-logic-report.md, 29 findings); 3 CRITICALS + act7_complete FIXED+pushed; 8 MAJOR + 17 MINOR remain — apply next session from the report | partial |
 | P9 | Balance APPLIED+pushed: 13 enemy overrides, 6 ability tweaks, boss silence-resist, HEAVY telegraph tag. Sim script reusable: node .claude/plans/s5-balance-sim.mjs --validate | DONE |
@@ -108,3 +108,10 @@ Exit back via elevator only. Sitting in the chair triggers andrews longest monol
 ## Verification
 npm run check w/ REAL exit codes; npm run shoot full sheet at end; mobile spot-check after P4
 (zoom change!) at 390x844 + 844x390.
+
+## SPRINT 5 CLOSED (June 11, ~3am)
+All 11 phases + playtest rounds done and PUSHED. Logic: 3 CRIT + 8 MAJOR + 17 MINOR all resolved.
+Collision: 145 walk-through tiles -> 42 intentional; 33 invisible walls -> 1 (BFS-verified all rooms).
+Also shipped: release packaging (S5-REL), epilogue vignettes, choice greying, NPC stuck-detection,
+blueprint room-hole + ghost intersection fixes, ground-floor shell, recessed elevators.
+Remaining known: og.png asset (public/), itch upload itself, human end-to-end run.
