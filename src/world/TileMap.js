@@ -8,6 +8,26 @@ export class TileMap {
     this.grid = new Uint8Array(width * height);
     this.exitData = {}; // "x,z" -> { targetRoom, spawnX, spawnZ }
     this.interactData = {}; // "x,z" -> { type, id, ... }
+    // Per-tile floor elevation (multi-level rooms). Flat rooms never
+    // allocate it; heightAt() returns 0 everywhere for them.
+    this.heights = null;
+  }
+
+  // Set floor elevation for a rect of tiles (from room data floorZones)
+  setHeightRect(x, z, w, h, y) {
+    if (!this.heights) this.heights = new Float32Array(this.width * this.height);
+    for (let dz = 0; dz < h; dz++) {
+      for (let dx = 0; dx < w; dx++) {
+        const idx = this._idx(x + dx, z + dz);
+        if (idx >= 0) this.heights[idx] = y;
+      }
+    }
+  }
+
+  heightAt(x, z) {
+    if (!this.heights) return 0;
+    const idx = this._idx(x, z);
+    return idx >= 0 ? this.heights[idx] : 0;
   }
 
   _idx(x, z) {
@@ -60,11 +80,19 @@ export class TileMap {
   }
 
   // Check if player can move to position (with sub-tile precision)
-  canMove(x, z, radius = 0.2) {
+  canMove(x, z, radius = 0.2, fromX = null, fromZ = null) {
     // Check all four corners of the bounding circle approximation
-    return this.isWalkable(x - radius, z - radius) &&
+    const walkable = this.isWalkable(x - radius, z - radius) &&
            this.isWalkable(x + radius, z - radius) &&
            this.isWalkable(x - radius, z + radius) &&
            this.isWalkable(x + radius, z + radius);
+    if (!walkable) return false;
+    // Multi-level rooms: a big elevation jump between adjacent tiles is
+    // a ledge, not a path — stairs are zones of small per-tile rises
+    if (this.heights && fromX !== null) {
+      const dh = Math.abs(this.heightAt(x, z) - this.heightAt(fromX, fromZ));
+      if (dh > 0.55) return false;
+    }
+    return true;
   }
 }

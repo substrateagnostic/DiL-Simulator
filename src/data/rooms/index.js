@@ -960,30 +960,40 @@ export const ROOMS = {
     floorColor: 0xc0b8a8,
     walls: true,
     lighting: { ambient: 0xaab4c0, ambientIntensity: 0.42, dir: 0xc8d2dc, dirIntensity: 0.55, flicker: true },
+    // A TRUE stairwell: three landings connected by full-width steps.
+    // You enter at department level and physically descend two storeys
+    // to the archive door. Each step row drops 0.225 (within the
+    // TileMap ledge tolerance); landings are flat.
+    floorZones: [
+      { x: 0, z: 14, w: 4, h: 6, y: 0 },       // top landing (cubicle farm level)
+      { x: 0, z: 13, w: 4, h: 1, y: -0.225 },
+      { x: 0, z: 12, w: 4, h: 1, y: -0.45 },
+      { x: 0, z: 11, w: 4, h: 1, y: -0.675 },
+      { x: 0, z: 7,  w: 4, h: 4, y: -0.9 },    // mid landing
+      { x: 0, z: 6,  w: 4, h: 1, y: -1.125 },
+      { x: 0, z: 5,  w: 4, h: 1, y: -1.35 },
+      { x: 0, z: 4,  w: 4, h: 1, y: -1.575 },
+      { x: 0, z: 0,  w: 4, h: 4, y: -1.8 },    // bottom landing (archive level)
+    ],
     furniture: [
-      // Motivational poster on west wall
-      { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
+      // Motivational poster on west wall (top landing)
+      { type: 'motivationalPoster', x: 0.1, z: 16, rotation: Math.PI / 2 },
       // Network Ghost signal booster mount (east wall, upper section)
-      { type: 'boosterMount', x: 3.9, z: 5, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
-      // The shaft itself — a center stairwell the corridor wraps around:
-      // a down-flight toward the archive end, an up-flight toward floors
-      // you never get a badge for. The x2-3 lane stays walkable.
-      { type: 'stairFlight', x: 1, z: 9,  variant: 'down' },
-      { type: 'stairFlight', x: 1, z: 17, variant: 'up' },
+      { type: 'boosterMount', x: 3.9, z: 15, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     exits: [
       // SOUTH exit -> Cubicle Farm
       { x: 1, z: 19, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 12 },
       { x: 2, z: 19, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 13 },
-      // NORTH exit -> Archive (Act 3+)
+      // NORTH exit -> Archive (Act 3+), two storeys down
       { x: 1, z: 0, targetRoom: 'archive', spawnX: 6, spawnZ: 8 },
       { x: 2, z: 0, targetRoom: 'archive', spawnX: 6, spawnZ: 8 },
     ],
     interactables: [
-      { x: 3, z: 10, type: 'graffiti', dialogId: 'stairwell_graffiti' },
-      { x: 0, z: 10, type: 'poster', dialogId: 'poster_stair_1' },
+      { x: 3, z: 16, type: 'graffiti', dialogId: 'stairwell_graffiti' },
+      { x: 0, z: 16, type: 'poster', dialogId: 'poster_stair_1' },
       // Network Ghost signal booster (east wall, upper section)
-      { x: 3, z: 5, type: 'poster', dialogId: 'network_booster_stairwell', condition: { notFlag: 'quest_network_ghost_complete' } },
+      { x: 3, z: 15, type: 'poster', dialogId: 'network_booster_stairwell', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     playerSpawn: { x: 2, z: 18 },
   },

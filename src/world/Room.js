@@ -90,8 +90,13 @@ export class Room {
     // Create the TileMap
     this.tileMap = new TileMap(width, height);
 
-    // 1. Floor
-    this._buildFloor(width, height, floorColor, floorPattern);
+    // 1. Floor — multi-level rooms define floorZones (terraced boxes +
+    // per-tile heights); everyone else gets the classic flat plane
+    if (this.data.floorZones) {
+      this._buildFloorZones(this.data.floorZones, floorColor);
+    } else {
+      this._buildFloor(width, height, floorColor, floorPattern);
+    }
 
     // 2. Perimeter walls (open-air rooms still get exit markers)
     if (walls) {
@@ -219,12 +224,43 @@ export class Room {
   }
 
   /**
+   * Terraced floors for multi-level rooms. Each zone is a solid box whose
+   * top sits at zone.y — adjacent lower zones expose the box side, which
+   * gives free riser faces. Registers per-tile heights on the TileMap.
+   * Zone rect: { x, z, w, h, y } in tile coords.
+   */
+  _buildFloorZones(zones, color) {
+    const mat = Materials.custom(color);
+    const minY = Math.min(0, ...zones.map(zn => zn.y));
+    this.floorMinY = minY;
+    for (const zn of zones) {
+      const depth = zn.y - (minY - 2.0); // solid mass down past the lowest zone
+      const box = new THREE.Mesh(
+        new THREE.BoxGeometry(zn.w * TILE_SIZE, depth, zn.h * TILE_SIZE),
+        mat
+      );
+      box.position.set(
+        zn.x + (zn.w * TILE_SIZE) / 2 - TILE_SIZE / 2,
+        zn.y - depth / 2,
+        zn.z + (zn.h * TILE_SIZE) / 2 - TILE_SIZE / 2,
+      );
+      box.receiveShadow = true;
+      box.castShadow = true;
+      this.scene.add(box);
+      this.tileMap.setHeightRect(zn.x, zn.z, zn.w, zn.h, zn.y);
+    }
+  }
+
+  /**
    * Build perimeter walls (with gaps at exits) and block those tiles.
    * Walls are built as segments between exit tiles so doors are visible.
    * Green glowing floor markers are placed at each exit tile.
    */
   _buildPerimeterWalls(w, h) {
-    const wallHeight = 2.5;
+    // Multi-level rooms drop the walls down to the lowest terrace so the
+    // shaft has no floating gaps
+    const wallDrop = this.floorMinY ? -this.floorMinY : 0;
+    const wallHeight = 2.5 + wallDrop;
     const wallThickness = 0.15;
     const wallMat = Materials.wall();
 
@@ -333,7 +369,7 @@ export class Room {
       const segWidth = count * TILE_SIZE;
       mesh = new THREE.Mesh(new THREE.BoxGeometry(segWidth, wallHeight, wallThickness), wallMat);
       const centerX = ((from + to) / 2) * TILE_SIZE;
-      mesh.position.set(centerX, wallHeight / 2, fixedPos);
+      mesh.position.set(centerX, wallHeight / 2 + (this.floorMinY || 0), fixedPos);
       base = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.16, wallThickness + 0.06), baseMat);
       base.position.set(centerX, 0.08, fixedPos);
       crown = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.07, wallThickness + 0.04), crownMat);
@@ -342,7 +378,7 @@ export class Room {
       const segHeight = count * TILE_SIZE;
       mesh = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, segHeight), wallMat);
       const centerZ = ((from + to) / 2) * TILE_SIZE;
-      mesh.position.set(fixedPos, wallHeight / 2, centerZ);
+      mesh.position.set(fixedPos, wallHeight / 2 + (this.floorMinY || 0), centerZ);
       base = new THREE.Mesh(new THREE.BoxGeometry(wallThickness + 0.06, 0.16, segHeight), baseMat);
       base.position.set(fixedPos, 0.08, centerZ);
       crown = new THREE.Mesh(new THREE.BoxGeometry(wallThickness + 0.04, 0.07, segHeight), crownMat);
@@ -432,7 +468,9 @@ export class Room {
     for (const exit of this.data.exits) {
       const marker = new THREE.Mesh(markerGeo, markerMat);
       marker.rotation.x = -Math.PI / 2;
-      marker.position.set(exit.x * TILE_SIZE, 0.01, exit.z * TILE_SIZE);
+      // Multi-level rooms: marker sits on the terrace the exit lives on
+      const ey = this.tileMap ? this.tileMap.heightAt(exit.x, exit.z) : 0;
+      marker.position.set(exit.x * TILE_SIZE, ey + 0.01, exit.z * TILE_SIZE);
       marker.name = `exit_marker_${exit.x}_${exit.z}`;
       this.scene.add(marker);
     }
@@ -479,13 +517,15 @@ export class Room {
           const zPos = wall === 'north'
             ? -TILE_SIZE / 2
             : (h - 1) * TILE_SIZE + TILE_SIZE / 2;
-          doorGroup.position.set(midCoord * TILE_SIZE, 0, zPos);
+          const dyN = this.tileMap ? this.tileMap.heightAt(midCoord, wall === 'north' ? 0 : h - 1) : 0;
+          doorGroup.position.set(midCoord * TILE_SIZE, dyN, zPos);
           if (wall === 'south') doorGroup.rotation.y = Math.PI;
         } else {
           const xPos = wall === 'west'
             ? -TILE_SIZE / 2
             : (w - 1) * TILE_SIZE + TILE_SIZE / 2;
-          doorGroup.position.set(xPos, 0, midCoord * TILE_SIZE);
+          const dyW = this.tileMap ? this.tileMap.heightAt(wall === 'west' ? 0 : w - 1, midCoord) : 0;
+          doorGroup.position.set(xPos, dyW, midCoord * TILE_SIZE);
           doorGroup.rotation.y = wall === 'west' ? Math.PI / 2 : -Math.PI / 2;
         }
 
@@ -669,12 +709,6 @@ export class Room {
       // Facade strips block their full variant-defined width
       if (type === 'facadeStrip') {
         this.tileMap.blockRect(tileX, tileZ, Math.round(variant || 6), 1);
-        continue;
-      }
-
-      // Stair flights extend northward (-z) from their anchor tile
-      if (type === 'stairFlight') {
-        this.tileMap.blockRect(tileX, tileZ - 3, 1, 4);
         continue;
       }
 

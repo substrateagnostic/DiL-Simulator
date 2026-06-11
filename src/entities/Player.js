@@ -56,12 +56,13 @@ export class Player {
       this.animator.setFacing(Math.atan2(dx, dz));
     }
 
-    // Check X and Z independently for wall sliding
+    // Check X and Z independently for wall sliding (from-position lets
+    // multi-level rooms refuse ledge jumps while allowing stair steps)
     if (tileMap) {
-      if (tileMap.canMove(nx, this.position.z, 0.3)) {
+      if (tileMap.canMove(nx, this.position.z, 0.3, this.position.x, this.position.z)) {
         this.position.x = nx;
       }
-      if (tileMap.canMove(this.position.x, nz, 0.3)) {
+      if (tileMap.canMove(this.position.x, nz, 0.3, this.position.x, this.position.z)) {
         this.position.z = nz;
       }
       // Clamp to room perimeter so character doesn't clip through walls
@@ -72,7 +73,11 @@ export class Player {
       this.position.z = nz;
     }
 
-    this.mesh.position.set(this.position.x, 0, this.position.z);
+    // Ride the terrain: lerp toward the current tile's floor height
+    const targetY = tileMap ? tileMap.heightAt(this.position.x, this.position.z) : 0;
+    const curY = this.mesh.position.y;
+    const newY = Math.abs(targetY - curY) < 0.01 ? targetY : curY + (targetY - curY) * Math.min(1, dt * 12);
+    this.mesh.position.set(this.position.x, newY, this.position.z);
   }
 
   update(dt) {
