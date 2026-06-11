@@ -1,3 +1,34 @@
+# Session Handoff — June 11, 2026 (Sprints 4+5, Session 9) — OVERNIGHT IN FLIGHT
+
+**Morning protocol (whoever wakes first, human or instance):**
+1. THREE background agents were running at session end. Their work is COMMITTED but NOT pushed:
+   - P5 agent: character cloth textures + silhouette (CharacterBuilder/FacePainter/MaterialLibrary only)
+   - P6+P8 agent: logic-report MAJORS + fixtures pass (rooms/dialogs/ExplorationState/Furniture)
+   - Codex agent: 8 epilogue vignettes → src/assets/epilogues/ (1024px raws — downscale to 512,
+     archive raws to art/, commit; System.Drawing snippet in the Session 6 handoff below)
+2. Review: `git log origin/main..HEAD --oneline`, spot-check `git show` per commit + contact
+   sheet (`npm run shoot`, open screenshots/contact/index.html), `npm run check > c.log 2>&1;
+   echo $?` (NEVER pipe check to tail — masks crashes), then push.
+3. Sprint state: `.claude/plans/overnight-sprint-5.md`. Audits: s5-logic-report.md (8 MAJOR
+   with the agent; 17 MINOR open), s5-balance-report.md + reusable sim s5-balance-sim.mjs.
+
+Session 9 shipped (all pushed): floor-height engine + true terraced stairwell (thin slabs,
+riser contact shadows, east-wall top door, people-sized doors, doorStyle:'none' elevator
+exits), near-wall auto-fade, ElevatorRide overlay (doors/LED/ding + Quiet Floor detour),
+RetroPass (Bayer dither + 5-bit quantize + grain + per-hour grade; Engine.setRetroPass),
+street ground fog + mist, desktop zoom 10.5, settings menu (core/Settings.js), 3 CRITICAL
+logic fixes (Firm dead-end -> the_firm_retry; Alex act2 ceiling; ESC no longer aborts
+dialogs), combat balance applied (13 enemy overrides, 6 ability tweaks, boss silence-resist,
+HEAVY telegraph tag — chad/compliance/regional were literally 0-2% winnable), EpilogueState
+(flag-driven ending cards), floor_13 Quiet Floor.
+
+New gotchas (Session 9): exits need E ("Go through") — they don't auto-fire on stand.
+`window.__explore` = DEV_MODE debug handle. Multi-level rooms: `floorZones` in room data;
+doors/markers sit on their terrace; walls extend down but door height stays 2.5 (pass the
+constant to _addDoorFrames, NOT wallHeight).
+
+---
+
 # Session Handoff — June 11, 2026 (Sprint 3: PS1 models, Session 8)
 
 Full detail: `.claude/plans/overnight-sprint-3.md`. NEXT RUN: `.claude/plans/overnight-sprint-4.md`
