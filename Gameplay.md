@@ -83,6 +83,11 @@ Achievements are tracked across all saves and viewable in the Pause Menu → Ach
 | 🏢 | Hostile Takeover Blocked | Complete Act 5 — defeat Rachel and drive out the restructuring team |
 | 🤝 | United We Stand | Complete Act 6 — rally the team and secure the Janitor's Rolex |
 | 💻 | Trust Issues Resolved | Complete Act 7 — defeat The Algorithm |
+| 🖋 | The Countersignature | Act 6½ — get the charter certified by the Recorder's living deputy |
+| ✉ | Served | Defeat The Firm in the first vault |
+| 🖥 | One More Rememberer | Document Process 7 (post-game, Server Room rack 7) |
+| 🕯 | A Finished Shift | Let Process 7 reconcile its last timestamp |
+| 🔁 | Lap Two | Start New Game+ |
 
 ### Combat Mastery
 
@@ -119,6 +124,8 @@ Achievements are tracked across all saves and viewable in the Pause Menu → Ach
 | 🚪 | Hard Pass | Decline a client after winning combat |
 | ⭐ | Dream Client | Accept a client with no negative attributes |
 | 💸 | High Roller | Accept a client with 5,000,000+ in assets |
+| 🅿 | Honorary Gray Area | Win the Meter War — beat Officer Reyes three times |
+| 🚌 | The 5:15 Runs On Time | Recover Marlene's transfer ledger |
 
 ---
 

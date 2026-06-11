@@ -15,6 +15,19 @@ const ACHIEVEMENTS = [
   { id: 'act6_complete',     category: 'Act Completions', name: 'United We Stand',      desc: 'Rally the team and secure the evidence',                     icon: '🤝', check: (p) => !!p.getFlag('act6_complete') },
   { id: 'act7_complete',     category: 'Act Completions', name: 'Trust Issues Resolved', desc: 'Defeat The Algorithm',                                      icon: '💻', check: (p) => !!p.getFlag('algorithm_defeated') },
 
+  // Act 6½ — The Countersignature
+  { id: 'countersigned',     category: 'Act Completions', name: 'The Countersignature', desc: "Get the 1947 charter certified by the Recorder's living deputy", icon: '🖋', check: (p) => !!p.getFlag('charter_certified') },
+  { id: 'served',            category: 'Act Completions', name: 'Served',               desc: 'Defeat The Firm in the first vault',                          icon: '✉',  check: (p) => !!p.getFlag('defeated_the_firm') },
+  { id: 'gray_area',         category: 'Roguelite',       name: 'Honorary Gray Area',   desc: 'Win the Meter War — three appeals upheld against Officer Reyes', icon: '🅿', check: (p) => !!p.getFlag('meter_war_done') },
+  { id: 'on_time',           category: 'Roguelite',       name: 'The 5:15 Runs On Time', desc: "Recover Marlene's transfer ledger and read the second handwriting", icon: '🚌', check: (p) => !!p.getFlag('bus515_done') },
+
+  // The Daemon at Rack 7
+  { id: 'rememberer',        category: 'Story',           name: 'One More Rememberer',  desc: 'Document Process 7 — Institutional Memory, Auxiliary',        icon: '🖥', check: (p) => !!p.getFlag('daemon_kept') },
+  { id: 'finished_shift',    category: 'Story',           name: 'A Finished Shift',     desc: 'Let Process 7 reconcile its last timestamp',                  icon: '🕯', check: (p) => !!p.getFlag('daemon_killed') },
+
+  // New Game+
+  { id: 'lap_two',           category: 'Story',           name: 'Lap Two',              desc: 'Restart the week with everything you earned',                 icon: '🔁', check: (p) => !!p.getFlag('ng_plus') },
+
   // Combat mastery
   { id: 'assert_dominance',  category: 'Combat Mastery', name: 'Assert Dominance',     desc: 'Use Assert Dominance in combat',           icon: '⚡', check: (p, ctx) => ctx.event === 'power_move_used' },
   { id: 'brace_master',      category: 'Combat Mastery', name: 'Brace for Impact',     desc: 'Successfully brace an attack',             icon: '🛡', check: (p, ctx) => ctx.event === 'brace_success' },

@@ -137,6 +137,31 @@ All quests, objectives, and rewards.
 
 ---
 
+### Act 6½ · The Countersignature
+*The charter is real. The seal is not on it. One afternoon, one city.*
+
+| # | Objective |
+|---|-----------|
+| 1 | Take the charter to the Penthouse elevator (it will refuse — this starts the chapter) |
+| 2 | Exit through the parking garage's south door to Fennimore Avenue |
+| 3 | Hall of Records — request Form 11-C from the Clerk (wrong forms → back of the queue, retry allowed) |
+| 4 | Find Delia Okafor — Lucky's Diner, booth 4. Answer her question plainly. |
+| 5 | The Roastery (east end) — basement vault, box 0001 |
+| 6 | Survive The Firm's ambush; Delia certifies the charter |
+
+**Combat rewards:**
+| Enemy | XP | HP | Notes |
+|-------|----|----|----|
+| The Firm (Partner + Associate + Paralegal) | **390 XP total** | 520/420/360 | 3v1, cannot flee. They serve you mid-cutscene. |
+| Officer Reyes (optional, repeatable ×3) | **90 XP each** | 380 | Meter War: 3 wins → +2 SPD + Honorary Gray Area |
+| The Networking Guy (optional) | **85 XP** | 320 | He will mention you on the pod |
+
+**Optional side quests:** The 5:15 Crosstown (Marlene's transfer ledger under seat 12 → 2× Energy Drink + 150 XP), Deep Stacks (records hall, after Form 11-C → +2 DEF + 150 XP).
+
+**Chapter rewards:** Form 11-C 150 XP · Delia's test 200 XP · certification 400 XP. `charter_certified` unlocks the Penthouse.
+
+---
+
 ### Act 7 · Trust Issues
 *Top floor. Final answers.*
 
@@ -245,6 +270,25 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | 4 | Wait for the patch to deploy |
 
 **Reward:** Ability unlocked — **Invoke Charter** *(Read the 1947 charter aloud, Power 100 — devastating to bad-faith enemies)*
+
+---
+
+## Ally Personal Missions (post-recruit)
+
+| Ally | Mission | Where | Reward |
+|------|---------|-------|--------|
+| Alex from IT | Badge Audit | PATCH-3 rack, Server Room (5,5) | Kernel Panic unlock + 200 XP |
+| Isaiah | The Receipts | HVAC cabinet, Archive west bank | Paperwork Blizzard unlock + 250 XP |
+| Diane | The Original Handbook | MISC ADMIN ARCHIVE box, HR south filing | Termination Letter unlock + 250 XP |
+| Janet | The Vacancy | Gary's desk under the paper, Cubicle Farm NE (16,3) | Binder Slam unlock + 250 XP |
+| Janitor | The Names (post-Rolex) | Behind the deposit boxes, Vault (1,6) | +15 max Coffee + 250 XP |
+
+## Post-Game
+
+| Quest | Where | Notes |
+|-------|-------|-------|
+| The Daemon at Rack 7 | Server Room (3,4), after The Algorithm falls | KEEP or TERMINATE Process 7. Both end the only way they can. 300 XP either way. |
+| New Game+ | Pause menu after the Algorithm | Carry AUM/abilities/cosmetics/records; enemies ×1.4 HP / ×1.3 ATK |
 
 ---
 

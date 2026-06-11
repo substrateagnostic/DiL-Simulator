@@ -369,6 +369,9 @@ export class ExplorationState {
         const ACT_ACHIEVEMENT_FLAGS = [
           'briefing_complete', 'act2_complete', 'act3_complete',
           'act4_complete', 'act5_complete', 'act6_complete', 'algorithm_defeated',
+          // Act 6½ + post-game choices
+          'charter_certified', 'defeated_the_firm', 'meter_war_done',
+          'bus515_done', 'daemon_kept', 'daemon_killed',
         ];
         if (ACT_ACHIEVEMENT_FLAGS.includes(key)) {
           AchievementManager.check(this.player, {});
