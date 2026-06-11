@@ -239,15 +239,21 @@ export function buildCharacter(config, options = {}) {
       brim.position.set(0, headY + hh * 0.3, headZ - hdp * 0.78);
       group.add(brim);
     } else if (style === 'shawl') {
-      const hood = new THREE.Mesh(
-        new THREE.SphereGeometry(hw * 0.78, 8, 6, 0, Math.PI * 2, 0, Math.PI * 0.72),
-        hairMat
-      );
-      hood.position.set(0, headY + hh * 0.1, headZ - hdp * 0.16);
-      hood.scale.set(1, 1.05, 1.08);
-      group.add(hood);
-      const knot = new THREE.Mesh(new THREE.SphereGeometry(hw * 0.14, 5, 4), hairMat);
-      knot.position.set(0, headY - hh * 0.62, headZ + hdp * 0.4);
+      // Babushka hood: cap above the brow + sides/back only — the face
+      // plane must stay fully outside the hood geometry
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(hw * 1.24, hh * 0.42, hdp * 1.28), hairMat);
+      cap.position.set(0, headY + hh * 0.44, headZ - hdp * 0.1);
+      group.add(cap);
+      for (const side of [-1, 1]) {
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(hw * 0.16, hh * 1.0, hdp * 1.1), hairMat);
+        panel.position.set(side * hw * 0.64, headY - hh * 0.02, headZ - hdp * 0.12);
+        group.add(panel);
+      }
+      const back = new THREE.Mesh(new THREE.BoxGeometry(hw * 1.24, hh * 1.15, hdp * 0.2), hairMat);
+      back.position.set(0, headY - hh * 0.05, headZ - hdp * 0.66);
+      group.add(back);
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(hw * 0.13, 5, 4), hairMat);
+      knot.position.set(0, headY - hh * 0.66, headZ + hdp * 0.42);
       group.add(knot);
     } else { // 'short' and default
       const cap = new THREE.Mesh(new THREE.BoxGeometry(hw * 1.1, hh * 0.4, hdp * 1.1), hairMat);
