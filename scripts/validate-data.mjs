@@ -196,13 +196,18 @@ function validateDataReferences() {
         if (kind === 'furniture') {
           assert(typeof Furniture[entry.type] === 'function', `room ${roomId} furniture ${index} has unknown furniture type ${entry.type}`);
         }
+        // Furniture may recess half a tile into the wall plane (walls sit
+        // at -0.5 / size-0.5) — e.g. the elevator units are recessed
+        // portals in their doorway gaps. NPCs, exits, and interactables
+        // stay strictly in-grid.
+        const slack = kind === 'furniture' ? 0.5 : 0;
         if (entry.x !== undefined) {
           assert(Number.isFinite(entry.x), `room ${roomId} ${kind} ${index} has non-numeric x`);
-          assert(entry.x >= 0 && entry.x <= room.width, `room ${roomId} ${kind} ${index} x outside bounds: ${entry.x}`);
+          assert(entry.x >= -slack && entry.x <= room.width + slack, `room ${roomId} ${kind} ${index} x outside bounds: ${entry.x}`);
         }
         if (entry.z !== undefined) {
           assert(Number.isFinite(entry.z), `room ${roomId} ${kind} ${index} has non-numeric z`);
-          assert(entry.z >= 0 && entry.z <= room.height, `room ${roomId} ${kind} ${index} z outside bounds: ${entry.z}`);
+          assert(entry.z >= -slack && entry.z <= room.height + slack, `room ${roomId} ${kind} ${index} z outside bounds: ${entry.z}`);
         }
       });
     }
