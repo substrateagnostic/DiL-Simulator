@@ -1316,6 +1316,106 @@ export const Furniture = {
 
   // ── Act 6½ city furniture ──────────────────────────────────────────
 
+  // Street-level building front, left-anchored (place at its leftmost
+  // tile). variant = width in tiles. Canvas storefront texture: brick,
+  // windows, doors, awnings — varies per build.
+  facadeStrip(variant) {
+    const w = typeof variant === 'number' ? variant : 6;
+    const group = new THREE.Group();
+    const H = 3.4;
+
+    const c = document.createElement('canvas');
+    c.width = w * 48;
+    c.height = 160;
+    const ctx = c.getContext('2d');
+    const palettes = [
+      ['#6a5244', '#4a3a30', '#d8c8a8'], // brick
+      ['#7a7468', '#5a5448', '#c8d2d8'], // stucco
+      ['#5a6470', '#3e4650', '#e0d8b8'], // stone
+    ];
+    const [wall, dark, glassC] = palettes[Math.floor(Math.random() * palettes.length)];
+    ctx.fillStyle = wall;
+    ctx.fillRect(0, 0, c.width, 160);
+    // Brick course lines
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.lineWidth = 1;
+    for (let y = 8; y < 160; y += 10) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(c.width, y); ctx.stroke();
+    }
+    // Per-module storefronts (one per ~2 tiles)
+    const modules = Math.max(1, Math.floor(w / 2));
+    const mw = c.width / modules;
+    for (let m = 0; m < modules; m++) {
+      const x0 = m * mw;
+      const isDoor = m % 3 === 1;
+      // Upper window
+      ctx.fillStyle = glassC;
+      ctx.fillRect(x0 + mw * 0.18, 24, mw * 0.64, 38);
+      ctx.strokeStyle = dark;
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x0 + mw * 0.18, 24, mw * 0.64, 38);
+      // Awning
+      ctx.fillStyle = m % 2 === 0 ? '#8a3030' : '#2e5a46';
+      ctx.fillRect(x0 + mw * 0.1, 70, mw * 0.8, 12);
+      for (let s = 0; s < 4; s++) {
+        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+        ctx.fillRect(x0 + mw * 0.1 + s * mw * 0.2 + mw * 0.05, 70, mw * 0.08, 12);
+      }
+      // Ground level: door or shop window
+      if (isDoor) {
+        ctx.fillStyle = dark;
+        ctx.fillRect(x0 + mw * 0.3, 92, mw * 0.4, 68);
+        ctx.fillStyle = '#c8a030';
+        ctx.fillRect(x0 + mw * 0.62, 124, 4, 4); // knob
+      } else {
+        ctx.fillStyle = glassC;
+        ctx.fillRect(x0 + mw * 0.14, 92, mw * 0.72, 54);
+        ctx.strokeStyle = dark;
+        ctx.strokeRect(x0 + mw * 0.14, 92, mw * 0.72, 54);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+
+    // Body, left-anchored: spans tiles 0..w-1 (origin at left tile center)
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(w, H, 0.5),
+      Materials.custom(0x4a4038)
+    );
+    body.position.set(w / 2 - 0.5, H / 2, 0);
+    group.add(body);
+    const face = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, H * 0.94),
+      new THREE.MeshLambertMaterial({ map: tex })
+    );
+    face.position.set(w / 2 - 0.5, H / 2, 0.26);
+    group.add(face);
+    // Cornice
+    const cornice = new THREE.Mesh(
+      new THREE.BoxGeometry(w + 0.2, 0.14, 0.66),
+      Materials.custom(0x3a342c)
+    );
+    cornice.position.set(w / 2 - 0.5, H + 0.07, 0.05);
+    group.add(cornice);
+    group.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    return group;
+  },
+
+  // Low sidewalk curb, left-anchored. variant = length in tiles.
+  curb(variant) {
+    const len = typeof variant === 'number' ? variant : 8;
+    const group = new THREE.Group();
+    const curbMesh = new THREE.Mesh(
+      new THREE.BoxGeometry(len, 0.12, 0.34),
+      Materials.custom(0x8a8a88)
+    );
+    curbMesh.position.set(len / 2 - 0.5, 0.06, 0);
+    group.add(curbMesh);
+    group.traverse(m => { if (m.isMesh) { m.receiveShadow = true; } });
+    return group;
+  },
+
   lamppost() {
     const group = new THREE.Group();
     const poleMat = Materials.custom(0x2a3038);

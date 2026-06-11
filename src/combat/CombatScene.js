@@ -124,6 +124,9 @@ export class CombatScene {
   setCombatants(enemyIds, partyIds, player) {
     this._clearGroups();
 
+    // Multi-enemy fights pull the camera back so nobody's head crops out
+    this._basePos.z = enemyIds.length > 1 ? 5.9 : 5;
+
     // Place enemies on the back stage
     const positions = this._enemyPositions(enemyIds.length);
     for (let i = 0; i < enemyIds.length; i++) {

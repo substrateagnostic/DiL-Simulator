@@ -63,7 +63,7 @@ const NO_BLOCK = new Set([
   'aquariumWall', 'movieScreen', 'dataVizPanel', 'megaAnalyticsScreen', 'loungeBar',
   'couch', 'popcornPopper', 'neonSign', 'coffeeTable', 'leatherArmchair', 'operatorChair',
   'cableTray', 'monitorWall', 'aisleGlow',
-  'lamppost', 'hydrant', 'busStopSign', 'newspaperBox',
+  'lamppost', 'hydrant', 'busStopSign', 'newspaperBox', 'curb',
 ]);
 
 export class Room {
@@ -93,9 +93,11 @@ export class Room {
     // 1. Floor
     this._buildFloor(width, height, floorColor, floorPattern);
 
-    // 2. Perimeter walls
+    // 2. Perimeter walls (open-air rooms still get exit markers)
     if (walls) {
       this._buildPerimeterWalls(width, height);
+    } else if (exits && exits.length > 0) {
+      this._addExitMarkers();
     }
 
     // 3. Furniture
@@ -661,6 +663,12 @@ export class Room {
       // Skip blocking for small/decorative items — allows slight clipping
       // for much smoother pathing through office environments
       if (NO_BLOCK.has(type)) {
+        continue;
+      }
+
+      // Facade strips block their full variant-defined width
+      if (type === 'facadeStrip') {
+        this.tileMap.blockRect(tileX, tileZ, Math.round(variant || 6), 1);
         continue;
       }
 

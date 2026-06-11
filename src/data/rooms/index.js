@@ -1628,9 +1628,16 @@ export const ROOMS = {
     width: 26,
     height: 12,
     floorColor: 0x6a6e74,  // sidewalk concrete
-    walls: true,
+    walls: false,          // open air — bounded by buildings, not drywall
     lighting: { ambient: 0xffe8c8, ambientIntensity: 0.72, dir: 0xffd8a0, dirIntensity: 0.95 },
     furniture: [
+      // Building fronts along the north side (gaps at the records hall
+      // door x:5 and Lucky's door x:18)
+      { type: 'facadeStrip', x: 0,  z: 0, variant: 5 },
+      { type: 'facadeStrip', x: 6,  z: 0, variant: 12 },
+      { type: 'facadeStrip', x: 19, z: 0, variant: 7 },
+      // Sidewalk curb where the parking lane starts
+      { type: 'curb', x: 0, z: 9.4, variant: 26 },
       // Street dressing along the north building line
       { type: 'lamppost', x: 3,  z: 1 },
       { type: 'lamppost', x: 9,  z: 1 },
