@@ -690,6 +690,10 @@ export class ExplorationState {
   async _changeRoom(targetRoom, spawnX, spawnZ) {
     // Room gating — check access before allowing entry
     const gatedRooms = {
+      // The reception elevator tile is walkable (elevatorDoors don't
+      // block), so standing on it bypassed the elevator dialog's
+      // branch_chosen check entirely (logic-sweep MAJOR #10)
+      executive_floor: { flag: 'branch_chosen', message: 'The keycard reader blinks red. AUTHORIZED PERSONNEL ONLY.' },
       archive: { flag: 'archive_accessible', message: "The freight elevator won't move. You need a keycard." },
       hr_department: { flag: 'hr_accessible', message: "The HR Department is locked down. You need authorization." },
       vault: { flag: 'vault_accessible', message: "The vault door is sealed shut. You need more information." },
