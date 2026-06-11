@@ -13,14 +13,14 @@ post-process pass** (Bayer dither + film grain + per-act color grade, settings t
 | # | Phase | State | Commit |
 |---|-------|-------|--------|
 | P1 | Floor-height engine + TRUE stairwell | DONE | see git log |
-| P2 | Near-wall auto-fade | pending | — |
-| P3 | Elevator-car ride interior | pending | — |
-| P4 | PS1 post pass (dither/grain/grade) + street ground fog + desktop zoom-in | pending | — |
+| P2 | Near-wall auto-fade | DONE | (pushed) |
+| P3 | Elevator ride overlay (doors/LED/ding) | DONE | (pushed) |
+| P4 | RetroPass + street ground fog + desktop zoom 10.5 | DONE | (pushed) |
 | P5 | Character refinement: more-PS1 cloth textures, better human silhouette | pending | — |
 | P6 | Fixtures common-sense pass (windows/posters/overlaps, uses buildingMap exterior walls) | pending | — |
-| P7 | Settings menu (volumes, text speed, shake/flash/dither toggles, fullscreen) | pending | — |
-| P8 | Quest/dialog logic sweep — bg agent REPORT then apply | pending | — |
-| P9 | Combat balance — bg agent headless sim REPORT then balance.json | pending | — |
+| P7 | Settings menu (volumes, text speed, retro/shake toggles) | DONE | (pushed) |
+| P8 | Logic sweep: report DONE (s5-logic-report.md, 29 findings); 3 CRITICALS + act7_complete FIXED+pushed; 8 MAJOR + 17 MINOR remain — apply next session from the report | partial |
+| P9 | Balance sim agent STILL RUNNING at session end — report lands at .claude/plans/s5-balance-report.md; review then apply via balance.json | bg |
 | P10 | Epilogue slides (per-flag cards, anchor voices) | pending | — |
 | P11 | The Quiet Floor (floor 13, post-Act-5 night, sit + monologue) | pending | — |
 
