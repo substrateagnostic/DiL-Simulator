@@ -52,12 +52,14 @@ const RetroShader = {
       vec3 c = src.rgb * grade;
 
       // Film grain — gentle, time-seeded
-      float g = (hash(gl_FragCoord.xy * 0.37 + fract(time) * 17.0) - 0.5) * 0.045;
+      float g = (hash(gl_FragCoord.xy * 0.37 + fract(time) * 17.0) - 0.5) * 0.028;
       c += g;
 
-      // 5-bit quantization with Bayer dithering — the PS1 texture
-      float d = bayer4(gl_FragCoord.xy) - 0.5;
-      vec3 q = floor(c * 31.0 + 0.5 + d) / 31.0;
+      // 6-bit quantization with softened Bayer dithering. (5-bit made
+      // the quantize boundary crawl visibly across large flat floors
+      // while the camera panned — jarring shimmer when walking.)
+      float d = (bayer4(gl_FragCoord.xy) - 0.5) * 0.6;
+      vec3 q = floor(c * 63.0 + 0.5 + d) / 63.0;
 
       gl_FragColor = vec4(mix(src.rgb, q, strength), src.a);
     }

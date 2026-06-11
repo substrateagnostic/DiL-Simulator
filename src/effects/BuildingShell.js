@@ -67,19 +67,24 @@ export class BuildingShell {
       const y = level * STOREY + (level > 0 ? 0.4 : 0);
       const depthFade = Math.max(0.25, 1 - (Math.abs(level) - 1) * 0.18);
 
-      const slab = new THREE.Mesh(slabGeo, new THREE.MeshBasicMaterial({
-        color: BLUEPRINT, transparent: true, opacity: 0.05 * depthFade,
-        depthWrite: false, side: THREE.DoubleSide,
-      }));
-      slab.rotation.x = -Math.PI / 2;
-      slab.position.set(cx, y, cz);
-      group.add(slab);
+      // Floors ABOVE the current one are outline-only and very faint —
+      // filled slabs overhead read as a ceiling pressing down on the
+      // room (Alex's playtest note). Below keeps the filled stack.
+      if (level < 0) {
+        const slab = new THREE.Mesh(slabGeo, new THREE.MeshBasicMaterial({
+          color: BLUEPRINT, transparent: true, opacity: 0.05 * depthFade,
+          depthWrite: false, side: THREE.DoubleSide,
+        }));
+        slab.rotation.x = -Math.PI / 2;
+        slab.position.set(cx, y, cz);
+        group.add(slab);
+      }
 
       const outline = new THREE.LineSegments(
         edgeGeo,
         new THREE.LineBasicMaterial({
           color: BLUEPRINT, transparent: true,
-          opacity: 0.22 * depthFade, depthWrite: false,
+          opacity: (level < 0 ? 0.22 : 0.07) * depthFade, depthWrite: false,
         })
       );
       outline.rotation.x = -Math.PI / 2;

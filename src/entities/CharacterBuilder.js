@@ -491,6 +491,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       mugGroup.add(liquid);
       mugGroup.position.set(handX + 0.02, handY + 0.05, 0.06);
       group.add(mugGroup);
+      group.rightArm?.attach(mugGroup); // held items ride the arm swing
       group.mugAccessory = mugGroup;
       break;
     }
@@ -501,6 +502,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       );
       mug.position.set(handX + 0.02, handY + 0.05, 0.06);
       group.add(mug);
+      group.rightArm?.attach(mug);
       break;
     }
     case 'bluetooth_earpiece': {
@@ -520,6 +522,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       board.position.set(-(handX + 0.02), handY + 0.1, 0.09);
       board.rotation.z = 0.08;
       group.add(board);
+      group.leftArm?.attach(board);
       const paper = new THREE.Mesh(
         new THREE.BoxGeometry(0.145, 0.2, 0.005),
         Materials.paper()
@@ -535,6 +538,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       );
       tumbler.position.set(-(handX + 0.02), handY + 0.05, 0.05);
       group.add(tumbler);
+      group.leftArm?.attach(tumbler);
       break;
     }
     case 'sunglasses': {
@@ -574,6 +578,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       tabGroup.position.set(-(handX + 0.02), handY + 0.1, 0.1);
       tabGroup.rotation.set(-0.18, 0, 0.1);
       group.add(tabGroup);
+      group.leftArm?.attach(tabGroup);
       break;
     }
     case 'pearl_earrings': {
@@ -593,6 +598,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       );
       bottle.position.set(handX + 0.02, handY + 0.07, 0.05);
       group.add(bottle);
+      group.rightArm?.attach(bottle);
       break;
     }
     case 'purse': {
@@ -635,6 +641,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       );
       watch.position.set(-(handX - 0.01), handY + 0.12, 0.02);
       group.add(watch);
+      group.leftArm?.attach(watch);
       break;
     }
     case 'cane': {
@@ -670,6 +677,7 @@ function addAccessory(group, acc, headY, config, dims, headZ = 0) {
       shaft.position.set(handX + 0.12, 0.43, -0.08);
       shaft.rotation.z = 0.15;
       group.add(shaft);
+      group.rightArm?.attach(shaft);
       break;
     }
     // ---- Cosmetic equipment visuals (Andrew only) ----
