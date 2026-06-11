@@ -965,6 +965,11 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
       // Network Ghost signal booster mount (east wall, upper section)
       { type: 'boosterMount', x: 3.9, z: 5, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
+      // The shaft itself — a center stairwell the corridor wraps around:
+      // a down-flight toward the archive end, an up-flight toward floors
+      // you never get a badge for. The x2-3 lane stays walkable.
+      { type: 'stairFlight', x: 1, z: 9,  variant: 'down' },
+      { type: 'stairFlight', x: 1, z: 17, variant: 'up' },
     ],
     exits: [
       // SOUTH exit -> Cubicle Farm

@@ -672,6 +672,12 @@ export class Room {
         continue;
       }
 
+      // Stair flights extend northward (-z) from their anchor tile
+      if (type === 'stairFlight') {
+        this.tileMap.blockRect(tileX, tileZ - 3, 1, 4);
+        continue;
+      }
+
       const footprint = FURNITURE_FOOTPRINTS[type] || { w: 1, h: 1 };
       // Cubicle walls are the only type whose footprint (2x1) doesn't account
       // for rotation — swap w/h when they're placed as side dividers (90°).

@@ -1459,6 +1459,92 @@ export const Furniture = {
     return group;
   },
 
+  // A real stairwell flight along a wall. variant 'up': steps ascend
+  // northward (-z) from floor level into a shadowed upper landing.
+  // variant 'down': a railed opening with step tops descending into the
+  // dark — built just above the floor plane so the iso camera reads it.
+  // Footprint is 1 tile wide x 4 deep, anchored at the front (south) tile.
+  stairFlight(variant) {
+    const dir = variant === 'down' ? 'down' : 'up';
+    const group = new THREE.Group();
+    const stepMat = Materials.custom(0xb0a890);
+    const stringerMat = Materials.custom(0x6a6354);
+    const railMat = Materials.custom(0x3a4048);
+    const STEPS = 8;
+    const runDepth = 3.4;          // total z span of the flight
+    const stepD = runDepth / STEPS;
+
+    if (dir === 'up') {
+      const rise = 0.3;
+      for (let i = 0; i < STEPS; i++) {
+        const step = new THREE.Mesh(
+          new THREE.BoxGeometry(0.92, 0.09, stepD),
+          stepMat
+        );
+        step.position.set(0, i * rise + 0.045, -i * stepD);
+        group.add(step);
+        const riser = new THREE.Mesh(
+          new THREE.BoxGeometry(0.92, rise, 0.06),
+          stringerMat
+        );
+        riser.position.set(0, i * rise - rise / 2 + 0.045, -i * stepD + stepD / 2);
+        group.add(riser);
+      }
+      // Shadowed upper landing the flight vanishes into
+      const hood = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 1.4, stepD * 2.4),
+        Materials.custom(0x14161c)
+      );
+      hood.position.set(0, STEPS * rise + 0.6, -(STEPS - 1.1) * stepD);
+      group.add(hood);
+      // Handrail along the east side
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, runDepth + 0.3), railMat);
+      rail.position.set(0.5, STEPS * rise * 0.5 + 0.85, -runDepth / 2 + stepD / 2);
+      rail.rotation.x = Math.atan2(STEPS * rise, runDepth);
+      group.add(rail);
+      for (let i = 0; i < 4; i++) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.8, 0.04), railMat);
+        const z = -i * (runDepth / 3.2);
+        post.position.set(0.5, (i * (runDepth / 3.2) / runDepth) * STEPS * rise + 0.42, z);
+        group.add(post);
+      }
+    } else {
+      // The pit: dark inset with the top few steps sinking out of sight
+      const pit = new THREE.Mesh(
+        new THREE.BoxGeometry(1.0, 0.04, runDepth + 0.2),
+        Materials.custom(0x0a0c12)
+      );
+      pit.position.set(0, 0.021, -runDepth / 2 + stepD / 2);
+      group.add(pit);
+      for (let i = 0; i < 4; i++) {
+        const step = new THREE.Mesh(
+          new THREE.BoxGeometry(0.92, 0.05, stepD),
+          Materials.custom(0x8a8270 - i * 0x181810)
+        );
+        step.position.set(0, 0.16 - i * 0.045, -i * stepD);
+        group.add(step);
+      }
+      // Railing wrapping the opening (east side + ends)
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, runDepth + 0.3), railMat);
+      rail.position.set(0.5, 0.92, -runDepth / 2 + stepD / 2);
+      group.add(rail);
+      for (let i = 0; i < 4; i++) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, 0.04), railMat);
+        post.position.set(0.5, 0.47, -i * (runDepth / 3.2));
+        group.add(post);
+      }
+      const endRail = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 0.05), railMat);
+      endRail.position.set(0, 0.92, stepD / 2 + 0.08);
+      group.add(endRail);
+      const endPost = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.9, 0.04), railMat);
+      endPost.position.set(-0.45, 0.47, stepD / 2 + 0.08);
+      group.add(endPost);
+    }
+
+    group.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    return group;
+  },
+
   // Low sidewalk curb, left-anchored. variant = length in tiles.
   curb(variant) {
     const len = typeof variant === 'number' ? variant : 8;
