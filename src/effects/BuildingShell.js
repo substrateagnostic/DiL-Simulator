@@ -151,7 +151,18 @@ export class BuildingShell {
       const target = BUILDING_MAP[exit.targetRoom];
       const targetRoom = ROOMS[exit.targetRoom];
 
-      if (target && targetRoom && target.floor === floor && !seenTargets.has(exit.targetRoom)) {
+      // The map's floor-plan estimates overlap in places — an aligned
+      // neighbor ghost that would intersect the CURRENT room renders
+      // right through it (Alex's "outlines on the rooms"). Those fall
+      // back to the small doorway hint instead.
+      let intersectsRoom = false;
+      if (target && targetRoom) {
+        const nx0 = target.offsetX - offsetX - 0.5, nx1 = nx0 + targetRoom.width;
+        const nz0 = target.offsetZ - offsetZ - 0.5, nz1 = nz0 + targetRoom.height;
+        intersectsRoom = nx0 < w - 0.1 && nx1 > -0.9 && nz0 < h - 0.1 && nz1 > -0.9;
+      }
+
+      if (target && targetRoom && target.floor === floor && !intersectsRoom && !seenTargets.has(exit.targetRoom)) {
         // Aligned ghost: the neighbor at its true mapped position
         seenTargets.add(exit.targetRoom);
         const gw = targetRoom.width, gd = targetRoom.height;
@@ -164,7 +175,7 @@ export class BuildingShell {
         const edges = new THREE.LineSegments(new THREE.EdgesGeometry(ghostGeo), ghostEdgeMat);
         edges.position.copy(ghost.position);
         group.add(edges);
-      } else if (!target || target.floor !== floor) {
+      } else if (!target || target.floor !== floor || intersectsRoom) {
         // Different floor (stairwell/elevator) or unmapped: small warm
         // hint beyond the doorway so the door still goes somewhere
         const key = `${dx},${dz},${Math.round((dx !== 0 ? exit.z : exit.x) / 3)}`;
