@@ -146,6 +146,32 @@ export class CityBackdrop {
       });
     }
 
+    // ── Street-level ground: a dark plane swallows the blueprint void
+    // floor, and slow mist patches drift over the asphalt (Alex's note:
+    // the light-blue void reads wrong at the bottom of the city) ───────
+    this.streetGround = new THREE.Mesh(
+      new THREE.CircleGeometry(85, 28),
+      new THREE.MeshBasicMaterial({ color: 0x0b0814, transparent: true, opacity: 0.97, depthWrite: false })
+    );
+    this.streetGround.rotation.x = -Math.PI / 2;
+    this.streetGround.position.set(CENTER.x, -0.08, CENTER.z);
+    this.streetGround.renderOrder = -2;
+    this.streetGround.visible = false;
+    this.group.add(this.streetGround);
+
+    this.mistPatches = [];
+    for (let i = 0; i < 7; i++) {
+      const mist = new THREE.Mesh(
+        new THREE.CircleGeometry(7 + (i % 3) * 4, 12),
+        new THREE.MeshBasicMaterial({ color: 0x241a36, transparent: true, opacity: 0.16, depthWrite: false })
+      );
+      mist.rotation.x = -Math.PI / 2;
+      mist.position.set(CENTER.x + (i - 3) * 11, 0.22 + (i % 2) * 0.18, CENTER.z + ((i * 7) % 22) - 11);
+      mist.visible = false;
+      this.group.add(mist);
+      this.mistPatches.push({ mesh: mist, speed: 0.35 + (i % 4) * 0.12, phase: i * 1.7 });
+    }
+
     // ── Cloud shadows drifting across the office floor ──────────────────
     for (let i = 0; i < 4; i++) {
       const blob = new THREE.Mesh(
@@ -191,6 +217,11 @@ export class CityBackdrop {
       this.hqTower.visible = on;
       this.hqBeacon.visible = on;
     }
+    // Ground fog replaces the blueprint void floor down here; cloud
+    // shadows are an office-window thing and read wrong on asphalt
+    if (this.streetGround) this.streetGround.visible = on;
+    for (const m of (this.mistPatches || [])) m.mesh.visible = on;
+    for (const cs of this.cloudShadows) cs.mesh.visible = !on;
   }
 
   setTimeOfDay(key) {
@@ -237,6 +268,15 @@ export class CityBackdrop {
     for (const cs of this.cloudShadows) {
       cs.mesh.position.x += cs.speed * dt;
       if (cs.mesh.position.x > 34) cs.mesh.position.x = -10;
+    }
+
+    // Street mist breathes and drifts
+    if (this.streetLevel) {
+      for (const m of this.mistPatches) {
+        m.mesh.position.x += m.speed * dt;
+        if (m.mesh.position.x > CENTER.x + 45) m.mesh.position.x = CENTER.x - 45;
+        m.mesh.material.opacity = 0.11 + 0.07 * (0.5 + 0.5 * Math.sin(this.time * 0.4 + m.phase));
+      }
     }
   }
 }

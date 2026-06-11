@@ -69,6 +69,16 @@ class EngineClass {
     );
     this.composer.addPass(this._bloomPass);
 
+    // The PS1 finish: Bayer dither + 5-bit quantize + grain + story grade
+    // (lazy import keeps the boot path lean)
+    import('../effects/RetroPass.js').then(({ createRetroPass, RETRO_GRADES }) => {
+      this._retroPass = createRetroPass();
+      this._retroGrades = RETRO_GRADES;
+      this.composer.addPass(this._retroPass);
+      if (this._pendingGradeKey) this._applyRetroGrade(this._pendingGradeKey);
+      if (this._pendingRetroOff) this._retroPass.uniforms.strength.value = 0;
+    });
+
     // Resize handler
     window.addEventListener('resize', () => this._onResize());
 
@@ -89,11 +99,25 @@ class EngineClass {
     });
   }
 
-  // Story-driven time of day — drives the city backdrop palette + fog.
-  // Room interior rigs stay authoritative (applyRoomLighting).
+  // Story-driven time of day — drives the city backdrop palette + fog
+  // and the retro pass color grade. Room interior rigs stay
+  // authoritative (applyRoomLighting).
   setTimeOfDay(key) {
     if (this.cityBackdrop) this.cityBackdrop.setTimeOfDay(key);
     else this._pendingTimeOfDay = key;
+    this._applyRetroGrade(key);
+  }
+
+  _applyRetroGrade(key) {
+    if (!this._retroPass || !this._retroGrades) { this._pendingGradeKey = key; return; }
+    const g = this._retroGrades[key];
+    if (g) this._retroPass.uniforms.grade.value.setRGB(g[0], g[1], g[2]);
+  }
+
+  // Settings toggle / reduce-flicker accessibility
+  setRetroPass(on) {
+    if (this._retroPass) this._retroPass.uniforms.strength.value = on ? 1 : 0;
+    else this._pendingRetroOff = !on;
   }
 
   // Street-level mode: tower bases at the ground plane (city chapter,
@@ -203,7 +227,9 @@ class EngineClass {
   _zoomForViewport() {
     const aspect = this.width / this.height;
     if (aspect < 1) return Math.min(16, 7 / aspect);
-    return this.height < 540 ? 8 : 12;
+    // Desktop pulled in from 12 → 10.5 (Alex: rooms should fill more
+    // of the frame); short landscape viewports stay tighter still
+    return this.height < 540 ? 8 : 10.5;
   }
 
   _onResize() {
@@ -253,6 +279,7 @@ class EngineClass {
     }
 
     this.cityBackdrop?.update(dt);
+    if (this._retroPass) this._retroPass.uniforms.time.value += dt;
 
     if (this._updateCallback) {
       this._updateCallback(dt);
