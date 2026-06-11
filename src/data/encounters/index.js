@@ -137,6 +137,7 @@ export const ENCOUNTERS = {
     postDialogId: 'the_firm_defeated',
     canFlee: false,
     boss: true,
+    music: 'firm_battle',
   },
   cfos_assistant: {
     enemyId: 'cfos_assistant',

@@ -583,6 +583,13 @@ export class ExplorationState {
       board_room:      'executive',
       penthouse:       'executive',
       hr_department:   'exploration',
+      // City chapter (Act 6½)
+      city_street:     'city',
+      transit_bus:     'city',
+      luckys_diner:    'diner',
+      old_branch:      'diner',
+      records_hall:    'records',
+      old_vault:       'records',
     };
     return map[roomId] || 'exploration';
   }

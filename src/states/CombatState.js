@@ -145,7 +145,8 @@ export class CombatState {
     window.addEventListener('resize', this._resizeHandler);
 
     AudioManager.playSfx('confirm');
-    AudioManager.playMusic('combat');
+    // Encounters may specify a battle-music variant via `music` in their config
+    AudioManager.playMusic(this.encounterConfig.music || 'combat');
   }
 
   exit() {
