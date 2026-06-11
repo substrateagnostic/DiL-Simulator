@@ -57,8 +57,28 @@ export class BuildingShell {
     const below = floor >= 0 ? Math.min(6, floor + 3) : Math.max(0, 3 + floor);
 
     // ── Ghost floor slabs ───────────────────────────────────────────────
-    const slabGeo = new THREE.PlaneGeometry(PLATE.w, PLATE.d);
-    const edgeGeo = new THREE.EdgesGeometry(slabGeo);
+    // Fills get a room-shaped hole: translucent layers directly above or
+    // below the playable floor shimmer against it (Alex's flicker note) —
+    // the blueprint only exists OUTSIDE the room.
+    // After rotation.x = -PI/2, shape (x, y) maps to world (x, -z).
+    const px0 = -offsetX - 0.5;
+    const pz0 = -offsetZ - 0.5;
+    const shape = new THREE.Shape();
+    shape.moveTo(px0, -(pz0 + PLATE.d));
+    shape.lineTo(px0 + PLATE.w, -(pz0 + PLATE.d));
+    shape.lineTo(px0 + PLATE.w, -pz0);
+    shape.lineTo(px0, -pz0);
+    shape.closePath();
+    const PAD = 0.8; // hole slightly larger than the room so nothing peeks at the wall line
+    const hole = new THREE.Path();
+    hole.moveTo(-0.5 - PAD, -(roomData.height - 0.5 + PAD));
+    hole.lineTo(roomData.width - 0.5 + PAD, -(roomData.height - 0.5 + PAD));
+    hole.lineTo(roomData.width - 0.5 + PAD, 0.5 + PAD);
+    hole.lineTo(-0.5 - PAD, 0.5 + PAD);
+    hole.closePath();
+    shape.holes.push(hole);
+    const slabGeo = new THREE.ShapeGeometry(shape);
+    const edgeGeo = new THREE.EdgesGeometry(new THREE.PlaneGeometry(PLATE.w, PLATE.d));
     const levels = [];
     for (let i = 1; i <= above; i++) levels.push(i);
     for (let i = 1; i <= below; i++) levels.push(-i);
@@ -76,7 +96,8 @@ export class BuildingShell {
           depthWrite: false, side: THREE.DoubleSide,
         }));
         slab.rotation.x = -Math.PI / 2;
-        slab.position.set(cx, y, cz);
+        // Shape coords are absolute world XZ — only the height moves
+        slab.position.set(0, y, 0);
         group.add(slab);
       }
 
