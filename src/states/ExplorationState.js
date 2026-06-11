@@ -1772,6 +1772,17 @@ export class ExplorationState {
       return 'janitor_names_offer';
     }
 
+    // The Janitor never falls through to generic act routing — his act3/
+    // act4/act6 story beats are served ONLY by the gated Archive entries
+    // (explicit dialogIds, security_guard → act3 → needs_ross → act4
+    // ordering). The garage janitor gives the intro at any act (he's
+    // timeless — met_janitor gates the riddles and the Architect ending),
+    // then small talk (logic-sweep MAJORs #5/#6).
+    if (id === 'janitor') {
+      if (!this.player.getFlag('met_janitor') && DIALOGS.janitor_intro) return 'janitor_intro';
+      if (DIALOGS.janitor_return) return 'janitor_return';
+    }
+
     if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
     if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
@@ -2231,8 +2242,10 @@ export class ExplorationState {
     const hints = [];
     const f = (flag) => this.player.getFlag(flag);
 
-    // Janitor riddles — progressive
-    if (f('met_janitor')) {
+    // Janitor riddles — progressive. Gated on read_janitor_act3 (the
+    // actual riddle unlock), not met_janitor alone — the Archive is
+    // sealed until Act 3, so an earlier hint pointed at a locked room.
+    if (f('met_janitor') && f('read_janitor_act3')) {
       if (!f('janitor_riddle_1_done')) {
         hints.push('The Janitor has a riddle for you — find him in the Archive');
       } else if (!f('janitor_riddle_2_done')) {

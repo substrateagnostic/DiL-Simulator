@@ -8,7 +8,10 @@ const MAIN_INTRO_DIALOGS = new Set([
   'isaiah_intro',
   'diane_intro',
   'ross_intro',
-  'janitor_intro',
+  // janitor_intro deliberately NOT listed: the Janitor is optional and
+  // timeless — met_janitor gates the riddle chain and the Architect
+  // ending, so the intro must stay reachable at any quest stage
+  // (logic-sweep MAJOR #5).
 ]);
 
 const ACT_STAGE_RANGES = {
