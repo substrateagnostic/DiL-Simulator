@@ -29,6 +29,10 @@ function shade(c, f) {
 }
 
 export function paintFace(config, expression = 'neutral') {
+  // Headless guard: the data validator builds characters under Node,
+  // where there is no canvas. Models render faceless there, which is
+  // fine — nobody is looking.
+  if (typeof document === 'undefined') return null;
   const id = config.faceCacheKey || config.name || 'anon';
   const key = `${id}_${expression}`;
   if (cache[key]) return cache[key];
@@ -194,6 +198,7 @@ export function paintFace(config, expression = 'neutral') {
 
 // All expressions for a character, pre-painted (texture-swap expressions)
 export function paintFaceSet(config) {
+  if (typeof document === 'undefined') return {};
   const set = {};
   for (const e of EXPRESSIONS) set[e] = paintFace(config, e);
   return set;

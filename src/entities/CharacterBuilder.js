@@ -182,13 +182,15 @@ export function buildCharacter(config, options = {}) {
   // Lambert so it takes scene lighting like the rest of the body
   // (MeshBasic glows under bloom and reads as a mask).
   group.faceTextures = paintFaceSet(config);
-  const faceMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(dims.headW * 0.86, dims.headH * 0.74),
-    new THREE.MeshLambertMaterial({ map: group.faceTextures.neutral, transparent: true })
-  );
-  faceMesh.position.set(0, headY - dims.headH * 0.08, headZ + dims.headD / 2 + 0.004);
-  group.add(faceMesh);
-  group.faceMesh = faceMesh;
+  if (group.faceTextures.neutral) {
+    const faceMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(dims.headW * 0.86, dims.headH * 0.74),
+      new THREE.MeshLambertMaterial({ map: group.faceTextures.neutral, transparent: true })
+    );
+    faceMesh.position.set(0, headY - dims.headH * 0.08, headZ + dims.headD / 2 + 0.004);
+    group.add(faceMesh);
+    group.faceMesh = faceMesh;
+  }
 
   // ── Hair — geometry caps scaled to the box head ─────────────────────
   if (config.hairColor) {
