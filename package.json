@@ -10,7 +10,8 @@
     "editor": "node scripts/editor.js",
     "shoot": "node tools/shoot.mjs",
     "validate:data": "node scripts/validate-data.mjs",
-    "check": "npm run validate:data && npm run build"
+    "check": "npm run validate:data && npm run build",
+    "package:itch": "node scripts/package-itch.mjs"
   },
   "keywords": [],
   "author": "",
