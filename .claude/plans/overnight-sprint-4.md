@@ -66,3 +66,25 @@ spans B2→6 (it's the connector). City rooms + garage are STREET CONTEXT (no sh
 ## Verification
 `npm run shoot` contact sheet after each phase; street-level mode needs new shots of all six
 city rooms + garage; stairwell shot at top/middle/bottom spawn.
+
+## STATUS (June 11, session 9)
+- P1 buildingMap.js DONE (7839903) - canonical floors/offsets, 28x20 plate
+- P2 BuildingShell v2 DONE (7839903) - one tower, floor-aware stacks, aligned neighbor ghosts,
+  city ring recenters via setCenter
+- P3 street-level mode DONE (634a264) - setStreetLevel: bases at ground, 2.4x stretch, curb-height
+  car streaks, HQ tower north behind facades (lit per story hour). City rooms + garage.
+- P4 garage elevator DONE (47f55b2) - elevatorDoors furniture (G + 1), ride transition w/ ding toast
+- P5 stairwell shaft DONE (6e8a2d4) - center-shaft up/down flights; NEEDS IN-GAME WALK:
+  near-wall occlusion may hide flights at fixed iso angle; follow-up candidate = near-wall auto-fade
+- Audio overhaul committed earlier (683cc64) after diff review.
+- Remaining carryover: city encounter balance sim (editor Combat Sim L8/10/12).
+
+## New gotchas (session 9)
+- Furniture dispatch is DYNAMIC (Furniture[type]) - no switch; CLAUDE.md's 'add to switch' note
+  is stale. Mesh placement precedes blocking logic; special-case blocks (facadeStrip width,
+  stairFlight 1x4 northward) live before the FURNITURE_FOOTPRINTS lookup and 'continue'.
+- PowerShell .Replace patches can swallow newlines - prefer the Edit tool for code (bit us in
+  Furniture.js; rollup error at the glued line).
+- shoot.mjs room tiles can capture auto-triggered combat (fixture flags + Enter-clearing advance
+  dialogs into start_combat). If a room tile looks like a fight, that's the harness, not the game.
+- Narrow corridors: near long wall occludes interior at the iso angle - judge stairwell in motion.
