@@ -177,6 +177,7 @@ export function buildCharacter(config, options = {}) {
 
   const headY = head.position.y;
   const headZ = head.position.z;
+  const preHeadChildren = group.children.length;
 
   // The face — a painted texture plane on the front of the head.
   // Lambert so it takes scene lighting like the rest of the body
@@ -265,6 +266,13 @@ export function buildCharacter(config, options = {}) {
       back.position.set(0, headY + hh * 0.1, headZ - hdp * 0.58);
       group.add(back);
     }
+  }
+
+  // Everything added since the head (face + hair) rides WITH the head —
+  // the walk bob animates head.position.y directly and siblings lag a
+  // frame behind (the bald-flash bug). attach() preserves world pose.
+  for (const child of group.children.slice(preHeadChildren)) {
+    head.attach(child);
   }
 
   // Accessories

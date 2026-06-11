@@ -75,7 +75,9 @@ export class CityBackdrop {
       // Keep the camera corridor clear — the iso camera looks in from the
       // +x/+z diagonal (~PI/4); a tower there would sit in front of the room
       if (Math.abs(angle - Math.PI / 4) < 0.55) { rand(); rand(); continue; }
-      const radius = 24 + rand() * 26;
+      // Alternate near/far bands so neighboring towers can't interpenetrate
+      // (overlapping dark boxes read as 'tearing' at the silhouette)
+      const radius = i % 2 === 0 ? 25 + rand() * 9 : 40 + rand() * 12;
       const x = CENTER.x + Math.cos(angle) * radius;
       const z = CENTER.z + Math.sin(angle) * radius * 0.8;
       const w = 2.5 + rand() * 4;

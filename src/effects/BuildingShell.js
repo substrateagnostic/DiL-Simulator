@@ -79,7 +79,7 @@ export class BuildingShell {
         edgeGeo,
         new THREE.LineBasicMaterial({
           color: BLUEPRINT, transparent: true,
-          opacity: 0.22 * depthFade,
+          opacity: 0.22 * depthFade, depthWrite: false,
         })
       );
       outline.rotation.x = -Math.PI / 2;
@@ -108,7 +108,7 @@ export class BuildingShell {
       depthWrite: false, side: THREE.BackSide,
     });
     const ghostEdgeMat = new THREE.LineBasicMaterial({
-      color: WARM, transparent: true, opacity: 0.15,
+      color: WARM, transparent: true, opacity: 0.15, depthWrite: false,
     });
     const w = roomData.width, h = roomData.height;
     const seenTargets = new Set();
