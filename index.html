@@ -4,6 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>TRUST ISSUES: A Trust Officer Simulator</title>
+  <meta name="description" content="A satirical office RPG. You are Andrew, a trust officer. Your patience is your HP, your coffee is your mana, and the Henderson family would like a word. Turn-based combat, seven acts, one extremely suspicious printer." />
+  <meta name="theme-color" content="#1a1a2e" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TRUST ISSUES" />
+  <meta property="og:title" content="TRUST ISSUES: A Trust Officer Simulator" />
+  <meta property="og:description" content="A satirical office RPG. Manage trusts, survive the Hendersons, and uncover what the building has been quietly doing with everyone's assets. Turn-based combat where your patience is your HP and your coffee is your mana." />
+  <meta property="og:url" content="https://trustissues.alexgallefrom.io/" />
+  <!-- TODO: create /og.png (1200x630) before public launch -->
+  <meta property="og:image" content="https://trustissues.alexgallefrom.io/og.png" />
+  <meta property="og:image:alt" content="TRUST ISSUES title screen — a pixel-styled corporate office RPG" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TRUST ISSUES: A Trust Officer Simulator" />
+  <meta name="twitter:description" content="A satirical office RPG. Manage trusts, survive the Hendersons, and uncover what the building has been quietly doing with everyone's assets." />
+  <meta name="twitter:image" content="https://trustissues.alexgallefrom.io/og.png" />
+
+  <!-- Mobile web app -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TRUST ISSUES" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%231a1a2e'/%3E%3Cpath d='M16 18h32v8H36v26h-8V26H16z' fill='%23e94560'/%3E%3Cpath d='M18 12h28v5H18z' fill='%23ffd166'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="/styles/main.css" />
   <link rel="stylesheet" href="/styles/dialog.css" />
@@ -20,6 +44,72 @@
     <canvas id="game-canvas"></canvas>
     <div id="ui-overlay"></div>
   </div>
+
+  <!-- Boot screen: loading indicator + WebGL failure message. Inline styles so it
+       renders before any stylesheet (or the game itself) has loaded. Removed by the
+       inline script below the moment the engine sizes the canvas. -->
+  <style>
+    #boot-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #1a1a2e; color: #e94560;
+      font-family: 'VT323', 'Courier New', monospace;
+      text-align: center; padding: 24px;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #boot-screen.boot-fail { pointer-events: auto; }
+    #boot-screen .boot-title { font-size: 28px; letter-spacing: 3px; }
+    #boot-screen .boot-sub { font-size: 18px; color: #53a8b6; margin-top: 10px; max-width: 520px; line-height: 1.4; }
+    #boot-screen .boot-dots { animation: boot-blink 1.2s steps(1) infinite; }
+    @keyframes boot-blink { 50% { opacity: 0; } }
+  </style>
+  <div id="boot-screen">
+    <div class="boot-title">LOADING THE OFFICE<span class="boot-dots">...</span></div>
+    <div class="boot-sub">Locating your stapler. Filing the forms about the forms.</div>
+    <noscript>
+      <div class="boot-sub" style="color: #e94560;">This office requires JavaScript, which your browser has declined to provide. The lights stay off until it does.</div>
+    </noscript>
+  </div>
+  <script>
+    (function () {
+      var boot = document.getElementById('boot-screen');
+
+      // WebGL capability check — fail in-page instead of a black screen.
+      var gl = false;
+      try {
+        var probe = document.createElement('canvas');
+        gl = !!(probe.getContext('webgl2') || probe.getContext('webgl') || probe.getContext('experimental-webgl'));
+      } catch (e) { gl = false; }
+      if (!gl) {
+        boot.classList.add('boot-fail');
+        boot.innerHTML =
+          '<div class="boot-title">OFFICE CLOSED</div>' +
+          '<div class="boot-sub" style="color:#eee; margin-top:16px;">This office requires WebGL, which your browser has declined to provide.</div>' +
+          '<div class="boot-sub">Facilities recommends a current version of Chrome, Firefox, Edge, or Safari, with hardware acceleration switched on. The fluorescent lights will remain off until then.</div>';
+        return;
+      }
+
+      // Hide the loader the moment the engine sizes the canvas (first sign of life).
+      // Three.js renderer.setSize() sets the canvas width attribute, which our HTML
+      // leaves unset — so an attribute mutation is the cheapest reliable boot signal.
+      // Works for both the title screen and the ?dev fixture pipeline.
+      var canvas = document.getElementById('game-canvas');
+      function hideBoot() {
+        if (!boot) return;
+        boot.style.opacity = '0';
+        setTimeout(function () { if (boot && boot.parentNode) boot.parentNode.removeChild(boot); boot = null; }, 400);
+      }
+      if (canvas.getAttribute('width')) {
+        hideBoot();
+      } else {
+        var mo = new MutationObserver(function () {
+          if (canvas.getAttribute('width')) { mo.disconnect(); hideBoot(); }
+        });
+        mo.observe(canvas, { attributes: true, attributeFilter: ['width'] });
+      }
+    })();
+  </script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

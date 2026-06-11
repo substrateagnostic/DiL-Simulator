@@ -89,6 +89,13 @@ export class TitleState {
     version.textContent = 'v1.0.0 // "Handle their assets carefully"';
     this.element.appendChild(version);
 
+    const settingsHint = document.createElement('div');
+    settingsHint.className = 'title-version';
+    settingsHint.style.right = 'auto';
+    settingsHint.style.left = '16px';
+    settingsHint.textContent = 'Settings: pause menu (ESC) in-game';
+    this.element.appendChild(settingsHint);
+
     overlay.appendChild(this.element);
   }
 
