@@ -167,6 +167,16 @@ export class ExplorationState {
               this.stateManager.push(dialogState);
             }, 500);
           }
+          return;
+        }
+
+        // The epilogue plays once the ending dialog chain has fully drained
+        if (this._pendingEpilogue && !this._pendingCombat && !this._pendingDialog) {
+          this._pendingEpilogue = false;
+          setTimeout(async () => {
+            const { EpilogueState } = await import('./EpilogueState.js');
+            this.stateManager.push(new EpilogueState(this.stateManager, this.player));
+          }, 900);
         }
       }),
       EventBus.on('quest-update', (data) => {
@@ -312,6 +322,8 @@ export class ExplorationState {
         // (logic-sweep MAJOR): mirror the Algorithm's defeat flag
         if (key === 'algorithm_defeated' && value) {
           this.player.setFlag('act7_complete', true);
+          // Queue the epilogue for when the ending dialogs finish
+          if (!this.player.getFlag('epilogue_seen')) this._pendingEpilogue = true;
         }
         // Act 6½: pulling the seal from box 0001 triggers The Firm's ambush
         if (key === 'has_recorder_seal') {
