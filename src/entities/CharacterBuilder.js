@@ -8,6 +8,11 @@ import { paintFaceSet } from './FacePainter.js';
 // head-height proportions, segmented faceted geometry, and painted canvas
 // face textures: expressions are texture swaps, like it's 1998.
 //
+// v4.5 (S5-P5): painted cloth textures via Materials.cloth (weave noise,
+// button placket on the chest front, belt line on the pelvis) + silhouette
+// refinements: angled shoulder caps, toe-tapered shoes, narrower forearms,
+// shorter neck. Total height stays ~1.45.
+//
 // Tone dial (config.tone): 'silly' | 'scary' | 'normal' (default).
 // Silly = features exaggerated + saturated; scary = compressed features +
 // body palette desaturated ~35%; normal = mild desaturation.
@@ -52,8 +57,14 @@ export function buildCharacter(config, options = {}) {
   group.legLength = dims.legH;
 
   const tc = (c) => toneColor(c, tone);
-  const legMat = Materials.custom(tc(config.pantsColor ?? 0x2a2a3a));
-  const bodyMat = Materials.custom(tc(config.bodyColor ?? 0x2c3e6b));
+  const pantsC = tc(config.pantsColor ?? 0x2a2a3a);
+  const bodyC = tc(config.bodyColor ?? 0x2c3e6b);
+  const legMat = Materials.custom(pantsC);
+  // Painted cloth (weave noise + hem) replaces the flat body color —
+  // tone treatment runs first so the cache key carries (color, tone).
+  const bodyMat = Materials.cloth(bodyC, 'plain');         // sleeves, sides
+  const chestFrontMat = Materials.cloth(bodyC, 'placket'); // button placket
+  const beltMat = Materials.cloth(pantsC, 'belt');         // pelvis belt line
   const skinMat = Materials.custom(tc(config.skinColor ?? 0xf5c6a0));
   const shoeMat = Materials.custom(tc(0x1a1a1a));
 
@@ -63,6 +74,18 @@ export function buildCharacter(config, options = {}) {
   const lowerLegGeo = new THREE.BoxGeometry(dims.legW, dims.legH * 0.5, dims.legW);
   const shoeS = (config.shoeSize || 1.0);
   const shoeGeo = new THREE.BoxGeometry(dims.legW * 1.5 * shoeS, 0.055, dims.legW * 2.4 * shoeS);
+  {
+    // Toe taper — same vertex trick as the head wedge: the front half
+    // narrows and the top slopes down toward the toe.
+    const pos = shoeGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      if (pos.getZ(i) > 0) {
+        pos.setX(i, pos.getX(i) * 0.66);
+        if (pos.getY(i) > 0) pos.setY(i, pos.getY(i) * 0.45);
+      }
+    }
+    shoeGeo.computeVertexNormals();
+  }
 
   for (const side of [-1, 1]) {
     const leg = new THREE.Group(); // pivot at hip
@@ -82,7 +105,7 @@ export function buildCharacter(config, options = {}) {
 
   // ── Torso — pelvis + tapered chest, segmented like it's billed hourly ─
   const pelvisGeo = new THREE.BoxGeometry(dims.bodyW * 0.92, dims.pelvisH, dims.bodyD);
-  const pelvis = new THREE.Mesh(pelvisGeo, legMat);
+  const pelvis = new THREE.Mesh(pelvisGeo, beltMat);
   pelvis.position.y = dims.legH + dims.pelvisH / 2;
   group.add(pelvis);
 
@@ -101,7 +124,12 @@ export function buildCharacter(config, options = {}) {
     }
     chestGeo.computeVertexNormals();
   }
-  const chest = new THREE.Mesh(chestGeo, bodyMat);
+  // 6-material array: button placket on the front (+z) face only.
+  // BoxGeometry face order: +x, -x, +y, -y, +z, -z.
+  const chest = new THREE.Mesh(
+    chestGeo,
+    [bodyMat, bodyMat, bodyMat, bodyMat, chestFrontMat, bodyMat]
+  );
   chest.position.y = dims.legH + dims.pelvisH + dims.chestH / 2 - Math.sin(hunch) * dims.chestH * 0.15;
   chest.position.z = Math.sin(hunch) * dims.chestH * 0.3;
   chest.rotation.x = hunch;
@@ -130,7 +158,7 @@ export function buildCharacter(config, options = {}) {
 
   // ── Arms — two segments, pre-bent at the elbow ──────────────────────
   const upperArmGeo = new THREE.BoxGeometry(dims.armW * 1.1, dims.armH * 0.5, dims.armW * 1.1);
-  const lowerArmGeo = new THREE.BoxGeometry(dims.armW * 0.9, dims.armH * 0.46, dims.armW * 0.9);
+  const lowerArmGeo = new THREE.BoxGeometry(dims.armW * 0.78, dims.armH * 0.46, dims.armW * 0.78);
   const handGeo = new THREE.BoxGeometry(dims.armW * 1.15, 0.07, dims.armW * 1.05);
 
   for (const side of [-1, 1]) {
@@ -151,10 +179,20 @@ export function buildCharacter(config, options = {}) {
     if (side < 0) group.leftArm = arm; else group.rightArm = arm;
   }
 
+  // Shoulder caps — small angled boxes bridging the arm join. Static on
+  // the torso (a jacket shoulder, not a sleeve), so they don't swing.
+  const capGeo = new THREE.BoxGeometry(dims.armW * 1.7, 0.05, dims.armW * 1.55);
+  for (const side of [-1, 1]) {
+    const cap = new THREE.Mesh(capGeo, bodyMat);
+    cap.position.set(side * (shoulderX + dims.armW * 0.35), shoulderY - 0.002, headForward * 0.6);
+    cap.rotation.z = -side * 0.32; // slope down-outward
+    group.add(cap);
+  }
+
   // ── Neck + head — tapered box with the painted face ────────────────
-  const neckGeo = new THREE.BoxGeometry(dims.headW * 0.42, 0.07, dims.headW * 0.42);
+  const neckGeo = new THREE.BoxGeometry(dims.headW * 0.42, 0.055, dims.headW * 0.42);
   const neck = new THREE.Mesh(neckGeo, skinMat);
-  neck.position.set(0, shoulderY + 0.025, headForward * 0.85);
+  neck.position.set(0, shoulderY + 0.018, headForward * 0.85);
   group.add(neck);
 
   const headGeo = new THREE.BoxGeometry(dims.headW, dims.headH, dims.headD);
@@ -171,7 +209,7 @@ export function buildCharacter(config, options = {}) {
     headGeo.computeVertexNormals();
   }
   const head = new THREE.Mesh(headGeo, skinMat);
-  head.position.set(0, shoulderY + 0.06 + dims.headH / 2, headForward);
+  head.position.set(0, shoulderY + 0.045 + dims.headH / 2, headForward);
   group.add(head);
   group.head = head;
 

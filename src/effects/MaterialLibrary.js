@@ -32,6 +32,73 @@ const gradientMap4 = createGradientMap(4);
 // Material cache
 const cache = {};
 
+// ── Cloth canvas textures (PS1 character clothing) ────────────────────
+// 32x48 grayscale canvases multiplied through the material color, so one
+// texture per VARIANT serves every clothing color. Deterministic hash
+// noise only — no Math.random — so character rebuilds are pixel-stable.
+// Variants:
+//   'plain'   — 2-tone weave + darkened bottom hem (sleeves, jacket sides)
+//   'placket' — plain + button placket line down the front (chest front)
+//   'belt'    — weave + dark belt band w/ buckle near the top (pelvis)
+const CLOTH_W = 32;
+const CLOTH_H = 48;
+
+function clothHash(x, y) {
+  let h = (x * 374761393 + y * 668265263) >>> 0;
+  h = (h ^ (h >>> 13)) >>> 0;
+  h = (h * 1274126177) >>> 0;
+  return (h >>> 16) & 0xff;
+}
+
+function clothTexture(variant) {
+  const key = `clothtex_${variant}`;
+  if (cache[key]) return cache[key];
+
+  const c = document.createElement('canvas');
+  c.width = CLOTH_W;
+  c.height = CLOTH_H;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(CLOTH_W, CLOTH_H);
+
+  for (let y = 0; y < CLOTH_H; y++) {
+    for (let x = 0; x < CLOTH_W; x++) {
+      // 2-tone weave — hash on (x>>1, y) gives 2px horizontal threads
+      let v = (clothHash(x >> 1, y) & 1) ? 250 : 240;
+
+      if (variant === 'belt') {
+        // Belt band across the top of the pelvis, lighter buckle center
+        if (y >= 0 && y <= 4) {
+          v = (x >= 13 && x <= 18) ? 208 : Math.round(v * 0.45);
+        }
+      } else {
+        // Bottom hem darkening (jacket weight)
+        if (y >= 42) v = Math.round(v * (1 - (y - 41) * 0.03));
+        if (variant === 'placket') {
+          // Button placket line down the front + buttons
+          if (x === 15 || x === 16) {
+            v = Math.round(v * 0.82);
+            if (y === 12 || y === 13 || y === 22 || y === 23 || y === 32 || y === 33) v = 120;
+          } else if (x === 14 || x === 17) {
+            v = Math.round(v * 0.93);
+          }
+        }
+      }
+
+      const i = (y * CLOTH_W + x) * 4;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v;
+      img.data[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+
+  const tex = new THREE.CanvasTexture(c);
+  tex.minFilter = THREE.NearestFilter;   // the PS1 crunch
+  tex.magFilter = THREE.NearestFilter;
+  tex.generateMipmaps = false;
+  cache[key] = tex;
+  return tex;
+}
+
 function toon(color, opts = {}) {
   const key = `${color}_${opts.stops || 3}_${opts.emissive || 0}_${opts.smooth ? 's' : 'f'}`;
   if (cache[key]) return cache[key];
@@ -104,6 +171,24 @@ export const Materials = {
 
   // Custom color toon material
   custom: (color, opts) => toon(color, opts),
+
+  // Painted cloth toon material for character clothing. `color` should
+  // already be tone-treated (CharacterBuilder's toneColor), so the cache
+  // key is effectively (color, tone, variant). Headless-safe: the data
+  // validator builds characters under Node where there is no canvas —
+  // fall back to the flat toon material there (nobody is looking).
+  cloth(color, variant = 'plain') {
+    if (typeof document === 'undefined') return toon(color);
+    const key = `cloth_${color}_${variant}`;
+    if (cache[key]) return cache[key];
+    const mat = new THREE.MeshToonMaterial({
+      color: new THREE.Color(color),
+      map: clothTexture(variant),
+      gradientMap: gradientMap3,
+    });
+    cache[key] = mat;
+    return mat;
+  },
 
   // Hardwood plank pattern — light oak with grain lines and plank seams
   hardwoodPattern(w, h) {
