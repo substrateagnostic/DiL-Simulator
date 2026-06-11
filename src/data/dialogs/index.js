@@ -1769,7 +1769,11 @@ export const DIALOGS = {
     /* 7  */ { type: 'end' },
   ],
 
-  // Convince Ross puzzle — need to use his buzzwords correctly (4 choice points, need 3/4)
+  // Convince Ross puzzle — need to use his buzzwords correctly (4 choice
+  // points, need 3/4, checked by the condition tree at nodes 23+).
+  // Failing ends without ross_rallied; ExplorationState re-offers the
+  // dialog at act 4 until he's rallied, and ross_convince_* flags persist
+  // across attempts so a retry only needs the missed buzzwords.
   ross_act4: [
     /* 0  */ { type: 'text', speaker: 'Ross', text: "Andrew. I... I've been thinking. Which is new for me, but I'm trying it." },
     /* 1  */ { type: 'text', speaker: 'Ross', text: "Rachel wants to dissolve the department. MY department. The one I built from... okay, I didn't build it. The Janitor built it. But I've been MANAGING it." },
@@ -1802,10 +1806,24 @@ export const DIALOGS = {
     /* 16 */ { type: 'text', speaker: 'Ross', text: "'Circle back.' 'Fiduciary moat.' That's... that's beautiful. I don't know what it means but I feel it in my SOUL." },
     /* 17 */ { type: 'text', speaker: 'Ross', text: "I'm in. Whatever it takes. For the department. For the team. For the synergy." },
     /* 18 */ { type: 'text', speaker: 'Ross', text: "The board. You're right. We take the evidence to the board meeting. All of it." },
-    /* 19 */ { type: 'text', speaker: 'Ross', text: "I'm done hiding behind buzzwords. Well... I'm done hiding behind MOST buzzwords. Some of them are load-bearing." },
+    /* 19 */ { type: 'text', speaker: 'Ross', text: "I'm done hiding behind buzzwords. Well... I'm done hiding behind MOST buzzwords. Some of them are load-bearing.", next: 23 },
     /* 20 */ { type: 'action', action: 'set_flag', flag: 'ross_rallied', value: true, next: 21 },
     /* 21 */ { type: 'text', speaker: 'Ross', text: "Let's do this. *finger guns* ...Sorry. Force of habit." },
     /* 22 */ { type: 'end' },
+    // Buzzword tally: pass (→20) needs at least 3 of ross_convince_1..4.
+    // Every fail route lands on 32.
+    /* 23 */ { type: 'condition', flag: 'ross_convince_1', ifTrue: 24, ifFalse: 27 },
+    /* 24 */ { type: 'condition', flag: 'ross_convince_2', ifTrue: 25, ifFalse: 30 },
+    /* 25 */ { type: 'condition', flag: 'ross_convince_3', ifTrue: 20, ifFalse: 26 },
+    /* 26 */ { type: 'condition', flag: 'ross_convince_4', ifTrue: 20, ifFalse: 32 },
+    /* 27 */ { type: 'condition', flag: 'ross_convince_2', ifTrue: 28, ifFalse: 32 },
+    /* 28 */ { type: 'condition', flag: 'ross_convince_3', ifTrue: 29, ifFalse: 32 },
+    /* 29 */ { type: 'condition', flag: 'ross_convince_4', ifTrue: 20, ifFalse: 32 },
+    /* 30 */ { type: 'condition', flag: 'ross_convince_3', ifTrue: 31, ifFalse: 32 },
+    /* 31 */ { type: 'condition', flag: 'ross_convince_4', ifTrue: 20, ifFalse: 32 },
+    /* 32 */ { type: 'text', speaker: 'Ross', text: "I want to believe you, Andrew. I do. But half of that pitch was just... words. REGULAR words. Anyone can say regular words." },
+    /* 33 */ { type: 'text', speaker: 'Ross', text: "Come back when you can say it in fluent Ross. I'll be here. Leveraging my feelings. Circling back to my doubts." },
+    /* 34 */ { type: 'end' },
   ],
 
   intern_act4: [

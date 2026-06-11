@@ -1604,6 +1604,14 @@ export class ExplorationState {
       return 'janet_act4';
     }
 
+    // Ross act-4 rally can FAIL (3-of-4 buzzword check) — keep offering
+    // it until he's rallied. Progression requires ross_rallied (the
+    // Janitor won't move without him), so act stays 4 until this lands.
+    // Bounded to act 4 exactly to match the _act4 stage band.
+    if (id === 'ross' && act === 4 && !this.player.getFlag('ross_rallied') && DIALOGS.ross_act4) {
+      return 'ross_act4';
+    }
+
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
       return npc.dialogId;
     }
