@@ -20,7 +20,7 @@ post-process pass** (Bayer dither + film grain + per-act color grade, settings t
 | P6 | Fixtures common-sense pass (windows/posters/overlaps, uses buildingMap exterior walls) | pending | — |
 | P7 | Settings menu (volumes, text speed, retro/shake toggles) | DONE | (pushed) |
 | P8 | Logic sweep: report DONE (s5-logic-report.md, 29 findings); 3 CRITICALS + act7_complete FIXED+pushed; 8 MAJOR + 17 MINOR remain — apply next session from the report | partial |
-| P9 | Balance sim agent STILL RUNNING at session end — report lands at .claude/plans/s5-balance-report.md; review then apply via balance.json | bg |
+| P9 | Balance APPLIED+pushed: 13 enemy overrides, 6 ability tweaks, boss silence-resist, HEAVY telegraph tag. Sim script reusable: node .claude/plans/s5-balance-sim.mjs --validate | DONE |
 | P10 | Epilogue slides (per-flag cards, anchor voices) | pending | — |
 | P11 | The Quiet Floor (floor 13, post-Act-5 night, sit + monologue) | pending | — |
 
