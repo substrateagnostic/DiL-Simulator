@@ -616,6 +616,9 @@ export class ExplorationState {
   // City chapter rooms are always golden hour (the one nice afternoon).
   _applyTimeOfDay(roomId) {
     const CITY_ROOMS = ['city_street', 'transit_bus', 'records_hall', 'luckys_diner', 'old_branch', 'old_vault'];
+    // Street-level rooms sit at the BOTTOM of the skyline — the city
+    // chapter and the garage (the building's feet)
+    Engine.setStreetLevel(CITY_ROOMS.includes(roomId) || roomId === 'parking_garage');
     if (CITY_ROOMS.includes(roomId)) {
       Engine.setTimeOfDay('goldenhour');
       return;

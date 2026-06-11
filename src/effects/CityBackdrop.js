@@ -89,9 +89,10 @@ export class CityBackdrop {
       });
       const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
       // Rooftops sit below the room floor — the office is high in its tower
-      building.position.set(x, -h / 2 - 2.5 - rand() * 4, z);
+      const baseDrop = 2.5 + rand() * 4;
+      building.position.set(x, -h / 2 - baseDrop, z);
       this.group.add(building);
-      this.buildings.push(building);
+      this.buildings.push({ mesh: building, h, baseDrop });
 
       // Aircraft beacon on the tallest few
       if (h > 13) {
@@ -101,9 +102,31 @@ export class CityBackdrop {
         );
         beacon.position.set(x, building.position.y + h / 2 + 0.15, z);
         this.group.add(beacon);
-        this.beacons.push({ mesh: beacon, phase: rand() * Math.PI * 2 });
+        this.beacons.push({ mesh: beacon, phase: rand() * Math.PI * 2, building: this.buildings[this.buildings.length - 1] });
       }
     }
+
+    // ── The Vaults Fargo tower itself — visible from street level only,
+    // looming south beyond the road, windows lit to the story's hour ────
+    const hqMat = new THREE.MeshToonMaterial({
+      color: 0x3c4456,
+      map: this._facadeTexture(0.3),
+      flatShading: true,
+    });
+    // North, behind the street facades — you just walked out of it
+    this.hqTower = new THREE.Mesh(new THREE.BoxGeometry(11, 46, 8), hqMat);
+    this.hqTower.position.set(CENTER.x, 23 - 0.4, CENTER.z - 18);
+    this.hqTower.visible = false;
+    this.group.add(this.hqTower);
+    const hqBeacon = new THREE.Mesh(
+      new THREE.SphereGeometry(0.16, 6, 5),
+      new THREE.MeshBasicMaterial({ color: 0xff3333, transparent: true, opacity: 0.8 })
+    );
+    hqBeacon.position.set(CENTER.x, 46, CENTER.z - 18);
+    hqBeacon.visible = false;
+    this.group.add(hqBeacon);
+    this.hqBeacon = hqBeacon;
+    this.beacons.push({ mesh: hqBeacon, phase: 0.7, hq: true });
 
     // ── Car-light streaks on two streets far below ───────────────────────
     for (let i = 0; i < 10; i++) {
@@ -143,14 +166,46 @@ export class CityBackdrop {
     this.group.position.set(x - CENTER.x, this.group.position.y, z - CENTER.z);
   }
 
+  // Street-level mode: you're at the BOTTOM of the city. Tower bases
+  // land at the ground plane and stretch overhead; car lights run at
+  // curb height; the Vaults Fargo tower looms to the south.
+  setStreetLevel(on) {
+    if (this.streetLevel === on) return;
+    this.streetLevel = on;
+    this.streakY = on ? -0.25 : -16;
+    for (const b of this.buildings) {
+      if (on) {
+        b.mesh.scale.y = 2.4;
+        b.mesh.position.y = (b.h * 2.4) / 2 - 0.6;
+      } else {
+        b.mesh.scale.y = 1;
+        b.mesh.position.y = -b.h / 2 - b.baseDrop;
+      }
+    }
+    for (const bc of this.beacons) {
+      if (bc.hq) continue;
+      const b = bc.building;
+      if (b) bc.mesh.position.y = b.mesh.position.y + (b.h * b.mesh.scale.y) / 2 + 0.15;
+    }
+    if (this.hqTower) {
+      this.hqTower.visible = on;
+      this.hqBeacon.visible = on;
+    }
+  }
+
   setTimeOfDay(key) {
     if (!TIME_OF_DAY[key] || key === this.tod) return;
     this.tod = key;
     const t = TIME_OF_DAY[key];
     for (const b of this.buildings) {
-      b.material.color.set(t.building);
-      b.material.map = this._facadeTexture(t.windowLit + Math.random() * 0.08);
-      b.material.needsUpdate = true;
+      b.mesh.material.color.set(t.building);
+      b.mesh.material.map = this._facadeTexture(t.windowLit + Math.random() * 0.08);
+      b.mesh.material.needsUpdate = true;
+    }
+    if (this.hqTower) {
+      this.hqTower.material.color.set(t.building);
+      this.hqTower.material.map = this._facadeTexture(Math.min(0.8, t.windowLit + 0.12));
+      this.hqTower.material.needsUpdate = true;
     }
     for (const bc of this.beacons) bc.mesh.material.color.set(t.beacon);
     for (const s of this.streaks) s.mesh.material.color.set(t.streak);
@@ -166,14 +221,15 @@ export class CityBackdrop {
       bc.mesh.material.opacity = 0.35 + 0.45 * (0.5 + 0.5 * Math.sin(this.time * 1.6 + bc.phase));
     }
 
-    // Car streaks loop along their streets
+    // Car streaks loop along their streets (street level: curb height)
+    const sy = this.streakY ?? -16;
     for (const s of this.streaks) {
       const range = 46;
       const p = ((this.time * s.speed + s.offset) % range + range) % range - range / 2;
       if (s.isX) {
-        s.mesh.position.set(CENTER.x + p, -16, s.lane);
+        s.mesh.position.set(CENTER.x + p, sy, s.lane);
       } else {
-        s.mesh.position.set(s.lane, -16, CENTER.z + p);
+        s.mesh.position.set(s.lane, sy, CENTER.z + p);
       }
     }
 

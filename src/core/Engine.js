@@ -79,6 +79,7 @@ class EngineClass {
     import('../effects/CityBackdrop.js').then(({ CityBackdrop }) => {
       this.cityBackdrop = new CityBackdrop(this.scene);
       if (this._pendingTimeOfDay) this.cityBackdrop.setTimeOfDay(this._pendingTimeOfDay);
+      if (this._pendingStreetLevel !== undefined) this.cityBackdrop.setStreetLevel(this._pendingStreetLevel);
     });
 
     // The ghost of the building around the current room
@@ -93,6 +94,13 @@ class EngineClass {
   setTimeOfDay(key) {
     if (this.cityBackdrop) this.cityBackdrop.setTimeOfDay(key);
     else this._pendingTimeOfDay = key;
+  }
+
+  // Street-level mode: tower bases at the ground plane (city chapter,
+  // parking garage) instead of rooftops far below
+  setStreetLevel(on) {
+    if (this.cityBackdrop) this.cityBackdrop.setStreetLevel(on);
+    else this._pendingStreetLevel = on;
   }
 
   _createVoidBackdrop() {
