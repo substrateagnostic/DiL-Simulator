@@ -1574,8 +1574,11 @@ export class ExplorationState {
       return 'janitor_return';
     }
 
-    // Janet act4 rally takes priority over lunch thief dialogId overrides
-    if (id === 'janet' && act >= 4 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
+    // Janet act4 rally takes priority over lunch thief dialogId overrides.
+    // Bounded below act 6: her rally is optional, and past the _act4 stage
+    // band this returned a dialog the gate rejects — shadowing janet_act6
+    // and the 5-ally finale counter forever (logic-sweep MAJOR #8).
+    if (id === 'janet' && act >= 4 && act < 6 && !this.player.getFlag('janet_rallied') && DIALOGS.janet_act4) {
       return 'janet_act4';
     }
 
@@ -2187,6 +2190,24 @@ export class ExplorationState {
       !this.player.getFlag('ready_for_ross')
     ) {
       this.player.setFlag('ready_for_ross', true);
+    }
+
+    // Act 6: the Janitor only hands over the Rolex once the team is
+    // actually assembled — 5 allies + 2 pieces of evidence (the counter
+    // the objective panel demands). Derived flag because room NPC
+    // conditions support a single flag/notFlag pair (logic-sweep MAJOR #7).
+    if (
+      this.player.getFlag('act5_complete') &&
+      this.player.getFlag('janet_act6_rallied') &&
+      this.player.getFlag('diane_act6_rallied') &&
+      this.player.getFlag('intern_act6_rallied') &&
+      this.player.getFlag('ross_speech_ready') &&
+      this.player.getFlag('grandma_ally') &&
+      this.player.getFlag('diane_evidence') &&
+      this.player.getFlag('isaiah_evidence') &&
+      !this.player.getFlag('act6_ready')
+    ) {
+      this.player.setFlag('act6_ready', true);
     }
 
     this._syncActFromFlags();

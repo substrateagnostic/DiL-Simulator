@@ -425,9 +425,13 @@ export const ROOMS = {
     npcs: [
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'act2_complete', notFlag: 'ross_returned_seen' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen', notFlag: 'act5_complete' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete' } },
+      // ross_returned is an Act-7 beat ("the Regional Director was gone…
+      // The Algorithm is already running projections") — it only fires
+      // once the Regional Director is actually defeated, never at Act 3
+      // (logic-sweep MAJORs #9/#15). Acts 3-6 use generic act routing.
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'regional_director_defeated' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'regional_director_defeated', notFlag: 'ross_returned_seen' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen' } },
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
@@ -488,9 +492,11 @@ export const ROOMS = {
     npcs: [
       { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
       { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'act2_complete', notFlag: 'ross_returned_seen' } },
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen', notFlag: 'act5_complete' } },
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete' } },
+      // Mirrors ross_office: ross_returned is gated on the Regional
+      // Director's defeat (Act 7), not act2_complete (MAJORs #9/#15)
+      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'regional_director_defeated' } },
+      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'regional_director_defeated', notFlag: 'ross_returned_seen' } },
+      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen' } },
     ],
     exits: [
       { x: 4, z: 9, targetRoom: 'cubicle_farm',    spawnX: 9, spawnZ: 4 },
@@ -1069,7 +1075,11 @@ export const ROOMS = {
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_needs_ross', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act6',  movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete', notFlag: 'has_rolex' } },
+      // Act 6 rally phase: he sweeps and waits — no Rolex until the team
+      // is assembled (act6_ready derives from 5 allies + 2 evidence in
+      // _refreshStoryProgress; logic-sweep MAJOR #7)
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete', notFlag: 'act6_ready' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act6',  movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act6_ready', notFlag: 'has_rolex' } },
     ],
     exits: [
       // SOUTH exit -> Stairwell
