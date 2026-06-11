@@ -1,3 +1,44 @@
+# Session Handoff — June 11, 2026 (Sprint 3: PS1 models, Session 8)
+
+Full detail: `.claude/plans/overnight-sprint-3.md`. NEXT RUN: `.claude/plans/overnight-sprint-4.md`
+("The Building Is Real" — Alex's brief: street-level skyline mode, garage elevator, real
+stairwell stairs, one canonical building map for the ghost tower).
+
+## What Was Done
+
+1. **PS1 model direction** — co-creator rejected caricatures; four direction boards generated
+   (art/direction/karen_dir_*.png); Alex picked **C+A hybrid, applied everywhere**.
+2. **CharacterBuilder v4 + FacePainter** — realistic ~5.75-head proportions, segmented
+   chest/pelvis torso, two-piece pre-bent limbs, tapered box heads, **painted canvas faces**
+   (FacePainter.js): expressions are texture swaps; `config.tone: silly|scary|normal` drives
+   feature exaggeration + body-palette desaturation (scary = board-A muted). 14 tone fields in
+   characters.js. Face plane is MeshLambert (MeshBasic glows under bloom). Beards painted into
+   the texture. Sitting uses `group.legLength`.
+3. **Fennimore Avenue open-air** — walls:false; new `facadeStrip` (left-anchored storefront
+   canvas fronts, full-width blocking via special case in Room._placeFurniture) + `curb`;
+   exit markers now render for wall-less rooms.
+4. **Multi-enemy camera** — CombatScene pulls to z 5.9 when enemyIds.length > 1.
+5. **7 new achievements** (countersigned/served/gray_area/on_time/rememberer/finished_shift/
+   lap_two) + ACT_ACHIEVEMENT_FLAGS extended; Quest.md (Act 6½ + personal missions + post-game)
+   and Gameplay.md updated.
+6. **Delia mood portraits** (angry/smug/worried, 256px).
+7. **Audio overhaul agent IN FLIGHT at session end** — see sprint-4 carryovers for the review
+   protocol. Uncommitted diff expected in src/core/AudioManager.js + ExplorationState.
+
+## New gotchas (Session 8)
+
+- **Pipes mask exit codes**: `npm run check | tail` reports success even when the validator
+  CRASHES. Use `npm run check > log 2>&1; echo $?`. This bit us once (committed on a false pass).
+- **FacePainter is headless-guarded**: returns null/{} without `document` (the validator builds
+  a Player under Node). Never remove the guard.
+- **facadeStrip/curb are left-anchored** (place at leftmost tile; variant = width/length).
+- **Expression API unchanged** (`setExpression(name, hold)`) but it swaps faceMesh.material.map
+  now — old face-rig fields (browL, mouths…) no longer exist.
+- Tone colors run through `toneColor()` in CharacterBuilder — editor color overrides apply
+  BEFORE desaturation, so edited colors shift slightly for scary/normal characters.
+
+---
+
 # Session Handoff — June 10–11, 2026 (Sprint 2 + Mobile, Session 7)
 
 Full detail: `.claude/plans/overnight-sprint-2-2026-06-10.md` (status, gotchas, follow-ups) and

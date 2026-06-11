@@ -14,12 +14,12 @@ commit per phase, update STATUS. Fresh instance: read this + HANDOFF.md Session 
 
 | # | Phase | State | Commit |
 |---|-------|-------|--------|
-| P0 | This doc | 🔨 | — |
-| P1 | PS1 builder (CharacterBuilder v4) + Karen prototype vs board C | pending | — |
-| P2 | Full-cast rollout with tone dials + accessory re-anchor | pending | — |
-| P3 | Follow-ups: outdoor street walls, wider 3v1 framing, Delia moods (codex) | pending | — |
-| P4 | Achievements (Act 6½/Daemon/NG+), Quest.md+Gameplay.md updates, balance sim pass | pending | — |
-| P5 | STRETCH: synth themes — street/diner/records hall/Firm battle | pending | — |
+| P0 | This doc | DONE | 822579a |
+| P1 | PS1 builder (CharacterBuilder v4) + Karen prototype vs board C | DONE | 3eeaa0d |
+| P2 | Full-cast rollout with tone dials + accessory re-anchor | DONE (pushed) | e95ff92 |
+| P3 | Follow-ups: outdoor street walls, wider 3v1 framing, Delia moods | DONE | e7e5888 + 588a61d |
+| P4 | Achievements (7 new), Quest.md+Gameplay.md updates | DONE (balance sim pass deferred to S4) | 12e9b56 |
+| P5 | PROMOTED (Alex): full audio anti-repetition overhaul — variation engine (rotating progressions, phrase pools, layered intensity), randomized SFX variants, + new city/Firm themes. As much tonight as fits; rest -> sprint 4. | pending | — |
 
 ## P1 technical spec — CharacterBuilder v4 ("PS1 mode")
 
