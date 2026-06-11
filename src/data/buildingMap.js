@@ -33,9 +33,12 @@ export const BUILDING_MAP = {
   // The connector shaft (spans B2–6; rendered mid-shaft)
   stairwell:           { floor: 2,  offsetX: 0,  offsetZ: 0 },
 
-  // The top of the building
-  executive_floor:     { floor: 21, offsetX: 6,  offsetZ: 4 },
-  board_room:          { floor: 22, offsetX: 6,  offsetZ: 4 },
+  // The top of the building. Exec floor and board room each own their
+  // whole storey and sit AGAINST the plate edge — their dusk windows
+  // (north / west respectively) face real sky, not interior partitions
+  // (S5-P6 fixtures pass).
+  executive_floor:     { floor: 21, offsetX: 6,  offsetZ: 0 },
+  board_room:          { floor: 22, offsetX: 0,  offsetZ: 4 },
   penthouse:           { floor: 23, offsetX: 6,  offsetZ: 4 },
   penthouse_expanded:  { floor: 23, offsetX: 3,  offsetZ: 2 },
   penthouse_aquarium:  { floor: 23, offsetX: 10, offsetZ: 0 },

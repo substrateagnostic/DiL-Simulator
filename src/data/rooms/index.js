@@ -36,10 +36,9 @@ export const ROOMS = {
     floorPattern: 'carpet',
     walls: true,
     lighting: { flicker: true },
-    windows: [
-      { wall: 'north', from: 2, to: 5, sky: 'day' },
-      { wall: 'north', from: 14, to: 17, sky: 'day' },
-    ],
+    // No windows: floor 6 is fully interior on the building plate —
+    // ross_office/conference sit beyond the north wall (S5-P6). The
+    // department's only daylight is the break room's west exposure.
     furniture: [
       // ============================================================
       // NORTH CUBICLE ROW  (back walls at z=2, desks at z=3)
@@ -215,6 +214,9 @@ export const ROOMS = {
       // ============================================================
       // North wall
       { type: 'motivationalPoster', x: 7,  z: 0.1, rotation: 0 },
+      // Where the fake windows used to be — more corporate wall comfort
+      { type: 'motivationalPoster', x: 3.5,  z: 0.1, rotation: 0 },
+      { type: 'motivationalPoster', x: 15.5, z: 0.1, rotation: 0 },
       // South wall (face inward)
       { type: 'motivationalPoster', x: 6,  z: 14.9, rotation: Math.PI },
       { type: 'motivationalPoster', x: 11, z: 14.9, rotation: Math.PI },
@@ -520,7 +522,10 @@ export const ROOMS = {
     height: 8,
     floorColor: 0x4a6741,  // same carpet as boss office
     walls: true,
-    windows: [{ wall: 'north', from: 7, to: 10, sky: 'day' }],
+    // East wall is exterior too (offsetX 16 + width 12 = plate edge) and,
+    // unlike the north span, is never covered by the projection-wall
+    // renovation smartBoards (S5-P6).
+    windows: [{ wall: 'east', from: 1, to: 2, sky: 'day' }],
     furniture: [
       // === Conference table (big, central) ===
       { type: 'conferenceTable', x: 6, z: 4, rotation: 0 },
@@ -851,9 +856,12 @@ export const ROOMS = {
     floorColor: 0x6b5335,  // dark hardwood
     walls: true,
     lighting: { ambient: 0xe8eeff, ambientIntensity: 0.52, dir: 0xdde6ff, dirIntensity: 0.85 },
+    // North wall is exterior (floor 21 sits at the plate's north edge).
+    // Spans trimmed so the windows, the four ironic posters (x 5/6/9/10)
+    // and the board-room door (x 7-8) each get their own wall (S5-P6).
     windows: [
-      { wall: 'north', from: 2, to: 5, sky: 'dusk' },
-      { wall: 'north', from: 10, to: 13, sky: 'dusk' },
+      { wall: 'north', from: 2, to: 4, sky: 'dusk' },
+      { wall: 'north', from: 11, to: 13, sky: 'dusk' },
     ],
     furniture: [
       // === Grand executive desk (north-center, imposing) ===
@@ -907,10 +915,11 @@ export const ROOMS = {
       { type: 'whiteboard', x: 15, z: 6, rotation: -Math.PI / 2 },
 
       // === Power decor: motivational posters (ironic executive versions) ===
-      { type: 'motivationalPoster', x: 4, z: 0.1, rotation: 0 },
+      // Flank the board-room door (x 7-8), clear of both window spans
+      { type: 'motivationalPoster', x: 5, z: 0.1, rotation: 0 },
       { type: 'motivationalPoster', x: 6, z: 0.1, rotation: 0 },
+      { type: 'motivationalPoster', x: 9, z: 0.1, rotation: 0 },
       { type: 'motivationalPoster', x: 10, z: 0.1, rotation: 0 },
-      { type: 'motivationalPoster', x: 12, z: 0.1, rotation: 0 },
 
 
       // === Printer / fax near east wall ===
@@ -946,11 +955,11 @@ export const ROOMS = {
       { x: 8, z: 3, type: 'executive_desk', dialogId: 'executive_desk' },
       { x: 1, z: 8, type: 'water_cooler', dialogId: 'executive_water_cooler' },
       { x: 8, z: 11, type: 'elevator', dialogId: 'elevator_executive' },
-      // Motivational posters
-      { x: 4,  z: 0, type: 'poster', dialogId: 'poster_exec_1' },
+      // Motivational posters — kept in sync with the furniture entries above
+      { x: 5,  z: 0, type: 'poster', dialogId: 'poster_exec_1' },
       { x: 6,  z: 0, type: 'poster', dialogId: 'poster_exec_2' },
-      { x: 10, z: 0, type: 'poster', dialogId: 'poster_exec_3' },
-      { x: 12, z: 0, type: 'poster', dialogId: 'poster_exec_4' },
+      { x: 9,  z: 0, type: 'poster', dialogId: 'poster_exec_3' },
+      { x: 10, z: 0, type: 'poster', dialogId: 'poster_exec_4' },
     ],
     playerSpawn: { x: 8, z: 10 },
   },
