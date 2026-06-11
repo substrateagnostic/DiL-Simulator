@@ -16,13 +16,13 @@ post-process pass** (Bayer dither + film grain + per-act color grade, settings t
 | P2 | Near-wall auto-fade | DONE | (pushed) |
 | P3 | Elevator ride overlay (doors/LED/ding) | DONE | (pushed) |
 | P4 | RetroPass + street ground fog + desktop zoom 10.5 | DONE | (pushed) |
-| P5 | Character refinement: more-PS1 cloth textures, better human silhouette | pending | — |
-| P6 | Fixtures common-sense pass (windows/posters/overlaps, uses buildingMap exterior walls) | pending | — |
+| P5 | Character refinement (cloth canvas textures, silhouette) | NEXT SESSION | — |
+| P6 | Fixtures common-sense pass | NEXT SESSION (do with P8 majors) | — |
 | P7 | Settings menu (volumes, text speed, retro/shake toggles) | DONE | (pushed) |
 | P8 | Logic sweep: report DONE (s5-logic-report.md, 29 findings); 3 CRITICALS + act7_complete FIXED+pushed; 8 MAJOR + 17 MINOR remain — apply next session from the report | partial |
 | P9 | Balance APPLIED+pushed: 13 enemy overrides, 6 ability tweaks, boss silence-resist, HEAVY telegraph tag. Sim script reusable: node .claude/plans/s5-balance-sim.mjs --validate | DONE |
-| P10 | Epilogue slides (per-flag cards, anchor voices) | pending | — |
-| P11 | The Quiet Floor (floor 13, post-Act-5 night, sit + monologue) | pending | — |
+| P10 | Epilogue engine DONE+pushed; vignette art batch (8) generating via codex at session end — when it lands: downscale to 512px (HANDOFF snippet, target src/assets/epilogues/), copy raws to art/, build+commit | code done |
+| P11 | The Quiet Floor | DONE | (pushed) |
 
 ## P1 spec — floor heights (the stairwell fix, third attempt, the real one)
 - Room data: optional `floorZones: [{ x, z, w, h, y }]` — per-rect floor elevation. Rooms
