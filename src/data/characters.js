@@ -14,6 +14,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['coffee_mug'],
   },
   ross: {
+    tone: 'silly',
     name: 'Ross',
     bodyColor: COLORS.POLO_GREEN,
     pantsColor: COLORS.KHAKI,
@@ -50,6 +51,7 @@ export const CHARACTER_CONFIGS = {
     accessories: [],
   },
   intern: {
+    tone: 'silly',
     name: 'The Intern',
     bodyColor: 0x4a4a6a, // Oversized suit (gray-blue)
     pantsColor: 0x3a3a4a,
@@ -87,6 +89,7 @@ export const CHARACTER_CONFIGS = {
     hunch: 0.16, heightScale: 0.96,
   },
   karen: {
+    tone: 'silly',
     name: 'Karen Henderson',
     bodyColor: 0xcc6688,
     pantsColor: 0x2a2a3a,
@@ -99,6 +102,7 @@ export const CHARACTER_CONFIGS = {
     hunch: 0.14, headScale: 1.05,
   },
   chad: {
+    tone: 'silly',
     name: 'Chad Henderson',
     bodyColor: 0xcc4444, // Red polo
     pantsColor: COLORS.KHAKI,
@@ -123,6 +127,7 @@ export const CHARACTER_CONFIGS = {
     heightScale: 0.76, hunch: 0.38, widthScale: 1.12, headScale: 1.12,
   },
   compliance: {
+    tone: 'scary',
     name: 'Compliance Auditor',
     bodyColor: COLORS.SUIT_BLACK,
     pantsColor: 0x1a1a1a,
@@ -157,6 +162,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['bluetooth_earpiece', 'golf_putter'],
   },
   rachel: {
+    tone: 'scary',
     name: 'Rachel',
     bodyColor: 0x1a1a3a, // Navy power suit
     pantsColor: 0x1a1a3a,
@@ -215,6 +221,7 @@ export const CHARACTER_CONFIGS = {
     heightScale: 1.02, widthScale: 0.88,
   },
   regional_director: {
+    tone: 'scary',
     name: 'Regional Director',
     bodyColor: 0x2a1a4a, // Deep purple executive suit
     pantsColor: 0x1a1a2a,
@@ -262,6 +269,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['glasses'],
   },
   corporate_lawyer: {
+    tone: 'scary',
     name: 'Corporate Lawyer',
     bodyColor: COLORS.SUIT_BLACK,
     pantsColor: 0x1a1a1a,
@@ -284,6 +292,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['glasses'],
   },
   chief_of_restructuring: {
+    tone: 'scary',
     name: 'Chief of Restructuring',
     bodyColor: 0x1a1a3a, // near-black power suit
     pantsColor: 0x111122,
@@ -296,6 +305,7 @@ export const CHARACTER_CONFIGS = {
     heightScale: 1.12, widthScale: 1.06,
   },
   rachel_boss: {
+    tone: 'scary',
     name: 'Rachel, SVP',
     bodyColor: 0x1a1a3a, // navy power suit
     pantsColor: 0x1a1a3a,
@@ -334,6 +344,7 @@ export const CHARACTER_CONFIGS = {
     widthScale: 1.15, browAngle: -0.15,
   },
   networking_guy: {
+    tone: 'silly',
     name: 'The Networking Guy',
     bodyColor: 0x3a6a8a,        // quarter-zip
     pantsColor: 0x4a4a52,
@@ -397,6 +408,7 @@ export const CHARACTER_CONFIGS = {
   },
   // The Firm — they move like a school of fish
   firm_partner: {
+    tone: 'scary',
     name: 'The Firm (Partner)',
     bodyColor: 0x16161e,
     pantsColor: 0x16161e,
@@ -409,6 +421,7 @@ export const CHARACTER_CONFIGS = {
     heightScale: 1.08, widthScale: 0.9, browAngle: -0.1,
   },
   firm_associate: {
+    tone: 'scary',
     name: 'The Firm (Associate)',
     bodyColor: 0x1a1a24,
     pantsColor: 0x1a1a24,
@@ -421,6 +434,7 @@ export const CHARACTER_CONFIGS = {
     heightScale: 1.02, widthScale: 0.88, browAngle: -0.1,
   },
   firm_paralegal: {
+    tone: 'scary',
     name: 'The Firm (Paralegal)',
     bodyColor: 0x20202a,
     pantsColor: 0x20202a,

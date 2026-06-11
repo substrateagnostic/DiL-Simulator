@@ -20,39 +20,14 @@ export class CharacterAnimator {
     this._exprHold = 0;
   }
 
-  // Swap the face rig into an expression preset. hold > 0 reverts to
-  // neutral after that many seconds. No-ops on faceless builds (monolith).
+  // Swap the painted face texture (PS1 style — expressions are textures).
+  // hold > 0 reverts to neutral after that many seconds. No-ops on
+  // faceless builds (monolith).
   setExpression(name, hold = 0) {
-    const f = this.group.face;
-    if (!f) return;
-    const showMouth = (key) => {
-      for (const [k, m] of Object.entries(f.mouths)) m.visible = k === key;
-    };
-    const brows = (lRot, rRot, dy) => {
-      f.browL.rotation.z = f.browBaseL + lRot;
-      f.browR.rotation.z = f.browBaseR + rRot;
-      f.browL.position.y = f.browBaseY + dy;
-      f.browR.position.y = f.browBaseY + dy;
-    };
-    const eyes = (scaleY) => {
-      if (this.group.leftEye) this.group.leftEye.scale.y = scaleY;
-      if (this.group.rightEye) this.group.rightEye.scale.y = scaleY;
-    };
-    switch (name) {
-      case 'angry':   brows(-0.4, 0.4, -0.015); eyes(0.8); showMouth('frown'); break;
-      case 'smug':
-        f.browL.rotation.z = f.browBaseL - 0.22;
-        f.browL.position.y = f.browBaseY + 0.035;
-        f.browR.rotation.z = f.browBaseR;
-        f.browR.position.y = f.browBaseY;
-        eyes(0.9);
-        showMouth('smile');
-        break;
-      case 'worried': brows(0.3, -0.3, 0.045); eyes(1.15); showMouth('o'); break;
-      case 'hurt':    brows(-0.3, 0.3, -0.01); eyes(0.25); showMouth('grim'); break;
-      case 'victory': brows(0.12, -0.12, 0.04); eyes(1); showMouth('smile'); break;
-      default:        brows(0, 0, 0); eyes(1); showMouth('neutral');
-    }
+    const tex = this.group.faceTextures?.[name] || this.group.faceTextures?.neutral;
+    if (!tex || !this.group.faceMesh) return;
+    this.group.faceMesh.material.map = tex;
+    this.group.faceMesh.material.needsUpdate = true;
     this._exprHold = hold > 0 ? hold : 0;
   }
 
@@ -82,8 +57,9 @@ export class CharacterAnimator {
     }
 
     if (this.isSitting) {
-      // Raise hips to seat height
-      this.group.position.y = SEAT_Y - CHAR.LEG_HEIGHT;
+      // Raise hips to seat height (v4 models carry their own leg length)
+      const legLen = this.group.legLength ?? CHAR.LEG_HEIGHT;
+      this.group.position.y = Math.max(0.02, SEAT_Y - legLen);
       // Bend legs forward (horizontal)
       if (this.group.leftLeg)  this.group.leftLeg.rotation.x  = Math.PI / 2;
       if (this.group.rightLeg) this.group.rightLeg.rotation.x = Math.PI / 2;
