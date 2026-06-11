@@ -87,7 +87,6 @@ export class CityBackdrop {
       const mat = new THREE.MeshToonMaterial({
         color: 0x4a5668,
         map: this._facadeTexture(0.18 + rand() * 0.1),
-        flatShading: true,
       });
       const building = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
       // Rooftops sit below the room floor — the office is high in its tower
@@ -113,7 +112,6 @@ export class CityBackdrop {
     const hqMat = new THREE.MeshToonMaterial({
       color: 0x3c4456,
       map: this._facadeTexture(0.3),
-      flatShading: true,
     });
     // North, behind the street facades — you just walked out of it
     this.hqTower = new THREE.Mesh(new THREE.BoxGeometry(11, 46, 8), hqMat);

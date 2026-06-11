@@ -713,18 +713,18 @@ export class ExplorationState {
     AudioManager.playSfx('door');
 
     const currentRoom = this.player.currentRoom;
-    // The garage elevator — a proper ride between the building's feet
-    // and the lobby
+    // The garage elevator — a real ride: doors close over the screen,
+    // the LED ticks the floors, ding, doors part onto the new room
     const elevatorUp = currentRoom === 'parking_garage' && targetRoom === 'reception';
     const elevatorDown = currentRoom === 'reception' && targetRoom === 'parking_garage';
-    if (elevatorUp || elevatorDown) {
-      AudioManager.playSfx('confirm');
-      this._showToast(elevatorUp ? '🛗  G → 1 — ding.' : '🛗  1 → G — ding.', 'info');
-    }
-    const goingDown = elevatorDown || targetRoom === 'archive' || (targetRoom === 'vault' && currentRoom === 'archive');
-    const goingUp = elevatorUp || (currentRoom === 'archive' && targetRoom === 'stairwell');
+    const goingDown = targetRoom === 'archive' || (targetRoom === 'vault' && currentRoom === 'archive');
+    const goingUp = currentRoom === 'archive' && targetRoom === 'stairwell';
 
-    if (goingDown) {
+    if (elevatorUp || elevatorDown) {
+      const { ElevatorRide } = await import('../ui/ElevatorRide.js');
+      this._elevatorRide = ElevatorRide;
+      await ElevatorRide.close(elevatorUp ? ['G', '1'] : ['1', 'G'], elevatorUp);
+    } else if (goingDown) {
       await this.transition.wipeDownOut(0.4);
     } else if (goingUp) {
       await this.transition.wipeUpOut(0.4);
@@ -759,7 +759,9 @@ export class ExplorationState {
       }
     }
 
-    if (goingDown) {
+    if (elevatorUp || elevatorDown) {
+      await this._elevatorRide.open();
+    } else if (goingDown) {
       await this.transition.wipeDownIn(0.4);
     } else if (goingUp) {
       await this.transition.wipeUpIn(0.4);
