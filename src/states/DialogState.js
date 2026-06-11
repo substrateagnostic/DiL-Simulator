@@ -353,12 +353,14 @@ export class DialogState {
       }
     }
 
-    // Cancel / skip to end of text, then exit dialog on second press
+    // Escape skips the typewriter but NEVER aborts the dialog — aborting
+    // mid-tree skipped set_flag/start_combat actions while still marking
+    // read_<id>, which could permanently strand story flags (e.g. losing
+    // city_unlocked, met_* intros, or the Firm fight). Dialogs only end
+    // through their own end nodes.
     if (InputManager.isJustPressed('escape')) {
       if (!this.dialogBox.isComplete()) {
         this.dialogBox.skipToEnd();
-      } else {
-        this._endDialog();
       }
     }
   }

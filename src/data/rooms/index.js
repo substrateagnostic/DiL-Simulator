@@ -1930,7 +1930,12 @@ export const ROOMS = {
       { type: 'popcornPopper', x: 6.5, z: 6.5 },
       { type: 'cobweb', x: 7.4, z: 0.6 },
     ],
-    npcs: [],
+    npcs: [
+      // The Firm waits at the foot of the stairs until beaten — without
+      // this, losing the ambush (or aborting it) would seal the charter
+      // chain forever
+      { id: 'firm_partner', x: 2, z: 4, facing: Math.PI, dialogId: 'the_firm_retry', condition: { flag: 'has_recorder_seal', notFlag: 'defeated_the_firm' } },
+    ],
     exits: [
       { x: 0, z: 1, targetRoom: 'old_branch', spawnX: 12, spawnZ: 8 },
     ],

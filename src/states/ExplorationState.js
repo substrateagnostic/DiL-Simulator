@@ -182,7 +182,10 @@ export class ExplorationState {
         // Alex IT router: chain into the chosen dialog after router ends
         // Only queue pending dialogs when flags are set to truthy values — not when cleared
         if (key === 'alex_story_chosen' && value) {
-          const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret');
+          // act2_complete ceiling: past Act 2, the act2 reveal would play
+          // empty (dialogGating caps it) and strand knows_server_secret
+          const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret')
+            && !this.player.getFlag('act2_complete');
           this._pendingDialog = hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
           // Reset immediately so the flag can fire again for future story acts
           this.player.setFlag('alex_story_chosen', false);
@@ -304,6 +307,11 @@ export class ExplorationState {
             };
             this.stateManager.push(arcadeState);
           });
+        }
+        // act7_complete was read by Act-7 ally chats but never written
+        // (logic-sweep MAJOR): mirror the Algorithm's defeat flag
+        if (key === 'algorithm_defeated' && value) {
+          this.player.setFlag('act7_complete', true);
         }
         // Act 6½: pulling the seal from box 0001 triggers The Firm's ambush
         if (key === 'has_recorder_seal') {
@@ -1589,7 +1597,8 @@ export class ExplorationState {
 
     // Alex IT: when story beat is available, offer choice between story and side quests
     if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
-      const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret') && DIALOGS.alex_it_act2;
+      const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret')
+        && !this.player.getFlag('act2_complete') && DIALOGS.alex_it_act2;
       const hasAct3 = this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done') && DIALOGS.alex_it_act3;
 
       // Player chose story from the router — go straight to the story dialog

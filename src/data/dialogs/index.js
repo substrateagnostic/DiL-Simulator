@@ -4169,6 +4169,17 @@ export const DIALOGS = {
     /* 10 */ { type: 'end' },
   ],
 
+  // Losing (or wandering off) doesn't dismiss process servers. They
+  // wait. It's billable.
+  the_firm_retry: [
+    /* 0 */ { type: 'text', speaker: 'The Firm', text: "You came back. We never—" },
+    /* 1 */ { type: 'text', speaker: 'The Firm', text: "—left. Waiting is—" },
+    /* 2 */ { type: 'text', speaker: 'The Firm', text: "—billable." },
+    /* 3 */ { type: 'text', speaker: 'Narrator', text: "Three briefcases click open in unison. The seal isn't leaving this basement with anyone but you." },
+    /* 4 */ { type: 'action', action: 'start_combat', encounter: 'the_firm', next: 5 },
+    /* 5 */ { type: 'end' },
+  ],
+
   the_firm_defeated: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "The Firm retreats up the stairs in formation, slightly less synchronized than they came down. One of them is billing this. You can tell." },
     /* 1  */ { type: 'text', speaker: 'The Firm', text: "This will be—" },
