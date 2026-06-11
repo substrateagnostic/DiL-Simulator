@@ -27,6 +27,9 @@ class Game {
     this.postProcessing.init();
     this.touchControls.init();
 
+    // Player settings (volumes, retro filter, text speed, shake)
+    import('./core/Settings.js').then(({ loadSettings }) => loadSettings());
+
     // Screenshot-pipeline fixtures (?dev&fixture=act5&shot=server_room&hud=0
     // or &fight=karen) boot straight into a deterministic game state.
     const params = new URLSearchParams(window.location.search);

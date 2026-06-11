@@ -15,7 +15,7 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Achievements', 'Stats', 'Save Game', 'Controls', 'Audio Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Achievements', 'Stats', 'Save Game', 'Controls', 'Settings', 'Quit to Title'];
     // New Game+ unlocks after the Algorithm falls
     if (player.getFlag('algorithm_defeated')) {
       this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
@@ -47,7 +47,7 @@ export class MenuState {
       'Stats':          { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
       'Save Game':      { tag: '[SYS]',      tagColor: '#44cc88', section: 'SETTINGS' },
       'Controls':       { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
-      'Audio Settings': { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
+      'Settings': { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
       'New Game+':      { tag: '[NG+]',      tagColor: '#ffaa44', section: null },
       'Quit to Title':  { tag: '[EXIT]',     tagColor: '#e94560', section: null },
     };
@@ -189,7 +189,7 @@ export class MenuState {
       case 'Controls':
         this._showControls();
         break;
-      case 'Audio Settings':
+      case 'Settings':
         this._showAudioSettings();
         break;
       case 'New Game+':
@@ -422,50 +422,41 @@ export class MenuState {
     this.audioOverlay.style.zIndex = '60';
 
     const render = () => {
-      const mv = Math.round(AudioManager.musicVolume * 100);
-      const sv = Math.round(AudioManager.sfxVolume * 100);
-      const on = AudioManager.musicVolume > 0;
-      const bar = (pct) => {
-        const filled = Math.round(pct / 10);
+      const S = this._settings;
+      const bar = (v) => {
+        const filled = Math.round(v * 10);
         return '■'.repeat(filled) + '□'.repeat(10 - filled);
       };
-      const focusMusic = this._audioFocus === 'music';
+      const onOff = (v) => `<span style="color:${v ? '#44ff44' : '#ff4444'};">${v ? 'ON' : 'OFF'}</span>`;
+      const speedLabel = S.textSpeed >= 1.4 ? 'SLOW' : S.textSpeed <= 0.6 ? 'FAST' : 'NORMAL';
       const hl = 'background:rgba(233,69,96,0.15);border-left:3px solid #e94560;padding-left:8px;margin-left:-11px;';
+      const row = (i, label, value) =>
+        `<div style="${this._audioFocus === i ? hl : ''}"><span style="color:#e94560;">${label}</span>&nbsp; ${value}</div>`;
       this.audioOverlay.innerHTML = `
         <div class="menu-panel">
-          <div class="menu-title">AUDIO</div>
-          <div style="color:#ddd;font-family:'VT323',monospace;font-size:22px;line-height:2.2;">
-            <div style="${focusMusic ? hl : ''}">
-              <span style="color:#e94560;">Music:</span>
-              <span id="audio-music-toggle" style="cursor:pointer;margin-left:12px;color:${on ? '#44ff44' : '#ff4444'};">
-                ${on ? 'ON' : 'OFF'}
-              </span>
-              &nbsp; [${bar(mv)}] ${mv}%
-            </div>
-            <div style="${!focusMusic ? hl : ''}">
-              <span style="color:#e94560;">SFX Vol:</span>&nbsp;&nbsp; [${bar(sv)}] ${sv}%
-            </div>
+          <div class="menu-title">SETTINGS</div>
+          <div style="color:#ddd;font-family:'VT323',monospace;font-size:22px;line-height:2.1;">
+            ${row(0, 'Music:', `[${bar(S.musicVol)}] ${Math.round(S.musicVol * 100)}%`)}
+            ${row(1, 'SFX:', `[${bar(S.sfxVol)}] ${Math.round(S.sfxVol * 100)}%`)}
+            ${row(2, 'Text Speed:', speedLabel)}
+            ${row(3, 'Retro Filter:', onOff(S.retro) + '<span style="font-size:15px;color:#888;"> (off reduces flicker)</span>')}
+            ${row(4, 'Screen Shake:', onOff(S.shake))}
             <div style="font-size:16px;color:#888;margin-left:8px;">↑↓ select &nbsp; ← → adjust</div>
           </div>
           <div class="menu-item" style="margin-top:16px;" id="audio-back">Back</div>
         </div>
       `;
-      document.getElementById('audio-music-toggle')?.addEventListener('click', () => {
-        if (AudioManager.musicVolume > 0) {
-          AudioManager.setMusicVolume(0);
-        } else {
-          AudioManager.setMusicVolume(0.3);
-        }
-        render();
-      });
       document.getElementById('audio-back')?.addEventListener('click', () => this._closeAudioSettings());
     };
 
-    document.getElementById('ui-overlay').appendChild(this.audioOverlay);
-    if (this.element) this.element.style.display = 'none';
-    render();
-    this._audioRender = render;
-    this._audioFocus = 'music'; // 'music' or 'sfx'
+    import('../core/Settings.js').then(({ SETTINGS }) => {
+      this._settings = SETTINGS;
+      document.getElementById('ui-overlay').appendChild(this.audioOverlay);
+      if (this.element) this.element.style.display = 'none';
+      render();
+      this._audioRender = render;
+      this._audioFocus = 0; // row index
+    });
   }
 
   _closeAudioSettings() {
@@ -1031,18 +1022,30 @@ export class MenuState {
       const up    = InputManager.isJustPressed('arrowup')    || InputManager.isJustPressed('w');
       const down  = InputManager.isJustPressed('arrowdown')  || InputManager.isJustPressed('s');
 
-      if (up || down) {
-        this._audioFocus = this._audioFocus === 'music' ? 'sfx' : 'music';
+      const S = this._settings;
+      if (S && (up || down)) {
+        this._audioFocus = (this._audioFocus + (down ? 1 : 4)) % 5;
         AudioManager.playSfx('cursor');
       }
-      if (left || right) {
-        const delta = right ? 0.1 : -0.1;
-        if (this._audioFocus === 'music') {
-          AudioManager.setMusicVolume(AudioManager.musicVolume + delta);
-        } else {
-          AudioManager.setSfxVolume(AudioManager.sfxVolume + delta);
-          AudioManager.playSfx('cursor');
+      if (S && (left || right)) {
+        const dir = right ? 1 : -1;
+        switch (this._audioFocus) {
+          case 0: S.musicVol = Math.max(0, Math.min(1, S.musicVol + dir * 0.1)); break;
+          case 1: S.sfxVol = Math.max(0, Math.min(1, S.sfxVol + dir * 0.1)); break;
+          case 2: { // slow 1.5 / normal 1.0 / fast 0.5
+            const speeds = [1.5, 1.0, 0.5];
+            const i = speeds.findIndex(v => Math.abs(v - S.textSpeed) < 0.01);
+            S.textSpeed = speeds[Math.max(0, Math.min(2, (i < 0 ? 1 : i) + dir))];
+            break;
+          }
+          case 3: S.retro = !S.retro; break;
+          case 4: S.shake = !S.shake; break;
         }
+        import('../core/Settings.js').then(({ applySettings, saveSettings }) => {
+          applySettings();
+          saveSettings();
+        });
+        AudioManager.playSfx('cursor');
       }
       if (left || right || up || down) this._audioRender?.();
       if (InputManager.isConfirmPressed()) { this._closeAudioSettings(); return; }

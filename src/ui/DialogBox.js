@@ -1,5 +1,6 @@
 import { AudioManager } from '../core/AudioManager.js';
 import { TEXT_SPEED } from '../utils/constants.js';
+import { SETTINGS } from '../core/Settings.js';
 
 // Speaker name colors for visual distinction
 const SPEAKER_COLORS = {
@@ -190,6 +191,7 @@ export class DialogBox {
    */
   show(speaker, text, choices = null, speed = TEXT_SPEED.NORMAL, mood = null) {
     this._createElements();
+    speed = speed * (SETTINGS.textSpeed || 1);
 
     // Speaker tag
     this.speakerEl.textContent = speaker;

@@ -222,6 +222,11 @@ export class CombatScene {
   // Shake doubles as the central "hit feel" dispatcher: big hits also get
   // hit-stop and a camera punch-in, so every existing call site gains juice.
   shake(intensity = 0.5) {
+    if (this._settings === undefined) {
+      import('../core/Settings.js').then(({ SETTINGS }) => { this._settings = SETTINGS; });
+      this._settings = null;
+    }
+    if (this._settings && !this._settings.shake) intensity = 0;
     this.shakeAmount = intensity;
     if (intensity >= 1.0) {
       this.hitStop(0.11);
