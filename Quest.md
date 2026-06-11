@@ -236,7 +236,7 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 | Step | What to do |
 |------|-----------|
 | 1 | Talk to Alex |
-| 2 | Find the sticky note *(Cubicle Farm, x:10 z:6)* |
+| 2 | Find the sticky note *(Cubicle Farm, x:13 z:10 — the unoccupied SE-pod desk)* |
 | 3 | Find the floppy disk *(Break Room, x:4 z:6)* |
 | 4 | Find the server tag *(Server Room, x:7 z:3)* |
 | 5 | Return to Alex |

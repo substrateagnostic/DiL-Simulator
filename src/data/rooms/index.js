@@ -216,7 +216,7 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 7,  z: 0.1, rotation: 0 },
       // Where the fake windows used to be — more corporate wall comfort
       { type: 'motivationalPoster', x: 3.5,  z: 0.1, rotation: 0 },
-      { type: 'motivationalPoster', x: 15.5, z: 0.1, rotation: 0 },
+      { type: 'motivationalPoster', x: 14.5, z: 0.1, rotation: 0 },
       // South wall (face inward)
       { type: 'motivationalPoster', x: 6,  z: 14.9, rotation: Math.PI },
       { type: 'motivationalPoster', x: 11, z: 14.9, rotation: Math.PI },
@@ -285,8 +285,9 @@ export const ROOMS = {
       { x: 0,  z: 3,  type: 'poster', dialogId: 'quest_def_1', condition: { flag: 'retry_karen' } },
       // Phantom Approver: source workstation — on the desk tile, same pattern as andrews_desk
       { x: 17, z: 5,  type: 'monitor', dialogId: 'phantom_workstation_cf' },
-      // Tuesday 2PM: sticky note on a monitor
-      { x: 10, z: 6,  type: 'poster', dialogId: 'tuesday_sticky_note' },
+      // Tuesday 2PM: sticky note on a monitor — the unoccupied SE-pod
+      // desk (monitor at 13,9.7), not a bare aisle tile (S5-P6)
+      { x: 13, z: 10, type: 'poster', dialogId: 'tuesday_sticky_note' },
       // Printer's Soul: ethernet port on the wall near the printer
       { x: 13, z: 2,  type: 'poster', dialogId: 'printer_ethernet_port' },
     ],
@@ -1863,7 +1864,8 @@ export const ROOMS = {
       { type: 'chair', x: 14, z: 5, rotation: Math.PI },
       { type: 'desk', x: 14, z: 9, rotation: 0 },
       { type: 'chair', x: 14, z: 10, rotation: Math.PI },
-      { type: 'motivationalPoster', x: 16, z: 0.1 },
+      // Clear of the north window (13-16) and the stacks (S5-P6)
+      { type: 'motivationalPoster', x: 11, z: 0.1 },
     ],
     npcs: [
       { id: 'records_clerk', x: 9, z: 5, facing: Math.PI, sitting: true, dialogId: 'records_clerk_form11c', interactRange: 2.0 },
