@@ -179,11 +179,17 @@ export class DialogState {
 
     this.shownAnyNode = true;
 
-    // Map filtered choices to DialogBox format
-    const boxChoices = filteredChoices.map(({ choice }, displayIdx) => ({
-      text: choice.text,
-      id: displayIdx,
-    }));
+    // Map filtered choices to DialogBox format. Choices the player has
+    // already taken (persisted per save) render greyed and the cursor
+    // starts on the first unread one — EXCEPT exit-style choices (those
+    // whose target node is an `end`), which stay fresh forever.
+    const boxChoices = filteredChoices.map(({ choice, originalIndex }, displayIdx) => {
+      const targetIdx = choice.next !== undefined ? choice.next : this.currentIndex + 1;
+      const isExit = this.dialogTree[targetIdx]?.type === 'end';
+      const seen = !isExit && this.dialogId
+        && !!this.player.getFlag(`_chose_${this.dialogId}_${this.currentIndex}_${originalIndex}`);
+      return { text: choice.text, id: displayIdx, seen };
+    });
 
     this.dialogBox.show(node.speaker || 'Narrator', node.prompt || node.text || '', boxChoices, undefined, node.mood);
 
@@ -194,6 +200,12 @@ export class DialogState {
         this.waitingForInput = false;
         this._processNode();
         return;
+      }
+
+      // Remember the pick so revisits grey it out
+      if (this.dialogId) {
+        const origIdx = filteredChoices[choiceIndex].originalIndex;
+        this.player.setFlag(`_chose_${this.dialogId}_${this.currentIndex}_${origIdx}`, true);
       }
 
       // Set flag if the choice specifies one

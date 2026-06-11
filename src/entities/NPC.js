@@ -200,6 +200,8 @@ export class NPC {
       }
       this._moveTarget = target;
       this._moveState = 'walking';
+      this._stuckTime = 0;
+      this._lastDist = Infinity;
       this.animator.setWalking(true);
       this.faceTowards(target.x, target.z);
     }
@@ -220,6 +222,23 @@ export class NPC {
     if (dist < 0.15) {
       this._arriveAtTarget();
       return;
+    }
+
+    // Stuck detection: axis-sliding around an obstacle can shuffle
+    // forever without closing distance (Karen vs the water cooler).
+    // No real progress for 1.5s -> abandon the target and re-idle.
+    if (dist > (this._lastDist ?? Infinity) - 0.005) {
+      this._stuckTime = (this._stuckTime || 0) + dt;
+      if (this._stuckTime > 1.5) {
+        this._moveTarget = null;
+        this._moveState = 'idle';
+        this._idleTimer = 0;
+        this.animator.setWalking(false);
+        return;
+      }
+    } else {
+      this._stuckTime = 0;
+      this._lastDist = dist;
     }
 
     const speed = (this.movement.speed || MOVE_SPEED) * dt;

@@ -303,8 +303,8 @@ export class DialogBox {
 
     this.choices.forEach((choice, i) => {
       const el = document.createElement('div');
-      el.className = 'dialog-choice';
-      el.innerHTML = `<span class="dialog-choice-indicator">&gt;</span> ${this._escapeHtml(choice.text)}`;
+      el.className = 'dialog-choice' + (choice.seen ? ' seen' : '');
+      el.innerHTML = `<span class="dialog-choice-indicator">${choice.seen ? '·' : '&gt;'}</span> ${this._escapeHtml(choice.text)}`;
 
       el.addEventListener('mouseenter', () => {
         this._selectChoice(i);
@@ -318,7 +318,9 @@ export class DialogBox {
       this.choiceElements.push(el);
     });
 
-    // Highlight first choice
+    // Cursor starts on the first unread choice (all read → first)
+    const firstFresh = this.choices.findIndex(c => !c.seen);
+    this.selectedIndex = firstFresh >= 0 ? firstFresh : 0;
     this._updateChoiceHighlight();
     this.choicesEl.style.display = '';
   }

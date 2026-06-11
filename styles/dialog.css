@@ -97,6 +97,12 @@
   text-align: left;
 }
 
+/* Already-read one-time options: dimmed but still selectable */
+.dialog-choice.seen {
+  opacity: 0.42;
+  border-color: rgba(120, 120, 140, 0.3);
+}
+
 .dialog-choice:hover,
 .dialog-choice.selected {
   background: rgba(233, 69, 96, 0.3);
