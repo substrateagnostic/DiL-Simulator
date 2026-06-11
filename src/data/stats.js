@@ -699,7 +699,7 @@ export const ENEMY_ABILITIES = {
     '"My lawyer is like, super smart dude. He went to online law school."',
     '"My lawyer says I can sue for emotional damages from this meeting."',
   ]},
-  trust_fund_tantrum: { name: 'Trust Fund Tantrum', power: 30, type: 'attack', messages: [
+  trust_fund_tantrum: { name: 'Trust Fund Tantrum', power: 24, type: 'attack', messages: [
     'The client throws a tantrum about their trust fund distribution!',
     '"I NEED that money for my NFT project!" they rage!',
     'They kick over a chair and scream about their inheritance!',
@@ -719,12 +719,12 @@ export const ENEMY_ABILITIES = {
   ]},
 
   // Chad phase abilities
-  alpha_mode: { name: 'Alpha Mode', power: 0, type: 'buff', buff: { atk: 12, spd: 6 }, duration: 3, messages: [
+  alpha_mode: { name: 'Alpha Mode', power: 0, type: 'buff', buff: { atk: 4, spd: 4 }, duration: 3, messages: [
     '"ALPHA MODE ACTIVATED." Chad crushes his empty protein container.',
     '"I am the apex predator of this trust dispute." Chad\'s eyes go blank.',
     '"No thoughts. Head empty. Pure AGGRESSION." Chad enters the zone.',
   ]},
-  rage_quit_attack: { name: 'Rage Quit', power: 42, type: 'attack', messages: [
+  rage_quit_attack: { name: 'Rage Quit', power: 28, type: 'attack', messages: [
     'Chad upends the conference table in a fit of entitled rage!',
     '"I AM DONE WITH THIS PROCESS." Chad flings a stack of legal briefs!',
     '"My therapist said I needed to set BOUNDARIES." The briefcase becomes a weapon.',
@@ -786,7 +786,7 @@ export const ENEMY_ABILITIES = {
     'The Auditor pulls up your transaction history. All of it.',
     '"We\'ll be reviewing every entry since 2019." The paper trail grows.',
   ]},
-  form_27b_stroke_6: { name: 'Form 27B/6', power: 35, type: 'attack', messages: [
+  form_27b_stroke_6: { name: 'Form 27B/6', power: 28, type: 'attack', messages: [
     'You haven\'t filed Form 27B/6. This is... problematic.',
     '"This form needed three signatures. You have two. DENIED."',
     'The Auditor stamps REJECTED in red ink across your face!',
@@ -803,7 +803,7 @@ export const ENEMY_ABILITIES = {
     '"Going forward, your role has been... redefined."',
     '"The org chart changed overnight. You report to a committee now."',
   ]},
-  golden_parachute: { name: 'Golden Parachute', power: 0, type: 'heal', healAmount: 90, messages: [
+  golden_parachute: { name: 'Golden Parachute', power: 0, type: 'heal', healAmount: 35, messages: [
     'The Regional Manager activates their golden parachute!',
     'The manager opens a briefcase full of stock options. They feel renewed.',
     '"My severance package is worth more than your salary." The manager heals!',
@@ -978,7 +978,7 @@ export const ENEMY_ABILITIES = {
     '"The party of the first part, notwithstanding..." Your eyes glaze over.',
     '"Under the doctrine of respondeat superior, vis-à-vis..." Nothing makes sense anymore.',
   ]},
-  billable_assault: { name: 'Billable Assault', power: 28, type: 'attack', messages: [
+  billable_assault: { name: 'Billable Assault', power: 22, type: 'attack', messages: [
     'The lawyer charges you $450/hour while also charging AT you.',
     '"This conversation is billable." The lawyer attacks and invoices you simultaneously.',
     'Each word costs $50. The lawyer uses a LOT of words. Violently.',

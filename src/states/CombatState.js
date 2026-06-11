@@ -1962,8 +1962,11 @@ export class CombatState {
     const ability = ENEMY_ABILITIES[abilityId];
     const name = enemy?.name || this.engine.enemy?.name || 'Enemy';
     if (!ability) return `${name} is making a move...`;
+    // Magnitude matters: brace-everything turtling loses fights
+    // (sim-validated), so big hits announce themselves
+    const heavy = (ability.power || 0) >= 26 ? ' (HEAVY — brace!)' : '';
     switch (ability.type) {
-      case 'attack': return `${name}: attack`;
+      case 'attack': return `${name}: attack${heavy}`;
       case 'dot': return `${name}: lingering`;
       case 'heal': return `${name}: heal`;
       case 'debuff': return `${name}: weaken`;

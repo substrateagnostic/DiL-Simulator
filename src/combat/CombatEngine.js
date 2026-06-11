@@ -571,8 +571,12 @@ export class CombatEngine {
       case 'silence': {
         const target = this._pickAllyAttackTarget(ally);
         if (!target) return null;
-        target.silenced = Math.max(target.silenced || 0, ability.duration || 2);
-        result = { ...result, duration: ability.duration || 2, targetIndex: this.enemies.indexOf(target) };
+        // Bosses (phased enemies) shake silence off after one turn —
+        // sim-validated: full recastable silence made the final bosses'
+        // difficulty depend on party comp (100% vs 22% identical stats)
+        const dur = target.phases ? 1 : (ability.duration || 2);
+        target.silenced = Math.max(target.silenced || 0, dur);
+        result = { ...result, duration: dur, targetIndex: this.enemies.indexOf(target) };
         break;
       }
     }
