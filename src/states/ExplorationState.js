@@ -692,8 +692,16 @@ export class ExplorationState {
     AudioManager.playSfx('door');
 
     const currentRoom = this.player.currentRoom;
-    const goingDown = targetRoom === 'archive' || (targetRoom === 'vault' && currentRoom === 'archive');
-    const goingUp = currentRoom === 'archive' && targetRoom === 'stairwell';
+    // The garage elevator — a proper ride between the building's feet
+    // and the lobby
+    const elevatorUp = currentRoom === 'parking_garage' && targetRoom === 'reception';
+    const elevatorDown = currentRoom === 'reception' && targetRoom === 'parking_garage';
+    if (elevatorUp || elevatorDown) {
+      AudioManager.playSfx('confirm');
+      this._showToast(elevatorUp ? '🛗  G → 1 — ding.' : '🛗  1 → G — ding.', 'info');
+    }
+    const goingDown = elevatorDown || targetRoom === 'archive' || (targetRoom === 'vault' && currentRoom === 'archive');
+    const goingUp = elevatorUp || (currentRoom === 'archive' && targetRoom === 'stairwell');
 
     if (goingDown) {
       await this.transition.wipeDownOut(0.4);

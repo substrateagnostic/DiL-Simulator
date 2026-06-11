@@ -705,6 +705,8 @@ export const ROOMS = {
       // === Reception desk (center, facing south toward entrance) ===
       { type: 'receptionDesk',       x: 7, z: 3, rotation: 0, condition: { notFlag: 'renovation_marble_counter' } },
       { type: 'receptionDeskMarble', x: 7, z: 3, rotation: 0, condition: { flag:    'renovation_marble_counter' } },
+      // The elevator down to the garage (south exit tiles 6-7)
+      { type: 'elevatorDoors', x: 6.5, z: 6.86, rotation: Math.PI, variant: '1' },
       { type: 'monitor', x: 6.5, z: 2.8, rotation: Math.PI },
       { type: 'monitor', x: 7.5, z: 2.8, rotation: Math.PI },
       { type: 'deskPlant', x: 8.0, z: 2.9 },
@@ -755,7 +757,7 @@ export const ROOMS = {
       // NORTH exits -> Cubicle Farm
       { x: 6, z: 0, targetRoom: 'cubicle_farm', spawnX: 9, spawnZ: 13 },
       { x: 7, z: 0, targetRoom: 'cubicle_farm', spawnX: 10, spawnZ: 13 },
-      // SOUTH exits -> Parking Garage (front entrance)
+      // SOUTH exits -> Parking Garage (the elevator down)
       { x: 6, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
       { x: 7, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
       // EAST elevator -> Executive Floor (Act 3 only, gated by game logic)
@@ -810,6 +812,9 @@ export const ROOMS = {
       { type: 'car',       x: 12, z: 2, rotation: Math.PI / 2 },
       { type: 'carSUV',    x: 12, z: 4, rotation: Math.PI / 2 },
       { type: 'carSports', x: 12, z: 6, rotation: Math.PI / 2 },
+
+      // The elevator up into the building (north exit tiles 6-7)
+      { type: 'elevatorDoors', x: 6.5, z: 0.14, variant: 'G' },
     ],
     npcs: [
       { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage

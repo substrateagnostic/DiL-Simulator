@@ -1402,6 +1402,63 @@ export const Furniture = {
     return group;
   },
 
+  // Lobby-grade elevator doors with a lit floor indicator. Wall-mounted
+  // (place at the exit tiles, z ~0.12 against a north wall; rotate for
+  // other walls). variant = the floor label shown on the indicator.
+  elevatorDoors(variant) {
+    const label = typeof variant === 'string' ? variant : 'G';
+    const group = new THREE.Group();
+    const frameMat = Materials.custom(0x6a705e);
+    const doorMat = Materials.custom(0x9aa2a8, { stops: 4 });
+
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.5, 0.18), frameMat);
+    frame.position.y = 1.25;
+    group.add(frame);
+    for (const side of [-1, 1]) {
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.92, 2.2, 0.06), doorMat);
+      door.position.set(side * 0.49, 1.18, 0.08);
+      group.add(door);
+    }
+    const seam = new THREE.Mesh(
+      new THREE.BoxGeometry(0.03, 2.2, 0.07),
+      Materials.custom(0x2a2e32)
+    );
+    seam.position.set(0, 1.18, 0.085);
+    group.add(seam);
+
+    // Floor indicator - lit canvas above the doors
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 24;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#16100a';
+    ctx.fillRect(0, 0, 64, 24);
+    ctx.fillStyle = '#ff9a2a';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('▲ ' + label, 32, 18);
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    const indicator = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.7, 0.26),
+      new THREE.MeshBasicMaterial({ map: tex })
+    );
+    indicator.position.set(0, 2.62, 0.1);
+    group.add(indicator);
+
+    // Call button
+    const button = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.035, 0.035, 0.03, 8),
+      Materials.custom(0xffc04a, { emissive: 0xffc04a, emissiveIntensity: 0.6 })
+    );
+    button.rotation.x = Math.PI / 2;
+    button.position.set(1.28, 1.05, 0.1);
+    group.add(button);
+
+    group.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    return group;
+  },
+
   // Low sidewalk curb, left-anchored. variant = length in tiles.
   curb(variant) {
     const len = typeof variant === 'number' ? variant : 8;
