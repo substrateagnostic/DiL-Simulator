@@ -18,8 +18,11 @@ export class CombatState {
     this.player = player;
     this.enemyId = enemyId; // encounter ID — used for flags, encounter config lookup
     this.onEnd = onEnd;
-    this.enemyOverrides = enemyOverrides;
     this.encounterConfig = ENCOUNTERS[enemyId] || {};
+    // Encounter configs may carry their own enemyOverrides (balance-sim
+    // rec: lets the trio fight tune its members without touching their
+    // solo fights). Call-site overrides win on conflict.
+    this.enemyOverrides = { ...(this.encounterConfig.enemyOverrides || {}), ...enemyOverrides };
 
     // Resolve enemy list — multi-enemy via enemyIds, fallback to single enemyId mapping
     this.enemyIdsList = (this.encounterConfig.enemyIds && this.encounterConfig.enemyIds.length > 0)
@@ -87,7 +90,15 @@ export class CombatState {
       this.player.getCombatStats(),
       this.actualEnemyId,
       this.enemyOverrides,
-      { enemyIds: this.enemyIdsList, partyIds: this.partyIdsList, partyOverrides, ngPlus: !!this.player.getFlag?.('ng_plus') }
+      {
+        enemyIds: this.enemyIdsList,
+        partyIds: this.partyIdsList,
+        partyOverrides,
+        // Per-enemy overrides keyed by id (multi-enemy fights) — lets an
+        // encounter tune its members without touching their solo fights
+        enemyOverrides: this.encounterConfig.enemyOverrides || {},
+        ngPlus: !!this.player.getFlag?.('ng_plus'),
+      }
     );
 
     // Reasonable Doubt: unlock the Charter voice in the Rachel fight if the

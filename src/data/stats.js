@@ -64,7 +64,11 @@ export const PLAYER_ABILITIES = {
     name: 'Coffee Break',
     description: 'Restore Patience by stepping away',
     cost: 0,
-    healAmount: 50,
+    // Scales with level (40 + 2×level: L5 = 50, parity with old flat
+    // value). Balance-sim finding: a flat heal ceiling made any enemy
+    // sustaining ~45+/turn mathematically unwinnable.
+    healAmount: 40,
+    healPerLevel: 2,
     type: 'heal',
     tier: 0, // starter — free
     skipsTurn: true,

@@ -365,7 +365,9 @@ export class CombatEngine {
         break;
       }
       case 'heal': {
-        const healAmt = ability.healAmount;
+        // healPerLevel: heals grow with the player so a flat ceiling
+        // can't make sustained-damage enemies unwinnable (sim finding)
+        const healAmt = ability.healAmount + (ability.healPerLevel || 0) * (this.player.level || 1);
         this.player.hp = Math.min(this.player.maxHP, this.player.hp + healAmt);
         result = { ...result, healAmount: healAmt, skipsTurn: ability.skipsTurn };
         break;
