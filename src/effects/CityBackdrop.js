@@ -137,6 +137,12 @@ export class CityBackdrop {
     }
   }
 
+  // Recenter the whole city on the building's plate center so the ring
+  // of towers stays anchored to the SAME building as you change floors.
+  setCenter(x, z) {
+    this.group.position.set(x - CENTER.x, this.group.position.y, z - CENTER.z);
+  }
+
   setTimeOfDay(key) {
     if (!TIME_OF_DAY[key] || key === this.tod) return;
     this.tod = key;

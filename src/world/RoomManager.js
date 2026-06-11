@@ -49,9 +49,15 @@ export class RoomManager {
     Engine.applyRoomLighting(room.data.lighting);
 
     // Rebuild the ghost building shell around this room (handles the
-    // first-load race before the lazy module resolves)
-    if (Engine.buildingShell) Engine.buildingShell.buildFor(room.data);
-    else Engine._pendingShellRoom = room.data;
+    // first-load race before the lazy module resolves). The shell returns
+    // the canonical plate center — recenter the city ring on it so the
+    // skyline stays anchored to the same building across floors.
+    if (Engine.buildingShell) {
+      const plateCenter = Engine.buildingShell.buildFor(room.data);
+      if (plateCenter) Engine.cityBackdrop?.setCenter(plateCenter.x, plateCenter.z);
+    } else {
+      Engine._pendingShellRoom = room.data;
+    }
 
     // Set up NPCs
     this.entityManager.clear();
