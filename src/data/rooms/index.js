@@ -760,9 +760,16 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
-      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { flag: 'chad_defeated', notFlag: 'grandma_defeated' }, dialogId: 'grandma_reception_idle' },
+      // Hidden once ross_post_chad is set — at that point she is seated in the
+      // conference room, and two Grandmas at once was a continuity bug, not a
+      // Christie twist. grandma_defeated implies ross_post_chad (#14).
+      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { flag: 'chad_defeated', notFlag: 'ross_post_chad' }, dialogId: 'grandma_reception_idle' },
       { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: true, sitting: true },
-      // Corporate Lawyer blocks elevator until defeated — player initiates on their own terms
+      // INTENTIONALLY VESTIGIAL (#27): the trio post-dialog sets
+      // restructuring_defeated and corporate_lawyer_defeated in the same
+      // frame, so this solo-gauntlet lawyer can never spawn today. Kept (with
+      // the matching exec-floor gate and objective line in ExplorationState)
+      // in case the Act 5 gauntlet is ever re-split into solo fights.
       { id: 'corporate_lawyer', x: 11, z: 4, facing: -Math.PI / 2, condition: { flag: 'restructuring_defeated', notFlag: 'corporate_lawyer_defeated' }, dialogId: 'corporate_lawyer_combat' },
     ],
     exits: [
@@ -935,7 +942,10 @@ export const ROOMS = {
     npcs: [
       // Regional Manager — only for legal/bro paths, not grandma path. Moved off desk.
       { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_legal', notFlag: 'defeated_regional' } },
-      { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_bro', notFlag: 'defeated_regional' } },
+      // path_bro never fights the Regional Manager, so defeated_regional is
+      // never set on that path — gate on act5_complete instead (Act 5's
+      // narration announces his SEC arrest) (#16).
+      { id: 'regional', x: 10, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'path_bro', notFlag: 'act5_complete' } },
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { notFlag: 'compliance_defeated' } },
       // Re-appears in Act 3+ for bro-path players who defeated him — needed to issue archive crossword password
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { flag: 'compliance_defeated', notFlag: 'compliance_crossword_done' } },
@@ -943,6 +953,11 @@ export const ROOMS = {
       { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'act2_complete' } },
       // Grandma appears on executive floor for the secret path — seated north side of table, facing south
       { id: 'grandma', x: 4, z: 6.5, facing: Math.PI, sitting: true, dialogId: 'grandma_exec_idle', condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
+      // Rachel surveys her future territory during Acts 3-4. Her intro/act3/
+      // return dialogs were unreachable before — no Rachel NPC existed
+      // anywhere until the board room (#20). Routing in _getDialogId serves
+      // rachel_intro first, then rachel_act3, then rachel_return.
+      { id: 'rachel', x: 12, z: 8, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'act4_complete' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -1163,7 +1178,10 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'hr_rep', x: 10, z: 6, facing: Math.PI, dialogId: 'hr_rep_combat', movement: { type: 'wander', radius: 2.5 }, condition: { notFlag: 'defeated_hr_rep' } },
-      { id: 'hr_rep', x: 10, z: 6, facing: Math.PI, dialogId: 'hr_rep_defeated', condition: { flag: 'defeated_hr_rep' } },
+      // hr_rep_intro's own condition node routes defeated_hr_rep to a short
+      // return line — pointing here at hr_rep_defeated replayed the full
+      // "you search the files" narration forever (#21)
+      { id: 'hr_rep', x: 10, z: 6, facing: Math.PI, dialogId: 'hr_rep_intro', condition: { flag: 'defeated_hr_rep' } },
     ],
     exits: [
       // WEST exit -> Cubicle Farm (single door, centered on west wall)
@@ -1961,6 +1979,9 @@ export const ROOMS = {
       { id: 'barista', x: 4, z: 2.2, facing: Math.PI, dialogId: 'barista_vault', interactRange: 1.8 },
       // Delia relocates here once she decides to get the seal
       { id: 'delia', x: 11.5, z: 6, facing: -Math.PI / 2, dialogId: 'delia_roastery', condition: { flag: 'delia_moved', notFlag: 'has_recorder_seal' } },
+      // ...and returns for the epilogue once the charter is certified —
+      // delia_epilogue was orphaned without this entry (#20)
+      { id: 'delia', x: 11.5, z: 6, facing: -Math.PI / 2, dialogId: 'delia_epilogue', condition: { flag: 'charter_certified' } },
     ],
     exits: [
       { x: 0, z: 5, targetRoom: 'city_street', spawnX: 24, spawnZ: 5 },

@@ -700,12 +700,18 @@ export class ExplorationState {
       board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
       penthouse: { flag: 'act6_complete', message: "The staircase to the Penthouse is sealed. You need the Janitor's Rolex." },
       city_street: { flag: 'city_unlocked', message: "The garage door is down. You've never had a reason to open it." },
+      // Jules says "staff only" — the door now agrees with her (#22)
+      old_vault: { flag: 'delia_moved', message: 'Jules angles between you and the basement door. Staff only.' },
       penthouse_aquarium: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
       penthouse_analytics: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
       penthouse_bar: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
     };
 
-    // Block executive floor while the corporate lawyer is active and undefeated
+    // Block executive floor while the corporate lawyer is active and undefeated.
+    // INTENTIONALLY VESTIGIAL (#27): the trio post-dialog sets both flags in
+    // the same frame, so this gate can never engage today. Kept (with the
+    // reception lawyer NPC entry and the 'Push through to reception'
+    // objective) in case the Act 5 gauntlet is ever re-split into solo fights.
     if (targetRoom === 'executive_floor'
       && this.player.getFlag('restructuring_defeated')
       && !this.player.getFlag('corporate_lawyer_defeated')) {
@@ -1579,8 +1585,11 @@ export class ExplorationState {
       return `${retryEncId}_retry`;
     }
 
-    // Block Karen until the intern spar is complete (required combat tutorial)
-    if (id === 'karen' && !this.player.getFlag('defeated_intern')) {
+    // Block Karen until the intern spar is complete (required combat
+    // tutorial). Scoped to briefing_complete: the pre-briefing water-cooler
+    // Karen has no Henderson-meeting context and the Intern spar doesn't
+    // exist yet — she gets karen_intro / karen_return instead (#13).
+    if (id === 'karen' && this.player.getFlag('briefing_complete') && !this.player.getFlag('defeated_intern')) {
       return 'karen_intern_first';
     }
 
@@ -1614,6 +1623,18 @@ export class ExplorationState {
 
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
       return npc.dialogId;
+    }
+
+    // Rachel paces the executive floor during Acts 3-4 (#20). First meeting
+    // plays her intro; generic act routing then serves rachel_act3 (which
+    // sets its own read flag) and rachel_return. Placed AFTER the hardcoded
+    // dialogId check, and ceilinged at act4_complete so the board-room boss
+    // era can never serve the stale intro.
+    if (id === 'rachel'
+        && !this.player.getFlag('act4_complete')
+        && !this.player.getFlag('met_rachel')
+        && DIALOGS.rachel_intro) {
+      return 'rachel_intro';
     }
 
     // Printer from Hell side quest: route Alex to explanation dialog while active
@@ -1803,6 +1824,17 @@ export class ExplorationState {
         return 'janitor_names_return';
       }
       return 'janitor_names_offer';
+    }
+
+    // Dave's story — the D.K. who signed the printer's note (Printer from
+    // Hell). The Janitor remembers him once the note has been found;
+    // janitor_dave had no route at all before this (#20).
+    if (id === 'janitor'
+        && this.player.getFlag('met_janitor')
+        && this.player.getFlag('printer_quest_done')
+        && !this.player.getFlag('dave_janitor_done')
+        && DIALOGS.janitor_dave) {
+      return 'janitor_dave';
     }
 
     // The Janitor never falls through to generic act routing — his act3/
@@ -2103,6 +2135,8 @@ export class ExplorationState {
       return 'Get to the executive floor';
     }
     if (this.player.getFlag('restructuring_defeated')) {
+      // INTENTIONALLY VESTIGIAL (#27): unreachable while the trio post-dialog
+      // sets corporate_lawyer_defeated in the same frame (checked above).
       return 'Push through to reception';
     }
     if (this.player.getFlag('act4_complete')) {
