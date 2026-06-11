@@ -125,6 +125,7 @@ export class ExplorationState {
   }
 
   enter() {
+    if (DEV_MODE) window.__explore = this; // harness/debug handle
     Engine.scene.add(this.player.mesh);
     this._createHUD();
     this._loadRoom(this.player.currentRoom);
@@ -614,6 +615,26 @@ export class ExplorationState {
 
   // Story act → time of day for the world outside the windows.
   // City chapter rooms are always golden hour (the one nice afternoon).
+  // Camera-side walls (south + east) fade out when the player walks near
+  // them, so narrow rooms and lower terraces stay readable. The wall
+  // meshes already carry per-room cloned transparent materials.
+  _updateWallFade(dt) {
+    const room = this.roomManager.currentRoom;
+    if (!room || !room.data) return;
+    const px = this.player.position.x;
+    const pz = this.player.position.z;
+    const fade = (meshes, near) => {
+      const target = near ? 0.16 : 1.0;
+      for (const mesh of meshes) {
+        const m = mesh.material;
+        if (Math.abs(m.opacity - target) < 0.01) { m.opacity = target; continue; }
+        m.opacity += (target - m.opacity) * Math.min(1, dt * 7);
+      }
+    };
+    fade(room.getSouthWallMeshes(), pz > room.data.height - 3.5);
+    fade(room.getEastWallMeshes(), px > room.data.width - 3.5);
+  }
+
   _applyTimeOfDay(roomId) {
     const CITY_ROOMS = ['city_street', 'transit_bus', 'records_hall', 'luckys_diner', 'old_branch', 'old_vault'];
     // Street-level rooms sit at the BOTTOM of the skyline — the city
@@ -2352,6 +2373,8 @@ export class ExplorationState {
 
   update(dt) {
     if (this.paused) return;
+
+    this._updateWallFade(dt);
 
     if (DEV_MODE && InputManager.isJustPressed('f2')) {
       const existing = document.getElementById('dev-panel');
