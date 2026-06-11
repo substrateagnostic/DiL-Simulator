@@ -52,9 +52,14 @@ export class BuildingShell {
     const cx = -offsetX + PLATE.w / 2 - 0.5;
     const cz = -offsetZ + PLATE.d / 2 - 0.5;
 
-    // How much building exists above and below this floor
+    // How much building exists above and below this floor. The ground
+    // floor shows NOTHING below — it sits on the street, and ghost
+    // basements under it read as floating (Alex). Basement rooms keep
+    // their own remaining depth.
     const above = Math.max(0, Math.min(2, TOP_FLOOR - floor));
-    const below = floor >= 0 ? Math.min(6, floor + 3) : Math.max(0, 3 + floor);
+    const below = floor === 0 ? 0
+      : floor > 0 ? Math.min(6, floor + 3)
+      : Math.max(0, 3 + floor);
 
     // ── Ghost floor slabs ───────────────────────────────────────────────
     // Fills get a room-shaped hole: translucent layers directly above or

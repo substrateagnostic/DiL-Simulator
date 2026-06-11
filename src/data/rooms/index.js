@@ -718,7 +718,7 @@ export const ROOMS = {
       { type: 'receptionDesk',       x: 7, z: 3, rotation: 0, condition: { notFlag: 'renovation_marble_counter' } },
       { type: 'receptionDeskMarble', x: 7, z: 3, rotation: 0, condition: { flag:    'renovation_marble_counter' } },
       // The elevator down to the garage (south exit tiles 6-7)
-      { type: 'elevatorDoors', x: 6.5, z: 6.86, rotation: Math.PI, variant: '1' },
+      { type: 'elevatorDoors', x: 6.5, z: 7.45, rotation: Math.PI, variant: '1' },
       { type: 'monitor', x: 6.5, z: 2.8, rotation: Math.PI },
       { type: 'monitor', x: 7.5, z: 2.8, rotation: Math.PI },
       { type: 'deskPlant', x: 8.0, z: 2.9 },
@@ -826,7 +826,7 @@ export const ROOMS = {
       { type: 'carSports', x: 12, z: 6, rotation: Math.PI / 2 },
 
       // The elevator up into the building (north exit tiles 6-7)
-      { type: 'elevatorDoors', x: 6.5, z: 0.14, variant: 'G' },
+      { type: 'elevatorDoors', x: 6.5, z: -0.45, variant: 'G' },
     ],
     npcs: [
       { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage
@@ -1620,7 +1620,7 @@ export const ROOMS = {
       { type: 'monitor', x: 8, z: 1.8 },
       { type: 'chair', x: 8, z: 2.9, rotation: 0 },
       // The way back
-      { type: 'elevatorDoors', x: 7.5, z: 9.86, rotation: Math.PI, variant: '13' },
+      { type: 'elevatorDoors', x: 7.5, z: 9.45, rotation: Math.PI, variant: '13' },
     ],
     npcs: [],
     exits: [
