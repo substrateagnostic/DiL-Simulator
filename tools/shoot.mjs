@@ -23,6 +23,7 @@ const ROOMS = [
   'penthouse_aquarium', 'penthouse_analytics', 'penthouse_bar',
   // Act 6½ city rooms (no-op until they exist)
   'city_street', 'transit_bus', 'records_hall', 'luckys_diner', 'old_branch', 'old_vault',
+  'floor_13',
 ];
 const FIGHTS = ['intern', 'karen', 'chad', 'grandma', 'compliance', 'rachel_boss', 'algorithm', 'the_firm', 'parking_enforcer'];
 

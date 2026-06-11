@@ -599,6 +599,7 @@ export class ExplorationState {
       old_branch:      'diner',
       records_hall:    'records',
       old_vault:       'records',
+      floor_13:        'records',  // sparse and patient — right for a floor that waits
     };
     return map[roomId] || 'exploration';
   }
@@ -731,7 +732,18 @@ export class ExplorationState {
     if (elevatorUp || elevatorDown) {
       const { ElevatorRide } = await import('../ui/ElevatorRide.js');
       this._elevatorRide = ElevatorRide;
-      await ElevatorRide.close(elevatorUp ? ['G', '1'] : ['1', 'G'], elevatorUp);
+      // The Quiet Floor: late in the story, at night, the elevator
+      // sometimes stops where it isn't supposed to. Once per session.
+      const act = this.player.actIndex || 0;
+      if (act >= 5 && !ExplorationState._quietFloorVisited && targetRoom !== 'floor_13' && Math.random() < 0.2) {
+        ExplorationState._quietFloorVisited = true;
+        await ElevatorRide.close(elevatorUp ? ['G', '1', '...', '13'] : ['1', '...', '13'], elevatorUp);
+        this._showToast('The elevator pauses. The doors open anyway.', 'info');
+        targetRoom = 'floor_13';
+        spawnX = 8; spawnZ = 8;
+      } else {
+        await ElevatorRide.close(elevatorUp ? ['G', '1'] : ['1', 'G'], elevatorUp);
+      }
     } else if (goingDown) {
       await this.transition.wipeDownOut(0.4);
     } else if (goingUp) {
@@ -1909,6 +1921,7 @@ export class ExplorationState {
       transit_bus: 'The 5:15 Crosstown',
       records_hall: 'Hall of Records',
       luckys_diner: "Lucky's",
+      floor_13: 'Floor 13',
       old_branch: 'The Roastery',
       old_vault: 'The First Vault',
     };

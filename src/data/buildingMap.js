@@ -28,6 +28,7 @@ export const BUILDING_MAP = {
   conference_room:     { floor: 6,  offsetX: 16, offsetZ: 0 },
 
   hr_department:       { floor: 9,  offsetX: 6,  offsetZ: 5 },
+  floor_13:            { floor: 13, offsetX: 6,  offsetZ: 5 },
 
   // The connector shaft (spans B2–6; rendered mid-shaft)
   stairwell:           { floor: 2,  offsetX: 0,  offsetZ: 0 },

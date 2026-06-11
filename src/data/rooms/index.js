@@ -1567,6 +1567,53 @@ export const ROOMS = {
   },
 
   // ----------------------------------------------------------
+  // THE QUIET FLOOR — floor 13. The elevator isn't supposed to
+  // stop here. Late in the story, at night, it sometimes does.
+  // Nothing is wrong. That's what takes getting used to.
+  // ----------------------------------------------------------
+  floor_13: {
+    id: 'floor_13',
+    name: 'Floor 13',
+    width: 16,
+    height: 10,
+    floorColor: 0x2e2a33,
+    floorPattern: 'carpet',
+    walls: true,
+    lighting: { ambient: 0x4a4658, ambientIntensity: 0.22, dir: 0x6a6680, dirIntensity: 0.18 },
+    lights: [
+      // One desk lamp, left on by no one
+      { type: 'point', color: 0xffd890, intensity: 0.9, x: 8, y: 1.4, z: 2, distance: 6 },
+    ],
+    windows: [
+      { wall: 'north', x: 8, variant: 'night' },
+    ],
+    furniture: [
+      // Empty desks, sheeted in dust — a floor the org chart forgot
+      { type: 'desk', x: 3,  z: 3 }, { type: 'desk', x: 5,  z: 3 },
+      { type: 'desk', x: 11, z: 3 }, { type: 'desk', x: 13, z: 3 },
+      { type: 'desk', x: 3,  z: 6 }, { type: 'desk', x: 5,  z: 6 },
+      { type: 'desk', x: 11, z: 6 }, { type: 'desk', x: 13, z: 6 },
+      { type: 'cobweb', x: 0.6, z: 0.6 },
+      { type: 'cobweb', x: 15.4, z: 0.6 },
+      // The one desk that's awake: a chair facing the window, a monitor on
+      { type: 'desk', x: 8, z: 2 },
+      { type: 'monitor', x: 8, z: 1.8 },
+      { type: 'chair', x: 8, z: 2.9, rotation: 0 },
+      // The way back
+      { type: 'elevatorDoors', x: 7.5, z: 9.86, rotation: Math.PI, variant: '13' },
+    ],
+    npcs: [],
+    exits: [
+      { x: 7, z: 9, targetRoom: 'reception', spawnX: 7, spawnZ: 6, doorStyle: 'none' },
+      { x: 8, z: 9, targetRoom: 'reception', spawnX: 7, spawnZ: 6, doorStyle: 'none' },
+    ],
+    interactables: [
+      { x: 8, z: 2, type: 'poster', dialogId: 'floor_13_window' },
+    ],
+    playerSpawn: { x: 8, z: 8 },
+  },
+
+  // ----------------------------------------------------------
   // 18. PENTHOUSE — PRIVATE LOUNGE (18×12, west wing)
   // ----------------------------------------------------------
   penthouse_bar: {

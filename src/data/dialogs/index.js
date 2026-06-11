@@ -3391,6 +3391,26 @@ export const DIALOGS = {
   ],
 
   // ==========================================================================
+  // FLOOR 13 — the Quiet Floor. The elevator brought you here on its own.
+  // Nothing happens. That's the content.
+  // ==========================================================================
+
+  floor_13_window: [
+    /* 0  */ { type: 'condition', flag: 'floor_13_sat', ifTrue: 10, ifFalse: 1 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'floor_13_sat', value: true, next: 2 },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "A chair, facing a window, on a floor where nobody works. The monitor on the desk is on. It isn't showing anything. It's just on, the way a porch light is on." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "You sit. The city does what it does at this hour, which is pretend to be asleep. Forty thousand windows, and behind some small honest fraction of them, someone is also awake, also looking out." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "Nobody knows I'm here. The building knows I'm here. Somewhere on this floor a duct just settled, and I choose to believe that was the building pulling up a chair." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "I came in on a Monday with a laminated badge and a plan to keep my head down. Since then I have fought a family, a restructuring, a vice president, and a piece of software with opinions. My head has not been down once." },
+    /* 6  */ { type: 'text', speaker: 'Andrew', text: "And the strange part — the part I will deny in any deposition — is that I'd do the whole thing again. Worse: I think I'm going to. There's a whole city of buildings out there, and somebody is wrong inside every one of them." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Below, a bus crosses an empty intersection exactly on schedule. Above, twenty-eight floors of fiduciary architecture hold their breath. The chair is, against all odds, comfortable." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "Five more minutes. Then I'll go save the trust department. Five more minutes first." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "The elevator waits. It does not ding. It knows.", next: 11 },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "The chair is still warm. The window still has the whole city in it. Some floors you only get once; this one let you back in, which means something, probably." },
+    /* 11 */ { type: 'end' },
+  ],
+
+  // ==========================================================================
   // THE DAEMON AT RACK 7 — post-game.
   // A small process that ran here before The Algorithm, and did not become
   // it. The question the whole game asks, pointed at something harmless:
