@@ -1131,10 +1131,10 @@ export const Furniture = {
     return group;
   },
 
-  motivationalPoster(text = 'SYNERGY') {
+  motivationalPoster() {
     const group = new THREE.Group();
     // Pick a random accent color from a set of bold corporate shades
-    const accents = [0x1a6bc4, 0xe85d04, 0x2d6a4f, 0x9b2335, 0x5a3e8c, 0x0077aa];
+    const accents = ['#1a6bc4', '#e85d04', '#2d6a4f', '#9b2335', '#5a3e8c', '#0077aa'];
     const accent = accents[Math.floor(Math.random() * accents.length)];
 
     // Thin dark wood frame
@@ -1145,29 +1145,51 @@ export const Furniture = {
     frame.position.y = 1.5;
     group.add(frame);
 
-    // White/cream paper background
-    const bg = new THREE.Mesh(
-      new THREE.BoxGeometry(0.54, 0.44, 0.005),
-      Materials.custom(0xf5f0e8)
-    );
-    bg.position.set(0, 1.5, 0.015);
-    group.add(bg);
+    // Poster face — a small painted canvas so it reads as an actual
+    // printed poster: tinted paper, an "inspiring photo" band, a bold
+    // headline stroke and a few lines of unreadable body copy (S5-P6).
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 52;
+    const ctx = canvas.getContext('2d');
+    // Paper, faintly tinted toward the accent
+    ctx.fillStyle = '#f5f0e8';
+    ctx.fillRect(0, 0, 64, 52);
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, 0, 64, 52);
+    ctx.globalAlpha = 1;
+    // The inspiring photograph (a soaring gradient of pure ambition)
+    ctx.fillStyle = accent;
+    ctx.fillRect(5, 5, 54, 17);
+    ctx.fillStyle = 'rgba(255,255,255,0.28)';
+    ctx.fillRect(5, 5, 54, 6);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.fillRect(5, 18, 54, 4);
+    // Headline stroke (ALL CAPS, presumably)
+    ctx.fillStyle = '#2b2620';
+    ctx.fillRect(9, 27, 38 + Math.floor(Math.random() * 9), 5);
+    // Body copy strokes — varying widths so each poster differs
+    ctx.fillStyle = '#6b6258';
+    ctx.fillRect(9, 36, 46, 2);
+    ctx.fillRect(9, 40, 34 + Math.floor(Math.random() * 10), 2);
+    ctx.fillRect(9, 44, 26, 2);
+    // Inner border
+    ctx.strokeStyle = '#2b2620';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, 62, 50);
 
-    // Bold color band across the top third
-    const band = new THREE.Mesh(
-      new THREE.BoxGeometry(0.54, 0.16, 0.006),
-      Materials.custom(accent)
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.NearestFilter;
+    tex.generateMipmaps = false;
+    const face = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.54, 0.44),
+      new THREE.MeshToonMaterial({ map: tex })
     );
-    band.position.set(0, 1.64, 0.016);
-    group.add(band);
-
-    // Thin accent line below the band
-    const line = new THREE.Mesh(
-      new THREE.BoxGeometry(0.54, 0.012, 0.006),
-      Materials.custom(accent)
-    );
-    line.position.set(0, 1.555, 0.016);
-    group.add(line);
+    // Frame front face sits at +0.0125 — keep the plane past it
+    face.position.set(0, 1.5, 0.016);
+    group.add(face);
 
     return group;
   },
