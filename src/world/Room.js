@@ -16,26 +16,35 @@ import _roomOverrides from '../data/room-overrides.json' with { type: 'json' };
 // Maps furniture types to the tile footprint they block.
 // { w, h } in tile units (x, z). Defaults to 1x1.
 // Items not listed here or in NO_BLOCK get default 1x1 blocking.
+//
+// Entries WITH ox/oz are anchored differently (S5-COLL): the anchor tile is
+// Math.floor(coord + 0.5 - eps) + offset — i.e. the tile nearest the
+// placement point, shifted by the offset. This matches CENTER-origin meshes
+// (conferenceTable, couch, pokerTable...) whose visuals extend symmetrically
+// from the placement point, and survives the half-tile placements room data
+// actually uses. Quarter-turn rotations swap (w,h) and (ox,oz) for these
+// entries automatically. Legacy entries (no ox/oz) keep corner anchoring at
+// Math.floor(coord) and are NOT rotation-aware (cubicleWall excepted).
 const FURNITURE_FOOTPRINTS = {
   desk:               { w: 1, h: 1 },
-  grandDesk:          { w: 3, h: 2 },
+  grandDesk:          { w: 3, h: 1, ox: -1, oz: 0 },   // mesh is 2.55x1.1 centered — old 3x2 ghost-blocked a full empty row
   cubicleWall:        { w: 2, h: 1 },
   vendingMachine:     { w: 1, h: 1 },
   supplyShop:         { w: 1, h: 1 },
-  boardroomTable:     { w: 8, h: 2 },
-  conferenceTable:    { w: 3, h: 1 },
+  boardroomTable:     { w: 9, h: 3, ox: 0, oz: 0 },    // mesh spans 0..8 x 0..2 (half-tile past the old 8x2 on +x/+z)
+  conferenceTable:    { w: 3, h: 1, ox: -1, oz: 0 },   // center-origin: old corner-anchored 3x1 left a ghost tile + a walk-through tile
   serverRack:         { w: 1, h: 1 },
-  receptionDesk:       { w: 2, h: 1 },
-  receptionDeskMarble: { w: 2, h: 1 },
+  receptionDesk:       { w: 3, h: 1, ox: -1, oz: 0 },  // 2.56 wide, center-origin
+  receptionDeskMarble: { w: 3, h: 1, ox: -1, oz: 0 },
   elevatorDoors:      { w: 2, h: 1 },
   fridge:             { w: 1, h: 1 },
-  fileCabinet:        { w: 1, h: 1 },
-  fileCabinetLow:     { w: 1, h: 1 },
-  fileCabinetLateral: { w: 1, h: 1 },
-  car:                { w: 1, h: 2 },
-  carSUV:             { w: 1, h: 2 },
-  carSports:          { w: 1, h: 2 },
-  andrewsCar:         { w: 1, h: 2 },
+  fileCabinet:        { w: 1, h: 1, ox: 0, oz: 0 },    // nearest-tile anchor: the old_vault cabinets sit at z .8 fractions
+  fileCabinetLow:     { w: 1, h: 1, ox: 0, oz: 0 },
+  fileCabinetLateral: { w: 1, h: 1, ox: 0, oz: 0 },
+  car:                { w: 1, h: 3, ox: 0, oz: -1 },   // ~1.9 long, center-origin; every placement is rotated 90° —
+  carSUV:             { w: 1, h: 3, ox: 0, oz: -1 },   // the old 1x2 corner block left invisible walls in the garage aisles
+  carSports:          { w: 1, h: 3, ox: 0, oz: -1 },
+  andrewsCar:         { w: 1, h: 3, ox: 0, oz: -1 },
   staircase:          { w: 2, h: 2 },
   safeDepositBox:     { w: 1, h: 1 },
   sculpture:          { w: 1, h: 1 },
@@ -44,10 +53,22 @@ const FURNITURE_FOOTPRINTS = {
   cornerBar:          { w: 2, h: 1 },
   chargingBull:       { w: 2, h: 1 },
   puttingGreen:       { w: 3, h: 2 },
-  luxuryFridge:       { w: 2, h: 1 },
-  kitchenIsland:      { w: 2, h: 1 },
+  luxuryFridge:       { w: 2, h: 1, ox: -1, oz: 0 },   // 1.6 wide, center-origin
+  kitchenIsland:      { w: 3, h: 1, ox: -1, oz: 0 },   // 2.1 wide, center-origin
   kitchenCounter:     { w: 1, h: 1 },
   wineFridge:         { w: 1, h: 1 },
+  // Previously unlisted (default 1x1) or NO_BLOCK items that read solid —
+  // players walked through them (S5-COLL, Alex playtest):
+  couch:              { w: 3, h: 1, ox: -1, oz: 0 },   // 2.32 wide
+  loungeBar:          { w: 5, h: 1, ox: -2, oz: 0 },   // 4.1 wide
+  leatherArmchair:    { w: 1, h: 1, ox: 0, oz: 0 },
+  coffeeTable:        { w: 1, h: 1, ox: 0, oz: 0 },
+  pokerTable:         { w: 3, h: 3, ox: -1, oz: -1 },  // 2.93x2.79 centered
+  poolTable:          { w: 3, h: 1, ox: -1, oz: 0 },   // 2.22x1.1 centered
+  dinerBooth:         { w: 1, h: 1, ox: 0, oz: 0 },    // mesh narrowed to keep the door aisle between the south booths open
+  bench:              { w: 1, h: 1, ox: 0, oz: 0 },    // transit benches sit at z .8 fractions
+  missionControlDesk: { w: 1, h: 1, ox: 0, oz: 0 },    // analytics desks sit at z .2-.8 fractions
+  lockbox:            { w: 1, h: 1, ox: 0, oz: 0 },    // vault boxes sit at .875 fractions
 };
 
 // Small/decorative items that should NOT block movement.
@@ -60,8 +81,11 @@ const NO_BLOCK = new Set([
   'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'globeStand', 'vaultDoor',
   'rangeHood', 'boosterMount',
   'stockTicker', 'scaledModel', 'whiskeyWall',
-  'aquariumWall', 'movieScreen', 'dataVizPanel', 'megaAnalyticsScreen', 'loungeBar',
-  'couch', 'popcornPopper', 'neonSign', 'coffeeTable', 'leatherArmchair', 'operatorChair',
+  // (couch, loungeBar, coffeeTable, leatherArmchair moved OUT of this set —
+  // they are waist-high-or-taller solid lounge pieces players walked through;
+  // they now block via FURNITURE_FOOTPRINTS. S5-COLL.)
+  'aquariumWall', 'movieScreen', 'dataVizPanel', 'megaAnalyticsScreen',
+  'popcornPopper', 'neonSign', 'operatorChair',
   'cableTray', 'monitorWall', 'aisleGlow',
   'lamppost', 'hydrant', 'busStopSign', 'newspaperBox', 'curb', 'elevatorDoors',
 ]);
@@ -745,9 +769,24 @@ export class Room {
       }
 
       const footprint = FURNITURE_FOOTPRINTS[type] || { w: 1, h: 1 };
-      // Cubicle walls are the only type whose footprint (2x1) doesn't account
-      // for rotation — swap w/h when they're placed as side dividers (90°).
       let fw = footprint.w, fh = footprint.h;
+      // Offset entries (center-origin meshes): anchor on the tile nearest
+      // the placement point, apply the declared offsets, and swap both the
+      // rect and the offsets on quarter-turn rotations (S5-COLL).
+      if ('ox' in footprint) {
+        let ox = footprint.ox || 0, oz = footprint.oz || 0;
+        if (rotation && Math.abs(Math.abs(rotation) % Math.PI - Math.PI / 2) < 0.1) {
+          [fw, fh] = [fh, fw];
+          [ox, oz] = [oz, ox];
+        }
+        const ax = Math.floor(x + 0.5 - 1e-6) + ox;
+        const az = Math.floor(z + 0.5 - 1e-6) + oz;
+        this.tileMap.blockRect(ax, az, fw, fh);
+        continue;
+      }
+      // Legacy corner-anchored entries. Cubicle walls are the only legacy
+      // type whose footprint (2x1) accounts for rotation — swap w/h when
+      // they're placed as side dividers (90°).
       if (type === 'cubicleWall' && rotation && Math.abs(rotation % Math.PI - Math.PI / 2) < 0.1) {
         fw = footprint.h;
         fh = footprint.w;

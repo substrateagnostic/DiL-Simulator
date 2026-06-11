@@ -1693,16 +1693,20 @@ export const Furniture = {
   },
 
   // Diner booth: two facing benches + a table. Faces +z by default.
+  // Kept to ~1.8 wide (was 2.36) so it reads as the single tile it blocks —
+  // at Lucky's the south booths flank the door aisle, and a wider mesh
+  // either waded into the aisle or, if fully blocked, sealed the exit
+  // (S5-COLL: prefer shrinking the mesh over leaving the collision hole).
   dinerBooth() {
     const group = new THREE.Group();
     const vinyl = Materials.custom(0x8a2a2a);
     const tableMat = Materials.custom(0xe8e2d4);
     for (const side of [-1, 1]) {
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 1.0), vinyl);
-      seat.position.set(side * 0.85, 0.225, 0);
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.45, 1.0), vinyl);
+      seat.position.set(side * 0.61, 0.225, 0);
       group.add(seat);
       const back = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.0, 1.0), vinyl);
-      back.position.set(side * 1.12, 0.5, 0);
+      back.position.set(side * 0.84, 0.5, 0);
       group.add(back);
     }
     const table = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.06, 0.9), tableMat);
@@ -5140,5 +5144,12 @@ function _buildCredenza(facing) {
   group.add(vNeck);
 
   group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
-  return group;
+  // Recenter (S5-COLL): the build is corner-origin (x 0..0.58, z 0..2.8)
+  // while the 1x3 footprint blocks x±0.5, z-0.5..z+2.5 from the placement
+  // tile — players waded through the front face in ross_office_large.
+  // Shift so the bbox sits inside the blocked tiles for both wall variants.
+  group.position.set(-0.29, 0, -0.35);
+  const outer = new THREE.Group();
+  outer.add(group);
+  return outer;
 }
