@@ -757,9 +757,9 @@ export const ROOMS = {
       // NORTH exits -> Cubicle Farm
       { x: 6, z: 0, targetRoom: 'cubicle_farm', spawnX: 9, spawnZ: 13 },
       { x: 7, z: 0, targetRoom: 'cubicle_farm', spawnX: 10, spawnZ: 13 },
-      // SOUTH exits -> Parking Garage (the elevator down)
-      { x: 6, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
-      { x: 7, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1 },
+      // SOUTH exits -> Parking Garage (the elevator brings its own doors)
+      { x: 6, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1, doorStyle: 'none' },
+      { x: 7, z: 7, targetRoom: 'parking_garage', spawnX: 7, spawnZ: 1, doorStyle: 'none' },
       // EAST elevator -> Executive Floor (Act 3 only, gated by game logic)
       { x: 13, z: 3, targetRoom: 'executive_floor', spawnX: 8, spawnZ: 10 },
     ],
@@ -820,9 +820,9 @@ export const ROOMS = {
       { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage
     ],
     exits: [
-      // NORTH exits -> Reception
-      { x: 6, z: 0, targetRoom: 'reception', spawnX: 6, spawnZ: 6 },
-      { x: 7, z: 0, targetRoom: 'reception', spawnX: 7, spawnZ: 6 },
+      // NORTH exits -> Reception (the elevator brings its own doors)
+      { x: 6, z: 0, targetRoom: 'reception', spawnX: 6, spawnZ: 6, doorStyle: 'none' },
+      { x: 7, z: 0, targetRoom: 'reception', spawnX: 7, spawnZ: 6, doorStyle: 'none' },
       // SOUTH — the garage door to the street (Act 6½, gated on city_unlocked)
       { x: 6, z: 9, targetRoom: 'city_street', spawnX: 12, spawnZ: 10 },
       { x: 7, z: 9, targetRoom: 'city_street', spawnX: 13, spawnZ: 10 },
@@ -982,9 +982,10 @@ export const ROOMS = {
       { type: 'boosterMount', x: 3.9, z: 15, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     exits: [
-      // SOUTH exit -> Cubicle Farm
-      { x: 1, z: 19, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 12 },
-      { x: 2, z: 19, targetRoom: 'cubicle_farm', spawnX: 2, spawnZ: 13 },
+      // EAST exits -> Cubicle Farm (the farm's stairwell door is on ITS
+      // west wall at z12-13, so this door faces it from the top landing)
+      { x: 3, z: 17, targetRoom: 'cubicle_farm', spawnX: 1, spawnZ: 12 },
+      { x: 3, z: 18, targetRoom: 'cubicle_farm', spawnX: 1, spawnZ: 13 },
       // NORTH exit -> Archive (Act 3+), two storeys down
       { x: 1, z: 0, targetRoom: 'archive', spawnX: 6, spawnZ: 8 },
       { x: 2, z: 0, targetRoom: 'archive', spawnX: 6, spawnZ: 8 },

@@ -233,21 +233,48 @@ export class Room {
     const mat = Materials.custom(color);
     const minY = Math.min(0, ...zones.map(zn => zn.y));
     this.floorMinY = minY;
+    // Thin slabs, not solid masses: a step's visible side is exactly its
+    // riser (drops between zones are ≤0.25), and beneath the staircase
+    // the blueprint void shows through — matching the floating-room
+    // aesthetic instead of a building-sized concrete block.
+    const THICK = 0.26;
     for (const zn of zones) {
-      const depth = zn.y - (minY - 2.0); // solid mass down past the lowest zone
       const box = new THREE.Mesh(
-        new THREE.BoxGeometry(zn.w * TILE_SIZE, depth, zn.h * TILE_SIZE),
+        new THREE.BoxGeometry(zn.w * TILE_SIZE, THICK, zn.h * TILE_SIZE),
         mat
       );
       box.position.set(
         zn.x + (zn.w * TILE_SIZE) / 2 - TILE_SIZE / 2,
-        zn.y - depth / 2,
+        zn.y - THICK / 2,
         zn.z + (zn.h * TILE_SIZE) / 2 - TILE_SIZE / 2,
       );
       box.receiveShadow = true;
       box.castShadow = true;
       this.scene.add(box);
       this.tileMap.setHeightRect(zn.x, zn.z, zn.w, zn.h, zn.y);
+    }
+
+    // Contact shadows at the foot of each riser — cheap, deterministic
+    // depth cue (real shadow casting at this scale is mush in iso)
+    const shadowMat = new THREE.MeshBasicMaterial({
+      color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false,
+    });
+    for (const hi of zones) {
+      for (const lo of zones) {
+        if (lo.y >= hi.y) continue;
+        // lo directly north of hi (steps descend northward)
+        if (lo.z + lo.h === hi.z && lo.x < hi.x + hi.w && hi.x < lo.x + lo.w) {
+          const w = Math.min(hi.x + hi.w, lo.x + lo.w) - Math.max(hi.x, lo.x);
+          const strip = new THREE.Mesh(new THREE.PlaneGeometry(w * TILE_SIZE, 0.34), shadowMat);
+          strip.rotation.x = -Math.PI / 2;
+          strip.position.set(
+            Math.max(hi.x, lo.x) + (w * TILE_SIZE) / 2 - TILE_SIZE / 2,
+            lo.y + 0.012,
+            hi.z - TILE_SIZE / 2 - 0.17,
+          );
+          this.scene.add(strip);
+        }
+      }
     }
   }
 
@@ -340,9 +367,11 @@ export class Room {
       mesh.material = mat;
     }
 
-    // Add glowing floor markers and door frames at exit tiles
+    // Add glowing floor markers and door frames at exit tiles.
+    // Doors are people-sized (2.5) even when walls extend down to a
+    // lower terrace — wallHeight here includes the drop.
     this._addExitMarkers();
-    this._addDoorFrames(w, h, wallHeight);
+    this._addDoorFrames(w, h, 2.5);
 
     // Windows with skyline views (data-driven: room.windows)
     this._addWindows(w, h, wallThickness);
@@ -483,9 +512,12 @@ export class Room {
   _addDoorFrames(w, h, wallHeight) {
     if (!this.data.exits) return;
 
-    // Group exits by wall to merge adjacent exits into wider doors
+    // Group exits by wall to merge adjacent exits into wider doors.
+    // Exits marked doorStyle:'none' bring their own door furniture
+    // (e.g. the elevator) — no mahogany.
     const exitsByKey = {};
     for (const exit of this.data.exits) {
+      if (exit.doorStyle === 'none') continue;
       let wall, coord;
       if (exit.z === 0)         { wall = 'north'; coord = exit.x; }
       else if (exit.z === h - 1){ wall = 'south'; coord = exit.x; }
