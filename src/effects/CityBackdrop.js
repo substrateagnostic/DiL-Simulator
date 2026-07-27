@@ -616,13 +616,14 @@ export class CityBackdrop {
       // additive, lifted just above void-black, soft radial falloff so it
       // has no hard rim — reads as a wet slab catching the lamp.
       const ground = new THREE.Mesh(
-        new THREE.PlaneGeometry(6.0 * s, 6.0 * s),
+        new THREE.PlaneGeometry(9.5 * s, 9.5 * s),
         new THREE.MeshBasicMaterial({
-          // Wave-2 R2: a bigger, warmer, softly-feathered wet-asphalt disc so
-          // the sodium pool lands on a READABLE surface (Drive haze) instead of
-          // a hard bright ellipse floating in the void (the "floating fireball"
-          // garage note). Soft radial falloff → no hard ground rim.
-          map: disc, color: 0x3a2c18, transparent: true, opacity: 0.9, depthWrite: false,
+          // Round-3: exterior lamp pools still "hovered on invisible ground —
+          // fuzzy warm discs in pure black touching no surface." The catch is now
+          // a MUCH WIDER, near-void-black cool-asphalt disc (was a smaller warm
+          // brown that blended into the pool). A dim implied-asphalt halo rings
+          // the warm pool so the sodium clearly lands ON a surface, not in void.
+          map: disc, color: 0x1c1a16, transparent: true, opacity: 0.9, depthWrite: false,
         })
       );
       ground.rotation.x = -Math.PI / 2;
@@ -669,7 +670,9 @@ export class CityBackdrop {
       this.group.add(beam);
       // Wave-2: fainter haze shaft (base 0.55 -> 0.36) so the lamp reads as a
       // sodium pool on the (now readable) ground disc, not a floating cone.
-      this.streetFX.push({ mesh: beam, kind, base: 0.36, breathe: true });
+      // Round-3: eased again (0.36 -> 0.26) so the shaft stops reading as a lone
+      // "orange streak attached to nothing" over the wider asphalt catch.
+      this.streetFX.push({ mesh: beam, kind, base: 0.26, breathe: true });
 
       // The lamp standard — every emissive needs visible structure
       // (critic: sodium cones hovering in void). A slim dark pole from
@@ -803,16 +806,24 @@ export class CityBackdrop {
         // line that reads as a render artifact (critic). Dim the whole facade
         // material so seams drop to a subtle edge — at street level the light
         // belongs to the road (pools/trails/reflections), not the towers.
-        if (b.variant !== 3) b.mesh.material.color.setHex(0x4d4d4d);
+        // Round-3: dim EVERY tower (was variant!==3 only). The skipped dark
+        // variant-3 towers kept full-bright WINDOWS whose warm scatter was the
+        // real "bare orange vertical streak" source in the upper frame — 30 of
+        // them, ~85% of the orange. Dimming all drops it to just the lamp heads,
+        // and a darker skyline is more on-brief (obsidian towers, light lives in
+        // the road's pools, not the towers).
+        b.mesh.material.color.setHex(0x2e2e2e);
       } else {
         b.mesh.scale.y = 1;
         b.mesh.position.y = -b.h / 2 - b.baseDrop;
-        if (b.variant !== 3) b.mesh.material.color.setHex(0xffffff);
+        // Restore ALL towers to full bright at office level (street level now
+        // dims every tower, variant 3 included, so the restore must match).
+        b.mesh.material.color.setHex(0xffffff);
       }
     }
     // The Vaults Fargo HQ carries a magenta seam; dim it the same way so it
     // doesn't loom as a lone bright column at street level.
-    if (this.hqTower) this.hqTower.material.color.setHex(on ? 0x4d4d4d : 0xffffff);
+    if (this.hqTower) this.hqTower.material.color.setHex(on ? 0x2e2e2e : 0xffffff);
     for (const bc of this.beacons) {
       if (bc.hq) continue;
       const b = bc.building;

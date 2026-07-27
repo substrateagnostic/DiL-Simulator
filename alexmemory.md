@@ -15,6 +15,21 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## LOG
 
+### 2026-07-27 ~05:05 — WAVE 2 COMMITTED (68202bf) + THE ISO DIAGNOSIS
+- Wave 2 landed real gains: city bokeh is gorgeous, neon spill kisses
+  walls, server racks have cyan data-spines, fixtures have bodies.
+- But critics stayed not_yet 3 rounds on two structural items — and the
+  root cause was GEOMETRY, not taste: **a recessed troffer glows downward;
+  the iso camera sees only its dark top and sides.** Three fix rounds
+  brightened a face the camera physically cannot see. Likewise ortho
+  specular lobes rarely align — the neon needs an authored flipped-ghost
+  reflection, not physics.
+- Wave 2.5 surgical round launched: three Opus surgeons with the ISO
+  CAMERA LAW written into their briefs (emissive side-trim + anchored
+  pools + faint light-shafts; ghost reflections + streak sprites; garage
+  pool ground-catch, penthouse practicals, reception hum prop). One
+  fable-critic verify round after.
+
 ### 2026-07-27 ~03:35 — CHARACTER PROTOTYPE: SKELETON APPROVED
 - The scratchpad prototype came home after 7 self-critique rounds. My
   ruling: **skeleton approved** — real proportions (~6 heads), lathe

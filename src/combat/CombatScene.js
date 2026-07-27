@@ -158,7 +158,10 @@ export class CombatScene {
           // against its neighbour. Wave-2 R2: the fade band is widened (starts
           // brighter near center, reaches black much later) so the cyc edge is
           // unfindable at contact-sheet zoom.
-          float vig = smoothstep(1.45, 0.10, length(center) * 1.28);
+          // Round-3: falloff pushed ~20% further (1.28 -> 1.55) so the colour
+          // lobes reach black EARLIER — the upper-left arc seam now dies well
+          // before the frame edge instead of terminating against it.
+          float vig = smoothstep(1.45, 0.10, length(center) * 1.55);
           color *= vig;
           // Dissolve the bottom of the backdrop into TRUE black right at the
           // stage-floor line (uv.y ~0.3 in world), so the swirl fades into
@@ -272,6 +275,26 @@ export class CombatScene {
     bounce.renderOrder = 3;
     bounce.userData.noFlash = true;
     group.add(bounce);
+
+    // Dark AO contact ellipse — a tight soft shadow directly under the feet,
+    // drawn OVER the red kiss (normal blend, black) so it darkens the center of
+    // the spotlight pool into a grounded contact shadow. On the pure-black stage
+    // outside the pool it's invisibly black-on-black; inside the red pool it
+    // reads as the shadow the figure casts, planting the feet (round-3 note:
+    // "her legs float above the red pool"). Same reused radial texture.
+    const ao = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        map: CombatScene._bounceTex, color: 0x000000, transparent: true,
+        opacity: 0.5, depthWrite: false,
+      })
+    );
+    ao.rotation.x = -Math.PI / 2;
+    ao.scale.set(1.02 * s, 0.6 * s, 1);
+    ao.position.set(0, 0.045 * s, 0.02 * s);
+    ao.renderOrder = 4;   // after the red kiss so it darkens the pool center
+    ao.userData.noFlash = true;
+    group.add(ao);
   }
 
   // Legacy single-enemy entry point — kept for backward compatibility

@@ -236,16 +236,30 @@ export const Materials = {
   // the plain institutional floor — a WAXED VCT satin (period-correct: a
   // Lumon floor is buffed, not mirror), ready if a room routes to them.
   floor: () => pbr(COLORS.FLOOR, { roughness: 0.62, metalness: 0.0, clearcoat: 0.35, clearcoatRoughness: 0.35, normal: 'concrete', normalRepeat: [6, 4], normalScale: 0.12 }),
+  // The generic plain-floor fallback (Room._buildFloor's `else`). Was
+  // Materials.custom(color) — a FLAT TOON PLANE with no specular, no normal,
+  // no clearcoat: the wiring bug that meant three rounds of floor-material
+  // work never reached the screen (reception, garage, break room all shipped
+  // matte resin). Now a WAXED VCT satin that respects the room's floorColor:
+  // real PBR so the office key throws a satin sheen, a troweled concrete
+  // micro-normal so the surface stops reading as vertex colour, and a soft
+  // clearcoat lobe the fixtures can catch. Value-matched to toon (three's
+  // Standard/Physical share MeshToon's irradiance scaling — no darkening).
+  satinFloor: (color) => pbr(color, { roughness: 0.6, metalness: 0.0, clearcoat: 0.34, clearcoatRoughness: 0.32, normal: 'concrete', normalRepeat: [8, 6], normalScale: 0.24 }),
   carpet: () => toon(COLORS.CARPET),
   wall: () => toon(COLORS.WALL),
   ceiling: () => toon(COLORS.CEILING),
-  cubicleWall: () => toon(COLORS.CUBICLE_WALL),
+  // Cubicle partitions were flat toon — "surfaces read vertex colour" (round-3
+  // critic). Now a fabric-panel PBR: high roughness (felt, not plastic) + a
+  // coarse woven normal at real amplitude so the camera-facing panel face
+  // catches the office key as loop-pile tooth instead of a dead grey slab.
+  cubicleWall: () => pbr(COLORS.CUBICLE_WALL, { roughness: 0.92, metalness: 0.0, normal: 'carpet', normalRepeat: [3, 2], normalScale: 0.7 }),
   // Wave-2 R2: lower base roughness + a deeper wood-grain normal so the office
   // key throws a visible streaked clearcoat highlight (the "give wood 2% spec so
   // it stops reading as painted foam" note). The grain now shapes that highlight
   // at gameplay zoom instead of a flat brown box.
-  desk: () => pbr(COLORS.DESK, { roughness: 0.42, metalness: 0.0, clearcoat: 0.7, clearcoatRoughness: 0.14, normal: 'wood', normalRepeat: [2, 2], normalScale: 0.5 }),
-  deskDark: () => pbr(COLORS.DESK_DARK, { roughness: 0.4, metalness: 0.0, clearcoat: 0.7, clearcoatRoughness: 0.13, normal: 'wood', normalRepeat: [2, 2], normalScale: 0.5 }),
+  desk: () => pbr(COLORS.DESK, { roughness: 0.42, metalness: 0.0, clearcoat: 0.7, clearcoatRoughness: 0.14, normal: 'wood', normalRepeat: [2, 2], normalScale: 0.68 }),
+  deskDark: () => pbr(COLORS.DESK_DARK, { roughness: 0.4, metalness: 0.0, clearcoat: 0.7, clearcoatRoughness: 0.13, normal: 'wood', normalRepeat: [2, 2], normalScale: 0.68 }),
   monitor: () => toon(0x222222),
   monitorScreen: () => toon(COLORS.MONITOR_GLOW, { emissive: COLORS.MONITOR_GLOW, emissiveIntensity: 0.8 }),
   chair: () => toon(0x333333),
@@ -388,22 +402,155 @@ export const Materials = {
     tintColor.r = tintColor.r * 0.98 + 0.006;
     tintColor.g = tintColor.g * 0.98 + 0.0034;
     tintColor.b = tintColor.b * 0.98 + 0.0020;
+    // A near-black data floor (the lounge, 0x0c0610) is meant to read WET
+    // near-black, not lifted grey — the room's nine point lights otherwise
+    // wash a mid-roughness floor to flat lavender (the "matte grey that
+    // reflects neither" indictment). Deepen the albedo of very dark floors so
+    // the lit patches stay deep walnut and the neon ghost pops against it.
+    const baseLuma = 0.299 * base.r + 0.587 * base.g + 0.114 * base.b;
+    if (baseLuma < 0.12) tintColor.multiplyScalar(0.62);
 
     // Lacquered walnut: low base roughness + a crisp clearcoat lobe. No
     // env map — the office key and the bar's coloured point lights are
     // what the coat reflects (a static env could not catch the neon).
     // Wood-grain normal, stretched along the plank axis, streaks the
     // highlight instead of a plastic hotspot.
+    // Roughness by VALUE: the near-black lounge floor (penthouse_bar,
+    // 0x0c0610) wants to read WET — a low-roughness lacquer the neon glints
+    // off, dark between the point-light hotspots so the magenta ghost pops
+    // (the "indictment" still: matte grey that reflected neither). A bright
+    // oak floor (board room, 0x9a9284) keeps a satin roughness so it doesn't
+    // turn to plastic. Lerp between the two on the tint's luma.
+    const luma = 0.299 * tintColor.r + 0.587 * tintColor.g + 0.114 * tintColor.b;
+    const rough = 0.18 + Math.min(1, luma / 0.38) * (0.44 - 0.18);
     const mat = new THREE.MeshPhysicalMaterial({
       map: texture,
       color: tintColor,
-      roughness: 0.38,
+      roughness: rough,
       metalness: 0.0,
       clearcoat: 1.0,
-      clearcoatRoughness: 0.08,
+      clearcoatRoughness: 0.07,
     });
     mat.normalMap = ProceduralNormals.get('wood', { repeat: [Math.max(2, w / 3), Math.max(2, h / 6)] });
-    mat.normalScale = new THREE.Vector2(0.28, 0.28);
+    mat.normalScale = new THREE.Vector2(0.36, 0.36);
+    return mat;
+  },
+
+  // Clinical VCT tile floor (reception, the Severance lobby). Big square
+  // waxed tiles with thin grout, a subtle checker sheen-variation, and a
+  // satin clearcoat so the overhead troffers throw a buffed-floor gleam —
+  // the "clinical tile catching light" the round-3 critic said never shipped
+  // (reception was routing to a FLAT TOON plane). `tint` is the room floorColor.
+  tilePattern(w, h, tint) {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const col = new THREE.Color(tint ?? 0xd8d0c0);
+    const r = Math.round(col.r * 255), g = Math.round(col.g * 255), b = Math.round(col.b * 255);
+
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(0, 0, size, size);
+
+    // 2x2 tiles per texture image → checkered satin variation (buffed VCT is
+    // never a flat field; adjacent tiles catch the light a hair differently).
+    const t = size / 2;
+    for (let ty = 0; ty < 2; ty++) {
+      for (let tx = 0; tx < 2; tx++) {
+        const v = ((tx + ty) & 1) ? 0.955 : 1.035;
+        ctx.fillStyle = `rgb(${Math.min(255, r * v) | 0},${Math.min(255, g * v) | 0},${Math.min(255, b * v) | 0})`;
+        ctx.fillRect(tx * t + 1.5, ty * t + 1.5, t - 3, t - 3);
+      }
+    }
+    // Fine VCT fleck so each tile has micro-tooth, not a plastic fill
+    for (let i = 0; i < 260; i++) {
+      const fx = Math.random() * size, fy = Math.random() * size;
+      const d = (Math.random() - 0.5) * 40;
+      ctx.fillStyle = `rgba(${Math.max(0, r + d) | 0},${Math.max(0, g + d) | 0},${Math.max(0, b + d) | 0},0.5)`;
+      ctx.fillRect(fx, fy, 1.3, 1.3);
+    }
+    // Grout — darker, thin, along the tile seams (image edges + centre cross)
+    const dr = Math.max(0, r - 58), dg = Math.max(0, g - 58), db = Math.max(0, b - 58);
+    ctx.strokeStyle = `rgba(${dr},${dg},${db},0.85)`;
+    ctx.lineWidth = 2.4;
+    ctx.strokeRect(0, 0, size, size);
+    ctx.beginPath();
+    ctx.moveTo(t, 0); ctx.lineTo(t, size);
+    ctx.moveTo(0, t); ctx.lineTo(size, t);
+    ctx.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(w / 2, h / 2);   // image spans 2 world units → ~1m tiles
+
+    const mat = new THREE.MeshPhysicalMaterial({
+      map: texture,
+      color: 0xffffff,
+      roughness: 0.34,
+      metalness: 0.0,
+      clearcoat: 0.62,
+      clearcoatRoughness: 0.17,
+    });
+    mat.normalMap = ProceduralNormals.get('concrete', { repeat: [w, h] });
+    mat.normalScale = new THREE.Vector2(0.14, 0.14);
+    return mat;
+  },
+
+  // Poured-concrete slab (parking garage). Broad control joints, coarse
+  // aggregate speckle, and a HIGH-amplitude troweled normal so the sodium
+  // pools graze real tooth (round-3: "garage concrete reads vertex colour").
+  // A whisper of clearcoat for the sealed-slab sheen, no more.
+  concretePattern(w, h, tint) {
+    const size = 256;
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    const col = new THREE.Color(tint ?? 0x888888);
+    const r = Math.round(col.r * 255), g = Math.round(col.g * 255), b = Math.round(col.b * 255);
+
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fillRect(0, 0, size, size);
+    // Mottled pour — soft cloudy value drift
+    for (let i = 0; i < 40; i++) {
+      const cx = Math.random() * size, cy = Math.random() * size, rad = 20 + Math.random() * 60;
+      const d = (Math.random() - 0.5) * 26;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
+      grad.addColorStop(0, `rgba(${Math.max(0, r + d) | 0},${Math.max(0, g + d) | 0},${Math.max(0, b + d) | 0},0.25)`);
+      grad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(cx - rad, cy - rad, rad * 2, rad * 2);
+    }
+    // Aggregate speckle
+    for (let i = 0; i < 520; i++) {
+      const fx = Math.random() * size, fy = Math.random() * size;
+      const d = (Math.random() - 0.5) * 54;
+      ctx.fillStyle = `rgba(${Math.max(0, r + d) | 0},${Math.max(0, g + d) | 0},${Math.max(0, b + d) | 0},0.55)`;
+      ctx.fillRect(fx, fy, 1.4, 1.4);
+    }
+    // Control joints — a couple of dark saw-cut grooves per slab image
+    const dr = Math.max(0, r - 64), dg = Math.max(0, g - 64), db = Math.max(0, b - 64);
+    ctx.strokeStyle = `rgba(${dr},${dg},${db},0.8)`;
+    ctx.lineWidth = 2.6;
+    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, size); ctx.moveTo(0, 0); ctx.lineTo(size, 0); ctx.stroke();
+
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(w / 4, h / 4);   // ~4m poured bays
+
+    const mat = new THREE.MeshPhysicalMaterial({
+      map: texture,
+      color: 0xffffff,
+      roughness: 0.82,
+      metalness: 0.0,
+      clearcoat: 0.16,
+      clearcoatRoughness: 0.5,
+    });
+    mat.normalMap = ProceduralNormals.get('concrete', { repeat: [w * 1.5, h * 1.5] });
+    mat.normalScale = new THREE.Vector2(0.42, 0.42);
     return mat;
   },
 
@@ -612,8 +759,12 @@ export const Materials = {
       roughness: 0.94,
       metalness: 0.0,
     });
-    mat.normalMap = ProceduralNormals.get('carpet', { repeat: [w, h] });
-    mat.normalScale = new THREE.Vector2(0.5, 0.5);
+    // Coarser weave (half the tile-repeat → bigger loops) at higher amplitude
+    // so the pile actually READS at 1920px iso zoom instead of dissolving to a
+    // flat field — round-3 "normals invisible at screenshot scale". Still micro
+    // enough to shape a graze, not bumpy porridge.
+    mat.normalMap = ProceduralNormals.get('carpet', { repeat: [Math.max(2, w / 2), Math.max(2, h / 2)] });
+    mat.normalScale = new THREE.Vector2(0.9, 0.9);
     return mat;
   },
 };

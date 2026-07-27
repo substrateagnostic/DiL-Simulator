@@ -396,7 +396,14 @@ class EngineClass {
     // with a soft underglow, each throwing its green-white pool on the
     // floor below. Bright enough to graze the bloom threshold.
     const amb = roomData.lighting?.ambientIntensity ?? 0.52;
-    if (amb >= 0.4) {
+    const officeRig = (roomData.lighting?.dirIntensity ?? 1.15) >= 0.9;
+
+    // Generic grid light pools — a ceiling wash for BRIGHT rooms that do NOT run
+    // the office fixture rig (they'd read flat otherwise). Office rooms skip
+    // these: their troffers own the floor now, and stacking the grid pools on
+    // top of the fixture pools was exactly the SOURCELESS hot spot the critics
+    // flagged ("a floor that is somehow lit anyway"). One pool system per room.
+    if (amb >= 0.4 && !officeRig) {
       const poolMat = new THREE.MeshBasicMaterial({
         map: this._fxRadialTexture(), color: 0xdfeee2, transparent: true,
         opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false,
@@ -415,63 +422,80 @@ class EngineClass {
           g.add(pool);
         }
       }
-      // The fixtures: Severance linear top-light. Wave-2 (kill the single
-      // room-length "lightsaber tube"): each ceiling row is broken into 2-3
-      // SHORTER recessed troffers (Furniture.ceilingFixture — dark matte
-      // housing, inset diffuser) with gaps between them, and each fixture
-      // paints its OWN warm-white elliptical light pool on the floor directly
-      // beneath it (the missing "floor pooling under the bar" note).
-      // OFFICE RIG ONLY: mood-lit rooms (garage, lounge, dim concrete) keep
-      // their grid pools but get no office fixtures — there, partial occlusion
-      // chops the runs into floating fragments and the tone is wrong.
-      const officeRig = (roomData.lighting?.dirIntensity ?? 1.15) >= 0.9;
-      if (officeRig) {
-        const nSeg = Math.min(3, Math.max(2, Math.round((w - 2) / 6)));
-        const gap = 0.9;                                  // dark gap between troffers
-        const span = w - 3.0;                             // total run width, inset from walls
-        const segLen = Math.max(1.6, span / nSeg - gap);
-        const cxm = (w - 1) / 2;
-        const fxPoolMat = new THREE.MeshBasicMaterial({
-          map: this._fxRadialTexture(), color: 0xfff0d2, transparent: true,
-          opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false,
-        });
-        // Lacquer reflection streak — the MATERIALS-PILLAR fix: a bright, narrow,
-        // stretched cool highlight directly beneath each troffer so the fixture
-        // paints a specular smear on the floor (a lacquered miniature, not matte
-        // resin). Elongated along the bar's long axis (X), thin across (Z), on
-        // top of the soft warm pool. Uses the streak-smear texture (soft ends).
-        const fxStreakMat = new THREE.MeshBasicMaterial({
-          map: this._fxGlossStreakTexture(), color: 0xe9f1ff, transparent: true,
-          opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false,
-        });
-        const fxPoolGeo = new THREE.PlaneGeometry(1, 1);
-        for (let j = 0; j < nz; j++) {
-          const pz = 1.0 + (h - 2) * ((j + 0.5) / nz) - 0.5;
-          for (let s = 0; s < nSeg; s++) {
-            const sx = cxm + (s - (nSeg - 1) / 2) * (segLen + gap);
-            const fixture = Furniture.ceilingFixture(segLen);
-            fixture.position.set(sx, 2.44, pz);
-            g.add(fixture);
-            // Warm elliptical pool on the floor directly beneath the troffer —
-            // elongated along the fixture's long axis (X).
-            const pool = new THREE.Mesh(fxPoolGeo, fxPoolMat);
-            pool.rotation.x = -Math.PI / 2;
-            pool.scale.set(segLen + 2.2, 3.4, 1);
-            pool.position.set(sx, 0.017, pz);
-            pool.renderOrder = 2;
-            g.add(pool);
-            // The lacquer reflection: narrow bright streak, offset a touch toward
-            // the camera (+z) the way a floor reflection of an overhead light
-            // stretches toward the viewer.
-            const streak = new THREE.Mesh(fxPoolGeo, fxStreakMat);
-            streak.rotation.x = -Math.PI / 2;
-            streak.scale.set(segLen + 0.5, 1.15, 1);
-            streak.position.set(sx, 0.018, pz + 0.35);
-            streak.renderOrder = 3;
-            g.add(streak);
-          }
+    }
+
+    // Office fixture rig: Severance linear top-light, rebuilt for iso by Surgeon
+    // 1. Each ceiling row breaks into 2-3 short SELF-LIT troffers (their warm
+    // glowing top panel + rim lip is now visible from the god's-eye camera), and
+    // each fixture SOURCES its light through three cooperating cues so the floor
+    // never reads "lit anyway": a warm pool anchored DIRECTLY beneath it, a faint
+    // additive light-shaft joining housing to pool, and a slim specular streak.
+    // Pool width is kept close to the fixture and opacity capped so neighbouring
+    // washes don't additively stack into blown paper BETWEEN the fixtures.
+    if (officeRig) {
+      const nz = Math.max(1, Math.round((h - 3) / 4.5));
+      const nSeg = Math.min(3, Math.max(2, Math.round((w - 2) / 6)));
+      const gap = 0.9;                                  // dark gap between troffers
+      const span = w - 3.0;                             // total run width, inset from walls
+      const segLen = Math.max(1.6, span / nSeg - gap);
+      const cxm = (w - 1) / 2;
+      const fxPoolMat = new THREE.MeshBasicMaterial({
+        map: this._fxRadialTexture(), color: 0xffefce, transparent: true,
+        opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const fxStreakMat = new THREE.MeshBasicMaterial({
+        map: this._fxGlossStreakTexture(), color: 0xe9f1ff, transparent: true,
+        opacity: 0.30, blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const fxPoolGeo = new THREE.PlaneGeometry(1, 1);
+      for (let j = 0; j < nz; j++) {
+        const pz = 1.0 + (h - 2) * ((j + 0.5) / nz) - 0.5;
+        for (let s = 0; s < nSeg; s++) {
+          const sx = cxm + (s - (nSeg - 1) / 2) * (segLen + gap);
+          const fixture = Furniture.ceilingFixture(segLen);
+          fixture.position.set(sx, 2.44, pz);
+          g.add(fixture);
+          // Warm pool on the floor directly beneath the troffer — width held
+          // near the fixture so adjacent pools kiss but don't stack hot.
+          const pool = new THREE.Mesh(fxPoolGeo, fxPoolMat);
+          pool.rotation.x = -Math.PI / 2;
+          pool.scale.set(segLen + 1.0, 2.9, 1);
+          pool.position.set(sx, 0.017, pz);
+          pool.renderOrder = 2;
+          g.add(pool);
+          // Light-shaft: the SOURCE connective tissue joining housing to pool.
+          g.add(this._fxLightShaft(sx, pz, 2.36, 0xffe9c8, segLen * 0.7, 0.7, 0.07));
+          // Lacquer specular streak, offset a touch toward the camera (+z).
+          const streak = new THREE.Mesh(fxPoolGeo, fxStreakMat);
+          streak.rotation.x = -Math.PI / 2;
+          streak.scale.set(segLen + 0.5, 1.1, 1);
+          streak.position.set(sx, 0.018, pz + 0.35);
+          streak.renderOrder = 3;
+          g.add(streak);
         }
       }
+    }
+
+    // Server room: a cool ceiling fixture over the EAST half — the right side
+    // was sinking into murk (critic: "one more ceiling pool lifts the server
+    // room right half"). Data-centre cool tint, with its own shaft + cool pool
+    // so it sources the same way the office troffers do.
+    if (roomData.id === 'server_room') {
+      const sx = 6, sz = 4, topY = 2.44;
+      const fixture = Furniture.ceilingFixture(3.0, 0xccdcf0);
+      fixture.position.set(sx, topY, sz);
+      g.add(fixture);
+      g.add(this._fxLightShaft(sx, sz, topY - 0.08, 0x9fc4e6, 2.1, 0.7, 0.08));
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
+        new THREE.MeshBasicMaterial({
+          map: this._fxRadialTexture(), color: 0x9fc4e6, transparent: true,
+          opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false,
+        }));
+      pool.rotation.x = -Math.PI / 2;
+      pool.scale.set(5.0, 5.2, 1);
+      pool.position.set(sx, 0.019, sz);
+      pool.renderOrder = 2;
+      g.add(pool);
     }
 
     // 3. Lacquer gloss ramp — one soft diagonal sheen across the floor;
@@ -802,6 +826,59 @@ class EngineClass {
     this._fxSmear.minFilter = THREE.LinearFilter;
     this._fxSmear.generateMipmaps = false;
     return this._fxSmear;
+  }
+
+  // A faint additive light-shaft from a ceiling fixture down toward its floor
+  // pool — the SOURCE connective tissue that makes the pool trace to a fixture
+  // instead of reading "lit anyway." Two crossed vertical quads so the fixed
+  // iso camera always catches one at a readable angle. Deliberately subtle
+  // (low opacity) — it sources light, it is not fog. The per-call material is
+  // disposed with the room; the shaft texture is shared and never disposed.
+  _fxLightShaft(x, z, topY, color, wx, wz, opacity) {
+    const grp = new THREE.Group();
+    const H = topY - 0.08;
+    const mat = new THREE.MeshBasicMaterial({
+      map: this._fxShaftTexture(), color, transparent: true, opacity,
+      blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide,
+    });
+    const a = new THREE.Mesh(new THREE.PlaneGeometry(wx, H), mat);
+    a.position.set(x, 0.08 + H / 2, z);
+    a.renderOrder = 2;
+    grp.add(a);
+    const b = new THREE.Mesh(new THREE.PlaneGeometry(wz, H), mat);
+    b.rotation.y = Math.PI / 2;
+    b.position.set(x, 0.08 + H / 2, z);
+    b.renderOrder = 2;
+    grp.add(b);
+    return grp;
+  }
+
+  // Vertical shaft gradient: bright at the top (the fixture) feathering to
+  // nothing before the floor, and soft on the left/right edges.
+  _fxShaftTexture() {
+    if (this._fxShaft) return this._fxShaft;
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 128;
+    const ctx = c.getContext('2d');
+    const gv = ctx.createLinearGradient(0, 0, 0, 128);
+    gv.addColorStop(0.0, 'rgba(255,255,255,0.85)');   // top — at the fixture
+    gv.addColorStop(0.45, 'rgba(255,255,255,0.30)');
+    gv.addColorStop(1.0, 'rgba(255,255,255,0)');       // fades before the floor
+    ctx.fillStyle = gv;
+    ctx.fillRect(0, 0, 64, 128);
+    const gh = ctx.createLinearGradient(0, 0, 64, 0);
+    gh.addColorStop(0.0, 'rgba(0,0,0,0)');
+    gh.addColorStop(0.5, 'rgba(0,0,0,1)');
+    gh.addColorStop(1.0, 'rgba(0,0,0,0)');
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.fillStyle = gh;
+    ctx.fillRect(0, 0, 64, 128);
+    ctx.globalCompositeOperation = 'source-over';
+    this._fxShaft = new THREE.CanvasTexture(c);
+    this._fxShaft.colorSpace = THREE.SRGBColorSpace;
+    this._fxShaft.minFilter = THREE.LinearFilter;
+    this._fxShaft.generateMipmaps = false;
+    return this._fxShaft;
   }
 
   // Per-size cached wall-seam AO frame: transparent center, soft dark

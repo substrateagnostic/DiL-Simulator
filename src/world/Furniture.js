@@ -195,50 +195,55 @@ export const Furniture = {
   // face gives the fixture a body. Materials are fresh per call (safe for
   // Engine.applyRoomFX's per-room dispose); the diffuser texture is cached
   // and survives material.dispose() (dispose never touches the map).
-  ceilingFixture(length = 3) {
+  ceilingFixture(length = 3, tint = 0xefe9db) {
     const group = new THREE.Group();
     const L = Math.max(1.2, typeof length === 'number' ? length : 3);
 
-    // Wave-2 R2 rebuild (the "you should see the dark HOUSING from above, never
-    // its lit face" note): a recessed troffer built as a DEEP DARK TRAY whose
-    // emissive diffuser sits at the BOTTOM of the tray, well below the rim tops.
-    // From the god's-eye iso 3/4-top the camera reads the dark housing plate and
-    // the four raised rims; the glow lives down inside the trough, and the near
-    // rim clips it — exactly a real ceiling troffer seen from above. The FLOOR
-    // POOL (Engine.applyRoomFX) carries the actual light. Dark MATTE housing, no
-    // metalness → no chrome mirror-gradient down the length (the lightsaber tell).
+    // ISO-CAMERA REBUILD (Surgeon 1 — light sourcing). The god's-eye ortho
+    // camera sees a fixture's TOP and near SIDES, never its lit underside, so a
+    // recessed troffer reads as a pure-black slab — the "dozen dark monoliths"
+    // note. This fixture instead SOURCES its light through faces the camera can
+    // actually see: a soft warm-white glowing diffuser panel on TOP, plus a slim
+    // emissive light-lip wrapping the housing perimeter (a bloom kiss on the near
+    // rim). Warm ~0.92 luma, not pure white. The floor pool + light-shaft
+    // (Engine.applyRoomFX) complete the source read on the ground.
     const housingMat = new THREE.MeshStandardMaterial({
-      color: 0x161917, roughness: 0.97, metalness: 0.0,
+      color: 0x1b1d1b, roughness: 0.96, metalness: 0.0,
     });
-    // CLOSED dark housing box — a real recessed troffer emits DOWN, so from the
-    // god's-eye iso the camera reads its dark metal BACK, never a lit face (the
-    // exact [B] note). The floor pool (Engine.applyRoomFX) carries the actual
-    // light; the fixture itself is architecture, not a glowing rod.
-    const body = new THREE.Mesh(new THREE.BoxGeometry(L + 0.22, 0.15, 0.58), housingMat);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(L + 0.16, 0.13, 0.52), housingMat);
     group.add(body);
-    // Downward emissive diffuser, recessed flush to the housing underside — it
-    // physically throws the pool and shows only when the frame catches a lower
-    // angle; from straight-down iso it's occluded by the body (as it should be).
-    const faceMat = new THREE.MeshBasicMaterial({
-      map: Furniture._ceilingDiffuserTex(), side: THREE.DoubleSide,
+
+    const glowTex = Furniture._ceilingDiffuserTex();
+    // TOP diffuser panel — up-facing, the primary source the iso camera reads.
+    // Inset so the dark housing rim frames it (a lit panel, not a floating white
+    // slab). Normal alpha (not additive) so it glows without clipping to paper;
+    // the warm core grazes the bloom threshold for a soft halo.
+    const topMat = new THREE.MeshBasicMaterial({
+      map: glowTex, color: tint, transparent: true, depthWrite: false,
     });
-    const face = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.02, 0.40), faceMat);
-    face.rotation.x = Math.PI / 2;   // lit side faces DOWN toward the floor
-    face.position.y = -0.078;
-    group.add(face);
-    // A thin dim warm glow-line escaping the lower long edges — the light
-    // "leaking" from the troffer so it reads as a LIT fixture from the iso 3/4
-    // side view, without ever presenting a bright top face. Kept low + narrow.
-    const edgeMat = new THREE.MeshBasicMaterial({ color: 0xbfae86 });
-    const edgeGeo = new THREE.BoxGeometry(L - 0.04, 0.025, 0.02);
-    for (const dz of [-0.285, 0.285]) {
-      const e = new THREE.Mesh(edgeGeo, edgeMat);
-      e.position.set(0, -0.06, dz);
-      group.add(e);
-    }
-    // Short pendant stems — the fixture hangs FROM something (the "attach it to
-    // an implied ceiling" note). Two thin dark rods rising off the housing top;
-    // in the open-top diorama they read as the cut mounting points.
+    const top = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.06, 0.46), topMat);
+    top.rotation.x = -Math.PI / 2;   // lit face points UP toward the camera
+    top.position.y = 0.069;
+    top.renderOrder = 2;
+    group.add(top);
+
+    // Perimeter light-lip — a slim warm emissive band on the lower edge of every
+    // side, additive for a soft bloom kiss on the camera-facing rim. Same baked
+    // falloff tex → the band eases off toward the ends, no hard laser stub.
+    const lipMat = new THREE.MeshBasicMaterial({
+      map: glowTex, color: tint, transparent: true, opacity: 0.8,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const longLip = () => new THREE.Mesh(new THREE.PlaneGeometry(L, 0.07), lipMat);
+    const south = longLip(); south.position.set(0, -0.03, 0.268); group.add(south);
+    const north = longLip(); north.rotation.y = Math.PI; north.position.set(0, -0.03, -0.268); group.add(north);
+    const endLip = () => new THREE.Mesh(new THREE.PlaneGeometry(0.5, 0.07), lipMat);
+    const east = endLip(); east.rotation.y = Math.PI / 2; east.position.set((L + 0.16) / 2, -0.03, 0); group.add(east);
+    const west = endLip(); west.rotation.y = -Math.PI / 2; west.position.set(-(L + 0.16) / 2, -0.03, 0); group.add(west);
+
+    // Short pendant stems — the fixture hangs FROM an implied ceiling. Two thin
+    // dark rods rising off the housing top; in the open-top diorama they read as
+    // the cut mounting points.
     const stemGeo = new THREE.BoxGeometry(0.04, 0.34, 0.04);
     for (const dx of [-L * 0.28, L * 0.28]) {
       const stem = new THREE.Mesh(stemGeo, housingMat);
@@ -250,36 +255,36 @@ export const Furniture = {
     return group;
   },
 
-  // Cached diffuser texture: bright cool-white centre rolling off across the
-  // tube to dim edges, faded at the two ends. Peak clamped BELOW white
-  // (~0.90 luma) so ACES rolls it to a lit-diffuser glow that only grazes
-  // bloom at the core — not a flat clipping bar.
+  // Cached diffuser texture: a warm-white glow (~0.92 luma at the core)
+  // feathering to TRANSPARENT at every edge, so the dark housing frames it and
+  // there is no hard laser-bar clip. Baked falloff is what sources a soft
+  // lit-diffuser read from the iso camera. Used on the top panel AND the rim
+  // lip (the lip samples the bright core band with soft ends). tint multiplies.
   _ceilingDiffuserTex() {
     if (Furniture._ceilingDiffTex) return Furniture._ceilingDiffTex;
     const c = document.createElement('canvas');
     c.width = 256; c.height = 64;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#20241f';
-    ctx.fillRect(0, 0, 256, 64);
-    // Across-tube roll-off (canvas height -> fixture width). Hot centre line
-    // (~0.96 luma, just into bloom for a soft halo) easing to dim edges — the
-    // gradient is what kills the laser-stick clip, not an overall dim.
+    // Across-panel roll-off (canvas height -> panel width): warm core to
+    // transparent edges.
     const gv = ctx.createLinearGradient(0, 0, 0, 64);
-    gv.addColorStop(0.0,  '#2b322d');
-    gv.addColorStop(0.24, '#7d8a82');
-    gv.addColorStop(0.5,  '#e4ecdf');
-    gv.addColorStop(0.76, '#7d8a82');
-    gv.addColorStop(1.0,  '#2b322d');
+    gv.addColorStop(0.0,  'rgba(238,231,214,0)');
+    gv.addColorStop(0.20, 'rgba(216,206,184,0.42)');
+    gv.addColorStop(0.5,  'rgba(246,241,228,0.96)');
+    gv.addColorStop(0.80, 'rgba(216,206,184,0.42)');
+    gv.addColorStop(1.0,  'rgba(238,231,214,0)');
     ctx.fillStyle = gv;
     ctx.fillRect(0, 0, 256, 64);
-    // Faded end caps (canvas width -> fixture length) — opaque, no alpha
+    // Feather the two ends (destination-in with a horizontal alpha gradient)
     const ge = ctx.createLinearGradient(0, 0, 256, 0);
-    ge.addColorStop(0.0,  'rgba(32,36,31,1)');
-    ge.addColorStop(0.06, 'rgba(32,36,31,0)');
-    ge.addColorStop(0.94, 'rgba(32,36,31,0)');
-    ge.addColorStop(1.0,  'rgba(32,36,31,1)');
+    ge.addColorStop(0.0,  'rgba(0,0,0,0)');
+    ge.addColorStop(0.08, 'rgba(0,0,0,1)');
+    ge.addColorStop(0.92, 'rgba(0,0,0,1)');
+    ge.addColorStop(1.0,  'rgba(0,0,0,0)');
+    ctx.globalCompositeOperation = 'destination-in';
     ctx.fillStyle = ge;
     ctx.fillRect(0, 0, 256, 64);
+    ctx.globalCompositeOperation = 'source-over';
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.minFilter = THREE.LinearFilter;
@@ -338,6 +343,103 @@ export const Furniture = {
     group.add(core);
     group.traverse(c => { if (c.isMesh) c.castShadow = false; });
     return group;
+  },
+
+  // A small warm practical lamp (bar counter / poker felt / side table). The
+  // ortho down-camera never catches a bulb's lit underside, so the source reads
+  // through what it CAN see: a warm emissive shade (top + sides glow) crowned by
+  // a hot cap that grazes bloom, plus an anchored warm pool directly beneath.
+  // Sits on whatever surface the room data's `y` places it on (ISO CAMERA LAW).
+  loungeLamp() {
+    const group = new THREE.Group();
+    const dark  = Materials.custom(0x15100a);
+    const brass = Materials.custom(0x5a4220, { emissive: 0x241804, emissiveIntensity: 0.25 });
+    // Foot + slim stem
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.11, 0.03, 14), brass);
+    foot.position.y = 0.015; group.add(foot);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.028, 0.28, 8), dark);
+    stem.position.y = 0.17; group.add(stem);
+    // Warm glowing shade — emissive amber; the iso camera reads its lit top+sides
+    const shadeMat = new THREE.MeshStandardMaterial({
+      color: 0xffcf8a, emissive: 0xffb257, emissiveIntensity: 0.95, roughness: 0.6, metalness: 0.0,
+    });
+    const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.155, 0.17, 16, 1, true), shadeMat);
+    shade.position.y = 0.40; group.add(shade);
+    // Hot cap — a bright disc facing up so the lamp head grazes the bloom pass
+    const cap = new THREE.Mesh(new THREE.CircleGeometry(0.095, 16),
+      new THREE.MeshBasicMaterial({ color: 0xffe7c4 }));
+    cap.rotation.x = -Math.PI / 2; cap.position.y = 0.485; group.add(cap);
+    // Anchored warm pool beneath — the "low lamp pool" that grounds the source
+    // and warms the near-black box it sits on
+    const pool = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.7),
+      new THREE.MeshBasicMaterial({
+        map: Furniture._floorPoolTex(), color: 0xffb45a, transparent: true,
+        opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+    pool.rotation.x = -Math.PI / 2; pool.position.y = 0.02; pool.renderOrder = 3; group.add(pool);
+    // Tighter hot core inside the pool
+    const core = new THREE.Mesh(new THREE.PlaneGeometry(0.72, 0.72),
+      new THREE.MeshBasicMaterial({
+        map: Furniture._floorPoolTex(), color: 0xffdca0, transparent: true,
+        opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+    core.rotation.x = -Math.PI / 2; core.position.y = 0.024; core.renderOrder = 4; group.add(core);
+    group.traverse(c => { if (c.isMesh) c.castShadow = false; });
+    return group;
+  },
+
+  // A wall-mounted green EXIT lightbox — reception's single saturated pop
+  // (round-3 note). Reads at thumbnail: a bright emissive green panel with a
+  // white EXIT bar, and a soft green spill decal that kisses the wall behind it
+  // (the ortho camera never catches the box's glow on the wall as a specular, so
+  // the spill is authored). Local +Z is the lit face — mount on a camera-facing
+  // wall (north/west in the iso rig) and it glows toward the lens.
+  exitSign() {
+    const group = new THREE.Group();
+    const green = 0x2bff77;
+    const boxMat = new THREE.MeshStandardMaterial({
+      color: 0x0a1e10, emissive: green, emissiveIntensity: 2.3, roughness: 0.5, metalness: 0.0,
+    });
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.74, 0.31, 0.08), boxMat);
+    group.add(box);
+    // Bright face plate (basic → not tonemapped down) so the box core stays hot
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.70, 0.27),
+      new THREE.MeshBasicMaterial({ color: 0xa6ffcb }));
+    face.position.z = 0.042; group.add(face);
+    // "EXIT" lettering
+    const letters = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.14),
+      new THREE.MeshBasicMaterial({ map: Furniture._exitTextTex(), transparent: true, depthWrite: false }));
+    letters.position.z = 0.044; group.add(letters);
+    // Soft green spill on the wall behind (authored glow kiss — the single pop).
+    // Glows harder than taste suggests: this is the clinical lobby's one emitter.
+    const spill = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.7),
+      new THREE.MeshBasicMaterial({
+        map: Furniture._floorPoolTex(), color: green, transparent: true,
+        opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false,
+      }));
+    spill.position.z = -0.02; spill.renderOrder = 2; group.add(spill);
+    group.traverse(c => { if (c.isMesh) c.castShadow = false; });
+    return group;
+  },
+
+  // Cached white "EXIT" lettering on transparent — for the exitSign face.
+  _exitTextTex() {
+    if (Furniture._exitTex) return Furniture._exitTex;
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 72;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, 256, 72);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 52px Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('EXIT', 128, 39);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    Furniture._exitTex = tex;
+    return tex;
   },
 
   // Institutional-green carpet runner — the Lumon identity as an architectural
@@ -2035,17 +2137,40 @@ export const Furniture = {
     return group;
   },
 
-  // Emissive floor strip for hot/cold server aisles. variant = hex color.
+  // Housed hot/cold aisle luminaire (Surgeon 1 — the bare "cyan tube spanning
+  // rack tops" note). A slim dark channel with a recessed glowing slot: two low
+  // dark rails flank the emissive strip so from iso it reads as a linear floor
+  // fixture, not a floating stick. Strip runs along +z; rails offset in x.
+  // variant = hex color.
   aisleGlow(variant) {
     const color = typeof variant === 'number' ? variant : 0x2244cc;
+    const group = new THREE.Group();
+    const railMat = Materials.custom(0x14161b);
+    for (const dx of [-0.17, 0.17]) {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.06, 4.6), railMat);
+      rail.position.set(dx, 0.03, 0);
+      group.add(rail);
+    }
+    for (const dz of [-2.33, 2.33]) {
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.06, 0.08), railMat);
+      cap.position.set(0, 0.03, dz);
+      group.add(cap);
+    }
+    // Recessed emissive slot — narrower + brighter, sitting just below the rail
+    // tops so the rails read as a housing (iso: a linear luminaire, not a bare
+    // tube). Additive so it grazes bloom as the aisle's saturated seam.
     const strip = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.5, 4.6),
-      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.32, depthWrite: false })
+      new THREE.PlaneGeometry(0.24, 4.5),
+      new THREE.MeshBasicMaterial({
+        color, transparent: true, opacity: 0.4,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      })
     );
     strip.rotation.x = -Math.PI / 2;
-    strip.position.y = 0.012;
-    const group = new THREE.Group();
+    strip.position.y = 0.045;
+    strip.renderOrder = 3;
     group.add(strip);
+    group.traverse(c => { if (c.isMesh) c.castShadow = false; });
     return group;
   },
 
@@ -4125,8 +4250,82 @@ export const Furniture = {
     glow.position.set(0, 2.2, 0.6);
     group.add(glow);
 
+    // ── Authored floor GHOST (the ISO CAMERA LAW) ─────────────────────────
+    // A punctual specular of a wall neon never aligns into an orthographic
+    // down-camera, so the sign's reflection has to be authored: the sign's
+    // own face, vertically flipped, stretched and blurred toward the viewer,
+    // laid flat on the lacquered floor at 17% additive. This is the "magenta
+    // neon ghosting on the wet floor" (Drive) that the round-3 critic named
+    // the whole indictment — Engine.applyRoomFX supplies the soft GLOW; this
+    // supplies the recognisable mirrored SIGN the glow alone can't.
+    const ghost = new THREE.Mesh(
+      new THREE.PlaneGeometry(3.1, 3.3),
+      new THREE.MeshBasicMaterial({
+        map: Furniture._neonFloorGhostTex(seam),
+        transparent: true, opacity: 0.17,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      })
+    );
+    ghost.rotation.x = -Math.PI / 2;
+    ghost.position.set(0, 0.02, 1.62);   // on the floor, reaching into the room
+    ghost.renderOrder = 4;
+    group.add(ghost);
+
     group.traverse(c => { if (c.isMesh) c.castShadow = false; });
     return group;
+  },
+
+  // Vertically-smeared, blurred, flipped copy of the neon sign face for the
+  // floor-ghost reflection. Transparent background + a top→bottom alpha taper
+  // so, drawn additive, only the neon streak lands on the floor and it fades
+  // toward the camera. Cached per variant (text | seam).
+  _neonFloorGhostTex(seam) {
+    const key = seam ? 'seam' : 'text';
+    Furniture._neonGhost = Furniture._neonGhost || {};
+    if (Furniture._neonGhost[key]) return Furniture._neonGhost[key];
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, 256, 256);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineCap = 'round';
+    ctx.shadowColor = '#ff2aa8';
+    // Draw the sign content several times, stepping DOWN the canvas (toward
+    // the camera) with growing blur and falling alpha — a cheap wet smear.
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5;
+      const y = 52 + t * 150;
+      ctx.globalAlpha = 0.9 * (1 - t * 0.72);
+      if (seam) {
+        ctx.shadowBlur = 22 + t * 46;
+        ctx.strokeStyle = i === 0 ? '#ff9ed8' : '#ff2aa8';
+        ctx.lineWidth = 12 + t * 10;
+        ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(216, y); ctx.stroke();
+      } else {
+        ctx.shadowBlur = 20 + t * 40;
+        ctx.font = 'bold 40px Arial, sans-serif';
+        ctx.fillStyle = i === 0 ? '#ffbdec' : '#e23bad';
+        ctx.fillText('TRUST ISSUES', 128, y);
+      }
+    }
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    // Alpha taper — fade in from the wall edge, fade out toward the camera.
+    ctx.globalCompositeOperation = 'destination-in';
+    const grad = ctx.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0.0, 'rgba(255,255,255,0.15)');
+    grad.addColorStop(0.20, 'rgba(255,255,255,1.0)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.globalCompositeOperation = 'source-over';
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    Furniture._neonGhost[key] = tex;
+    return tex;
   },
 
   // Cached soft radial gradient for neon/screen wall-kiss spill decals
@@ -4575,8 +4774,78 @@ export const Furniture = {
       group.add(seat);
     });
 
+    // ── Authored backbar floor reflection (ISO CAMERA LAW) ────────────────
+    // The purple-lit backbar and its bottle glints can't specular into the
+    // ortho down-camera, so their reflection on the lacquered lounge floor is
+    // authored: a soft violet wash + warm bottle glints, flipped and smeared
+    // toward the viewer at 13% additive. Reaches past the stools onto open
+    // floor so it reads as the bar catching the wet walnut, not a light disc.
+    const barGhost = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.2, 2.6),
+      new THREE.MeshBasicMaterial({
+        map: Furniture._barFloorGhostTex(),
+        transparent: true, opacity: 0.13,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      })
+    );
+    barGhost.rotation.x = -Math.PI / 2;
+    barGhost.position.set(0, 0.02, 1.55);
+    barGhost.renderOrder = 4;
+    group.add(barGhost);
+
     group.traverse(c => { if (c.isMesh) c.castShadow = true; });
     return group;
+  },
+
+  // Backbar reflection texture — violet shelf glow smeared downward with a
+  // row of warm/green bottle glints, tapered toward the camera. Cached.
+  _barFloorGhostTex() {
+    if (Furniture._barGhost) return Furniture._barGhost;
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 256;
+    const ctx = c.getContext('2d');
+    ctx.clearRect(0, 0, 256, 256);
+    // Violet shelf band, smeared down
+    for (let i = 0; i < 6; i++) {
+      const t = i / 5;
+      const y = 44 + t * 150;
+      ctx.globalAlpha = 0.7 * (1 - t * 0.7);
+      ctx.shadowColor = '#7a3cff';
+      ctx.shadowBlur = 26 + t * 40;
+      ctx.strokeStyle = i === 0 ? '#c9a6ff' : '#7a3cff';
+      ctx.lineWidth = 20 + t * 12;
+      ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(36, y); ctx.lineTo(220, y); ctx.stroke();
+    }
+    // Bottle glints — alternating warm amber / green, smeared
+    const glints = [[52, '#ff7a2c'], [92, '#3ce27a'], [128, '#ff7a2c'], [164, '#3ce27a'], [204, '#ff7a2c']];
+    for (const [gx, gc] of glints) {
+      for (let i = 0; i < 4; i++) {
+        const t = i / 3;
+        ctx.globalAlpha = 0.6 * (1 - t * 0.75);
+        ctx.shadowColor = gc; ctx.shadowBlur = 8 + t * 22;
+        ctx.fillStyle = gc;
+        ctx.beginPath();
+        ctx.arc(gx, 58 + t * 120, 5 - t * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    // Taper toward camera
+    ctx.globalCompositeOperation = 'destination-in';
+    const grad = ctx.createLinearGradient(0, 0, 0, 256);
+    grad.addColorStop(0.0, 'rgba(255,255,255,0.2)');
+    grad.addColorStop(0.18, 'rgba(255,255,255,1.0)');
+    grad.addColorStop(1.0, 'rgba(255,255,255,0.0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 256, 256);
+    ctx.globalCompositeOperation = 'source-over';
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    Furniture._barGhost = tex;
+    return tex;
   },
 
   couch() {

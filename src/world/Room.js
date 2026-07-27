@@ -228,9 +228,18 @@ export class Room {
    */
   _buildFloor(w, h, color, floorPattern) {
     const geo = new THREE.PlaneGeometry(w * TILE_SIZE, h * TILE_SIZE);
+    // Plain floors (no floorPattern in data) used to route to Materials.custom
+    // — a FLAT TOON plane with no specular/normal/clearcoat. That was the wiring
+    // bug behind "ZERO GLOSS ANYWHERE": three rounds of floor materials never
+    // reached these rooms. Reception now gets clinical VCT tile, the garage a
+    // troweled concrete slab, and everything else a waxed satin PBR floor —
+    // all real material response the office key and neon can actually catch.
+    const id = this.data.id;
     const mat = floorPattern === 'carpet'   ? Materials.carpetPattern(w, h, color)
               : floorPattern === 'hardwood' ? Materials.hardwoodPattern(w, h, color)
-              : Materials.custom(color);
+              : id === 'reception'          ? Materials.tilePattern(w, h, color)
+              : id === 'parking_garage'     ? Materials.concretePattern(w, h, color)
+              : Materials.satinFloor(color);
     const floor = new THREE.Mesh(geo, mat);
 
     // PlaneGeometry faces +Y by default; rotate to be horizontal
@@ -401,6 +410,10 @@ export class Room {
     // Windows with skyline views (data-driven: room.windows)
     this._addWindows(w, h, wallThickness);
 
+    // Interior wall fill — lift the camera-facing interior wall faces out of
+    // near-black in dim rooms (round-3 note).
+    this._addInteriorWallFill(w, h, exitsByWall);
+
     // Perimeter tiles are NOT blocked — out-of-bounds checks in
     // TileMap.canMove() already prevent the player from leaving the grid,
     // so blocking the perimeter row/column just creates an invisible
@@ -514,6 +527,62 @@ export class Room {
       group.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = false; } });
       this.scene.add(group);
     }
+  }
+
+  /**
+   * Interior wall fill — a faint cool additive wash on the camera-facing NORTH
+   * and WEST interior wall faces so dim rooms lift out of near-black and read as
+   * enclosed lit sets, not hollow greyboxes (round-3 note: reception + server
+   * room interior faces near-black). In the iso rig the camera sits at +x/+z, so
+   * the interior faces it actually sees are north (+z) and west (+x); the near
+   * south/east walls only ever show their exterior (void) side, which this must
+   * NOT touch. The fill sits on the interior side only and its meshes live at
+   * north/west positions, so the Engine night-sleeve detector (which matches
+   * transparent meshes at the south/east wall positions) never picks them up —
+   * the walk-behind fade sleeve is left intact. Skipped in deliberately moody
+   * rooms (low dirIntensity) so lounges keep their dark walls.
+   */
+  _addInteriorWallFill(w, h, exitsByWall) {
+    const dir = this.data.lighting?.dirIntensity ?? 1.15;
+    if (dir < 0.6) return;
+    const opacity = Math.max(0.05, Math.min(0.13, 0.20 - dir * 0.10));
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0x9fb0c4, transparent: true, opacity,
+      blending: THREE.AdditiveBlending, depthWrite: false,
+    });
+    const FILL_H = 2.24, FILL_CY = 1.18, eps = 0.03;
+    // Build fill planes over contiguous runs of NON-exit tiles (so doorways stay
+    // clear), one run at a time.
+    const addRuns = (n, exitTiles, makePlane) => {
+      let start = null;
+      for (let i = 0; i < n; i++) {
+        if (exitTiles.has(i)) {
+          if (start !== null) { makePlane(start, i - 1); start = null; }
+        } else if (start === null) {
+          start = i;
+        }
+      }
+      if (start !== null) makePlane(start, n - 1);
+    };
+    // NORTH interior face (+z), facing the camera
+    addRuns(w, exitsByWall.north, (a, b) => {
+      const len = (b - a + 1) * TILE_SIZE - 0.04;
+      const cx = ((a + b) / 2) * TILE_SIZE;
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(len, FILL_H), mat);
+      p.position.set(cx, FILL_CY, -TILE_SIZE / 2 + eps);
+      p.renderOrder = 1;
+      this.scene.add(p);
+    });
+    // WEST interior face (+x), facing the camera
+    addRuns(h, exitsByWall.west, (a, b) => {
+      const len = (b - a + 1) * TILE_SIZE - 0.04;
+      const cz = ((a + b) / 2) * TILE_SIZE;
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(len, FILL_H), mat);
+      p.rotation.y = Math.PI / 2;
+      p.position.set(-TILE_SIZE / 2 + eps, FILL_CY, cz);
+      p.renderOrder = 1;
+      this.scene.add(p);
+    });
   }
 
   /**

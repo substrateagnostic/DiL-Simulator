@@ -767,6 +767,9 @@ export const ROOMS = {
 
 
       // === Company sign area (north wall, above reception desk) ===
+      // Green EXIT lightbox on the north wall by the door — the clinical white
+      // lobby's one saturated pop (round-3 note). Glows toward the iso camera.
+      { type: 'exitSign', x: 4.5, z: 0.13, y: 2.05 },
       // === Elevator on east wall ===
       { type: 'elevatorDoors', x: 13, z: 3, rotation: -Math.PI / 2 },
 
@@ -1705,8 +1708,10 @@ export const ROOMS = {
     // troffers that were slicing white laser bars across the lounge.
     lighting: { ambient: 0x4a3630, ambientIntensity: 0.34, dir: 0x8a6446, dirIntensity: 0.42 },
     lights: [
-      // Deep purple wash over bar
-      { type: 'point', color: 0x7700cc, intensity: 0.9, x: 9,  y: 2.5, z: 2,  distance: 9  },
+      // Deep purple wash over bar. Tightened (distance 9->5, z 2->1.4) so it
+      // hugs the bar instead of throwing a lone violet specular hotspot onto the
+      // open mid-floor (the "stray purple glow-dot" round-3 note).
+      { type: 'point', color: 0x7700cc, intensity: 0.9, x: 9,  y: 2.5, z: 1.4, distance: 5 },
       // Neon halos (dimmed — the sign's own spill decal now kisses the wall)
       { type: 'point', color: 0xff0088, intensity: 0.5, x: 3,  y: 2.4, z: 1.5, distance: 5 },
       { type: 'point', color: 0xff2a9e, intensity: 0.4, x: 15, y: 2.4, z: 1.5, distance: 5 },
@@ -1726,6 +1731,9 @@ export const ROOMS = {
     furniture: [
       // ── Bar — north wall, centered ──────────────────────────
       { type: 'loungeBar', x: 9, z: 0.6 },
+      // Warm practical on the bar counter — a low lamp pool so the near-black
+      // counter box carries a warm source instead of reading dead (round-3 note).
+      { type: 'loungeLamp', x: 11, z: 0.66, y: 1.08 },
 
       // ── Neon flanking bar ───────────────────────────────────
       // ONE readable "TRUST ISSUES" sign; the second is an abstract magenta
@@ -1741,9 +1749,15 @@ export const ROOMS = {
 
       // ── Poker table — NE corner ──────────────────────────────
       { type: 'pokerTable', x: 15, z: 1.8 },
+      // Warm practical over the poker felt — a low lamp pool so the black poker
+      // box in the room's dead middle reads as a lit table (round-3 note).
+      { type: 'loungeLamp', x: 15, z: 2.3, y: 0.735 },
 
       // ── Pool table — centre room ────────────────────────────
       { type: 'poolTable', x: 9, z: 6 },
+      // Warm practical on the pool felt — the dead-centre black box was the
+      // room's darkest middle mass; a low lamp pool lifts it (round-3 note).
+      { type: 'loungeLamp', x: 9, z: 5.55, y: 0.74 },
 
       // ── West VIP booth — L-shape in SW corner ───────────────
       { type: 'couch', x: 1,   z: 9,    rotation: -Math.PI / 2 }, // west wall, faces east
