@@ -1,3 +1,67 @@
+# Session Handoff — July 27, 2026 — THE DISPLAY CASE REBUILD (overnight, branch `display-case`)
+
+**What happened:** the queued director-mode AAA pass ran end-to-end in one
+overnight watch. Seven commits on branch **`display-case`** (683c0bd →
+5c945d8), main untouched. Art bible (ruled live with Alex): *"a lacquered
+miniature of corporate life — Severance-lit inside, parked in a Drive
+2011 / Tron: Ares night — with fights shot like Clair Obscur."* Full comp
+card with adversarially-verified citations: `art/COMP_CARD.md`. Plan +
+lane specs: `.claude/plans/display-case-rebuild.md`. Running ledger for
+Alex: `alexmemory.md` (root). Session craft laws (ISO CAMERA LAW etc.):
+auto-memory `display-case-craft-lessons`.
+
+**Wave tour (each commit message has detail):**
+1. `44781cb` post stack — TiltShiftPass (ortho-gated), N8AO, GradePass
+   (now the chain's SOLE output transform — fixed a linear-as-sRGB
+   display bug; combat/title were authored against the broken transform),
+   RetroPass off by default = "1998 MODE" settings toggle.
+2. `68202bf`+`a2b8aad` interiors/materials/night — Severance troffers with
+   real housings, per-room rigs, MaterialLibrary v2 (49 exports preserved,
+   physical/clearcoat tiers, ProceduralNormals.js), obsidian seam-light
+   city, wet-asphalt street kit, neon floor ghosts, EXIT-sign hum.
+3. `8ceb05b`+`9677007` CHARACTERS — CharacterBuilder v5 + FacePainter v5
+   (the one consistent playtest criticism, addressed): real-proportioned
+   figures, six working expressions, glasses as geometry, scalp-conforming
+   hair, 23–32 draw calls/char, `options.detailed` now real (physical tier
+   in combat / cheaper in rooms). All 36 human configs have v5 face fields.
+4. `5c945d8` combat cinema — `src/combat/CombatCinematics.js` timeline
+   sequencer (per-tag ability cinematics, POWER_MOVE, ENEMY_HEAVY
+   anticipation, intro banners), camera rig over `_basePos`, per-venue
+   arena palettes (`arena` field in encounters), actor wind-up→strike→
+   recoil beats, impact sparks on the contact frame.
+
+**New tools:** `tools/cine-shoot.mjs` — captures REAL-input 8-frame attack
+bursts to `screenshots/cine/` for motion verification (read them as a
+contact strip). `art/comp_refs/` (gitignored) holds official comp stills +
+MANIFEST for critic agents.
+
+**Punch list (small, 3×-zoom class — none block a playtest):**
+- Prop grips are contact not grasp at 3×+ (Chad's shake, Karen's pencil).
+- Knee crease arcs where kneecap meets thigh capsule at 3×+.
+- Karen left-heel sliver below the pump; grandma cane-swipe burst unverified on-frame.
+- Wind-ups are stylized rear-back+lunge, not full overhead cocks (deliberate).
+- Seated-NPC read needs one close-framed verification still (shoot harness has no close room shot).
+- Perf: post chain + v5 characters need a real-hardware FPS pass (budget: 60fps mid laptop; degrade order AO → tilt-shift half-res → bloom half-res).
+
+**Gotchas for the next instance:**
+- GradePass must NEVER be disabled — it owns tone map + sRGB now
+  (neutralize via `strength`, not `enabled`). `renderer.toneMapping` is
+  deliberately NoToneMapping.
+- Tilt-shift/AO gate on `camera.isOrthographicCamera` — combat gets none.
+- CharacterAnimator's `GESTURES` table owns combat pose keyframes;
+  CombatScene drives them via `playGesture`.
+- The ISO CAMERA LAW (see auto-memory): light must read via camera-visible
+  surfaces + authored fakes; specular physics won't deliver into an ortho iso cam.
+- `npm run editor` balance/room editor untested against tonight's changes —
+  verify before publishing balance from it.
+
+**Next (by value):** Alex + Andrew playtest → their notes are frame data ·
+L6 ambient life (walk/idle polish on v5 bodies, watercooler events) ·
+R-phase (itch deploy, save versioning, smoke test) per ROADMAP · merge
+`display-case` → main after Alex's review.
+
+---
+
 # Session Handoff — June 11, 2026 (Sprints 4+5, Session 9) — OVERNIGHT IN FLIGHT
 
 **Morning protocol (whoever wakes first, human or instance):**

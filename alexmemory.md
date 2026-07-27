@@ -6,10 +6,18 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## NEEDS YOU (current)
 
-- **Nothing blocking. For your eye when you can:** `art/COMP_CARD.md` — the
-  final comp card (5 comps, every claim adversarially verified, refuted
-  claims listed so we don't chase ghosts). Wave 1 stills will land in
-  `screenshots/contact/` as lanes complete.
+- **THE WATCH IS CLOSED — 7 commits on branch `display-case`, main
+  untouched.** Play it: `npm run dev` → the whole game, reborn. Then:
+  1. **Your eye:** `screenshots/contact/index.html` (full final contact
+     sheet) and `screenshots/cine/` (real-input attack bursts — karen_f2
+     is the shot of the night: Andrew taking the hit, sparks on his
+     chest, grimace in frame).
+  2. **Your call:** merge `display-case` → main when you've played it.
+  3. **Andrew:** get DIDDY D on it — his notes are frame data, and the
+     characters were rebuilt for exactly his criticism.
+  4. Punch list + gotchas + next steps: HANDOFF.md top entry.
+  5. Settings has a **1998 MODE** toggle — the old PS1 finish, preserved
+     as a cosmetic. For the lineage.
 
 ---
 
