@@ -44,16 +44,16 @@ const POSES = {
   // Recoil: pull back toward the viewer (we just got hit).
   recoil:     { pos: { x: 0,     y: -0.08, z: 0.42  }, look: { x: 0,    y: 0.00,  z: 0.22  } },
   recoilHard: { pos: { x: 0,     y: -0.12, z: 0.58  }, look: { x: 0,    y: 0.00,  z: 0.28  } },
-  // Victim cut: reframe onto ANDREW (front-right stage, world ~(2.2,1,3.5)) so
-  // the reaction reads — the enemy's lunge crosses in from the left and Andrew's
-  // stagger + the big damage number own the frame. The old offsets aimed PAST
-  // Andrew into the back stage, so the camera "dollied behind the attacker" and
-  // Andrew ate the hit entirely offscreen (critic). Framing verified on-cam.
-  // The look-at Y is lifted (0.12 → 0.64) and the camera pulled back a touch (z
-  // 1.05 → 1.45) so Andrew's FULL HEAD clears the top edge on the impact close-up
-  // — the old low-rear angle cropped his skull every post-cut frame (critic #4).
-  victim:     { pos: { x: -0.10, y: 0.44,  z: 1.45  }, look: { x: 1.90, y: 0.64,  z: 3.35  } },
-  victimHard: { pos: { x: -0.05, y: 0.40,  z: 1.20  }, look: { x: 1.98, y: 0.60,  z: 3.42  } },
+  // Victim cut: swing to ANDREW's front-LEFT and look back at his face (shot/
+  // reverse-shot grammar). The allies are blocked back-3/4 facing the enemy, so
+  // a near/front camera only saw the back of his skull. Because the block holds a
+  // quarter shy of dead-on, his face is angled to the SIDE — this pose reaches it
+  // from stage-left at MODERATE depth (camPos ≈ (0.05, 1.95, 2.55)) without
+  // crossing down to the enemy mark (which clipped the lens into the enemy's body
+  // — verified on the burst). Andrew's staggering face + the damage number own
+  // the frame; aimed at his head (~2.05, 1.5, 3.40).
+  victim:     { pos: { x: -0.55, y: 0.44,  z: -2.72 }, look: { x: 2.05, y: 0.90,  z: 3.40  } },
+  victimHard: { pos: { x: -0.45, y: 0.38,  z: -2.88 }, look: { x: 2.08, y: 0.88,  z: 3.42  } },
   // Enemy coil: lean gently toward them as they wind up.
   lean:       { pos: { x: 0,     y: 0.05,  z: -0.30 }, look: { x: 0,    y: 0.05,  z: -0.18 } },
   leanHeavy:  { pos: { x: 0,     y: 0.11,  z: -0.46 }, look: { x: 0,    y: 0.05,  z: -0.26 } },
@@ -167,7 +167,7 @@ const DESPERATE_GAMBLE = {
 // a corner HP number; framing him lets the stagger + hurt-anim read.
 const ENEMY_ATTACK = [
   { t: 0.00, cam: 'lean',   ease: 4 },                               // coil toward the winding-up enemy
-  { t: 0.30, cam: 'victim', ease: 13, hitstop: 0.06, shake: 0.5 },   // CUT to Andrew as the blow lands + shake
+  { t: 0.30, cam: 'victim', ease: 18, hitstop: 0.06, shake: 0.5 },   // hard CUT/reverse to Andrew as the blow lands + shake
   // Impact ACCENT — a hit-spark burst ON the victim's chest + a punch-in, timed so
   // it is still FRESH on the post-cut impact frame (~0.46) instead of firing at the
   // cut and being gone by the time the frame is grabbed (critic #2: "f2 carries no
@@ -187,7 +187,7 @@ const ENEMY_HEAVY = [
   { t: 0.00, cam: 'leanHeavy',  ease: 2.8 },
   { t: 0.02, overlay: { kind: 'vignette', color: '#e94560', ms: 700 } },
   { t: 0.12, rim: 0.4 },
-  { t: 0.30, cam: 'victimHard', ease: 13, hitstop: 0.13, shake: 0.75 },
+  { t: 0.30, cam: 'victimHard', ease: 18, hitstop: 0.13, shake: 0.75 },
   // Impact ACCENT — a bigger hit-spark burst ON the victim + a hard punch-in,
   // timed to land fresh on the post-cut impact frame (critic #2).
   { t: 0.44, punch: 0.7,

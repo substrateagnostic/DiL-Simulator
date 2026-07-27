@@ -25,10 +25,14 @@ const P = (o = {}) => ({
 const SIGNATURE_POSES = {
   // Karen: phone up at eye line, purse hand steady — "I'm calling corporate."
   karen:   P({ raX: 1.15, raZ: 0.18, tilt: 0.12, lean: 0.02 }),
-  // Chad: double-flex, chest thrown out, wide — the finance bro cornering you.
-  chad:    P({ laX: 0.2, laZ: -0.72, raX: 0.2, raZ: 0.72, lean: -0.05 }),
-  // Grandma: both hands forward on the cane, hunched low over it.
-  grandma: P({ raX: 0.4, raZ: -0.16, laX: 0.34, laZ: 0.16, lean: 0.14, tilt: 0.16 }),
+  // Chad: a relaxed gym-bro stance — arms down and a touch forward, chest thrown
+  // back. The old double-flex (raZ ±0.72) rendered as a stiff palms-back A-POSE
+  // ("no human stands like this — an unposed rig"); with no elbow channel a true
+  // flex can't read, so a confident loose stance beats a failed flex.
+  chad:    P({ laX: 0.14, laZ: -0.14, raX: 0.16, raZ: 0.14, lean: -0.06 }),
+  // Grandma: hands forward on the cane, a GENTLE lean (the deep bow self-occluded
+  // her face and read as an ominous wraith — cap the intro pitch).
+  grandma: P({ raX: 0.4, raZ: -0.16, laX: 0.34, laZ: 0.16, lean: 0.06, tilt: 0.05 }),
   // Generic heavy: a coiled, arms-out menace stance.
   ready:   P({ laX: -0.12, laZ: -0.28, raX: -0.12, raZ: 0.28, lean: 0.06 }),
 };

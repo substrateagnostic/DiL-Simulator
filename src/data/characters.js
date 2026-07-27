@@ -67,13 +67,13 @@ export const CHARACTER_CONFIGS = {
     shirtColor: COLORS.SHIRT_WHITE,
     tieColor: 0x884422,
     skinColor: COLORS.SKIN,
-    hairColor: COLORS.HAIR_DARK,
+    hairColor: 0x5a3f28,   // warm brown to match the portrait (was near-black)
     hairStyle: 'short',
     accessories: ['name_tag'],
     widthScale: 1.18, heightScale: 0.92, headScale: 1.05,
-    // torus glasses (item 8): a mid-face element so fringe / glasses / brow read
-    // as three separate bands and break up the "80% forehead" expanse.
-    glasses: 'clear',
+    neckScale: 0.78,       // slight timid teenager — a slim neck, not jaw-wide
+    // Portrait has NO glasses and warm-brown hair; the raised 'short' hairline now
+    // shows a strip of forehead so fringe / brow / eyes still read as three bands.
     // v5 face — young, timid, small chin (early-Charlie-Brown big head)
     gender: 'm', eyeColor: 0x4a3a2a, jaw: 0.80, chin: 0.94,
   },
@@ -114,12 +114,12 @@ export const CHARACTER_CONFIGS = {
     shirtColor: 0xf2e8dc,   // cream blouse in the collar V
     tieColor: null,
     skinColor: 0xf0c0a0,
-    hairColor: COLORS.HAIR_BLONDE,
+    hairColor: 0xdccaa0,   // PLATINUM blonde to match the portrait (was ochre-gold)
     hairStyle: 'karen',
     accessories: ['purse'],
-    hunch: 0.14, headScale: 1.05,
-    // v5 face/proportion fields
-    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.86, lipColor: 0xc0506a, headForward: 0.05,
+    hunch: 0.10, headScale: 1.05,
+    // v5 face/proportion fields — bold DARK brows + red lip per the portrait
+    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.86, lipColor: 0xc83a52, browColor: 0x4a3a28, headForward: 0.05,
   },
   chad: {
     tone: 'silly',
@@ -129,16 +129,18 @@ export const CHARACTER_CONFIGS = {
     shirtColor: null,
     tieColor: null,
     skinColor: 0xd99a70,   // gym tan
-    hairColor: 0x8a6a38,   // dark-blonde quiff — reads against the tan (was HAIR_BLONDE = bald)
+    hairColor: 0xbfa066,   // dirty-blonde quiff to match the portrait (was chocolate-brown)
     hairStyle: 'slick',    // pompadour quiff, not a bald-fronted backwards cap
-    accessories: ['protein_shake'],
+    accessories: ['protein_shake', 'gold_chain'],
     belt: true,
-    // head up ~9% (0.92→1.0) and shoulders in ~17% (1.5→1.25) so his head/shoulder
-    // ratio shares the cast's figurine language instead of reading as a scale bug
-    // (item 12).
-    widthScale: 1.35, heightScale: 1.06, headScale: 1.0,
+    lapels: false,         // a POLO, not a blazer — kill the rectangular pec-slab lapels
+    shortSleeve: true,     // red polo w/ BARE muscular forearms (was red long sleeves)
+    beard: 'stubble', beardColor: 0x6a5236, // light stubble per the portrait
+    // Shoulders capped near LAW 1's 2.0 head-widths: widthScale 1.35→1.2 and
+    // shoulderScale 1.25→1.12 pull the flat coat-hanger shelf into a rounded V.
+    widthScale: 1.2, heightScale: 1.06, headScale: 1.0,
     // v5 face/proportion fields — broad jaw, jutting chin
-    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.2, shoulderScale: 1.25, waistScale: 0.8,
+    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.15, shoulderScale: 1.12, waistScale: 0.82,
   },
   grandma: {
     name: 'Grandma Henderson',
@@ -150,7 +152,7 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_WHITE,
     hairStyle: 'shawl',
     accessories: ['cane'],
-    heightScale: 0.76, hunch: 0.38, widthScale: 1.12, headScale: 1.12,
+    heightScale: 0.76, hunch: 0.22, widthScale: 1.12, headScale: 1.12,
     // v5 face/proportion fields — elderly read
     gender: 'f', age: 'old', eyeColor: 0x5a4a38, jaw: 0.9, glasses: 'reading',
     lapels: false, shoulderScale: 0.92, headForward: 0.05,
@@ -208,8 +210,9 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bob',
     accessories: ['tablet', 'pearl_earrings'],
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
-    // v5 face — sharp/angular, cold steel eyes, severe cool lip
-    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.78, chin: 1.02,
+    // v6 face — sharp/angular, cold steel eyes, severe cool lip (jaw clamped to
+    // the human band 0.85; her severity lives in the tall/narrow silhouette)
+    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.85, chin: 1.02,
   },
   isaiah: {
     name: 'Isaiah',
@@ -373,8 +376,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bob',
     accessories: ['tablet', 'pearl_earrings'],
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
-    // v5 face — identical to Rachel (same woman, boss form)
-    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.78, chin: 1.02,
+    // v6 face — identical to Rachel (same woman, boss form); jaw in the band
+    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.85, chin: 1.02,
   },
 
   // ── Act 6½ city cast ──────────────────────────────────────────────

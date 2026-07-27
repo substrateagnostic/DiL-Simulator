@@ -72,13 +72,14 @@ export const CHAR = {
   ARM_HEIGHT: 0.45,
   TOTAL_HEIGHT: 1.35,
 
-  // v5 body proportions — realistic ~5.6-head lacquered miniature.
-  // legLength is the hip-pivot height; the animator seats on it (SEAT_Y).
-  // Total standing height ≈ 1.55 (LEG_LENGTH + TORSO_H + NECK_H + head).
-  V5_HEAD_R: 0.122,
-  V5_LEG_LENGTH: 0.70,
-  V5_TORSO_H: 0.47,
-  V5_NECK_H: 0.075,
+  // v6 body proportions — heroic-natural 6.5–7-head stylized adult (CHARACTER
+  // BIBLE LAW 1). The head SHRINKS and the figure lengthens vs v5's lumpy-toddler
+  // ~5.8 heads. legLength is the hip-pivot height; the animator seats on it
+  // (SEAT_Y). Standing crown ≈ 1.62; ÷ head-vert (≈2.2R≈0.23) ≈ 7 heads.
+  V5_HEAD_R: 0.104,   // v5 0.122 → −15% (head vert ≈ 2.2R ≈ 0.23)
+  V5_LEG_LENGTH: 0.78, // v5 0.70 → longer legs raise the figure
+  V5_TORSO_H: 0.50,   // v5 0.47
+  V5_NECK_H: 0.090,   // v5 0.075 → neck is VISIBLE, never sunk in the collar
 };
 
 // Animation

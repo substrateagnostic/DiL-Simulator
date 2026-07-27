@@ -6,6 +6,16 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## NEEDS YOU (current)
 
+- **WAVE 5 IN FLIGHT (your colleagues' notes, ~14:40):** "scrunched/scary
+  faces, lumpy bodies, caricature" → CHARACTER BIBLE v6: human-first
+  proportions (6.5–7 heads), Sleek Law (single lofts, no joint lumps),
+  Pleasant Neutral faces (menace moves to expression sets), matte skin,
+  combat face-key so nobody is horror-lit from below, allies face the
+  enemy (back-¾ to camera). Judged per-character against paired human +
+  game exemplars in art/char_refs/. Veto anything above by just typing.
+
+
+
 - **THE WATCH IS CLOSED — 7 commits on branch `display-case`, main
   untouched.** Play it: `npm run dev` → the whole game, reborn. Then:
   1. **Your eye:** `screenshots/contact/index.html` (full final contact

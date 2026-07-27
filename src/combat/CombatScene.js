@@ -64,7 +64,7 @@ export class CombatScene {
     // survives the darker key (Clair-Obscur close-up grammar). Base intensities
     // are stored so the cinematic rig can darken the key + spike the rim for
     // power beats and always restore them.
-    const BI = { ambient: 0.30, dir: 0.60, fill: 0.46, eye: 0.27, rimCyan: 0.66, rimMagenta: 0.60, rimLow: 0.58, hero: 0.34 };
+    const BI = { ambient: 0.30, dir: 0.60, fill: 0.46, eye: 0.27, faceKey: 0.32, rimCyan: 0.66, rimMagenta: 0.60, rimLow: 0.58, hero: 0.34 };
     this._baseIntensity = BI;
 
     const ambient = new THREE.AmbientLight(0xffffff, BI.ambient);
@@ -89,6 +89,20 @@ export class CombatScene {
     eyeLight.position.set(0, 0.4, 6);
     this.scene.add(eyeLight);
     this.eyeLight = eyeLight;
+    // FACE-KEY — a soft WARM fill from front-ABOVE, raked down onto the faces.
+    // The eyeLight sits BELOW the chin (y 0.4) which, alone, is textbook horror
+    // under-lighting; this counter-key comes from high and slightly camera-side
+    // so it lands on foreheads/cheekbones and the victim's up-tilted face,
+    // killing the ghoul shadows without washing out the Refn key/rim contrast
+    // (kept low + steeply raked so the backdrop and back-stage stay dark). It's
+    // a first-class rig light (base intensity in BI, dimmed in update) so the
+    // power-beat darken still owns it and setArenaLighting never clobbers it.
+    const faceKey = new THREE.DirectionalLight(0xffdcbe, BI.faceKey);
+    faceKey.position.set(0.8, 4.6, 5.2);
+    faceKey.target.position.set(0.8, 1.5, 1.2);
+    this.scene.add(faceKey);
+    this.scene.add(faceKey.target);
+    this.faceKey = faceKey;
     // Two BACK RIMS for Clair-Obscur silhouette separation on the close-ups
     // (addendum: "one cool rim/backlight per combatant"). Both sit BEHIND the
     // actors so they edge-light the outline instead of muddying the face — the
@@ -329,6 +343,18 @@ export class CombatScene {
     // Enemies slide in from stage right over ~half a second
     this._introT = 0;
 
+    // Allies face TOWARD the enemy (back-3/4 to camera — classic JRPG blocking).
+    // Compute the enemy centroid so each ally turns to actually confront the
+    // threat instead of the old hardcoded partial-camera angle. With forward =
+    // (sinθ, cosθ) (enemy at rot 0 faces +z / the camera), θ = atan2(dx, dz)
+    // aims the ally's front at the enemy — a strong −z component puts the back
+    // to the lens, an −x component turns them onto the boss.
+    let ecx = 0, ecz = 0;
+    if (this.enemyGroups.length) {
+      for (const e of this.enemyGroups) { ecx += e.baseX; ecz += e.baseZ; }
+      ecx /= this.enemyGroups.length; ecz /= this.enemyGroups.length;
+    }
+
     // Place party on the front stage
     const partyPositions = this._allyPositions(partyIds.length);
     for (let i = 0; i < partyIds.length; i++) {
@@ -350,10 +376,24 @@ export class CombatScene {
       const pos = partyPositions[i];
       group.position.set(pos.x, 0, pos.z);
       group.scale.setScalar(1.8);
-      group.rotation.y = -Math.PI * 0.6;
+      // Turn to face the enemy centroid, but hold ~30% shy of dead-on (blended
+      // toward the stage-left profile). A dead-on turn buries the face toward the
+      // BACK stage where the enemy stands, so the reaction-cut camera can only
+      // recover it by crossing down beside the enemy — where it clips into the
+      // enemy's body. Holding a quarter shy keeps a clear back-3/4 "confronting
+      // the boss" read in the wide/rest frames while angling the face enough to
+      // the SIDE that a safe front-left victim camera catches it (verified on the
+      // enemy-attack burst). setFacing() locks the angle into the animator so
+      // CharacterAnimator._updateFacing (which eases rotation.y toward facingAngle
+      // every frame) HOLDS the block instead of drifting the ally to camera-front
+      // over the fight (facingAngle used to default to 0, silently un-blocking).
+      const enemyAngle = Math.atan2(ecx - pos.x, ecz - pos.z);
+      const faceRotY = enemyAngle + (-Math.PI / 2 - enemyAngle) * 0.30;
+      group.rotation.y = faceRotY;
+      animator.setFacing(faceRotY);
       this._addContactBounce(group, 1.8);
       this.scene.add(group);
-      this.allyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: -Math.PI * 0.6, baseScale: 1.8, characterId: id });
+      this.allyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: faceRotY, baseScale: 1.8, characterId: id });
     }
   }
 
@@ -945,6 +985,7 @@ export class CombatScene {
       if (this.dirLight)   this.dirLight.intensity   = bi.dir     * keyDim;
       if (this.fillLight)  this.fillLight.intensity  = bi.fill    * keyDim;
       if (this.eyeLight)   this.eyeLight.intensity   = bi.eye     * keyDim;
+      if (this.faceKey)    this.faceKey.intensity    = bi.faceKey * keyDim;
       if (this.rimCyan)    this.rimCyan.intensity    = bi.rimCyan    * rimDim + this._rimBeatV * 0.5;
       if (this.rimMagenta) this.rimMagenta.intensity = bi.rimMagenta * rimDim + this._rimBeatV * 1.5;
       if (this.rimLow)     this.rimLow.intensity     = bi.rimLow     * rimDim + this._rimBeatV * 0.4;

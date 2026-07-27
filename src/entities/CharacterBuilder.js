@@ -94,7 +94,11 @@ export function buildCharacter(config, options = {}) {
   for (const side of [-1, 1]) {
     const leg = new THREE.Group();               // hip pivot
     const thighWrap = new THREE.Group();
-    const thigh = limbSegment(0.072 * ws, 0.056 * ws, thighLen, mPants);
+    // Knee join slimmed (thigh-bottom 0.056→0.050, shin-top 0.055→0.050) so the
+    // matched rounded caps read as a GENTLE widening, not a balloon that pinches
+    // to the ankle (item: karen/grandma "kneecap bulge / hose rings still in the
+    // lathe profile"). Equal join radii keep the seam invisible.
+    const thigh = limbSegment(0.078 * ws, 0.050 * ws, thighLen, mPants);
     thigh.position.y = -thighLen / 2;
     thighWrap.add(thigh);
     collapseNode(thighWrap);
@@ -103,26 +107,17 @@ export function buildCharacter(config, options = {}) {
     const knee = new THREE.Group();              // knee pivot
     knee.position.y = -thighLen;
     const shinWrap = new THREE.Group();
-    const shin = limbSegment(0.055 * ws, 0.044 * ws, shinLen, mPants);
+    const shin = limbSegment(0.050 * ws, 0.044 * ws, shinLen, mPants);
     shin.position.set(0, -shinLen / 2 + 0.01, 0.01);
     shinWrap.add(shin);
-    // kneecap — a rounded pants-coloured cover over the thigh/shin junction so
-    // the two capsule ends don't cross as a visible articulation "ring" through
-    // the trouser (item 10). Larger than either segment so the crease sits inside
-    // it; merges into the shin (same material) on collapse.
-    const kneecap = new THREE.Mesh(new THREE.SphereGeometry(0.063 * ws, 16, 12), mPants);
-    kneecap.scale.set(1.02, 0.92, 1.05);
-    kneecap.position.set(0, 0.006, 0.012);
-    shinWrap.add(kneecap);
-    // shoe: smooth lacquered form
-    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.062 * ws, 20, 14), mShoe);
-    foot.scale.set(0.85, 0.62, 1.7);
-    foot.position.set(0, -shinLen + 0.05, 0.03);
+    // v6 SLEEK LAW — no kneecap sphere. The shin's rounded top and the thigh's
+    // rounded bottom share a radius (~0.055) so they overlap into a smooth knee.
+    // shoe: ONE smooth lacquered loafer form (was a foot sphere + a heel sphere
+    // reading as two lumps). A single elongated rounded mass carries heel→toe.
+    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.058 * ws, 22, 16), mShoe);
+    foot.scale.set(0.92, 0.62, 2.0);
+    foot.position.set(0, -shinLen + 0.035, 0.028);
     shinWrap.add(foot);
-    const heel = new THREE.Mesh(new THREE.SphereGeometry(0.05 * ws, 16, 12), mShoe);
-    heel.scale.set(0.85, 0.7, 0.9);
-    heel.position.set(0, -shinLen + 0.05, -0.03);
-    shinWrap.add(heel);
     collapseNode(shinWrap);
     knee.add(shinWrap);
     leg.add(knee);
@@ -143,11 +138,17 @@ export function buildCharacter(config, options = {}) {
   group.body = torso;
 
   // pelvis / crotch cover — a pants-coloured mass bridging the two thigh tops so
-  // the dark background can't show through the inverted-V between the legs as a
-  // "mesh hole" (item 9, Chad's black crotch wedge). Sits under the jacket hem.
-  const pelvis = new THREE.Mesh(new THREE.SphereGeometry(dims.hipR * 0.92, 20, 16), mPants);
-  pelvis.scale.set(1.18, 0.78, 0.72);
-  pelvis.position.set(0, legLength - dims.hipR * 0.22, torsoZ);
+  // the dark background can't show through the inverted-V between the legs (Chad's
+  // black crotch wedge). v6: taller so it reaches down past the upper thighs (the
+  // longer v6 legs opened a gap below the old shallow cover); width kept just
+  // under the thigh spread so slim builds don't bulge. Sits under the jacket hem.
+  // v6 round-2 — the pelvis was a bulbous pod proud of BOTH trouser legs (the
+  // "diaper" 4th side-inflection, karen/intern/andrew). Shrunk so its half-width
+  // sits well inside the thigh spread and merges into the leg loft as one crotch
+  // cover, not a discrete pod. Kept tall+thin so it still bridges the leg gap.
+  const pelvis = new THREE.Mesh(new THREE.SphereGeometry(dims.hipR * 0.72, 20, 16), mPants);
+  pelvis.scale.set(1.0, 1.2, 0.72);
+  pelvis.position.set(0, legLength - dims.hipR * 0.38, torsoZ);
   pelvis.rotation.x = hunch;
   group.add(pelvis);
 
@@ -187,16 +188,21 @@ export function buildCharacter(config, options = {}) {
     // side*0.3 z-tilt flared them into detached triangles), and shaded only a
     // hair off the suit (0.9, was 0.82) so they don't catch a different light.
     if (config.lapels !== false) {
-      const mLapel = M.cloth(shadeHexToInt(suitC, 0.9), config.suitMat || {});
+      // v6 round-2 — the lapel pair + dark centre seam rendered as two hard slash
+      // lines ("hoodie drawstrings" on Karen, "cracks in the cloth" on Andrew).
+      // Contrast dropped hard (0.9→0.95 lapel, 0.78→0.9 seam), the lapels splay
+      // into a shallow notch V, and the placket is thinner+shorter so it reads as
+      // tailoring, not a gash.
+      const mLapel = M.cloth(shadeHexToInt(suitC, 0.95), config.suitMat || {});
       const lapZ = neckBaseZ + dims.chestR * 0.5;
       for (const side of [-1, 1]) {
-        const lap = new THREE.Mesh(new THREE.BoxGeometry(dims.chestR * 0.5, torsoH * 0.44, 0.01), mLapel);
-        lap.position.set(side * dims.chestR * 0.3, neckBaseY - torsoH * 0.28, lapZ);
-        lap.rotation.set(hunch, side * 0.06, side * 0.14);
+        const lap = new THREE.Mesh(new THREE.BoxGeometry(dims.chestR * 0.52, torsoH * 0.44, 0.01), mLapel);
+        lap.position.set(side * dims.chestR * 0.32, neckBaseY - torsoH * 0.28, lapZ);
+        lap.rotation.set(hunch, side * 0.08, side * 0.17);
         staticNode.add(lap);
       }
-      const seam = new THREE.Mesh(new THREE.BoxGeometry(0.007, torsoH * 0.55, 0.008), M.cloth(shadeHexToInt(suitC, 0.78), {}));
-      seam.position.set(0, neckBaseY - torsoH * 0.4, lapZ + 0.004);
+      const seam = new THREE.Mesh(new THREE.BoxGeometry(0.005, torsoH * 0.40, 0.008), M.cloth(shadeHexToInt(suitC, 0.9), {}));
+      seam.position.set(0, neckBaseY - torsoH * 0.36, lapZ + 0.004);
       seam.rotation.x = hunch;
       staticNode.add(seam);
     }
@@ -215,17 +221,19 @@ export function buildCharacter(config, options = {}) {
       staticNode.add(tie);
     }
 
-    // shoulder join — a TAILORED sleeve-head, not a football pad. Shrunk ~22%
-    // (0.082→0.064r) and flattened into an ellipse that lies along the shoulder
-    // slope, tucked down and inboard so it blends the jacket→arm seam instead of
-    // ballooning above it with a visible crease (addendum: shrink ~20%, blend
-    // the sleeve join — suits hang, they don't bulge).
+    // v6 SLEEK LAW — NO shoulder pads. The shoulder is the torso loft's yoke
+    // meeting the arm's rounded top; a low, smooth deltoid fillet only BLENDS
+    // that seam (lies flat along the slope, never perched proud). Radius sits
+    // just under the shoulder width so it can't balloon into a football pad.
     for (const side of [-1, 1]) {
-      const pad = new THREE.Mesh(new THREE.SphereGeometry(0.064 * ws, 24, 18), mSuit);
-      pad.scale.set(1.28, 0.72, 1.06);
-      pad.position.set(side * (shoulderX - 0.012), shoulderY - 0.05, shoulderZ);
-      pad.rotation.z = side * 0.24;   // lie along the shoulder slope, not perched on top
-      staticNode.add(pad);
+      // Smaller, flatter fillet (0.05→0.042, flatter scale) so it BLENDS the
+      // neck→arm slope into a rounded shoulder instead of perching as a corner
+      // that squares off into the coat-hanger shelf (item: Chad's 90° deltoid).
+      const delt = new THREE.Mesh(new THREE.SphereGeometry(0.042 * ws, 20, 14), mSuit);
+      delt.scale.set(1.05, 0.68, 1.0);
+      delt.position.set(side * (shoulderX + 0.002), shoulderY - 0.05, shoulderZ);
+      delt.rotation.z = side * 0.32;   // lie flat along the shoulder slope
+      staticNode.add(delt);
     }
 
     // belt at the waist (opt-in) — separates jacket/shirt from pants so the
@@ -244,9 +252,11 @@ export function buildCharacter(config, options = {}) {
       staticNode.add(buckle);
     }
 
-    // neck (smooth: more radial segments so the lit column reads gradient-clean,
-    // not concentric "hose rings" at 4× — item 7)
-    const neckGeo = new THREE.CylinderGeometry(headR * 0.62, headR * 0.72, neckH, 28, 2);
+    // neck — slimmer (0.62→0.58 top, 0.72→0.68 base) so it never reads jaw-wide
+    // (item: Intern's neck ≈ jaw width); per-character neckScale trims it further.
+    // More height segments (2→3) so the lit column stays gradient-clean, no bands.
+    const nsc = config.neckScale ?? 1;
+    const neckGeo = new THREE.CylinderGeometry(headR * 0.58 * nsc, headR * 0.68 * nsc, neckH, 28, 3);
     neckGeo.computeVertexNormals();
     const neck = new THREE.Mesh(neckGeo, mSkin);
     neck.position.set(0, neckBaseY + neckH * 0.45, neckBaseZ + Math.sin(hunch) * neckH * 0.5);
@@ -260,24 +270,32 @@ export function buildCharacter(config, options = {}) {
   const upperArmLen = torsoH * 0.5;
   const foreArmLen = torsoH * 0.46;
   const handLocalY = -upperArmLen - foreArmLen - 0.02;
+  // shortSleeve (Chad's polo) — the forearm renders as BARE SKIN with a suit-
+  // coloured sleeve hem at the bicep, instead of a full sleeve + shirt cuff.
+  const shortSleeve = config.shortSleeve === true;
+  const foreMat = shortSleeve ? mSkin : mSuit;
   for (const side of [-1, 1]) {
     const arm = new THREE.Group();               // shoulder pivot
     const upper = limbSegment(0.058 * ws, 0.05 * ws, upperArmLen, mSuit);
     upper.position.y = -upperArmLen / 2;
     arm.add(upper);
-    const fore = limbSegment(0.048 * ws, 0.04 * ws, foreArmLen, mSuit);
+    const fore = limbSegment(0.05 * ws, 0.04 * ws, foreArmLen, foreMat);
     fore.position.set(0, -upperArmLen - foreArmLen / 2 + 0.01, 0.015);
     fore.rotation.x = -0.12;
     arm.add(fore);
-    // elbow cover — hides the upper/fore capsule junction crease so the sleeve
-    // reads as one cloth, not a jointed doll arm (item 10).
-    const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.053 * ws, 16, 12), mSuit);
-    elbow.scale.set(1.02, 0.95, 1.05);
-    elbow.position.set(0, -upperArmLen + 0.004, 0.006);
-    arm.add(elbow);
-    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.041 * ws, 0.041 * ws, 0.03, 14), mShirt);
-    cuff.position.set(0, -upperArmLen - foreArmLen + 0.02, 0.03);
-    arm.add(cuff);
+    // v6 SLEEK LAW — no elbow sphere. The upper arm's rounded bottom (0.05) and
+    // the forearm's rounded top (0.05) share a radius and overlap into a smooth
+    // elbow, so the sleeve reads as one continuous cloth, not a jointed doll arm.
+    if (shortSleeve) {
+      // polo sleeve hem: a suit-coloured band a third of the way down the bicep
+      const hem = new THREE.Mesh(new THREE.CylinderGeometry(0.056 * ws, 0.052 * ws, 0.035, 16), mSuit);
+      hem.position.set(0, -upperArmLen + 0.01, 0);
+      arm.add(hem);
+    } else {
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.041 * ws, 0.041 * ws, 0.03, 14), mShirt);
+      cuff.position.set(0, -upperArmLen - foreArmLen + 0.02, 0.03);
+      arm.add(cuff);
+    }
     // mitten hand + thumb
     const palm = new THREE.Mesh(new THREE.SphereGeometry(0.045 * ws, 14, 12), mSkin);
     palm.scale.set(0.85, 1.15, 0.6);
@@ -313,7 +331,12 @@ export function buildCharacter(config, options = {}) {
   // lower face so the painted mouth lands on the visible front.
   head.rotation.x = 0.15 - hunch * 0.42;
 
-  const skull = makeHead(headR, mSkin, { jaw: config.jaw ?? 0.82, chin: config.chin ?? 1.0, detailed });
+  // v6 LAW 4 — every jaw/chin dial is clamped into the human ±band [0.85, 1.15];
+  // no lantern jaws, no pinched chins. (Silhouette/attitude live elsewhere.)
+  const _clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const jawDial = _clamp(config.jaw ?? 0.9, 0.85, 1.15);
+  const chinDial = _clamp(config.chin ?? 1.0, 0.85, 1.15);
+  const skull = makeHead(headR, mSkin, { jaw: jawDial, chin: chinDial, detailed });
   head.add(skull);
   const mConcha = M.skin(shadeHexToInt(skinC, 0.58), null);
   for (const side of [-1, 1]) {
@@ -321,13 +344,16 @@ export function buildCharacter(config, options = {}) {
     // tucks beside the head instead of floating as a pale disc mid-cheek
     // (Chad/Intern note). A dark concha dimple recessed into the front sells it
     // as an ear (item 8) — the old comment promised this but never drew it.
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.23, 16, 12), mSkin);
-    ear.scale.set(0.58, 0.96, 0.82);
-    ear.position.set(side * headR * 0.95, -headR * 0.05, -headR * 0.18);
+    // Smaller (0.23→0.20) and RAISED to the eye→nose band (y −0.05→−0.01) so it
+    // no longer sits at mouth/jaw height (item: Chad "raise the ear") and never
+    // dominates the skull side as a paddle (item: Grandma).
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.20, 16, 12), mSkin);
+    ear.scale.set(0.56, 0.94, 0.80);
+    ear.position.set(side * headR * 0.95, -headR * 0.01, -headR * 0.18);
     head.add(ear);
-    const concha = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.12, 12, 10), mConcha);
+    const concha = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.11, 12, 10), mConcha);
     concha.scale.set(0.5, 0.8, 0.5);
-    concha.position.set(side * headR * 1.0, -headR * 0.05, -headR * 0.10);
+    concha.position.set(side * headR * 1.0, -headR * 0.01, -headR * 0.10);
     head.add(concha);
   }
 
@@ -397,14 +423,14 @@ function makeMaterialKit(detailed) {
   if (detailed) {
     return {
       skin: (color, faceTex) => {
-        // Round-3 (item 7): specular lobes STILL rang latitude bands on the neck
-        // and forehead at 4×. Clearcoat/sheen eased further (0.16→0.08, 0.16→0.10)
-        // and roughness up so the skin is a clean matte gradient — the geometry
-        // (now higher-tessellated) carries the form, not a banded highlight.
+        // v6 LAW 5 — skin is MATTE. Clearcoat + sheen stripped entirely (they
+        // ring specular latitude bands and read plastic-horror under the arena
+        // wash). Roughness raised to 0.82 so the diffuse gradient carries the
+        // form; the higher-tessellated geometry does the rest.
         const m = new THREE.MeshPhysicalMaterial({
           color: faceTex ? 0xffffff : color, map: faceTex || null,
-          roughness: 0.62, clearcoat: 0.08, clearcoatRoughness: 0.6,
-          sheen: 0.10, sheenColor: new THREE.Color(0xff9a80), envMapIntensity: 0.42,
+          roughness: 0.82, clearcoat: 0.0,
+          sheen: 0.0, envMapIntensity: 0.28,
         });
         // A faint noise bump on the BARE skin (skull/neck/ears — never the painted
         // face patch) dithers the smooth light falloff so the neck's quantized
@@ -655,16 +681,33 @@ function weaveTexture() {
 }
 
 // ── geometry helpers ──────────────────────────────────────────────────
+// v6 SLEEK LAW (LAW 2) — a limb is ONE continuous tapered loft, not a cylinder
+// hidden behind two cap spheres. The rounded ends are built into the LATHE
+// profile so there is no seam ring and no pasted ball; where two segments butt
+// (thigh↔shin, upper↔fore-arm) their matched-radius rounded ends overlap into a
+// smooth joint, so the knee/elbow reads as a gentle widening — never a kneecap.
+// Total extent is preserved (±(len/2 + r)) so all downstream positions line up.
 function limbSegment(rTop, rBot, len, mat) {
-  const geo = new THREE.CylinderGeometry(rTop, rBot, len, 16, 3, false);
+  const half = len / 2;
+  const CAP = 6;                        // quarter-arc steps per rounded end
+  const pts = [];
+  // bottom rounded cap: pole → equator (ascending Y)
+  for (let i = 0; i <= CAP; i++) {
+    const a = (Math.PI / 2) * (i / CAP);
+    pts.push(new THREE.Vector2(Math.sin(a) * rBot, -half - Math.cos(a) * rBot));
+  }
+  // straight tapered side (a mid point keeps normals clean and lets a gentle
+  // mid-limb swell live in the profile if ever wanted)
+  pts.push(new THREE.Vector2((rTop + rBot) * 0.5, 0));
+  pts.push(new THREE.Vector2(rTop, half));
+  // top rounded cap: equator → pole
+  for (let i = 1; i <= CAP; i++) {
+    const a = (Math.PI / 2) * (i / CAP);
+    pts.push(new THREE.Vector2(Math.cos(a) * rTop, half + Math.sin(a) * rTop));
+  }
+  const geo = new THREE.LatheGeometry(pts, 24);
   geo.computeVertexNormals();
-  const grp = new THREE.Group();
-  grp.add(new THREE.Mesh(geo, mat));
-  const capTop = new THREE.Mesh(new THREE.SphereGeometry(rTop, 14, 10), mat);
-  capTop.position.y = len / 2; grp.add(capTop);
-  const capBot = new THREE.Mesh(new THREE.SphereGeometry(rBot, 14, 10), mat);
-  capBot.position.y = -len / 2; grp.add(capBot);
-  return grp;
+  return new THREE.Mesh(geo, mat);
 }
 
 function makeHead(rad, mat, opts = {}) {
@@ -680,7 +723,11 @@ function makeHead(rad, mat, opts = {}) {
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
     const yN = v.y / rad;
-    v.y *= 1.09;                       // egg elongation (rounder = less long jaw)
+    // v6 round-2 — the eye-line rendered at ~40-43% of skull height (LAW 3 wants
+    // 50%) and 57% of the head read as jaw/jowl. The lower hemisphere is now
+    // COMPRESSED (0.90) while the crown eases (1.05): the chin rises toward the
+    // mouth, so the eye sits ≈50% down a shorter lower face and a real neck shows.
+    v.y *= (yN >= 0 ? 1.05 : 0.90);
     if (v.z < 0) v.z *= 0.92;          // flatten back of head
     if (yN < 0) {
       const t = -yN;
@@ -698,7 +745,9 @@ function makeHead(rad, mat, opts = {}) {
 function makeFacePatch(rad, faceTex, M, detailed = false) {
   const phiStart = Math.PI * 0.5 - 1.0;
   const phiLen = 2.0;
-  const thetaStart = 0.62;
+  // Patch band nudged DOWN the skull (0.62→0.68) so the painted eyes/nose/mouth
+  // seat lower — pairs with the shortened lower face to land the eye-line ≈50%.
+  const thetaStart = 0.68;
   const thetaLen = 1.4;
   // Bulge kept minimal (0.4%) so the patch does NOT catch more light than the
   // skull beneath it — the "patch is brighter than the head" luminance step.
@@ -723,7 +772,7 @@ function makeFacePatch(rad, faceTex, M, detailed = false) {
     for (let i = 0; i < pos.count; i++) {
       vv.fromBufferAttribute(pos, i);
       const yN = vv.y / (rad * 1.004);
-      vv.y *= 1.09;
+      vv.y *= (yN >= 0 ? 1.05 : 0.90);   // MATCH makeHead's shortened lower face
       if (yN > 0.15 && vv.z > 0) vv.z += rad * 0.03 * (yN - 0.15);
       pos.setXYZ(i, vv.x, vv.y, vv.z);
     }
@@ -804,7 +853,7 @@ function buildHair(head, r, mat, style) {
     for (let i = 0; i < pos.count; i++) {
       v.fromBufferAttribute(pos, i);
       const yN = v.y / r;
-      v.y *= 1.09;                       // match head egg elongation
+      v.y *= (yN >= 0 ? 1.05 : 0.90);    // match head egg elongation (shortened lower)
       if (v.z < 0) v.z *= 0.92;          // match flattened occiput
       if (yN > 0.15 && v.z > 0) v.z += r * 0.03 * (yN - 0.15);  // match brow ridge
       v.multiplyScalar(grow);            // float uniformly proud of the skin
@@ -930,27 +979,33 @@ function buildHair(head, r, mat, style) {
     // BEHIND the jawline (z negative) and stop short of the chin, so the white
     // hair frames the face from the sides/back but NEVER wraps under the jaw and
     // closes beneath the chin (the "bearded Dumbledore" read).
-    // Lower hairline (0.34) so the white hair comes down over the forehead and
-    // hides the patch's top feather edge — kills the faint stippled seam at the
-    // hairline (item 6, Grandma) without re-wrapping the jaw.
-    scalpCap(1.5, 1.045, 0.34);
+    // Hairline lifted (0.34→0.42) so a strip of forehead shows and the silver hair
+    // stops reading as a tight nun's coif wrapped to the eyes (item: Grandma's
+    // "hair opening ends above the mouth"); the raised eye-line keeps the seam hid.
+    scalpCap(1.5, 1.045, 0.42);
     const back = new THREE.Mesh(new THREE.SphereGeometry(r * 1.0, 22, 18), mat);
     back.scale.set(1.18, 1.4, 1.06);
     back.position.set(0, -r * 0.22, -r * 0.3);
     add(back);
     for (const s of [-1, 1]) {
+      // Pushed DOWN and BACK (z −0.2→−0.5) off the ear line and narrowed (0.5→0.42)
+      // so the silver drape frames behind the jaw instead of sitting over the ear
+      // as a flat gray paddle (item: Grandma's ear paddle).
       const drape = new THREE.Mesh(new THREE.SphereGeometry(r * 0.5, 18, 14), mat);
-      drape.scale.set(0.5, 1.5, 0.8);
-      drape.position.set(s * r * 0.94, -r * 0.42, -r * 0.2);   // outboard + BEHIND the jaw
+      drape.scale.set(0.42, 1.3, 0.7);
+      drape.position.set(s * r * 0.9, -r * 0.5, -r * 0.5);   // outboard + BEHIND the jaw
       drape.rotation.z = s * -0.06;
       add(drape);
     }
   } else { // 'short'
     // Conforming cap to the ears + a single swept fringe rooted at the hairline.
-    // No bald band, no floating beret (Andrew/Intern fix).
-    scalpCap(1.5, 1.03, 0.38);
+    // Hairline RAISED (0.38→0.46) so a strip of forehead + full eyes show under
+    // the fringe (item: Intern's hair eclipses the forehead/lenses). The fringe is
+    // lifted and pulled back (y 0.4→0.52, less depth/tilt) so it can't clip down
+    // over the eyes at a combat head-pitch (item: Andrew's blindfold fringe).
+    scalpCap(1.5, 1.03, 0.46);
     backMass(1.0, -r * 0.04, 1.0);
-    fringe(0.4, 0.62, 1.42, 0.34);
+    fringe(0.52, 0.5, 1.35, 0.26);
   }
 }
 
@@ -972,7 +1027,7 @@ function buildGlasses(head, r, kind, detailed) {
   const zf = r * 1.06;               // lens plane — clearly proud of the face
   for (const s of [-1, 1]) {
     const rim = new THREE.Mesh(new THREE.TorusGeometry(lensR, tube, 10, 24), frameMat);
-    rim.position.set(s * sep, r * 0.02, zf);
+    rim.position.set(s * sep, r * 0.05, zf);   // raised onto the painted eye-line
     rim.userData.noFlash = true;
     head.add(rim);
     // lens fill: sunglasses get a dark tint; reading/clear get a faint bluish
@@ -985,7 +1040,7 @@ function buildGlasses(head, r, kind, detailed) {
       // blows to a pink-white glare pool that half-drowns the pupil (critic).
       : new THREE.MeshPhysicalMaterial({ color: 0xbcd0e0, roughness: 0.2, metalness: 0.0, clearcoat: 0.4, clearcoatRoughness: 0.35, transparent: true, opacity: 0.10, envMapIntensity: 0.4 });
     const lens = new THREE.Mesh(new THREE.CircleGeometry(lensR, 20), lensMat);
-    lens.position.set(s * sep, r * 0.02, zf - tube * 0.4);
+    lens.position.set(s * sep, r * 0.05, zf - tube * 0.4);
     lens.userData.noFlash = true;
     head.add(lens);
     // lens glint — a bright white dot sitting on the LENS FRONT (proud of the
@@ -996,20 +1051,20 @@ function buildGlasses(head, r, kind, detailed) {
     // Smaller catchlight bead, seated at the upper-OUTER lens edge (not over the
     // pupil) so it says "glass" without drowning the eye (critic: glare pools).
     const glint = new THREE.Mesh(new THREE.SphereGeometry(tube * 1.05, 10, 8), catchMat);
-    glint.position.set(s * sep + s * lensR * 0.5, r * 0.02 + lensR * 0.56, zf + tube * 1.2);
+    glint.position.set(s * sep + s * lensR * 0.5, r * 0.05 + lensR * 0.56, zf + tube * 1.2);
     glint.userData.noFlash = true;
     head.add(glint);
   }
   const bridge = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.016, r * 0.016, sep * 0.7, 8), frameMat);
   bridge.rotation.z = Math.PI / 2;
-  bridge.position.set(0, r * 0.05, zf + tube);
+  bridge.position.set(0, r * 0.08, zf + tube);
   bridge.userData.noFlash = true;
   head.add(bridge);
   // temple arms angling back to the ears (sell the air gap in profile)
   for (const s of [-1, 1]) {
     const arm = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.014, r * 0.014, r * 0.72, 6), frameMat);
     arm.rotation.set(Math.PI / 2 - 0.12, 0, 0);
-    arm.position.set(s * (sep + lensR * 0.82), r * 0.06, r * 0.62);
+    arm.position.set(s * (sep + lensR * 0.82), r * 0.08, r * 0.62);
     arm.userData.noFlash = true;
     head.add(arm);
   }
@@ -1121,6 +1176,19 @@ function addAccessory(group, acc, rig, config, detailed) {
       cap.position.set(0.01, hy + 0.075, 0.115);
       group.rightArm?.add(cap);
       grip(1, 0.0, 0.035);
+      break;
+    }
+    case 'gold_chain': {
+      // Chad's gold chain — a ring around the neck base with a small pendant dip
+      // on the chest (portrait signature). Sits over the polo collar.
+      const chainMat = Materials.custom(0xd4af37, { stops: 4 });
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(rig.headR * 0.78, 0.011, 8, 30), chainMat);
+      ring.rotation.x = Math.PI / 2 + 0.25;   // dip the front toward the chest
+      ring.position.set(0, rig.legLength + rig.torsoH * 0.86, rig.frontZ * 0.32);
+      group.add(ring);
+      const pendant = new THREE.Mesh(new THREE.SphereGeometry(0.016, 10, 8), chainMat);
+      pendant.position.set(0, rig.legLength + rig.torsoH * 0.74, rig.frontZ * 0.55 + 0.02);
+      group.add(pendant);
       break;
     }
     case 'purse': {
