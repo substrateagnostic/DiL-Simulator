@@ -598,6 +598,20 @@ export class CombatState {
     });
     this.hud.updateTelegraphAll(hints);
 
+    // Drive each enemy's FACE from what it is telegraphing, so combatants emote
+    // through the fight instead of holding a dead neutral while the banner reads
+    // "attack" (addendum: the six-expression set must be wired to combat state
+    // and proven on camera). No hold — it persists through the player's turn;
+    // the attack/hurt/defeat anims swap it when they fire.
+    this.engine.enemies.forEach((e, i) => {
+      if (e.hp <= 0) return;
+      const entry = this.scene.enemyGroups?.[i];
+      if (!entry || !entry.animator) return;
+      const type = ENEMY_ABILITIES[e.telegraphedAbility]?.type;
+      const scheming = type === 'heal' || type === 'buff' || type === 'debuff' || type === 'confuse';
+      entry.animator.setExpression(scheming ? 'smug' : 'angry');
+    });
+
     const voicesAvailable = this.engine.getAvailableVoices ? this.engine.getAvailableVoices() : [];
     // Resolve action descriptors for the voice submenu
     this._currentVoices = voicesAvailable.map(v => {

@@ -71,6 +71,14 @@ export const CHAR = {
   ARM_WIDTH: 0.1,
   ARM_HEIGHT: 0.45,
   TOTAL_HEIGHT: 1.35,
+
+  // v5 body proportions — realistic ~5.6-head lacquered miniature.
+  // legLength is the hip-pivot height; the animator seats on it (SEAT_Y).
+  // Total standing height ≈ 1.55 (LEG_LENGTH + TORSO_H + NECK_H + head).
+  V5_HEAD_R: 0.122,
+  V5_LEG_LENGTH: 0.70,
+  V5_TORSO_H: 0.47,
+  V5_NECK_H: 0.075,
 };
 
 // Animation

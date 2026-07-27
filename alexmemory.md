@@ -15,6 +15,27 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## LOG
 
+### 2026-07-27 ~06:15 — WAVE 2.5 COMMITTED (a2b8aad) + WAVE 3 FLIES
+- Surgery worked: S2 confirmed the wiring bug (most floors were routed to
+  flat-toon `Materials.custom` — three rounds of material upgrades lived
+  in shortcuts nothing called); S1 found the troffer diffuser literally
+  faced away from the camera. Both root-caused and fixed.
+- Verify critics DIVERGED (A said fixtures still dark; B said garage
+  poles now grammatical, lacquer real). My tiebreak eyes: B was right —
+  reception reads clinical with lit-rim fixtures, penthouse is
+  transformed (neon ghosts on the floor, three warm practicals). Small
+  pixel-addressed residuals remain.
+- **Allocation ruling:** residuals ride along as a polish agent inside
+  Wave 3 instead of another lighting-only round. **Wave 3 = THE
+  CHARACTERS** — C1 ports the approved prototype into CharacterBuilder
+  v5 (faces 2× contrast, hair de-helmeted, six expressions, geometry
+  merge, detailed-tier materials), C2 rolls v5 across all ~27 cast
+  configs honoring WRITING.md identities, then a character-art director
+  and a figurine sculptor judge the close-ups against Clair Obscur refs
+  and the prototype bar.
+- **YOUR EYE when you wake:** fight-karen.png after this wave — that's
+  the screen your colleagues criticized, reborn or not.
+
 ### 2026-07-27 ~05:05 — WAVE 2 COMMITTED (68202bf) + THE ISO DIAGNOSIS
 - Wave 2 landed real gains: city bokeh is gorgeous, neon spill kisses
   walls, server racks have cyan data-spines, fixtures have bodies.

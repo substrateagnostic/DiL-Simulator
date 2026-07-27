@@ -88,7 +88,7 @@ const NO_BLOCK = new Set([
   'popcornPopper', 'neonSign', 'operatorChair',
   'cableTray', 'monitorWall', 'aisleGlow',
   'lamppost', 'hydrant', 'busStopSign', 'newspaperBox', 'curb', 'elevatorDoors',
-  'sodiumPool', 'severanceRunner',
+  'sodiumPool', 'severanceRunner', 'garagePendant',
 ]);
 
 export class Room {

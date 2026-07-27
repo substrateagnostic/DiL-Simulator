@@ -248,11 +248,11 @@ export const ROOMS = {
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_fridge_done', notFlag: 'lunch_thief_culprit_revealed' }, dialogId: 'janet_lunch_thief_investigate' },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_investigate' },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_complete', notFlag: 'janet_quest_resolved' }, dialogId: 'janet_lunch_thief_resolved' },
-      { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'janet_quest_resolved' } },
+      { id: 'janet', x: 6, z: 3.8, facing: 0, sitting: true, condition: { flag: 'janet_quest_resolved' } },  // settles at her desk once the lunch-thief case is closed (occupied-office read)
       // Intern — conditional entries covering lunch thief confrontation
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'intern_lunch_thief_confrontation' },
-      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_complete' } },
+      { id: 'intern', x: 13, z: 5.8, facing: 0, sitting: true, condition: { flag: 'lunch_thief_complete' } },  // seated at his workstation post-quest (occupied-office read)
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'briefing_complete' } }, // water cooler, paces — hidden once briefing starts
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
     ],
@@ -845,6 +845,12 @@ export const ROOMS = {
       { type: 'sodiumPool', x: 2.5, z: 4 },
       { type: 'sodiumPool', x: 7,   z: 5 },
       { type: 'sodiumPool', x: 10.5, z: 4 },
+      // S2.5: warm pendant tubes hung directly over each sodium pool so the
+      // interior floor pools among the cars trace to a visible source instead
+      // of glowing from nowhere (garage critic).
+      { type: 'garagePendant', x: 2.5,  z: 4, y: 2.12 },
+      { type: 'garagePendant', x: 7,    z: 5, y: 2.12 },
+      { type: 'garagePendant', x: 10.5, z: 4, y: 2.12 },
       // === Parking spots (floor markings) ===
       { type: 'parkingSpot', x: 1,  z: 2, rotation: Math.PI / 2 },
       { type: 'parkingSpot', x: 1,  z: 4, rotation: Math.PI / 2 },
@@ -1706,7 +1712,10 @@ export const ROOMS = {
     // Dusk-gold lounge: low warm key so the point-light washes and the neon
     // carry the room. dirIntensity < 0.9 also suppresses the clinical office
     // troffers that were slicing white laser bars across the lounge.
-    lighting: { ambient: 0x4a3630, ambientIntensity: 0.34, dir: 0x8a6446, dirIntensity: 0.42 },
+    // S2.5: ambient floor wash dropped ~40% (0.34 -> 0.20) so the hardwood
+    // falls toward black BETWEEN the lamp pools — the lounge lamps and neon now
+    // carry the light instead of a lifted grey wash filling the whole floor.
+    lighting: { ambient: 0x4a3630, ambientIntensity: 0.20, dir: 0x8a6446, dirIntensity: 0.42 },
     lights: [
       // Deep purple wash over bar. Tightened (distance 9->5, z 2->1.4) so it
       // hugs the bar instead of throwing a lone violet specular hotspot onto the
@@ -1725,8 +1734,10 @@ export const ROOMS = {
       { type: 'point', color: 0xff7722, intensity: 0.55, x: 3, y: 2,   z: 10, distance: 6  },
       // East VIP booth — warm amber
       { type: 'point', color: 0xff7722, intensity: 0.55, x: 15, y: 2,  z: 10, distance: 6  },
-      // General dark fill
-      { type: 'point', color: 0x180022, intensity: 0.4, x: 9,  y: 1.5, z: 6,  distance: 18 },
+      // General dark fill — tightened (dist 18->11, int 0.4->0.26) so the open
+      // mid-floor between the pool and poker tables falls toward black instead
+      // of holding a lifted flat-grey wash (rider: "flat grey ambient wash").
+      { type: 'point', color: 0x180022, intensity: 0.26, x: 9,  y: 1.5, z: 4,  distance: 11 },
     ],
     furniture: [
       // ── Bar — north wall, centered ──────────────────────────

@@ -439,13 +439,15 @@ class EngineClass {
       const span = w - 3.0;                             // total run width, inset from walls
       const segLen = Math.max(1.6, span / nSeg - gap);
       const cxm = (w - 1) / 2;
+      // S2.5 polish: one stop more floor presence so light traces fixture->floor
+      // at a glance — pool 0.24->0.34, specular streak 0.30->0.42.
       const fxPoolMat = new THREE.MeshBasicMaterial({
         map: this._fxRadialTexture(), color: 0xffefce, transparent: true,
-        opacity: 0.24, blending: THREE.AdditiveBlending, depthWrite: false,
+        opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false,
       });
       const fxStreakMat = new THREE.MeshBasicMaterial({
         map: this._fxGlossStreakTexture(), color: 0xe9f1ff, transparent: true,
-        opacity: 0.30, blending: THREE.AdditiveBlending, depthWrite: false,
+        opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false,
       });
       const fxPoolGeo = new THREE.PlaneGeometry(1, 1);
       for (let j = 0; j < nz; j++) {
@@ -463,13 +465,16 @@ class EngineClass {
           pool.position.set(sx, 0.017, pz);
           pool.renderOrder = 2;
           g.add(pool);
-          // Light-shaft: the SOURCE connective tissue joining housing to pool.
-          g.add(this._fxLightShaft(sx, pz, 2.36, 0xffe9c8, segLen * 0.7, 0.7, 0.07));
-          // Lacquer specular streak, offset a touch toward the camera (+z).
+          // Light-shaft: the SOURCE connective tissue joining housing to pool
+          // (0.07->0.11 so the fixture->floor trace reads at a glance).
+          g.add(this._fxLightShaft(sx, pz, 2.36, 0xffe9c8, segLen * 0.7, 0.7, 0.11));
+          // Lacquer specular streak. S2.5: pulled back under the bar (+0.35 ->
+          // +0.16) so the sheen anchors to its fixture instead of floating a
+          // half-tile out in the aisle (cubicle_farm critic).
           const streak = new THREE.Mesh(fxPoolGeo, fxStreakMat);
           streak.rotation.x = -Math.PI / 2;
           streak.scale.set(segLen + 0.5, 1.1, 1);
-          streak.position.set(sx, 0.018, pz + 0.35);
+          streak.position.set(sx, 0.018, pz + 0.16);
           streak.renderOrder = 3;
           g.add(streak);
         }

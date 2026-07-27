@@ -365,9 +365,15 @@ export class CityBackdrop {
     c.width = 64; c.height = 128;
     const ctx = c.getContext('2d');
     const g = ctx.createLinearGradient(0, 0, 0, 128);
-    g.addColorStop(0, 'rgba(255,255,255,0.9)');
-    g.addColorStop(0.45, 'rgba(255,255,255,0.28)');
-    g.addColorStop(0.8, 'rgba(255,255,255,0)');
+    // S2.5: the top stop was a hard 0.9-alpha edge, so a beam whose pole/head
+    // fell behind a wall poked over it as a "vertical smear with a clipped top
+    // edge" (garage critic). Feather the top to transparent and drop the bright
+    // band just below it, so a partly-occluded beam dissolves instead of
+    // clipping — the shaft now has no hard edge anywhere.
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(0.16, 'rgba(255,255,255,0.82)');
+    g.addColorStop(0.5, 'rgba(255,255,255,0.24)');
+    g.addColorStop(0.82, 'rgba(255,255,255,0)');
     g.addColorStop(1, 'rgba(255,255,255,0)');
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, 64, 128);
@@ -654,16 +660,16 @@ export class CityBackdrop {
       // with gaussian-feathered edges (no geometric silhouette anywhere);
       // reads as a soft pool of sodium hanging in the haze
       const beam = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.1 * s, 3.6),
+        new THREE.PlaneGeometry(1.1 * s, 2.6),
         new THREE.MeshBasicMaterial({
           map: this._beamTexture(), color: 0xffa04a, transparent: true, opacity: 0.07,
           blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
-      // Lower and shorter than v2: the shaft sits close over its pool
-      // instead of a tall column that pokes over floating room walls (the
-      // "smeared crimson/magenta blob" was a magenta beam behind a wall)
-      beam.position.set(px, 2.0, pz);
+      // Lower and shorter (rider "garage orphan smears"): the shaft hugs the
+      // pole base over its pool instead of a tall column that reads as an amber
+      // vertical smear floating unattached in the void.
+      beam.position.set(px, 1.5, pz);
       beam.rotation.y = Math.PI / 4;   // face the iso camera (azimuth PI/4)
       beam.renderOrder = 1;
       beam.visible = false;
@@ -672,14 +678,22 @@ export class CityBackdrop {
       // sodium pool on the (now readable) ground disc, not a floating cone.
       // Round-3: eased again (0.36 -> 0.26) so the shaft stops reading as a lone
       // "orange streak attached to nothing" over the wider asphalt catch.
-      this.streetFX.push({ mesh: beam, kind, base: 0.26, breathe: true });
+      // S2.5: eased once more (0.26 -> 0.16) so beams whose pole/head fall behind
+      // a wall recede to near-nothing — no orphan sodium smear — while the
+      // structured lamps keep their identity through the pole/head/pool.
+      // Wave-3 R2: eased again (0.10 -> 0.05) — a garage back-row beam poking over
+      // the wall with its pole occluded was still reading as a faint amber wisp
+      // in the upper void (rider). The pool + hot head carry the lamp now.
+      this.streetFX.push({ mesh: beam, kind, base: 0.05, breathe: true });
 
-      // The lamp standard — every emissive needs visible structure
-      // (critic: sodium cones hovering in void). A slim dark pole from
-      // asphalt to lamp head; barely lit, but the light hangs ON it.
+      // The lamp standard — every emissive needs visible structure (rider:
+      // amber smears "unattached to any lamp pole"). The pole was 0x232833 —
+      // near-invisible against the void, so its beam read as orphaned. Lifted
+      // to a legible cool grey and widened so every shaft plainly hangs ON a
+      // pole. Kept unlit (retint skips 'pole'), just brighter.
       const pole = new THREE.Mesh(
-        new THREE.BoxGeometry(0.09, 5.6, 0.09),
-        new THREE.MeshBasicMaterial({ color: 0x232833 })
+        new THREE.BoxGeometry(0.13, 5.6, 0.13),
+        new THREE.MeshBasicMaterial({ color: 0x5a6576 })
       );
       pole.position.set(px, 2.8, pz);
       pole.visible = false;
@@ -702,7 +716,7 @@ export class CityBackdrop {
       const smear = new THREE.Mesh(
         new THREE.PlaneGeometry(4.6 * s, 0.55),
         new THREE.MeshBasicMaterial({
-          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.26,
+          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.16,
           blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
@@ -791,7 +805,11 @@ export class CityBackdrop {
     if (this.streetLevel === on) return;
     this.streetLevel = on;
     this.streakY = on ? -0.25 : -16;
-    this._streakDim = on ? 1 : 0.2;
+    // Long-exposure street trails are motion-blur WHISPERS, not bright bars. At
+    // 1.0 they floated as orphan orange/red lines in the garage's walled void
+    // with no pole or pool (rider: "garage orphan smears … the rider says
+    // zero"). Halved so they read as subliminal road motion, never a bare streak.
+    this._streakDim = on ? 0.45 : 0.2;
     const t = TIME_OF_DAY[this.tod];
     if (t) {
       this._streakMatA.opacity = t.streakOpacity * this._streakDim;

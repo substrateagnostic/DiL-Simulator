@@ -231,7 +231,7 @@ export const Furniture = {
     // side, additive for a soft bloom kiss on the camera-facing rim. Same baked
     // falloff tex → the band eases off toward the ends, no hard laser stub.
     const lipMat = new THREE.MeshBasicMaterial({
-      map: glowTex, color: tint, transparent: true, opacity: 0.8,
+      map: glowTex, color: tint, transparent: true, opacity: 0.95,
       blending: THREE.AdditiveBlending, depthWrite: false,
     });
     const longLip = () => new THREE.Mesh(new THREE.PlaneGeometry(L, 0.07), lipMat);
@@ -255,6 +255,15 @@ export const Furniture = {
     return group;
   },
 
+  // Warm sodium pendant for the parking garage. The interior sodium floor
+  // pools among the parked cars had no visible source (S2.5 critic: "warm
+  // floor pools with no fixture"), so this is a short amber-tinted troffer
+  // hung above each pool — same self-lit diffuser + rim + floor read as the
+  // office rig, but warm so the sodium clearly traces to a hanging fixture.
+  garagePendant(length) {
+    return Furniture.ceilingFixture(typeof length === 'number' ? length : 1.8, 0xffb264);
+  },
+
   // Cached diffuser texture: a warm-white glow (~0.92 luma at the core)
   // feathering to TRANSPARENT at every edge, so the dark housing frames it and
   // there is no hard laser-bar clip. Baked falloff is what sources a soft
@@ -268,10 +277,13 @@ export const Furniture = {
     // Across-panel roll-off (canvas height -> panel width): warm core to
     // transparent edges.
     const gv = ctx.createLinearGradient(0, 0, 0, 64);
+    // One stop brighter (S2.5 polish): near-white core at full alpha + wider
+    // lit shoulders so the troffer reads as a self-lit diffuser from the iso
+    // camera and its warm core grazes the bloom threshold, not a grey slab.
     gv.addColorStop(0.0,  'rgba(238,231,214,0)');
-    gv.addColorStop(0.20, 'rgba(216,206,184,0.42)');
-    gv.addColorStop(0.5,  'rgba(246,241,228,0.96)');
-    gv.addColorStop(0.80, 'rgba(216,206,184,0.42)');
+    gv.addColorStop(0.18, 'rgba(228,219,198,0.58)');
+    gv.addColorStop(0.5,  'rgba(255,250,238,1.0)');
+    gv.addColorStop(0.82, 'rgba(228,219,198,0.58)');
     gv.addColorStop(1.0,  'rgba(238,231,214,0)');
     ctx.fillStyle = gv;
     ctx.fillRect(0, 0, 256, 64);
@@ -2176,12 +2188,14 @@ export const Furniture = {
 
   receptionDesk() {
     const group = new THREE.Group();
-    // Front panel (curved feel with box)
+    // Front counter panel. Lowered 1.1→0.9 so the SEATED receptionist's head and
+    // shoulders clear it and she reads as a person at a desk, not a hair lump
+    // slumped into it (addendum: seated NPC must be legible behind the desk).
     const front = new THREE.Mesh(
-      new THREE.BoxGeometry(2.5, 1.1, 0.1),
+      new THREE.BoxGeometry(2.5, 0.9, 0.1),
       Materials.deskDark()
     );
-    front.position.set(0, 0.55, 0.35);
+    front.position.set(0, 0.45, 0.35);
     group.add(front);
     // Work surface
     const top = new THREE.Mesh(
@@ -2190,14 +2204,19 @@ export const Furniture = {
     );
     top.position.y = 0.72;
     group.add(top);
+    // Counter lip along the front top edge — keeps the transaction-counter read
+    // without walling off the person behind it.
+    const lip = new THREE.Mesh(new THREE.BoxGeometry(2.5, 0.06, 0.12), Materials.desk());
+    lip.position.set(0, 0.9, 0.35);
+    group.add(lip);
     // Side panels
     const sideMat = Materials.deskDark();
-    const sideGeo = new THREE.BoxGeometry(0.06, 1.1, 0.7);
+    const sideGeo = new THREE.BoxGeometry(0.06, 0.9, 0.7);
     const left = new THREE.Mesh(sideGeo, sideMat);
-    left.position.set(-1.25, 0.55, 0);
+    left.position.set(-1.25, 0.45, 0);
     group.add(left);
     const right = new THREE.Mesh(sideGeo, sideMat);
-    right.position.set(1.25, 0.55, 0);
+    right.position.set(1.25, 0.45, 0);
     group.add(right);
     group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
     return group;
@@ -4233,15 +4252,21 @@ export const Furniture = {
     // flush to the wall behind the sign, additive, so the emissive actually
     // lights its surroundings. Sized past the sign so the glow reads on the
     // wall around it instead of the sign floating on a dead surface.
+    // CLAMPED to the wall plane (rider: the halo was a disc "bleeding past the
+    // roofline into the void sky"). The old spill sat at z=-0.5 — BEHIND the
+    // wall, out in the void — so its radial disc glowed in the sky with a hard
+    // round edge. Pulled to the room-facing wall surface (z just in front of
+    // the sign backing) and shrunk so it stays UNDER the roofline: now it reads
+    // as neon light kissing the wall, not a sprite billboard in the void.
     const spill = new THREE.Mesh(
-      new THREE.PlaneGeometry(4.8, 3.0),
+      new THREE.PlaneGeometry(4.0, 1.9),
       new THREE.MeshBasicMaterial({
         map: Furniture._neonSpillTex(), color: 0xff2a9e,
-        transparent: true, opacity: seam ? 0.5 : 0.62,
+        transparent: true, opacity: seam ? 0.44 : 0.55,
         blending: THREE.AdditiveBlending, depthWrite: false,
       })
     );
-    spill.position.set(0, 2.15, -0.5);
+    spill.position.set(0, 2.1, 0.02);
     spill.renderOrder = 1;
     group.add(spill);
 
@@ -4258,16 +4283,21 @@ export const Furniture = {
     // neon ghosting on the wet floor" (Drive) that the round-3 critic named
     // the whole indictment — Engine.applyRoomFX supplies the soft GLOW; this
     // supplies the recognisable mirrored SIGN the glow alone can't.
+    // S2.5 polish: the ghost was floating a tile out in the mid-floor. Re-
+    // anchored so its bright edge HUGS the base of the wall the sign hangs on
+    // and the smear STRETCHES toward the camera (longer plane, pushed +z), with
+    // more blur (softer tex) and ~40% dimmer (0.17 -> 0.10) so it reads as a wet
+    // wall-foot reflection, not a second sign lying on the floor.
     const ghost = new THREE.Mesh(
-      new THREE.PlaneGeometry(3.1, 3.3),
+      new THREE.PlaneGeometry(3.2, 4.6),
       new THREE.MeshBasicMaterial({
         map: Furniture._neonFloorGhostTex(seam),
-        transparent: true, opacity: 0.17,
+        transparent: true, opacity: 0.10,
         blending: THREE.AdditiveBlending, depthWrite: false,
       })
     );
     ghost.rotation.x = -Math.PI / 2;
-    ghost.position.set(0, 0.02, 1.62);   // on the floor, reaching into the room
+    ghost.position.set(0, 0.02, 2.35);   // bright edge at the wall foot, tail toward camera
     ghost.renderOrder = 4;
     group.add(ghost);
 
@@ -4298,12 +4328,12 @@ export const Furniture = {
       const y = 52 + t * 150;
       ctx.globalAlpha = 0.9 * (1 - t * 0.72);
       if (seam) {
-        ctx.shadowBlur = 22 + t * 46;
+        ctx.shadowBlur = 30 + t * 64;   // S2.5: blurrier wet smear
         ctx.strokeStyle = i === 0 ? '#ff9ed8' : '#ff2aa8';
         ctx.lineWidth = 12 + t * 10;
         ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(216, y); ctx.stroke();
       } else {
-        ctx.shadowBlur = 20 + t * 40;
+        ctx.shadowBlur = 28 + t * 60;   // S2.5: blurrier wet smear
         ctx.font = 'bold 40px Arial, sans-serif';
         ctx.fillStyle = i === 0 ? '#ffbdec' : '#e23bad';
         ctx.fillText('TRUST ISSUES', 128, y);

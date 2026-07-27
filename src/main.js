@@ -33,7 +33,7 @@ class Game {
     // Screenshot-pipeline fixtures (?dev&fixture=act5&shot=server_room&hud=0
     // or &fight=karen) boot straight into a deterministic game state.
     const params = new URLSearchParams(window.location.search);
-    if (DEV_MODE && (params.has('fixture') || params.has('shot') || params.has('fight'))) {
+    if (DEV_MODE && (params.has('fixture') || params.has('shot') || params.has('fight') || params.has('portrait'))) {
       this._startFixture(params);
     } else {
       // Start with title screen
@@ -107,8 +107,36 @@ class Game {
       setTimeout(() => ex._startCombat(fight), 700);
     }
 
+    // Portrait mode (?dev&portrait=andrew) — a combat-framed close-up of a
+    // single character with no combat engine, so the shoot suite can VERIFY the
+    // player (Andrew) at the real combat camera (addendum: "Andrew is
+    // unverifiable — add a player-side combat close-up; no character pass
+    // without it"). Renders one CharacterBuilder build on the combat stage,
+    // holding an 'angry' beat so the face emotes.
+    const portrait = params.get('portrait');
+    if (portrait) {
+      const [{ CombatScene }] = await Promise.all([import('./combat/CombatScene.js')]);
+      const scene = new CombatScene();
+      scene.setCombatants([portrait], [], ex.player);
+      let held = false;
+      const portraitState = {
+        enter() {}, exit() {}, pause() {}, resume() {},
+        update(dt) {
+          scene.update(dt);
+          const e = scene.enemyGroups[0];
+          if (e && e.animator && !held && scene._introT >= 1) {
+            e.animator.setExpression('angry');   // prove the six-expression set on camera
+            held = true;
+          }
+          Engine.renderScene(scene.scene, scene.camera);
+          Engine.skipDefaultRender();
+        },
+      };
+      this.stateManager.push(portraitState);
+    }
+
     // Ready signal for the shoot harness (after the scene settles)
-    setTimeout(() => { window.__shotReady = true; }, fight ? 3500 : 1200);
+    setTimeout(() => { window.__shotReady = true; }, (fight || portrait) ? 3500 : 1200);
   }
 
   _startGame(mode, slot = 1) {

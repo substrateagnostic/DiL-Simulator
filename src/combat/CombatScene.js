@@ -34,17 +34,34 @@ export class CombatScene {
     this.camera.position.set(0, 1.5, 5);
     this.camera.lookAt(0, 0.95, 0);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.45);
     this.scene.add(ambient);
     const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
     dirLight.position.set(2, 5, 3);
     this.scene.add(dirLight);
-    const backLight = new THREE.DirectionalLight(0x8888ff, 0.3);
-    backLight.position.set(-2, 3, -3);
-    this.scene.add(backLight);
-    const rimLight = new THREE.DirectionalLight(0xe94560, 0.4);
-    rimLight.position.set(-3, 2, 1);
-    this.scene.add(rimLight);
+    // Cool FRONT FILL at face height on the camera axis — lifts the faces out
+    // of the venue-wash mud (addendum: "zero front fill … faces fall into
+    // mud"). Kept cool-white and near-frontal so it reads the down-nodded face
+    // features straight-on without flattening the Clair-Obscur key/rim drama.
+    const fillLight = new THREE.DirectionalLight(0xc6d4f2, 0.62);
+    fillLight.position.set(0.3, 1.7, 7.5);
+    this.scene.add(fillLight);
+    // A second, tighter warm-neutral fill from slightly below sells the eyes on
+    // the up-looking combat cam — a soft "eye light" so sockets don't read as
+    // dark hollows under the brows.
+    const eyeLight = new THREE.DirectionalLight(0xffe8d8, 0.33);
+    eyeLight.position.set(0, 0.4, 6);
+    this.scene.add(eyeLight);
+    // Two BACK RIMS for Clair-Obscur silhouette separation on the close-ups
+    // (addendum: "one cool rim/backlight per combatant"). Both sit BEHIND the
+    // actors so they edge-light the outline instead of muddying the face — the
+    // magenta one carries the Refn accent, the cyan one the cold key.
+    const rimCyan = new THREE.DirectionalLight(0x6ea8ff, 0.55);
+    rimCyan.position.set(-3.5, 3, -3.5);
+    this.scene.add(rimCyan);
+    const rimMagenta = new THREE.DirectionalLight(0xe94560, 0.5);
+    rimMagenta.position.set(3.5, 2.6, -3.2);
+    this.scene.add(rimMagenta);
 
     this._createBackground();
 
@@ -169,6 +186,14 @@ export class CombatScene {
           // (critic: "a visible stage seam"). Fully black below the floor,
           // ramping back to full a little above it.
           color *= smoothstep(0.27, 0.52, uv.y);
+          // S2.5: screen-space hash dither (~1.6% span) breaks the 8-bit
+          // banding in the near-black navy field — the smooth ramps quantised
+          // into visible arcs on the deep blue lobes.
+          // Wave-3: dither lifted (4→7 /255) — the amber (Chad) and green
+          // (Intern) washes are brighter low-saturation ramps that still showed
+          // concentric 8-bit banding through the radial vignette at the old span.
+          float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+          color += (dither - 0.5) * (7.0 / 255.0);
           gl_FragColor = vec4(color, 1.0);
         }
       `,
@@ -263,7 +288,7 @@ export class CombatScene {
       new THREE.PlaneGeometry(1, 1),
       new THREE.MeshBasicMaterial({
         map: CombatScene._bounceTex, color: 0xe94560, transparent: true,
-        opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false,
+        opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false,
       })
     );
     bounce.rotation.x = -Math.PI / 2;
@@ -286,12 +311,16 @@ export class CombatScene {
       new THREE.PlaneGeometry(1, 1),
       new THREE.MeshBasicMaterial({
         map: CombatScene._bounceTex, color: 0x000000, transparent: true,
-        opacity: 0.5, depthWrite: false,
+        opacity: 0.92, depthWrite: false,
       })
     );
     ao.rotation.x = -Math.PI / 2;
-    ao.scale.set(1.02 * s, 0.6 * s, 1);
-    ao.position.set(0, 0.045 * s, 0.02 * s);
+    // A tight, DARK contact ellipse pushed forward under the shoes. Opacity is
+    // now high enough (and the red kiss dimmed above) that the shadow WINS at
+    // the contact line — the figure plants instead of floating on the spotlight
+    // (rider: "light running under the toe … she floats on the pool").
+    ao.scale.set(0.82 * s, 0.46 * s, 1);
+    ao.position.set(0, 0.045 * s, 0.13 * s);
     ao.renderOrder = 4;   // after the red kiss so it darkens the pool center
     ao.userData.noFlash = true;
     group.add(ao);

@@ -12,6 +12,9 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'short',
     accessories: ['coffee_mug'],
+    // v5 face/proportion fields
+    gender: 'm', eyeColor: 0x4a3222, jaw: 0.84, chin: 1.05,
+    beard: 'stubble', beardColor: 0x2a2016,
   },
   ross: {
     tone: 'silly',
@@ -25,6 +28,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['bluetooth_earpiece', 'boss_mug'],
     shoeSize: 0.75,
+    // v5 face — soft everyman, faintly weak chin (defeated-optimist Loman)
+    gender: 'm', eyeColor: 0x4a3527, jaw: 0.85, chin: 0.98,
   },
   janet: {
     name: 'Janet',
@@ -36,6 +41,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'bun',
     accessories: ['wine_tumbler'],
+    // v5 face — tired dry wit, muted worn lip, narrow jaw
+    gender: 'f', eyeColor: 0x5a4030, lipColor: 0x9a5a54, jaw: 0.81,
   },
   alex_it: {
     name: 'Alex from IT',
@@ -49,6 +56,8 @@ export const CHARACTER_CONFIGS = {
     beard: true,
     beardColor: 0x8a5f38, // ginger-brown
     accessories: [],
+    // v5 face — late-30s Dirk Gently, hazel eyes to pair the ginger beard
+    gender: 'm', eyeColor: 0x6a6238, jaw: 0.84, chin: 1.02,
   },
   intern: {
     tone: 'silly',
@@ -62,6 +71,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['name_tag'],
     widthScale: 1.18, heightScale: 0.92, headScale: 1.05,
+    // v5 face — young, timid, small chin (early-Charlie-Brown big head)
+    gender: 'm', eyeColor: 0x4a3a2a, jaw: 0.80, chin: 0.94,
   },
   diane: {
     name: 'Diane',
@@ -73,6 +84,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'bun',
     accessories: ['clipboard'],
+    // v5 face — composed August-Wilson dignity, steady deep-brown eyes
+    gender: 'f', eyeColor: 0x2e1d12, lipColor: 0xa5605a, jaw: 0.83,
   },
   janitor: {
     name: 'Mysterious Janitor',
@@ -87,32 +100,39 @@ export const CHARACTER_CONFIGS = {
     beardColor: 0xd8d4c8, // white stubble
     accessories: ['mop', 'gold_rolex'],
     hunch: 0.16, heightScale: 0.96,
+    // v5 face — weathered elder griot, broad jaw, deep-set eyes
+    gender: 'm', age: 'old', eyeColor: 0x3a2818, jaw: 0.86, chin: 1.02,
   },
   karen: {
     tone: 'silly',
     name: 'Karen Henderson',
     bodyColor: 0xcc6688,
     pantsColor: 0x2a2a3a,
-    shirtColor: null,
+    shirtColor: 0xf2e8dc,   // cream blouse in the collar V
     tieColor: null,
-    skinColor: COLORS.SKIN,
+    skinColor: 0xf0c0a0,
     hairColor: COLORS.HAIR_BLONDE,
     hairStyle: 'karen',
     accessories: ['purse'],
     hunch: 0.14, headScale: 1.05,
+    // v5 face/proportion fields
+    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.86, lipColor: 0xc0506a, headForward: 0.05,
   },
   chad: {
     tone: 'silly',
     name: 'Chad Henderson',
     bodyColor: 0xcc4444, // Red polo
-    pantsColor: COLORS.KHAKI,
+    pantsColor: 0x6f6042, // darker/cooler khaki — was skin-toned (read bare-legged)
     shirtColor: null,
     tieColor: null,
-    skinColor: COLORS.SKIN,
-    hairColor: COLORS.HAIR_BLONDE,
-    hairStyle: 'backwards_cap',
+    skinColor: 0xd99a70,   // gym tan
+    hairColor: 0x8a6a38,   // dark-blonde quiff — reads against the tan (was HAIR_BLONDE = bald)
+    hairStyle: 'slick',    // pompadour quiff, not a bald-fronted backwards cap
     accessories: ['protein_shake'],
+    belt: true,
     widthScale: 1.35, heightScale: 1.06, headScale: 0.92,
+    // v5 face/proportion fields — broad jaw, jutting chin
+    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.2, shoulderScale: 1.5, waistScale: 0.8,
   },
   grandma: {
     name: 'Grandma Henderson',
@@ -120,11 +140,14 @@ export const CHARACTER_CONFIGS = {
     pantsColor: 0x6a6a7a,
     shirtColor: null,
     tieColor: null,
-    skinColor: COLORS.SKIN,
+    skinColor: 0xe6c2a6,
     hairColor: COLORS.HAIR_WHITE,
     hairStyle: 'shawl',
     accessories: ['cane'],
     heightScale: 0.76, hunch: 0.38, widthScale: 1.12, headScale: 1.12,
+    // v5 face/proportion fields — elderly read
+    gender: 'f', age: 'old', eyeColor: 0x5a4a38, jaw: 0.9, glasses: 'reading',
+    lapels: false, shoulderScale: 0.92, headForward: 0.05,
   },
   compliance: {
     tone: 'scary',
@@ -137,6 +160,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: ['clipboard', 'sunglasses'],
+    // v5 face — stern square auditor jaw (eyes hidden behind the shades)
+    gender: 'm', eyeColor: 0x3a2a1c, jaw: 0.88, chin: 1.05,
   },
   regional: {
     name: 'Regional Manager',
@@ -149,6 +174,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['golf_putter'],
     widthScale: 1.15, heightScale: 1.04,
+    // v5 face — seasoned exec, strong jaw
+    gender: 'm', eyeColor: 0x4a3828, jaw: 0.90, chin: 1.05,
   },
   ross_boss: {
     name: 'Ross (Unhinged)',
@@ -160,6 +187,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'short',
     accessories: ['bluetooth_earpiece', 'golf_putter'],
+    // v5 face — same man as Ross (identical face fields)
+    gender: 'm', eyeColor: 0x4a3527, jaw: 0.85, chin: 0.98,
   },
   rachel: {
     tone: 'scary',
@@ -173,6 +202,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bob',
     accessories: ['tablet', 'pearl_earrings'],
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
+    // v5 face — sharp/angular, cold steel eyes, severe cool lip
+    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.78, chin: 1.02,
   },
   isaiah: {
     name: 'Isaiah',
@@ -184,6 +215,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: ['glasses'],
+    // v5 face — calm balanced Stoic, deep-brown eyes
+    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.84, chin: 1.0,
   },
   hr_rep: {
     name: 'HR Representative',
@@ -195,6 +228,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'bun',
     accessories: ['clipboard'],
+    // v5 face
+    gender: 'f', eyeColor: 0x4a3325, lipColor: 0xb0655c, jaw: 0.83,
   },
   security_guard: {
     name: 'Security Guard',
@@ -207,6 +242,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: [],
     widthScale: 1.28, heightScale: 1.08, headScale: 0.95,
+    // v5 face — broad, strong square jaw
+    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.92, chin: 1.06,
   },
   cfos_assistant: {
     name: 'CFO\'s Assistant',
@@ -219,6 +256,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',
     accessories: ['glasses'],
     heightScale: 1.02, widthScale: 0.88,
+    // v5 face — sharp corporate climber
+    gender: 'm', eyeColor: 0x4a3828, jaw: 0.85, chin: 1.02,
   },
   regional_director: {
     tone: 'scary',
@@ -232,6 +271,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: [],
     heightScale: 1.1, widthScale: 1.12,
+    // v5 face — imposing, strong jaw
+    gender: 'm', eyeColor: 0x33241a, jaw: 0.90, chin: 1.06,
   },
   algorithm: {
     name: 'The Algorithm',
@@ -256,6 +297,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BLONDE,
     hairStyle: 'slick',
     accessories: ['clipboard'],
+    // v5 face — blonde consultant, warm-hazel eyes
+    gender: 'm', eyeColor: 0x5a4830, jaw: 0.85, chin: 1.0,
   },
   restructuring_analyst: {
     name: 'Restructuring Analyst',
@@ -267,6 +310,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: ['glasses'],
+    // v5 face
+    gender: 'm', eyeColor: 0x3a2a1c, jaw: 0.84, chin: 1.0,
   },
   corporate_lawyer: {
     tone: 'scary',
@@ -279,6 +324,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_GRAY,
     hairStyle: 'slick',
     accessories: ['clipboard', 'glasses'],
+    // v5 face — senior, stern; cold gray eyes match the gray hair
+    gender: 'm', eyeColor: 0x5a5560, jaw: 0.86, chin: 1.04,
   },
   data_analytics_lead: {
     name: 'Data Analytics Lead',
@@ -290,6 +337,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: ['glasses'],
+    // v5 face
+    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.84, chin: 1.0,
   },
   chief_of_restructuring: {
     tone: 'scary',
@@ -303,6 +352,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['clipboard'],
     heightScale: 1.12, widthScale: 1.06,
+    // v5 face — imposing, icy pale eyes to match the white hair, strong jaw
+    gender: 'm', eyeColor: 0x60636c, jaw: 0.90, chin: 1.05,
   },
   rachel_boss: {
     tone: 'scary',
@@ -316,6 +367,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bob',
     accessories: ['tablet', 'pearl_earrings'],
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
+    // v5 face — identical to Rachel (same woman, boss form)
+    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.78, chin: 1.02,
   },
 
   // ── Act 6½ city cast ──────────────────────────────────────────────
@@ -330,6 +383,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: ['glasses'],
     heightScale: 0.9, hunch: 0.08, headScale: 1.05,
+    // v5 face — retired Deputy Recorder, warm elder, kind deep-brown eyes
+    gender: 'f', age: 'old', eyeColor: 0x3a2818, lipColor: 0xa8655c, jaw: 0.84, chin: 1.0,
   },
   parking_enforcer: {
     name: 'Officer Reyes',
@@ -342,6 +397,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'backwards_cap',
     accessories: ['clipboard'],
     widthScale: 1.15, browAngle: -0.15,
+    // v5 face — broad, stern municipal jaw
+    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.90, chin: 1.05,
   },
   networking_guy: {
     tone: 'silly',
@@ -355,6 +412,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',
     accessories: ['bluetooth_earpiece'],
     taper: 1.25, mouthWidth: 1.3,
+    // v5 face — glad-handing salesman
+    gender: 'm', eyeColor: 0x4a3828, jaw: 0.86, chin: 1.0,
   },
   bus_driver: {
     name: 'Marlene',
@@ -367,6 +426,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: ['sunglasses'],
     widthScale: 1.1,
+    // v5 face — bold lip (eyes behind the shades)
+    gender: 'f', eyeColor: 0x4a3020, lipColor: 0xb05a50, jaw: 0.85, chin: 1.02,
   },
   records_clerk: {
     name: 'The Clerk',
@@ -379,6 +440,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',
     accessories: ['glasses'],
     heightScale: 1.04, widthScale: 0.85, browAngle: 0.05,
+    // v5 face — gaunt, pale, washed-out eyes (Borges' librarian)
+    gender: 'm', eyeColor: 0x4a4238, jaw: 0.80, chin: 1.0,
   },
   diner_regular: {
     name: 'Earl',
@@ -393,6 +456,8 @@ export const CHARACTER_CONFIGS = {
     beardColor: 0xb8b0a0,
     accessories: ['coffee_mug'],
     widthScale: 1.12, hunch: 0.08,
+    // v5 face — weathered old regular, broad jaw
+    gender: 'm', age: 'old', eyeColor: 0x4a3828, jaw: 0.88, chin: 1.04,
   },
   barista: {
     name: 'Jules',
@@ -405,6 +470,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: [],
     heightScale: 0.96,
+    // v5 face — young, soft, subtle lip
+    gender: 'f', eyeColor: 0x2e1d12, lipColor: 0xa5605a, jaw: 0.81, chin: 0.96,
   },
   // The Firm — they move like a school of fish
   firm_partner: {
@@ -419,6 +486,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',
     accessories: ['tablet'],
     heightScale: 1.08, widthScale: 0.9, browAngle: -0.1,
+    // v5 face — chorus: identical cold steel eyes + sharp jaw across all three
+    gender: 'm', eyeColor: 0x6a6e78, jaw: 0.80, chin: 1.02,
   },
   firm_associate: {
     tone: 'scary',
@@ -432,6 +501,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',
     accessories: ['clipboard'],
     heightScale: 1.02, widthScale: 0.88, browAngle: -0.1,
+    // v5 face — chorus uniformity: same steel eyes + jaw as the Partner
+    gender: 'm', eyeColor: 0x6a6e78, jaw: 0.80, chin: 1.02,
   },
   firm_paralegal: {
     tone: 'scary',
@@ -445,6 +516,8 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bob',
     accessories: ['glasses'],
     heightScale: 0.96, widthScale: 0.85, browAngle: -0.1,
+    // v5 face — chorus: same steel eyes, cold muted lip, sharp jaw
+    gender: 'f', eyeColor: 0x6a6e78, lipColor: 0x8a5a5e, jaw: 0.80, chin: 1.02,
   },
 
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
@@ -458,6 +531,8 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'short',
     accessories: [],
+    // v5 face — neutral default (visual fields spread over by ClientGenerator)
+    gender: 'm', eyeColor: 0x4a3020, jaw: 0.84, chin: 1.0,
   },
 };
 

@@ -39,6 +39,9 @@ export class CharacterAnimator {
     this.isSitting = sitting;
     if (!sitting) {
       this.group.position.y = 0;
+      // Straighten the knees again (they fold for the seated pose).
+      if (this.group.leftLeg?.knee)  this.group.leftLeg.knee.rotation.x  = 0;
+      if (this.group.rightLeg?.knee) this.group.rightLeg.knee.rotation.x = 0;
     }
   }
 
@@ -57,12 +60,21 @@ export class CharacterAnimator {
     }
 
     if (this.isSitting) {
-      // Raise hips to seat height (v4 models carry their own leg length)
+      // Drop the hips onto the seat: hip pivot lands at SEAT_Y in world.
+      // v5 legs are long (legLength ~0.70), so this is negative — the thigh
+      // folds forward and the shin bends back down to the floor via the
+      // per-leg knee pivot, instead of the whole body floating above the
+      // chair (the old Math.max(0.02, …) clamp only worked for v4's 0.35 legs).
       const legLen = this.group.legLength ?? CHAR.LEG_HEIGHT;
-      this.group.position.y = Math.max(0.02, SEAT_Y - legLen);
-      // Bend legs forward (horizontal)
+      const hasKnee = !!(this.group.leftLeg && this.group.leftLeg.knee);
+      this.group.position.y = hasKnee ? (SEAT_Y - legLen) : Math.max(0.02, SEAT_Y - legLen);
+      // Thighs go horizontal at the hip; knees fold the shins back down.
       if (this.group.leftLeg)  this.group.leftLeg.rotation.x  = Math.PI / 2;
       if (this.group.rightLeg) this.group.rightLeg.rotation.x = Math.PI / 2;
+      if (hasKnee) {
+        this.group.leftLeg.knee.rotation.x  = -Math.PI / 2;
+        this.group.rightLeg.knee.rotation.x = -Math.PI / 2;
+      }
       // Arms rest slightly forward
       if (this.group.leftArm)  this.group.leftArm.rotation.x  = 0.2;
       if (this.group.rightArm) this.group.rightArm.rotation.x = 0.2;
