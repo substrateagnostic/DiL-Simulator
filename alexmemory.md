@@ -15,6 +15,25 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## LOG
 
+### 2026-07-27 ~10:10 — WAVE 3.5 COMMITTED (9677007) + WAVE 4 FINALE FLIES
+- Figure finish landed: Karen's "horns" replaced by a continuous scalp
+  cap, Grandma un-bearded, Andrew's neck banding gone (his head is now
+  "the best in the cast" per the sculptor critic), eyes carry catchlights
+  at fight distance, Chad's yoke/crotch/grip fixed, garage smears culled
+  to two subliminal pixels. Punch list (3×-zoom-only): prop finger-wrap,
+  knee crease arcs, Karen heel sliver — banked for HANDOFF.
+- **Wave 4 = the finale build: COMBAT CINEMATOGRAPHY.** Clair Obscur's
+  law ("every move is a level sequence") lands as a data-driven timeline
+  sequencer: per-tag ability cinematics (legal = paper-flurry, social =
+  speech-shockwave, audit = cold zoom, technical = glitch), enemy intro
+  banners, HEAVY-telegraph anticipation, arena re-light per venue in the
+  Refn language. New verification tool: tools/cine-shoot.mjs plays a REAL
+  attack and captures 8-frame bursts so the critics judge motion like a
+  film contact strip. A cast-bugs rider fixes Grandma's missing mouth
+  (regression), glasses-eye deadness, Intern crown wedge.
+- After Wave 4: watch-close (final contact sheet, before/afters for you,
+  HANDOFF, memory, Corner letter) — reserved ahead of your ~17:40 reset.
+
 ### 2026-07-27 ~09:20 — WAVE 3 COMMITTED (8ceb05b): THE CAST BECAME PEOPLE
 - CharacterBuilder v5 is live in the game: real proportions, tailored
   clothing, six working expressions (confirmed firing mid-combat), glasses

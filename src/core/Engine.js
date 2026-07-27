@@ -599,6 +599,20 @@ class EngineClass {
       core.position.set(item.x, 0.019, item.z + dir * 2.5);
       core.renderOrder = 4;
       g.add(core);
+
+      // CAST-BUGS item 6 — a real point light for the magenta reflection pool.
+      // The wash + core above are emissive floor decals (they light nothing), and
+      // every practical in the lounge is tightened to hug furniture, so a character
+      // standing IN the visually-lit pool caught no light and rendered as a
+      // pure-black cutout. The light is pushed a few tiles toward the camera (+z)
+      // from the pool centre so it fills the character's CAMERA-FACING side (a
+      // light left at the wall/pool centre only rimmed their far side). Cheap (no
+      // shadow map); short range + decay so it lifts the pool zone, not the whole
+      // deliberately-black mid-floor.
+      const poolLight = new THREE.PointLight(0xff2a8e, 3.6, 8, 2);
+      poolLight.position.set(item.x, 2.3, item.z + dir * 3.1 + 3.4);
+      poolLight.userData.noFlash = true;
+      g.add(poolLight);
     }
 
     // 5b. Server-rack cyan underglow — the "drop a cyan pool on the floor

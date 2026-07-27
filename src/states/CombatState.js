@@ -10,6 +10,7 @@ import { VOICE_ACTIONS, VOICES } from '../data/voices.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
+import { CombatCinematics, ARENA_PALETTES, resolveArena } from '../combat/CombatCinematics.js';
 import { DEV_MODE } from '../utils/constants.js';
 
 export class CombatState {
@@ -53,6 +54,9 @@ export class CombatState {
     this.hud = new CombatHUD();
     this.floatingText = new FloatingText();
     this.particles = new ParticleSystem(this.scene.scene);
+    // Cinematic sequencer — authored camera + flourishes layered on the scene.
+    this.cine = new CombatCinematics(this.scene, this.hud, this.particles);
+    this._enemyTelegraphInfo = {}; // per-enemy { attack, heavy } stashed from telegraph
 
     this.phase = 'intro';                 // intro, ally_turn, targeting, animating, enemy_phase, result
     this.animTimer = 0;
@@ -67,6 +71,16 @@ export class CombatState {
   }
 
   enter() {
+    // Hide the exploration HUD (location badge + quest/objective tracker) for
+    // the duration of combat. ExplorationState.pause() leaves it up, so without
+    // this the OBJECTIVE panel + "Parking Garage" badge bleed through the fight
+    // and collide with enemy taunts (critic). Restored in exit().
+    this._explorationHud = document.querySelector('.exploration-hud');
+    if (this._explorationHud) {
+      this._explorationHudDisplay = this._explorationHud.style.display;
+      this._explorationHud.style.display = 'none';
+    }
+
     // Build scene with all enemies + the party
     this.scene.setCombatants(this.enemyIdsList, this.partyCharIds, this.player);
 
@@ -108,28 +122,10 @@ export class CombatState {
       this.engine.voiceState.charterUnlocked = true;
     }
 
-    // Backdrop colors keyed by primary enemy (legacy mapping)
-    const bgColors = {
-      intern: [0x1a2a1a, 0x0a3a0a, 0x2a3a1a, 0x4a8a2a],
-      karen: [0x3a0a2a, 0x5a0a3a, 0x2a0a4a, 0xe94560],
-      chad: [0x3a2a0a, 0x5a3a0a, 0x2a1a0a, 0xdd8833],
-      grandma: [0x2a2a3a, 0x3a3a4a, 0x1a1a2a, 0x8888bb],
-      compliance: [0x0a0a1a, 0x1a1a2a, 0x0a0a2a, 0xcc2222],
-      regional: [0x2a1a0a, 0x3a2a1a, 0x4a3a2a, 0xdaa520],
-      ross_boss: [0x1a3a1a, 0x0a2a3a, 0x2a1a3a, 0xe94560],
-      reception_client: [0x0a1a2a, 0x1a2a3a, 0x0a0a1a, 0x3a8aaa],
-      security_guard: [0x1a1a2a, 0x2a2a3a, 0x0a0a1a, 0x4a6a8a],
-      hr_rep: [0x2a1a3a, 0x3a2a4a, 0x1a0a2a, 0x6a4a8a],
-      restructuring_analyst: [0x1a1a1a, 0x2a2a2a, 0x0a0a0a, 0x888888],
-      brand_consultant: [0x3a1a2a, 0x4a2a3a, 0x2a0a1a, 0xcc6688],
-      corporate_lawyer: [0x0a0a0a, 0x1a1a1a, 0x0a0a0a, 0xaaaaaa],
-      rachel_boss: [0x0a0a2a, 0x1a1a3a, 0x0a0a1a, 0xc0c0c0],
-      cfos_assistant: [0x1a0a2e, 0x2a1a3e, 0x0a0a1e, 0x8844cc],
-      regional_director: [0x0a1628, 0x1a2638, 0x0a0a18, 0x4488cc],
-      algorithm: [0x000000, 0x0a0a0a, 0x000000, 0xff0000],
-    };
-    const colors = bgColors[this.actualEnemyId] || [0x1a0533, 0x0a2463, 0x3e1f47, 0xe94560];
-    this.scene.setBackgroundColors(...colors);
+    // Per-venue arena palette (backdrop swirl + rim tint). Resolved from the
+    // encounter's `arena` field, then the enemy-id venue map, then a default.
+    this._arena = resolveArena(this.encounterConfig, this.actualEnemyId);
+    this.scene.setArenaLighting(ARENA_PALETTES[this._arena] || ARENA_PALETTES.conference);
 
     // HUD: enemies + party in the order the engine has them
     const enemiesView = this.engine.enemies.map(e => ({ name: e.name, hp: e.hp, maxHP: e.maxHP }));
@@ -150,7 +146,13 @@ export class CombatState {
     this.hud.onAllyAbilitySelect = (id) => this._handleAllyAbility(id);
 
     this.phase = 'intro';
-    this.animTimer = 1.0;
+    this.animTimer = 1.7; // longer beat so the intro banner + orbit-settle breathe
+
+    // Enemy intro: kinetic name banner + one taunt line, choreographed with the
+    // CombatScene slide-in and a camera orbit-settle onto the enemy.
+    const introName = this.engine.enemies[0]?.name || 'Opponent';
+    this.hud.showEnemyIntro(introName, this._introTaunt(), { hold: 1650 });
+    this.cine.play('intro', {});
 
     this._resizeHandler = () => this.scene.resize();
     window.addEventListener('resize', this._resizeHandler);
@@ -158,10 +160,21 @@ export class CombatState {
     AudioManager.playSfx('confirm');
     // Encounters may specify a battle-music variant via `music` in their config
     AudioManager.playMusic(this.encounterConfig.music || 'combat');
+
+    // Dev-only handle for the cinematics verification harness (tools/cine-shoot):
+    // lets it poll input readiness and trigger the real power-move sequence.
+    if (DEV_MODE && typeof window !== 'undefined') window.__combat = this;
   }
 
   exit() {
+    if (DEV_MODE && typeof window !== 'undefined' && window.__combat === this) window.__combat = null;
+    // Restore the exploration HUD hidden on enter().
+    if (this._explorationHud) {
+      this._explorationHud.style.display = this._explorationHudDisplay || '';
+      this._explorationHud = null;
+    }
     this.hud.remove();
+    this.cine.dispose();
     this.particles.dispose();
     this.scene.dispose();
     window.removeEventListener('resize', this._resizeHandler);
@@ -535,6 +548,9 @@ export class CombatState {
       if (result.message) this.hud.showMessage(result.message);
 
       if (result.damage) {
+        // Cinematic: lean on the coil, recoil on impact. HEAVY telegraphed
+        // hits get the vignette-warned, punchier ENEMY_HEAVY beat.
+        this.cine.play('enemy_attack', { heavy: !!this._enemyTelegraphInfo[enemyIndex]?.heavy });
         this.scene.enemyAttackAnim(enemyIndex);
         const targetAllyIndex = result.targetAllyIndex ?? 0;
         // Voice triggers: damage to Andrew arms the Skeptic
@@ -554,7 +570,10 @@ export class CombatState {
             this.scene.allyHurtAnim(targetAllyIndex);
           }
           AudioManager.playSfx(result.braced ? 'confirm' : (result.critical ? 'critical' : 'hit'));
-          this._spawnDamageNumberForAlly(result.damage, result.critical ? 'critical' : 'damage', targetAllyIndex);
+          // The victim number must be the loudest object on screen (P5 grammar) —
+          // a braced hit is muted, a clean hit is BIG, a crit is bigger still.
+          const hitType = result.braced ? 'damage' : (result.critical ? 'critical' : 'bigdamage');
+          this._spawnDamageNumberForAlly(result.damage, hitType, targetAllyIndex);
           this._refreshHUD();
           if (this.engine.posterJustTriggered) {
             this.engine.posterJustTriggered = false;
@@ -567,10 +586,15 @@ export class CombatState {
         }, 200);
       } else if (result.healAmount) {
         AudioManager.playSfx('heal');
+        this.scene.enemyCastAnim(enemyIndex);   // gathering cast pose, not a dead idle
         this._spawnDamageNumberAtEnemy(`+${result.healAmount}`, 'heal', enemyIndex);
         this.particles.burst({ x: 0, y: 1.2, z: 0 }, 10, 0x44ff44, 2, 1.0);
         // Voice triggers: enemy healing arms the Litigator
         if (this.engine.noteEnemyHeal) this.engine.noteEnemyHeal();
+      } else {
+        // Buff / debuff / confuse and other non-damaging moves — still ACT with
+        // the body so the turn never reads as the enemy standing inert.
+        this.scene.enemyCastAnim(enemyIndex);
       }
 
       this._refreshHUD();
@@ -604,10 +628,16 @@ export class CombatState {
     // and proven on camera). No hold — it persists through the player's turn;
     // the attack/hurt/defeat anims swap it when they fire.
     this.engine.enemies.forEach((e, i) => {
-      if (e.hp <= 0) return;
+      if (e.hp <= 0) { this._enemyTelegraphInfo[i] = null; return; }
+      // Stash whether this telegraphed move is an attack, and whether it's a
+      // HEAVY one (power >= 26 — same threshold the telegraph hint uses), so
+      // the enemy-turn cinematic can pick ENEMY_ATTACK vs ENEMY_HEAVY.
+      const ab = ENEMY_ABILITIES[e.telegraphedAbility];
+      const type = ab?.type;
+      const isAttack = type === 'attack' || type === 'dot';
+      this._enemyTelegraphInfo[i] = { attack: isAttack, heavy: isAttack && (ab?.power || 0) >= 26 };
       const entry = this.scene.enemyGroups?.[i];
       if (!entry || !entry.animator) return;
-      const type = ENEMY_ABILITIES[e.telegraphedAbility]?.type;
       const scheming = type === 'heal' || type === 'buff' || type === 'debuff' || type === 'confuse';
       entry.animator.setExpression(scheming ? 'smug' : 'angry');
     });
@@ -998,6 +1028,15 @@ export class CombatState {
     }
     this.phase = 'animating';
     this.hud.disableInput();
+    // Cinematic: offensive abilities get the tag-flavored beat (legal/social/
+    // audit/technical each distinct); heals/buffs get the self-framing beat.
+    const ability = PLAYER_ABILITIES[abilityId];
+    const offensive = result.type === 'attack' || result.type === 'attack_aoe' || result.type === 'debuff' || !!result.damage;
+    if (offensive) {
+      this.cine.play('ability', { tag: ability?.tag, crit: !!(result.critical || result.effective === 'super'), targetIndex });
+    } else {
+      this.cine.play('self_ability', {});
+    }
     const delay = this._playPlayerActionResult(result, abilityId);
 
     if (result.critical) this._fireTaunt('crit');
@@ -1046,6 +1085,9 @@ export class CombatState {
     this.phase = 'animating';
     this.hud.disableInput();
     const result = this.engine.playerAttack(targetIndex);
+    // Cinematic: dolly to Andrew on wind-up, snap to the target on impact.
+    // Crit/weakness gets the punch-in CRIT beat.
+    this.cine.play('attack', { crit: !!(result && (result.critical || result.effective === 'super')), targetIndex });
     const delay = this._playPlayerActionResult(result);
 
     if (result && result.critical) { this._fireTaunt('crit'); this.engine.noteCrit && this.engine.noteCrit(); }
@@ -1519,9 +1561,14 @@ export class CombatState {
   _spawnDamageNumberForAlly(text, type, allyIndex) {
     const cx = window.innerWidth / 2;
     const count = this.engine.allies.length;
-    const offset = count > 1 ? ((allyIndex - 0) * 120 + 100) : 0;
-    const baseY = window.innerHeight * 0.65;
-    const jitter = (Math.random() - 0.5) * 30;
+    // The enemy-turn cut frames Andrew on the RIGHT of stage, so the LOUD victim
+    // numbers (bigdamage / crit) are pushed LEFT into the dark gap beside him and
+    // lifted — clear air, not composited on his torso where it read as a jersey
+    // number (critic #3). Softer hits keep the lower slot below the reaction.
+    const loud = type === 'bigdamage' || type === 'critical';
+    const offset = count > 1 ? ((allyIndex - 0) * 120 + 100) : (loud ? -300 : 0);
+    const baseY = window.innerHeight * (loud ? 0.34 : 0.65);
+    const jitter = (Math.random() - 0.5) * (loud ? 16 : 30);
     this.floatingText.spawn(String(text), cx + offset + jitter, baseY, type);
   }
 
@@ -1650,11 +1697,17 @@ export class CombatState {
     this.phase = 'animating';
     this.hud.disableInput();
 
-    this.hud.showMessage('ASSERT DOMINANCE!');
-    this._fireTaunt('power_move');
-    this._checkPhaseChange();
+    // Cinematic: slow low-angle push-in, backdrop darkens, one hard rim beat,
+    // burst on impact (POWER_MOVE timeline). Damage lands on the 680ms slam.
+    this.cine.play('power', { targetIndex });
+    // Dedicated upper-third banner (not a centered combat-message that a phase
+    // taunt firing on the same beat would bury). Andrew's own quip is delayed so
+    // the banner + damage number own the money frame, then the phase message.
+    this.hud.showBanner('ASSERT DOMINANCE');
+    setTimeout(() => this._fireTaunt('power_move'), 900);
+    setTimeout(() => this._checkPhaseChange(), 1100);
     AchievementManager.check(this.player, { event: 'power_move_used' });
-    this.scene.flash(0xffd700, 0.15);
+    // Anticipation charge during the low push-in
     this.particles.burst({ x: 0, y: 2.5, z: 2 }, 30, 0xffd700, 4, 0.8);
     this.particles.burst({ x: 0, y: 1.8, z: 2 }, 20, 0xffff00, 3, 0.6);
 
@@ -1667,7 +1720,7 @@ export class CombatState {
       this._spawnDamageNumberAtEnemy(result.damage, 'critical', result.targetIndex ?? 0);
       this.particles.burst({ x: 0, y: 1.2, z: 0 }, 50, 0xffd700, 6, 1.5);
       this.particles.burst({ x: 0, y: 1.5, z: 0 }, 25, 0xffffff, 5, 1.2);
-    }, 400);
+    }, 680);
 
     this._refreshHUD();
     setTimeout(() => {
@@ -1682,6 +1735,7 @@ export class CombatState {
 
     this.phase = 'animating';
     this.hud.disableInput();
+    this.cine.play('attack', { crit: !!result.critical, targetIndex });
     this.hud.showMessage('Press Advantage! Enemy DEF lowered!');
     this.scene.playerAbilityLunge(0.6, this._activeAllyIndex);
     this.scene.flash(0x8844ff, 0.10);
@@ -1709,6 +1763,7 @@ export class CombatState {
 
     this.phase = 'animating';
     this.hud.disableInput();
+    this.cine.play('second_wind', {});
     let msg = `Second Wind! +${result.healAmount} HP`;
     if (result.clearedStatus) msg += ` | ${result.clearedStatus} cleared!`;
     this.hud.showMessage(msg);
@@ -1733,6 +1788,7 @@ export class CombatState {
 
       this.phase = 'animating';
       this.hud.disableInput();
+      this.cine.play('retaliate', { crit: !!result.critical, targetIndex });
       const msg = multiplier >= 1.4 ? 'DEVASTATING COUNTER!' : multiplier >= 1.0 ? 'Direct Counter!' : multiplier >= 0.66 ? 'Counter-Attack!' : 'Glancing Counter...';
       this.hud.showMessage(msg);
       this._fireTaunt('retaliate');
@@ -1931,6 +1987,8 @@ export class CombatState {
     } else {
       const label = risk === 'all_in' ? 'ALL IN pays off!' : risk === 'risky' ? (result.success ? 'Risky move pays off!' : 'Risky move backfires!') : 'Safe bet lands!';
       this.hud.showMessage(label);
+      // Cinematic: risk-tiered drama (safe steady / risky commit / all-in low-angle).
+      this.cine.play('gamble', { risk, targetIndex });
       this.scene.playerAttackAnim(this._activeAllyIndex);
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
       setTimeout(() => {
@@ -1982,6 +2040,12 @@ export class CombatState {
     return taunts[Math.floor(Math.random() * taunts.length)];
   }
 
+  // A single opening taunt line for the intro banner (falls back to a generic).
+  _introTaunt() {
+    const t = this._pickTaunt('enemy');
+    return t || 'Let\'s make this quick.';
+  }
+
   _getTelegraphHint(abilityId, enemy = null) {
     if (!abilityId) return '';
     const ability = ENEMY_ABILITIES[abilityId];
@@ -2006,6 +2070,7 @@ export class CombatState {
 
   update(dt) {
     this.scene.update(dt);
+    this.cine.update(dt);   // advance camera timelines on the game clock (locked to gestures/hit-stop)
     this.particles.update(dt);
 
     Engine.renderScene(this.scene.scene, this.scene.camera);

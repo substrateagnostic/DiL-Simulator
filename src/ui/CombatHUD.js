@@ -3,8 +3,98 @@
 // Bottom-left: stats wrapper. Active actor's full bars on top; remaining party shows compact bars below.
 // New: showTargetPicker(enemies, onPick) — arrow-key cycle through alive enemies, Enter to pick.
 
+// One-time injection of the cinematic HUD styles (intro banner + FX overlays).
+// Kept here rather than in styles/combat.css so the whole cinematics layer ships
+// as a self-contained unit.
+let _cineStylesInjected = false;
+function _ensureCineStyles() {
+  if (_cineStylesInjected || typeof document === 'undefined') return;
+  _cineStylesInjected = true;
+  const style = document.createElement('style');
+  style.id = 'combat-cine-styles';
+  style.textContent = `
+  /* Enemy intro banner (kinetic slide-in + settle) */
+  .combat-enemy-intro {
+    position: absolute; top: 34%; left: 0; right: 0; text-align: right;
+    padding-right: 8vw; pointer-events: none; z-index: 40;
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .combat-enemy-intro.leaving { opacity: 0; transform: translateX(40px); }
+  /* Resting states are VISIBLE — the keyframes are pure entrance polish, so the
+     banner still reads if the animation timeline is throttled (headless / heavy
+     frame). Same pattern as .combat-message. */
+  .combat-enemy-intro-kicker {
+    font-family: 'VT323', monospace; font-size: 20px; letter-spacing: 6px;
+    color: #6ea8ff; opacity: 0.9; text-shadow: 0 0 8px rgba(15,52,96,0.9);
+    animation: introKicker 0.5s ease-out 0.15s both;
+  }
+  .combat-enemy-intro-name {
+    font-family: 'Press Start 2P', cursive; font-size: 46px; line-height: 1.1;
+    color: #fff; text-shadow: 3px 3px 0 #e94560, 6px 6px 12px rgba(0,0,0,0.8);
+    transform: none; opacity: 1;
+    animation: introNameSlide 0.6s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .combat-enemy-intro-bar {
+    height: 4px; margin: 12px 0 10px auto; width: min(52vw,640px);
+    background: linear-gradient(90deg, rgba(233,69,96,0) 0%, #e94560 60%, #ff8fa3 100%);
+    box-shadow: 0 0 12px rgba(233,69,96,0.8);
+    animation: introBarWipe 0.55s ease-out 0.35s both;
+  }
+  .combat-enemy-intro-sub {
+    font-family: 'VT323', monospace; font-size: 22px; color: #ffb3c0;
+    max-width: 46ch; margin-left: auto; text-shadow: 1px 1px 4px rgba(0,0,0,0.9);
+    opacity: 1; animation: introSubFade 0.5s ease-out 0.55s both;
+  }
+  @keyframes introKicker { from{opacity:0;transform:translateX(30px)} to{opacity:0.9;transform:translateX(0)} }
+  @keyframes introNameSlide { 0%{transform:translateX(120%);opacity:0} 70%{transform:translateX(-6%);opacity:1} 100%{transform:translateX(0);opacity:1} }
+  @keyframes introBarWipe { from{width:0} to{width:min(52vw,640px)} }
+  @keyframes introSubFade { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  @media (max-width:700px),(max-height:540px){
+    .combat-enemy-intro-name{font-size:30px} .combat-enemy-intro-sub{font-size:17px}
+  }
+  /* Cinematic FX overlays (driven by CombatCinematics) */
+  .combat-fx-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 18; }
+  .combat-fx-vignette {
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, var(--fx-color,#e94560) 140%);
+    opacity: 0; mix-blend-mode: screen; animation: fxVignettePulse 0.66s ease-out forwards;
+  }
+  @keyframes fxVignettePulse { 0%{opacity:0} 30%{opacity:0.55} 100%{opacity:0} }
+  .combat-fx-grid {
+    background-image: linear-gradient(var(--fx-color,#66ff99) 1px, transparent 1px),
+      linear-gradient(90deg, var(--fx-color,#66ff99) 1px, transparent 1px);
+    background-size: 48px 48px; opacity: 0; mix-blend-mode: screen;
+    animation: fxGridFlash 0.34s steps(2,end) forwards;
+  }
+  @keyframes fxGridFlash { 0%{opacity:0} 20%{opacity:0.30} 100%{opacity:0} }
+  .combat-fx-scanline {
+    background-image: repeating-linear-gradient(0deg, var(--fx-color,#cc88ff) 0px, var(--fx-color,#cc88ff) 1px, transparent 3px, transparent 5px);
+    opacity: 0; mix-blend-mode: screen; animation: fxScanline 0.52s linear forwards;
+  }
+  @keyframes fxScanline { 0%{opacity:0;background-position-y:0} 25%{opacity:0.35} 100%{opacity:0;background-position-y:60px} }
+  /* Power-move banner — its OWN slot in the upper third so the title reads
+     clear of the centered combat-message (phase taunts) that used to bury it. */
+  .combat-power-banner {
+    position: absolute; top: 20%; left: 0; right: 0; text-align: center;
+    pointer-events: none; z-index: 46;
+    font-family: 'Press Start 2P', cursive; font-size: 40px; line-height: 1.1;
+    color: #ffd700;
+    text-shadow: 0 0 18px rgba(255,180,0,0.9), 3px 3px 0 #7a2a00, 5px 5px 14px rgba(0,0,0,0.85);
+    animation: powerBannerSlam 0.4s cubic-bezier(0.2,1.4,0.4,1) both;
+  }
+  @keyframes powerBannerSlam {
+    0%{opacity:0;transform:scale(1.9) translateY(-10px)}
+    60%{opacity:1;transform:scale(0.94)}
+    100%{opacity:1;transform:scale(1)}
+  }
+  .combat-power-banner.leaving { opacity: 0; transition: opacity 0.4s ease; }
+  @media (max-width:700px),(max-height:540px){ .combat-power-banner{font-size:26px} }
+  `;
+  document.head.appendChild(style);
+}
+
 export class CombatHUD {
   constructor() {
+    _ensureCineStyles();
     this.container = document.getElementById('ui-overlay');
     this.root = null;
     this.enemyRowEl = null;       // row container holding all enemy info blocks
@@ -623,6 +713,37 @@ export class CombatHUD {
     }
   }
 
+  // Kinetic enemy-intro banner — big name slide-in + settle, one taunt line,
+  // red/navy. Choreographed by CombatState with the CombatScene orbit-settle.
+  showEnemyIntro(name, subtitle = '', opts = {}) {
+    const el = document.createElement('div');
+    el.className = 'combat-enemy-intro';
+    el.innerHTML = `
+      <div class="combat-enemy-intro-kicker">NOW ENTERING</div>
+      <div class="combat-enemy-intro-name">${name}</div>
+      <div class="combat-enemy-intro-bar"></div>
+      ${subtitle ? `<div class="combat-enemy-intro-sub">${subtitle}</div>` : ''}
+    `;
+    this.container.appendChild(el);
+    const hold = opts.hold || 1700;
+    setTimeout(() => {
+      el.classList.add('leaving');
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
+    }, hold);
+    return el;
+  }
+
+  // Full-screen FX overlay pulse used by the cinematic sequencer.
+  // kind: 'vignette' (edge pulse) | 'grid' (audit) | 'scanline' (technical).
+  pulseOverlay(kind = 'vignette', color = '#e94560', ms = 500) {
+    const el = document.createElement('div');
+    el.className = `combat-fx-overlay combat-fx-${kind}`;
+    el.style.setProperty('--fx-color', color);
+    this.container.appendChild(el);
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, ms);
+    return el;
+  }
+
   showTaunt(text, side = 'player') {
     const el = document.createElement('div');
     el.className = `combat-taunt combat-taunt-${side}`;
@@ -632,6 +753,23 @@ export class CombatHUD {
       el.style.opacity = '0';
       setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
     }, 2500);
+  }
+
+  // Big centered-upper announcement for signature moves (ASSERT DOMINANCE),
+  // rendered in its own slot above the combat-message band so it never gets
+  // buried behind an enemy phase-taunt firing on the same beat.
+  showBanner(text, hold = 1400) {
+    if (this._powerBanner && this._powerBanner.parentNode) this._powerBanner.remove();
+    const el = document.createElement('div');
+    el.className = 'combat-power-banner';
+    el.textContent = text;
+    this.container.appendChild(el);
+    this._powerBanner = el;
+    setTimeout(() => {
+      el.classList.add('leaving');
+      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 400);
+    }, hold);
+    return el;
   }
 
   showMessage(text) {

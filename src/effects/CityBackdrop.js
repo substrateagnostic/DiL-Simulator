@@ -542,27 +542,16 @@ export class CityBackdrop {
       map: this._trailTexture(), color: 0xff3d5e, transparent: true, opacity: 0.7,
       blending: THREE.AdditiveBlending, depthWrite: false,
     });
-    for (let i = 0; i < 14; i++) {
-      const isX = i % 2 === 0;
-      const lane = (i % 4 < 2) ? -1 : 1;
-      const len = 3.4 + (i % 3) * 0.9;
-      // Wave-2: a touch wider so the trail reads as soft motion blur, not a
-      // hairline scratch across the frame edge.
-      const streak = new THREE.Mesh(
-        new THREE.PlaneGeometry(len, 0.15),
-        lane > 0 ? this._streakMatA : this._streakMatB
-      );
-      streak.rotation.set(-Math.PI / 2, 0, isX ? 0 : Math.PI / 2);
-      streak.position.y = -16;
-      streak.renderOrder = 2;
-      this.group.add(streak);
-      this.streaks.push({
-        mesh: streak, isX,
-        lane: (isX ? CENTER.z : CENTER.x) + lane * (16 + (i % 3) * 2),
-        speed: (3.2 + (i % 5) * 0.9) * (lane > 0 ? 1 : -1),
-        offset: i * 9.3,
-      });
-    }
+    // CAST-BUGS item 5 — the long-exposure street TRAILS are DELETED. Running at
+    // curb height in the walled parking-garage void they had no pole/pool/road to
+    // anchor them, so a lane that ran past the room's opening read as a lone
+    // diagonal amber line floating in black (the two last orphan smears the rider
+    // pixel-located: a streak at frame bottom-right and a dash at the left edge).
+    // Same orphan class the earlier waves already culled (shafts, wet-reflection
+    // smears, seam reflections); the trails were the last members. The rest of the
+    // night city (obsidian towers, lit seams, lamp pools, beacons, haze) carries
+    // the road-motion feel without a bare streak. `this.streaks` stays empty so
+    // the update loop and the material setters below remain no-ops.
 
     // ── Street level: wet asphalt ──────────────────────────────────────
     this.streetGround = new THREE.Mesh(

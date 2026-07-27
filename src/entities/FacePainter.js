@@ -89,6 +89,13 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // gender/age dials: prefer explicit fields, else infer from legacy config.
   const female = config.gender === 'f' || config.faceGender === 'f';
   const old = config.age === 'old' || config.faceAge === 'old';
+  // Glasses-wearers need brighter eyes so the sclera/iris/catchlight read THROUGH
+  // the torus lens under the dark venue wash (item 2 — Grandma's grey slits,
+  // the Intern's lid-smears). Detected from config.glasses OR an accessories
+  // entry whose name mentions glass ('glasses'/'sunglasses').
+  const hasGlasses = !!config.glasses ||
+    (Array.isArray(config.accessories) && config.accessories.some(
+      (a) => typeof a === 'string' && /glass/i.test(a)));
   const lipC = config.lipColor ?? (female ? 0xb5615a : 0xb06a58);
   const E = exprParams(expression);
 
@@ -115,7 +122,13 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // Mouth dropped ~15% lower toward the jaw (item 5: "flat line floating high
   // above an enormous blank chin"). Seats the mouth on the lower face so the
   // jaw region reads as anatomy, not Easter Island.
-  const mouthY = S * 0.808;
+  // Old faces seat the mouth notably higher, close to the nose base: grandma's
+  // lower face foreshortens hard on the up-looking combat cam and falls into
+  // shadow, so a mouth at the full drop (0.756) landed in a dark, curved-away
+  // band and read as a blank chin (cast bug). Pulling it up to just under the
+  // nose puts it on the brightly-lit, camera-facing front of the face where it
+  // survives the squash.
+  const mouthY = S * (old ? 0.836 : 0.808);
 
   // ── base skin: FLAT fill at exactly skin so the feathered patch edge
   // blends seamlessly into the head skin. Shaping is centered overlays that
@@ -177,11 +190,18 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     ctx.ellipse(ex, eyeY, eyeW, eyeH, 0, 0, Math.PI * 2);
     ctx.closePath();
     ctx.clip();
-    // sclera (bright, so the eye reads open — not a dark beady dot)
+    // sclera (bright, so the eye reads open — not a dark beady dot). Glasses-
+    // wearers get a whiter sclera so the eye survives the lens tint + dark wash.
     const wg = ctx.createLinearGradient(0, eyeY - eyeH, 0, eyeY + eyeH);
-    wg.addColorStop(0, '#e6e0d6');
-    wg.addColorStop(0.5, '#fbf8f2');
-    wg.addColorStop(1, '#efe9de');
+    if (hasGlasses) {
+      wg.addColorStop(0, '#f0ece4');
+      wg.addColorStop(0.5, '#ffffff');
+      wg.addColorStop(1, '#f6f1e8');
+    } else {
+      wg.addColorStop(0, '#e6e0d6');
+      wg.addColorStop(0.5, '#fbf8f2');
+      wg.addColorStop(1, '#efe9de');
+    }
     ctx.fillStyle = wg;
     ctx.fillRect(ex - eyeW, eyeY - eyeH, eyeW * 2, eyeH * 2);
     // iris — sized to sit INSIDE a ring of bright sclera (0.64 of eyeH, down
@@ -191,9 +211,12 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     const irisR = eyeH * 0.64;
     const iy = eyeY + eyeH * 0.06;
     const ig = ctx.createRadialGradient(ex, iy, irisR * 0.15, ex, iy, irisR);
-    ig.addColorStop(0, shadeHex(eyeC, 1.5));
-    ig.addColorStop(0.55, shadeHex(eyeC, 1.0));
-    ig.addColorStop(0.86, shadeHex(eyeC, 0.48));
+    // Glasses-wearers get a lighter iris so it never reads as a dark blob behind
+    // the lens; the limbal ring stays dark so the iris edge is still defined.
+    const gf = hasGlasses ? 1.34 : 1.0;
+    ig.addColorStop(0, shadeHex(eyeC, 1.5 * gf));
+    ig.addColorStop(0.55, shadeHex(eyeC, 1.0 * gf));
+    ig.addColorStop(0.86, shadeHex(eyeC, 0.48 * gf));
     ig.addColorStop(1, shadeHex(eyeC, 0.26));   // dark limbal ring — defines the iris edge
     ctx.fillStyle = ig;
     ctx.beginPath(); ctx.arc(ex, iy, irisR, 0, Math.PI * 2); ctx.fill();
@@ -205,7 +228,9 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     // punches against the black. A tiny secondary sparkle keeps it from reading
     // as a painted dot.
     ctx.fillStyle = 'rgba(255,255,255,1)';
-    ctx.beginPath(); ctx.arc(ex - irisR * 0.26, iy - irisR * 0.34, irisR * 0.40, 0, Math.PI * 2); ctx.fill();
+    // Bigger catchlight for glasses-wearers — a punchy bead that still reads as
+    // a live eye once the tinted lens sits over it.
+    ctx.beginPath(); ctx.arc(ex - irisR * 0.26, iy - irisR * 0.34, irisR * (hasGlasses ? 0.50 : 0.40), 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.beginPath(); ctx.arc(ex + irisR * 0.4, iy + irisR * 0.42, irisR * 0.16, 0, Math.PI * 2); ctx.fill();
     // upper lid drop (lowered eyelid skin over the eye)
@@ -309,7 +334,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   ctx.beginPath(); ctx.arc(cx, noseTipY - S * 0.012, S * 0.016, 0, Math.PI * 2); ctx.fill();
 
   // ── mouth ── (expression-driven; more saturated lips = contrast)
-  drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E);
+  drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old);
 
   // ── age: wrinkles / softening ─────────────────────────────────────
   if (old) {
@@ -432,7 +457,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
 }
 
 // ── mouth shapes ──────────────────────────────────────────────────────
-function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E) {
+function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
   const mw = (female ? 0.106 : 0.098) * S;   // addendum round-2: +size again (mouths vanished at real framing)
   const curve = E.mouthCurve * (S / 512);
   // philtrum shadow above the lip
@@ -481,6 +506,67 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E) {
     ctx.strokeStyle = rgba(0x3a1a14, 0.8);
     ctx.lineWidth = 0.008 * S;
     ctx.strokeRect(cx - mw * 0.9, mouthY - S * 0.018, mw * 1.8, S * 0.036);
+    return;
+  }
+
+  // ── elderly closed mouth (item 1) ──────────────────────────────────
+  // Grandma's lower face is severely foreshortened by the up-looking combat
+  // camera: the whole lower-face texture (V≈0.5→0.9) compresses into a thin band
+  // just under the glasses, so the normal subtle lip pair renders sub-pixel and
+  // vanished to a blank peach field. The elderly mouth is therefore built with
+  // real vertical MASS in near-black albedo — a dark, thin-lipped closed mouth
+  // with corner darkening and a sub-lip shelf — so ~4× vertical squash still
+  // leaves a legible mouth. (Non-old faces keep the softer lip pair below.)
+  if (old) {
+    const mwo = mw * 1.05;
+    const dn = curve * 0.6;                         // faint downturn, expression-nudged
+    // High-CONTRAST lit lip pair + a hard dark seam. A near-black dark-mass mouth
+    // (the prior approach) vanished into grandma's shadowed, foreshortened lower
+    // face — invisible albedo-dark on dark skin. A LIT lip (warm vermilion) framed
+    // by a black seam keeps the mouth reading even when the chin falls into shadow.
+    // upper lip
+    ctx.fillStyle = rgba(lipC, 0.92);
+    ctx.beginPath();
+    ctx.moveTo(cx - mwo, mouthY - S * 0.002 + dn);
+    ctx.quadraticCurveTo(cx - mwo * 0.45, mouthY - S * 0.017, cx, mouthY - S * 0.010);
+    ctx.quadraticCurveTo(cx + mwo * 0.45, mouthY - S * 0.017, cx + mwo, mouthY - S * 0.002 + dn);
+    ctx.quadraticCurveTo(cx, mouthY + S * 0.003, cx - mwo, mouthY - S * 0.002 + dn);
+    ctx.fill();
+    // lower lip — a lighter warm catch so the pair has volume
+    ctx.fillStyle = rgba(lipC, 0.98);
+    ctx.beginPath();
+    ctx.moveTo(cx - mwo * 0.86, mouthY + S * 0.002 + dn);
+    ctx.quadraticCurveTo(cx, mouthY + S * 0.026, cx + mwo * 0.86, mouthY + S * 0.002 + dn);
+    ctx.quadraticCurveTo(cx, mouthY + S * 0.006, cx - mwo * 0.86, mouthY + S * 0.002 + dn);
+    ctx.fill();
+    // lower-lip specular sliver so it catches the front fill
+    ctx.fillStyle = rgba(0xffd8c8, 0.5);
+    ctx.beginPath();
+    ctx.ellipse(cx, mouthY + S * 0.012, mwo * 0.34, S * 0.006, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // hard dark central seam — the black line that defines the closed mouth
+    ctx.strokeStyle = rgba(0x18090a, 0.98);
+    ctx.lineWidth = 0.016 * S;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(cx - mwo, mouthY + dn);
+    ctx.quadraticCurveTo(cx, mouthY + S * 0.004 + curve, cx + mwo, mouthY + dn);
+    ctx.stroke();
+    // corner beads — strong dark so the mouth has ends
+    for (const s of [-1, 1]) {
+      const cxs = cx + s * mwo * 0.98;
+      const cg = ctx.createRadialGradient(cxs, mouthY + dn, 1, cxs, mouthY + dn, mwo * 0.30);
+      cg.addColorStop(0, rgba(0x14080a, 0.9));
+      cg.addColorStop(1, rgba(0x14080a, 0));
+      ctx.fillStyle = cg;
+      ctx.fillRect(cxs - mwo * 0.4, mouthY - S * 0.024, mwo * 0.8, S * 0.05);
+    }
+    // sub-lip / chin shelf shadow — deep crescent so the jaw reads under the mouth
+    const slo = ctx.createRadialGradient(cx, mouthY + S * 0.034, S * 0.006, cx, mouthY + S * 0.034, S * 0.09);
+    slo.addColorStop(0, rgba(0x2a1810, 0.42));
+    slo.addColorStop(1, rgba(0x2a1810, 0));
+    ctx.fillStyle = slo;
+    ctx.fillRect(cx - S * 0.095, mouthY + S * 0.010, S * 0.19, S * 0.095);
     return;
   }
 

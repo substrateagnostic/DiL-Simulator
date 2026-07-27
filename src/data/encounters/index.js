@@ -116,6 +116,7 @@ export const ENCOUNTERS = {
     preDialogId: 'rachel_boss_combat',
     postDialogId: 'rachel_boss_defeated',
     canFlee: false,
+    arena: 'penthouse',
   },
   // ── Act 6½ — The Countersignature ─────────────────────────────────
   parking_enforcer: {
@@ -138,6 +139,7 @@ export const ENCOUNTERS = {
     canFlee: false,
     boss: true,
     music: 'firm_battle',
+    arena: 'penthouse', // void-purple boss arena (firm_partner is unmapped)
   },
   cfos_assistant: {
     enemyId: 'cfos_assistant',
@@ -156,6 +158,7 @@ export const ENCOUNTERS = {
     preDialogId: 'algorithm_combat',
     postDialogId: 'algorithm_defeated',
     canFlee: false,
+    arena: 'server', // terminal green-cyan
   },
   patch_defense: {
     enemyId: 'security_guard',

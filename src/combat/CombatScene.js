@@ -3,6 +3,12 @@ import { buildCharacter } from '../entities/CharacterBuilder.js';
 import { CharacterAnimator } from '../entities/CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 
+// Per-boss authorship: which held silhouette + attack gesture each character
+// uses. Named bosses get bespoke choreography; everyone else gets a generic
+// coiled "ready" stance and a committed shove so no enemy is a limp mannequin.
+const SIGNATURE_BY_CHAR = { karen: 'karen', chad: 'chad', grandma: 'grandma' };
+const ATTACK_VARIANT_BY_CHAR = { karen: 'attack_karen', chad: 'attack_chad', grandma: 'attack_grandma' };
+
 // Multi-combatant combat scene.
 // Renders 1+ enemies on the left/center stage and 1+ allies on the right.
 // Per-target animations: enemyHurtAnim(idx), enemyAttackAnim(idx), enemyDefeatAnim(idx).
@@ -27,6 +33,24 @@ export class CombatScene {
     this._punchT = 1;         // camera punch-in progress (1 = idle)
     this._punchAmount = 0;
     this._introT = 1;         // enemy slide-in progress (1 = done)
+
+    // ── Cinematic camera rig (driven by CombatCinematics) ────────────────
+    // Every authored camera move is an OFFSET layered on _basePos / _baseLook
+    // and always eases back toward zero, so the camera is GUARANTEED to
+    // return to _basePos when a timeline zeroes its targets ("always return
+    // to _basePos"). The rig also owns lookAt so pans/orbits are possible.
+    this._baseLook = { x: 0, y: 0.95, z: 0 };
+    this._cinePos = { x: 0, y: 0, z: 0 };
+    this._cinePosTarget = { x: 0, y: 0, z: 0 };
+    this._cineLook = { x: 0, y: 0, z: 0 };
+    this._cineLookTarget = { x: 0, y: 0, z: 0 };
+    this._camEase = 6;
+    // Light-beat modulation: rim spike + backdrop darken for power beats.
+    this._dim = 1; this._dimTarget = 1; this._dimTimer = null;
+    this._rimBeatV = 0;
+    // Technical-tag camera glitch (high-freq decaying jitter)
+    this._glitchAmt = 0; this._glitchT = 0;
+
     this._setup();
   }
 
@@ -34,34 +58,69 @@ export class CombatScene {
     this.camera.position.set(0, 1.5, 5);
     this.camera.lookAt(0, 0.95, 0);
 
-    const ambient = new THREE.AmbientLight(0xffffff, 0.45);
+    // ARENA RELIGHT — combat was authored against the broken output transform
+    // and now renders brighter. Key/fill are pulled DOWN so combatants sit in
+    // Refn dark; the two back RIMS stay strong so the silhouette separation
+    // survives the darker key (Clair-Obscur close-up grammar). Base intensities
+    // are stored so the cinematic rig can darken the key + spike the rim for
+    // power beats and always restore them.
+    const BI = { ambient: 0.30, dir: 0.60, fill: 0.46, eye: 0.27, rimCyan: 0.66, rimMagenta: 0.60, rimLow: 0.58, hero: 0.34 };
+    this._baseIntensity = BI;
+
+    const ambient = new THREE.AmbientLight(0xffffff, BI.ambient);
     this.scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    this.ambient = ambient;
+    const dirLight = new THREE.DirectionalLight(0xffffff, BI.dir);
     dirLight.position.set(2, 5, 3);
     this.scene.add(dirLight);
+    this.dirLight = dirLight;
     // Cool FRONT FILL at face height on the camera axis — lifts the faces out
     // of the venue-wash mud (addendum: "zero front fill … faces fall into
     // mud"). Kept cool-white and near-frontal so it reads the down-nodded face
     // features straight-on without flattening the Clair-Obscur key/rim drama.
-    const fillLight = new THREE.DirectionalLight(0xc6d4f2, 0.62);
+    const fillLight = new THREE.DirectionalLight(0xc6d4f2, BI.fill);
     fillLight.position.set(0.3, 1.7, 7.5);
     this.scene.add(fillLight);
+    this.fillLight = fillLight;
     // A second, tighter warm-neutral fill from slightly below sells the eyes on
     // the up-looking combat cam — a soft "eye light" so sockets don't read as
     // dark hollows under the brows.
-    const eyeLight = new THREE.DirectionalLight(0xffe8d8, 0.33);
+    const eyeLight = new THREE.DirectionalLight(0xffe8d8, BI.eye);
     eyeLight.position.set(0, 0.4, 6);
     this.scene.add(eyeLight);
+    this.eyeLight = eyeLight;
     // Two BACK RIMS for Clair-Obscur silhouette separation on the close-ups
     // (addendum: "one cool rim/backlight per combatant"). Both sit BEHIND the
     // actors so they edge-light the outline instead of muddying the face — the
-    // magenta one carries the Refn accent, the cyan one the cold key.
-    const rimCyan = new THREE.DirectionalLight(0x6ea8ff, 0.55);
+    // magenta one carries the Refn accent, the cyan one the cold key. Colors
+    // are re-tinted per venue by setArenaLighting().
+    const rimCyan = new THREE.DirectionalLight(0x6ea8ff, BI.rimCyan);
     rimCyan.position.set(-3.5, 3, -3.5);
     this.scene.add(rimCyan);
-    const rimMagenta = new THREE.DirectionalLight(0xe94560, 0.5);
+    this.rimCyan = rimCyan;
+    const rimMagenta = new THREE.DirectionalLight(0xe94560, BI.rimMagenta);
     rimMagenta.position.set(3.5, 2.6, -3.2);
     this.scene.add(rimMagenta);
+    this.rimMagenta = rimMagenta;
+    // LOW back rim — the two main rims sit high (y≈3) and edge only the upper
+    // body, so dark trousers (Intern's navy suit, Karen's slacks) merged into
+    // the black stage below the knee ("weakest rim separation in the lineup").
+    // A low, cool rim grazing from behind lifts the leg silhouette off the void.
+    const rimLow = new THREE.DirectionalLight(0x7fb0ff, BI.rimLow);
+    rimLow.position.set(2.2, 0.55, -3.0);
+    this.scene.add(rimLow);
+    this.rimLow = rimLow;
+    // HERO spot — a tight warm key aimed at Andrew's mark on the front stage.
+    // Power moves darken the whole venue (backdropDarken), which sank Andrew's
+    // foreground body to an unlit near-black mass ("zero rim on the hero"). This
+    // spot lights ONLY the ally area (cone-limited, so it never flattens the
+    // back-stage enemy) and BRIGHTENS as the world dims, so the hero stays lit.
+    const heroSpot = new THREE.SpotLight(0xfff0e0, BI.hero, 14, Math.PI * 0.20, 0.6, 1.0);
+    heroSpot.position.set(3.4, 4.2, 5.6);
+    heroSpot.target.position.set(2.2, 1.1, 3.4);
+    this.scene.add(heroSpot);
+    this.scene.add(heroSpot.target);
+    this.heroSpot = heroSpot;
 
     this._createBackground();
 
@@ -111,6 +170,8 @@ export class CombatScene {
     stagePool.position.set(0, 0.004, 0.4);
     stagePool.renderOrder = 1;
     this.scene.add(stagePool);
+    this.stagePool = stagePool;
+    this._bounceMats = [];   // contact-glow mats, retinted per arena
 
     // Target selector ring (invisible until used)
     const ringGeo = new THREE.RingGeometry(0.6, 0.85, 32);
@@ -134,6 +195,9 @@ export class CombatScene {
         uColor2: { value: new THREE.Color(0x080a16) },
         uColor3: { value: new THREE.Color(0x1c0b1e) },
         uColor4: { value: new THREE.Color(0xe94560) },
+        // Global dim (1 = full). The cinematic rig drives this toward ~0.3 for
+        // the power-move "backdrop darkens" beat, then eases it back to 1.
+        uDim: { value: 1 },
       },
       vertexShader: `
         varying vec2 vUv;
@@ -148,6 +212,7 @@ export class CombatScene {
         uniform vec3 uColor2;
         uniform vec3 uColor3;
         uniform vec3 uColor4;
+        uniform float uDim;
         varying vec2 vUv;
         void main() {
           vec2 uv = vUv;
@@ -196,6 +261,9 @@ export class CombatScene {
           // (critic: "a visible stage seam"). Fully black below the floor,
           // ramping back to full a little above it.
           color *= smoothstep(0.27, 0.52, uv.y);
+          // Cinematic backdrop-darken beat (power moves): pull the whole field
+          // toward black so the single rim beat + gold burst own the frame.
+          color *= uDim;
           // S2.5: screen-space hash dither (~1.6% span) breaks the 8-bit
           // banding in the near-black navy field — the smooth ramps quantised
           // into visible arcs on the deep blue lobes.
@@ -244,10 +312,19 @@ export class CombatScene {
       const scale = enemyIds.length === 1 ? 1.9 : 1.6;
       group.position.set(pos.x + 5.0, 0, pos.z);
       group.scale.setScalar(scale);
-      group.rotation.y = Math.PI;
+      // Face the camera from the start. Enemies used to build at Math.PI and let
+      // the facing-lerp swing them 180° to camera-front — but the intro banner is
+      // captured mid-swing, so the boss debuted as a limp back-view (critic #8).
+      // The slide-in already provides the entrance; the reveal is the SILHOUETTE.
+      group.rotation.y = 0;
+      animator.setFacing(0);
       this._addContactBounce(group, scale);
       this.scene.add(group);
-      this.enemyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: Math.PI, baseScale: scale, characterId: id, introDelay: i * 0.12 });
+      // Snap to a signature silhouette so the intro reads as a character, not a
+      // limp A-stand (critic: "a P5 intro gives the boss a silhouette pose").
+      animator.setSignaturePose(SIGNATURE_BY_CHAR[id] || 'ready');
+      const attackGesture = ATTACK_VARIANT_BY_CHAR[id] || 'attack_shove';
+      this.enemyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: 0, baseScale: scale, characterId: id, introDelay: i * 0.12, attackGesture });
     }
     // Enemies slide in from stage right over ~half a second
     this._introT = 0;
@@ -305,10 +382,11 @@ export class CombatScene {
     const bounce = new THREE.Mesh(
       new THREE.PlaneGeometry(1, 1),
       new THREE.MeshBasicMaterial({
-        map: CombatScene._bounceTex, color: 0xe94560, transparent: true,
+        map: CombatScene._bounceTex, color: this._arenaPool ?? 0xe94560, transparent: true,
         opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false,
       })
     );
+    if (this._bounceMats) this._bounceMats.push(bounce.material);
     bounce.rotation.x = -Math.PI / 2;
     // Local units — parent scale (scale) turns these into a ~1.7×1.15 world
     // footprint sitting just above the black stage floor.
@@ -382,6 +460,7 @@ export class CombatScene {
     for (const a of this.allyGroups) this.scene.remove(a.group);
     this.enemyGroups = [];
     this.allyGroups = [];
+    this._bounceMats = [];
     if (this.targetMarker) this.targetMarker.visible = false;
   }
 
@@ -426,6 +505,59 @@ export class CombatScene {
     this.flashTimer = duration;
   }
 
+  // ── Cinematic camera rig API (called by CombatCinematics) ─────────────
+  // Move the camera to an OFFSET pose relative to rest. pos/look are additive
+  // offsets on _basePos / _baseLook. Higher ease = snappier settle. Passing
+  // nulls leaves that channel where it is. Kept subtle (<~14° equivalent).
+  cineCam(pos = null, look = null, ease = 6) {
+    if (pos)  { this._cinePosTarget.x = pos.x || 0;  this._cinePosTarget.y = pos.y || 0;  this._cinePosTarget.z = pos.z || 0; }
+    if (look) { this._cineLookTarget.x = look.x || 0; this._cineLookTarget.y = look.y || 0; this._cineLookTarget.z = look.z || 0; }
+    this._camEase = ease;
+  }
+
+  // Return the camera to rest (offsets → 0). Ends every timeline.
+  cineReset(ease = 3.4) {
+    this._cinePosTarget.x = this._cinePosTarget.y = this._cinePosTarget.z = 0;
+    this._cineLookTarget.x = this._cineLookTarget.y = this._cineLookTarget.z = 0;
+    this._camEase = ease;
+  }
+
+  // A single hard rim-light spike (power-move / crit beat). Decays in update().
+  rimBeat(amount = 1) { this._rimBeatV = Math.max(this._rimBeatV, amount); }
+
+  // Dim the backdrop + key toward `amount` for `hold` ms, then release to 1.
+  backdropDarken(amount = 0.32, hold = 700) {
+    this._dimTarget = amount;
+    clearTimeout(this._dimTimer);
+    this._dimTimer = setTimeout(() => { this._dimTarget = 1; }, hold);
+  }
+
+  // High-frequency camera jitter (technical-tag glitch). Decays over `seconds`.
+  glitch(amount = 0.06, seconds = 0.4) {
+    this._glitchAmt = amount;
+    this._glitchT = Math.max(this._glitchT, seconds);
+  }
+
+  // Apply a venue palette: backdrop swirl colors + re-tinted rim lights, so
+  // the silhouette separation matches the room the fight happens in.
+  setArenaLighting(palette) {
+    if (!palette) return;
+    if (palette.bg) this.setBackgroundColors(...palette.bg);
+    if (palette.rimHot  && this.rimMagenta) this.rimMagenta.color.set(palette.rimHot);
+    if (palette.rimCool && this.rimCyan)    this.rimCyan.color.set(palette.rimCool);
+    if (palette.rimCool && this.rimLow)     this.rimLow.color.set(palette.rimCool);
+    // Re-tint the FLOOR to the venue: the stage pool + every actor's contact
+    // glow were a hardcoded red, so all arenas read as the same red-void no
+    // matter the backdrop (critic: venues not distinct). Now the floor carries
+    // the room's accent — navy reception, green server, purple penthouse.
+    const pool = palette.pool ?? palette.rimHot;
+    if (pool != null) {
+      this._arenaPool = pool;
+      if (this.stagePool) this.stagePool.material.color.set(pool);
+      for (const m of this._bounceMats || []) m.color.set(pool);
+    }
+  }
+
   // Show/move the target reticle under enemy at the given index
   setTargetMarker(enemyIndex, visible = true) {
     if (!this.targetMarker) return;
@@ -458,41 +590,57 @@ export class CombatScene {
     }, duration * 1000);
   }
 
-  enemyAttackAnim(idx = 0) {
+  enemyAttackAnim(idx = 0, opts = {}) {
     const entry = this.enemyGroups[idx];
     if (!entry) return;
     entry.animator?.setExpression('angry', 1.4);
+    // BODY first: the authored per-boss limb gesture (wind-up → strike →
+    // follow-through) carries the attack — the group translate below is just the
+    // travel underneath it. Statue no more (critic: "the attack is camera +
+    // particles + UI around a mannequin").
+    entry.animator?.playGesture(opts.variant || entry.attackGesture || 'attack_shove');
     const startZ = entry.baseZ;
     const startX = entry.baseX;
     const startRotY = entry.baseRotY;
     const s = entry.baseScale;
-    // Anticipation: rear back and coil for 220ms...
-    entry.group.position.z = startZ - 0.55;
-    entry.group.rotation.x = -0.12;
-    entry.group.scale.set(s * 1.04, s * 0.94, s * 1.04);
+    // Anticipation: rear back and coil (synced to the gesture wind-up ~0.16s)…
+    // the coil is a touch deeper now so the whole-body recoil-back reads as a
+    // clear preparation before the strike (critic: note 1, wind-up must read).
+    entry.group.position.z = startZ - 0.6;
+    entry.group.scale.set(s * 1.04, s * 0.93, s * 1.05);
     setTimeout(() => {
       if (!entry.group.parent) return;
-      // ...then lunge hard into the player's space
-      entry.group.position.z = startZ + 1.7;
-      entry.group.position.x = startX + 0.15;
-      entry.group.rotation.y = startRotY + 0.08;
-      entry.group.rotation.x = 0.1;
-      entry.group.scale.set(s * 0.97, s * 1.05, s * 0.97);
+      // …then drive into the player's space as the striking arm lands (synced to
+      // the gesture strike at ~0.23s). Kept to ~1.1 so the enemy lunges toward the
+      // victim without swallowing the reaction-cut framing that now frames Andrew.
+      entry.group.position.z = startZ + 1.1;
+      entry.group.position.x = startX + 0.12;
+      entry.group.rotation.y = startRotY + 0.06;
+      entry.group.scale.set(s * 0.98, s * 1.05, s * 0.97);
       setTimeout(() => {
         if (!entry.group.parent) return;
         entry.group.position.z = startZ;
         entry.group.position.x = startX;
         entry.group.rotation.y = startRotY;
-        entry.group.rotation.x = 0;
         entry.group.scale.setScalar(s);
       }, 190);
-    }, 220);
+    }, 160);
+  }
+
+  // Scheming beat (heal / buff / debuff / confuse) — a gathering cast pose so the
+  // enemy still ACTS on its non-attack turns instead of holding a dead idle.
+  enemyCastAnim(idx = 0) {
+    const entry = this.enemyGroups[idx];
+    if (!entry) return;
+    entry.animator?.setExpression('smug', 1.2);
+    entry.animator?.playGesture('cast');
   }
 
   enemyHurtAnim(idx = 0) {
     const entry = this.enemyGroups[idx];
     if (!entry) return;
     entry.animator?.setExpression('hurt', 0.9);
+    entry.animator?.playGesture('hurt');   // limb flinch — arms fly up, torso snaps back
     this.flashEnemy(0.15, idx);
     const startX = entry.baseX;
     const s = entry.baseScale;
@@ -544,6 +692,7 @@ export class CombatScene {
       return;
     }
     entry.animator?.setExpression('angry', 0.8);
+    entry.animator?.playGesture('attack_ally');   // Andrew sells his own swing (body, not just travel)
     const startX = entry.baseX;
     const startZ = entry.baseZ;
     const startRotY = entry.baseRotY;
@@ -570,45 +719,78 @@ export class CombatScene {
       }, 160);
     }, 80);
 
-    setTimeout(() => this.flash(0xffffff, 0.06), 80);
+    setTimeout(() => this.flash(0xffffff, 0.05), 80);
 
-    const makeSlash = (x, y, z, color, scaleX, scaleY, rotation) => {
-      const mat = new THREE.SpriteMaterial({ color, transparent: true, opacity: 1.0, rotation, depthWrite: false });
+    // Slash accent — a DIRECTIONAL streak that reads as a cut crossing the
+    // target, not a textureless white quad. The prior version was square white
+    // sprites grown to ~2.4× that bloom-nuked into a shapeless slab covering a
+    // third of the frame (critic: "impact reads as a lens flare with confetti").
+    // A slash is now a thin, elongated, additive streak that SWEEPS across the
+    // enemy's chest (aspect ~6:1) and fades in 1–2 frames — a point of contact
+    // with a direction. Reused static texture: a lens-shaped bright core.
+    if (!CombatScene._slashTex) {
+      const sc = document.createElement('canvas');
+      sc.width = 128; sc.height = 128;
+      const sctx = sc.getContext('2d');
+      const sg = sctx.createRadialGradient(64, 64, 2, 64, 64, 62);
+      sg.addColorStop(0, 'rgba(255,255,255,1)');
+      sg.addColorStop(0.35, 'rgba(255,255,255,0.85)');
+      sg.addColorStop(0.7, 'rgba(255,255,255,0.18)');
+      sg.addColorStop(1, 'rgba(255,255,255,0)');
+      sctx.fillStyle = sg;
+      sctx.fillRect(0, 0, 128, 128);
+      CombatScene._slashTex = new THREE.CanvasTexture(sc);
+      CombatScene._slashTex.colorSpace = THREE.SRGBColorSpace;
+      CombatScene._slashTex.minFilter = THREE.LinearFilter;
+      CombatScene._slashTex.generateMipmaps = false;
+    }
+    const makeSlash = (x, y, z, color, rotation) => {
+      const mat = new THREE.SpriteMaterial({
+        map: CombatScene._slashTex, color, transparent: true, opacity: 1.0,
+        rotation, depthWrite: false, blending: THREE.AdditiveBlending,
+      });
       const sprite = new THREE.Sprite(mat);
       sprite.position.set(x, y, z);
-      sprite.scale.set(scaleX, scaleY, 1);
+      sprite.center.set(0.5, 0.5);
       this.scene.add(sprite);
-      return { sprite, mat };
+      return { sprite, mat, x, y };
     };
 
     setTimeout(() => {
-      const s1 = makeSlash( 0.1, 1.2, 0.3, 0xffffff, 0.6, 0.6,  0.35);
-      const s2 = makeSlash(-0.2, 0.9, 0.2, 0xffee88, 0.5, 0.5, -0.25);
-      const s3 = makeSlash( 0.3, 1.5, 0.4, 0xffffff, 0.35, 0.35, 0.9);
-      const s4 = makeSlash(-0.1, 1.3, 0.1, 0xe94560, 0.3, 0.3,  0.6);
-
-      const DURATION = 0.35;
+      // Two crossing streaks (the cut) + a tight impact spark. The streaks are
+      // long+thin and drawn near the enemy's centre of mass so they read as a
+      // blade crossing the body toward stage-left (the direction Andrew lunges).
+      const s1 = makeSlash(0.0, 1.15, 0.35, 0xffffff, -0.55);   // primary diagonal
+      const s2 = makeSlash(0.05, 1.3, 0.3, 0xffe08a, -0.5);     // warm trailing edge
+      const spark = makeSlash(-0.15, 1.05, 0.4, 0xffd0d8, 0.0); // contact spark
+      const slashes = [
+        { s: s1, lenX: 2.6, lenY: 0.42, sweep: -0.7, peak: 1.0 },
+        { s: s2, lenX: 2.2, lenY: 0.30, sweep: -0.6, peak: 0.8 },
+        { s: spark, lenX: 0.6, lenY: 0.6, sweep: 0.0, peak: 0.9, spark: true },
+      ];
+      const DURATION = 0.26;
       let elapsed = 0;
       const tick = () => {
         elapsed += 0.016;
         const t = Math.min(elapsed / DURATION, 1);
-        const ease = 1 - t * t;
-        const grow = 1 + t * 3;
-        s1.mat.opacity = ease;
-        s2.mat.opacity = ease * 0.85;
-        s3.mat.opacity = ease * 0.7;
-        s4.mat.opacity = ease * 0.6;
-        s1.sprite.scale.set(0.6 * grow, 0.6 * grow, 1);
-        s2.sprite.scale.set(0.5 * grow, 0.5 * grow, 1);
-        s3.sprite.scale.set(0.35 * grow, 0.35 * grow, 1);
-        s4.sprite.scale.set(0.3 * grow, 0.3 * grow, 1);
+        // Streaks snap to full length fast, then fade — a 1–2 frame accent.
+        const grow = Math.min(1, t * 3.5);
+        const fade = 1 - t * t;
+        for (const sl of slashes) {
+          if (sl.spark) {
+            const g = 0.4 + grow * 0.7;
+            sl.s.sprite.scale.set(sl.lenX * g, sl.lenY * g, 1);
+            sl.s.mat.opacity = fade * sl.peak;
+          } else {
+            sl.s.sprite.scale.set(sl.lenX * grow, sl.lenY, 1);
+            sl.s.mat.opacity = fade * sl.peak;
+            sl.s.sprite.position.x = sl.s.x + sl.sweep * t; // sweep across the body
+          }
+        }
         if (t < 1) {
           requestAnimationFrame(tick);
         } else {
-          [s1, s2, s3, s4].forEach(s => {
-            this.scene.remove(s.sprite);
-            s.mat.dispose();
-          });
+          for (const sl of slashes) { this.scene.remove(sl.s.sprite); sl.s.mat.dispose(); }
         }
       };
       requestAnimationFrame(tick);
@@ -635,6 +817,7 @@ export class CombatScene {
     const entry = this.allyGroups[allyIndex];
     if (!entry) return;
     entry.animator?.setExpression('hurt', 0.9);
+    entry.animator?.playGesture('hurt');   // body flinch so the victim reads even from behind
     const startX = entry.baseX;
     entry.group.position.x = startX - 0.2;
     setTimeout(() => {
@@ -700,23 +883,77 @@ export class CombatScene {
       this.targetMarker.rotation.z += dt * 1.2;
     }
 
-    // Camera punch-in: snap toward the stage, ease back out
+    // ── Cinematic camera rig ────────────────────────────────────────────
+    // Ease cine offsets toward their targets (exponential smoothing). This is
+    // what gives "dolly on wind-up → snap on impact → settle to rest" for free,
+    // and guarantees a return to _basePos when the timeline zeroes its targets.
+    const k = Math.min(1, dt * this._camEase);
+    this._cinePos.x  += (this._cinePosTarget.x  - this._cinePos.x)  * k;
+    this._cinePos.y  += (this._cinePosTarget.y  - this._cinePos.y)  * k;
+    this._cinePos.z  += (this._cinePosTarget.z  - this._cinePos.z)  * k;
+    this._cineLook.x += (this._cineLookTarget.x - this._cineLook.x) * k;
+    this._cineLook.y += (this._cineLookTarget.y - this._cineLook.y) * k;
+    this._cineLook.z += (this._cineLookTarget.z - this._cineLook.z) * k;
+
+    // Camera punch-in: snap toward the stage, ease back out (crit/weakness)
     let punchZ = 0;
     if (this._punchT < 1) {
       this._punchT = Math.min(this._punchT + dt / 0.35, 1);
       punchZ = this._punchAmount * (1 - this._punchT) * (1 - this._punchT);
     }
 
+    // Technical-tag glitch — high-frequency decaying jitter
+    let gx = 0, gy = 0;
+    if (this._glitchT > 0) {
+      this._glitchT -= dt;
+      const g = this._glitchAmt * Math.max(0, this._glitchT) * 6;
+      gx = (Math.random() - 0.5) * g;
+      gy = (Math.random() - 0.5) * g;
+    }
+
+    // Translational shake
+    let sx = 0, sy = 0;
     if (this.shakeAmount > 0.01) {
-      this.camera.position.set(
-        this._basePos.x + (Math.random() - 0.5) * this.shakeAmount,
-        this._basePos.y + (Math.random() - 0.5) * this.shakeAmount * 0.5,
-        this._basePos.z - punchZ
-      );
+      sx = (Math.random() - 0.5) * this.shakeAmount;
+      sy = (Math.random() - 0.5) * this.shakeAmount * 0.5;
       this.shakeAmount *= 0.88;
     } else {
       this.shakeAmount = 0;
-      this.camera.position.set(this._basePos.x, this._basePos.y, this._basePos.z - punchZ);
+    }
+
+    this.camera.position.set(
+      this._basePos.x + this._cinePos.x + sx + gx,
+      this._basePos.y + this._cinePos.y + sy + gy,
+      this._basePos.z + this._cinePos.z - punchZ
+    );
+    this.camera.lookAt(
+      this._baseLook.x + this._cineLook.x,
+      this._baseLook.y + this._cineLook.y,
+      this._baseLook.z + this._cineLook.z
+    );
+
+    // ── Light-beat modulation ───────────────────────────────────────────
+    this._dim += (this._dimTarget - this._dim) * Math.min(1, dt * 9);
+    this._rimBeatV = this._rimBeatV > 0.002 ? this._rimBeatV * 0.90 : 0;
+    const bi = this._baseIntensity;
+    if (bi) {
+      // Key + fill follow the darken; rims mostly survive it (Refn separation)
+      // and take the beat spike so the silhouette stays readable in the dark.
+      const keyDim = this._dim;
+      const rimDim = 0.6 + 0.4 * this._dim;
+      if (this.ambient)    this.ambient.intensity    = bi.ambient * keyDim;
+      if (this.dirLight)   this.dirLight.intensity   = bi.dir     * keyDim;
+      if (this.fillLight)  this.fillLight.intensity  = bi.fill    * keyDim;
+      if (this.eyeLight)   this.eyeLight.intensity   = bi.eye     * keyDim;
+      if (this.rimCyan)    this.rimCyan.intensity    = bi.rimCyan    * rimDim + this._rimBeatV * 0.5;
+      if (this.rimMagenta) this.rimMagenta.intensity = bi.rimMagenta * rimDim + this._rimBeatV * 1.5;
+      if (this.rimLow)     this.rimLow.intensity     = bi.rimLow     * rimDim + this._rimBeatV * 0.4;
+      // Hero spot INVERTS the dim: brightest exactly when the venue darkens for a
+      // power beat, so Andrew keeps a warm rim while the world drops to black.
+      if (this.heroSpot)   this.heroSpot.intensity   = bi.hero * (1 + (1 - this._dim) * 2.2) + this._rimBeatV * 0.6;
+    }
+    if (this.bgMesh && this.bgMesh.material.uniforms && this.bgMesh.material.uniforms.uDim) {
+      this.bgMesh.material.uniforms.uDim.value = this._dim;
     }
 
     if (this.flashTimer > 0) {
@@ -735,6 +972,7 @@ export class CombatScene {
   }
 
   dispose() {
+    clearTimeout(this._dimTimer);
     this._clearGroups();
     if (this.targetMarker) {
       this.scene.remove(this.targetMarker);

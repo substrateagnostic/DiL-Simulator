@@ -305,7 +305,13 @@ export function buildCharacter(config, options = {}) {
   // Slight downward nod so the face aims at the combat camera (which looks
   // UP at the head); without it, the up-view foreshortens the face into a
   // long blank jaw with the features crammed at the top.
-  head.rotation.x = 0.15;
+  // HUNCH COMPENSATION: a hunched figure (Grandma) sits short, so the combat cam
+  // looks LESS up at her — the fixed nod then over-pitched her face downward and
+  // rotated the whole lower band (mouth/chin) out of view, leaving a mouthless
+  // expanse below the nose (the cast-bug the patch-elongation fix didn't reach on
+  // her). Pitching the head back up in proportion to the hunch re-presents the
+  // lower face so the painted mouth lands on the visible front.
+  head.rotation.x = 0.15 - hunch * 0.42;
 
   const skull = makeHead(headR, mSkin, { jaw: config.jaw ?? 0.82, chin: config.chin ?? 1.0, detailed });
   head.add(skull);
@@ -333,7 +339,7 @@ export function buildCharacter(config, options = {}) {
   group.faceTextures = paintFaceSet(faceConfig, faceSize);
   let facePatch = null;
   if (group.faceTextures && group.faceTextures.neutral) {
-    facePatch = makeFacePatch(headR, group.faceTextures.neutral, M);
+    facePatch = makeFacePatch(headR, group.faceTextures.neutral, M, detailed);
     facePatch.userData.noMerge = true;
     head.add(facePatch);
   }
@@ -689,7 +695,7 @@ function makeHead(rad, mat, opts = {}) {
   return new THREE.Mesh(geo, mat);
 }
 
-function makeFacePatch(rad, faceTex, M) {
+function makeFacePatch(rad, faceTex, M, detailed = false) {
   const phiStart = Math.PI * 0.5 - 1.0;
   const phiLen = 2.0;
   const thetaStart = 0.62;
@@ -697,7 +703,32 @@ function makeFacePatch(rad, faceTex, M) {
   // Bulge kept minimal (0.4%) so the patch does NOT catch more light than the
   // skull beneath it — the "patch is brighter than the head" luminance step.
   // polygonOffset (below) keeps it from z-fighting despite the tiny gap.
-  const geo = new THREE.SphereGeometry(rad * 1.004, 48, 48, phiStart, phiLen, thetaStart, thetaLen);
+  // Segment density is raised hard on the combat tier: at 48 the ~20 visible
+  // latitude bands shaded as concentric "onion rings" across the cheeks/forehead
+  // at 4× (item 4, Chad/Intern). 128 pushes each band sub-2px so the patch is a
+  // clean gradient; smooth normals are recomputed to seal it.
+  const seg = detailed ? 128 : 56;
+  const geo = new THREE.SphereGeometry(rad * 1.004, seg, seg, phiStart, phiLen, thetaStart, thetaLen);
+  // Conform the patch to the SAME egg the skull uses (makeHead): the skull is
+  // elongated 1.09× in Y with a brow-ridge bulge, but the patch was a plain
+  // sphere section — so it sat SHORTER than the skull and its lower-face
+  // latitudes (mouth/chin) fell behind the skull, leaving the painted mouth
+  // occluded by bare skull (item 1, Grandma's blank lower face). Matching the
+  // elongation seats the mouth on the visible front face. Jaw-narrowing is
+  // intentionally NOT copied (it would pull the patch behind the skull); the
+  // un-narrowed patch stays a hair proud, which is what we want.
+  {
+    const pos = geo.attributes.position;
+    const vv = new THREE.Vector3();
+    for (let i = 0; i < pos.count; i++) {
+      vv.fromBufferAttribute(pos, i);
+      const yN = vv.y / (rad * 1.004);
+      vv.y *= 1.09;
+      if (yN > 0.15 && vv.z > 0) vv.z += rad * 0.03 * (yN - 0.15);
+      pos.setXYZ(i, vv.x, vv.y, vv.z);
+    }
+  }
+  geo.computeVertexNormals();
   const uv = geo.attributes.uv;
   let uMin = 1, uMax = 0, vMin = 1, vMax = 0;
   for (let i = 0; i < uv.count; i++) {
@@ -780,9 +811,14 @@ function buildHair(head, r, mat, style) {
       // front hairline lift: raise front-of-head verts below the hairline up to
       // it (weighted by how far forward they are), so the forehead stays open
       // and the rim forms a natural arc that dips toward the temples/ears.
+      // The lift is tapered LATERALLY (item 3): full at the centre-front so the
+      // forehead opens, falling to zero by the temples so the cap stays down over
+      // them. Without this, the temple rim lifted too, opening a bare-scalp wedge
+      // between the fringe and the side mass (the Intern's "two detached lobes").
       if (v.z > 0 && v.y < hairlineY * r) {
         const front = Math.min(1, v.z / (r * 0.5));
-        const lift = (hairlineY * r - v.y) * front;
+        const lateral = Math.max(0, 1 - (Math.abs(v.x) / (r * 0.6)) ** 2);
+        const lift = (hairlineY * r - v.y) * front * lateral;
         v.y += lift;
         v.z -= lift * 0.45;              // ease the lifted rim back off the face
       }
@@ -945,17 +981,24 @@ function buildGlasses(head, r, kind, detailed) {
       ? new THREE.MeshPhysicalMaterial({ color: 0x0a0a10, roughness: 0.12, metalness: 0.2, clearcoat: 0.9, transparent: true, opacity: 0.88 })
       // Reading/clear glass barely tints — a faint rim catch, not a frosted disc
       // that smudges the eyes behind it (addendum: Grandma's eyes are smudges).
-      : new THREE.MeshPhysicalMaterial({ color: 0xbcd0e0, roughness: 0.08, metalness: 0.0, clearcoat: 1.0, clearcoatRoughness: 0.05, transparent: true, opacity: 0.10, envMapIntensity: 1.2 });
+      // Specular calmed (rougher clearcoat, low envMap) so the lens no longer
+      // blows to a pink-white glare pool that half-drowns the pupil (critic).
+      : new THREE.MeshPhysicalMaterial({ color: 0xbcd0e0, roughness: 0.2, metalness: 0.0, clearcoat: 0.4, clearcoatRoughness: 0.35, transparent: true, opacity: 0.10, envMapIntensity: 0.4 });
     const lens = new THREE.Mesh(new THREE.CircleGeometry(lensR, 20), lensMat);
     lens.position.set(s * sep, r * 0.02, zf - tube * 0.4);
     lens.userData.noFlash = true;
     head.add(lens);
-    // catchlight — a small bright bead near the top-outer of each rim so the
-    // glasses read as glossy geometry even under the dark venue wash.
-    const catch1 = new THREE.Mesh(new THREE.SphereGeometry(tube * 0.9, 8, 6), catchMat);
-    catch1.position.set(s * sep - s * lensR * 0.5, r * 0.02 + lensR * 0.55, zf + tube * 0.6);
-    catch1.userData.noFlash = true;
-    head.add(catch1);
+    // lens glint — a bright white dot sitting on the LENS FRONT (proud of the
+    // rim, upper-inner) so each lens plainly catches light. This is the figurine
+    // read that says "there is glass here" and keeps glasses-wearers from looking
+    // dead-eyed under the dark venue wash (item 2). Bigger + further forward than
+    // the old sub-pixel rim bead that never showed.
+    // Smaller catchlight bead, seated at the upper-OUTER lens edge (not over the
+    // pupil) so it says "glass" without drowning the eye (critic: glare pools).
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(tube * 1.05, 10, 8), catchMat);
+    glint.position.set(s * sep + s * lensR * 0.5, r * 0.02 + lensR * 0.56, zf + tube * 1.2);
+    glint.userData.noFlash = true;
+    head.add(glint);
   }
   const bridge = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.016, r * 0.016, sep * 0.7, 8), frameMat);
   bridge.rotation.z = Math.PI / 2;
