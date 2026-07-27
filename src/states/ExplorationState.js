@@ -2614,7 +2614,7 @@ export class ExplorationState {
       this.stateManager.push(menuState);
     }
 
-    Engine.renderer.render(Engine.scene, Engine.camera);
+    Engine.renderScene(Engine.scene, Engine.camera);
     Engine.skipDefaultRender();
   }
 

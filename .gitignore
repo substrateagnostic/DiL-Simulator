@@ -8,4 +8,5 @@ release/
 .playwright-mcp/
 screenshots/
 art/portraits_raw/
+art/comp_refs/
 trust-issues-itch.zip

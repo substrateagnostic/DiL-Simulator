@@ -1313,15 +1313,28 @@ export const Furniture = {
           ctx.fillStyle = '#0a0c10';
           for (let vy = y + 3; vy < y + unitH - 5; vy += 3) ctx.fillRect(6, vy, 30, 1);
         }
-        // LED cluster
+        // LED cluster — halo first, hot dot on top (feeds the bloom pass;
+        // these are 'the only saturated light sources in dark scenes')
         const ledColors = ['#22ff66', '#22ff66', '#ffaa22', '#2266ff', '#ff3344'];
         for (let i = 0; i < 4; i++) {
-          ctx.fillStyle = Math.random() < 0.75 ? ledColors[Math.floor(Math.random() * ledColors.length)] : '#1a2a1a';
-          ctx.fillRect(42 + (i % 2) * 6, y + 3 + Math.floor(i / 2) * 5, 3, 3);
+          const lx = 42 + (i % 2) * 6, ly = y + 3 + Math.floor(i / 2) * 5;
+          if (Math.random() < 0.82) {
+            const col = ledColors[Math.floor(Math.random() * ledColors.length)];
+            ctx.globalAlpha = 0.45;
+            ctx.fillStyle = col;
+            ctx.fillRect(lx - 1, ly - 1, 5, 5);
+            ctx.globalAlpha = 1;
+            ctx.fillStyle = col;
+            ctx.fillRect(lx, ly, 3, 3);
+          } else {
+            ctx.fillStyle = '#1a2a1a';
+            ctx.fillRect(lx, ly, 3, 3);
+          }
         }
         y += unitH;
       }
       const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
       tex.minFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
       Furniture._rackPanels[key] = tex;
@@ -1332,7 +1345,50 @@ export const Furniture = {
     );
     panel.position.set(0, 0.9, 0.26);
     group.add(panel);
+    // Additive re-add of the same panel: LEDs double in intensity while
+    // the near-black chassis contributes nothing — cheap emissive boost
+    const panelGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.52, 1.7),
+      new THREE.MeshBasicMaterial({
+        map: Furniture._rackPanels[key], transparent: true, opacity: 0.85,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      })
+    );
+    panelGlow.position.set(0, 0.9, 0.265);
+    group.add(panelGlow);
+    // Faint colored spill onto the floor of the aisle in front of the rack
+    if (!Furniture._rackSpillTex) {
+      const sc = document.createElement('canvas');
+      sc.width = sc.height = 64;
+      const sctx = sc.getContext('2d');
+      const sg = sctx.createRadialGradient(32, 32, 3, 32, 32, 31);
+      sg.addColorStop(0, 'rgba(255,255,255,0.7)');
+      sg.addColorStop(0.5, 'rgba(255,255,255,0.24)');
+      sg.addColorStop(1, 'rgba(255,255,255,0)');
+      sctx.fillStyle = sg;
+      sctx.fillRect(0, 0, 64, 64);
+      Furniture._rackSpillTex = new THREE.CanvasTexture(sc);
+      Furniture._rackSpillTex.colorSpace = THREE.SRGBColorSpace;
+      Furniture._rackSpillTex.minFilter = THREE.LinearFilter;
+      Furniture._rackSpillTex.generateMipmaps = false;
+    }
+    const spillColors = [0x2fd77a, 0x3b7fff, 0xff9a3c];
+    const spill = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.7, 1.15),
+      new THREE.MeshBasicMaterial({
+        map: Furniture._rackSpillTex, color: spillColors[variant],
+        transparent: true, opacity: 0.16,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      })
+    );
+    spill.rotation.x = -Math.PI / 2;
+    spill.position.set(0, 0.022, 0.85);
+    spill.renderOrder = 2;
+    group.add(spill);
     group.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+    // Emissive overlays never cast shadows
+    panelGlow.castShadow = false;
+    spill.castShadow = false;
     return group;
   },
 

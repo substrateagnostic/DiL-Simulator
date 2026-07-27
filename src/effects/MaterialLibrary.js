@@ -191,19 +191,23 @@ export const Materials = {
   },
 
   // Hardwood plank pattern — light oak with grain lines and plank seams
-  hardwoodPattern(w, h) {
+  // Lacquered plank floor. `tint` (the room's floorColor) cools/darkens
+  // the walnut base so hardwood rooms honor their data palette — the
+  // penthouse lounges are DARK floors in the data; the old baked-caramel
+  // oak ("orange-washed", grade-brief violation) is gone.
+  hardwoodPattern(w, h, tint) {
     const size = 256;
     const canvas = document.createElement('canvas');
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d');
 
-    // Base oak colour
-    ctx.fillStyle = '#c8a96e';
+    // Base walnut — neutral-cool, never caramel
+    ctx.fillStyle = '#8a755f';
     ctx.fillRect(0, 0, size, size);
 
     // Subtle grain streaks
-    ctx.strokeStyle = 'rgba(160,120,60,0.32)';
+    ctx.strokeStyle = 'rgba(84,64,46,0.34)';
     ctx.lineWidth = 0.8;
     for (let i = 0; i < 28; i++) {
       const x = Math.random() * size;
@@ -240,13 +244,19 @@ export const Materials = {
     }
 
     const texture = new THREE.CanvasTexture(canvas);
+    texture.colorSpace = THREE.SRGBColorSpace;
     texture.wrapS = THREE.RepeatWrapping;
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(w / 3, h / 3);
 
+    // Tint: lift the room's floorColor toward a neutral so very dark data
+    // colors land as deep cool walnut, not pitch black; no floorColor
+    // falls back to a neutral bone (never the old caramel 0xd4aa72)
+    const tintColor = new THREE.Color(tint ?? 0xb9ac9c)
+      .lerp(new THREE.Color(0xcfc6b8), tint !== undefined ? 0.58 : 0);
     return new THREE.MeshToonMaterial({
       map: texture,
-      color: new THREE.Color(0xd4aa72),
+      color: tintColor,
       gradientMap: gradientMap3,
     });
   },

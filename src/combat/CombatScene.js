@@ -48,12 +48,42 @@ export class CombatScene {
 
     this._createBackground();
 
+    // Near-opaque true-black stage floor — the frame's bottom anchor
+    // (Refn blacks; the ribbon backdrop must never flood the floor)
     const groundGeo = new THREE.PlaneGeometry(14, 7);
-    const groundMat = new THREE.MeshBasicMaterial({ color: 0x111122, transparent: true, opacity: 0.3 });
+    const groundMat = new THREE.MeshBasicMaterial({ color: 0x050508, transparent: true, opacity: 0.88 });
     const ground = new THREE.Mesh(groundGeo, groundMat);
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.01;
     this.scene.add(ground);
+
+    // Faint magenta stage pool — separates the actors' feet from the
+    // black floor (Refn black needs one wet-reflection accent, and the
+    // combatants are what it should catch)
+    const poolCanvas = document.createElement('canvas');
+    poolCanvas.width = poolCanvas.height = 128;
+    const pctx = poolCanvas.getContext('2d');
+    const pg = pctx.createRadialGradient(64, 64, 6, 64, 64, 62);
+    pg.addColorStop(0, 'rgba(255,255,255,0.75)');
+    pg.addColorStop(0.45, 'rgba(255,255,255,0.25)');
+    pg.addColorStop(1, 'rgba(255,255,255,0)');
+    pctx.fillStyle = pg;
+    pctx.fillRect(0, 0, 128, 128);
+    const poolTex = new THREE.CanvasTexture(poolCanvas);
+    poolTex.colorSpace = THREE.SRGBColorSpace;
+    poolTex.minFilter = THREE.LinearFilter;
+    poolTex.generateMipmaps = false;
+    const stagePool = new THREE.Mesh(
+      new THREE.PlaneGeometry(11, 5.5),
+      new THREE.MeshBasicMaterial({
+        map: poolTex, color: 0xe94560, transparent: true, opacity: 0.10,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      })
+    );
+    stagePool.rotation.x = -Math.PI / 2;
+    stagePool.position.set(0, 0.004, 0.4);
+    stagePool.renderOrder = 1;
+    this.scene.add(stagePool);
 
     // Target selector ring (invisible until used)
     const ringGeo = new THREE.RingGeometry(0.6, 0.85, 32);
@@ -70,9 +100,12 @@ export class CombatScene {
     const bgMat = new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uColor1: { value: new THREE.Color(0x1a0533) },
-        uColor2: { value: new THREE.Color(0x0a2463) },
-        uColor3: { value: new THREE.Color(0x3e1f47) },
+        // Deep-Refn-black base palette: three near-black voids so the
+        // single magenta accent (uColor4) reads as controlled edge light,
+        // not an all-over red wash — matches the night-city stills
+        uColor1: { value: new THREE.Color(0x050309) },
+        uColor2: { value: new THREE.Color(0x080a16) },
+        uColor3: { value: new THREE.Color(0x1c0b1e) },
         uColor4: { value: new THREE.Color(0xe94560) },
       },
       vertexShader: `
@@ -103,12 +136,19 @@ export class CombatScene {
           float spiral = sin(angle * 3.0 + dist * 10.0 - t * 4.0);
           float blend1 = smoothstep(-0.3, 0.3, pattern);
           float blend2 = smoothstep(-0.2, 0.2, spiral);
+          // Near-black ribbon field...
           vec3 color = mix(
             mix(uColor1, uColor2, blend1),
-            mix(uColor3, uColor4, blend1),
+            mix(uColor3, uColor3 * 1.7, blend1),
             blend2
           );
+          // ...with magenta as a controlled accent on a few ribbon
+          // edges only — never an all-over wash
+          float accent = smoothstep(0.5, 0.92, pattern) * smoothstep(0.25, 0.8, spiral);
+          color += uColor4 * accent * 1.1;
           color *= 0.8 + 0.2 * sin(t * 1.5);
+          // Crush the bottom of frame into the stage-floor black
+          color *= mix(0.18, 1.0, smoothstep(0.02, 0.38, uv.y));
           gl_FragColor = vec4(color, 1.0);
         }
       `,

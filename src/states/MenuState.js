@@ -439,7 +439,7 @@ export class MenuState {
             ${row(0, 'Music:', `[${bar(S.musicVol)}] ${Math.round(S.musicVol * 100)}%`)}
             ${row(1, 'SFX:', `[${bar(S.sfxVol)}] ${Math.round(S.sfxVol * 100)}%`)}
             ${row(2, 'Text Speed:', speedLabel)}
-            ${row(3, 'Retro Filter:', onOff(S.retro) + '<span style="font-size:15px;color:#888;"> (off reduces flicker)</span>')}
+            ${row(3, '1998 MODE:', onOff(S.retro) + '<span style="font-size:15px;color:#888;"> (off reduces flicker)</span>')}
             ${row(4, 'Screen Shake:', onOff(S.shake))}
             <div style="font-size:16px;color:#888;margin-left:8px;">↑↓ select &nbsp; ← → adjust</div>
           </div>

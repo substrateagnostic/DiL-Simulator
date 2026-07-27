@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { BUILDING_MAP, PLATE, TOP_FLOOR } from '../data/buildingMap.js';
-import { ROOMS } from '../data/rooms/index.js';
 
 // The ghost of the building around the current room — v2: ONE canonical
 // tower. Every interior room has a floor number and a position on the
@@ -15,8 +14,12 @@ import { ROOMS } from '../data/rooms/index.js';
 // the street uses CityBackdrop's street-level mode instead (P3).
 
 const STOREY = 3.4;
-const BLUEPRINT = 0x53a8b6;
-const WARM = 0xffd890;
+// Seam-light language: the ghost building is an architectural hologram —
+// thin, dim, precise lines; never scaffolding. Desaturated cool slate
+// (NOT cyan — saturated cyan verticals read synthwave against the sodium
+// city, critic-flagged), a sodium-adjacent warmth for thresholds.
+const BLUEPRINT = 0x59626e;
+const WARM = 0xffc27d;
 
 export class BuildingShell {
   constructor(scene) {
@@ -96,8 +99,10 @@ export class BuildingShell {
       // filled slabs overhead read as a ceiling pressing down on the
       // room (Alex's playtest note). Below keeps the filled stack.
       if (level < 0) {
+        // Whisper-quiet since the sRGB fix dropped the city to true
+        // black — the blueprint dream must never read as glass sheets
         const slab = new THREE.Mesh(slabGeo, new THREE.MeshBasicMaterial({
-          color: BLUEPRINT, transparent: true, opacity: 0.05 * depthFade,
+          color: BLUEPRINT, transparent: true, opacity: 0.013 * depthFade,
           depthWrite: false, side: THREE.DoubleSide,
         }));
         slab.rotation.x = -Math.PI / 2;
@@ -106,16 +111,21 @@ export class BuildingShell {
         group.add(slab);
       }
 
-      const outline = new THREE.LineSegments(
-        edgeGeo,
-        new THREE.LineBasicMaterial({
-          color: BLUEPRINT, transparent: true,
-          opacity: (level < 0 ? 0.22 : 0.07) * depthFade, depthWrite: false,
-        })
-      );
-      outline.rotation.x = -Math.PI / 2;
-      outline.position.set(cx, y, cz);
-      group.add(outline);
+      // Outlines only on the two levels nearest the room — a deep stack
+      // of glowing rectangles below the floor read as ground grid lines
+      // (critic: flirts with the banned 80s-grid kitsch)
+      if (Math.abs(level) <= 2) {
+        const outline = new THREE.LineSegments(
+          edgeGeo,
+          new THREE.LineBasicMaterial({
+            color: BLUEPRINT, transparent: true,
+            opacity: (level < 0 ? 0.038 : 0.018) * depthFade, depthWrite: false,
+          })
+        );
+        outline.rotation.x = -Math.PI / 2;
+        outline.position.set(cx, y, cz);
+        group.add(outline);
+      }
     }
 
     // ── Corner columns spanning the visible shaft ───────────────────────
@@ -123,9 +133,10 @@ export class BuildingShell {
       const topY = above * STOREY + 0.8;
       const botY = -below * STOREY;
       const colMat = new THREE.MeshBasicMaterial({
-        color: BLUEPRINT, transparent: true, opacity: 0.1, depthWrite: false,
+        color: BLUEPRINT, transparent: true, opacity: 0.05, depthWrite: false,
       });
-      const colGeo = new THREE.BoxGeometry(0.22, topY - botY, 0.22);
+      // Thin precise seam-columns, not scaffolding posts
+      const colGeo = new THREE.BoxGeometry(0.07, topY - botY, 0.07);
       for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
         const col = new THREE.Mesh(colGeo, colMat);
         col.position.set(cx + sx * PLATE.w / 2, (topY + botY) / 2, cz + sz * PLATE.d / 2);
@@ -133,18 +144,13 @@ export class BuildingShell {
       }
     }
 
-    // ── Ghost neighbor rooms — the REAL ones, where the map knows them ──
-    const ghostMat = new THREE.MeshBasicMaterial({
-      color: WARM, transparent: true, opacity: 0.05,
-      depthWrite: false, side: THREE.BackSide,
-    });
-    const ghostEdgeMat = new THREE.LineBasicMaterial({
-      color: WARM, transparent: true, opacity: 0.15, depthWrite: false,
-    });
+    // ── Thresholds ──────────────────────────────────────────────────────
+    // The old translucent "ghost neighbor" boxes and doorway-hint volumes
+    // read as leftover debug/collision geometry in stills (critic verdict:
+    // thread-killer) — deleted. Doors keep only a breath of warm light at
+    // the threshold; the building shell's slabs and columns carry the
+    // architecture.
     const w = roomData.width, h = roomData.height;
-    const seenTargets = new Set();
-    const seenDoorways = new Set();
-
     for (const exit of (roomData.exits || [])) {
       let dx = 0, dz = 0;
       if (exit.z === 0) dz = -1;
@@ -153,52 +159,10 @@ export class BuildingShell {
       else if (exit.x === w - 1) dx = 1;
       else continue;
 
-      const target = BUILDING_MAP[exit.targetRoom];
-      const targetRoom = ROOMS[exit.targetRoom];
-
-      // The map's floor-plan estimates overlap in places — an aligned
-      // neighbor ghost that would intersect the CURRENT room renders
-      // right through it (Alex's "outlines on the rooms"). Those fall
-      // back to the small doorway hint instead.
-      let intersectsRoom = false;
-      if (target && targetRoom) {
-        const nx0 = target.offsetX - offsetX - 0.5, nx1 = nx0 + targetRoom.width;
-        const nz0 = target.offsetZ - offsetZ - 0.5, nz1 = nz0 + targetRoom.height;
-        intersectsRoom = nx0 < w - 0.1 && nx1 > -0.9 && nz0 < h - 0.1 && nz1 > -0.9;
-      }
-
-      if (target && targetRoom && target.floor === floor && !intersectsRoom && !seenTargets.has(exit.targetRoom)) {
-        // Aligned ghost: the neighbor at its true mapped position
-        seenTargets.add(exit.targetRoom);
-        const gw = targetRoom.width, gd = targetRoom.height;
-        const gx = (target.offsetX - offsetX) + gw / 2 - 0.5;
-        const gz = (target.offsetZ - offsetZ) + gd / 2 - 0.5;
-        const ghostGeo = new THREE.BoxGeometry(gw, 2.6, gd);
-        const ghost = new THREE.Mesh(ghostGeo, ghostMat);
-        ghost.position.set(gx, 1.3, gz);
-        group.add(ghost);
-        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(ghostGeo), ghostEdgeMat);
-        edges.position.copy(ghost.position);
-        group.add(edges);
-      } else if (!target || target.floor !== floor || intersectsRoom) {
-        // Different floor (stairwell/elevator) or unmapped: small warm
-        // hint beyond the doorway so the door still goes somewhere
-        const key = `${dx},${dz},${Math.round((dx !== 0 ? exit.z : exit.x) / 3)}`;
-        if (seenDoorways.has(key)) continue;
-        seenDoorways.add(key);
-        const ghostGeo = new THREE.BoxGeometry(dx !== 0 ? 4.5 : 4.5, 2.6, 4.5);
-        const ghost = new THREE.Mesh(ghostGeo, ghostMat);
-        ghost.position.set(exit.x + dx * 3.4, 1.3, exit.z + dz * 3.4);
-        group.add(ghost);
-        const edges = new THREE.LineSegments(new THREE.EdgesGeometry(ghostGeo), ghostEdgeMat);
-        edges.position.copy(ghost.position);
-        group.add(edges);
-      }
-
       // A breath of light at every threshold
       const glow = new THREE.Mesh(
         new THREE.PlaneGeometry(1.6, 2.0),
-        new THREE.MeshBasicMaterial({ color: WARM, transparent: true, opacity: 0.1, depthWrite: false, side: THREE.DoubleSide })
+        new THREE.MeshBasicMaterial({ color: WARM, transparent: true, opacity: 0.06, depthWrite: false, side: THREE.DoubleSide })
       );
       glow.position.set(exit.x + dx * 0.9, 1.0, exit.z + dz * 0.9);
       if (dx !== 0) glow.rotation.y = Math.PI / 2;

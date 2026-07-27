@@ -228,7 +228,7 @@ export class Room {
   _buildFloor(w, h, color, floorPattern) {
     const geo = new THREE.PlaneGeometry(w * TILE_SIZE, h * TILE_SIZE);
     const mat = floorPattern === 'carpet'   ? Materials.carpetPattern(w, h, color)
-              : floorPattern === 'hardwood' ? Materials.hardwoodPattern(w, h)
+              : floorPattern === 'hardwood' ? Materials.hardwoodPattern(w, h, color)
               : Materials.custom(color);
     const floor = new THREE.Mesh(geo, mat);
 
@@ -750,6 +750,8 @@ export class Room {
       }
 
       obj.name = `${type}_${x}_${z}`;
+      // Tag for Engine.applyRoomFX (contact-shadow blobs under furniture)
+      obj.userData.furnitureType = type;
       this.scene.add(obj);
 
       // Block tiles based on footprint

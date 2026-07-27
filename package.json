@@ -17,6 +17,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "n8ao": "^2.0.0",
     "three": "^0.183.2",
     "vite": "^7.3.1"
   },

@@ -48,6 +48,10 @@ export class RoomManager {
     // Per-room mood lighting (falls back to default office rig)
     Engine.applyRoomLighting(room.data.lighting);
 
+    // Interior lighting design layer: ceiling light pools, wall-seam AO
+    // frame, furniture contact blobs, floor gloss + neon reflections
+    Engine.applyRoomFX(room.data, this.roomGroup);
+
     // Rebuild the ghost building shell around this room (handles the
     // first-load race before the lazy module resolves). The shell returns
     // the canonical plate center — recenter the city ring on it so the

@@ -15,6 +15,22 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## LOG
 
+### 2026-07-27 ~01:55 — WAVE 1 ROUND 1: CRITICS BITE, IDENTITY HOLDS
+- Builders + integrator landed; `npm run check` green; six stills shot.
+- Both blind critics: **not_yet** — game lost all 8 comp pairings, BUT two
+  narrowly ("fixable wave-1 reasons") and the identity got real praise:
+  "a lacquered, lit specimen-room floating in a black tower field...
+  looks like nobody else's screenshot"; night city "would honestly draw
+  'is this the new Tron?' — never retrowave"; blacks "honestly deep."
+- **Convergent sour notes** (both critics independently — the A-string
+  principle paying off): no Severance ceiling light-pools in interiors
+  yet; AO not reading at wall-floor seams/furniture contact; translucent
+  city slabs read as debug geometry; seam-light needs hierarchy (fewer,
+  varied, sodium-shifted); penthouse floor orange-washed; fight backdrop
+  grade breaks cohesion with the Refn-black stills.
+- Fix agent mid-flight (live file writes at 01:52–01:54). Round 2
+  critique follows automatically. No cap stall; resume ping stood down.
+
 ### 2026-07-27 — COMP CARD + PLATFORM RULING + WAVE 1 LAUNCH
 - **Research landed:** 103 agents, 0 errors, all claims verified or killed.
   Comp stack: Hinterberg (rendering strategy) · Link's Awakening (tilt-shift
@@ -32,6 +48,10 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 - **Wave 1 launched:** L0 post stack (tilt-shift, AO, grade, 1998-mode) +
   L3 night layer (Refn/Ares city), parallel, disjoint files, two-critic
   blind verdicts before merge.
+- **Comp reference pack landed:** 32 official stills, all six comps, in
+  `art/comp_refs/` (gitignored, critics' eyes only) + MANIFEST.md with
+  sources. Gaps flagged honestly: no wide MDR green-carpet Severance shot;
+  Drive frames 1024px, no magenta wet-street frame.
 
 ### 2026-07-27 — RULING #4: THE NIGHT GOES REFN/ARES (yours, live)
 - The neon-noir layer calibrates to **Drive (2011) + Tron: Ares**, not the
