@@ -26,10 +26,15 @@ const ROOMS = [
   'floor_13',
 ];
 const FIGHTS = ['intern', 'karen', 'chad', 'grandma', 'compliance', 'rachel_boss', 'algorithm', 'the_firm', 'parking_enforcer'];
+// Combat-framed close-ups of characters that never appear as enemies — the
+// player (Andrew) chief among them, so the jaw-patch-seam "kill by construction"
+// is verifiable on the contact sheet (addendum: no character pass without it).
+const PORTRAITS = ['andrew'];
 
 const shots = [
   ...ROOMS.map(r => ({ name: `room-${r}`, url: `${BASE}/?dev&fixture=${fixture}&shot=${r}&hud=0`, wait: 1500 })),
   ...FIGHTS.map(f => ({ name: `fight-${f}`, url: `${BASE}/?dev&fixture=${fixture}&fight=${f}`, wait: 4500 })),
+  ...PORTRAITS.map(p => ({ name: `fight-${p}`, url: `${BASE}/?dev&portrait=${p}`, wait: 4500 })),
 ];
 
 const run = async () => {

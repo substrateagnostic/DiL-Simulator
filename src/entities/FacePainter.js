@@ -102,17 +102,20 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // eyeY pushed DOWN toward the head's equator so the eyes face the below-
   // looking combat camera instead of tilting up over the brow — that up-tilt
   // was the "dark eye band" (the sclera pointed away from the lens).
-  const eyeY = S * 0.534;
-  const eyeDX = S * 0.152;        // eye separation from center (addendum: +size)
-  // Addendum round-2 (a): features vanished at the ACTUAL combat framing (noses
-  // and mouths gone; Chad/Intern eyes pupil-less; Grandma's smudged). Another
-  // ~+35% on eyes/mouth on top of the earlier doubles, iris enlarged so it reads
-  // as an iris (not sleepy sclera), line weights +40% again, sockets darkened.
-  const eyeW = S * 0.156;
-  const eyeH = S * 0.100 * E.openY;
-  const browY = S * 0.452;
-  const noseTipY = S * 0.676;
-  const mouthY = S * 0.792;
+  const eyeY = S * 0.532;
+  const eyeDX = S * 0.166;        // eye separation from center (round-3: widened w/ taller eyes)
+  // Addendum round-3 (item 4): eyes still collapsed to dark slits at fight
+  // framing. Taller eye opening (more sclera), a SMALLER iris framed by white,
+  // a lighter socket, and a guaranteed bright catchlight bead — so the eye
+  // reads OPEN and alive at combat distance instead of a sleepy dark blob.
+  const eyeW = S * 0.160;
+  const eyeH = S * 0.118 * E.openY;
+  const browY = S * 0.448;
+  const noseTipY = S * 0.680;
+  // Mouth dropped ~15% lower toward the jaw (item 5: "flat line floating high
+  // above an enormous blank chin"). Seats the mouth on the lower face so the
+  // jaw region reads as anatomy, not Easter Island.
+  const mouthY = S * 0.808;
 
   // ── base skin: FLAT fill at exactly skin so the feathered patch edge
   // blends seamlessly into the head skin. Shaping is centered overlays that
@@ -154,11 +157,11 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   for (const s of [-1, 1]) {
     const ex = cx + s * eyeDX;
     const sg = ctx.createRadialGradient(ex, eyeY - S * 0.032, S * 0.012, ex, eyeY - S * 0.02, S * 0.10);
-    // Darker lid/socket accent (addendum: darken lid/socket accents) so the eye
-    // sits in a defined socket and reads at range — but kept off the eye itself
-    // (the shadow is ABOVE the lash line) so the sclera stays bright.
-    sg.addColorStop(0, rgba(0x241009, 0.30));
-    sg.addColorStop(0.6, rgba(0x241009, 0.14));
+    // Lighter socket accent (round-3 item 4: the dark socket + heavy lash merged
+    // with the iris into a "dark slit"). Enough to seat the eye in a socket, but
+    // eased so the sclera stays bright and the eye reads OPEN at fight distance.
+    sg.addColorStop(0, rgba(0x241009, 0.20));
+    sg.addColorStop(0.6, rgba(0x241009, 0.09));
     sg.addColorStop(1, rgba(0, 0));
     ctx.fillStyle = sg;
     ctx.fillRect(ex - S * 0.13, eyeY - S * 0.14, S * 0.26, S * 0.17);
@@ -181,27 +184,30 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     wg.addColorStop(1, '#efe9de');
     ctx.fillStyle = wg;
     ctx.fillRect(ex - eyeW, eyeY - eyeH, eyeW * 2, eyeH * 2);
-    // iris — ENLARGED (0.56→0.74 of eyeH) with a dark limbal ring and a clear
-    // pupil, so at combat framing the eye reads as an iris with intent rather
-    // than blank sclera + lid line (the Chad/Intern "pupil-less, sleepy-dead"
-    // note). The bright sclera still frames it left/right.
-    const irisR = eyeH * 0.76;
-    const iy = eyeY + eyeH * 0.04;
+    // iris — sized to sit INSIDE a ring of bright sclera (0.64 of eyeH, down
+    // from 0.76) so white frames it top/bottom/sides and the eye never collapses
+    // to an all-dark blob at distance. Dark limbal ring + clear pupil keep the
+    // iris legible; the high-contrast sclera does the "open eye" read.
+    const irisR = eyeH * 0.64;
+    const iy = eyeY + eyeH * 0.06;
     const ig = ctx.createRadialGradient(ex, iy, irisR * 0.15, ex, iy, irisR);
-    ig.addColorStop(0, shadeHex(eyeC, 1.45));
+    ig.addColorStop(0, shadeHex(eyeC, 1.5));
     ig.addColorStop(0.55, shadeHex(eyeC, 1.0));
-    ig.addColorStop(0.86, shadeHex(eyeC, 0.5));
-    ig.addColorStop(1, shadeHex(eyeC, 0.28));   // dark limbal ring — defines the iris edge
+    ig.addColorStop(0.86, shadeHex(eyeC, 0.48));
+    ig.addColorStop(1, shadeHex(eyeC, 0.26));   // dark limbal ring — defines the iris edge
     ctx.fillStyle = ig;
     ctx.beginPath(); ctx.arc(ex, iy, irisR, 0, Math.PI * 2); ctx.fill();
-    // pupil (larger, jet black)
-    ctx.fillStyle = '#080604';
-    ctx.beginPath(); ctx.arc(ex, iy, irisR * 0.5, 0, Math.PI * 2); ctx.fill();
-    // catchlight — bigger bright bead top-inner so the eye reads glossy/alive
-    ctx.fillStyle = 'rgba(255,255,255,0.99)';
-    ctx.beginPath(); ctx.arc(ex - irisR * 0.3, iy - irisR * 0.36, irisR * 0.3, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.beginPath(); ctx.arc(ex + irisR * 0.36, iy + irisR * 0.38, irisR * 0.15, 0, Math.PI * 2); ctx.fill();
+    // pupil (jet black, sized so a rim of iris colour still shows)
+    ctx.fillStyle = '#070503';
+    ctx.beginPath(); ctx.arc(ex, iy, irisR * 0.46, 0, Math.PI * 2); ctx.fill();
+    // catchlight — a big pure-white bead top-inner, GUARANTEED to survive at
+    // fight framing (item 4). Its centre sits on the pupil/iris boundary so it
+    // punches against the black. A tiny secondary sparkle keeps it from reading
+    // as a painted dot.
+    ctx.fillStyle = 'rgba(255,255,255,1)';
+    ctx.beginPath(); ctx.arc(ex - irisR * 0.26, iy - irisR * 0.34, irisR * 0.40, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.beginPath(); ctx.arc(ex + irisR * 0.4, iy + irisR * 0.42, irisR * 0.16, 0, Math.PI * 2); ctx.fill();
     // upper lid drop (lowered eyelid skin over the eye)
     if (lidDrop > 0.5) {
       ctx.fillStyle = shadeHex(skin, 0.9);
@@ -209,9 +215,11 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     }
     ctx.restore();
 
-    // upper lid line + lash — THICK and dark (addendum: +40% line weight)
+    // upper lid line + lash — dark and legible, but thinned slightly (0.016→0.014
+    // men) and raised so it frames the eye rather than pressing it half-shut into
+    // a "sleepy" slit (item 4: eyes read OPEN and alert at distance).
     ctx.strokeStyle = rgba(0x120a05, 0.96);
-    ctx.lineWidth = (female ? 0.020 : 0.016) * S;
+    ctx.lineWidth = (female ? 0.018 : 0.014) * S;
     ctx.lineCap = 'round';
     const lidY = eyeY - eyeH + lidDrop;
     ctx.beginPath();
@@ -236,7 +244,11 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   eye(-1); eye(1);
 
   // ── brows ── (heavier; expression sets inner/outer height + angle)
-  const browBase = shadeHex(hairC, old ? 1.35 : 0.8);
+  // Old brows are soft grey, NOT clamped-white: hairC*1.35 on white hair blew
+  // out to pure white (invisible), which left only the darker strand-hints
+  // showing as disconnected specks floating over the lenses (item 3, Grandma).
+  // A visible-but-soft grey base reads as a real elderly brow.
+  const browBase = shadeHex(hairC, old ? 0.82 : 0.8);
   ctx.lineCap = 'round';
   for (const s of [-1, 1]) {
     const bx = cx + s * eyeDX;
@@ -252,7 +264,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     ctx.stroke();
     // strand hints
     ctx.lineWidth = 0.004 * S;
-    ctx.strokeStyle = shadeHex(hairC, 0.68);
+    ctx.strokeStyle = shadeHex(hairC, old ? 0.95 : 0.68);   // faint on white brows (no dark specks)
     for (let i = -2; i <= 2; i++) {
       ctx.beginPath();
       ctx.moveTo(bx + i * S * 0.023, browY + S * 0.015 + (i < 0 ? outer : inner) * 0.5);
@@ -372,19 +384,38 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // ~65% opaque, which is exactly the shield-shaped seam / jaw goatee-shadow
   // the addendum called out. The vertical squash pulls the fade in above and
   // below so the chin AND hairline edges dissolve into the head skin. ──
-  ctx.globalCompositeOperation = 'destination-in';
   const mCx = cx, mCy = S * 0.56;
-  // Wider feather (fade begins at 0.46 of the radius, was 0.60) so the forehead
-  // and chin edges dissolve into the head skin over a longer ramp — kills the
-  // "straight hard line slicing the forehead" patch seam (addendum, Grandma).
-  const mask = ctx.createRadialGradient(mCx, mCy, S * 0.28, mCx, mCy, S * 0.46);
+
+  // ── patch-edge vignette: darken the patch toward its border so the rim's
+  // luminance matches the skull curving away into shadow. Without it the flat-lit
+  // patch stays brighter than the shaded head and the boundary reads as a decal
+  // seam at the temples/hairline/jaw (item 6 — the Chad/Grandma "hard arc").
+  // Composited BEFORE the alpha feather so it shades the same skin the feather
+  // then dissolves. ───────────────────────────────────────────────────────
+  {
+    const eg = ctx.createRadialGradient(mCx, mCy, S * 0.24, mCx, mCy, S * 0.47);
+    eg.addColorStop(0, rgba(0x1a0f08, 0));
+    eg.addColorStop(0.72, rgba(0x1a0f08, 0));
+    eg.addColorStop(1, rgba(0x140c06, 0.5));
+    ctx.fillStyle = eg;
+    ctx.save();
+    ctx.translate(mCx, mCy); ctx.scale(1.04, 0.98); ctx.translate(-mCx, -mCy);
+    ctx.fillRect(0, 0, S, S);
+    ctx.restore();
+  }
+
+  ctx.globalCompositeOperation = 'destination-in';
+  // Wider, softer feather (opaque core 0.24, fade out to 0.50 — was 0.28→0.46)
+  // so every geometry edge dissolves over a long ramp and the visible boundary
+  // is always soft skin, never the patch rim (item 6, whole cast).
+  const mask = ctx.createRadialGradient(mCx, mCy, S * 0.24, mCx, mCy, S * 0.50);
   mask.addColorStop(0, 'rgba(255,255,255,1)');
-  mask.addColorStop(0.46, 'rgba(255,255,255,1)');
+  mask.addColorStop(0.20, 'rgba(255,255,255,1)');
   mask.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = mask;
   ctx.save();
   ctx.translate(mCx, mCy);
-  ctx.scale(1.02, 0.95);
+  ctx.scale(1.02, 0.96);
   ctx.translate(-mCx, -mCy);
   ctx.fillRect(0, 0, S, S);
   ctx.restore();
@@ -487,6 +518,23 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E) {
   ctx.beginPath();
   ctx.ellipse(cx, mouthY + drop * 0.55, mw * 0.4, (female ? S * 0.006 : S * 0.0045), 0, 0, Math.PI * 2);
   ctx.fill();
+  // mouth-corner darkening — a small dark bead at each commissure so the mouth
+  // has ends and doesn't read as a floating flat line (item 5).
+  for (const s of [-1, 1]) {
+    const cxs = cx + s * mw * 0.94;
+    const cg = ctx.createRadialGradient(cxs, mouthY + (s < 0 ? asymL : asymR), 1, cxs, mouthY, mw * 0.22);
+    cg.addColorStop(0, rgba(0x2a1210, 0.55));
+    cg.addColorStop(1, rgba(0x2a1210, 0));
+    ctx.fillStyle = cg;
+    ctx.fillRect(cxs - mw * 0.3, mouthY - S * 0.02, mw * 0.6, S * 0.04);
+  }
+  // sub-lip / chin shelf shadow — a soft crescent under the lower lip so the
+  // huge lower face reads as a jaw with a chin, not a blank Easter-Island slab.
+  const sl = ctx.createRadialGradient(cx, mouthY + drop + S * 0.03, S * 0.006, cx, mouthY + drop + S * 0.03, S * 0.075);
+  sl.addColorStop(0, rgba(0x2a1810, 0.22));
+  sl.addColorStop(1, rgba(0x2a1810, 0));
+  ctx.fillStyle = sl;
+  ctx.fillRect(cx - S * 0.09, mouthY + drop, S * 0.18, S * 0.09);
 }
 
 // All expressions for a character, pre-painted (texture-swap expressions).

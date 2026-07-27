@@ -1715,7 +1715,12 @@ export const ROOMS = {
     // S2.5: ambient floor wash dropped ~40% (0.34 -> 0.20) so the hardwood
     // falls toward black BETWEEN the lamp pools — the lounge lamps and neon now
     // carry the light instead of a lifted grey wash filling the whole floor.
-    lighting: { ambient: 0x4a3630, ambientIntensity: 0.20, dir: 0x8a6446, dirIntensity: 0.42 },
+    // W / final residuals: dropped again (0.20 -> 0.13 ambient, 0.42 -> 0.32
+    // dir) — the mid-floor still read as a "flat milky-grey plateau between the
+    // lamp pools." The point-light practicals keep their pools; the uniform lift
+    // between them now falls toward black. (Paired with a killed floor-gloss
+    // sheen for this room in Engine.applyRoomFX — the gloss band was the milk.)
+    lighting: { ambient: 0x4a3630, ambientIntensity: 0.13, dir: 0x8a6446, dirIntensity: 0.32 },
     lights: [
       // Deep purple wash over bar. Tightened (distance 9->5, z 2->1.4) so it
       // hugs the bar instead of throwing a lone violet specular hotspot onto the

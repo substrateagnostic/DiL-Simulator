@@ -86,6 +86,16 @@ export class CombatScene {
     pg.addColorStop(1, 'rgba(255,255,255,0)');
     pctx.fillStyle = pg;
     pctx.fillRect(0, 0, 128, 128);
+    // W / final residuals: this 128px alpha ramp is stretched across an 11×5.5
+    // world plane, so its 8-bit steps read as concentric rings in the magenta
+    // stage-pool (rider: "steps in the magenta stage-pool gradient"). Dither the
+    // alpha channel by ~±2% per pixel to dissolve the rings before upload.
+    const pimg = pctx.getImageData(0, 0, 128, 128);
+    const pdata = pimg.data;
+    for (let i = 3; i < pdata.length; i += 4) {
+      pdata[i] = Math.max(0, Math.min(255, pdata[i] + (Math.random() - 0.5) * 6));
+    }
+    pctx.putImageData(pimg, 0, 0);
     const poolTex = new THREE.CanvasTexture(poolCanvas);
     poolTex.colorSpace = THREE.SRGBColorSpace;
     poolTex.minFilter = THREE.LinearFilter;
@@ -192,8 +202,16 @@ export class CombatScene {
           // Wave-3: dither lifted (4→7 /255) — the amber (Chad) and green
           // (Intern) washes are brighter low-saturation ramps that still showed
           // concentric 8-bit banding through the radial vignette at the old span.
-          float dither = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
-          color += (dither - 0.5) * (7.0 / 255.0);
+          // W / final residuals: switched to a TRIANGULAR-PDF dither (sum of two
+          // decorrelated hashes, remapped to [-1,1]). A flat single-hash dither
+          // left faint concentric rings in fight-chad's warm vignette and a
+          // trace in the karen blue/red field — the tone-map crushed the uniform
+          // noise in the mid-tones where the banding lived. TPDF puts more of its
+          // energy where quantisation steps occur, so the rings dissolve at the
+          // same ~peak span without adding visible grain to the flat blacks.
+          float d1 = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+          float d2 = fract(sin(dot(gl_FragCoord.xy, vec2(39.346, 11.135))) * 26742.1234);
+          color += (d1 + d2 - 1.0) * (7.5 / 255.0);
           gl_FragColor = vec4(color, 1.0);
         }
       `,
@@ -311,16 +329,22 @@ export class CombatScene {
       new THREE.PlaneGeometry(1, 1),
       new THREE.MeshBasicMaterial({
         map: CombatScene._bounceTex, color: 0x000000, transparent: true,
-        opacity: 0.92, depthWrite: false,
+        opacity: 0.97, depthWrite: false,
       })
     );
     ao.rotation.x = -Math.PI / 2;
-    // A tight, DARK contact ellipse pushed forward under the shoes. Opacity is
-    // now high enough (and the red kiss dimmed above) that the shadow WINS at
-    // the contact line — the figure plants instead of floating on the spotlight
-    // (rider: "light running under the toe … she floats on the pool").
-    ao.scale.set(0.82 * s, 0.46 * s, 1);
-    ao.position.set(0, 0.045 * s, 0.13 * s);
+    // A DARK contact ellipse pushed forward under the shoes. Opacity is now high
+    // enough that the shadow WINS at the contact line — the figure plants
+    // instead of floating on the spotlight (rider: "light running under the
+    // toe … she floats on the pool").
+    // W / final residuals: enlarged (0.82×0.46 → 1.12×0.66) and darkened
+    // (0.92 → 0.97), and pulled back closer under the soles (z 0.13 → 0.09). On
+    // Karen the small tight ellipse was swamped by her especially bright red
+    // wash — the bright red spilled under the toe and she hovered. The bigger,
+    // blacker ellipse reaches across the hot pool so the soles get a committing
+    // contact shadow that survives the spotlight.
+    ao.scale.set(1.12 * s, 0.66 * s, 1);
+    ao.position.set(0, 0.045 * s, 0.09 * s);
     ao.renderOrder = 4;   // after the red kiss so it darkens the pool center
     ao.userData.noFlash = true;
     group.add(ao);

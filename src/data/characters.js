@@ -71,6 +71,9 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['name_tag'],
     widthScale: 1.18, heightScale: 0.92, headScale: 1.05,
+    // torus glasses (item 8): a mid-face element so fringe / glasses / brow read
+    // as three separate bands and break up the "80% forehead" expanse.
+    glasses: 'clear',
     // v5 face — young, timid, small chin (early-Charlie-Brown big head)
     gender: 'm', eyeColor: 0x4a3a2a, jaw: 0.80, chin: 0.94,
   },
@@ -130,9 +133,12 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',    // pompadour quiff, not a bald-fronted backwards cap
     accessories: ['protein_shake'],
     belt: true,
-    widthScale: 1.35, heightScale: 1.06, headScale: 0.92,
+    // head up ~9% (0.92→1.0) and shoulders in ~17% (1.5→1.25) so his head/shoulder
+    // ratio shares the cast's figurine language instead of reading as a scale bug
+    // (item 12).
+    widthScale: 1.35, heightScale: 1.06, headScale: 1.0,
     // v5 face/proportion fields — broad jaw, jutting chin
-    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.2, shoulderScale: 1.5, waistScale: 0.8,
+    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.2, shoulderScale: 1.25, waistScale: 0.8,
   },
   grandma: {
     name: 'Grandma Henderson',

@@ -106,6 +106,14 @@ export function buildCharacter(config, options = {}) {
     const shin = limbSegment(0.055 * ws, 0.044 * ws, shinLen, mPants);
     shin.position.set(0, -shinLen / 2 + 0.01, 0.01);
     shinWrap.add(shin);
+    // kneecap — a rounded pants-coloured cover over the thigh/shin junction so
+    // the two capsule ends don't cross as a visible articulation "ring" through
+    // the trouser (item 10). Larger than either segment so the crease sits inside
+    // it; merges into the shin (same material) on collapse.
+    const kneecap = new THREE.Mesh(new THREE.SphereGeometry(0.063 * ws, 16, 12), mPants);
+    kneecap.scale.set(1.02, 0.92, 1.05);
+    kneecap.position.set(0, 0.006, 0.012);
+    shinWrap.add(kneecap);
     // shoe: smooth lacquered form
     const foot = new THREE.Mesh(new THREE.SphereGeometry(0.062 * ws, 20, 14), mShoe);
     foot.scale.set(0.85, 0.62, 1.7);
@@ -127,12 +135,21 @@ export function buildCharacter(config, options = {}) {
 
   // ── TORSO (jacket shell) — the one animated body mesh ───────────────
   const torsoZ = Math.sin(hunch) * torsoH * 0.2;
-  const torso = buildTorso(dims, mSuit);
+  const torso = buildTorso(dims, mSuit, detailed);
   torso.position.y = legLength;
   torso.position.z = torsoZ;
   torso.rotation.x = hunch;
   group.add(torso);
   group.body = torso;
+
+  // pelvis / crotch cover — a pants-coloured mass bridging the two thigh tops so
+  // the dark background can't show through the inverted-V between the legs as a
+  // "mesh hole" (item 9, Chad's black crotch wedge). Sits under the jacket hem.
+  const pelvis = new THREE.Mesh(new THREE.SphereGeometry(dims.hipR * 0.92, 20, 16), mPants);
+  pelvis.scale.set(1.18, 0.78, 0.72);
+  pelvis.position.set(0, legLength - dims.hipR * 0.22, torsoZ);
+  pelvis.rotation.x = hunch;
+  group.add(pelvis);
 
   // anchor points (group space)
   const shoulderY = legLength + Math.cos(hunch) * torsoH * 0.9;
@@ -148,9 +165,12 @@ export function buildCharacter(config, options = {}) {
     // seated flush to the chest (was a wide flat ellipse that read as a white
     // splat pasted at the collarbone, addendum [B]). Narrower + taller + tucked
     // under the collar band so it reads as an open neckline, not a decal.
-    const shirt = new THREE.Mesh(new THREE.SphereGeometry(dims.chestR * 0.5, 18, 14), mShirt);
-    shirt.scale.set(0.6, 0.92, 0.24);
-    shirt.position.set(0, neckBaseY - torsoH * 0.18, neckBaseZ + dims.chestR * 0.28);
+    // Narrower, taller, flatter, and tucked HIGHER against the collar (item 11:
+    // Karen's cream blouse read as a "dinner plate glued to the sternum"). Now a
+    // slim neckline slit seated between the lapels, not a bulging oval.
+    const shirt = new THREE.Mesh(new THREE.SphereGeometry(dims.chestR * 0.42, 18, 14), mShirt);
+    shirt.scale.set(0.5, 1.02, 0.16);
+    shirt.position.set(0, neckBaseY - torsoH * 0.13, neckBaseZ + dims.chestR * 0.24);
     shirt.rotation.x = hunch;
     staticNode.add(shirt);
 
@@ -201,7 +221,7 @@ export function buildCharacter(config, options = {}) {
     // ballooning above it with a visible crease (addendum: shrink ~20%, blend
     // the sleeve join — suits hang, they don't bulge).
     for (const side of [-1, 1]) {
-      const pad = new THREE.Mesh(new THREE.SphereGeometry(0.064 * ws, 18, 14), mSuit);
+      const pad = new THREE.Mesh(new THREE.SphereGeometry(0.064 * ws, 24, 18), mSuit);
       pad.scale.set(1.28, 0.72, 1.06);
       pad.position.set(side * (shoulderX - 0.012), shoulderY - 0.05, shoulderZ);
       pad.rotation.z = side * 0.24;   // lie along the shoulder slope, not perched on top
@@ -224,8 +244,11 @@ export function buildCharacter(config, options = {}) {
       staticNode.add(buckle);
     }
 
-    // neck
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(headR * 0.62, headR * 0.72, neckH, 16), mSkin);
+    // neck (smooth: more radial segments so the lit column reads gradient-clean,
+    // not concentric "hose rings" at 4× — item 7)
+    const neckGeo = new THREE.CylinderGeometry(headR * 0.62, headR * 0.72, neckH, 28, 2);
+    neckGeo.computeVertexNormals();
+    const neck = new THREE.Mesh(neckGeo, mSkin);
     neck.position.set(0, neckBaseY + neckH * 0.45, neckBaseZ + Math.sin(hunch) * neckH * 0.5);
     neck.rotation.x = hunch * 0.5;
     staticNode.add(neck);
@@ -246,6 +269,12 @@ export function buildCharacter(config, options = {}) {
     fore.position.set(0, -upperArmLen - foreArmLen / 2 + 0.01, 0.015);
     fore.rotation.x = -0.12;
     arm.add(fore);
+    // elbow cover — hides the upper/fore capsule junction crease so the sleeve
+    // reads as one cloth, not a jointed doll arm (item 10).
+    const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.053 * ws, 16, 12), mSuit);
+    elbow.scale.set(1.02, 0.95, 1.05);
+    elbow.position.set(0, -upperArmLen + 0.004, 0.006);
+    arm.add(elbow);
     const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.041 * ws, 0.041 * ws, 0.03, 14), mShirt);
     cuff.position.set(0, -upperArmLen - foreArmLen + 0.02, 0.03);
     arm.add(cuff);
@@ -278,15 +307,22 @@ export function buildCharacter(config, options = {}) {
   // long blank jaw with the features crammed at the top.
   head.rotation.x = 0.15;
 
-  const skull = makeHead(headR, mSkin, { jaw: config.jaw ?? 0.82, chin: config.chin ?? 1.0 });
+  const skull = makeHead(headR, mSkin, { jaw: config.jaw ?? 0.82, chin: config.chin ?? 1.0, detailed });
   head.add(skull);
+  const mConcha = M.skin(shadeHexToInt(skinC, 0.58), null);
   for (const side of [-1, 1]) {
-    // Rounder, seated at the side-back of the skull (was a flat pale paper tab —
-    // Intern note). A small dark concha dimple sells it as an ear, not a disc.
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.24, 14, 12), mSkin);
-    ear.scale.set(0.62, 0.98, 0.86);
-    ear.position.set(side * headR * 0.94, -headR * 0.06, -headR * 0.12);
+    // Rounder, seated further back on the skull (z −0.18, was −0.12) so at 3/4 it
+    // tucks beside the head instead of floating as a pale disc mid-cheek
+    // (Chad/Intern note). A dark concha dimple recessed into the front sells it
+    // as an ear (item 8) — the old comment promised this but never drew it.
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.23, 16, 12), mSkin);
+    ear.scale.set(0.58, 0.96, 0.82);
+    ear.position.set(side * headR * 0.95, -headR * 0.05, -headR * 0.18);
     head.add(ear);
+    const concha = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.12, 12, 10), mConcha);
+    concha.scale.set(0.5, 0.8, 0.5);
+    concha.position.set(side * headR * 1.0, -headR * 0.05, -headR * 0.10);
+    head.add(concha);
   }
 
   // hair (before collapse so it merges by material)
@@ -354,14 +390,25 @@ export function buildCharacter(config, options = {}) {
 function makeMaterialKit(detailed) {
   if (detailed) {
     return {
-      skin: (color, faceTex) => new THREE.MeshPhysicalMaterial({
-        // Eased clearcoat/sheen (was 0.28/0.25): the strong specular lobes rang
-        // horizontal bands across the lit cheek/neck at 4× ("corduroy skin",
-        // addendum [B]). A softer satin keeps the lacquer read without banding.
-        color: faceTex ? 0xffffff : color, map: faceTex || null,
-        roughness: 0.56, clearcoat: 0.16, clearcoatRoughness: 0.55,
-        sheen: 0.16, sheenColor: new THREE.Color(0xff9a80), envMapIntensity: 0.5,
-      }),
+      skin: (color, faceTex) => {
+        // Round-3 (item 7): specular lobes STILL rang latitude bands on the neck
+        // and forehead at 4×. Clearcoat/sheen eased further (0.16→0.08, 0.16→0.10)
+        // and roughness up so the skin is a clean matte gradient — the geometry
+        // (now higher-tessellated) carries the form, not a banded highlight.
+        const m = new THREE.MeshPhysicalMaterial({
+          color: faceTex ? 0xffffff : color, map: faceTex || null,
+          roughness: 0.62, clearcoat: 0.08, clearcoatRoughness: 0.6,
+          sheen: 0.10, sheenColor: new THREE.Color(0xff9a80), envMapIntensity: 0.42,
+        });
+        // A faint noise bump on the BARE skin (skull/neck/ears — never the painted
+        // face patch) dithers the smooth light falloff so the neck's quantized
+        // gradient stops reading as concentric "hose rings" (item 7).
+        if (!faceTex) {
+          const b = skinBumpTexture();
+          if (b) { m.bumpMap = b; m.bumpScale = 0.004; }
+        }
+        return m;
+      },
       hair: (color) => {
         const t = hairTexture();
         // Softer than before (rougher, low clearcoat/sheen): the glossy sheen
@@ -541,6 +588,34 @@ function hairTexture(key = 'default') {
   return tex;
 }
 
+let _skinBumpTex = null;
+function skinBumpTexture() {
+  if (typeof document === 'undefined') return null;
+  if (_skinBumpTex) return _skinBumpTex;
+  const S = 128;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
+  const img = ctx.createImageData(S, S);
+  // Fine, high-frequency value noise — used only as a low-amplitude bumpMap to
+  // dither the skin's diffuse gradient (kills 8-bit Mach banding on the neck).
+  for (let i = 0; i < S * S; i++) {
+    const x = i % S, y = (i / S) | 0;
+    const h = Math.sin(x * 91.73 + y * 47.31) * 7391.71;
+    const v = 128 + ((h - Math.floor(h)) - 0.5) * 30;
+    const j = i * 4;
+    img.data[j] = img.data[j + 1] = img.data[j + 2] = v;
+    img.data[j + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(3, 4);
+  tex.minFilter = THREE.LinearFilter;
+  _skinBumpTex = tex;
+  return tex;
+}
+
 let _weaveTex = null;
 function weaveTexture() {
   if (typeof document === 'undefined') return null;
@@ -587,7 +662,11 @@ function limbSegment(rTop, rBot, len, mat) {
 }
 
 function makeHead(rad, mat, opts = {}) {
-  const geo = new THREE.SphereGeometry(rad, 40, 34);
+  // Higher tessellation on the combat tier so the forehead/cheek read as a
+  // clean gradient, not faceted latitude bands at 4× (item 7).
+  const wSeg = opts.detailed ? 64 : 44;
+  const hSeg = opts.detailed ? 52 : 36;
+  const geo = new THREE.SphereGeometry(rad, wSeg, hSeg);
   const pos = geo.attributes.position;
   const v = new THREE.Vector3();
   const jaw = opts.jaw ?? 0.82;
@@ -639,7 +718,7 @@ function makeFacePatch(rad, faceTex, M) {
   return new THREE.Mesh(geo, mat);
 }
 
-function buildTorso(dims, mat) {
+function buildTorso(dims, mat, detailed = false) {
   const { hipR, waistR, chestR, shoulderR, torsoH } = dims;
   const V2 = (x, y) => new THREE.Vector2(x, y);
   const pts = [
@@ -656,7 +735,9 @@ function buildTorso(dims, mat) {
     V2(shoulderR * 0.5, torsoH * 1.0),
     V2(shoulderR * 0.28, torsoH * 1.02),
   ];
-  const geo = new THREE.LatheGeometry(pts, 36);
+  // More radial segments on the combat tier so the shoulder yoke reads as a
+  // smooth gradient, not hard triangular shading facets (item 9, Chad).
+  const geo = new THREE.LatheGeometry(pts, detailed ? 56 : 36);
   geo.computeVertexNormals();
   geo.scale(1, 1, 0.66);              // elliptical (flatter front-back)
   return new THREE.Mesh(geo, mat);
@@ -676,16 +757,17 @@ function buildTorso(dims, mat) {
 function buildHair(head, r, mat, style) {
   const add = (m) => { m.userData.noCast = true; head.add(m); };
 
-  // ── egg-conforming hair shell ───────────────────────────────────────
-  // The recurring failure (Chad's floating wedge, the Intern's beret over a
-  // bald band, the top-down bald crowns) was a PLAIN sphere cap sitting on an
-  // ELONGATED egg head: the head's 1.09× crown poked through the sphere and its
-  // lower rim stepped off the curve. This shell is the head's OWN egg profile
-  // grown a hair proud (`grow`), so it rides the skull exactly — the crown can
-  // never poke through and the hairline can't step or gap. thetaLen sets how
-  // low it descends (bigger = lower hairline).
-  function eggShell(thetaLen, grow = 1.05, seg = 30) {
-    const geo = new THREE.SphereGeometry(r, seg, Math.max(18, Math.round(seg * 0.8)), 0, Math.PI * 2, 0, thetaLen);
+  // ── one continuous scalp-conforming cap ─────────────────────────────
+  // Round-3 rebuild (items 1 & 2). The cap rides the head's OWN egg profile a
+  // hair proud (`grow`), descends to the EAR LINE on the sides and back
+  // (thetaLen ~1.5), and LIFTS its front-hemisphere rim up to a clean hairline
+  // arc (`hairlineY`) so it never sheets over the face. This kills all three
+  // failures at once: the crown is a single merged shell (no instanced blobs
+  // reading as "horns"), the sides hug down to the ears (no bare scalp band /
+  // cap-step), and the back joins seamlessly (no offset occiput). Strand grain
+  // is PAINTED by the hair texture, never sculpted.
+  function scalpCap(thetaLen, grow = 1.03, hairlineY = 0.36, seg = 44) {
+    const geo = new THREE.SphereGeometry(r, seg, Math.max(26, Math.round(seg * 0.7)), 0, Math.PI * 2, 0, thetaLen);
     const pos = geo.attributes.position;
     const v = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
@@ -695,129 +777,110 @@ function buildHair(head, r, mat, style) {
       if (v.z < 0) v.z *= 0.92;          // match flattened occiput
       if (yN > 0.15 && v.z > 0) v.z += r * 0.03 * (yN - 0.15);  // match brow ridge
       v.multiplyScalar(grow);            // float uniformly proud of the skin
+      // front hairline lift: raise front-of-head verts below the hairline up to
+      // it (weighted by how far forward they are), so the forehead stays open
+      // and the rim forms a natural arc that dips toward the temples/ears.
+      if (v.z > 0 && v.y < hairlineY * r) {
+        const front = Math.min(1, v.z / (r * 0.5));
+        const lift = (hairlineY * r - v.y) * front;
+        v.y += lift;
+        v.z -= lift * 0.45;              // ease the lifted rim back off the face
+      }
       pos.setXYZ(i, v.x, v.y, v.z);
     }
     geo.computeVertexNormals();
-    return new THREE.Mesh(geo, mat);
+    const m = new THREE.Mesh(geo, mat);
+    add(m);
+    return m;
   }
-  // Conforming scalp cap. Owns the crown (thetaStart 0 = the pole) and descends
-  // to a natural hairline. No separate flush band needed — the shell meets the
-  // face patch cleanly because both share the egg profile.
-  function scalp(thetaLen, grow = 1.05) {
-    add(eggShell(thetaLen, grow));
-  }
-  // Back mass filling the nape/occiput; overlaps the scalp (no seam step).
-  function backMass(scaleY = 1.05, lowY = -r * 0.06, depth = 1.15) {
-    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 1.0, 22, 18), mat);
-    back.scale.set(1.06, scaleY, depth);
-    back.position.set(0, lowY, -r * 0.2);
+  // nape/occiput volume behind & below the cap rim; overlaps it (no seam step).
+  function backMass(scaleY = 1.0, lowY = -r * 0.05, depth = 1.08, wide = 1.05) {
+    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 0.98, 24, 20), mat);
+    back.scale.set(wide, scaleY, depth);
+    back.position.set(0, lowY, -r * 0.22);
     add(back);
+  }
+  // a single smooth swept fringe rooted at the hairline (never a row of blobs).
+  function fringe(y = 0.4, depth = 0.62, widthS = 1.4, tiltX = 0.34) {
+    const f = new THREE.Mesh(new THREE.SphereGeometry(r * 0.7, 22, 16), mat);
+    f.scale.set(widthS, 0.5, depth);
+    f.rotation.x = tiltX;
+    f.position.set(0, r * y, r * 0.5);
+    add(f);
   }
 
   if (style === 'side_part') {
-    scalp(1.05, 1.05);
-    backMass(1.0, -r * 0.06, 1.05);
-    const sweep = new THREE.Mesh(new THREE.SphereGeometry(r * 0.72, 18, 14), mat);
+    scalpCap(1.5, 1.03, 0.42);
+    backMass(1.0, -r * 0.05, 1.05);
+    const sweep = new THREE.Mesh(new THREE.SphereGeometry(r * 0.72, 20, 16), mat);
     sweep.scale.set(1.3, 0.55, 0.95);
     sweep.rotation.set(-0.1, 0, 0.12);
-    sweep.position.set(-r * 0.12, r * 0.72, r * 0.42);
+    sweep.position.set(-r * 0.12, r * 0.6, r * 0.46);
     add(sweep);
-    const sweep2 = new THREE.Mesh(new THREE.SphereGeometry(r * 0.52, 14, 12), mat);
+    const sweep2 = new THREE.Mesh(new THREE.SphereGeometry(r * 0.5, 16, 12), mat);
     sweep2.scale.set(1.0, 0.56, 0.95);
-    sweep2.position.set(r * 0.4, r * 0.66, r * 0.38);
+    sweep2.position.set(r * 0.4, r * 0.56, r * 0.42);
     add(sweep2);
-    for (const s of [-1, 1]) {
-      const sb = new THREE.Mesh(new THREE.CapsuleGeometry(r * 0.1, r * 0.36, 3, 6), mat);
-      sb.position.set(s * r * 0.9, r * 0.02, r * 0.02);
-      add(sb);
-    }
   } else if (style === 'bob') {
-    // De-helmeted: a TIGHT-hugging conforming crown (no mushroom dome), its hard
-    // rim broken by rooted strand lumps, a center part, jaw-length curtains, and
-    // a CURTAIN-SWEPT fringe that parts ABOVE the browline so both eyes read
-    // (the r7→now regression was a straight fringe hanging over the eye zone).
-    scalp(0.86, 1.045);
-    // strand lumps around the front/side crown that cross the cap rim so it
-    // reads as falling hair, not a helmet edge
-    for (const a of [-1.05, -0.62, 0.62, 1.05]) {
-      const lump = new THREE.Mesh(new THREE.SphereGeometry(r * 0.3, 12, 10), mat);
-      lump.scale.set(0.6, 1.15, 0.7);
-      lump.position.set(Math.sin(a) * r * 0.82, r * 0.5, Math.cos(a) * r * 0.5 + r * 0.28);
-      lump.rotation.z = -a * 0.3;
-      add(lump);
-    }
-    // shallow center-part valley (a darker-free geometric dip so the crown isn't
-    // one glassy dome)
-    const part = new THREE.Mesh(new THREE.SphereGeometry(r * 0.18, 10, 8), mat);
-    part.scale.set(0.5, 0.6, 0.9);
-    part.position.set(0, r * 0.9, r * 0.36);
-    add(part);
-    // jaw-length side curtains framing the face
+    // De-helmeted (item 1): ONE continuous crown — NO discrete lumps, NO center-
+    // part sphere. The cap conforms to the ears; a soft curtain fringe parts
+    // above the brow so both eyes read; jaw-length side curtains frame the face.
+    scalpCap(1.5, 1.035, 0.34);
+    // curtain fringe: two smooth swept pieces meeting at a high part, sweeping
+    // OUT to the temples (forehead + eye zone stay open).
     for (const s of [-1, 1]) {
-      const side = new THREE.Mesh(new THREE.SphereGeometry(r * 0.56, 18, 16), mat);
-      side.scale.set(0.6, 1.75, 1.02);
-      side.position.set(s * r * 0.84, -r * 0.5, r * 0.04);
-      side.rotation.z = s * -0.12;
-      add(side);
-    }
-    // curtain fringe: two swept pieces that meet at a high center part and sweep
-    // OUT to the temples — the forehead+eye zone stays open. Bottom edge sits at
-    // ~y 0.42r, comfortably above the eyes (~0.27r).
-    for (const s of [-1, 1]) {
-      const bang = new THREE.Mesh(new THREE.SphereGeometry(r * 0.6, 18, 14), mat);
-      bang.scale.set(0.9, 0.5, 0.62);
-      bang.rotation.set(0.34, s * 0.5, s * 0.5);
-      bang.position.set(s * r * 0.4, r * 0.66, r * 0.6);
+      const bang = new THREE.Mesh(new THREE.SphereGeometry(r * 0.6, 20, 16), mat);
+      bang.scale.set(0.95, 0.5, 0.6);
+      bang.rotation.set(0.3, s * 0.5, s * 0.5);
+      bang.position.set(s * r * 0.36, r * 0.5, r * 0.58);
       add(bang);
     }
-    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 0.98, 20, 18), mat);
-    back.scale.set(1.14, 1.5, 0.94);
+    // jaw-length side curtains framing the face
+    for (const s of [-1, 1]) {
+      const side = new THREE.Mesh(new THREE.SphereGeometry(r * 0.56, 20, 16), mat);
+      side.scale.set(0.58, 1.7, 1.0);
+      side.position.set(s * r * 0.82, -r * 0.5, r * 0.02);
+      side.rotation.z = s * -0.1;
+      add(side);
+    }
+    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 0.98, 22, 18), mat);
+    back.scale.set(1.12, 1.5, 0.94);
     back.position.set(0, -r * 0.3, -r * 0.4);
     add(back);
   } else if (style === 'bun') {
-    scalp(1.0, 1.05);
-    backMass(1.05, -r * 0.05, 1.05);
+    scalpCap(1.5, 1.035, 0.4);
+    backMass(1.0, -r * 0.04, 1.05);
     for (const s of [-1, 1]) {
-      const wave = new THREE.Mesh(new THREE.SphereGeometry(r * 0.4, 12, 10), mat);
+      const wave = new THREE.Mesh(new THREE.SphereGeometry(r * 0.4, 14, 12), mat);
       wave.scale.set(0.72, 1.0, 1.0);
-      wave.position.set(s * r * 0.82, r * 0.28, r * 0.05);
+      wave.position.set(s * r * 0.8, r * 0.2, r * 0.05);
       add(wave);
     }
-    const bun = new THREE.Mesh(new THREE.SphereGeometry(r * 0.36, 16, 12), mat);
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(r * 0.36, 18, 14), mat);
     bun.position.set(0, r * 0.3, -r * 0.92);
     add(bun);
   } else if (style === 'slick') {
-    // Pompadour/quiff ROOTED into a conforming scalp — the front volume grows
-    // out of the crown instead of floating as a wedge above a skin band. The
-    // scalp descends to a real hairline (0.98) so there is no bald forehead step.
-    scalp(0.98, 1.045);
-    backMass(0.95, 0, 1.0);
-    // the quiff sits low enough to overlap the scalp front (no gap), rising forward
-    const pomp = new THREE.Mesh(new THREE.SphereGeometry(r * 0.66, 20, 16), mat);
-    pomp.scale.set(1.32, 0.86, 1.02);
+    // Pompadour rooted into the conforming cap (no floating wedge, no bald band).
+    scalpCap(1.5, 1.03, 0.4);
+    backMass(0.95, -r * 0.02, 1.0);
+    const pomp = new THREE.Mesh(new THREE.SphereGeometry(r * 0.66, 22, 16), mat);
+    pomp.scale.set(1.3, 0.9, 1.0);
     pomp.rotation.x = -0.22;
-    pomp.position.set(0, r * 0.74, r * 0.42);
+    pomp.position.set(0, r * 0.66, r * 0.4);
     add(pomp);
-    // a filler lump bridging quiff→scalp so the seam between them is covered
-    const bridge = new THREE.Mesh(new THREE.SphereGeometry(r * 0.5, 16, 12), mat);
-    bridge.scale.set(1.2, 0.7, 0.9);
-    bridge.position.set(0, r * 0.7, r * 0.14);
+    // filler bridging quiff→crown so their overlap reads as one mass (no seam)
+    const bridge = new THREE.Mesh(new THREE.SphereGeometry(r * 0.5, 18, 14), mat);
+    bridge.scale.set(1.2, 0.72, 0.92);
+    bridge.position.set(0, r * 0.62, r * 0.12);
     add(bridge);
-    for (const s of [-1, 1]) {
-      const sb = new THREE.Mesh(new THREE.CapsuleGeometry(r * 0.11, r * 0.42, 3, 6), mat);
-      sb.position.set(s * r * 0.86, r * 0.06, 0);
-      add(sb);
-    }
   } else if (style === 'cap') {
-    // backwards baseball cap: a conforming fabric dome hugging the crown + a
-    // tuft of hair at the front hairline (never bald-fronted) + rear brim +
-    // button. The dome rides the egg profile — no float ledge, no rim step.
-    add(eggShell(1.0, 1.06));
-    // front tuft peeking under the cap brim
-    const tuft = new THREE.Mesh(new THREE.SphereGeometry(r * 0.7, 16, 12), mat);
+    // backwards baseball cap: a conforming fabric dome + front tuft + rear brim +
+    // button. High hairline (0.55) keeps it a dome sitting ON the crown.
+    scalpCap(1.15, 1.06, 0.55);
+    const tuft = new THREE.Mesh(new THREE.SphereGeometry(r * 0.7, 18, 14), mat);
     tuft.scale.set(1.32, 0.44, 0.72);
     tuft.rotation.x = 0.42;
-    tuft.position.set(0, r * 0.58, r * 0.58);
+    tuft.position.set(0, r * 0.56, r * 0.58);
     add(tuft);
     const brim = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.55, r * 0.55, 0.02, 16, 1, false, 0, Math.PI), mat);
     brim.rotation.set(Math.PI / 2, Math.PI, 0);
@@ -827,35 +890,31 @@ function buildHair(head, r, mat, style) {
     btn.position.set(0, r * 1.06, 0);
     add(btn);
   } else if (style === 'shawl') {
-    // Babushka headscarf. Under the scarf the scalp is OPAQUE, hair-coloured,
-    // and CONFORMING (no skin-crown showing through — the "exposed brain" note),
-    // and it descends low enough (1.05) to cover the top edge of the face patch
-    // so there is no forehead seam. The back mass + side drapes share the SAME
-    // hair material and overlap the crown, so crown and drape read as one piece
-    // (kills the "shower-cap seam" between the noisy crown and smooth sides).
-    scalp(1.05, 1.055);
-    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 1.0, 20, 18), mat);
-    back.scale.set(1.2, 1.4, 1.08);
-    back.position.set(0, -r * 0.2, -r * 0.28);
+    // Grandma (item 3): the crown cap + a back mass. Side drapes are pushed
+    // BEHIND the jawline (z negative) and stop short of the chin, so the white
+    // hair frames the face from the sides/back but NEVER wraps under the jaw and
+    // closes beneath the chin (the "bearded Dumbledore" read).
+    // Lower hairline (0.34) so the white hair comes down over the forehead and
+    // hides the patch's top feather edge — kills the faint stippled seam at the
+    // hairline (item 6, Grandma) without re-wrapping the jaw.
+    scalpCap(1.5, 1.045, 0.34);
+    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 1.0, 22, 18), mat);
+    back.scale.set(1.18, 1.4, 1.06);
+    back.position.set(0, -r * 0.22, -r * 0.3);
     add(back);
     for (const s of [-1, 1]) {
-      const drape = new THREE.Mesh(new THREE.SphereGeometry(r * 0.52, 16, 14), mat);
-      drape.scale.set(0.6, 1.7, 0.95);
-      drape.position.set(s * r * 0.86, -r * 0.5, r * 0.08);
-      drape.rotation.z = s * -0.1;
+      const drape = new THREE.Mesh(new THREE.SphereGeometry(r * 0.5, 18, 14), mat);
+      drape.scale.set(0.5, 1.5, 0.8);
+      drape.position.set(s * r * 0.94, -r * 0.42, -r * 0.2);   // outboard + BEHIND the jaw
+      drape.rotation.z = s * -0.06;
       add(drape);
     }
   } else { // 'short'
-    // Conforming scalp descending to a real hairline just above the brow, with a
-    // tucked front sweep rooted into it — no bald band, no floating disc/beret
-    // (the Intern fix). thetaLen 1.05 owns the crown from the top-down camera.
-    scalp(1.05, 1.045);
-    backMass(1.0, -r * 0.05, 1.0);
-    const front = new THREE.Mesh(new THREE.SphereGeometry(r * 0.72, 18, 14), mat);
-    front.scale.set(1.4, 0.5, 0.86);
-    front.rotation.x = 0.34;
-    front.position.set(0, r * 0.6, r * 0.56);
-    add(front);
+    // Conforming cap to the ears + a single swept fringe rooted at the hairline.
+    // No bald band, no floating beret (Andrew/Intern fix).
+    scalpCap(1.5, 1.03, 0.38);
+    backMass(1.0, -r * 0.04, 1.0);
+    fringe(0.4, 0.62, 1.42, 0.34);
   }
 }
 
@@ -1010,14 +1069,15 @@ function addAccessory(group, acc, rig, config, detailed) {
       break;
     }
     case 'protein_shake': {
-      // Held in the right fist, seated in the palm and gripped (was clipping
-      // straight through Chad's closed hand).
+      // Seated at HAND height and pushed well forward of the fist (was riding up
+      // at dy 0.05 into the forearm with the grip missing it — item 9). Grip
+      // knuckles now wrap its front so it reads as held, not embedded.
       const bottle = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.032, 0.13, 12), Materials.custom(0x44aa44));
-      holdRight(bottle, 0.015, 0.05, 0.03);
+      holdRight(bottle, 0.01, 0.0, 0.055);
       const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.03, 0.03, 12), Materials.custom(0x2a2a2a));
-      cap.position.set(0.015, hy + 0.13, 0.09);
+      cap.position.set(0.01, hy + 0.075, 0.115);
       group.rightArm?.add(cap);
-      grip(1, 0.0, 0.02);
+      grip(1, 0.0, 0.035);
       break;
     }
     case 'purse': {

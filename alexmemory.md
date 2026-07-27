@@ -15,6 +15,21 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## LOG
 
+### 2026-07-27 ~09:20 — WAVE 3 COMMITTED (8ceb05b): THE CAST BECAME PEOPLE
+- CharacterBuilder v5 is live in the game: real proportions, tailored
+  clothing, six working expressions (confirmed firing mid-combat), glasses
+  as geometry, 23–32 draw calls/char, physical-lacquer combat tier. All 36
+  human cast configs got literary-anchored faces per WRITING.md (C2 gave
+  Ross a faint Willy Loman chin; the janitor reads griot; Rachel got cold
+  steel eyes). The Algorithm monolith untouched and correct.
+- Sent you fight-karen + fight-grandma stills. My verdict at 1×: they're
+  PEOPLE — Karen has genuinely unimpressed Karen-energy. At 4× face-zoom
+  the critics are right: hair crowns lump, knee seams ring, eye
+  catchlights die. **Wave 3.5 heads-and-seams master pass in flight** (one
+  specialist owning only heads/faces/seams + a world rider zeroing the
+  garage smears). Single verify round, then we bank it and spend the rest
+  of the runway on L5 combat cinematography.
+
 ### 2026-07-27 ~06:15 — WAVE 2.5 COMMITTED (a2b8aad) + WAVE 3 FLIES
 - Surgery worked: S2 confirmed the wiring bug (most floors were routed to
   flat-toon `Materials.custom` — three rounds of material upgrades lived

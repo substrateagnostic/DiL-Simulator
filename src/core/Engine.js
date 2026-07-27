@@ -504,13 +504,21 @@ class EngineClass {
     }
 
     // 3. Lacquer gloss ramp — one soft diagonal sheen across the floor;
-    // hardwood floors get the stronger lacquered response
+    // hardwood floors get the stronger lacquered response.
+    // W / final residuals: penthouse_bar is a near-black mood lounge, and the
+    // additive white gloss band (up to ~0.75 alpha in its core stop) was
+    // landing across the open mid-floor as the "flat milky-grey plateau between
+    // lamp pools" the rider flagged. Cut it hard for this room so the floor
+    // falls toward black between the practicals; the point-light pools carry
+    // the sheen. Other hardwood rooms keep the full lacquer response.
+    const glossOpacity = roomData.id === 'penthouse_bar' ? 0.035
+      : (roomData.floorPattern === 'hardwood' ? 0.12 : 0.085);
     const gloss = new THREE.Mesh(
       new THREE.PlaneGeometry(w, h),
       new THREE.MeshBasicMaterial({
         map: this._fxGlossTexture(), transparent: true, depthWrite: false,
         blending: THREE.AdditiveBlending,
-        opacity: roomData.floorPattern === 'hardwood' ? 0.12 : 0.085,
+        opacity: glossOpacity,
       })
     );
     gloss.rotation.x = -Math.PI / 2;

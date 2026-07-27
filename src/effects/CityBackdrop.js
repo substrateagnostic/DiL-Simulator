@@ -596,7 +596,13 @@ export class CityBackdrop {
     // runs from each light toward the camera diagonal (+x,+z) — the
     // classic wet-street long reflection.
     const disc = this._discTexture();
-    const smearTex = this._smearTexture();
+    // W / final residuals: every pool here now sits IN FRONT OF or beside the
+    // room (z >= CENTER.z). The three pools that used to sit BEHIND the room
+    // (CENTER.z - 8, -9, -15) are DELETED. Their poles/heads were occluded by
+    // the room's back walls, so all that ever peeked over the wall top was the
+    // amber pool disc — the orphan smudge the rider flagged "right of the
+    // room's east edge." A streetlight the camera can only see the glow of, not
+    // the pole, is an orphan by construction; only front/side lamps survive.
     const POOLS = [
       // [x, z, kind, scale]  — kind 'B' = magenta
       [CENTER.x - 14, CENTER.z + 15, 'A', 1.0],
@@ -604,13 +610,7 @@ export class CityBackdrop {
       [CENTER.x + 7,  CENTER.z + 15, 'B', 1.0],
       [CENTER.x + 16, CENTER.z + 12, 'A', 0.9],
       [CENTER.x - 16, CENTER.z + 2,  'A', 1.15],
-      [CENTER.x - 15, CENTER.z - 8,  'A', 0.95],
       [CENTER.x + 18, CENTER.z + 2,  'A', 1.0],
-      [CENTER.x + 15, CENTER.z - 9,  'A', 0.85],
-      // Was magenta ('B'); it sits directly BEHIND the room and its beam
-      // poked over the back wall as a lone crimson smear (critic artifact).
-      // Sodium blends with the warm street instead of reading as a blob.
-      [CENTER.x - 5,  CENTER.z - 15, 'A', 1.1],
       [CENTER.x + 2,  CENTER.z + 22, 'A', 1.1],
       [CENTER.x + 11, CENTER.z + 24, 'A', 0.9],
       [CENTER.x - 24, CENTER.z + 6,  'A', 0.9],
@@ -656,35 +656,13 @@ export class CityBackdrop {
       this.group.add(pool);
       this.streetFX.push({ mesh: pool, kind, base: 0.55 });
 
-      // Hazy light shaft under the lamp head — a camera-facing billboard
-      // with gaussian-feathered edges (no geometric silhouette anywhere);
-      // reads as a soft pool of sodium hanging in the haze
-      const beam = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.1 * s, 2.6),
-        new THREE.MeshBasicMaterial({
-          map: this._beamTexture(), color: 0xffa04a, transparent: true, opacity: 0.07,
-          blending: THREE.AdditiveBlending, depthWrite: false,
-        })
-      );
-      // Lower and shorter (rider "garage orphan smears"): the shaft hugs the
-      // pole base over its pool instead of a tall column that reads as an amber
-      // vertical smear floating unattached in the void.
-      beam.position.set(px, 1.5, pz);
-      beam.rotation.y = Math.PI / 4;   // face the iso camera (azimuth PI/4)
-      beam.renderOrder = 1;
-      beam.visible = false;
-      this.group.add(beam);
-      // Wave-2: fainter haze shaft (base 0.55 -> 0.36) so the lamp reads as a
-      // sodium pool on the (now readable) ground disc, not a floating cone.
-      // Round-3: eased again (0.36 -> 0.26) so the shaft stops reading as a lone
-      // "orange streak attached to nothing" over the wider asphalt catch.
-      // S2.5: eased once more (0.26 -> 0.16) so beams whose pole/head fall behind
-      // a wall recede to near-nothing — no orphan sodium smear — while the
-      // structured lamps keep their identity through the pole/head/pool.
-      // Wave-3 R2: eased again (0.10 -> 0.05) — a garage back-row beam poking over
-      // the wall with its pole occluded was still reading as a faint amber wisp
-      // in the upper void (rider). The pool + hot head carry the lamp now.
-      this.streetFX.push({ mesh: beam, kind, base: 0.05, breathe: true });
+      // W / final residuals: the hazy light SHAFT (a camera-facing amber
+      // billboard) is DELETED. Even eased to base 0.05 it was the source of the
+      // garage's orphan amber vertical smears — any lamp whose pole/head fell
+      // behind a wall or off the readable floor left the shaft floating
+      // unattached in the void (rider: "orphan smears MUST reach zero").
+      // Restraint beats decoration: the structured lamp is now pole + head +
+      // pool + ground catch only — no free-floating emissive without a pole.
 
       // The lamp standard — every emissive needs visible structure (rider:
       // amber smears "unattached to any lamp pole"). The pole was 0x232833 —
@@ -712,44 +690,20 @@ export class CityBackdrop {
       this.group.add(head);
       this.streetFX.push({ mesh: head, kind: kind === 'B' ? 'coreB' : 'coreA', base: 1.0 });
 
-      // Wet reflection smear toward the viewer — shrunk to match the pool
-      const smear = new THREE.Mesh(
-        new THREE.PlaneGeometry(4.6 * s, 0.55),
-        new THREE.MeshBasicMaterial({
-          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.16,
-          blending: THREE.AdditiveBlending, depthWrite: false,
-        })
-      );
-      smear.rotation.set(-Math.PI / 2, 0, -Math.PI / 4);
-      const off = 4.6 * s * 0.42 * Math.SQRT1_2;
-      smear.position.set(px + off, 0.045, pz + off);
-      smear.renderOrder = 1;
-      smear.visible = false;
-      this.group.add(smear);
-      this.streetFX.push({ mesh: smear, kind, base: 1.1 });
+      // W / final residuals: the wet-reflection SMEAR (a flat amber streak
+      // raked toward the camera) is DELETED. Any pool sitting off the readable
+      // floor left its smear floating as a diagonal orphan streak in the void
+      // (rider: the "Z-shaped smear pair at the garage corner"). The ground
+      // catch + pool already plant the lamp on wet asphalt; the raked streak
+      // was pure decoration, so it's culled.
     }
 
-    // Seam reflections under the nearest glowing towers — their edge
-    // light smeared down into the wet street
-    let seamRefl = 0;
-    for (const b of this.buildings) {
-      if (b.variant === 3 || b.radius > 36 || seamRefl >= 10) continue;
-      seamRefl++;
-      const smear = new THREE.Mesh(
-        new THREE.PlaneGeometry(5.4, 0.36),
-        new THREE.MeshBasicMaterial({
-          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.18,
-          blending: THREE.AdditiveBlending, depthWrite: false,
-        })
-      );
-      smear.rotation.set(-Math.PI / 2, 0, -Math.PI / 4);
-      const off = 5.4 * 0.46 * Math.SQRT1_2;
-      smear.position.set(b.x + off, 0.03, b.z + off);
-      smear.renderOrder = 1;
-      smear.visible = false;
-      this.group.add(smear);
-      this.streetFX.push({ mesh: smear, kind: b.variant === 1 ? 'B' : 'A', base: 0.8 });
-    }
+    // W / final residuals: the per-tower SEAM REFLECTION smears are DELETED.
+    // These flat amber streaks raked off each glowing tower's base had NO pole
+    // or head to anchor them — exactly the "smear sprite that lacks an
+    // associated pole+head" the rider flagged (the left-field smudges and the
+    // pair right of the room's east edge). The tower seams themselves still
+    // read; their loose ground reflections do not survive the cull.
 
     // ── Layered ground haze (street level) ─────────────────────────────
     this.mistPatches = [];
