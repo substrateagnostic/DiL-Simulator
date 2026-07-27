@@ -1,3 +1,30 @@
+# Wave 5 addendum — July 27 ~17:55 — AAA CHARACTER PASS (commit 7a31dd9)
+
+Alex's colleagues' critique ("scrunched/scary faces, lumpy bodies,
+caricature") drove a v6 pass. **`art/CHARACTER_BIBLE.md` is now LAW** for
+all character work (proportions, Sleek Law, Pleasant Neutral, anti-
+caricature caps, matte-skin, staging). Canonical identity = the dialog
+portraits in `src/assets/portraits/<id>.png` — every 3D head must read as
+the same person. Reference packs (gitignored): `art/char_refs/game+human`.
+**Won this wave:** adult proportions 6.5–7.3 heads · single-loft limbs
+(no joint spheres at 5×) · open catchlight eyes on andrew/karen/chad/
+intern · combat face-key (horror under-lighting dead) · allies face the
+enemy back-¾ · monolith untouched.
+**Punch list (round-2 critic notes, pixel-measured — next session start
+here, the critique loop resumes via `wf_6184a4d6-35d` journal):**
+1. Grandma: head −30% (she's 3.6 heads = lone chibi), hair shell cut at
+   jaw (bearded-egg silhouette), eyes behind glasses need sclera+catchlight.
+2. All heads: jaw spans ~100% of cranial width — taper ~15% below cheekbones.
+3. All five: trouser pelvis dome ("diaper bump") — merge into trouser
+   loft, drop trouser sheen to satin.
+4. Karen: level the resting brow, unify face/head skin albedo (porthole
+   seam), rebuild bob per portrait (asymmetric platinum, dark underlayer),
+   arm length (fingertips must reach mid-thigh).
+5. Chad identity: portrait cues missing — backwards cap, stubble band,
+   chain, squared jaw (within 1.15 clamp).
+
+---
+
 # Session Handoff — July 27, 2026 — THE DISPLAY CASE REBUILD (overnight, branch `display-case`)
 
 **What happened:** the queued director-mode AAA pass ran end-to-end in one

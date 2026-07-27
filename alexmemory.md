@@ -6,7 +6,15 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## NEEDS YOU (current)
 
-- **WAVE 5 IN FLIGHT (your colleagues' notes, ~14:40):** "scrunched/scary
+- **WAVE 5 LANDED AT THE WINDOW (7a31dd9, pushed ~17:55):** the humans
+  are HUMAN now — 6.5–7.3 head proportions, sleek lofts, open catchlight
+  eyes, no horror lighting, Andrew fights back-¾ to camera. Your portrait
+  idea became law: `art/CHARACTER_BIBLE.md` + canonical-portrait identity
+  tests. Remaining pixel-measured punch list is in HANDOFF (grandma's
+  chibi head, the universal jaw taper, the trouser dome, Karen's bob,
+  Chad's cap/stubble/chain). The critique loop resumes exactly where it
+  stopped — one more session closes it.
+- Prior context — **WAVE 5 brief (your colleagues' notes, ~14:40):** "scrunched/scary
   faces, lumpy bodies, caricature" → CHARACTER BIBLE v6: human-first
   proportions (6.5–7 heads), Sleek Law (single lofts, no joint lumps),
   Pleasant Neutral faces (menace moves to expression sets), matte skin,
