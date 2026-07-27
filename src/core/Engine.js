@@ -5,6 +5,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { TiltShiftPass } from '../effects/TiltShiftPass.js';
 import { GradePass } from '../effects/GradePass.js';
 import { createVoidBackdrop, RECOMMENDED_FOG } from '../effects/VoidBackdrop.js';
+import { Furniture } from '../world/Furniture.js';
 // Default interior light colors — Severance clinical white-green.
 // Deliberately COOLER than COLORS.FLUORESCENT (warm cream): the wall and
 // floor materials are warm beige, and cool light over warm surfaces
@@ -398,7 +399,7 @@ class EngineClass {
     if (amb >= 0.4) {
       const poolMat = new THREE.MeshBasicMaterial({
         map: this._fxRadialTexture(), color: 0xdfeee2, transparent: true,
-        opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false,
+        opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false,
       });
       const nx = Math.max(1, Math.round((w - 3) / 4.5));
       const nz = Math.max(1, Math.round((h - 3) / 4.5));
@@ -414,36 +415,62 @@ class EngineClass {
           g.add(pool);
         }
       }
-      // The fixtures: long continuous fluorescent RUNS at wall-top
-      // height, one per ceiling row — Severance's linear top-light,
-      // architectural rather than per-panel confetti (short floating
-      // bars read as litter on the floor from the iso camera; long
-      // strips crossing over partitions read unmistakably as ceiling).
-      // OFFICE RIG ONLY: mood-lit rooms (garage, dim concrete) keep
-      // their pools but get no office fixtures — there, partial
-      // occlusion chops the runs into floating white fragments.
+      // The fixtures: Severance linear top-light. Wave-2 (kill the single
+      // room-length "lightsaber tube"): each ceiling row is broken into 2-3
+      // SHORTER recessed troffers (Furniture.ceilingFixture — dark matte
+      // housing, inset diffuser) with gaps between them, and each fixture
+      // paints its OWN warm-white elliptical light pool on the floor directly
+      // beneath it (the missing "floor pooling under the bar" note).
+      // OFFICE RIG ONLY: mood-lit rooms (garage, lounge, dim concrete) keep
+      // their grid pools but get no office fixtures — there, partial occlusion
+      // chops the runs into floating fragments and the tone is wrong.
       const officeRig = (roomData.lighting?.dirIntensity ?? 1.15) >= 0.9;
-      const runLen = Math.max(2.5, w - 3.2);
-      const housingGeo = new THREE.BoxGeometry(runLen + 0.14, 0.05, 0.44);
-      const housingMat = new THREE.MeshBasicMaterial({ color: 0x3a403d });
-      const stripGeo = new THREE.BoxGeometry(runLen, 0.055, 0.20);
-      // Diffuser just past 1.0 linear: ACES rolls it to clean glare-white
-      // and it GRAZES the bloom threshold — lit, but the room stays the
-      // subject (1.55+ turned the fixtures into light sabers)
-      const stripMat = new THREE.MeshBasicMaterial();
-      stripMat.color.setRGB(0.98, 1.06, 0.99);
-      const cxm = (w - 1) / 2;
-      for (let j = 0; officeRig && j < nz; j++) {
-        const pz = 1.0 + (h - 2) * ((j + 0.5) / nz) - 0.5;
-        // Housing UNDER the diffuser: the iso camera looks down on the
-        // fixture, so the hot surface must be the top face; the wider
-        // dark housing beneath rims it so the glow reads mounted.
-        const housing = new THREE.Mesh(housingGeo, housingMat);
-        housing.position.set(cxm, 2.42, pz);
-        g.add(housing);
-        const strip = new THREE.Mesh(stripGeo, stripMat);
-        strip.position.set(cxm, 2.465, pz);
-        g.add(strip);
+      if (officeRig) {
+        const nSeg = Math.min(3, Math.max(2, Math.round((w - 2) / 6)));
+        const gap = 0.9;                                  // dark gap between troffers
+        const span = w - 3.0;                             // total run width, inset from walls
+        const segLen = Math.max(1.6, span / nSeg - gap);
+        const cxm = (w - 1) / 2;
+        const fxPoolMat = new THREE.MeshBasicMaterial({
+          map: this._fxRadialTexture(), color: 0xfff0d2, transparent: true,
+          opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false,
+        });
+        // Lacquer reflection streak — the MATERIALS-PILLAR fix: a bright, narrow,
+        // stretched cool highlight directly beneath each troffer so the fixture
+        // paints a specular smear on the floor (a lacquered miniature, not matte
+        // resin). Elongated along the bar's long axis (X), thin across (Z), on
+        // top of the soft warm pool. Uses the streak-smear texture (soft ends).
+        const fxStreakMat = new THREE.MeshBasicMaterial({
+          map: this._fxGlossStreakTexture(), color: 0xe9f1ff, transparent: true,
+          opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false,
+        });
+        const fxPoolGeo = new THREE.PlaneGeometry(1, 1);
+        for (let j = 0; j < nz; j++) {
+          const pz = 1.0 + (h - 2) * ((j + 0.5) / nz) - 0.5;
+          for (let s = 0; s < nSeg; s++) {
+            const sx = cxm + (s - (nSeg - 1) / 2) * (segLen + gap);
+            const fixture = Furniture.ceilingFixture(segLen);
+            fixture.position.set(sx, 2.44, pz);
+            g.add(fixture);
+            // Warm elliptical pool on the floor directly beneath the troffer —
+            // elongated along the fixture's long axis (X).
+            const pool = new THREE.Mesh(fxPoolGeo, fxPoolMat);
+            pool.rotation.x = -Math.PI / 2;
+            pool.scale.set(segLen + 2.2, 3.4, 1);
+            pool.position.set(sx, 0.017, pz);
+            pool.renderOrder = 2;
+            g.add(pool);
+            // The lacquer reflection: narrow bright streak, offset a touch toward
+            // the camera (+z) the way a floor reflection of an overhead light
+            // stretches toward the viewer.
+            const streak = new THREE.Mesh(fxPoolGeo, fxStreakMat);
+            streak.rotation.x = -Math.PI / 2;
+            streak.scale.set(segLen + 0.5, 1.15, 1);
+            streak.position.set(sx, 0.018, pz + 0.35);
+            streak.renderOrder = 3;
+            g.add(streak);
+          }
+        }
       }
     }
 
@@ -454,7 +481,7 @@ class EngineClass {
       new THREE.MeshBasicMaterial({
         map: this._fxGlossTexture(), transparent: true, depthWrite: false,
         blending: THREE.AdditiveBlending,
-        opacity: roomData.floorPattern === 'hardwood' ? 0.10 : 0.045,
+        opacity: roomData.floorPattern === 'hardwood' ? 0.12 : 0.085,
       })
     );
     gloss.rotation.x = -Math.PI / 2;
@@ -494,24 +521,68 @@ class EngineClass {
       }
     }
 
-    // 5. Neon reflection smears — saturated signage catching in the
-    // lacquer (data-driven off furniture type, no room special-casing)
+    // 5. Neon reflection smears — saturated signage doubling itself in the
+    // lacquered floor (the "one floor catches one light" note). Data-driven
+    // off furniture type. Wave-2: a WIDE soft wash + a BRIGHT narrow core
+    // streak stretching from the sign toward the camera, so a magenta neon
+    // over a near-black hardwood floor (penthouse_bar) reads as a mirrored
+    // streak, not a sign floating on a dead surface.
     for (const item of (roomData.furniture || [])) {
       if (item.type !== 'neonSign') continue;
       const south = item.rotation && Math.abs(item.rotation - Math.PI) < 0.1;
       const dir = south ? -1 : 1;
-      const smear = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.4, 3.6),
+      // A broad soft reflected GLOW pushed a few tiles off the wall so it lands
+      // on OPEN floor (the corner signs' smears were dying behind the bar/poker
+      // furniture — "the grey floor refuses to answer"). Radial, not a wall-
+      // hugging streak, so the reflection reads even where furniture crowds the
+      // wall line.
+      const wash = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, 1),
         new THREE.MeshBasicMaterial({
-          map: this._fxSmearTexture(), color: 0xe94560, transparent: true,
-          opacity: 0.17, blending: THREE.AdditiveBlending, depthWrite: false,
+          map: this._fxRadialTexture(), color: 0xff2a8e, transparent: true,
+          opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
-      smear.rotation.x = -Math.PI / 2;
-      if (south) smear.rotation.z = Math.PI;
-      smear.position.set(item.x, 0.018, item.z + dir * 2.0);
-      smear.renderOrder = 3;
-      g.add(smear);
+      wash.rotation.x = -Math.PI / 2;
+      wash.scale.set(5.4, 6.6, 1);
+      wash.position.set(item.x, 0.017, item.z + dir * 3.1);
+      wash.renderOrder = 3;
+      g.add(wash);
+      // The stretched mirrored CORE — bright narrow streak from the sign
+      // reaching toward the camera, the Drive "neon on wet reflection" tell.
+      const core = new THREE.Mesh(
+        new THREE.PlaneGeometry(1.0, 5.2),
+        new THREE.MeshBasicMaterial({
+          map: this._fxSmearTexture(), color: 0xff58b0, transparent: true,
+          opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false,
+        })
+      );
+      core.rotation.x = -Math.PI / 2;
+      if (south) core.rotation.z = Math.PI;
+      core.position.set(item.x, 0.019, item.z + dir * 2.5);
+      core.renderOrder = 4;
+      g.add(core);
+    }
+
+    // 5b. Server-rack cyan underglow — the "drop a cyan pool on the floor
+    // beneath each rack column so the saturated hum actually hums" note. Each
+    // serverRack furniture entry gets a tight cool pool at its foot so the
+    // obsidian chassis separates from the dark floor instead of black-on-black.
+    let rackGlowMat = null;
+    for (const item of (roomData.furniture || [])) {
+      if (item.type !== 'serverRack') continue;
+      if (!rackGlowMat) rackGlowMat = new THREE.MeshBasicMaterial({
+        map: this._fxRadialTexture(), color: 0x1fb6e0, transparent: true,
+        opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false,
+      });
+      const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), rackGlowMat);
+      pool.rotation.x = -Math.PI / 2;
+      pool.scale.set(1.7, 2.0, 1);
+      pool.position.set(item.x, 0.021, item.z);
+      // renderOrder 4: draw AFTER the black furniture contact blobs (order 3) so
+      // the additive cyan lands on the darkened floor instead of being buried.
+      pool.renderOrder = 4;
+      g.add(pool);
     }
 
     // 6. Exterior night sleeve — the display-case shell. The room's
@@ -678,6 +749,34 @@ class EngineClass {
     this._fxGloss.minFilter = THREE.LinearFilter;
     this._fxGloss.generateMipmaps = false;
     return this._fxGloss;
+  }
+
+  // Horizontal lacquer-reflection streak: bright core along the middle, soft
+  // feather to transparent at both ends and both long edges. Scaled per fixture
+  // into a stretched highlight (the "specular streak under each ceiling bar").
+  _fxGlossStreakTexture() {
+    if (this._fxGlossStreak) return this._fxGlossStreak;
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 32;
+    const ctx = c.getContext('2d');
+    const gh = ctx.createLinearGradient(0, 0, 128, 0);
+    gh.addColorStop(0.0, 'rgba(255,255,255,0)');
+    gh.addColorStop(0.5, 'rgba(255,255,255,1)');
+    gh.addColorStop(1.0, 'rgba(255,255,255,0)');
+    ctx.fillStyle = gh;
+    ctx.fillRect(0, 0, 128, 32);
+    const gv = ctx.createLinearGradient(0, 0, 0, 32);
+    gv.addColorStop(0.0, 'rgba(0,0,0,1)');
+    gv.addColorStop(0.5, 'rgba(0,0,0,0)');
+    gv.addColorStop(1.0, 'rgba(0,0,0,1)');
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.fillStyle = gv;
+    ctx.fillRect(0, 0, 128, 32);
+    this._fxGlossStreak = new THREE.CanvasTexture(c);
+    this._fxGlossStreak.colorSpace = THREE.SRGBColorSpace;
+    this._fxGlossStreak.minFilter = THREE.LinearFilter;
+    this._fxGlossStreak.generateMipmaps = false;
+    return this._fxGlossStreak;
   }
 
   _fxSmearTexture() {

@@ -15,6 +15,36 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## LOG
 
+### 2026-07-27 ~03:35 — CHARACTER PROTOTYPE: SKELETON APPROVED
+- The scratchpad prototype came home after 7 self-critique rounds. My
+  ruling: **skeleton approved** — real proportions (~6 heads), lathe
+  torso, tapered limbs, tailored clothing, figurine gloss; four archetypes
+  instantly distinct; nobody would say minifig. Grandma is charming.
+- Still to win in the port (Wave 3): faces need 2× feature contrast to
+  read at game camera; hair de-helmeted (scalp-conforming, no cap-step);
+  glasses become geometry; six expressions; geometry-merge for perf.
+- **YOUR EYE (fun one):** scratchpad shots\r7_plate.png — Andrew, Karen,
+  Grandma, Chad as miniature people for the first time.
+
+### 2026-07-27 ~02:45 — WAVE 1 LANDS (commit 44781cb)
+- Three critic rounds run; final vote not_yet on six named residuals, ALL
+  of which belong to lanes that haven't run (interior light rigs = L4).
+  Director's ruling: commit the wave, route residuals into Wave 2 briefs.
+- **My own eyes on the stills:** reception is transformed — a lit
+  specimen room in a deep-black tower field, tilt-shift melting the
+  foreground towers. The critics' residuals are visibly real too (bare
+  lightsaber tube, floating sodium cones in the garage void).
+- Critics' identity verdict, unanimous: night city "says Drive/new-Tron
+  and never once retrowave — the hardest call in the bible and it landed."
+- Bonus fix: composer was displaying linear-as-sRGB — the game has been
+  muddier than authored this whole time. GradePass now owns the output
+  transform. Combat/title will read brighter until L5 re-lights them.
+- **YOUR EYE:** `screenshots/contact/room-reception.png` and
+  `room-parking_garage.png` — before/after vs any pre-tonight memory of
+  the game. 1998 MODE toggle now lives in settings.
+- Wave 2 launching: L1 materials + L4 Severance interiors + L3 residuals.
+  Fleet economy per your ask: OPUS builders/fixers, FABLE critics.
+
 ### 2026-07-27 ~01:55 — WAVE 1 ROUND 1: CRITICS BITE, IDENTITY HOLDS
 - Builders + integrator landed; `npm run check` green; six stills shot.
 - Both blind critics: **not_yet** — game lost all 8 comp pairings, BUT two

@@ -134,8 +134,11 @@ export class CombatScene {
           float angle = atan(center.y, center.x);
           float dist = length(center);
           float spiral = sin(angle * 3.0 + dist * 10.0 - t * 4.0);
-          float blend1 = smoothstep(-0.3, 0.3, pattern);
-          float blend2 = smoothstep(-0.2, 0.2, spiral);
+          // Wave-2: WIDER blend ramps so the colour lobes cross-dissolve
+          // instead of terminating in a readable arc edge (the fight-karen
+          // "blue lobe seam against the red field" note).
+          float blend1 = smoothstep(-0.6, 0.6, pattern);
+          float blend2 = smoothstep(-0.5, 0.5, spiral);
           // Near-black ribbon field...
           vec3 color = mix(
             mix(uColor1, uColor2, blend1),
@@ -143,12 +146,26 @@ export class CombatScene {
             blend2
           );
           // ...with magenta as a controlled accent on a few ribbon
-          // edges only — never an all-over wash
-          float accent = smoothstep(0.5, 0.92, pattern) * smoothstep(0.25, 0.8, spiral);
-          color += uColor4 * accent * 1.1;
+          // edges only — never an all-over wash. Wave-2 R2: much WIDER accent
+          // ramps so the red arcs cross-dissolve over a long gradient instead
+          // of terminating in a readable curved cyc edge (the fight-karen
+          // "hard arc framing the enemy" note).
+          float accent = smoothstep(0.20, 1.05, pattern) * smoothstep(-0.15, 0.95, spiral);
+          color += uColor4 * accent * 0.72;
           color *= 0.8 + 0.2 * sin(t * 1.5);
-          // Crush the bottom of frame into the stage-floor black
-          color *= mix(0.18, 1.0, smoothstep(0.02, 0.38, uv.y));
+          // Continuous radial falloff to black at the frame edges — the lobes
+          // dissolve into the void instead of one lobe ending in a hard arc
+          // against its neighbour. Wave-2 R2: the fade band is widened (starts
+          // brighter near center, reaches black much later) so the cyc edge is
+          // unfindable at contact-sheet zoom.
+          float vig = smoothstep(1.45, 0.10, length(center) * 1.28);
+          color *= vig;
+          // Dissolve the bottom of the backdrop into TRUE black right at the
+          // stage-floor line (uv.y ~0.3 in world), so the swirl fades into
+          // the floor instead of terminating in a razor-straight seam
+          // (critic: "a visible stage seam"). Fully black below the floor,
+          // ramping back to full a little above it.
+          color *= smoothstep(0.27, 0.52, uv.y);
           gl_FragColor = vec4(color, 1.0);
         }
       `,
@@ -182,6 +199,7 @@ export class CombatScene {
       group.position.set(pos.x + 5.0, 0, pos.z);
       group.scale.setScalar(scale);
       group.rotation.y = Math.PI;
+      this._addContactBounce(group, scale);
       this.scene.add(group);
       this.enemyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: Math.PI, baseScale: scale, characterId: id, introDelay: i * 0.12 });
     }
@@ -210,9 +228,50 @@ export class CombatScene {
       group.position.set(pos.x, 0, pos.z);
       group.scale.setScalar(1.8);
       group.rotation.y = -Math.PI * 0.6;
+      this._addContactBounce(group, 1.8);
       this.scene.add(group);
       this.allyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: -Math.PI * 0.6, baseScale: 1.8, characterId: id });
     }
+  }
+
+  // Red bounce contact pool parented to a combatant so it tracks them. On the
+  // true-black stage a black contact shadow is invisible (fight-karen: "her
+  // black slacks dissolve into the black stage, legless torso hovering"), so
+  // the grounding here is a warm ADDITIVE kiss — a red rim glow that lands on
+  // the floor AND catches the bottom of the legs/shoes, planting the figure.
+  _addContactBounce(group, scale) {
+    if (typeof document === 'undefined') return;
+    if (!CombatScene._bounceTex) {
+      const c = document.createElement('canvas');
+      c.width = c.height = 128;
+      const ctx = c.getContext('2d');
+      const g = ctx.createRadialGradient(64, 64, 3, 64, 64, 62);
+      g.addColorStop(0, 'rgba(255,255,255,0.95)');
+      g.addColorStop(0.4, 'rgba(255,255,255,0.4)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 128, 128);
+      CombatScene._bounceTex = new THREE.CanvasTexture(c);
+      CombatScene._bounceTex.colorSpace = THREE.SRGBColorSpace;
+      CombatScene._bounceTex.minFilter = THREE.LinearFilter;
+      CombatScene._bounceTex.generateMipmaps = false;
+    }
+    const bounce = new THREE.Mesh(
+      new THREE.PlaneGeometry(1, 1),
+      new THREE.MeshBasicMaterial({
+        map: CombatScene._bounceTex, color: 0xe94560, transparent: true,
+        opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false,
+      })
+    );
+    bounce.rotation.x = -Math.PI / 2;
+    // Local units — parent scale (scale) turns these into a ~1.7×1.15 world
+    // footprint sitting just above the black stage floor.
+    const s = 1.0 / Math.max(scale, 0.001);
+    bounce.scale.set(1.7 * s, 1.15 * s, 1);
+    bounce.position.set(0, 0.03 * s, 0.08 * s);
+    bounce.renderOrder = 3;
+    bounce.userData.noFlash = true;
+    group.add(bounce);
   }
 
   // Legacy single-enemy entry point — kept for backward compatibility

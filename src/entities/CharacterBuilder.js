@@ -328,7 +328,7 @@ export function buildCharacter(config, options = {}) {
     }
   });
 
-  _addBlobShadow(group, 0.26 * Math.max(ws, 1));
+  _addBlobShadow(group, 0.30 * Math.max(ws, 1));
 
   return group;
 }
@@ -344,15 +344,62 @@ function toneColor(color, tone) {
   return (mix(r) << 16) | (mix(g) << 8) | mix(b);
 }
 
-// Soft contact shadow that follows the character.
+// Shared soft radial gradient for the contact shadow — dark core fading to
+// nothing at the rim (a flat uniform disc reads as a hovering coaster, not
+// a shadow). Cached: one texture for every character in the scene.
+let _blobShadowTex = null;
+function _blobShadowTexture() {
+  if (_blobShadowTex) return _blobShadowTex;
+  // Headless (validate:data smoke test builds a Player in Node): no canvas.
+  // Return null → material renders as a solid-colour plane, which never gets
+  // rasterised headless anyway. In-game `document` always exists.
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64, 64, 2, 64, 64, 63);
+  g.addColorStop(0, 'rgba(0,0,0,0.95)');
+  g.addColorStop(0.4, 'rgba(0,0,0,0.7)');
+  g.addColorStop(0.72, 'rgba(0,0,0,0.24)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 128, 128);
+  _blobShadowTex = new THREE.CanvasTexture(c);
+  _blobShadowTex.colorSpace = THREE.SRGBColorSpace;
+  _blobShadowTex.minFilter = THREE.LinearFilter;
+  _blobShadowTex.generateMipmaps = false;
+  return _blobShadowTex;
+}
+
+// Soft contact shadow that follows the character — this is the ONLY thing
+// grounding the feet to the floor (there is no shadow-casting key light in
+// the room scenes), so its strength is doing real work.
+//
+// CRITIC-TUNED (round 3, "NPC figures stand on a shadowless floor and
+// visibly hover"): radial-gradient sprite instead of a flat disc, deeper
+// core opacity, and a wider soft footprint. A later L2 lane rebuilds the
+// character bodies — it MUST preserve this grounding shadow: keep the
+// gradient sprite and these opacity/radius values, do not revert to a flat
+// CircleGeometry at opacity 0.22.
 function _addBlobShadow(group, radius) {
+  const r = radius * 1.5;   // soft falloff means the visible core is smaller
   const blob = new THREE.Mesh(
-    new THREE.CircleGeometry(radius, 20),
-    new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.22, depthWrite: false })
+    new THREE.PlaneGeometry(r * 2, r * 2),
+    new THREE.MeshBasicMaterial({
+      map: _blobShadowTexture(),
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.82,
+      depthWrite: false,
+    })
   );
   blob.rotation.x = -Math.PI / 2;
-  blob.position.y = 0.015;
-  blob.renderOrder = 1;
+  blob.position.y = 0.012;
+  // renderOrder 2 (was 1): draws AFTER the combat stage's additive magenta
+  // floor pool, so the contact ellipse actually darkens the floor under the
+  // feet instead of being washed out by the glow (fight-karen "feet dissolve
+  // into the void, no contact shadow" note).
+  blob.renderOrder = 2;
   blob.userData.noFlash = true;     // excluded from combat white-flash
   blob.castShadow = false;
   blob.receiveShadow = false;

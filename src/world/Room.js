@@ -88,6 +88,7 @@ const NO_BLOCK = new Set([
   'popcornPopper', 'neonSign', 'operatorChair',
   'cableTray', 'monitorWall', 'aisleGlow',
   'lamppost', 'hydrant', 'busStopSign', 'newspaperBox', 'curb', 'elevatorDoors',
+  'sodiumPool', 'severanceRunner',
 ]);
 
 export class Room {
@@ -416,8 +417,14 @@ export class Room {
     const count = to - from + 1;
     const baseMat = Materials.custom(0x9a9078);   // baseboard — darker than wall
     const crownMat = Materials.custom(0xf4eee0);  // crown — lighter than wall
+    const railMat = Materials.custom(0xbfb6a4);   // chair-rail / two-tone reveal band
     const meshes = [];
-    let mesh, base, crown;
+    // Chair-rail sits at y=0.82 — a slim architectural reveal that splits
+    // the wall into a subtle two-tone (Severance trim, not wainscot cosplay).
+    // Kept below the y≈1.25 walk-behind fade window so it never gets picked
+    // as the wall mesh by the exterior-sleeve detector.
+    const RAIL_Y = 0.82;
+    let mesh, base, crown, rail;
     if (orientation === 'h') {
       const segWidth = count * TILE_SIZE;
       mesh = new THREE.Mesh(new THREE.BoxGeometry(segWidth, wallHeight, wallThickness), wallMat);
@@ -427,6 +434,8 @@ export class Room {
       base.position.set(centerX, 0.08, fixedPos);
       crown = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.07, wallThickness + 0.04), crownMat);
       crown.position.set(centerX, wallHeight - 0.035, fixedPos);
+      rail = new THREE.Mesh(new THREE.BoxGeometry(segWidth, 0.05, wallThickness + 0.045), railMat);
+      rail.position.set(centerX, RAIL_Y, fixedPos);
     } else {
       const segHeight = count * TILE_SIZE;
       mesh = new THREE.Mesh(new THREE.BoxGeometry(wallThickness, wallHeight, segHeight), wallMat);
@@ -436,8 +445,10 @@ export class Room {
       base.position.set(fixedPos, 0.08, centerZ);
       crown = new THREE.Mesh(new THREE.BoxGeometry(wallThickness + 0.04, 0.07, segHeight), crownMat);
       crown.position.set(fixedPos, wallHeight - 0.035, centerZ);
+      rail = new THREE.Mesh(new THREE.BoxGeometry(wallThickness + 0.045, 0.05, segHeight), railMat);
+      rail.position.set(fixedPos, RAIL_Y, centerZ);
     }
-    for (const m of [mesh, base, crown]) {
+    for (const m of [mesh, base, crown, rail]) {
       m.castShadow = true;
       m.receiveShadow = true;
       this.scene.add(m);
@@ -510,12 +521,17 @@ export class Room {
    */
   _addExitMarkers() {
     if (!this.data.exits) return;
+    // Wave-2 R2: the old 0x44ff88 exit tiles read as saturated gameplay-UI
+    // stickers fighting the institutional Lumon green (0x3f7d57) of the walkway
+    // runners — two greens, one room (critic). Pulled toward the walkway green
+    // and dimmed so the accent has ONE owner, while staying bright enough to
+    // still read as a "leave here" affordance.
     const markerMat = new THREE.MeshToonMaterial({
-      color: 0x44ff88,
-      emissive: 0x44ff88,
-      emissiveIntensity: 0.4,
+      color: 0x4fa877,
+      emissive: 0x4fa877,
+      emissiveIntensity: 0.26,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.55,
     });
     const markerGeo = new THREE.PlaneGeometry(0.8 * TILE_SIZE, 0.8 * TILE_SIZE);
     for (const exit of this.data.exits) {

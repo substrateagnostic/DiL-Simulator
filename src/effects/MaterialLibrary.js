@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { COLORS } from '../utils/constants.js';
+import { ProceduralNormals } from './ProceduralNormals.js';
 
 // Create a 3-tone gradient texture for toon shading
 function createGradientMap(stops = 3) {
@@ -99,8 +100,57 @@ function clothTexture(variant) {
   return tex;
 }
 
+// ── Hinterberg per-material stylization (opt-in) ──────────────────────
+// Their deferred material-ID channel → our forward equivalent: optional
+// rim light + shadow-ramp tint injected into MeshToonMaterial via
+// onBeforeCompile. DEFAULT PATH IS UNTOUCHED — a plain toon() with no
+// rim/ramp opts compiles to a stock MeshToonMaterial (no recompile, no
+// per-frame cost), so the thousands of flat-color props/characters pay
+// nothing. Later lanes style a single material by passing:
+//   Materials.custom(c, { rimColor: 0x6fb4ff, rimStrength: 0.4 })
+//   Materials.custom(c, { rampTint: 0x2a3550, rampStrength: 0.5 })
+// rimColor/rimStrength: fresnel glow at grazing angles (silhouette lift).
+// rampTint/rampStrength: multiplies the SHADOW end of the toon ramp toward
+// a hue (cool shadows / warm shadows) — the cheap Hinterberg ramp steal.
+// View dir is real (varying), so it reads on both ortho and combat cams.
+function toonRimHooks(mat, o) {
+  const rimColor = new THREE.Color(o.rimColor ?? 0xffffff);
+  const rampTint = new THREE.Color(o.rampTint ?? 0xffffff);
+  const rimStrength = o.rimStrength ?? 0.0;
+  const rimPower = o.rimPower ?? 2.5;
+  const rampStrength = o.rampStrength ?? (o.rampTint !== undefined ? 0.5 : 0.0);
+  mat.onBeforeCompile = (shader) => {
+    shader.uniforms.uRimColor = { value: rimColor };
+    shader.uniforms.uRimStrength = { value: rimStrength };
+    shader.uniforms.uRimPower = { value: rimPower };
+    shader.uniforms.uRampTint = { value: rampTint };
+    shader.uniforms.uRampStrength = { value: rampStrength };
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vRimView;')
+      .replace('#include <project_vertex>', '#include <project_vertex>\n\tvRimView = - mvPosition.xyz;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>',
+        '#include <common>\nuniform vec3 uRimColor;\nuniform float uRimStrength;\nuniform float uRimPower;\nuniform vec3 uRampTint;\nuniform float uRampStrength;\nvarying vec3 vRimView;')
+      .replace('#include <opaque_fragment>', `#include <opaque_fragment>
+      {
+        vec3 rimV = normalize( vRimView );
+        float ndv = clamp( dot( normal, rimV ), 0.0, 1.0 );
+        float rim = pow( 1.0 - ndv, uRimPower ) * uRimStrength;
+        gl_FragColor.rgb += uRimColor * rim;
+        float luma = dot( gl_FragColor.rgb, vec3( 0.299, 0.587, 0.114 ) );
+        float shadowMask = ( 1.0 - smoothstep( 0.0, 0.55, luma ) ) * uRampStrength;
+        gl_FragColor.rgb = mix( gl_FragColor.rgb, gl_FragColor.rgb * uRampTint, shadowMask );
+      }`);
+  };
+  // Same program for every rim/ramp material — values live in uniforms —
+  // so three shares one compile across all of them.
+  mat.customProgramCacheKey = () => 'toonRim';
+}
+
 function toon(color, opts = {}) {
-  const key = `${color}_${opts.stops || 3}_${opts.emissive || 0}_${opts.smooth ? 's' : 'f'}`;
+  const styled = opts.rimStrength || opts.rampTint !== undefined;
+  const key = `${color}_${opts.stops || 3}_${opts.emissive || 0}_${opts.emissiveIntensity || 0}_${opts.smooth ? 's' : 'f'}`
+    + (styled ? `_r${opts.rimColor || 0}_${opts.rimStrength || 0}_${opts.rimPower || 0}_${opts.rampTint || 0}_${opts.rampStrength || 0}` : '');
   if (cache[key]) return cache[key];
 
   // NOTE: MeshToonMaterial ignores flatShading (three r183) — the low-poly
@@ -117,21 +167,87 @@ function toon(color, opts = {}) {
     mat.emissiveIntensity = opts.emissiveIntensity || 0.3;
   }
 
+  if (styled) toonRimHooks(mat, opts);
+
   cache[key] = mat;
   return mat;
 }
 
+// ── Lacquered-miniature PBR response (the Link's Awakening steal) ──────
+// Toon shading is pure diffuse ramp — it has NO specular, so gloss is
+// physically impossible in it (round-3 critic: "gloss is absent
+// everywhere"). Floors, desks and metal therefore move to a real PBR
+// material so the office key and the bar's neon punctual lights throw a
+// lacquer highlight. Env-map-free BY DESIGN: a clearcoat lobe + the
+// scene's existing directional/point lights carry the sheen, so no PMREM
+// / renderer handle is needed and the reflection actually CATCHES the
+// room neon (a static env map could not). Brightness matches toon —
+// MeshStandard/Physical and MeshToon share the same Lambert+ambient
+// irradiance scaling in three, so swapping does not darken the room.
+//
+// Per-mesh swappable (CombatScene white-flash reassigns child.material)
+// and exposes a sane flat .color, exactly like the toon path.
+//   opts: roughness, metalness, clearcoat, clearcoatRoughness,
+//         normal ('wood'|'metal'|'carpet'|'concrete'), normalRepeat:[u,v],
+//         normalScale, map (THREE.Texture), emissive, emissiveIntensity
+function pbr(color, opts = {}) {
+  const useCoat = (opts.clearcoat ?? 0) > 0;
+  const nrmKey = opts.normal
+    ? `${opts.normal}_${(opts.normalRepeat || [1, 1]).join('x')}_${opts.normalScale ?? 1}`
+    : 'none';
+  // map-bearing materials (patterned floors) are never cached here — the
+  // caller owns the canvas texture and cache; flat pbr shortcuts cache.
+  const cacheable = !opts.map;
+  const key = `pbr_${color}_${opts.roughness ?? 0.5}_${opts.metalness ?? 0}_${useCoat ? (opts.clearcoat) : 0}_${opts.clearcoatRoughness ?? 0.1}_${nrmKey}_${opts.emissive || 0}_${opts.emissiveIntensity || 0}`;
+  if (cacheable && cache[key]) return cache[key];
+
+  const params = {
+    color: new THREE.Color(color),
+    roughness: opts.roughness ?? 0.5,
+    metalness: opts.metalness ?? 0.0,
+  };
+  if (opts.map) params.map = opts.map;
+  const mat = useCoat ? new THREE.MeshPhysicalMaterial(params)
+                      : new THREE.MeshStandardMaterial(params);
+  if (useCoat) {
+    mat.clearcoat = opts.clearcoat;
+    mat.clearcoatRoughness = opts.clearcoatRoughness ?? 0.12;
+  }
+  if (opts.normal) {
+    const nrm = ProceduralNormals.get(opts.normal, { repeat: opts.normalRepeat || [1, 1] });
+    mat.normalMap = nrm;
+    const ns = opts.normalScale ?? 0.35;
+    mat.normalScale = new THREE.Vector2(ns, ns);
+  }
+  if (opts.emissive) {
+    mat.emissive = new THREE.Color(opts.emissive);
+    mat.emissiveIntensity = opts.emissiveIntensity || 0.3;
+  }
+  if (cacheable) cache[key] = mat;
+  return mat;
+}
+
 export const Materials = {
-  // Environment
-  floor: () => toon(COLORS.FLOOR),
+  // Environment.
+  // Floors/desks/metal are the lacquered-miniature surfaces — PBR so they
+  // catch a specular sheen (toon cannot). Walls/ceiling/props stay toon:
+  // matte flat-color charm is the point there, and painting every wall
+  // glossy would fight the Severance-sterile read. `floor()`/`tile()` are
+  // the plain institutional floor — a WAXED VCT satin (period-correct: a
+  // Lumon floor is buffed, not mirror), ready if a room routes to them.
+  floor: () => pbr(COLORS.FLOOR, { roughness: 0.62, metalness: 0.0, clearcoat: 0.35, clearcoatRoughness: 0.35, normal: 'concrete', normalRepeat: [6, 4], normalScale: 0.12 }),
   carpet: () => toon(COLORS.CARPET),
   wall: () => toon(COLORS.WALL),
   ceiling: () => toon(COLORS.CEILING),
   cubicleWall: () => toon(COLORS.CUBICLE_WALL),
-  desk: () => toon(COLORS.DESK),
-  deskDark: () => toon(COLORS.DESK_DARK),
+  // Wave-2 R2: lower base roughness + a deeper wood-grain normal so the office
+  // key throws a visible streaked clearcoat highlight (the "give wood 2% spec so
+  // it stops reading as painted foam" note). The grain now shapes that highlight
+  // at gameplay zoom instead of a flat brown box.
+  desk: () => pbr(COLORS.DESK, { roughness: 0.42, metalness: 0.0, clearcoat: 0.7, clearcoatRoughness: 0.14, normal: 'wood', normalRepeat: [2, 2], normalScale: 0.5 }),
+  deskDark: () => pbr(COLORS.DESK_DARK, { roughness: 0.4, metalness: 0.0, clearcoat: 0.7, clearcoatRoughness: 0.13, normal: 'wood', normalRepeat: [2, 2], normalScale: 0.5 }),
   monitor: () => toon(0x222222),
-  monitorScreen: () => toon(COLORS.MONITOR_GLOW, { emissive: COLORS.MONITOR_GLOW, emissiveIntensity: 0.5 }),
+  monitorScreen: () => toon(COLORS.MONITOR_GLOW, { emissive: COLORS.MONITOR_GLOW, emissiveIntensity: 0.8 }),
   chair: () => toon(0x333333),
   chairFabric: () => toon(0x444466),
   plant: () => toon(0x3a7a3a),
@@ -140,13 +256,16 @@ export const Materials = {
   coffee: () => toon(COLORS.COFFEE),
   mug: () => toon(COLORS.COFFEE_MUG),
   mugRed: () => toon(0xcc3333),
-  metal: () => toon(0x888888),
+  // Brushed metal — moderate metalness (env-map-free, so a full metal
+  // would render near-black; 0.55 keeps a diffuse body + a soft brushed
+  // specular from the office key).
+  metal: () => pbr(0x888888, { roughness: 0.45, metalness: 0.55, normal: 'metal', normalRepeat: [3, 3], normalScale: 0.22 }),
   glass: () => toon(0xaaccee, { stops: 4 }),
   whiteboard: () => toon(0xf0f0f0),
-  tile: () => toon(0xd8d0c0),
+  tile: () => pbr(0xd8d0c0, { roughness: 0.6, metalness: 0.0, clearcoat: 0.4, clearcoatRoughness: 0.3, normal: 'concrete', normalRepeat: [6, 6], normalScale: 0.1 }),
   fridge: () => toon(0xdddddd),
   microwave: () => toon(0x444444),
-  vendingMachine: () => toon(0x2244aa, { emissive: 0x112244, emissiveIntensity: 0.2 }),
+  vendingMachine: () => toon(0x2244aa, { emissive: 0x112244, emissiveIntensity: 0.28 }),
 
   // Character parts
   skin: () => toon(COLORS.SKIN),
@@ -249,16 +368,43 @@ export const Materials = {
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(w / 3, h / 3);
 
-    // Tint: lift the room's floorColor toward a neutral so very dark data
-    // colors land as deep cool walnut, not pitch black; no floorColor
-    // falls back to a neutral bone (never the old caramel 0xd4aa72)
-    const tintColor = new THREE.Color(tint ?? 0xb9ac9c)
-      .lerp(new THREE.Color(0xcfc6b8), tint !== undefined ? 0.58 : 0);
-    return new THREE.MeshToonMaterial({
+    // Tint: warm the room's floorColor toward walnut while PRESERVING its
+    // darkness. The old code lerped 0.58 toward bone, which washed the
+    // penthouse's near-black data floor (0x0c0610) to a flat mid-grey —
+    // the exact "unpainted resin" the round-3 critic flagged. Now a dark
+    // data floor stays a deep lacquered walnut (warm, low-value) that the
+    // neon punctual lights pop against; a light data floor lands warm oak.
+    // A small shadow floor keeps it from crushing to pitch (grain unread).
+    // Warm the floor toward walnut hue while PRESERVING the data value.
+    // The old code lerped 0.58 toward bone (washed the bar's near-black
+    // floor to flat grey — the "unpainted resin" critic flag). Lifting it
+    // instead to a mid walnut over-brightened it under the bar's dark
+    // neon mood, reading as pale concrete. So: a gentle 0.32 hue-warm and
+    // only a whisper of shadow floor — dark data floors stay DEEP wet
+    // walnut (the Drive "magenta-on-reflection" read; neon glints pop
+    // against near-black), light data floors land warm oak.
+    const base = new THREE.Color(tint ?? 0x6b5335);
+    const tintColor = base.lerp(new THREE.Color(0x60422a), 0.24);
+    tintColor.r = tintColor.r * 0.98 + 0.006;
+    tintColor.g = tintColor.g * 0.98 + 0.0034;
+    tintColor.b = tintColor.b * 0.98 + 0.0020;
+
+    // Lacquered walnut: low base roughness + a crisp clearcoat lobe. No
+    // env map — the office key and the bar's coloured point lights are
+    // what the coat reflects (a static env could not catch the neon).
+    // Wood-grain normal, stretched along the plank axis, streaks the
+    // highlight instead of a plastic hotspot.
+    const mat = new THREE.MeshPhysicalMaterial({
       map: texture,
       color: tintColor,
-      gradientMap: gradientMap3,
+      roughness: 0.38,
+      metalness: 0.0,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.08,
     });
+    mat.normalMap = ProceduralNormals.get('wood', { repeat: [Math.max(2, w / 3), Math.max(2, h / 6)] });
+    mat.normalScale = new THREE.Vector2(0.28, 0.28);
+    return mat;
   },
 
   // Office monitor screen content — cached canvas textures.
@@ -456,10 +602,18 @@ export const Materials = {
     texture.wrapT = THREE.RepeatWrapping;
     texture.repeat.set(w / 2, h / 2);
 
-    return new THREE.MeshToonMaterial({
+    // Carpet is MATTE — no lacquer here — but a woven normal map gives the
+    // office key something to graze, so it reads as loop pile with depth
+    // instead of the flat matte plane the critic called "unpainted resin".
+    // High roughness, zero metalness, NO clearcoat: cloth, not plastic.
+    const mat = new THREE.MeshStandardMaterial({
       map: texture,
       color: new THREE.Color(color),
-      gradientMap: gradientMap3,
+      roughness: 0.94,
+      metalness: 0.0,
     });
+    mat.normalMap = ProceduralNormals.get('carpet', { repeat: [w, h] });
+    mat.normalScale = new THREE.Vector2(0.5, 0.5);
+    return mat;
   },
 };

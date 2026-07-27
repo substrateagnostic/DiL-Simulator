@@ -127,8 +127,17 @@ export class CityBackdrop {
     this.cloudShadows = [];
     this.streetFX = [];       // { mesh, kind: 'A'|'B'|'core', baseOpacity }
     this._texCache = {};
-    // Trails whisper from the office floors, sing at street level
-    this._streakDim = 0.45;
+    // Trails whisper from the office floors, sing at street level. Wave-2:
+    // the office-level whisper is dropped hard — at 0.45 the red (B) tails
+    // read as thin scratched-frame artifact lines across the void, not city
+    // atmosphere. The red tails are additionally halved vs the sodium (A)
+    // heads everywhere (see _streakBFactor) so they never scratch.
+    this._streakDim = 0.2;
+    // Wave-2 R2: the red (B) tails read as thin red scratch lines across the
+    // garage's frame-left/upper void (critic: "rendering artifacts"). Halved
+    // again to a near-subliminal whisper so the street reads as sodium motion
+    // blur, never a red hairline.
+    this._streakBFactor = 0.16;
     this._build();
     scene.add(this.group);
     this.setTimeOfDay('morning');
@@ -227,10 +236,24 @@ export class CityBackdrop {
       // Core stays saturated: the seam color itself, lifted — never cream
       const core = lighten(seam, 0.12);
       const a = t.seamAlpha * SEAM_LEVELS[seamLevel];
-      ctx.globalAlpha = a * 0.95;
+      // GROUNDING GLOW (Wave-2 R2): a soft dim column of the seam colour spills
+      // a few px off the edge onto the wall face, so the bright seam reads as
+      // the LIT EDGE OF A SLAB rather than a disembodied vertical line floating
+      // in the void (critic: "reads as a rendering artifact, not a building
+      // edge"). Faint enough it never lifts the obsidian body.
+      const sr = parseInt(seam.slice(1), 16);
+      const rr = (sr >> 16) & 255, gg = (sr >> 8) & 255, bb = sr & 255;
+      const glow = ctx.createLinearGradient(1, 0, 9, 0);
+      glow.addColorStop(0, `rgba(${rr},${gg},${bb},${(a * 0.34).toFixed(3)})`);
+      glow.addColorStop(1, `rgba(${rr},${gg},${bb},0)`);
+      ctx.fillStyle = glow;
+      ctx.fillRect(1, 0, 9, P.facH);
+      // Core seam — eased a touch off full at night so the columns hum instead
+      // of scratching (0.95/0.75 -> 0.86/0.66).
+      ctx.globalAlpha = a * 0.86;
       ctx.fillStyle = core;
       ctx.fillRect(0, 0, 1, P.facH);
-      ctx.globalAlpha = a * 0.75;
+      ctx.globalAlpha = a * 0.66;
       ctx.fillStyle = seam;
       ctx.fillRect(1, 0, 1, P.facH);
       ctx.globalAlpha = 1;
@@ -428,6 +451,11 @@ export class CityBackdrop {
       // Magenta is an accent, never a row — two glowing magenta towers
       // in sequence demote the second to sodium (retrowave-kitsch guard)
       if (variant === 1 && lastGlowVariant === 1) variant = 0;
+      // Wave-2 R2: thin slabs in the FAR band carry no lit seam. A thin far
+      // tower's near-black body vanishes into the void and its lone seam column
+      // reads as a disembodied vertical orange/red line — the "rendering
+      // artifact" the penthouse_bar / garage stills flagged. Silhouette only.
+      if (thin && radius > 33) variant = 3;
       if (variant !== 3) lastGlowVariant = variant;
       const litBucket = Math.floor(rand() * 3);
       const faceSeed = Math.floor(rand() * 4);
@@ -512,8 +540,10 @@ export class CityBackdrop {
       const isX = i % 2 === 0;
       const lane = (i % 4 < 2) ? -1 : 1;
       const len = 3.4 + (i % 3) * 0.9;
+      // Wave-2: a touch wider so the trail reads as soft motion blur, not a
+      // hairline scratch across the frame edge.
       const streak = new THREE.Mesh(
-        new THREE.PlaneGeometry(len, 0.1),
+        new THREE.PlaneGeometry(len, 0.15),
         lane > 0 ? this._streakMatA : this._streakMatB
       );
       streak.rotation.set(-Math.PI / 2, 0, isX ? 0 : Math.PI / 2);
@@ -571,17 +601,44 @@ export class CityBackdrop {
       [CENTER.x - 15, CENTER.z - 8,  'A', 0.95],
       [CENTER.x + 18, CENTER.z + 2,  'A', 1.0],
       [CENTER.x + 15, CENTER.z - 9,  'A', 0.85],
-      [CENTER.x - 5,  CENTER.z - 15, 'B', 1.1],
+      // Was magenta ('B'); it sits directly BEHIND the room and its beam
+      // poked over the back wall as a lone crimson smear (critic artifact).
+      // Sodium blends with the warm street instead of reading as a blob.
+      [CENTER.x - 5,  CENTER.z - 15, 'A', 1.1],
       [CENTER.x + 2,  CENTER.z + 22, 'A', 1.1],
       [CENTER.x + 11, CENTER.z + 24, 'A', 0.9],
       [CENTER.x - 24, CENTER.z + 6,  'A', 0.9],
     ];
     for (const [px, pz, kind, s] of POOLS) {
-      // Pooled light on the asphalt
-      const pool = new THREE.Mesh(
-        new THREE.PlaneGeometry(4.4 * s, 4.4 * s),
+      // Faint wet-asphalt patch UNDER the pool so the sodium light lands on
+      // a SURFACE instead of floating as a disc in the void (critic: "no
+      // ground plane to pool on — read as fireball particle bugs"). Non-
+      // additive, lifted just above void-black, soft radial falloff so it
+      // has no hard rim — reads as a wet slab catching the lamp.
+      const ground = new THREE.Mesh(
+        new THREE.PlaneGeometry(6.0 * s, 6.0 * s),
         new THREE.MeshBasicMaterial({
-          map: disc, color: 0xffa04a, transparent: true, opacity: 0.4,
+          // Wave-2 R2: a bigger, warmer, softly-feathered wet-asphalt disc so
+          // the sodium pool lands on a READABLE surface (Drive haze) instead of
+          // a hard bright ellipse floating in the void (the "floating fireball"
+          // garage note). Soft radial falloff → no hard ground rim.
+          map: disc, color: 0x3a2c18, transparent: true, opacity: 0.9, depthWrite: false,
+        })
+      );
+      ground.rotation.x = -Math.PI / 2;
+      ground.position.set(px, 0.006, pz);
+      ground.renderOrder = 0;
+      ground.visible = false;
+      this.group.add(ground);
+      this.streetFX.push({ mesh: ground, kind: 'ground', base: 1.0 });
+
+      // Pooled light on the asphalt — Wave-2 R2: broadened and dimmed (base
+      // 1.0 -> 0.55) so it reads as a soft sodium bokeh diffusing into the
+      // ground disc, not a hard bright ellipse hovering in the void.
+      const pool = new THREE.Mesh(
+        new THREE.PlaneGeometry(3.4 * s, 3.4 * s),
+        new THREE.MeshBasicMaterial({
+          map: disc, color: 0xffa04a, transparent: true, opacity: 0.28,
           blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
@@ -590,24 +647,29 @@ export class CityBackdrop {
       pool.renderOrder = 1;
       pool.visible = false;
       this.group.add(pool);
-      this.streetFX.push({ mesh: pool, kind, base: 1.0 });
+      this.streetFX.push({ mesh: pool, kind, base: 0.55 });
 
       // Hazy light shaft under the lamp head — a camera-facing billboard
       // with gaussian-feathered edges (no geometric silhouette anywhere);
       // reads as a soft pool of sodium hanging in the haze
       const beam = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.9 * s, 5.4),
+        new THREE.PlaneGeometry(1.1 * s, 3.6),
         new THREE.MeshBasicMaterial({
-          map: this._beamTexture(), color: 0xffa04a, transparent: true, opacity: 0.10,
+          map: this._beamTexture(), color: 0xffa04a, transparent: true, opacity: 0.07,
           blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
-      beam.position.set(px, 2.9, pz);
+      // Lower and shorter than v2: the shaft sits close over its pool
+      // instead of a tall column that pokes over floating room walls (the
+      // "smeared crimson/magenta blob" was a magenta beam behind a wall)
+      beam.position.set(px, 2.0, pz);
       beam.rotation.y = Math.PI / 4;   // face the iso camera (azimuth PI/4)
       beam.renderOrder = 1;
       beam.visible = false;
       this.group.add(beam);
-      this.streetFX.push({ mesh: beam, kind, base: 0.55, breathe: true });
+      // Wave-2: fainter haze shaft (base 0.55 -> 0.36) so the lamp reads as a
+      // sodium pool on the (now readable) ground disc, not a floating cone.
+      this.streetFX.push({ mesh: beam, kind, base: 0.36, breathe: true });
 
       // The lamp standard — every emissive needs visible structure
       // (critic: sodium cones hovering in void). A slim dark pole from
@@ -621,26 +683,28 @@ export class CityBackdrop {
       this.group.add(pole);
       this.streetFX.push({ mesh: pole, kind: 'pole', base: 1.0 });
 
-      // The lamp itself — a small hot point that feeds the bloom pass
+      // The lamp itself — a small HARD hot point (critic: "hard-core the
+      // lamp heads"). Fully opaque solid core so it reads as a lit bulb and
+      // feeds the bloom pass, instead of a soft fuzzy disc.
       const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.09, 6, 5),
-        new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: 0.95 })
+        new THREE.SphereGeometry(0.11, 8, 6),
+        new THREE.MeshBasicMaterial({ color: 0xffd9a8 })
       );
       head.position.set(px, 5.6, pz);
       head.visible = false;
       this.group.add(head);
       this.streetFX.push({ mesh: head, kind: kind === 'B' ? 'coreB' : 'coreA', base: 1.0 });
 
-      // Wet reflection smear toward the viewer
+      // Wet reflection smear toward the viewer — shrunk to match the pool
       const smear = new THREE.Mesh(
-        new THREE.PlaneGeometry(7.6 * s, 0.7),
+        new THREE.PlaneGeometry(4.6 * s, 0.55),
         new THREE.MeshBasicMaterial({
-          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.3,
+          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.26,
           blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
       smear.rotation.set(-Math.PI / 2, 0, -Math.PI / 4);
-      const off = 7.6 * s * 0.42 * Math.SQRT1_2;
+      const off = 4.6 * s * 0.42 * Math.SQRT1_2;
       smear.position.set(px + off, 0.045, pz + off);
       smear.renderOrder = 1;
       smear.visible = false;
@@ -655,14 +719,14 @@ export class CityBackdrop {
       if (b.variant === 3 || b.radius > 36 || seamRefl >= 10) continue;
       seamRefl++;
       const smear = new THREE.Mesh(
-        new THREE.PlaneGeometry(8.5, 0.4),
+        new THREE.PlaneGeometry(5.4, 0.36),
         new THREE.MeshBasicMaterial({
-          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.22,
+          map: smearTex, color: 0xffa04a, transparent: true, opacity: 0.18,
           blending: THREE.AdditiveBlending, depthWrite: false,
         })
       );
       smear.rotation.set(-Math.PI / 2, 0, -Math.PI / 4);
-      const off = 8.5 * 0.46 * Math.SQRT1_2;
+      const off = 5.4 * 0.46 * Math.SQRT1_2;
       smear.position.set(b.x + off, 0.03, b.z + off);
       smear.renderOrder = 1;
       smear.visible = false;
@@ -724,21 +788,31 @@ export class CityBackdrop {
     if (this.streetLevel === on) return;
     this.streetLevel = on;
     this.streakY = on ? -0.25 : -16;
-    this._streakDim = on ? 1 : 0.45;
+    this._streakDim = on ? 1 : 0.2;
     const t = TIME_OF_DAY[this.tod];
     if (t) {
       this._streakMatA.opacity = t.streakOpacity * this._streakDim;
-      this._streakMatB.opacity = t.streakOpacity * this._streakDim;
+      this._streakMatB.opacity = t.streakOpacity * this._streakDim * this._streakBFactor;
     }
     for (const b of this.buildings) {
       if (on) {
         b.mesh.scale.y = 2.4;
         b.mesh.position.y = (b.h * 2.4) / 2 - 0.6;
+        // Street level: towers scale 2.4× and their near-black bodies vanish
+        // against the void, leaving a lone lit SEAM as a full-height bright
+        // line that reads as a render artifact (critic). Dim the whole facade
+        // material so seams drop to a subtle edge — at street level the light
+        // belongs to the road (pools/trails/reflections), not the towers.
+        if (b.variant !== 3) b.mesh.material.color.setHex(0x4d4d4d);
       } else {
         b.mesh.scale.y = 1;
         b.mesh.position.y = -b.h / 2 - b.baseDrop;
+        if (b.variant !== 3) b.mesh.material.color.setHex(0xffffff);
       }
     }
+    // The Vaults Fargo HQ carries a magenta seam; dim it the same way so it
+    // doesn't loom as a lone bright column at street level.
+    if (this.hqTower) this.hqTower.material.color.setHex(on ? 0x4d4d4d : 0xffffff);
     for (const bc of this.beacons) {
       if (bc.hq) continue;
       const b = bc.building;
@@ -777,9 +851,10 @@ export class CityBackdrop {
     this._streakMatA.color.set(t.streakA);
     this._streakMatB.color.set(t.streakB);
     this._streakMatA.opacity = t.streakOpacity * this._streakDim;
-    this._streakMatB.opacity = t.streakOpacity * this._streakDim;
+    this._streakMatB.opacity = t.streakOpacity * this._streakDim * this._streakBFactor;
     for (const fx of this.streetFX) {
       if (fx.kind === 'pole') continue;   // structure, not light — no retint
+      if (fx.kind === 'ground') continue; // wet-asphalt patch — fixed dark, no retint
       if (fx.kind === 'coreA') { fx.mesh.material.color.set(0xffe6c2); continue; }
       if (fx.kind === 'coreB') { fx.mesh.material.color.set(0xffd9c9); continue; }
       if (fx.kind === 'sheen') { fx.mesh.material.color.set(t.sheen2); continue; }

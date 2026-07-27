@@ -35,11 +35,21 @@ export const ROOMS = {
     floorColor: 0xc8bfa9,
     floorPattern: 'carpet',
     walls: true,
-    lighting: { flicker: true },
+    // Wave-2 cohesion: pinned to reception's clinical-white rig so the two
+    // office rooms agree on what "white" is (cool key over the warm palette
+    // lands institutional white, not khaki).
+    lighting: { flicker: true, ambient: 0xeaf1f4, ambientIntensity: 0.58, dir: 0xf2f6ff, dirIntensity: 1.22 },
     // No windows: floor 6 is fully interior on the building plate —
     // ross_office/conference sit beyond the north wall (S5-P6). The
     // department's only daylight is the break room's west exposure.
     furniture: [
+      // Wave-2: institutional-green carpet runners forming a cross through the
+      // open aisles — the Lumon "green surface against clinical white" identity
+      // (Severance comp). Vertical runner in the central x=8-11 corridor; a
+      // shorter horizontal band across the mid aisle.
+      { type: 'severanceRunner', x: 9.5, z: 8, variant: 14, rotation: Math.PI / 2 },
+      { type: 'severanceRunner', x: 9.5, z: 7.5, variant: 8 },
+
       // ============================================================
       // NORTH CUBICLE ROW  (back walls at z=2, desks at z=3)
       // Two pods: NW (x=1-7) and NE (x=14-18), open aisle between
@@ -605,17 +615,29 @@ export const ROOMS = {
     height: 10,
     floorColor: 0x2a2a3a,  // dark floor
     walls: true,
-    lighting: { ambient: 0x9fb2cc, ambientIntensity: 0.56, dir: 0xbcd4ee, dirIntensity: 0.66 },
+    // Darker-but-READABLE data centre (round-3 fix b/e): fill lifted a stop
+    // out of the black pit, staying cooler than the office. The racks' cyan
+    // data-spines are the saturated source; point lights are cyan-dominant
+    // with one restrained warm counter, not the old green/blue/orange confetti.
+    // Wave-2: base clinical fill lifted ~a stop out of the black pit (Severance
+    // dread is even light, not darkness) — racks/floor/character read as objects.
+    // dir stays < 0.9 so the office troffers don't intrude on the data centre.
+    lighting: { ambient: 0x9db2c8, ambientIntensity: 0.92, dir: 0xb6cfe6, dirIntensity: 0.86 },
     lights: [
-      { type: 'point', color: 0x00ff44, intensity: 0.5, x: 1, y: 2, z: 3, distance: 6 },
-      { type: 'point', color: 0x2255ff, intensity: 0.9, x: 2, y: 1.4, z: 3, distance: 6 },  // cold aisle
-      { type: 'point', color: 0xff5511, intensity: 0.9, x: 4, y: 1.4, z: 3, distance: 6 },  // hot aisle
-      { type: 'point', color: 0x4488ff, intensity: 0.8, x: 6, y: 2, z: 7, distance: 8 },
+      { type: 'point', color: 0x0bd7ff, intensity: 0.9, x: 2, y: 1.5, z: 3, distance: 7 },  // cold aisle — cyan spine wash
+      { type: 'point', color: 0x0bd7ff, intensity: 0.7, x: 4, y: 1.5, z: 3, distance: 7 },  // second cyan aisle
+      { type: 'point', color: 0xffffff, intensity: 0.5, x: 3, y: 2.3, z: 3, distance: 8 },  // neutral fill (readability)
+      { type: 'point', color: 0x2ea6d6, intensity: 0.7, x: 6, y: 2,   z: 7, distance: 8 },  // Alex's corner — teal
+      // Wave-2 R2: the west aisle + the whole south play space was a black void
+      // slab (critic). Two cool neutral fills lift the empty floor/walls out of
+      // the murk so the room reads as a lit set, not a dark pit around the racks.
+      { type: 'point', color: 0x9fc0d8, intensity: 0.62, x: 2, y: 2.4, z: 7, distance: 9 },  // SW play-space fill
+      { type: 'point', color: 0x9fc0d8, intensity: 0.5,  x: 2, y: 2.4, z: 5, distance: 8 },  // west aisle / exit fill
     ],
     furniture: [
       // === Hot/cold aisle treatment + overhead cable trays ===
-      { type: 'aisleGlow', x: 2, z: 3, variant: 0x2244cc },
-      { type: 'aisleGlow', x: 4, z: 3, variant: 0xcc4411 },
+      { type: 'aisleGlow', x: 2, z: 3, variant: 0x0bd7ff },  // cyan cold aisle (round-3 e — restrained seam colour)
+      { type: 'aisleGlow', x: 4, z: 3, variant: 0x18a6cc },  // teal second aisle
       { type: 'cableTray', x: 2, z: 3, rotation: Math.PI / 2 },
       { type: 'cableTray', x: 4, z: 3, rotation: Math.PI / 2 },
       // Alex's den monitor wall, arm-mounted above the desk, facing him
@@ -713,6 +735,10 @@ export const ROOMS = {
     height: 8,
     floorColor: 0xd8d0c0,
     walls: true,
+    // Clinical Severance white, pulled up to match cubicle_farm (round-3
+    // fix b: reception was reading grey-murk). Cool key keeps the warm
+    // beige palette landing on institutional white, not khaki.
+    lighting: { ambient: 0xeaf1f4, ambientIntensity: 0.6, dir: 0xf2f6ff, dirIntensity: 1.28 },
     furniture: [
       // === Reception desk (center, facing south toward entrance) ===
       { type: 'receptionDesk',       x: 7, z: 3, rotation: 0, condition: { notFlag: 'renovation_marble_counter' } },
@@ -803,7 +829,19 @@ export const ROOMS = {
     floorColor: 0x888888,  // concrete gray
     walls: true,
     lighting: { ambient: 0xb8c0cc, ambientIntensity: 0.42, dir: 0xcfd8e2, dirIntensity: 0.6, flicker: true },
+    // Wave-2: interior sodium. Warm point lights hang over the drive aisles so
+    // the parked-car concrete catches warm sodium pools (Drive night) instead
+    // of the cool fluorescent-only wash it had — matched by sodiumPool decals.
+    lights: [
+      { type: 'point', color: 0xffa23c, intensity: 0.85, x: 2.5, y: 1.7, z: 4, distance: 6 },
+      { type: 'point', color: 0xffa23c, intensity: 0.8,  x: 7,   y: 1.7, z: 5, distance: 6 },
+      { type: 'point', color: 0xffa23c, intensity: 0.85, x: 10.5, y: 1.7, z: 4, distance: 6 },
+    ],
     furniture: [
+      // Sodium light pools on the concrete beneath the aisle lamps
+      { type: 'sodiumPool', x: 2.5, z: 4 },
+      { type: 'sodiumPool', x: 7,   z: 5 },
+      { type: 'sodiumPool', x: 10.5, z: 4 },
       // === Parking spots (floor markings) ===
       { type: 'parkingSpot', x: 1,  z: 2, rotation: Math.PI / 2 },
       { type: 'parkingSpot', x: 1,  z: 4, rotation: Math.PI / 2 },
@@ -1662,12 +1700,16 @@ export const ROOMS = {
     floorColor: 0x0c0610,
     floorPattern: 'hardwood',
     walls: true,
+    // Dusk-gold lounge: low warm key so the point-light washes and the neon
+    // carry the room. dirIntensity < 0.9 also suppresses the clinical office
+    // troffers that were slicing white laser bars across the lounge.
+    lighting: { ambient: 0x4a3630, ambientIntensity: 0.34, dir: 0x8a6446, dirIntensity: 0.42 },
     lights: [
       // Deep purple wash over bar
       { type: 'point', color: 0x7700cc, intensity: 0.9, x: 9,  y: 2.5, z: 2,  distance: 9  },
-      // Neon sign pink halos
-      { type: 'point', color: 0xff0088, intensity: 0.6, x: 3,  y: 2.4, z: 1.5, distance: 5 },
-      { type: 'point', color: 0xff0088, intensity: 0.6, x: 15, y: 2.4, z: 1.5, distance: 5 },
+      // Neon halos (dimmed — the sign's own spill decal now kisses the wall)
+      { type: 'point', color: 0xff0088, intensity: 0.5, x: 3,  y: 2.4, z: 1.5, distance: 5 },
+      { type: 'point', color: 0xff2a9e, intensity: 0.4, x: 15, y: 2.4, z: 1.5, distance: 5 },
       // Pool table green fill
       { type: 'point', color: 0x33bb44, intensity: 0.4, x: 9,  y: 3,   z: 6,  distance: 6  },
       // Cigar lounge — warm amber glow
@@ -1685,9 +1727,11 @@ export const ROOMS = {
       // ── Bar — north wall, centered ──────────────────────────
       { type: 'loungeBar', x: 9, z: 0.6 },
 
-      // ── Neon signs flanking bar ─────────────────────────────
+      // ── Neon flanking bar ───────────────────────────────────
+      // ONE readable "TRUST ISSUES" sign; the second is an abstract magenta
+      // seam so readable-text neon is never doubled (round-3 fix c).
       { type: 'neonSign', x: 3,  z: 0.05 },
-      { type: 'neonSign', x: 15, z: 0.05 },
+      { type: 'neonSign', x: 15, z: 0.05, variant: 'seam' },
 
       // ── Cigar lounge — NW corner ────────────────────────────
       { type: 'humidor',          x: 0.6, z: 2.2, rotation:  Math.PI / 2 },

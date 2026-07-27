@@ -69,6 +69,23 @@ necks, real silhouettes per cast member), FacePainter v2 at 512² with real
 facial features (lids, iris catchlights, nose/lip shading), LinearFilter,
 same expression set. Honor animator contract exactly. After L1 merges.
 
+*L2 addendum (2026-07-27 ~03:35, prototype reviewed by director):* the
+scratchpad prototype (proto_chars/chars.js, shots/r7_*.png) is APPROVED as
+the skeleton — port its lathe torso + capsule limbs + egg head + curved
+face patch (plate mode won the bake-off) + MeshPhysicalMaterial lacquer +
+pivot-group contract (kills the v4 bald-flash by construction). Rework in
+port, per my eyes on r7: (1) FACES — double feature contrast/size so they
+read at GAME camera distances (test at real ortho zoom + combat scale, not
+prototype stage); kill Andrew's jaw patch seam; glasses become thin torus
+GEOMETRY, never face paint. (2) HAIR — scalp-conforming, no cap-step or
+skin gap at the occiput; Karen's bob crown de-helmeted. (3) Port the full
+six-expression set (only neutral exists). (4) PERF — mergeGeometries per
+character (~50 meshes today, budget ≤300 calls/room) and reconcile
+materials with MaterialLibrary v2: physical tier for combat close-ups,
+toon+spec hybrid for room NPCs (finally use the dead `detailed` option).
+(5) Roll v5 across all ~27 cast configs in characters.js honoring
+tone/silhouette fields; SEAT_Y/legLength recheck (0.78 vs 0.44 seat).
+
 **L3 — THE NIGHT (CityBackdrop/BuildingShell/void v2).** Obsidian slab
 towers with seam-lights, sodium/magenta pools, wet-reflective street, haze,
 slow beacons. Independent of L1/L2 (inline materials — no overlap).
