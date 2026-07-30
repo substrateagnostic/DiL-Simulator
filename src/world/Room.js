@@ -5,6 +5,10 @@ import { Materials } from '../effects/MaterialLibrary.js';
 import { TILE_SIZE } from '../utils/constants.js';
 import { BUILDING_MAP, floorLabel } from '../data/buildingMap.js';
 import { ProceduralNormals } from '../effects/ProceduralNormals.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import {
+  BATCH_MATERIALS, bakeEnabled, bakeVertexColor, batchMaterialFor, materialSignature,
+} from '../effects/GeometryBatch.js';
 import _roomOverrides from '../data/room-overrides.json' with { type: 'json' };
 
 // ============================================================
@@ -14,6 +18,237 @@ import _roomOverrides from '../data/room-overrides.json' with { type: 'json' };
 // produces a renderable THREE.Group, a populated TileMap, and
 // NPC placement data ready for EntityManager.
 // ============================================================
+
+// ── Static-batch merge ───────────────────────────────────────────────────
+// Every furniture factory returns a THREE.Group of primitives, and a room is
+// up to 136 of those groups (cubicle_farm). Each primitive is its own draw
+// call, twice over when the shadow map refreshes — measured 1341 draw calls
+// per frame in cubicle_farm against COMP_CARD's ≤300 budget, and 98% of the
+// frame was CPU-side submission (the 4x-throttle proxy sat at 9fps).
+//
+// Nothing in that furniture moves. So after the room is built, every opaque
+// mesh that shares a material instance is baked into ONE geometry in room
+// space. This is a pure submission-cost win: identical pixels, identical
+// materials, identical shadow flags — the vertices just arrive in one buffer.
+//
+// Excluded, deliberately: transparent / depthWrite:false meshes (merging them
+// would change the depth-sorted draw order and therefore the image), meshes
+// with a material array, anything invisible or morph-targeted, and anything
+// that is not a plain Mesh (lights, sprites, points, lines are left alone).
+//
+// Set `window.__mergeStatics = false` before a room build to disable — that is
+// the A/B switch tools/perf-harness.mjs uses to price this in one session.
+const mergeEnabled = () =>
+  typeof window === 'undefined' || window.__mergeStatics !== false;
+
+// Mesh-level half of the bucket key — the state the RENDERER carries per object
+// rather than per material. Attribute signature is included because
+// mergeGeometries() refuses a mixed set (and logs an error rather than throwing).
+const meshKey = (mesh) => {
+  const g = mesh.geometry;
+  const attrs = Object.keys(g.attributes).sort().join(',');
+  return [
+    attrs, g.index ? 'i' : 'n',
+    mesh.castShadow ? 1 : 0, mesh.receiveShadow ? 1 : 0,
+    mesh.renderOrder | 0, mesh.layers.mask, mesh.frustumCulled ? 1 : 0,
+  ].join('|');
+};
+
+// Bucket key. TWO TIERS, tried in order:
+//
+//   1. COLOUR-BAKED — the material differs from its bucket-mates only in
+//      `material.color`, so the colour moves into a per-vertex attribute and the
+//      whole bucket draws with one shared white vertexColors material. This is
+//      the tier that actually moves the number: a room is hundreds of toon
+//      primitives whose only difference is a hex value. See GeometryBatch.js for
+//      why it is bit-exact and for the eligibility rules.
+//   2. IDENTITY — the material instance itself matches. The fallback for
+//      anything tier 1 refuses (textured materials, ShaderMaterials, patched
+//      shaders): still correct, just a narrower bucket.
+// Spatial partition. Batching trades per-object frustum culling for submission
+// cost: one batch spanning a whole room has a room-sized bounding sphere, so it
+// is never culled and every triangle in it is submitted even when the camera can
+// only see a corner. Measured on parking_garage (the biggest room): whole-room
+// batching cut the FROZEN full-room draw calls 682 -> 537, but during play it
+// pushed the median UP, 487 -> 537, and submitted triangles from 73.5k to 109.7k
+// — the unbatched build was winning on culling what the batched build won on
+// submission. Bucketing by an 8-tile cell keeps both: locally coherent batches
+// that the frustum can still reject.
+//
+// MEASURED AND REJECTED — the dial stays at 0 (one bucket per room). Cell sizes
+// 6 / 8 / 12 were swept on cubicle_farm, parking_garage and reception
+// (tools/f5-cell-sweep.mjs, screenshots/f5/cell-sweep.json): partitioning raised
+// the frozen whole-room draw calls in every case (cubicle 505 -> 765/705/642,
+// garage 534 -> 667/572/561, reception 426 -> 488/457/438) and did not produce a
+// CPU win outside run-to-run noise (cell 0 and cell 999 are the same partition
+// and measured 6.2ms vs 9.2ms p50 in the same sweep, which is the size of the
+// noise floor). The culling argument is real but the extra buckets cost more than
+// the culling saves at these room sizes. Kept as a live dial because it is the
+// first thing to try if a room ever gets big enough to change the answer.
+//
+// `window.__batchCell` overrides it for the A/B.
+const CELL = 0;
+const cellSize = () => {
+  const v = (typeof window !== 'undefined' && window.__batchCell);
+  return v === undefined || v === null || v === false ? CELL : +v;
+};
+
+const bucketFor = (mesh, cell) => {
+  // Cell index from the mesh's world position (its matrixWorld is already
+  // up to date — batchStatics() refreshes the tree before bucketing).
+  const e = mesh.matrixWorld.elements;
+  const cellKey = cell > 0
+    ? `${Math.floor(e[12] / cell)},${Math.floor(e[14] / cell)}`
+    : '*';
+  if (bakeEnabled()) {
+    const sig = materialSignature(mesh.material);
+    if (sig) return { key: `c|${cellKey}|${sig}|${meshKey(mesh)}`, bake: true, sig };
+  }
+  return { key: `m|${cellKey}|${mesh.material.uuid}|${meshKey(mesh)}`, bake: false, sig: null };
+};
+
+// Bake every mesh under `root` that shares a bucket into one geometry, in
+// root-local space. Returns the stats for the report.
+//
+// `transparent` opts the transparent meshes in. That is safe ONLY because a
+// bucket is keyed on every blend-relevant material property and on renderOrder:
+// every quad in a bucket blends with the same colour equation and alpha, and
+// identical layers commute, so losing the per-object depth sort inside a bucket
+// cannot change a pixel. Ordering BETWEEN buckets is untouched. Used for the
+// roomFX overlay, whose ~136 contact-shadow blobs in cubicle_farm are one draw
+// call each.
+//
+// NOTE on tier 1 + `transparent`: colour-baking a transparent bucket is still
+// order-safe (same equation, same alpha), and the colour multiply happens before
+// blending in exactly the same place it did as a uniform.
+export function batchStatics(root, { transparent = false } = {}) {
+  const stats = { before: 0, after: 0, kept: 0, buckets: 0, merged: 0, baked: 0, cell: cellSize() };
+  root.traverse((c) => { if (c.isMesh) stats.before++; });
+  if (!mergeEnabled()) {
+    stats.after = stats.kept = stats.before;
+    return stats;
+  }
+
+  root.updateWorldMatrix(false, true);
+  const rootInv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+  const buckets = new Map();
+  const candidates = [];
+  root.traverse((c) => {
+    if (!c.isMesh || !c.visible || c.userData?.noBatch) return;
+    const m = c.material;
+    if (!m || Array.isArray(m)) return;
+    if (!transparent && (m.transparent || m.depthWrite === false)) return;
+    const g = c.geometry;
+    if (!g || !g.attributes.position) return;
+    if (g.morphAttributes && Object.keys(g.morphAttributes).length) return;
+    // NOTE: geometry.groups is deliberately NOT a disqualifier. BoxGeometry
+    // ships 6 groups (one per face) even with a single material, and
+    // WebGLRenderer only walks groups when the material is an ARRAY — which is
+    // excluded above. Treating groups as a disqualifier excluded 606 of
+    // cubicle_farm's 668 meshes and made this whole pass a no-op.
+    candidates.push(c);
+  });
+
+  const cell = cellSize();
+  for (const mesh of candidates) {
+    const { key, bake, sig } = bucketFor(mesh, cell);
+    let b = buckets.get(key);
+    if (!b) buckets.set(key, (b = { mesh, bake, sig, geos: [], sources: [] }));
+    const local = new THREE.Matrix4().copy(rootInv).multiply(mesh.matrixWorld);
+    const g = mesh.geometry.clone().applyMatrix4(local);
+    g.morphAttributes = {};
+    // A colour-baked bucket needs the attribute on EVERY member, including the
+    // ones that already carried one (they cannot — tier 1 rejects
+    // vertexColors materials — but the assignment is unconditional so a future
+    // relaxation cannot half-apply it).
+    if (bake) bakeVertexColor(g, mesh.material.color);
+    b.geos.push(g);
+    b.sources.push(mesh);
+  }
+
+  for (const b of buckets.values()) {
+    // A bucket of one saves nothing and would only churn a buffer. It DOES still
+    // need the colour attribute stripped, since it keeps its original material.
+    if (b.geos.length < 2) { b.geos.forEach((g) => g.dispose()); continue; }
+    const material = b.bake ? batchMaterialFor(b.mesh.material, b.sig) : b.mesh.material;
+    if (!material) { b.geos.forEach((g) => g.dispose()); continue; }
+    const merged = mergeGeometries(b.geos, false);
+    b.geos.forEach((g) => g.dispose());
+    if (!merged) continue;                      // logged by three; leave as-is
+    const batch = new THREE.Mesh(merged, material);
+    batch.castShadow = b.mesh.castShadow;
+    batch.receiveShadow = b.mesh.receiveShadow;
+    batch.renderOrder = b.mesh.renderOrder;
+    batch.layers.mask = b.mesh.layers.mask;
+    batch.frustumCulled = b.mesh.frustumCulled;
+    batch.name = `batch_${b.sources.length}${b.bake ? '_c' : ''}`;
+    batch.matrixAutoUpdate = false;             // never moves again
+    root.add(batch);
+    for (const src of b.sources) {
+      src.geometry.dispose();
+      src.removeFromParent();
+    }
+    stats.buckets++;
+    stats.merged += b.sources.length;
+    if (b.bake) stats.baked += b.sources.length;
+  }
+
+  root.traverse((c) => { if (c.isMesh) stats.after++; });
+  stats.kept = stats.after - stats.buckets;
+  return stats;
+}
+
+// Texture slots checked when disposing a room-owned material (see dispose()).
+const MAP_SLOTS = [
+  'map', 'normalMap', 'roughnessMap', 'metalnessMap', 'alphaMap', 'emissiveMap',
+  'aoMap', 'bumpMap', 'displacementMap', 'lightMap', 'specularMap',
+  'clearcoatNormalMap', 'gradientMap', 'matcap', 'envMap',
+];
+
+// Every texture/material currently held by a CACHE, i.e. everything that must
+// outlive the room that happens to be using it. Recomputed per dispose() (a
+// few hundred entries, once per room exit) rather than memoised, because the
+// caches fill lazily as rooms are visited and a stale snapshot is exactly the
+// bug that would blank a surface three rooms later.
+//
+// Sources — this list is the safety property, extend it when a new cache lands:
+//   • Materials._cache — MaterialLibrary's material AND canvas-texture cache
+//     (cloth, monitor screens, city skylines).
+//   • the Furniture._* statics — _exitTex, _floorPool, _neonSpill,
+//     _rackSpillTex, _rackPanels, _ceilingDiffTex, _barGhost, … (own
+//     enumerable properties of the class object, so Object.values sees them).
+//   • ProceduralNormals — its normal maps (DataTextures, also excluded by the
+//     canvas test, belt and braces).
+const sharedResources = () => {
+  const out = new Set();
+  const addRes = (res, depth = 0) => {
+    if (!res || depth > 3) return;
+    if (Array.isArray(res)) { for (const r of res) addRes(r, depth + 1); return; }
+    if (res.isTexture) { out.add(res); return; }
+    if (res.isMaterial) {
+      out.add(res);
+      for (const slot of MAP_SLOTS) if (res[slot]?.isTexture) out.add(res[slot]);
+      return;
+    }
+    // A cached Mesh/Group (Furniture._barGhost & co) — mine it for resources.
+    if (res.isObject3D) {
+      res.traverse((c) => { if (c.material) addRes(c.material, depth + 1); });
+      return;
+    }
+    if (typeof res === 'object' && depth < 2) {
+      for (const v of Object.values(res)) addRes(v, depth + 1);
+    }
+  };
+  addRes(Materials._cache);
+  for (const v of Object.values(Furniture)) addRes(v);
+  for (const v of Object.values(ProceduralNormals)) addRes(v);
+  // GeometryBatch's shared white vertexColors clones. They are cached forever by
+  // material signature and are reused by every room and every character, so
+  // disposing one (or its gradient/normal map) would blank that surface tier
+  // everywhere for the rest of the session.
+  for (const m of BATCH_MATERIALS) addRes(m);
+  return out;
+};
 
 // Maps furniture types to the tile footprint they block.
 // { w, h } in tile units (x, z). Defaults to 1x1.
@@ -290,8 +525,30 @@ export class Room {
       this.scene.position.y = -spawnZ * Math.sin(angle);
     }
 
+    // 9. Bake the static opaque geometry into per-material batches. Must run
+    // AFTER every mesh is in place and BEFORE Engine.applyRoomFX() reads the
+    // furniture boxes (RoomManager calls that on the returned group).
+    this._mergeStatics();
+
     this.group = this.scene; // Alias for RoomManager
     return this.scene;
+  }
+
+  // ----------------------------------------------------------
+  // Static-batch merge — see the header comment on batchKey()
+  // ----------------------------------------------------------
+  _mergeStatics() {
+    // Engine.applyRoomFX() derives contact-shadow blobs from each furniture
+    // group's world box (Engine.js: box.setFromObject(child)). Merging empties
+    // those groups, so the box is captured here and read from userData there.
+    if (mergeEnabled()) {
+      const box = new THREE.Box3();
+      for (const child of this.scene.children) {
+        if (!child.userData?.furnitureType) continue;
+        child.userData.fxBox = box.setFromObject(child).clone();
+      }
+    }
+    this._mergeStats = batchStatics(this.scene);
   }
 
   // ----------------------------------------------------------
@@ -337,11 +594,22 @@ export class Room {
     // troweled concrete slab, and everything else a waxed satin PBR floor —
     // all real material response the office key and neon can actually catch.
     const id = this.data.id;
+    const patterned = floorPattern === 'carpet' || floorPattern === 'hardwood'
+      || id === 'reception' || id === 'parking_garage';
     const mat = floorPattern === 'carpet'   ? Materials.carpetPattern(w, h, color)
               : floorPattern === 'hardwood' ? Materials.hardwoodPattern(w, h, color)
               : id === 'reception'          ? Materials.tilePattern(w, h, color)
               : id === 'parking_garage'     ? Materials.concretePattern(w, h, color)
               : Materials.satinFloor(color);
+    // The *Pattern factories mint a fresh canvas texture and a fresh material
+    // on every call (MaterialLibrary refuses to cache a map-bearing material),
+    // so both die with the room — see dispose()'s ownership rules. satinFloor
+    // IS cached, and the shared ProceduralNormals normalMap on either path is
+    // deliberately left unflagged.
+    if (patterned) {
+      mat.userData.roomOwned = true;
+      if (mat.map) mat.map.userData.roomOwned = true;
+    }
     const floor = new THREE.Mesh(geo, mat);
 
     // PlaneGeometry faces +Y by default; rotate to be horizontal
@@ -489,6 +757,9 @@ export class Room {
       const mat = mesh.material.clone();
       mat.transparent = true;
       mat.opacity = 1.0;
+      // A clone of a cached wall material — this instance belongs to the room
+      // (its maps do not; Material.clone() shares texture references).
+      mat.userData.roomOwned = true;
       mesh.material = mat;
     }
 
@@ -500,6 +771,7 @@ export class Room {
       const mat = mesh.material.clone();
       mat.transparent = true;
       mat.opacity = 1.0;
+      mat.userData.roomOwned = true;   // see the south wall above
       mesh.material = mat;
     }
 
@@ -1093,14 +1365,64 @@ export class Room {
   // ----------------------------------------------------------
   // Cleanup
   // ----------------------------------------------------------
+  // Release this room's GPU resources. Called by RoomManager on every room
+  // exit — without it, room-hopping grew the geometry count without bound
+  // (measured: +305 geometries per hop, +3659 over 12 hops).
+  //
+  // OWNERSHIP RULES — read before extending:
+  //   • GEOMETRY is always room-owned. Nothing in the codebase caches or
+  //     shares a BufferGeometry across room builds (verified: MaterialLibrary,
+  //     ProceduralNormals, Furniture and CharacterBuilder cache materials and
+  //     textures only), so every geometry in this group dies with the room.
+  //   • MATERIALS are shared by default. MaterialLibrary hands out CACHED
+  //     MeshToonMaterial/MeshStandardMaterial instances; disposing one would
+  //     blank that surface in every room loaded afterwards. So a material is
+  //     disposed only when its creator opted in with
+  //     `userData.roomOwned = true` (the patterned floors and the cloned
+  //     fading walls). Opt-in fails safe: forget the flag and you leak, you
+  //     never corrupt a shared resource.
+  //   • CANVAS TEXTURES are swept against the live caches (sharedResources()).
+  //     Every Furniture factory that draws a fresh canvas per instance —
+  //     monitor faces, EXIT signs, elevator floor plates, whiteboards, ~14
+  //     sites — leaked one texture per room build (measured: +6.83/hop, +82
+  //     over 12 hops) and none of them can be tagged from here. The caches
+  //     ARE enumerable (Materials._cache, the Furniture._* statics,
+  //     ProceduralNormals), so "canvas-backed, reachable from this room, and
+  //     not in any cache" is a decidable question and the answer is safe.
+  //     DataTextures are never touched: the only ones in a room are the shared
+  //     toon gradient ramps and ProceduralNormals' normal maps.
   dispose() {
     if (!this.scene) return;
 
+    const shared = sharedResources();
+    const seen = new Set();
+    const disposeTexIfOwned = (tex) => {
+      if (!tex || !tex.isTexture || seen.has(tex)) return;
+      seen.add(tex);
+      if (tex.userData?.roomOwned === true) { tex.dispose(); return; }
+      if (shared.has(tex)) return;                 // in a cache — shared
+      const src = tex.source?.data;
+      const isCanvas = typeof HTMLCanvasElement !== 'undefined'
+        && (src instanceof HTMLCanvasElement
+          || (typeof OffscreenCanvas !== 'undefined' && src instanceof OffscreenCanvas));
+      if (isCanvas) tex.dispose();
+    };
+    const disposeMatIfOwned = (res) => {
+      if (!res || seen.has(res)) return;
+      seen.add(res);
+      // Maps are swept independently of the material: a per-instance canvas on
+      // a CACHED material still has to go, and a shared normal map on a
+      // room-owned material still has to stay.
+      for (const slot of MAP_SLOTS) disposeTexIfOwned(res[slot]);
+      if (res.userData?.roomOwned === true) res.dispose();
+    };
+
     this.scene.traverse((child) => {
-      if (child.isMesh) {
-        if (child.geometry) child.geometry.dispose();
-        // Materials are cached/shared in MaterialLibrary — don't dispose them here
-      }
+      if (!child.isMesh && !child.isLine && !child.isPoints && !child.isSprite) return;
+      if (child.geometry) child.geometry.dispose();
+      const mat = child.material;
+      if (Array.isArray(mat)) mat.forEach(disposeMatIfOwned);
+      else disposeMatIfOwned(mat);
     });
 
     // Remove all children
@@ -1109,7 +1431,10 @@ export class Room {
     }
 
     this.scene = null;
+    this.group = null;
     this.tileMap = null;
     this._builtNPCData = null;
+    this._southWallMeshes = null;
+    this._eastWallMeshes = null;
   }
 }

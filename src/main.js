@@ -53,16 +53,32 @@ class Game {
     };
     EventBus.on('quit-to-title', this._quitHandler);
 
-    // Initialize audio on first user interaction
+    // Initialize audio on first user interaction.
+    //
+    // The listeners are removed FIRST so a fast second key press cannot re-enter
+    // this, and the only work left in the handler is resume() — measured at 0ms
+    // once the context already exists. The expensive part (`new AudioContext()`,
+    // 385ms synchronous device open) is pulled forward into warmUp() below, so
+    // the player's first key press no longer freezes the game for a third of a
+    // second. Long Animation Frames attributed a 398ms blocking frame to this
+    // handler on every run in the perf baseline.
     const initAudio = () => {
-      AudioManager.resume();
       window.removeEventListener('click', initAudio);
       window.removeEventListener('keydown', initAudio);
       window.removeEventListener('touchstart', initAudio);
+      AudioManager.resume();
     };
     window.addEventListener('click', initAudio);
     window.addEventListener('keydown', initAudio);
     window.addEventListener('touchstart', initAudio);
+
+    // Open the audio device while the title screen is still settling, where a
+    // stall is invisible — never on the first input. requestIdleCallback waits
+    // for a genuinely idle main thread; the timeout stops it being starved
+    // forever by the render loop, and setTimeout covers Safari.
+    const warmAudio = () => AudioManager.warmUp();
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(warmAudio, { timeout: 1500 });
+    else setTimeout(warmAudio, 600);
 
     // Main game loop
     Engine.onUpdate((dt) => this._update(dt));

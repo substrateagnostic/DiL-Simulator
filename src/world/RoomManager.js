@@ -12,7 +12,6 @@ export class RoomManager {
     this.mainScene = scene;
     this.currentRoomId = null;
     this.currentRoom = null;
-    this.rooms = {};
     this.entityManager = new EntityManager();
     this.transition = new TransitionOverlay();
     this.roomGroup = null; // The THREE.Group for current room
@@ -39,7 +38,9 @@ export class RoomManager {
 
     this.currentRoomId = roomId;
     this.currentRoom = room;
-    this.rooms[roomId] = room;
+    // NOTE: no `this.rooms[roomId] = room` cache. It was write-only (nothing
+    // ever read it) and it pinned every room ever visited in memory, so even
+    // with dispose() wired below the old geometries could never be collected.
 
     // Add room geometry to scene
     this.roomGroup = room.group;
@@ -92,6 +93,11 @@ export class RoomManager {
       this.mainScene.add(npcEntity.mesh);
     }
 
+    // The whole shadow-caster set just changed. The renderer's shadow map is
+    // on a manual cadence (Engine.init) — tell it the room is new so the first
+    // frame of the room is never lit by the previous room's shadows.
+    Engine.invalidateShadows();
+
     EventBus.emit('room-entered', roomId);
     return { tileMap: room.tileMap, spawnX: spawnX ?? room.data.playerSpawn?.x ?? 5, spawnZ: spawnZ ?? room.data.playerSpawn?.z ?? 5 };
   }
@@ -112,8 +118,26 @@ export class RoomManager {
       this.mainScene.remove(this.roomGroup);
       this.roomGroup = null;
     }
-    // Remove NPC meshes
+    // Release the outgoing room's GPU resources. scene.remove() alone only
+    // unparents the group — the geometries stay resident, which grew the
+    // geometry count by ~305 per room hop with no ceiling. Room.dispose()
+    // owns the shared-vs-room-owned rules.
+    if (this.currentRoom) {
+      this.currentRoom.dispose();
+      this.currentRoom = null;
+    }
+
+    // Remove NPC meshes — and free them. Every NPC is rebuilt from scratch by
+    // the next loadRoom(), so nothing here survives the transition. Character
+    // GEOMETRY is per-instance; character MATERIALS and face/hair/cloth
+    // TEXTURES come out of MaterialLibrary / FacePainter / CharacterBuilder
+    // caches and are shared, so they are deliberately left alone.
     this.entityManager.removeFromScene(this.mainScene);
+    for (const npc of this.entityManager.npcs) {
+      npc.mesh?.traverse((child) => {
+        if (child.geometry) child.geometry.dispose();
+      });
+    }
     this.entityManager.clear();
     this.currentRoom = null;
   }

@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "editor": "node scripts/editor.js",
     "shoot": "node tools/shoot.mjs",
+    "perf": "node tools/perf-harness.mjs",
     "validate:data": "node scripts/validate-data.mjs",
     "check": "npm run validate:data && npm run build",
     "package:itch": "node scripts/package-itch.mjs"
@@ -22,6 +23,7 @@
     "vite": "^7.3.1"
   },
   "devDependencies": {
+    "odiff-bin": "^4.5.0",
     "playwright": "^1.60.0"
   }
 }

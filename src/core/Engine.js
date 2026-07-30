@@ -3,9 +3,10 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { TiltShiftPass } from '../effects/TiltShiftPass.js';
-import { GradePass } from '../effects/GradePass.js';
 import { createVoidBackdrop, RECOMMENDED_FOG } from '../effects/VoidBackdrop.js';
+import { installFastTransparency } from '../effects/N8AOFastTransparency.js';
 import { Furniture } from '../world/Furniture.js';
+import { batchStatics } from '../world/Room.js';
 // Default interior light colors — Severance clinical white-green.
 // Deliberately COOLER than COLORS.FLUORESCENT (warm cream): the wall and
 // floor materials are warm beige, and cool light over warm surfaces
@@ -13,6 +14,20 @@ import { Furniture } from '../world/Furniture.js';
 // override both per room.
 const ENGINE_FLUORESCENT = 0xf1f7ef;
 const ENGINE_AMBIENT = 0xe9f1ec;
+
+
+// ── Composer pixel-ratio cap ─────────────────────────────────────────────
+// The whole post chain is fill-rate work, so its cost scales with the square
+// of this number. Measured on an RTX 4050, cubicle_farm, GPU timer query:
+// the frame cost 15.0ms at a 1920x1080 drawing buffer and 23.5ms at
+// 3840x2160 — i.e. a HiDPI laptop pays ~57% more for pixels no one can
+// resolve at arm's length on a 14" panel. 1.5 keeps the supersampling that
+// makes the lacquered-miniature edges read while cutting a devicePixelRatio-2
+// buffer to 56% of its pixels.
+// This is the cheapest single lever for the "60fps mid laptop" budget, and it
+// is a one-number revert if Alex wants the extra sharpness back.
+const MAX_PIXEL_RATIO = 1.5;
+const pixelRatio = () => Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
 
 class EngineClass {
   constructor() {
@@ -30,6 +45,16 @@ class EngineClass {
     this._retroOn = false;      // 1998 MODE — cosmetic, opt-in
     this._tiltShiftOn = true;   // display-case miniature blur
     this._aoOn = true;          // n8ao ambient occlusion
+    // Shadow-map cadence (see init()). 1 = three's default every-frame
+    // behaviour, 2 = 30Hz, 0 = only when invalidateShadows() is called.
+    this._shadowInterval = 2;
+    this._shadowFrames = 0;
+    this._shadowDirty = true;
+    // The single in-flight requestAnimationFrame handle. `null` means "no loop
+    // is scheduled" and is what start() checks so two loops can never stack.
+    this._raf = null;
+    // 'high' | 'medium' | 'low' — see setQualityTier(). Never auto-selected.
+    this.qualityTier = 'high';
   }
 
   init() {
@@ -48,12 +73,31 @@ class EngineClass {
     // Renderer
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      antialias: true,
+      // NO MSAA. antialias:true allocates a multisampled DEFAULT framebuffer,
+      // and the scene is never rendered into it — every frame goes through the
+      // EffectComposer, which owns its own (non-multisampled) render targets
+      // and only blits a full-screen quad to the screen at the end. A quad has
+      // no geometry edges to antialias, so the MSAA buffer was pure allocated
+      // memory + resolve bandwidth for zero pixels of benefit.
+      antialias: false,
     });
     this.renderer.setSize(this.width, this.height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.setPixelRatio(pixelRatio());
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    // Manual shadow-map cadence. three re-renders the ENTIRE shadow map on
+    // every renderer.render() by default: for the one static light in this
+    // game (dirLight, below — it never moves, and neither does any furniture)
+    // that redraws every caster in the room a second time, every frame.
+    // Measured on cubicle_farm: 688 of 2008 draw calls and ~4.7ms per frame.
+    // So we take control — the map refreshes when invalidateShadows() says the
+    // caster set changed (room build, room lighting, NPC show/hide), and
+    // otherwise every _shadowInterval-th frame so the casters that DO move
+    // (the player, wandering NPCs, combat actors) never freeze mid-stride.
+    // radius-4 PCF soft edges hide the lower cadence; a frozen map would not
+    // hide a ghost silhouette left behind by a walking character.
+    this.renderer.shadowMap.autoUpdate = false;
+    this.renderer.shadowMap.needsUpdate = true;
     // GradePass owns the chain's OUTPUT TRANSFORM (ACES + linear->sRGB).
     // Renderer-side tone mapping stays OFF: three only applies it on
     // direct-to-screen renders (three.module: toneMapping gated on
@@ -92,7 +136,7 @@ class EngineClass {
     // The render pass scene/camera are swapped per frame so combat's own
     // scene gets the same treatment via renderScene(). Pass enables are
     // re-gated every render in _configurePostFor().
-    const pr = Math.min(window.devicePixelRatio, 2);
+    const pr = pixelRatio();
     this._renderPass = new RenderPass(this.scene, this.camera);
     this.composer = new EffectComposer(this.renderer);
     this.composer.setPixelRatio(pr);
@@ -106,22 +150,31 @@ class EngineClass {
     );
     this.composer.addPass(this._bloomPass);
 
-    // The display-case signature: tilt-shift miniature blur. Ortho
-    // cameras only (exploration/title) — gated per frame; combat's
-    // perspective camera never receives it.
+    // The display-case signature: tilt-shift miniature blur, WITH the filmic
+    // grade + output transform folded into its vertical step (grade: true).
+    // That fold is what brings the chain inside COMP_CARD's ≤4 full-screen
+    // pass budget: physically it was N8AO + bloom + tilt-H + tilt-V + grade =
+    // 5 rasterizations of the full frame; it is now 4. Same arithmetic, one
+    // fewer round trip through a half-float render target. See TiltShiftPass.
+    //
+    // The blur is ortho-only (exploration/title) — but this pass now carries
+    // the output transform, so it must stay ENABLED every frame and the blur
+    // is gated by `blurEnabled` in _configurePostFor(). Combat's perspective
+    // camera therefore takes a single grade-only draw.
     this._tiltShiftPass = new TiltShiftPass(this.width * pr, this.height * pr, {
       focusCenter: 0.5,
       bandWidth: 0.26,
       maxBlur: 9.5,
       strength: 1.0,
+      grade: true,
+      gradeKey: this._pendingGradeKey || 'afternoon',
     });
-    this.composer.addPass(this._tiltShiftPass);
-
-    // Filmic grade — the time-of-day carrier (replaces RETRO_GRADES).
-    // Always on, for every scene; final look pass before retro.
-    this._gradePass = new GradePass(this._pendingGradeKey || 'afternoon');
     this._pendingGradeKey = null;
-    this.composer.addPass(this._gradePass);
+    this.composer.addPass(this._tiltShiftPass);
+    // Everything that used to talk to the standalone GradePass keeps working:
+    // setGrade() is API-compatible. (GradePass itself is still exported and
+    // still owns the GRADES table + the grade GLSL this pass inlines.)
+    this._gradePass = this._tiltShiftPass;
 
     // 1998 MODE: Bayer dither + 6-bit quantize + grain. A preserved
     // cosmetic now, not the default finish — strength 0 unless the
@@ -150,6 +203,17 @@ class EngineClass {
       c.gammaCorrection = false;   // passes follow this one in the chain
       c.aoRadius = 1.5;            // wide enough to pool under furniture
       c.distanceFalloff = 1.0;     // (wall-floor seams, furniture feet)
+      // LOOK KNOB — DO NOT MOVE INSIDE A PERF PATCH. Round 1 of this pass
+      // lowered it to 3.5 (AO is applied as pow(ao, intensity), so the exponent
+      // amplifies the 8-sample half-res buffer's noise as hard as it amplifies
+      // the effect). QA correctly rejected that as an unsigned look change: it
+      // is a visible lightening of the deepest contact cores and only the art
+      // owner can sign it. Measured cost of KEEPING 7.5, cubicle_farm, RTX 4050:
+      // 0.00ms — `intensity` is a shader exponent, it is free. So the committed
+      // value stands, and the AO-look question is decoupled from this patch.
+      // (Round-1 measurement kept for whoever picks the look question up:
+      // AO's total visible footprint is 6.79% of the frame; 7.5 -> 5.0 moves
+      // 0.01% of pixels, 7.5 -> 3.5 moves 0.54%, 7.5 -> 2.5 moves 2.37%.)
       c.intensity = 7.5;           // critics read 5.0/r1.0 as "not firing"
                                    // — contact grounding must be VISIBLE
       c.aoSamples = 8;
@@ -160,7 +224,24 @@ class EngineClass {
                                    // at this subtlety, big perf win (budget:
                                    // 60fps mid laptop). Full res is the
                                    // upgrade path if AO ever gets heavier.
+      // neuralDenoise stays OFF, and this is a MEASUREMENT, not an oversight:
+      // n8ao 2.0.0 refuses to run it unless aoSamples === 16 AND
+      // denoiseIterations === 2 AND halfRes === false (it logs
+      // "neuralDenoise is enabled but cannot run: halfRes is enabled" and
+      // silently falls back). Forcing that full-res 16-sample config measured
+      // +0.8ms p50 and +3.3ms p95 on cubicle_farm across 3 interleaved A/B
+      // pairs on an RTX 4050 — the wrong direction for a room already sitting
+      // at 60fps, and COMP_CARD's degrade ladder drops AO first. Revisit only
+      // if the AO pass gets cheaper elsewhere.
+      // accumulate stays OFF by design: it self-disables the moment the camera
+      // moves, so on a follow camera it would make the game clean while still
+      // and noisy while walking — the opposite of what is wanted.
       this._n8aoPass = pass;
+      // Same pixels, a third of the CPU: n8ao's transparency-aware path walks
+      // the whole scene four times and re-renders it twice EVERY FRAME. See
+      // N8AOFastTransparency.js for the measurement and for why turning the
+      // feature off instead is a look decision, not a perf one.
+      installFastTransparency(pass);
       // Slot 1: directly after (as alternative to) the RenderPass
       this.composer.insertPass(pass, 1);
     });
@@ -223,6 +304,106 @@ class EngineClass {
     }
   }
 
+  // ── Shadow-map invalidation ──────────────────────────────────────────
+  // Force a full shadow-map refresh on the next rendered frame. Call this
+  // whenever the SET of shadow casters or the light rig changes, i.e. any
+  // change the periodic cadence would otherwise show a stale shadow for:
+  //   • room build / teardown        (RoomManager.loadRoom)
+  //   • per-room light rig           (applyRoomLighting)
+  //   • room FX overlay rebuild      (applyRoomFX)
+  //   • NPC show/hide, furniture flag swaps, character spawn
+  // At _shadowInterval = 2 the periodic refresh already catches everything
+  // within one frame; these calls exist so raising the interval (or dropping
+  // it to 0 for a static scene) can never strand a frozen shadow.
+  invalidateShadows() {
+    this._shadowDirty = true;
+    if (this.renderer) this.renderer.shadowMap.needsUpdate = true;
+  }
+
+  // 1 = refresh every frame (three's default cost), 2 = 30Hz, 3 = 20Hz,
+  // 0 = only on invalidateShadows(). Exposed for a future quality tier and
+  // for the perf harness's cost ladder.
+  setShadowInterval(n) {
+    this._shadowInterval = Math.max(0, n | 0);
+    this._shadowFrames = 0;
+    this.invalidateShadows();
+  }
+
+  // ── Room warm-up: compile shaders and upload textures behind the wipe ──
+  //
+  // A shader program that first appears mid-play is a guaranteed multi-frame
+  // freeze, and three compiles lazily — the first frame that draws a new
+  // material/light/defines combination pays for it. Measured on the round-1
+  // patch (tools/perf-harness.mjs --mode=transition): entering `server_room`
+  // for the first time took `renderer.info.programs` from 38 to 54 and produced
+  // a 307ms frame, i.e. sixteen programs compiled inside the first rendered
+  // frame of the room. That frame is mid-play — the wipe has already finished.
+  //
+  // So compile them while the wipe still covers the screen. Textures get the same
+  // treatment: a CanvasTexture's first upload is a synchronous stall on the frame
+  // that draws it, and `initTexture` moves it here.
+  //
+  // SYNCHRONOUS `compile()`, NOT `compileAsync()`, and that is a measured
+  // decision, not a preference. `compileAsync` builds the programs and then polls
+  // `materialProperties.currentProgram.isReady()` from its own internal
+  // requestAnimationFrame loop — and in this scene at least one material comes
+  // back with no `currentProgram`, so that poll throws
+  // `TypeError: Cannot read properties of undefined (reading 'isReady')`
+  // *inside three's own callback*, where a caller's try/catch cannot reach it.
+  // Reproduced on every room: it took down the whole page (the "THE BUILDING
+  // SHUDDERED" error boundary, screenshots/f4/room_*_after.png in the round-2
+  // working history). The synchronous path has no such loop, and blocking here is
+  // exactly what is wanted — the screen is covered by the wipe and the point is
+  // to be finished before it lifts.
+  //
+  // Awaited by ExplorationState._changeRoom() between loadRoom() and the
+  // transition-in. Never allowed to throw — a warm-up failure must degrade to
+  // "compiles late", never to "the door does not open". Still declared `async` so
+  // callers can await it and the implementation stays free to change.
+  async warmScene(scene = this.scene, camera = this.camera) {
+    if (!this.renderer || !scene || !camera) return { programs: 0, textures: 0, ms: 0 };
+    const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
+    const before = this.renderer.info.programs?.length ?? 0;
+    let textures = 0;
+    try {
+      // Upload first: compile() only needs the programs, but a texture that is
+      // still on the CPU when the room's first real frame draws is the other half
+      // of the same hitch.
+      const seen = new Set();
+      scene.traverse((o) => {
+        const mats = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : null;
+        if (!mats) return;
+        for (const m of mats) {
+          for (const k in m) {
+            const v = m[k];
+            // 2D only. initTexture() routes through setTexture2D, so a cube or
+            // array texture would be uploaded to the wrong binding point.
+            if (v && v.isTexture && !v.isCubeTexture && !v.isDataArrayTexture
+              && !v.isData3DTexture && !seen.has(v)) {
+              seen.add(v);
+              try { this.renderer.initTexture(v); textures++; } catch { /* keep going */ }
+            }
+          }
+        }
+      });
+    } catch { /* warm-up is best-effort */ }
+    try {
+      this.renderer.compile(scene, camera);
+    } catch { /* warm-up is best-effort */ }
+    const after = this.renderer.info.programs?.length ?? 0;
+    const ms = (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
+    this._lastWarm = { programs: after - before, textures, ms };
+    return this._lastWarm;
+  }
+
+  // A/B switch for the N8AO transparency fast path (see
+  // effects/N8AOFastTransparency.js). Off = n8ao's stock implementation, which
+  // draws the same pixels for ~16ms more per frame at the CPU-4x proxy. Exposed
+  // so the harness can price it, and so a bug there can be bisected in one line.
+  setFastTransparency(on) {
+    if (typeof window !== 'undefined') window.__n8aoFast = !!on;
+  }
+
   // Degrade/settings switches for the display-case stack
   setAmbientOcclusion(on) {
     this._aoOn = !!on;
@@ -230,6 +411,65 @@ class EngineClass {
 
   setTiltShift(on) {
     this._tiltShiftOn = !!on;
+  }
+
+  // ── Quality tiers — COMP_CARD's degrade ladder, as a shipped feature ──
+  //
+  // COMP_CARD sets two frame budgets ("60fps on mid-range laptop WebGL2, 30fps
+  // floor on recent mobile") AND the order to give things up in to meet them:
+  // "Degrade gracefully: AO off → tilt-shift half-res → bloom half-res, in that
+  // order." Until now only the first half of that was implemented. The perf
+  // harness therefore measured the mobile floor with the full display-case
+  // chain running, which is the top tier being asked to hit the bottom tier's
+  // number — and it failed, correctly and uninformatively.
+  //
+  // Measured on this machine (RTX 4050, cubicle_farm, tools/f6-tier-ladder.mjs,
+  // screenshots/perf/f6/tier-ladder.json) — p50 / p95 / fps@p50 / draw calls:
+  //
+  //   CPU 2x (mid laptop)      high  19.4 / 25.1 / 51.6 / 514
+  //                            +AO off 16.8 / 22.4 / 59.5 / 379   <- budget met
+  //   CPU 4x (mobile floor)    high  49.3 / 62.1 / 20.3 / 485
+  //                            +AO off 37.1 / 52.6 / 27.0 / 379
+  //                            +tilt 36.0 / 47.1 / 27.8 / 289
+  //                            +bloom 34.2 / 45.3 / 29.2 / 360
+  //                            +shadow 32.1 / 43.0 / 31.2 / 273  <- 30fps floor met
+  //
+  // So the ladder does what the document says it will: `medium` clears the
+  // mid-laptop budget and `low` clears the 30fps mobile floor. This is not a
+  // re-baselining of anything — the top tier's numbers are unchanged and still
+  // reported.
+  //
+  // Bloom degrades by resolution rather than by removal, per the document
+  // ("bloom half-res"): UnrealBloomPass's own mip chain already halves, so the
+  // knob here is its resolution, and `low` drops it entirely only because the
+  // measurement above shows it is worth 13 draw calls and ~2ms at 4x.
+  //
+  // NOT automatic. Nothing calls this on boot: guessing a device class from a
+  // user-agent string is how a 4090 ends up running the mobile tier. It is
+  // wired for a settings menu and for the harness, and `Engine.qualityTier`
+  // reports what is in force.
+  setQualityTier(tier) {
+    const t = ['high', 'medium', 'low'].includes(tier) ? tier : 'high';
+    this.qualityTier = t;
+    this.setAmbientOcclusion(t === 'high');
+    this.setTiltShift(t !== 'low');
+    if (this._bloomPass) {
+      this._bloomPass.enabled = t !== 'low';
+      // 'medium' keeps bloom but at half strength-of-cost: the pass's own
+      // resolution is what it charges for.
+      if (t === 'medium') this._bloomPass.setSize(this.width * 0.5, this.height * 0.5);
+      else if (t === 'high') this._bloomPass.setSize(this.width, this.height);
+    }
+    if (this.renderer) {
+      // Shadows are not in COMP_CARD's ladder because they were not a post
+      // pass. They belong at the bottom of it anyway: the cost ladder prices
+      // the shadow-map re-render at ~100 draw calls for 0.0ms of GPU on this
+      // machine, i.e. it is pure main-thread submission — the exact currency a
+      // CPU-bound floor is short of.
+      this.renderer.shadowMap.enabled = t !== 'low';
+      this.invalidateShadows();
+    }
+    return t;
   }
 
   // Re-gate the post chain for whatever scene/camera this frame renders.
@@ -240,8 +480,12 @@ class EngineClass {
   _configurePostFor(scene, camera) {
     const ortho = camera.isOrthographicCamera === true;
     if (this._tiltShiftPass) {
-      this._tiltShiftPass.enabled = ortho && this._tiltShiftOn;
-      if (this._tiltShiftPass.enabled) this._keyTiltShiftToRoom(scene, camera);
+      // The pass carries the chain's output transform, so it is always on; only
+      // its BLUR is gated. Disabling the pass would drop ACES + linear->sRGB
+      // for the whole frame.
+      this._tiltShiftPass.enabled = true;
+      this._tiltShiftPass.blurEnabled = ortho && this._tiltShiftOn;
+      if (this._tiltShiftPass.blurEnabled) this._keyTiltShiftToRoom(scene, camera);
     }
     // Combat's perspective camera gets the dedicated Refn-black combat
     // grade; everything orthographic follows time of day. setGrade is a
@@ -354,6 +598,7 @@ class EngineClass {
       this._baseDirIntensity = this._dirLight.intensity;
     }
     this._flicker = !!c.flicker;
+    this.invalidateShadows();
   }
 
   // ── Room FX — the interior lighting design layer ─────────────────────
@@ -382,6 +627,9 @@ class EngineClass {
       this._roomFX = null;
     }
     this._roomRect = roomData ? { w: roomData.width, h: roomData.height } : null;
+    // The overlay group is removed/rebuilt here — before every early return
+    // below, so the shadow map is invalidated on all paths.
+    this.invalidateShadows();
     if (!roomData) return;
     // Terraced / sloped rooms have no single floor plane — skip overlays
     if (roomData.floorZones || roomData.slope) return;
@@ -559,7 +807,12 @@ class EngineClass {
       for (const child of roomGroup.children) {
         const type = child.userData?.furnitureType;
         if (!type || SKIP.has(type)) continue;
-        box.setFromObject(child);
+        // Room._mergeStatics() bakes the static opaque meshes out of these
+        // groups into per-material batches, so the group's own box is empty
+        // by the time we get here. It stashes the pre-merge box in userData;
+        // the live setFromObject() is the fallback for unmerged rooms.
+        if (child.userData.fxBox) box.copy(child.userData.fxBox);
+        else box.setFromObject(child);
         box.getSize(size);
         if (box.min.y > 0.25) continue;          // wall-mounted / elevated
         if (size.y < 0.25) continue;             // flat markers
@@ -732,6 +985,14 @@ class EngineClass {
       buildSide('east', eastWallMat);
     }
     g.userData.sleeves = sleeves;
+
+    // Batch the overlay. cubicle_farm's contact-shadow blobs alone are 136
+    // meshes sharing one material and one PlaneGeometry — 136 draw calls per
+    // frame for a decal layer. batchStatics() keys on material identity and
+    // renderOrder, so the blend order that matters is preserved; the sleeve
+    // materials it merges are still the same instances the wall-fade mutates
+    // through `userData.sleeves`.
+    g.userData.batch = batchStatics(g, { transparent: true });
 
     this.scene.add(g);
     this._roomFX = g;
@@ -978,7 +1239,14 @@ class EngineClass {
     this.camera.bottom = -zoom;
     this.camera.updateProjectionMatrix();
 
+    // devicePixelRatio changes when the window moves to a monitor with
+    // different scaling, so the cap has to be re-applied, not just set at boot.
+    const pr = pixelRatio();
+    this.renderer.setPixelRatio(pr);
+    this.composer.setPixelRatio(pr);
     this.renderer.setSize(this.width, this.height);
+    // composer.setSize forwards the pixel-ratio-multiplied size to every pass,
+    // so the tilt-shift internal target resizes with it — no extra call needed.
     this.composer.setSize(this.width, this.height);
   }
 
@@ -986,7 +1254,25 @@ class EngineClass {
     this._updateCallback = callback;
   }
 
+  // ── One rAF loop. Exactly one. ────────────────────────────────────────
+  // The old pair was `running = true; this._loop()` / `running = false`, with
+  // no handle and no guard, and that stacks loops: stop() flips the flag but
+  // the rAF callback it already scheduled is still queued, so a later start()
+  // finds `running` true again inside that stale callback, which schedules its
+  // own successor — and now two independent chains drive the frame forever.
+  //
+  // Measured: after a single stop()/start() cycle, cubicle_farm went from 409
+  // draw calls per composed frame to 883, p50 16.5 -> 18.0ms, and every
+  // subsequent number in that page was taken on a double-driven loop
+  // (tools/f6-render-breakdown.mjs found it; the composed frame itself was
+  // unchanged at 409, which is what proved the doubling was in the DRIVER).
+  //
+  // In shipped play only ErrorBoundary stops the engine and it never restarts
+  // it, so this never bit a player — but every diagnostic that freezes a scene
+  // and hands control back (cine-shoot, f3/f4/f5 A/B tools) was one stop/start
+  // away from measuring twice the work and calling it a regression.
   start() {
+    if (this._raf !== null && this._raf !== undefined) return;  // already driving
     this.running = true;
     this._lastFrameTime = performance.now();
     this._loop();
@@ -994,22 +1280,48 @@ class EngineClass {
 
   stop() {
     this.running = false;
+    if (this._raf !== null && this._raf !== undefined) {
+      cancelAnimationFrame(this._raf);
+      this._raf = null;
+    }
   }
 
   _loop() {
+    this._raf = null;
     if (!this.running) return;
-    requestAnimationFrame(() => this._loop());
+    this._raf = requestAnimationFrame(() => this._loop());
 
     const now = performance.now();
     const dt = Math.min((now - this._lastFrameTime) / 1000, 0.05); // Cap delta at 50ms
     this._lastFrameTime = now;
 
-    // Fluorescent flicker — barely-perceptible hum with the odd buzz-dip
+    // Fluorescent flicker — barely-perceptible hum with the odd buzz-dip.
+    // DESIGN FEATURE (subliminal dread), not a bug: the four rooms carrying
+    // `lighting.flicker` are meant to breathe, and the amplitude is a LOOK
+    // value, so it is left exactly as committed. Round 1 of the perf pass
+    // halved it to keep a global key-intensity wobble from sitting on top of
+    // the temporal-stability instruments; QA correctly rejected that as an
+    // unsigned look change. The instrument problem is solved on the INSTRUMENT
+    // side instead — the harness pins `_flicker = false` and restores
+    // `_dirLight.intensity = _baseDirIntensity` before any A/B capture, which
+    // is strictly better because it removes the variable rather than shrinking
+    // it. See tools/perf-harness.mjs (FREEZE_LOOK).
     if (this._flicker && this._dirLight) {
       const t = now * 0.001;
       let f = 1 + Math.sin(t * 47.0) * 0.012 + Math.sin(t * 13.7) * 0.008;
       if (Math.random() < 0.0015) f *= 0.72;
       this._dirLight.intensity = this._baseDirIntensity * f;
+    }
+
+    // Shadow-map cadence (see init()). Set needsUpdate BEFORE the update
+    // callback, because states render from inside it via renderScene().
+    if (this._shadowDirty) {
+      this.renderer.shadowMap.needsUpdate = true;
+      this._shadowDirty = false;
+      this._shadowFrames = 0;
+    } else if (this._shadowInterval > 0 && ++this._shadowFrames >= this._shadowInterval) {
+      this.renderer.shadowMap.needsUpdate = true;
+      this._shadowFrames = 0;
     }
 
     this.cityBackdrop?.update(dt);
@@ -1047,10 +1359,48 @@ class EngineClass {
   // directly) or it silently bypasses AO/bloom/tilt-shift/grade AND the
   // output transform that lives in GradePass.
   renderScene(scene, camera) {
+    // When the loop is NOT driving the frame, the shadow cadence in _loop()
+    // never runs — tools/cine-shoot.mjs stops the engine, hand-steps the sim
+    // and calls this directly, and a stale shadow map would bake a lagging
+    // character shadow into a cinematic still. Off the loop, correctness wins.
+    if (!this.running) this.renderer.shadowMap.needsUpdate = true;
     this._renderPass.scene = scene;
     this._renderPass.camera = camera;
     this._configurePostFor(scene, camera);
-    this.composer.render();
+
+    // ── ONE world-matrix update per FRAME, not one per RENDER ──────────────
+    // `WebGLRenderer.render()` starts with
+    //     if (scene.matrixWorldAutoUpdate === true) scene.updateMatrixWorld();
+    // and a composer frame calls render() several times over the SAME scene:
+    // the N8AO beauty pass, then its two transparency sub-passes. Nothing moves
+    // between them — the game loop has already finished — so the 2nd and 3rd
+    // full traversals of a ~1000-node graph recompute matrices that are already
+    // correct.
+    //
+    // Measured (CPU profile, cubicle_farm, CPU 4x, screenshots/perf/f6/
+    // cpuprofile.json): `updateMatrixWorld` 8.3ms/frame + `multiplyMatrices`
+    // 2.4ms/frame — the single largest non-idle entry in the profile, and larger
+    // than any draw-submission entry.
+    //
+    // So: update once, here, then tell three it is already done. Exactly
+    // equivalent by construction (this is the same call three would make, made
+    // once instead of three times), and the flag is restored in a `finally` so a
+    // throwing pass cannot leave the scene with matrices pinned — which would
+    // freeze every animation in the game.
+    // `window.__frameMatrix = false` restores three's per-render behaviour, so
+    // the harness can price this in one interleaved session instead of across
+    // two runs separated by a thermal drift the report measures at ~24%.
+    const autoMatrix = scene.matrixWorldAutoUpdate;
+    const oncePerFrame = typeof window === 'undefined' || window.__frameMatrix !== false;
+    if (oncePerFrame && autoMatrix !== false) {
+      scene.updateMatrixWorld();
+      scene.matrixWorldAutoUpdate = false;
+    }
+    try {
+      this.composer.render();
+    } finally {
+      scene.matrixWorldAutoUpdate = autoMatrix;
+    }
   }
 }
 

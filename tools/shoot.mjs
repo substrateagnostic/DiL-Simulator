@@ -56,8 +56,10 @@ const run = async () => {
       const clearPopups = async () => {
         for (let i = 0; i < 12; i++) {
           const busy = await page.evaluate(() => {
-            const t = document.body.innerText;
-            return t.includes('[ESC] Exit') || t.includes('EMPLOYEE PORTAL');
+            // Structural check — do NOT match on hint text, the label changes
+            const dlg = document.querySelector('.dialog-container');
+            const dlgOpen = !!dlg && dlg.style.display !== 'none' && dlg.offsetParent !== null;
+            return dlgOpen || document.body.innerText.includes('EMPLOYEE PORTAL');
           });
           if (!busy) break;
           await page.keyboard.down('Enter');

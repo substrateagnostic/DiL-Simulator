@@ -32,6 +32,8 @@ const INTERACTION_OFFSETS = [
   [0, -1],
 ];
 
+const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
+
 const QUEST_OBJECTIVES = {
   main_act1: {
     0: 'Find your cubicle and settle in',
@@ -110,6 +112,22 @@ export class ExplorationState {
     this.nearestInteractable = null;
     this._pendingCombat = null;
     this._pendingDialog = null;
+    this._lastPromptHTML = null;
+    this._nearbyExitTarget = { x: 0, z: 0, data: null };
+    this._nearbyInteractableTarget = { x: 0, z: 0, data: null };
+    this._nearbyTargets = { exit: null, interactable: null };
+    this._lastClientPromptRaw = undefined;
+    this._clientPromptText = null;
+    this._lastSupplyShopAum = null;
+    this._supplyShopPromptText = null;
+    this._lastElevatorLinkFrom = null;
+    this._lastElevatorLinkTo = null;
+    this._lastElevatorLinkResult = false;
+    this._lastPromptNPC = null;
+    this._lastPromptNPCName = null;
+    this._npcPromptText = null;
+    this._lastReadDialogId = null;
+    this._readDialogFlag = null;
 
     // Quest tracking
     this.activeQuests = [];
@@ -640,21 +658,26 @@ export class ExplorationState {
   // Camera-side walls (south + east) fade out when the player walks near
   // them, so narrow rooms and lower terraces stay readable. The wall
   // meshes already carry per-room cloned transparent materials.
+  // Invariant: this system is the sole wall-opacity owner; Engine only mirrors it to the walk-behind sleeve.
   _updateWallFade(dt) {
     const room = this.roomManager.currentRoom;
     if (!room || !room.data) return;
     const px = this.player.position.x;
     const pz = this.player.position.z;
-    const fade = (meshes, near) => {
-      const target = near ? 0.16 : 1.0;
-      for (const mesh of meshes) {
-        const m = mesh.material;
-        if (Math.abs(m.opacity - target) < 0.01) { m.opacity = target; continue; }
-        m.opacity += (target - m.opacity) * Math.min(1, dt * 7);
+    const blend = Math.min(1, dt * 7);
+    this._fadeWallMeshes(room.getSouthWallMeshes(), pz > room.data.height - 3.5 ? 0.16 : 1.0, blend);
+    this._fadeWallMeshes(room.getEastWallMeshes(), px > room.data.width - 3.5 ? 0.16 : 1.0, blend);
+  }
+
+  _fadeWallMeshes(meshes, target, blend) {
+    for (let i = 0; i < meshes.length; i++) {
+      const material = meshes[i].material;
+      if (Math.abs(material.opacity - target) < 0.01) {
+        material.opacity = target;
+        continue;
       }
-    };
-    fade(room.getSouthWallMeshes(), pz > room.data.height - 3.5);
-    fade(room.getEastWallMeshes(), px > room.data.width - 3.5);
+      material.opacity += (target - material.opacity) * blend;
+    }
   }
 
   _applyTimeOfDay(roomId) {
@@ -685,6 +708,11 @@ export class ExplorationState {
       if (roomData) {
         this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
       }
+      // Non-transition load (boot, save load, dev fixture). Warm the new room's
+      // programs and textures here too — not awaited, because this path has no
+      // wipe to hide behind and the compile is better overlapped with the frames
+      // that follow than blocking the one that starts them. See warmScene().
+      Engine.warmScene(Engine.scene, Engine.camera);
     }
   }
 
@@ -816,6 +844,16 @@ export class ExplorationState {
         }, 400);
       }
     }
+
+    // Compile the new room's shaders and upload its textures while the wipe is
+    // STILL COVERING THE SCREEN. Without this, the first rendered frame of a
+    // room the player has not visited pays for every new program at once —
+    // measured 307ms on the first `server_room` entry, 16 programs, and that
+    // frame lands after the wipe has finished, i.e. mid-play. See
+    // Engine.warmScene().
+    // (IsometricCamera drives Engine.camera in place — there is no second
+    // camera object to pass here.)
+    await Engine.warmScene(Engine.scene, Engine.camera);
 
     if (ride) {
       // Release the hold first: the shell is already fading out of the new
@@ -1451,19 +1489,34 @@ export class ExplorationState {
     let exit = null;
     let interactable = null;
 
-    for (const [dx, dz] of INTERACTION_OFFSETS) {
+    for (let i = 0; i < INTERACTION_OFFSETS.length; i++) {
+      const offset = INTERACTION_OFFSETS[i];
+      const dx = offset[0];
+      const dz = offset[1];
       if (!interactable) {
         const data = this.tileMap?.getInteractable(px + dx, pz + dz);
-        if (data) interactable = { x: px + dx, z: pz + dz, data };
+        if (data) {
+          interactable = this._nearbyInteractableTarget;
+          interactable.x = px + dx;
+          interactable.z = pz + dz;
+          interactable.data = data;
+        }
       }
       if (!exit) {
         const data = this.tileMap?.getExit(px + dx, pz + dz);
-        if (data) exit = { x: px + dx, z: pz + dz, data };
+        if (data) {
+          exit = this._nearbyExitTarget;
+          exit.x = px + dx;
+          exit.z = pz + dz;
+          exit.data = data;
+        }
       }
       if (exit && interactable) break;
     }
 
-    return { exit, interactable };
+    this._nearbyTargets.exit = exit;
+    this._nearbyTargets.interactable = interactable;
+    return this._nearbyTargets;
   }
 
   _shouldPrioritizeExit(exitTarget, interactableTarget) {
@@ -1505,9 +1558,17 @@ export class ExplorationState {
     if (interactableTarget.data.type === 'reception_desk') {
       const clientRaw = this.player.getFlag('currentClient');
       if (clientRaw) {
-        let client;
-        try { client = JSON.parse(clientRaw); } catch { client = null; }
-        if (client) return `Meet ${client.name}`;
+        if (clientRaw !== this._lastClientPromptRaw) {
+          this._lastClientPromptRaw = clientRaw;
+          this._clientPromptText = null;
+          try {
+            const client = JSON.parse(clientRaw);
+            if (client) this._clientPromptText = `Meet ${client.name}`;
+          } catch {
+            this._clientPromptText = null;
+          }
+        }
+        if (this._clientPromptText) return this._clientPromptText;
       }
       return 'Reception Desk';
     }
@@ -1522,7 +1583,11 @@ export class ExplorationState {
 
     if (interactableTarget.data.type === 'supply_shop') {
       const aum = this.player.stats.aum || 0;
-      return `Supply Shop (${aum.toLocaleString()} AUM)`;
+      if (aum !== this._lastSupplyShopAum) {
+        this._lastSupplyShopAum = aum;
+        this._supplyShopPromptText = `Supply Shop (${aum.toLocaleString()} AUM)`;
+      }
+      return this._supplyShopPromptText;
     }
 
     return 'Examine';
@@ -1617,7 +1682,7 @@ export class ExplorationState {
     const act = this.player.actIndex;
 
     // Combat retry check runs first — overrides hardcoded dialogId on NPC
-    const retryEncId = { ross: 'ross_boss' }[id] || id;
+    const retryEncId = id === 'ross' ? 'ross_boss' : id;
     if (DIALOGS[`${retryEncId}_retry`] && this.player.getFlag(`retry_${retryEncId}`) && !this.player.getFlag(`defeated_${retryEncId}`)) {
       // Block Karen retry until 3 tutorial clients are handled
       if (id === 'karen' && !this.player.getFlag('karen_retry_ready')) {
@@ -1909,7 +1974,6 @@ export class ExplorationState {
     }
     if (act >= 1 && DIALOGS[`${id}_act2`] && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
     // Gate team intros until the player has checked their desk
-    const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
     if (PRE_DESK_TEAM.includes(id) && !this.player.getFlag('checked_desk') && !this.player.getFlag(`read_${id}_intro`)) {
       return 'team_pre_intro';
     }
@@ -1959,7 +2023,9 @@ export class ExplorationState {
 
     this.promptElement = document.createElement('div');
     this.promptElement.className = 'interact-prompt';
-    this.promptElement.innerHTML = '<kbd>E</kbd> Interact';
+    const promptHTML = '<kbd>E</kbd> Interact';
+    this.promptElement.innerHTML = promptHTML;
+    this._lastPromptHTML = promptHTML;
     this.promptElement.style.display = 'none';
     this.promptElement.addEventListener('click', () => this._interact());
     this.hudElement.appendChild(this.promptElement);
@@ -2072,7 +2138,11 @@ export class ExplorationState {
   _showInteractPrompt(text, isRead = false) {
     if (this.promptElement) {
       const key = ('ontouchstart' in window) ? 'A' : 'E';
-      this.promptElement.innerHTML = `<kbd>${key}</kbd> ${text || 'Interact'}`;
+      const html = `<kbd>${key}</kbd> ${text || 'Interact'}`;
+      if (html !== this._lastPromptHTML) {
+        this.promptElement.innerHTML = html;
+        this._lastPromptHTML = html;
+      }
       this.promptElement.style.display = 'block';
       this.promptElement.classList.toggle('read', isRead);
     }
@@ -2082,6 +2152,33 @@ export class ExplorationState {
     if (this.promptElement) {
       this.promptElement.style.display = 'none';
     }
+  }
+
+  _isElevatorLink(targetRoom) {
+    const fromRoom = this.player.currentRoom;
+    if (fromRoom !== this._lastElevatorLinkFrom || targetRoom !== this._lastElevatorLinkTo) {
+      this._lastElevatorLinkFrom = fromRoom;
+      this._lastElevatorLinkTo = targetRoom;
+      this._lastElevatorLinkResult = ElevatorRide.isElevatorLink(fromRoom, targetRoom);
+    }
+    return this._lastElevatorLinkResult;
+  }
+
+  _getNpcPromptText(npc) {
+    if (npc !== this._lastPromptNPC || npc.name !== this._lastPromptNPCName) {
+      this._lastPromptNPC = npc;
+      this._lastPromptNPCName = npc.name;
+      this._npcPromptText = `Talk to ${npc.name}`;
+    }
+    return this._npcPromptText;
+  }
+
+  _isDialogRead(dialogId) {
+    if (this._readDialogFlag === null || dialogId !== this._lastReadDialogId) {
+      this._lastReadDialogId = dialogId;
+      this._readDialogFlag = `read_${dialogId}`;
+    }
+    return this.player.getFlag(this._readDialogFlag);
   }
 
   _initQuests() {
@@ -2595,30 +2692,6 @@ export class ExplorationState {
     this.player.move(x, z, dt, this.tileMap);
     this.player.update(dt);
 
-    // Fade south wall when player gets close to it
-    const southWallMeshes = this.roomManager.currentRoom?.getSouthWallMeshes() ?? [];
-    if (southWallMeshes.length > 0 && this.tileMap) {
-      const southWallZ = this.tileMap.height - 0.5;
-      const dist = southWallZ - this.player.position.z;
-      // Fully opaque 3+ tiles away, fades to 0.15 opacity within 1 tile
-      const opacity = Math.min(1, Math.max(0.15, (dist - 1) / 2));
-      for (const mesh of southWallMeshes) {
-        mesh.material.opacity = opacity;
-      }
-    }
-
-    // Fade east wall when player gets close to it
-    const eastWallMeshes = this.roomManager.currentRoom?.getEastWallMeshes() ?? [];
-    if (eastWallMeshes.length > 0 && this.tileMap) {
-      const eastWallX = this.tileMap.width - 0.5;
-      const dist = eastWallX - this.player.position.x;
-      // Fully opaque 3+ tiles away, fades to 0.15 opacity within 1 tile
-      const opacity = Math.min(1, Math.max(0.15, (dist - 1) / 2));
-      for (const mesh of eastWallMeshes) {
-        mesh.material.opacity = opacity;
-      }
-    }
-
     this.camera.follow(this.player.position.x, this.player.position.z, 0);
     this.camera.update(dt);
 
@@ -2636,21 +2709,21 @@ export class ExplorationState {
 
     if (onExitTile) {
       this._showInteractPrompt(
-        ElevatorRide.isElevatorLink(this.player.currentRoom, nearExit.data.targetRoom)
+        this._isElevatorLink(nearExit.data.targetRoom)
           ? 'Ride elevator' : 'Go through'
       );
     } else if (nearNPC) {
       const dialogId = this._getNpcDialogId(nearNPC);
-      const isRead = this.player.getFlag(`read_${dialogId}`);
-      this._showInteractPrompt(`Talk to ${nearNPC.name}`, isRead);
+      const isRead = this._isDialogRead(dialogId);
+      this._showInteractPrompt(this._getNpcPromptText(nearNPC), isRead);
     } else if (this._shouldPrioritizeExit(nearExit, nearInteractable)) {
       this._showInteractPrompt(
-        ElevatorRide.isElevatorLink(this.player.currentRoom, nearExit.data.targetRoom)
+        this._isElevatorLink(nearExit.data.targetRoom)
           ? 'Ride elevator' : 'Go through'
       );
     } else if (nearInteractable) {
       const dialogId = this._getInteractableDialogId(nearInteractable.data);
-      const isRead = dialogId ? this.player.getFlag(`read_${dialogId}`) : false;
+      const isRead = dialogId ? this._isDialogRead(dialogId) : false;
       this._showInteractPrompt(this._getInteractPrompt(nearInteractable, nearExit), isRead);
     } else if (nearExit) {
       this._showInteractPrompt('Go through');

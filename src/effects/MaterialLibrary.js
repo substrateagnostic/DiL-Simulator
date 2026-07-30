@@ -228,6 +228,12 @@ function pbr(color, opts = {}) {
 }
 
 export const Materials = {
+  // The cache, exposed READ-ONLY for resource-ownership decisions. Room.dispose()
+  // has to answer "is this texture shared, or does it die with the room?" and
+  // this object is the authority for everything MaterialLibrary handed out —
+  // including the canvas textures cached at cloth/monitor/skyline keys. Never
+  // write to it from outside; never dispose anything found in it.
+  _cache: cache,
   // Environment.
   // Floors/desks/metal are the lacquered-miniature surfaces — PBR so they
   // catch a specular sheen (toon cannot). Walls/ceiling/props stay toon:

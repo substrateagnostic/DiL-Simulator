@@ -27,6 +27,32 @@ class AudioManagerClass {
     // side-effect-light so page load does not trigger autoplay warnings.
   }
 
+  // Build the AudioContext AHEAD of the first input, during a moment where a
+  // hitch is already covered (boot / title screen).
+  //
+  // Why this exists: `new AudioContext()` opens the audio device SYNCHRONOUSLY
+  // and measured 385.5ms on this machine (Long Animation Frames attributed a
+  // 398ms blocking frame to main.js's initAudio; splitting it showed
+  // _ensureContext 385.5ms, ctx.resume() 0ms, playMusic 7.5ms). Doing that
+  // inside the keydown handler means the player's VERY FIRST key press freezes
+  // the game for a third of a second. It cannot be made cheaper — it can only
+  // be moved somewhere a stall is invisible.
+  //
+  // Autoplay policy is satisfied either way: a pre-gesture context is created
+  // in the 'suspended' state and resume() after any gesture starts it. The only
+  // cost of creating early is a console autoplay notice, which is a much better
+  // trade than 385ms on first input. Safe to call repeatedly.
+  warmUp() {
+    if (this.ctx || typeof window === 'undefined') return;
+    try {
+      this._ensureContext();
+    } catch {
+      // Some browsers refuse a pre-gesture context. Fall back to the old
+      // behaviour: resume() will build it on the first gesture.
+      this.ctx = null;
+    }
+  }
+
   _ensureContext() {
     if (this.ctx || typeof window === 'undefined') return !!this.ctx;
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();

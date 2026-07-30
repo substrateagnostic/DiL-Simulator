@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Materials } from '../effects/MaterialLibrary.js';
+import { bakeEnabled, bakeVertexColor, batchMaterialFor, materialSignature } from '../effects/GeometryBatch.js';
 import { CHAR } from '../utils/constants.js';
 import { paintFaceSet } from './FacePainter.js';
 
@@ -738,21 +739,39 @@ function collapseNode(node, hairMat = null) {
     o.updateWorldMatrix(true, false);
     const g = normalizeAttrs(o.geometry.clone());
     g.applyMatrix4(nodeInv.clone().multiply(o.matrixWorld));
-    const arr = byMat.get(o.material) || [];
-    arr.push(g);
-    byMat.set(o.material, arr);
+    // ── Colour-baked bucketing ─────────────────────────────────────────
+    // A v5 character was 47–70 draw calls (measured, cubicle_farm) because
+    // per-material merging can only ever collapse meshes that share a
+    // material INSTANCE, and a character is a dozen toon materials that
+    // differ from each other by a hex value and nothing else. Moving the
+    // colour into a vertex attribute merges skin + shirt + trousers + shoes
+    // into one call. Exactness argument and eligibility rules: GeometryBatch.js.
+    //
+    // HAIR IS DELIBERATELY EXCLUDED. The merged hair mesh is the only one
+    // that gets userData.noCast (so hair never smudges the face in the
+    // shadow map), and that flag is per-mesh: if hair bucketed with skin the
+    // whole bucket would have to pick one answer and one of the two would be
+    // wrong. Keeping hair on the identity tier keeps the flag exact.
+    const isHair = !!(hairSet && hairSet.has(o.material));
+    const sig = isHair ? null : (bakeEnabled() ? materialSignature(o.material) : null);
+    if (sig) bakeVertexColor(g, o.material.color);
+    const key = sig ? `c|${sig}|${g.index ? 'i' : 'n'}` : o.material;
+    let b = byMat.get(key);
+    if (!b) byMat.set(key, (b = { mat: o.material, sig, geos: [] }));
+    b.geos.push(g);
     toRemove.push(o);
   });
   for (const k of keep) node.attach(k);       // preserve world pose
   for (const o of toRemove) if (o.parent) o.parent.remove(o);
   _pruneEmpty(node);
-  for (const [mat, geoms] of byMat) {
+  for (const b of byMat.values()) {
+    const mat = b.sig ? (batchMaterialFor(b.mat, b.sig) || b.mat) : b.mat;
     let merged;
-    try { merged = geoms.length === 1 ? geoms[0] : mergeGeometries(geoms, false); }
+    try { merged = b.geos.length === 1 ? b.geos[0] : mergeGeometries(b.geos, false); }
     catch (e) { merged = null; }
     if (!merged) continue;
     const mesh = new THREE.Mesh(merged, mat);
-    if (hairSet && hairSet.has(mat)) mesh.userData.noCast = true;
+    if (hairSet && hairSet.has(b.mat)) mesh.userData.noCast = true;
     node.add(mesh);
   }
 }

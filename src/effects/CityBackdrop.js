@@ -101,6 +101,13 @@ const PROFILE_HQ = {
 // glow at all, magenta is a rare accent (1-2 per frame, never a row).
 const VARIANT_WEIGHTS = [0.18, 0.08, 0.14, 0.60];
 
+// Global facade tint. Was abused as a street-level dimmer (0x2e2e2e), which is
+// what orphaned the seam/window highlights into the "stretch/tear" artifact —
+// see setStreetLevel(). Street level now uses a seam-free face instead, so the
+// tint stays neutral at both levels. Left as a named dial: lower it toward
+// 0x9a9a9a if the street-level slabs ever read too present against the void.
+const TOWER_TINT = 0xffffff;
+
 // Per-tower seam intensity tiers — even lit towers don't all sing at the
 // same volume (kills the gold-gilded-toy-set uniformity)
 const SEAM_LEVELS = [0.45, 0.72, 1.0];
@@ -149,8 +156,12 @@ export class CityBackdrop {
   // clustered windows, thin seam-light edge columns, and the rooftop
   // parapet ring region. faceSeed varies gloss angle + window layout so
   // the skyline never tiles one smudge; seamLevel varies seam intensity.
-  _facadeTexture(todKey, variant, litBucket, hq = false, faceSeed = 0, seamLevel = 2) {
-    const key = `${todKey}|${variant}|${litBucket}|${faceSeed}|${seamLevel}|${hq ? 'hq' : 's'}`;
+  // `street` builds the STREET-LEVEL variant of the same face: body gradient,
+  // gloss and panel joins only — no lit windows, no seam column. See the
+  // TEAR note on setStreetLevel() for why the bright features have to be
+  // *absent* down here rather than dimmed.
+  _facadeTexture(todKey, variant, litBucket, hq = false, faceSeed = 0, seamLevel = 2, street = false) {
+    const key = `${todKey}|${variant}|${litBucket}|${faceSeed}|${seamLevel}|${hq ? 'hq' : 's'}|${street ? 'st' : 'of'}`;
     if (this._texCache[key]) return this._texCache[key];
     const P = hq ? PROFILE_HQ : PROFILE_STD;
     const t = TIME_OF_DAY[todKey];
@@ -205,7 +216,7 @@ export class CityBackdrop {
     for (let i = 0; i < nClusters; i++) {
       clusters.push({ x: rand() * P.cw, y: rand() * P.facH * 0.9 });
     }
-    const lit = t.lit * (dark ? 0.45 : 1) * (hq ? 2.6 : 1) + litBucket * 0.02;
+    const lit = street ? 0 : t.lit * (dark ? 0.45 : 1) * (hq ? 2.6 : 1) + litBucket * 0.02;
     for (let y = P.margin; y < P.facH - P.margin - P.winH; y += P.pitchY) {
       for (let x = P.margin; x < P.cw - P.margin - P.winW; x += P.pitchX) {
         let d = 1e9;
@@ -231,7 +242,7 @@ export class CityBackdrop {
     // roofline-plus-four-verticals outline is Tron: Legacy game-grid
     // vocabulary (critic-flagged); rooflines and parapet rings no longer
     // glow at all — light lives in a seam, not around the box.
-    if (!dark) {
+    if (!dark && !street) {
       const seam = variant === 1 ? t.seamMagenta : t.seamSodium;
       // Core stays saturated: the seam color itself, lifted — never cream
       const core = lighten(seam, 0.12);
@@ -532,6 +543,16 @@ export class CityBackdrop {
     this.hqBeacon = hqBeacon;
     this.beacons.push({ mesh: hqBeacon, phase: 0.7, hq: true });
 
+    // TEAR FIX (F3), part 2: the "alternate near/far bands so neighbors can't
+    // interpenetrate" scheme above only separates *radially*, so same-band
+    // neighbours could still overlap in XZ — an audit of the shipped seed found
+    // 9 intersecting pairs, several of them slivers under 0.25 units, i.e.
+    // near-coplanar box faces. Coplanar faces z-fight, and a z-fight under a
+    // lit seam is a literal tear. Three ring towers also sat *inside* the
+    // Vaults Fargo HQ footprint, which is only visible at street level — the
+    // exact place the artifact was reported. Separate them deterministically.
+    this._separateTowers();
+
     // ── Long-exposure light trails on the streets far below ────────────
     // Two shared materials: A = sodium headstream, B = red/magenta tails
     this._streakMatA = new THREE.MeshBasicMaterial({
@@ -734,6 +755,56 @@ export class CityBackdrop {
     }
   }
 
+  // Push apart any towers whose XZ footprints intersect, so no two slab faces
+  // are coplanar or interpenetrating. Deterministic (no rand()), runs once at
+  // build time, and moves the *outer* tower of each pair radially outward so
+  // the skyline silhouette keeps its authored near/far banding.
+  _separateTowers() {
+    const MARGIN = 0.45;                 // clear air between slabs
+    const items = this.buildings.map((b) => {
+      const p = b.mesh.geometry.parameters;
+      return { rec: b, hw: p.width / 2, hd: p.depth / 2, radius: b.radius, fixed: false };
+    });
+    if (this.hqTower) {
+      const p = this.hqTower.geometry.parameters;
+      items.push({ rec: { mesh: this.hqTower }, hw: p.width / 2, hd: p.depth / 2, radius: 0, fixed: true });
+    }
+    for (let pass = 0; pass < 8; pass++) {
+      let moved = 0;
+      for (let a = 0; a < items.length; a++) {
+        for (let b = a + 1; b < items.length; b++) {
+          const A = items[a], B = items[b];
+          const ap = A.rec.mesh.position, bp = B.rec.mesh.position;
+          const gapX = Math.abs(ap.x - bp.x) - (A.hw + B.hw) - MARGIN;
+          const gapZ = Math.abs(ap.z - bp.z) - (A.hd + B.hd) - MARGIN;
+          if (gapX >= 0 || gapZ >= 0) continue;       // already clear on one axis
+          // Move the outer tower (never the HQ, never a fixed item)
+          const mover = A.fixed ? B : B.fixed ? A : (A.radius >= B.radius ? A : B);
+          if (mover.fixed) continue;
+          const other = mover === A ? B : A;
+          const mp = mover.rec.mesh.position, op = other.rec.mesh.position;
+          let dx = mp.x - op.x, dz = mp.z - op.z;
+          const len = Math.hypot(dx, dz) || 1;
+          dx /= len; dz /= len;
+          const push = Math.min(-gapX, -gapZ) + 0.05;
+          mp.x += dx * push; mp.z += dz * push;
+          if (mover.rec.x !== undefined) { mover.rec.x = mp.x; mover.rec.z = mp.z; }
+          moved++;
+        }
+      }
+      if (!moved) break;
+    }
+    // Beacons and masts were positioned inside the build loop; re-anchor them
+    // to whatever their tower ended up at, or a moved tower leaves a red dot
+    // floating in the sky with no mast under it.
+    for (const bc of this.beacons) {
+      if (bc.hq || !bc.building) continue;
+      const p = bc.building.mesh.position;
+      bc.mesh.position.x = p.x; bc.mesh.position.z = p.z;
+      if (bc.mast) { bc.mast.position.x = p.x; bc.mast.position.z = p.z; }
+    }
+  }
+
   // Recenter the whole city on the building's plate center so the ring
   // of towers stays anchored to the SAME building as you change floors.
   setCenter(x, z) {
@@ -758,33 +829,53 @@ export class CityBackdrop {
       this._streakMatA.opacity = t.streakOpacity * this._streakDim;
       this._streakMatB.opacity = t.streakOpacity * this._streakDim * this._streakBFactor;
     }
+    // ── TEAR FIX (F3) ────────────────────────────────────────────────────
+    // Producer report: "a building visibly stretches/tears outside the garage."
+    // Root cause was two bugs compounding, both in this block:
+    //
+    // 1. `scale.y = 2.4` is a NON-UNIFORM scale on a UV-mapped box, so the
+    //    facade canvas — authored 1:1, with 4×6px windows on a 9×10 pitch and
+    //    a 1–2px seam column — is stretched 2.4× in v. Every window row
+    //    becomes a 2.4×-tall amber streak and the seam becomes a bar over a
+    //    thousand pixels long. That is the "stretch", literally.
+    // 2. Dimming via `material.color` is a MULTIPLY, so it cannot compress
+    //    dynamic range: the near-black body (#08080d) went to pure black and
+    //    disappeared, while the bright seam/windows survived at 18%. All that
+    //    was left on screen were the stretched bright features, floating in
+    //    void, terminating in hard flat cuts at the box edges. That is the
+    //    "tear".
+    //
+    // Fix: at street level the towers sample a STREET VARIANT of the same
+    // facade canvas that has no windows and no seam column — body gradient,
+    // gloss and panel joins only. With no thin bright features left there is
+    // nothing for the 2.4× stretch to smear and nothing to orphan, so the
+    // tint hack is no longer needed and the authored obsidian body reads as a
+    // slab silhouette again. This is what the old comment here *wanted*
+    // ("light belongs to the road, not the towers") done by removing the
+    // features rather than by scaling them down.
     for (const b of this.buildings) {
       if (on) {
         b.mesh.scale.y = 2.4;
         b.mesh.position.y = (b.h * 2.4) / 2 - 0.6;
-        // Street level: towers scale 2.4× and their near-black bodies vanish
-        // against the void, leaving a lone lit SEAM as a full-height bright
-        // line that reads as a render artifact (critic). Dim the whole facade
-        // material so seams drop to a subtle edge — at street level the light
-        // belongs to the road (pools/trails/reflections), not the towers.
-        // Round-3: dim EVERY tower (was variant!==3 only). The skipped dark
-        // variant-3 towers kept full-bright WINDOWS whose warm scatter was the
-        // real "bare orange vertical streak" source in the upper frame — 30 of
-        // them, ~85% of the orange. Dimming all drops it to just the lamp heads,
-        // and a darker skyline is more on-brief (obsidian towers, light lives in
-        // the road's pools, not the towers).
-        b.mesh.material.color.setHex(0x2e2e2e);
       } else {
         b.mesh.scale.y = 1;
         b.mesh.position.y = -b.h / 2 - b.baseDrop;
-        // Restore ALL towers to full bright at office level (street level now
-        // dims every tower, variant 3 included, so the restore must match).
-        b.mesh.material.color.setHex(0xffffff);
+      }
+      b.mesh.material.color.setHex(TOWER_TINT);
+      if (this.tod) {
+        b.mesh.material.map =
+          this._facadeTexture(this.tod, b.variant, b.litBucket, false, b.faceSeed, b.seamLevel, on);
+        b.mesh.material.needsUpdate = true;
       }
     }
-    // The Vaults Fargo HQ carries a magenta seam; dim it the same way so it
-    // doesn't loom as a lone bright column at street level.
-    if (this.hqTower) this.hqTower.material.color.setHex(on ? 0x2e2e2e : 0xffffff);
+    // The Vaults Fargo HQ is only ever visible at street level, and its
+    // magenta seam was the single worst offender — a 46-unit amber bar with a
+    // hard flat terminus mid-frame. It gets the same seam-free street face.
+    if (this.hqTower && this.tod) {
+      this.hqTower.material.color.setHex(TOWER_TINT);
+      this.hqTower.material.map = this._facadeTexture(this.tod, 1, 1, true, 0, 2, on);
+      this.hqTower.material.needsUpdate = true;
+    }
     for (const bc of this.beacons) {
       if (bc.hq) continue;
       const b = bc.building;
@@ -811,12 +902,16 @@ export class CityBackdrop {
     if (!TIME_OF_DAY[key] || key === this.tod) return;
     this.tod = key;
     const t = TIME_OF_DAY[key];
+    // Street level uses the seam-free / window-free face (see setStreetLevel);
+    // a time-of-day change must keep whichever variant is currently in play or
+    // the stretch/tear artifact walks straight back in.
+    const st = this.streetLevel === true;
     for (const b of this.buildings) {
-      b.mesh.material.map = this._facadeTexture(key, b.variant, b.litBucket, false, b.faceSeed, b.seamLevel);
+      b.mesh.material.map = this._facadeTexture(key, b.variant, b.litBucket, false, b.faceSeed, b.seamLevel, st);
       b.mesh.material.needsUpdate = true;
     }
     if (this.hqTower) {
-      this.hqTower.material.map = this._facadeTexture(key, 1, 1, true);
+      this.hqTower.material.map = this._facadeTexture(key, 1, 1, true, 0, 2, st);
       this.hqTower.material.needsUpdate = true;
     }
     for (const bc of this.beacons) bc.mesh.material.color.set(t.beacon);

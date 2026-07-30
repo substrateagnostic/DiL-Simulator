@@ -36,6 +36,116 @@ export const GRADES = {
   combat:     { exposure: 0.90, contrast: 1.12, saturation: 1.05, lift: [-0.018, -0.024, -0.012], gamma: [1.03, 1.04, 1.01], gain: [0.992, 0.912, 1.030] },
 };
 
+// Uniform names the grade shader chunk below expects. Exported so a host pass
+// that INLINES the grade (see TiltShiftPass's merged vertical+grade material)
+// declares exactly the same set — the merge exists to keep the chain inside
+// COMP_CARD's ≤4 full-screen pass budget by removing one round trip through a
+// full-screen render target.
+export function makeGradeUniforms() {
+  return {
+    exposure: { value: 1.0 },
+    contrast: { value: 1.0 },
+    saturation: { value: 1.0 },
+    lift: { value: [0, 0, 0] },
+    gamma: { value: [1, 1, 1] },
+    gain: { value: [1, 1, 1] },
+    // Named gradeStrength, not strength: the host pass that inlines this chunk
+    // (TiltShiftPass) already has a `strength` uniform for the BLUR fade, and
+    // two `uniform float strength` declarations in one shader is a compile
+    // error, not a shadow.
+    gradeStrength: { value: 1.0 },
+  };
+}
+
+// Write a GRADES entry into a uniform set built by makeGradeUniforms().
+// Returns the resolved key, or null when the key was already applied.
+export function applyGradeUniforms(u, key, currentKey) {
+  const resolved = GRADES[key] ? key : 'afternoon';
+  if (resolved === currentKey) return null;
+  const g = GRADES[resolved];
+  u.exposure.value = g.exposure;
+  u.contrast.value = g.contrast;
+  u.saturation.value = g.saturation;
+  // ShaderPass clones uniforms; array values arrive as plain arrays
+  u.lift.value = [...g.lift];
+  u.gamma.value = [...g.gamma];
+  u.gain.value = [...g.gain];
+  return resolved;
+}
+
+// The grade + OUTPUT TRANSFORM as a reusable GLSL chunk. Declares the grade
+// uniforms and a `vec3 gradeApply(vec3 linearHDR)` entry point. Any pass that
+// includes this becomes the chain's output transform, so exactly ONE pass may
+// use it per frame.
+export const GRADE_GLSL = /* glsl */`
+  uniform float exposure;
+  uniform float contrast;
+  uniform float saturation;
+  uniform vec3 lift;
+  uniform vec3 gamma;
+  uniform vec3 gain;
+  uniform float gradeStrength;
+
+  // OUTPUT TRANSFORM — ACES tone mapping and the linear->sRGB encode for
+  // the whole composer chain. three only applies
+  // renderer.toneMapping/outputColorSpace when rendering to the screen
+  // framebuffer, so scene renders into the composer's targets arrive here
+  // as linear HDR. The carrying pass is always enabled; 'strength' fades
+  // the GRADE only, never the output transform.
+
+  // NOTE: names must not collide with three's injected
+  // tonemapping_pars_fragment (RRTAndODTFit, ACESFilmicToneMapping...)
+  // — the renderer prepends those helpers to any toneMapped material
+  // that renders to screen, and a duplicate body kills the compile.
+  // Carrying materials also set toneMapped = false, but stay defensive.
+  vec3 gradeRRTFit(vec3 v) {
+    vec3 a = v * (v + 0.0245786) - 0.000090537;
+    vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
+    return a / b;
+  }
+
+  // three.js ACESFilmicToneMapping (Stephen Hill fit), exposure 1.0
+  vec3 gradeAcesFilmic(vec3 color) {
+    const mat3 ACESInputMat = mat3(
+      vec3(0.59719, 0.07600, 0.02840),
+      vec3(0.35458, 0.90834, 0.13383),
+      vec3(0.04823, 0.01566, 0.83777)
+    );
+    const mat3 ACESOutputMat = mat3(
+      vec3(1.60475, -0.10208, -0.00327),
+      vec3(-0.53108, 1.10813, -0.07276),
+      vec3(-0.07367, -0.00605, 1.07602)
+    );
+    color *= 1.0 / 0.6;
+    color = ACESInputMat * color;
+    color = gradeRRTFit(color);
+    color = ACESOutputMat * color;
+    return clamp(color, 0.0, 1.0);
+  }
+
+  vec3 gradeLinearToSRGB(vec3 c) {
+    return mix(c * 12.92, 1.055 * pow(max(c, vec3(0.0)), vec3(1.0 / 2.4)) - 0.055,
+               step(vec3(0.0031308), c));
+  }
+
+  vec3 gradeApply(vec3 srcLinear) {
+    // Ungraded reference: straight output transform
+    vec3 base = gradeLinearToSRGB(gradeAcesFilmic(srcLinear));
+    // Graded: exposure in linear, transform, then display-space grade
+    vec3 c = gradeLinearToSRGB(gradeAcesFilmic(srcLinear * exposure));
+    // lift-gamma-gain (shadows / midtones / highlights)
+    c = gain * (c + lift * (1.0 - c));
+    c = pow(max(c, vec3(0.0)), vec3(1.0) / gamma);
+    // pivot contrast around mid-grey
+    c = (c - 0.5) * contrast + 0.5;
+    // saturation around luminance
+    float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+    c = mix(vec3(l), c, saturation);
+    c = clamp(c, 0.0, 1.0);
+    return mix(base, c, gradeStrength);
+  }
+`;
+
 const GradeShader = {
   name: 'GradeShader',
   uniforms: {
@@ -147,17 +257,7 @@ export class GradePass extends ShaderPass {
   // Cheap to call per frame — same-key calls return immediately (Engine
   // re-asserts the grade in _configurePostFor for ortho/combat routing).
   setGrade(key) {
-    const resolved = GRADES[key] ? key : 'afternoon';
-    if (resolved === this.gradeKey) return;
-    const g = GRADES[resolved];
-    const u = this.uniforms;
-    u.exposure.value = g.exposure;
-    u.contrast.value = g.contrast;
-    u.saturation.value = g.saturation;
-    // ShaderPass clones uniforms; array values arrive as plain arrays
-    u.lift.value = [...g.lift];
-    u.gamma.value = [...g.gamma];
-    u.gain.value = [...g.gain];
-    this.gradeKey = resolved;
+    const resolved = applyGradeUniforms(this.uniforms, key, this.gradeKey);
+    if (resolved) this.gradeKey = resolved;
   }
 }
