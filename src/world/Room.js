@@ -3,6 +3,8 @@ import { TileMap } from '../world/TileMap.js';
 import { Furniture } from '../world/Furniture.js';
 import { Materials } from '../effects/MaterialLibrary.js';
 import { TILE_SIZE } from '../utils/constants.js';
+import { BUILDING_MAP, floorLabel } from '../data/buildingMap.js';
+import { ProceduralNormals } from '../effects/ProceduralNormals.js';
 import _roomOverrides from '../data/room-overrides.json' with { type: 'json' };
 
 // ============================================================
@@ -90,6 +92,106 @@ const NO_BLOCK = new Set([
   'lamppost', 'hydrant', 'busStopSign', 'newspaperBox', 'curb', 'elevatorDoors',
   'sodiumPool', 'severanceRunner', 'garagePendant',
 ]);
+
+// ── Doors ─────────────────────────────────────────────────────────────────
+// One construction, three dresses (see Room._buildDoorGroup). Every door in
+// the building is the same joinery — cased frame, stop bead, stile-and-rail
+// leaf, hardware on a backplate, threshold — so the tiers read as one
+// millwork shop working to three budgets rather than three unrelated props.
+// Previously EVERY opening in the game, garage service door included, got
+// mahogany with pure-gold (0xffd700, metalness 0.98) trim.
+//
+//   office  — the building's standard: pale ash leaf, painted institutional
+//             frame, brushed-nickel lever. Severance-sterile, well made.
+//   exec    — the same door in mahogany with aged-brass beading, a knob on a
+//             rose, and a shallow crown. Aged brass, NOT pure gold: with no
+//             env map a 0.98-metalness gold blows out to a flat white blob.
+//   service — obsidian steel slab, wired vision lite, kick plate, push bar,
+//             and a warm line of light under the leaf (COMP_CARD §6).
+const DOOR_STYLES = {
+  office:  { hardware: 'lever', beading: true,  crown: false, kickPlate: false, visionLite: false, underGlow: false },
+  exec:    { hardware: 'knob',  beading: true,  crown: true,  kickPlate: false, visionLite: false, underGlow: false },
+  service: { hardware: 'bar',   beading: false, crown: false, kickPlate: true,  visionLite: true,  underGlow: true  },
+};
+
+// Which dress each room's openings wear. Anything unlisted is 'office'.
+// A single exit can override with `doorStyle: 'exec'` etc. in room data
+// ('none' still means "this opening brings its own door furniture").
+const ROOM_DOOR_STYLE = {
+  ross_office: 'exec', ross_office_large: 'exec', conference_room: 'exec',
+  executive_floor: 'exec', board_room: 'exec',
+  penthouse: 'exec', penthouse_expanded: 'exec', penthouse_aquarium: 'exec',
+  penthouse_analytics: 'exec', penthouse_bar: 'exec',
+  parking_garage: 'service', stairwell: 'service', archive: 'service',
+  vault: 'service', server_room: 'service', floor_13: 'service',
+  old_branch: 'service', old_vault: 'service', transit_bus: 'service',
+};
+
+// Door materials, built once per style and cached. Kept local rather than in
+// MaterialLibrary because nothing else in the game wears them.
+const _doorMatCache = {};
+function doorMaterials(styleKey) {
+  if (_doorMatCache[styleKey]) return _doorMatCache[styleKey];
+  const wood  = ProceduralNormals.get('wood',  { repeat: [1, 3] });
+  const steel = ProceduralNormals.get('metal', { repeat: [2, 4] });
+  // Both helpers carry a small emissive floor. MaterialLibrary is env-map
+  // free, so a PBR prop in a night-graded room falls to black while the
+  // MeshToon walls beside it hold a mid-tone off their gradient ramp — the
+  // first pass of these doors was a black rectangle in every dim room.
+  // The lift stands in for the ambient bounce, nothing more.
+  const lacquer = (color, nrm, scale, lift = 0x2a2622) => {
+    const m = new THREE.MeshPhysicalMaterial({
+      color, roughness: 0.42, metalness: 0.0,
+      emissive: new THREE.Color(lift), emissiveIntensity: 0.8,
+    });
+    m.clearcoat = 0.62; m.clearcoatRoughness = 0.16;
+    m.normalMap = nrm; m.normalScale = new THREE.Vector2(scale, scale);
+    return m;
+  };
+  const metal = (color, rough, metalness, lift = 0x2b2f33) => {
+    const m = new THREE.MeshPhysicalMaterial({
+      color, roughness: rough, metalness,
+      emissive: new THREE.Color(lift), emissiveIntensity: 0.8,
+    });
+    m.clearcoat = 0.3; m.clearcoatRoughness = 0.28;
+    m.normalMap = steel; m.normalScale = new THREE.Vector2(0.3, 0.3);
+    return m;
+  };
+  let M;
+  if (styleKey === 'exec') {
+    M = {
+      face:      lacquer(0x8a3b1e, wood, 0.6, 0x30201a),
+      panel:     lacquer(0x6b2712, wood, 0.7, 0x281812),
+      frame:     lacquer(0x3f2015, wood, 0.5, 0x1f1410),
+      frameBead: metal(0x9c7f3a, 0.34, 0.5, 0x2e2716),
+      trim:      metal(0xc39c46, 0.3, 0.5, 0x3a2f18),
+      hardware:  metal(0xd0a94e, 0.26, 0.55, 0x40331a),
+      glass:     new THREE.MeshPhysicalMaterial({ color: 0x2a3038, roughness: 0.3, metalness: 0.1 }),
+    };
+  } else if (styleKey === 'service') {
+    M = {
+      face:      metal(0x545c64, 0.46, 0.22, 0x22262a),
+      panel:     metal(0x3f464d, 0.5, 0.2, 0x1b1f23),
+      frame:     metal(0x24282c, 0.55, 0.18, 0x121517),
+      frameBead: metal(0x767d84, 0.4, 0.22, 0x2b3035),
+      trim:      metal(0x8f969d, 0.36, 0.25, 0x33383d),
+      hardware:  metal(0xb2b9c0, 0.32, 0.28, 0x3d4247),
+      glass:     new THREE.MeshPhysicalMaterial({ color: 0x1c2a2a, roughness: 0.42, metalness: 0.05 }),
+    };
+  } else {
+    M = {
+      face:      lacquer(0xb4a992, wood, 0.5, 0x2d2a25),
+      panel:     lacquer(0x9c917a, wood, 0.6, 0x272420),
+      frame:     lacquer(0x74796a, wood, 0.3, 0x1e211c),   // institutional green-grey
+      frameBead: lacquer(0x878d7c, wood, 0.25, 0x232620),
+      trim:      metal(0xb9c0c6, 0.34, 0.28, 0x3f4348),
+      hardware:  metal(0xc3cad0, 0.3, 0.3, 0x44484d),
+      glass:     new THREE.MeshPhysicalMaterial({ color: 0x263038, roughness: 0.35, metalness: 0.08 }),
+    };
+  }
+  _doorMatCache[styleKey] = M;
+  return M;
+}
 
 export class Room {
   /**
@@ -615,29 +717,51 @@ export class Room {
   }
 
   /**
-   * Add luxury door geometry at each exit tile.
-   * Solid mahogany doors with raised panels, gold molding, brass rose plate, and spherical gold knob.
+   * Add door geometry at each exit tile.
+   * One construction (cased frame + stile-and-rail leaf + hardware +
+   * threshold), three dresses — see DOOR_STYLES / doorStyleFor().
    */
   _addDoorFrames(w, h, wallHeight) {
     if (!this.data.exits) return;
 
     // Group exits by wall to merge adjacent exits into wider doors.
     // Exits marked doorStyle:'none' bring their own door furniture
-    // (e.g. the elevator) — no mahogany.
+    // (e.g. the elevator) — no leaf here.
+    // Any other doorStyle value ('office'|'exec'|'service') overrides the
+    // per-room default for that opening.
+    const roomStyle = this._doorStyleFor();
+    // Openings that already carry an `elevatorDoors` prop are the elevator's
+    // to dress — never stack a joinery leaf on top of one. Six of the eleven
+    // elevator exits said `doorStyle: 'none'` in room data and the rest did
+    // not, so reception's executive shaft and the executive floor's own
+    // shaft each shipped a wooden office door layered over the steel car
+    // doors. Deriving it from the furniture means new elevators can't
+    // reintroduce the bug by forgetting the flag.
+    const elevatorTiles = (this.data.furniture || [])
+      .filter(f => f.type === 'elevatorDoors')
+      .map(f => ({ x: f.x, z: f.z }));
+    const hasElevator = (x, z) => elevatorTiles.some(
+      e => Math.abs(e.x - x) <= 1.2 && Math.abs(e.z - z) <= 1.2
+    );
+
     const exitsByKey = {};
     for (const exit of this.data.exits) {
       if (exit.doorStyle === 'none') continue;
+      if (hasElevator(exit.x, exit.z)) continue;
       let wall, coord;
       if (exit.z === 0)         { wall = 'north'; coord = exit.x; }
       else if (exit.z === h - 1){ wall = 'south'; coord = exit.x; }
       else if (exit.x === 0)    { wall = 'west';  coord = exit.z; }
       else if (exit.x === w - 1){ wall = 'east';  coord = exit.z; }
       else continue;
-      if (!exitsByKey[wall]) exitsByKey[wall] = [];
-      exitsByKey[wall].push(coord);
+      const style = DOOR_STYLES[exit.doorStyle] ? exit.doorStyle : roomStyle;
+      const key = `${wall}|${style}`;
+      if (!exitsByKey[key]) exitsByKey[key] = [];
+      exitsByKey[key].push(coord);
     }
 
-    for (const [wall, coords] of Object.entries(exitsByKey)) {
+    for (const [key, coords] of Object.entries(exitsByKey)) {
+      const [wall, style] = key.split('|');
       coords.sort((a, b) => a - b);
 
       // Find contiguous runs
@@ -652,7 +776,7 @@ export class Room {
       for (const run of runs) {
         const midCoord = (run.start + run.end) / 2;
         const span = run.end - run.start + 1;
-        const doorGroup = this._buildLuxuryDoorGroup(span, wallHeight);
+        const doorGroup = this._buildDoorGroup(span, wallHeight, style);
 
         if (wall === 'north' || wall === 'south') {
           const zPos = wall === 'north'
@@ -670,140 +794,215 @@ export class Room {
           doorGroup.rotation.y = wall === 'west' ? Math.PI / 2 : -Math.PI / 2;
         }
 
+        doorGroup.name = `door_${style}_${wall}_${run.start}`;
         this.scene.add(doorGroup);
       }
     }
   }
 
   /**
-   * Build a single luxury door group (mahogany, raised panels, gold trim, knob).
-   * The group's local +Z faces into the room; position and rotate as needed.
+   * Which dress this room's doors wear. Room data can override per-opening
+   * with `doorStyle` on the exit.
    */
-  _buildLuxuryDoorGroup(spanTiles, wallHeight) {
+  _doorStyleFor() {
+    return ROOM_DOOR_STYLE[this.data.id] || 'office';
+  }
+
+  /**
+   * Build one door group. The group's local +Z faces into the room;
+   * position and rotate as needed.
+   *
+   * ONE construction for every door in the building — cased frame with a
+   * stop bead, stile-and-rail leaf with two recessed panels, hardware on a
+   * backplate, threshold plate. Only the materials and a couple of grace
+   * notes change per style, so the garage service door and the board-room
+   * door read as the same millwork shop at two budgets. Openings 2+ tiles
+   * wide become a real pair of leaves meeting on a centre astragal instead
+   * of one absurdly wide slab wearing a single knob.
+   */
+  _buildDoorGroup(spanTiles, wallHeight, styleKey = 'office') {
+    const S = DOOR_STYLES[styleKey] || DOOR_STYLES.office;
+    const M = doorMaterials(styleKey);
     const group = new THREE.Group();
 
-    const doorWidth    = spanTiles * TILE_SIZE * 0.82;
-    const doorHeight   = wallHeight * 0.88;
-    const doorThick    = 0.07;
+    const openW      = spanTiles * TILE_SIZE * 0.82;
+    const doorHeight = wallHeight * 0.88;
+    const thick      = 0.07;
+    const isPair     = spanTiles >= 2;
+    const leafW      = isPair ? openW / 2 - 0.004 : openW;
 
-    // Materials
-    const mahoganyMat = new THREE.MeshStandardMaterial({ color: 0x7a3018, roughness: 0.5,  metalness: 0.0 });
-    const panelMat    = new THREE.MeshStandardMaterial({ color: 0x5a2010, roughness: 0.6,  metalness: 0.0 });
-    const goldMat     = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.1,  metalness: 0.98 });
-    const brassMat    = new THREE.MeshStandardMaterial({ color: 0xe0a830, roughness: 0.2,  metalness: 0.92 });
-    const frameMat    = new THREE.MeshStandardMaterial({ color: 0x4a1e0a, roughness: 0.5,  metalness: 0.0  });
+    // -- Leaves ---------------------------------------------------------
+    // Each leaf: core slab, then stiles/rails raised PROUD of the core so
+    // the panel fields sit in genuine relief (the old version floated two
+    // darker boxes on a flat slab — no shadow line, no read).
+    const leafCentres = isPair ? [-(leafW / 2 + 0.004), leafW / 2 + 0.004] : [0];
+    const railD  = 0.018;                  // how far the frame stands proud
+    const railZ  = thick / 2 + railD / 2;
+    const stileW = Math.min(0.13, leafW * 0.16);
+    for (const cx of leafCentres) {
+      const core = new THREE.Mesh(new THREE.BoxGeometry(leafW, doorHeight, thick), M.panel);
+      core.position.set(cx, doorHeight / 2, 0);
+      group.add(core);
 
-    // --- Solid mahogany door body ---
-    const doorBody = new THREE.Mesh(
-      new THREE.BoxGeometry(doorWidth, doorHeight, doorThick),
-      mahoganyMat
-    );
-    doorBody.position.set(0, doorHeight / 2, 0);
-    group.add(doorBody);
+      // Vertical stiles
+      for (const sx of [-(leafW / 2 - stileW / 2), leafW / 2 - stileW / 2]) {
+        const stile = new THREE.Mesh(new THREE.BoxGeometry(stileW, doorHeight, railD), M.face);
+        stile.position.set(cx + sx, doorHeight / 2, railZ);
+        group.add(stile);
+      }
+      // Top rail, lock rail, bottom rail
+      for (const [ry, rh] of [
+        [doorHeight - 0.075, 0.15],
+        [doorHeight * 0.44,  0.19],
+        [0.115,              0.23],
+      ]) {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(leafW, rh, railD), M.face);
+        rail.position.set(cx, ry, railZ);
+        group.add(rail);
+      }
 
-    // --- Raised door panels (recessed darker boxes on the front face) ---
-    const panelInsetX = doorWidth * 0.08;
-    const panelDepth  = 0.014;
-    const panelZ      = doorThick / 2 + panelDepth / 2;
-
-    // Upper panel (~top 35% of door)
-    const upperPanel = new THREE.Mesh(
-      new THREE.BoxGeometry(doorWidth - panelInsetX * 2, doorHeight * 0.35, panelDepth),
-      panelMat
-    );
-    upperPanel.position.set(0, doorHeight * 0.625, panelZ);
-    group.add(upperPanel);
-
-    // Lower panel (~bottom 40% of door)
-    const lowerPanel = new THREE.Mesh(
-      new THREE.BoxGeometry(doorWidth - panelInsetX * 2, doorHeight * 0.40, panelDepth),
-      panelMat
-    );
-    lowerPanel.position.set(0, doorHeight * 0.215, panelZ);
-    group.add(lowerPanel);
-
-    // --- Gold molding strips (horizontal dividers & border) ---
-    const stripDepth = 0.022;
-    const stripZ     = doorThick / 2 + stripDepth / 2;
-    for (const sy of [doorHeight * 0.055, doorHeight * 0.44, doorHeight * 0.79, doorHeight * 0.875]) {
-      const strip = new THREE.Mesh(
-        new THREE.BoxGeometry(doorWidth * 0.93, 0.022, stripDepth),
-        goldMat
-      );
-      strip.position.set(0, sy, stripZ);
-      group.add(strip);
+      if (S.beading) {
+        // A thin bead outlining each panel field — brass on exec, nickel on
+        // office. Four sticks, not a printed stripe.
+        for (const [py, ph] of [[doorHeight * 0.715, doorHeight * 0.37], [doorHeight * 0.28, doorHeight * 0.28]]) {
+          const bw = leafW - stileW * 2 + 0.014;
+          for (const [bx, by, w2, h2] of [
+            [0, py + ph / 2, bw, 0.013], [0, py - ph / 2, bw, 0.013],
+            [-(bw / 2), py, 0.013, ph], [bw / 2, py, 0.013, ph],
+          ]) {
+            const bead = new THREE.Mesh(new THREE.BoxGeometry(w2, h2, 0.011), M.trim);
+            bead.position.set(cx + bx, by, thick / 2 + 0.006);
+            group.add(bead);
+          }
+        }
+      }
+      if (S.kickPlate) {
+        // Service doors get a scuffed steel kick plate, not joinery
+        const kick = new THREE.Mesh(new THREE.BoxGeometry(leafW - 0.03, 0.3, 0.012), M.hardware);
+        kick.position.set(cx, 0.19, thick / 2 + 0.021);
+        group.add(kick);
+      }
+      if (S.visionLite) {
+        // Wired-glass vision lite, dark — you never quite see through it
+        const liteW = Math.max(0.16, Math.min(0.42, leafW - stileW * 2.4));
+        const liteFrame = new THREE.Mesh(
+          new THREE.BoxGeometry(liteW + 0.05, 0.55, 0.012), M.hardware
+        );
+        liteFrame.position.set(cx, doorHeight * 0.72, thick / 2 + 0.004);
+        group.add(liteFrame);
+        const lite = new THREE.Mesh(new THREE.BoxGeometry(liteW, 0.5, 0.014), M.glass);
+        lite.position.set(cx, doorHeight * 0.72, thick / 2 + 0.012);
+        group.add(lite);
+      }
     }
 
-    // Gold vertical side trim strips
-    for (const sx of [-(doorWidth * 0.42), doorWidth * 0.42]) {
-      const vStrip = new THREE.Mesh(
-        new THREE.BoxGeometry(0.022, doorHeight * 0.93, stripDepth),
-        goldMat
-      );
-      vStrip.position.set(sx, doorHeight / 2, stripZ);
-      group.add(vStrip);
+    // Centre astragal on a pair
+    if (isPair) {
+      const astragal = new THREE.Mesh(new THREE.BoxGeometry(0.03, doorHeight, thick + 0.03), M.face);
+      astragal.position.set(0, doorHeight / 2, 0.008);
+      group.add(astragal);
     }
 
-    // --- Door knob: brass rose plate + gold sphere ---
-    const knobX = doorWidth / 2 - 0.13;
+    // -- Hardware -------------------------------------------------------
+    // Handles on the leading edge of each leaf, at a real 1.02m.
     const knobY = 1.02;
-
-    // Brass backplate (rose)
-    const rose = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.062, 0.062, 0.014, 20),
-      brassMat
-    );
-    rose.rotation.x = Math.PI / 2;
-    rose.position.set(knobX, knobY, doorThick / 2 + 0.007);
-    group.add(rose);
-
-    // Gold spherical knob
-    const knob = new THREE.Mesh(
-      new THREE.SphereGeometry(0.052, 20, 16),
-      goldMat
-    );
-    knob.position.set(knobX, knobY, doorThick / 2 + 0.072);
-    group.add(knob);
-
-    // --- Ornate frame: dark mahogany posts + lintel with gold edge trim ---
-    const frameW     = 0.11;
-    const frameDepth = 0.14;
-    const lintelH    = 0.12;
-
-    // Left post
-    const leftPost = new THREE.Mesh(new THREE.BoxGeometry(frameW, wallHeight, frameDepth), frameMat);
-    leftPost.position.set(-(doorWidth / 2 + frameW / 2), wallHeight / 2, 0);
-    group.add(leftPost);
-
-    // Right post
-    const rightPost = new THREE.Mesh(new THREE.BoxGeometry(frameW, wallHeight, frameDepth), frameMat);
-    rightPost.position.set(doorWidth / 2 + frameW / 2, wallHeight / 2, 0);
-    group.add(rightPost);
-
-    // Lintel
-    const lintel = new THREE.Mesh(
-      new THREE.BoxGeometry(doorWidth + frameW * 2, lintelH, frameDepth),
-      frameMat
-    );
-    lintel.position.set(0, doorHeight + lintelH / 2, 0);
-    group.add(lintel);
-
-    // Gold trim strips on front edges of frame posts
-    for (const sx of [-(doorWidth / 2), doorWidth / 2]) {
-      const postTrim = new THREE.Mesh(new THREE.BoxGeometry(0.016, wallHeight, 0.016), goldMat);
-      postTrim.position.set(sx, wallHeight / 2, frameDepth / 2);
-      group.add(postTrim);
+    for (const cx of leafCentres) {
+      const inward = isPair ? (cx < 0 ? 1 : -1) : 1;    // pair handles meet at the centre
+      const hx = cx + inward * (leafW / 2 - 0.13);
+      if (S.hardware === 'knob') {
+        const rose = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.014, 20), M.hardware);
+        rose.rotation.x = Math.PI / 2;
+        rose.position.set(hx, knobY, thick / 2 + 0.026);
+        group.add(rose);
+        const knob = new THREE.Mesh(new THREE.SphereGeometry(0.05, 18, 14), M.hardware);
+        knob.position.set(hx, knobY, thick / 2 + 0.086);
+        group.add(knob);
+      } else if (S.hardware === 'lever') {
+        const plate = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.2, 0.014), M.hardware);
+        plate.position.set(hx, knobY, thick / 2 + 0.026);
+        group.add(plate);
+        const spindle = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.019, 0.05, 10), M.hardware);
+        spindle.rotation.x = Math.PI / 2;
+        spindle.position.set(hx, knobY, thick / 2 + 0.05);
+        group.add(spindle);
+        // The lever arm, angled down toward the leaf edge
+        const lever = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.028, 0.032), M.hardware);
+        lever.position.set(hx - inward * 0.06, knobY - 0.018, thick / 2 + 0.07);
+        lever.rotation.z = inward * 0.22;
+        group.add(lever);
+      } else {
+        // 'bar' — service doors get a horizontal push bar
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(leafW - 0.26, 0.045, 0.045), M.hardware);
+        bar.position.set(cx, knobY, thick / 2 + 0.058);
+        group.add(bar);
+        for (const bx of [-(leafW / 2 - 0.13), leafW / 2 - 0.13]) {
+          const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.038, 0.055), M.hardware);
+          bracket.position.set(cx + bx, knobY, thick / 2 + 0.028);
+          group.add(bracket);
+        }
+      }
     }
 
-    // Gold trim strip along lintel bottom edge
-    const lintelTrim = new THREE.Mesh(
-      new THREE.BoxGeometry(doorWidth + frameW * 2 + 0.02, 0.016, 0.016),
-      goldMat
+    // -- Cased frame: posts + head, with a stop bead standing proud ------
+    const frameW = 0.11, frameD = 0.14, headH = 0.12, beadD = 0.03;
+    for (const sx of [-(openW / 2 + frameW / 2), openW / 2 + frameW / 2]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(frameW, wallHeight, frameD), M.frame);
+      post.position.set(sx, wallHeight / 2, 0);
+      group.add(post);
+      // Stop bead — the proud strip the leaf shuts against. This is what
+      // gives a door a shadow line instead of a printed-on look.
+      const bead = new THREE.Mesh(
+        new THREE.BoxGeometry(0.026, doorHeight + headH, beadD), M.frameBead
+      );
+      bead.position.set(
+        sx - Math.sign(sx) * (frameW / 2 - 0.02),
+        (doorHeight + headH) / 2,
+        frameD / 2 + beadD / 2
+      );
+      group.add(bead);
+    }
+    const head = new THREE.Mesh(new THREE.BoxGeometry(openW + frameW * 2, headH, frameD), M.frame);
+    head.position.set(0, doorHeight + headH / 2, 0);
+    group.add(head);
+    const headBead = new THREE.Mesh(
+      new THREE.BoxGeometry(openW + frameW * 2, 0.026, beadD), M.frameBead
     );
-    lintelTrim.position.set(0, doorHeight + lintelH, frameDepth / 2);
-    group.add(lintelTrim);
+    headBead.position.set(0, doorHeight + 0.013, frameD / 2 + beadD / 2);
+    group.add(headBead);
+
+    if (S.crown) {
+      // Exec openings get a shallow cornice over the head — the only
+      // ornament, and it earns its keep by catching the ceiling wash.
+      const crown = new THREE.Mesh(
+        new THREE.BoxGeometry(openW + frameW * 2 + 0.09, 0.055, frameD + 0.05), M.trim
+      );
+      crown.position.set(0, doorHeight + headH + 0.028, 0.025);
+      group.add(crown);
+    }
+
+    // -- Threshold plate ------------------------------------------------
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(openW + frameW, 0.022, 0.16), M.hardware);
+    sill.position.set(0, 0.014, 0);
+    group.add(sill);
 
     group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+
+    if (S.underGlow) {
+      // Light in the seam: a service door with something lit behind it, read
+      // as the thin bright line at the leaf's foot. Must sit on the ROOM
+      // side of the leaf — behind it (the first pass) it is occluded by the
+      // door it is supposed to be leaking around.
+      const glow = new THREE.Mesh(
+        new THREE.BoxGeometry(openW - 0.09, 0.014, 0.016),
+        new THREE.MeshStandardMaterial({
+          color: 0xffc98a, emissive: 0xff9a2a, emissiveIntensity: 1.1, roughness: 0.7,
+        })
+      );
+      glow.position.set(0, 0.032, thick / 2 + 0.014);
+      glow.castShadow = false;
+      group.add(glow);
+    }
+
     return group;
   }
 
@@ -817,13 +1016,22 @@ export class Room {
         if (c.flag && !flags[c.flag]) continue;
         if (c.notFlag && flags[c.notFlag]) continue;
       }
-      const { type, x, z, rotation, variant } = item;
+      const { type, x, z, rotation } = item;
+      let variant = item.variant;
 
       // Look up factory method
       const factoryFn = Furniture[type];
       if (!factoryFn) {
         console.warn(`[Room] Unknown furniture type: "${type}" — skipping.`);
         continue;
+      }
+
+      // Elevator indicators read the floor you are STANDING ON. Rather than
+      // hand-labelling every shaft in room data (and getting two of them
+      // wrong, which is what happened), derive the label from the canonical
+      // building map. Explicit `variant` in room data still wins.
+      if (type === 'elevatorDoors' && variant === undefined) {
+        variant = floorLabel(BUILDING_MAP[this.data.id]?.floor);
       }
 
       // Create the Three.js object (pass optional variant for multi-variant furniture)

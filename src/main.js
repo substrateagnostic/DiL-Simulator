@@ -9,6 +9,7 @@ import { ExplorationState } from './states/ExplorationState.js';
 import { PostProcessing } from './effects/PostProcessing.js';
 import { updateTweens } from './utils/tween.js';
 import { TouchControls } from './ui/TouchControls.js';
+import { installErrorBoundary } from './core/ErrorBoundary.js';
 import { DEV_MODE } from './utils/constants.js';
 
 class Game {
@@ -20,6 +21,9 @@ class Game {
   }
 
   init() {
+    // Crash net first, so anything that throws during init is caught too
+    installErrorBoundary();
+
     // Initialize core systems
     Engine.init();
     InputManager.init();

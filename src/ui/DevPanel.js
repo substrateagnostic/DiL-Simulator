@@ -71,7 +71,7 @@ export const DEV_PRESETS = [
   },
   {
     key: 'act6',
-    label: 'Act 6 — Rachel Defeated',
+    label: 'Act 6 — Meredith Defeated',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,

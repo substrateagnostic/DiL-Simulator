@@ -15,6 +15,15 @@
 export const PLATE = { w: 28, d: 20 };
 export const TOP_FLOOR = 23;
 
+// How the building writes a floor number on itself — elevator indicators,
+// LED panels, signage. Ground is 'G', basements are 'B1'..'B3'.
+export function floorLabel(floor) {
+  if (floor === undefined || floor === null) return 'G';
+  if (floor === 0) return 'G';
+  if (floor < 0) return 'B' + Math.abs(floor);
+  return String(floor);
+}
+
 export const BUILDING_MAP = {
   parking_garage:      { floor: 0,  offsetX: 7,  offsetZ: 5 },
   reception:           { floor: 1,  offsetX: 7,  offsetZ: 6 },

@@ -4,6 +4,24 @@
 `src/entities/CharacterBuilder.js` + `FacePainter.js`. Companion to
 `art/COMP_CARD.md` and the `.claude/plans/display-case-rebuild.md` L2 addendum.*
 
+> **PRODUCER AMENDMENTS (Alex, 2026-07-29 ~23:30 — LAW, supersedes where
+> in tension):**
+> 1. **HAIR CONTAINMENT:** hair masses must NEVER wrap forward past the
+>    ear line at or below jaw level — "Andrew's hair turns into a beard."
+>    Occiput mass ends ABOVE the collar. Verify from 3/4 AND side views.
+> 2. **NECKS ARE TOO WIDE:** tighten — neck radius ≤ ~0.55 of head radius
+>    at the top, subtle taper; a neck is a column, not a plinth.
+> 3. **FACE TOPOLOGY, not paint-on-egg:** faces are still vertically
+>    squished — "football heads." Faces need actual topology: proper
+>    vertical face proportion (brow/eye/nose/mouth zones per human
+>    thirds), sculpted brow ridge, cheek planes, jaw — geometry carrying
+>    the face, texture carrying the detail.
+> 4. **BODY TOPOLOGY:** lumpiness improved; next bar is real surface
+>    topology on bodies (garment/anatomy planes), not just clean lofts.
+> 5. **img2threejs reference-model pilot: BANKED for Alex's morning
+>    review — do NOT run without his go.** Idea: generate reference
+>    models (at minimum) to guide topology work.
+
 **THE VERDICT (why v6 exists).** Producer's colleagues, cold-read: faces
 *scrunched / scary*, bodies *lumpy*, reads *caricature*. That is the bug.
 **Target = a stylized HUMAN — a Dungeons-of-Hinterberg-band adult in miniature.

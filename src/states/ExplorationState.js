@@ -12,6 +12,7 @@ import { ClientReviewState } from './ClientReviewState.js';
 import { DIALOGS } from '../data/dialogs/index.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { TransitionOverlay } from '../ui/TransitionOverlay.js';
+import { ElevatorRide } from '../ui/ElevatorRide.js';
 import { generateClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
 import { ENEMY_STATS, XP_TABLE } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
@@ -35,7 +36,7 @@ const QUEST_OBJECTIVES = {
   main_act1: {
     0: 'Find your cubicle and settle in',
     1: 'Meet your coworkers',
-    2: 'Report to Ross for your assignment',
+    2: 'Report to Skip for your assignment',
     3: 'Handle the Henderson Trust meetings',
     4: 'Meet Karen Henderson in the Conference Room',
   },
@@ -62,7 +63,7 @@ const QUEST_OBJECTIVES = {
   main_act4: {
     0: 'Investigate the strange occurrences',
     1: 'Rally the team: Talk to Janet, Diane, and the Mysterious Janitor',
-    2: 'Convince Ross to stand up for the department',
+    2: 'Convince Skip to stand up for the department',
     3: 'Access the HR Department',
     4: 'Find the Vault behind the Archive',
     5: 'Retrieve the 1947 charter from the Vault',
@@ -72,12 +73,12 @@ const QUEST_OBJECTIVES = {
     1: 'Defeat the Restructuring Analyst',
     2: 'Defeat the Corporate Lawyer',
     3: 'Access the Board Room',
-    4: 'Confront Rachel in the Board Room',
+    4: 'Confront Meredith in the Board Room',
   },
   main_act6: {
     0: 'Rally the team for the board meeting',
-    1: 'Gather evidence against Rachel',
-    2: 'Get Ross to prepare his speech',
+    1: 'Gather evidence against Meredith',
+    2: 'Get Skip to prepare his speech',
     3: 'Recruit Grandma Henderson as ally',
     4: "Get the Janitor's Rolex",
   },
@@ -261,10 +262,10 @@ export class ExplorationState {
           this._showToast('The Board Room is now accessible from the executive floor.', 'objective');
         }
         if (key === 'act3_complete') {
-          this._showToast('Rachel has locked down the building. Rally Janet, Diane, and the Janitor!', 'objective');
+          this._showToast('Meredith has locked down the building. Rally Janet, Diane, and the Janitor!', 'objective');
         }
         if (key === 'act5_complete') {
-          this._showToast('Rachel is defeated, but the board meets tomorrow. Prepare the team!', 'objective');
+          this._showToast('Meredith is defeated, but the board meets tomorrow. Prepare the team!', 'objective');
         }
         if (key === 'diane_act6_rallied') {
           this._showToast("Diane rallied! Her documents are in the HR filing cabinet.", 'objective');
@@ -744,27 +745,42 @@ export class ExplorationState {
     AudioManager.playSfx('door');
 
     const currentRoom = this.player.currentRoom;
-    // The garage elevator — a real ride: doors close over the screen,
-    // the LED ticks the floors, ding, doors part onto the new room
-    const elevatorUp = currentRoom === 'parking_garage' && targetRoom === 'reception';
-    const elevatorDown = currentRoom === 'reception' && targetRoom === 'parking_garage';
+    // EVERY elevator in the tower is a real ride: doors close over the
+    // screen, the LED ticks the floors it passes, ding, doors part onto the
+    // new room. (A2 unification: this used to fire on the garage shaft only
+    // — the reception↔executive and floor_13 elevators just crossfaded,
+    // which is why two of the three elevators felt like scene changes and
+    // one felt like a building. ElevatorRide owns the link table now.)
+    const ride = ElevatorRide.isElevatorLink(currentRoom, targetRoom)
+      ? ElevatorRide.labelsFor(currentRoom, targetRoom)
+      : null;
     const goingDown = targetRoom === 'archive' || (targetRoom === 'vault' && currentRoom === 'archive');
     const goingUp = currentRoom === 'archive' && targetRoom === 'stairwell';
 
-    if (elevatorUp || elevatorDown) {
-      const { ElevatorRide } = await import('../ui/ElevatorRide.js');
-      this._elevatorRide = ElevatorRide;
+    if (ride) {
+      // With the doors shut the building is the only thing left to look at —
+      // hold the blueprint shell glowing for the length of the trip.
+      Engine.holdBuildingShell(true);
       // The Quiet Floor: late in the story, at night, the elevator
       // sometimes stops where it isn't supposed to. Once per session.
+      // Deliberately still limited to the lobby↔garage shaft even though
+      // every shaft now rides: the executive elevator is ridden during
+      // story-critical beats and a random detour there would read as a bug
+      // rather than a chill. (Widen this pair list if the producer wants
+      // the whole tower to misbehave.)
       const act = this.player.actIndex || 0;
-      if (act >= 5 && !ExplorationState._quietFloorVisited && targetRoom !== 'floor_13' && Math.random() < 0.2) {
+      const quietShaft = (currentRoom === 'parking_garage' && targetRoom === 'reception')
+        || (currentRoom === 'reception' && targetRoom === 'parking_garage');
+      if (quietShaft && act >= 5 && !ExplorationState._quietFloorVisited
+        && Math.random() < 0.2) {
         ExplorationState._quietFloorVisited = true;
-        await ElevatorRide.close(elevatorUp ? ['G', '1', '...', '13'] : ['1', '...', '13'], elevatorUp);
+        const detour = ElevatorRide.labelsFor(currentRoom, 'floor_13');
+        await ElevatorRide.close(detour.labels, detour.goingUp);
         this._showToast('The elevator pauses. The doors open anyway.', 'info');
         targetRoom = 'floor_13';
         spawnX = 8; spawnZ = 8;
       } else {
-        await ElevatorRide.close(elevatorUp ? ['G', '1'] : ['1', 'G'], elevatorUp);
+        await ElevatorRide.close(ride.labels, ride.goingUp);
       }
     } else if (goingDown) {
       await this.transition.wipeDownOut(0.4);
@@ -801,8 +817,12 @@ export class ExplorationState {
       }
     }
 
-    if (elevatorUp || elevatorDown) {
-      await this._elevatorRide.open();
+    if (ride) {
+      // Release the hold first: the shell is already fading out of the new
+      // room as the doors part, so the ride's glow reads as the arrival
+      // pulse rather than snapping off.
+      Engine.holdBuildingShell(false);
+      await ElevatorRide.open();
     } else if (goingDown) {
       await this.transition.wipeDownIn(0.4);
     } else if (goingUp) {
@@ -1044,13 +1064,24 @@ export class ExplorationState {
       this._applyClientToGameData(client);
       setTimeout(() => this._showToast(`${client.name} is waiting for you.`, 'objective'), 600);
     } else {
-      // Whale referral: a signed whale sent a friend (guaranteed whale-tier)
-      const referral = !postGame && this.player.getFlag('whale_referral_pending');
-      if (referral) this.player.setFlag('whale_referral_pending', false);
-      client = generateClient(null, this.player.stats.level, postGame, !!referral);
+      // A queued beneficiary chain outranks a fresh walk-in: the family has to
+      // arrive in order even if the player left reception between members,
+      // otherwise the queue is silently orphaned.
+      const queue = this.player.getFlag('chainQueue');
+      const chainPending = Array.isArray(queue) && queue.length > 0;
+      let intro;
+      if (chainPending) {
+        client = this._getNextClient();
+        intro = `${client.name} is waiting for you.`;
+      } else {
+        // Whale referral: a signed whale sent a friend (guaranteed whale-tier)
+        const referral = !postGame && this.player.getFlag('whale_referral_pending');
+        if (referral) this.player.setFlag('whale_referral_pending', false);
+        client = generateClient(null, this.player.stats.level, postGame, !!referral);
+        intro = referral ? `The referral came through: ${client.name}` : `New client waiting: ${client.name}`;
+      }
       this.player.setFlag('currentClient', JSON.stringify(client));
       this._applyClientToGameData(client);
-      const intro = referral ? `The referral came through: ${client.name}` : `New client waiting: ${client.name}`;
       setTimeout(() => this._showToast(intro, 'objective'), 600);
     }
 
@@ -1097,6 +1128,13 @@ export class ExplorationState {
   _onClientDecision(accepted, clientData, opts = {}) {
     // Track chain state if this client is part of a beneficiary chain
     this._updateChainState(clientData, accepted);
+
+    // Every client actually reviewed — accepted OR declined. This is the counter
+    // the beneficiary-chain gate in _getNextClient() reads; it was never written
+    // before, so the whole authored family-chain feature was dead code.
+    // (portfolioClients counts ACCEPTED clients only and drives achievements +
+    // the quarterly review, so it can't double as "seen".)
+    this.player.setFlag('totalClientsSeen', (this.player.getFlag('totalClientsSeen') || 0) + 1);
 
     if (accepted) {
       this._applyClientAcceptBuff(clientData);
@@ -1197,7 +1235,10 @@ export class ExplorationState {
       return nextChainMember;
     }
 
-    // 20% chance to generate a beneficiary chain (starts at client #4+)
+    // 20% chance to generate a beneficiary chain (starts at client #4+).
+    // totalClientsSeen is incremented in _onClientDecision for every reviewed
+    // client (accepted or declined) — before that write existed this branch was
+    // unreachable and the whole family-chain feature never fired.
     const totalSeen = this.player.getFlag('totalClientsSeen') || 0;
     if (totalSeen >= 4 && Math.random() < 0.2) {
       const chain = generateBeneficiaryChain(this.player.stats.level);
@@ -1248,9 +1289,9 @@ export class ExplorationState {
       this.player.setFlag('portfolio_strong', health.score >= 70);
       this.player.setFlag('portfolio_weak', health.score < 40);
       if (health.score >= 70) {
-        storyNote = '<div class="qr-story-note">Your strong portfolio gives you leverage against Rachel\'s restructuring arguments.</div>';
+        storyNote = '<div class="qr-story-note">Your strong portfolio gives you leverage against Meredith\'s restructuring arguments.</div>';
       } else if (health.score < 40) {
-        storyNote = '<div class="qr-story-note qr-story-warn">Rachel will use your weak portfolio as evidence for restructuring.</div>';
+        storyNote = '<div class="qr-story-note qr-story-warn">Meredith will use your weak portfolio as evidence for restructuring.</div>';
       }
     }
 
@@ -1267,13 +1308,13 @@ export class ExplorationState {
       this.player.stats.atk += 1;
       this.player.stats.def += 1;
       this._updateMiniStats();
-      rewardText = `Ross is impressed. ATK +1, Composure +1. +${xpReward} XP`;
+      rewardText = `Skip is impressed. ATK +1, Composure +1. +${xpReward} XP`;
     } else if (health.score < 40) {
       const anger = Math.min(10, (this.player.getFlag('bossAnger') || 0) + 2);
       this.player.setFlag('bossAnger', anger);
-      rewardText = `Ross is disappointed. Boss Anger +2.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
+      rewardText = `Skip is disappointed. Boss Anger +2.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
     } else {
-      rewardText = `Ross gives a noncommittal nod. Acceptable performance.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
+      rewardText = `Skip gives a noncommittal nod. Acceptable performance.${xpReward > 0 ? ` +${xpReward} XP` : ''}`;
     }
 
     el.innerHTML = `
@@ -1372,7 +1413,7 @@ export class ExplorationState {
       const prev = this.player.getFlag('rossAngerDebuffTotal') || { atk: 0, def: 0 };
       this.player.setFlag('rossAngerDebuffTotal', { atk: prev.atk + actualAtkLoss, def: prev.def + actualDefLoss });
       this._updateMiniStats();
-      this._showToast('Ross: "Your client choices are an embarrassment." (ATK -3, Composure -3)', 'objective');
+      this._showToast('Skip: "Your client choices are an embarrassment." (ATK -3, Composure -3)', 'objective');
     }
   }
 
@@ -1621,6 +1662,15 @@ export class ExplorationState {
       return 'ross_act4';
     }
 
+    // Rachel the trust officer (`rachel_to`, cubicle farm): the first
+    // conversation is always her introduction, whatever act the player finds
+    // her in. Her room entries carry the act-band return dialogs; routing the
+    // intro here keeps those three entries mutually exclusive, so she can
+    // never appear twice on the same chair.
+    if (id === 'rachel_to' && !this.player.getFlag('met_rachel_to') && DIALOGS.rachel_to_intro) {
+      return 'rachel_to_intro';
+    }
+
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
       return npc.dialogId;
     }
@@ -1764,10 +1814,13 @@ export class ExplorationState {
       return 'diane_recruit';
     }
 
-    // Alex from IT — Badge Audit personal mission (post-recruit, before Act 7)
+    // Alex from IT — Badge Audit personal mission (post-recruit; NO act cutoff).
+    // These four ally missions used to expire at act6_complete, so a player who
+    // beelined the Rolex permanently lost four missions, four ability unlocks
+    // and 750 XP. They now stay claimable through Act 7 and post-game, matching
+    // the Janitor's mission (which is has_rolex-gated and always survived).
     if (id === 'alex_it'
         && this.player.getFlag('alex_it_recruited')
-        && !this.player.getFlag('act6_complete')
         && DIALOGS.alex_badge_audit_offer
         && (!this.player.getFlag('alex_badge_audit_complete') || !this.player.getFlag(`read_alex_it_act${act}`))) {
       // While the personal mission is active OR done but the player hasn't seen it yet, prefer it
@@ -1779,10 +1832,9 @@ export class ExplorationState {
       }
     }
 
-    // Isaiah — The Receipts personal mission (post-recruit, before Act 7)
+    // Isaiah — The Receipts personal mission (post-recruit; no act cutoff)
     if (id === 'isaiah'
         && this.player.getFlag('isaiah_recruited')
-        && !this.player.getFlag('act6_complete')
         && DIALOGS.isaiah_receipts_offer
         && !this.player.getFlag('isaiah_receipts_complete')) {
       if (this.player.getFlag('isaiah_has_receipts')) {
@@ -1791,10 +1843,9 @@ export class ExplorationState {
       return 'isaiah_receipts_offer';
     }
 
-    // Diane — The Original Handbook personal mission (post-recruit, before Act 7)
+    // Diane — The Original Handbook personal mission (post-recruit; no act cutoff)
     if (id === 'diane'
         && this.player.getFlag('diane_recruited')
-        && !this.player.getFlag('act6_complete')
         && DIALOGS.diane_handbook_offer
         && !this.player.getFlag('diane_handbook_complete')) {
       if (this.player.getFlag('diane_has_handbook')) {
@@ -1803,10 +1854,9 @@ export class ExplorationState {
       return 'diane_handbook_offer';
     }
 
-    // Janet — The Vacancy personal mission (post-recruit, before Act 7)
+    // Janet — The Vacancy personal mission (post-recruit; no act cutoff)
     if (id === 'janet'
         && this.player.getFlag('janet_recruited')
-        && !this.player.getFlag('act6_complete')
         && DIALOGS.janet_vacancy_offer
         && !this.player.getFlag('janet_vacancy_complete')) {
       if (this.player.getFlag('janet_has_timesheet')) {
@@ -1989,7 +2039,8 @@ export class ExplorationState {
     const names = {
       cubicle_farm: 'Cubicle Farm',
       break_room: 'Break Room',
-      ross_office: "Ross's Office",
+      ross_office: "Skip's Office",
+      ross_office_large: "Skip's Office",   // renovated variant (_resolveRoomId)
       conference_room: 'Conference Room',
       server_room: 'IT Server Room',
       reception: 'Reception',
@@ -2101,7 +2152,7 @@ export class ExplorationState {
         { flag: 'janet_act6_rallied',  label: 'Janet' },
         { flag: 'diane_act6_rallied',  label: 'Diane' },
         { flag: 'intern_act6_rallied', label: 'Intern' },
-        { flag: 'ross_speech_ready',   label: 'Ross' },
+        { flag: 'ross_speech_ready',   label: 'Skip' },
         { flag: 'grandma_ally',        label: 'Grandma Henderson' },
       ];
       const evidenceFlags = [
@@ -2123,10 +2174,10 @@ export class ExplorationState {
 
     // Act 5
     if (this.player.getFlag('rachel_fight_started')) {
-      return 'Defeat Rachel in the Board Room';
+      return 'Defeat Meredith in the Board Room';
     }
     if (this.player.getFlag('chief_restructuring_defeated')) {
-      return 'Confront Rachel in the Board Room';
+      return 'Confront Meredith in the Board Room';
     }
     if (this.player.getFlag('data_lead_defeated')) {
       return 'Clear the executive floor';
@@ -2160,7 +2211,7 @@ export class ExplorationState {
     }
     if (this.player.getFlag('act3_complete')) {
       const rallied = ['janet_rallied', 'diane_rallied', 'ross_rallied', 'janitor_rallied'].filter(f => this.player.getFlag(f)).length;
-      return `Rally the team: Talk to Janet, Diane, Ross & the Janitor (${rallied}/4)`;
+      return `Rally the team: Talk to Janet, Diane, Skip & the Janitor (${rallied}/4)`;
     }
 
     // Act 3
@@ -2210,13 +2261,13 @@ export class ExplorationState {
       return 'Meet Grandma Henderson in the Conference Room';
     }
     if (this.player.getFlag('chad_defeated')) {
-      return "Talk to Ross in his office";
+      return "Talk to Skip in his office";
     }
     if (this.player.getFlag('karen_defeated') && this.player.getFlag('ross_post_karen')) {
       return 'Meet Chad Henderson in the Conference Room';
     }
     if (this.player.getFlag('karen_defeated')) {
-      return "Talk to Ross in his office";
+      return "Talk to Skip in his office";
     }
     if (this.player.getFlag('retry_karen')) {
       const wins = this.player.getFlag('roguelite_tutorial_wins') || 0;
@@ -2241,7 +2292,7 @@ export class ExplorationState {
       if (!this.player.getFlag('met_alex_it')) missing.push('Alex from IT');
       return `Meet your coworkers — find ${missing.join(', ')}`;
     }
-    return 'Report to Ross for your assignment';
+    return 'Report to Skip for your assignment';
   }
 
   _refreshStoryProgress(silent = false) {
@@ -2585,7 +2636,8 @@ export class ExplorationState {
 
     if (onExitTile) {
       this._showInteractPrompt(
-        nearExit.data.targetRoom === 'executive_floor' ? 'Ride elevator' : 'Go through'
+        ElevatorRide.isElevatorLink(this.player.currentRoom, nearExit.data.targetRoom)
+          ? 'Ride elevator' : 'Go through'
       );
     } else if (nearNPC) {
       const dialogId = this._getNpcDialogId(nearNPC);
@@ -2593,7 +2645,8 @@ export class ExplorationState {
       this._showInteractPrompt(`Talk to ${nearNPC.name}`, isRead);
     } else if (this._shouldPrioritizeExit(nearExit, nearInteractable)) {
       this._showInteractPrompt(
-        nearExit.data.targetRoom === 'executive_floor' ? 'Ride elevator' : 'Go through'
+        ElevatorRide.isElevatorLink(this.player.currentRoom, nearExit.data.targetRoom)
+          ? 'Ride elevator' : 'Go through'
       );
     } else if (nearInteractable) {
       const dialogId = this._getInteractableDialogId(nearInteractable.data);

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Materials } from '../effects/MaterialLibrary.js';
+import { ProceduralNormals } from '../effects/ProceduralNormals.js';
 
 // Factory for procedural office furniture
 export const Furniture = {
@@ -1785,60 +1786,142 @@ export const Furniture = {
     return group;
   },
 
-  // Lobby-grade elevator doors with a lit floor indicator. Wall-mounted
-  // (place at the exit tiles, z ~0.12 against a north wall; rotate for
-  // other walls). variant = the floor label shown on the indicator.
+  // THE canonical elevator. One design, every shaft in the building
+  // (A2 unification: there used to be a SECOND `elevatorDoors` further
+  // down this object literal that silently overwrote this one — duplicate
+  // keys don't error — so every elevator in the game shipped as a 1.2-wide
+  // grey slab with no indicator. Never add a second key with this name.)
+  //
+  // Language per COMP_CARD §6: obsidian slabs with light in the seams.
+  // A recessed near-black architrave, two brushed-steel leaves, and ONE
+  // warm sodium seam where they meet — the only saturated thing on the
+  // wall. Wall-mounted: place at the exit tiles (z ~±0.45 against the
+  // wall) and rotate so local +Z faces into the room.
+  // variant = the floor label on the indicator. Room.js derives it from
+  // BUILDING_MAP when the room data doesn't say.
   elevatorDoors(variant) {
     const label = typeof variant === 'string' ? variant : 'G';
     const group = new THREE.Group();
-    const frameMat = Materials.custom(0x6a705e);
-    const doorMat = Materials.custom(0x9aa2a8, { stops: 4 });
 
-    const frame = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.5, 0.18), frameMat);
-    frame.position.y = 1.25;
-    group.add(frame);
-    for (const side of [-1, 1]) {
-      const door = new THREE.Mesh(new THREE.BoxGeometry(0.92, 2.2, 0.06), doorMat);
-      door.position.set(side * 0.49, 1.18, 0.08);
-      group.add(door);
+    // Obsidian jamb + brushed leaves. Local, not cached in MaterialLibrary:
+    // these three are the elevator's own signature.
+    // MaterialLibrary is env-map-free by design, so metalness above ~0.5
+    // has nothing to reflect and collapses to black — the first pass of
+    // this door vanished entirely in the garage (verified in-still). Steel
+    // here is LOW metalness with a clearcoat lobe doing the sheen, which is
+    // the same trick Materials.metal() uses.
+    const jambMat = new THREE.MeshStandardMaterial({ color: 0x15181c, roughness: 0.52, metalness: 0.2 });
+    const nrm = ProceduralNormals.get('metal', { repeat: [2, 5] });
+    // The emissive floor is the stand-in for the ambient reflection real
+    // steel would pick up. Without it the leaves fall to black in the
+    // garage (the toon walls beside them hold a mid-tone because MeshToon
+    // ramps, so the elevator read as a hole in the wall).
+    const brushed = new THREE.MeshPhysicalMaterial({
+      color: 0xc6ccd2, roughness: 0.34, metalness: 0.18,
+      emissive: new THREE.Color(0x4a525a), emissiveIntensity: 0.85,
+    });
+    brushed.clearcoat = 0.5; brushed.clearcoatRoughness = 0.24;
+    brushed.normalMap = nrm;
+    brushed.normalScale = new THREE.Vector2(0.4, 0.4);
+    const brushedDark = new THREE.MeshPhysicalMaterial({
+      color: 0x8a9198, roughness: 0.42, metalness: 0.2,
+      emissive: new THREE.Color(0x2f353b), emissiveIntensity: 0.85,
+    });
+    brushedDark.clearcoat = 0.34; brushedDark.clearcoatRoughness = 0.3;
+    brushedDark.normalMap = nrm;
+    brushedDark.normalScale = new THREE.Vector2(0.35, 0.35);
+
+    // ── Recessed architrave: the shaft mouth reads as a hole cut in the
+    // wall, not a cabinet stuck onto it ──────────────────────────────────
+    const jamb = new THREE.Mesh(new THREE.BoxGeometry(2.34, 2.62, 0.18), jambMat);
+    jamb.position.y = 1.31;
+    group.add(jamb);
+    // Brushed reveal around the mouth (left/right posts + head)
+    for (const sx of [-1.06, 1.06]) {
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.11, 2.5, 0.1), brushedDark);
+      post.position.set(sx, 1.25, 0.06);
+      group.add(post);
     }
-    const seam = new THREE.Mesh(
-      new THREE.BoxGeometry(0.03, 2.2, 0.07),
-      Materials.custom(0x2a2e32)
-    );
-    seam.position.set(0, 1.18, 0.085);
-    group.add(seam);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(2.34, 0.11, 0.1), brushedDark);
+    head.position.set(0, 2.44, 0.06);
+    group.add(head);
 
-    // Floor indicator - lit canvas above the doors
+    // ── The two leaves ──────────────────────────────────────────────────
+    for (const side of [-1, 1]) {
+      const door = new THREE.Mesh(new THREE.BoxGeometry(0.95, 2.3, 0.07), brushed);
+      door.position.set(side * 0.5, 1.19, 0.105);
+      group.add(door);
+      // Two shallow reveals per leaf so the brushed grain has an edge to
+      // catch — flat leaves read as painted card in the iso key.
+      for (const ry of [0.42, 1.96]) {
+        const reveal = new THREE.Mesh(new THREE.BoxGeometry(0.87, 0.018, 0.012), brushedDark);
+        reveal.position.set(side * 0.5, ry, 0.148);
+        group.add(reveal);
+      }
+    }
+
+    // ── The seam: the one warm line on the wall ─────────────────────────
+    const seamRecess = new THREE.Mesh(new THREE.BoxGeometry(0.05, 2.3, 0.06), jambMat);
+    seamRecess.position.set(0, 1.19, 0.1);
+    group.add(seamRecess);
+    const seamLight = new THREE.Mesh(
+      new THREE.BoxGeometry(0.022, 2.22, 0.012),
+      new THREE.MeshStandardMaterial({
+        color: 0xffb066, emissive: 0xff9a2a, emissiveIntensity: 1.5, roughness: 0.6,
+      })
+    );
+    seamLight.position.set(0, 1.19, 0.144);
+    group.add(seamLight);
+
+    // ── Floor indicator, in a brushed housing above the head ────────────
+    const housing = new THREE.Mesh(new THREE.BoxGeometry(0.94, 0.34, 0.1), brushedDark);
+    housing.position.set(0, 2.62, 0.07);
+    group.add(housing);
     const c = document.createElement('canvas');
-    c.width = 64; c.height = 24;
+    c.width = 128; c.height = 48;
     const ctx = c.getContext('2d');
-    ctx.fillStyle = '#16100a';
-    ctx.fillRect(0, 0, 64, 24);
+    ctx.fillStyle = '#0d0906';
+    ctx.fillRect(0, 0, 128, 48);
     ctx.fillStyle = '#ff9a2a';
-    ctx.font = 'bold 16px monospace';
+    ctx.font = 'bold 30px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('▲ ' + label, 32, 18);
+    ctx.textBaseline = 'middle';
+    ctx.fillText('▲ ' + label, 64, 26);
     const tex = new THREE.CanvasTexture(c);
     tex.minFilter = THREE.LinearFilter;
     tex.generateMipmaps = false;
     const indicator = new THREE.Mesh(
-      new THREE.PlaneGeometry(0.7, 0.26),
+      new THREE.PlaneGeometry(0.74, 0.24),
       new THREE.MeshBasicMaterial({ map: tex })
     );
-    indicator.position.set(0, 2.62, 0.1);
+    indicator.position.set(0, 2.62, 0.126);
     group.add(indicator);
 
-    // Call button
-    const button = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.035, 0.035, 0.03, 8),
-      Materials.custom(0xffc04a, { emissive: 0xffc04a, emissiveIntensity: 0.6 })
-    );
-    button.rotation.x = Math.PI / 2;
-    button.position.set(1.28, 1.05, 0.1);
-    group.add(button);
+    // ── Call station: brushed plate, two buttons, up one lit ────────────
+    const plate = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.36, 0.028), brushedDark);
+    plate.position.set(1.3, 1.12, 0.11);
+    group.add(plate);
+    const litMat = Materials.custom(0xffc04a, { emissive: 0xffc04a, emissiveIntensity: 0.8 });
+    const dimMat = Materials.custom(0x3a3d42);
+    for (const [by, mat] of [[1.21, litMat], [1.03, dimMat]]) {
+      const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.033, 0.033, 0.02, 10), mat);
+      btn.rotation.x = Math.PI / 2;
+      btn.position.set(1.3, by, 0.132);
+      group.add(btn);
+    }
 
-    group.traverse(m => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
+    // ── Landing sill: the plate you step over ──────────────────────────
+    const sill = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.026, 0.3), brushedDark);
+    sill.position.set(0, 0.019, 0.14);
+    group.add(sill);
+
+    // Receive, never cast. The whole assembly is flush to the wall, so the
+    // only thing its own head/housing/posts can cast onto is its own door
+    // face — which is exactly what happened on the first pass: the leaves
+    // sat in a self-cast shadow and read as black holes in the garage.
+    group.traverse(m => { if (m.isMesh) { m.castShadow = false; m.receiveShadow = true; } });
+    seamLight.receiveShadow = false;   // it's the light, not a surface
+    indicator.receiveShadow = false;
     return group;
   },
 
@@ -5044,29 +5127,6 @@ export const Furniture = {
     flag.position.set(1.06, 0.4, 0);
     group.add(flag);
     group.traverse(c => { if (c.isMesh) c.castShadow = true; });
-    return group;
-  },
-
-  elevatorDoors() {
-    const group = new THREE.Group();
-    const doorMat = Materials.metal();
-    const leftDoor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 2.2, 0.04),
-      doorMat
-    );
-    leftDoor.position.set(-0.26, 1.1, 0);
-    group.add(leftDoor);
-    const rightDoor = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 2.2, 0.04),
-      doorMat
-    );
-    rightDoor.position.set(0.26, 1.1, 0);
-    group.add(rightDoor);
-    // Frame
-    const frameGeo = new THREE.BoxGeometry(1.2, 2.4, 0.06);
-    const frame = new THREE.Mesh(frameGeo, Materials.custom(0x666666));
-    frame.position.set(0, 1.2, -0.02);
-    group.add(frame);
     return group;
   },
 

@@ -16,11 +16,14 @@ const SPEAKER_COLORS = {
   'Grandma Henderson':  '#8888aa',
   'Compliance Auditor': '#cc2222',
   'Regional Manager':   '#daa520',
-  'Ross':               '#d28b26',
+  'Skip Hartley':       '#d28b26',
   'Diane':              '#5aa6b2',
   'Diane (Front Desk)': '#5aa6b2',
   'Isaiah':             '#b08968',
-  'Rachel':             '#9d4edd',
+  'Meredith Sterling':  '#9d4edd',
+  'Meredith Sterling, SVP': '#9d4edd',
+  // Rachel the trust officer (NPC id `rachel_to`) — no relation to Meredith.
+  'Rachel':             '#7a9ab5',
   'Brand Consultant':   '#ff9f1c',
   'Restructuring Analyst': '#6c757d',
   'Chief of Restructuring': '#495057',
@@ -55,12 +58,16 @@ const PORTRAIT_KEYS = {
   'Grandma Henderson': 'grandma',
   'Compliance Auditor': 'compliance',
   'Regional Manager': 'regional',
-  'Ross': 'ross',
+  // Display names changed; portrait file stems are permanent (ross.png, rachel.png).
+  'Skip Hartley': 'ross',
   'Diane': 'diane',
   'Diane (Front Desk)': 'diane',
   'Isaiah': 'isaiah',
-  'Rachel': 'rachel',
-  'Rachel, SVP': 'rachel',
+  'Meredith Sterling': 'rachel',
+  'Meredith Sterling, SVP': 'rachel',
+  // 'Rachel' (the trust officer, id `rachel_to`) has no portrait yet — an
+  // unmapped speaker simply renders with the portrait hidden. Do NOT point her
+  // at rachel.png; that is Meredith Sterling's face.
   'Brand Consultant': 'brand_consultant',
   'Restructuring Analyst': 'restructuring_analyst',
   'Chief of Restructuring': 'chief_of_restructuring',
@@ -153,9 +160,14 @@ export class DialogBox {
       box-shadow: 0 4px 18px rgba(0,0,0,0.55);
     `;
 
+    // Truth in labelling: Escape (touch: B) only SKIPS the typewriter — it has
+    // never exited the dialog, and aborting mid-tree is deliberately disabled
+    // (DialogState._handleInput, June 11 fix: an aborted tree skipped
+    // set_flag/start_combat while still marking read_<id>). The hint is hidden
+    // once the line finishes typing, because then the key does nothing at all.
     this.escHintEl = document.createElement('div');
     this.escHintEl.className = 'dialog-esc-hint';
-    this.escHintEl.textContent = ('ontouchstart' in window) ? '[B] Exit' : '[ESC] Exit';
+    this.escHintEl.textContent = this._skipHintLabel();
     this.escHintEl.style.cssText = `
       position: absolute; bottom: 6px; left: 10px;
       font-family: 'VT323', monospace; font-size: 14px;
@@ -244,6 +256,10 @@ export class DialogBox {
     // Hide advance indicator
     this.advanceEl.style.display = 'none';
 
+    // Skip hint is only true while the typewriter is running
+    this.escHintEl.textContent = this._skipHintLabel();
+    this.escHintEl.style.display = '';
+
     // Show container
     this.container.style.display = '';
     this.active = true;
@@ -260,6 +276,14 @@ export class DialogBox {
     this.complete = false;
     this.choices = null;
     this.choicesVisible = false;
+  }
+
+  /**
+   * Label for the skip hint. Touch devices press the on-screen B button,
+   * which InputManager maps to 'escape' (TouchControls.ACTION_KEYS).
+   */
+  _skipHintLabel() {
+    return ('ontouchstart' in window) ? '[B] Skip' : '[ESC] Skip';
   }
 
   /**
@@ -285,6 +309,8 @@ export class DialogBox {
    * Called when typewriter finishes. Shows advance indicator or choices.
    */
   _onTextComplete() {
+    // Nothing left to skip — stop advertising the key
+    if (this.escHintEl) this.escHintEl.style.display = 'none';
     if (this.choices && this.choices.length > 0) {
       this._showChoices();
     } else {

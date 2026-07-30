@@ -362,7 +362,7 @@ export const ENEMY_STATS = {
     weakness: 'social', resistance: 'legal',
   },
   ross_boss: {
-    name: 'Ross (Unhinged)',
+    name: 'Skip Hartley (Unhinged)',
     maxHP: 520,
     hp: 520,
     atk: 14,
@@ -464,7 +464,7 @@ export const ENEMY_STATS = {
     weakness: 'audit', resistance: 'legal',
   },
   rachel_boss: {
-    name: 'Rachel, SVP',
+    name: 'Meredith Sterling, SVP',
     maxHP: 720,
     hp: 720,
     atk: 18,
@@ -830,8 +830,8 @@ export const ENEMY_ABILITIES = {
     '"That\'s a great point. Let me push back on that." (Counter ready.)',
   ]},
   hard_pivot: { name: 'Hard Pivot', power: 20, type: 'attack', messages: [
-    'Ross PIVOTS — and drives his elbow straight into your credibility!',
-    '"We\'re going in a different direction." Ross lunges!',
+    'Skip PIVOTS — and drives his elbow straight into your credibility!',
+    '"We\'re going in a different direction." Skip lunges!',
     '"Let me be direct with you." He is, unfortunately, very direct.',
     '"I\'m going to need to push back on that." He does. Physically.',
   ]},
@@ -992,11 +992,11 @@ export const ENEMY_ABILITIES = {
   strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', messages: [
     '"This department is pivoting. You\'re either on the bus or under it."',
     '"We\'re going in a new direction. You\'re not invited."',
-    '"Strategic realignment requires... sacrifices." Rachel strikes!',
+    '"Strategic realignment requires... sacrifices." Meredith strikes!',
   ]},
   performance_review: { name: 'Performance Review', power: 0, type: 'debuff', debuff: { atk: -4, def: -4 }, duration: 1, messages: [
-    'Rachel reads your performance review aloud. Every word is a scalpel.',
-    '"Let me share some \'constructive feedback.\'" Rachel\'s smile doesn\'t reach her eyes.',
+    'Meredith reads your performance review aloud. Every word is a scalpel.',
+    '"Let me share some \'constructive feedback.\'" Meredith\'s smile doesn\'t reach her eyes.',
     '"I\'ve prepared a 360-degree assessment. It\'s mostly degrees of disappointment."',
   ]},
   restructure_threat: { name: 'Restructure Threat', power: 16, type: 'dot', duration: 3, messages: [
@@ -1005,13 +1005,13 @@ export const ENEMY_ABILITIES = {
     '"I have a meeting with the board tomorrow. About you." Dread sets in.',
   ]},
   hostile_takeover: { name: 'Hostile Takeover', power: 30, type: 'attack', messages: [
-    'Rachel executes a hostile takeover of your composure!',
-    '"This isn\'t personal. It\'s structural." Rachel\'s attack feels VERY personal.',
-    'Rachel presents a PowerPoint titled "Why You\'re Wrong." It has 30 slides.',
+    'Meredith executes a hostile takeover of your composure!',
+    '"This isn\'t personal. It\'s structural." Meredith\'s attack feels VERY personal.',
+    'Meredith presents a PowerPoint titled "Why You\'re Wrong." It has 30 slides.',
   ]},
   board_resolution: { name: 'Board Resolution', power: 0, type: 'heal', healAmount: 40, messages: [
-    'Rachel invokes a board resolution. The corporate hierarchy reinforces her.',
-    '"The board has approved my proposal." Rachel\'s power grows.',
+    'Meredith invokes a board resolution. The corporate hierarchy reinforces her.',
+    '"The board has approved my proposal." Meredith\'s power grows.',
   ]},
   golden_handcuffs: { name: 'Golden Handcuffs', power: 0, type: 'stun', duration: 1, messages: [
     '"Your compensation package includes a non-compete. You can\'t leave. Ever."',

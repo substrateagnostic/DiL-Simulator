@@ -6,7 +6,7 @@ export const QUESTS = {
     stages: [
       { id: 0, objective: 'Find your cubicle and settle in' },
       { id: 1, objective: 'Meet your coworkers' },
-      { id: 2, objective: 'Report to Ross for your assignment' },
+      { id: 2, objective: 'Report to Skip for your assignment' },
       { id: 3, objective: 'Handle the Henderson Trust meetings' },
       { id: 4, objective: 'Meet Karen Henderson in the Conference Room' },
     ],
@@ -46,7 +46,7 @@ export const QUESTS = {
     stages: [
       { id: 0, objective: 'Investigate the strange occurrences' },
       { id: 1, objective: 'Rally the team: Talk to Janet, Diane, and the Mysterious Janitor' },
-      { id: 2, objective: 'Convince Ross to stand up for the department' },
+      { id: 2, objective: 'Convince Skip to stand up for the department' },
       { id: 3, objective: 'Access the HR Department' },
       { id: 4, objective: 'Find the Vault behind the Archive' },
       { id: 5, objective: 'Retrieve the 1947 charter from the Vault' },
@@ -60,7 +60,7 @@ export const QUESTS = {
       { id: 1, objective: 'Defeat the Restructuring Analyst' },
       { id: 2, objective: 'Defeat the Corporate Lawyer' },
       { id: 3, objective: 'Access the Board Room' },
-      { id: 4, objective: 'Confront Rachel in the Board Room' },
+      { id: 4, objective: 'Confront Meredith in the Board Room' },
     ],
   },
   main_act6: {
@@ -68,8 +68,8 @@ export const QUESTS = {
     name: 'Fiduciary Uprising',
     stages: [
       { id: 0, objective: 'Rally the team for the board meeting' },
-      { id: 1, objective: 'Gather evidence against Rachel' },
-      { id: 2, objective: 'Get Ross to prepare his speech' },
+      { id: 1, objective: 'Gather evidence against Meredith' },
+      { id: 2, objective: 'Get Skip to prepare his speech' },
       { id: 3, objective: 'Recruit Grandma Henderson as ally' },
       { id: 4, objective: 'Get the Janitor\'s Rolex' },
     ],

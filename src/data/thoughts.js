@@ -22,6 +22,14 @@ export const ROOM_THOUGHTS = {
     "Seven leadership books. A motivational calendar. A stress ball shaped like a dollar sign. This explains everything.",
     "There's a family photo on his desk. He looks... happy. Human, even.",
   ],
+  // The renovated corner office loads as its own room id (_resolveRoomId), so it
+  // needs its own key — otherwise buying the renovation silently deletes the
+  // room's inner monologue.
+  ross_office_large: [
+    "The office got bigger. Same man, more square footage. The stress ball has a globe now.",
+    "Real paintings on the wall. He kept the motivational posters too — moved them behind the door where clients won't see them.",
+    "There's a family photo on his desk. Bigger frame. Same photo.",
+  ],
   server_room: [
     "The hum of a thousand transactions. Each one a promise kept or broken.",
     "It's cold in here. The servers don't care about comfort. Neither does the building.",
@@ -81,8 +89,8 @@ export const STORY_THOUGHTS = {
   act2_complete: "The lights flickered. The building noticed. I noticed the building noticing.",
   has_charter: "This piece of paper is seventy-seven years old and it has more integrity than the entire C-suite.",
   has_rolex: "The Janitor's watch hums against my palm. It's not telling time. It's telling me something else entirely.",
-  act5_complete: "Rachel is gone but the building is still humming. There's something upstairs. Something that thinks trust is a bug, not a feature.",
-  ross_speech_ready: "Ross is going to be sincere. In public. The apocalypse has officially begun.",
+  act5_complete: "Meredith is gone but the building is still humming. There's something upstairs. Something that thinks trust is a bug, not a feature.",
+  ross_speech_ready: "Skip is going to be sincere. In public. The apocalypse has officially begun.",
   grandma_ally: "Grandma Henderson brought cookies to a corporate restructuring. This is either the bravest or the most Midwestern thing I've ever seen.",
   algorithm_defeated: "I told a computer that trust matters. And I meant it. And it broke.",
 };

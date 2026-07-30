@@ -13,7 +13,7 @@ All quests, objectives, and rewards.
 |---|-----------|
 | 1 | Find your cubicle and settle in |
 | 2 | Meet your coworkers |
-| 3 | Report to Ross for your assignment |
+| 3 | Report to Skip for your assignment |
 | 4 | Handle the Henderson Trust meetings |
 | 5 | Meet Karen Henderson in the Conference Room |
 
@@ -58,7 +58,7 @@ All quests, objectives, and rewards.
 |-------|----|-------|----|
 | Compliance Auditor | **150 XP** + Stress Ball (restores 60 Patience) + full heal | Can flee: no | — |
 | Regional Manager | **200 XP** | Can flee: no | 500 |
-| *(Secret ending)* Ross | **200 XP** | Can flee: no | — |
+| *(Secret ending)* Skip Hartley | **200 XP** | Can flee: no | — |
 
 ---
 
@@ -88,7 +88,7 @@ All quests, objectives, and rewards.
 |---|-----------|
 | 1 | Investigate the strange occurrences |
 | 2 | Rally the team: Talk to Janet, Diane, and the Mysterious Janitor |
-| 3 | Convince Ross to stand up for the department |
+| 3 | Convince Skip to stand up for the department |
 | 4 | Access the HR Department |
 | 5 | Find the Vault behind the Archive |
 | 6 | Retrieve the 1947 charter from the Vault |
@@ -106,7 +106,7 @@ All quests, objectives, and rewards.
 | 2 | Defeat the Restructuring Analyst |
 | 3 | Defeat the Corporate Lawyer |
 | 4 | Access the Board Room |
-| 5 | Confront Rachel in the Board Room |
+| 5 | Confront Meredith in the Board Room |
 
 **Combat rewards** (in order):
 | Enemy | XP | HP | Notes |
@@ -125,15 +125,15 @@ All quests, objectives, and rewards.
 | # | Objective |
 |---|-----------|
 | 1 | Rally the team for the board meeting |
-| 2 | Gather evidence against Rachel |
-| 3 | Get Ross to prepare his speech |
+| 2 | Gather evidence against Meredith |
+| 3 | Get Skip to prepare his speech |
 | 4 | Recruit Grandma Henderson as ally |
 | 5 | Get the Janitor's Rolex |
 
 **Combat reward:**
 | Boss | XP | Notes |
 |------|----|-------|
-| Rachel (Board Room) | **300 XP** | Can flee: no |
+| Meredith Sterling (Board Room) | **300 XP** | Can flee: no |
 
 ---
 
@@ -309,7 +309,7 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 ### The Printer from Hell
 *Something is wrong with the office printer. More wrong than usual.*
 
-> **Unlocks after:** Speaking to Ross and receiving the Henderson briefing (`briefing_complete`).
+> **Unlocks after:** Speaking to Skip and receiving the Henderson briefing (`briefing_complete`).
 
 | Step | What to do |
 |------|-----------|
@@ -336,7 +336,7 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 
 ## Motivational Poster Quests
 
-> **Unlocked after:** Lose to Karen for the first time. Ross mentions the posters in his roguelite tutorial speech.
+> **Unlocked after:** Lose to Karen for the first time. Skip mentions the posters in his roguelite tutorial speech.
 
 One-time interactables — find the poster, read it, gain the reward. Each can only be claimed once. There are **18 unique posters** hidden across all rooms.
 

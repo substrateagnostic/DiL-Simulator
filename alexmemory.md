@@ -4,7 +4,29 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
-## NEEDS YOU (current)
+## NEEDS YOU (current) — MORNING GATE BOARD (night shift running)
+
+- **Wave 5 FINAL committed (cabc1de):** Grandma is human (sent you the
+  still). Critics: "the lumpy toddler is dead, the scrunch is dead."
+  Karen's last mile rides in Run A's K-lane.
+- **RUN A LAUNCHED (~23:20):** renames (Meredith Sterling / Skip Hartley,
+  display-only per save-safety ledger) · Rachel wired per the 4.6 draft
+  (playtest her at her cubicle desk, acts 1–3 — YOUR REDLINE PASS) ·
+  K-lane (Karen neck/portrait-bob/pearls, Chad gym-V, Grandma hunch+cane
+  back) · elevators unified + BuildingShell intentional pulse · XS
+  live-site fixes (og.png!, error boundary, ESC label, dead gates) ·
+  Isaiah portraits via codex imagegen (textual spec only).
+- **Your 23:30 character notes → CHARACTER_BIBLE amendments (law now):**
+  hair containment (no hair-beards), necks narrowed, face TOPOLOGY not
+  paint-on-egg (football heads), body topology next bar. Run A's critics
+  inherit via the bible; anything they can't close spawns a focused
+  topology wave (K2) for your morning.
+- **GATES BANKED FOR YOU (answer when awake):**
+  (0) **img2threejs reference-model pilot** — your idea, banked per your
+  word: go/no-go in the morning; (1) playtest Rachel +
+  redline; (2) Isaiah portrait approval (style-match check); (3) og.png
+  approval before it ships on the live site (it IS on display-case only,
+  not main — safe); (4) next: Run B perf (my go unless you object).
 
 - **WHAT'S-MISSING PROPOSALS READY (07-29):**
   `.claude/plans/proposals-whats-missing.md` — 24 ranked, nothing

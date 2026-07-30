@@ -174,7 +174,7 @@ export const VOICE_ACTIONS = {
   charter_read: {
     voice: 'the_charter',
     name: 'Read the 1947 Charter Aloud',
-    description: 'Quote the founding clause to the entire room. Devastating against Rachel-aligned targets.',
+    description: 'Quote the founding clause to the entire room. Devastating against Meredith-aligned targets.',
     quote: 'Section 1, Paragraph B: No reorganization, restructuring, or rebranding of the institution shall release the trustee from this duty. The duty survives the institution.',
     needsTarget: true,
     effect: (engine, targetIndex) => {

@@ -22,7 +22,7 @@ export const CHARACTER_CONFIGS = {
   },
   ross: {
     tone: 'silly',
-    name: 'Ross',
+    name: 'Skip Hartley',
     bodyColor: COLORS.POLO_GREEN,
     pantsColor: COLORS.KHAKI,
     shirtColor: null,
@@ -73,8 +73,15 @@ export const CHARACTER_CONFIGS = {
     skinColor: COLORS.SKIN,
     hairColor: 0x5a3f28,   // warm brown to match the portrait (was near-black)
     hairStyle: 'short',
-    accessories: ['name_tag'],
+    // LAW 7 #8 wants clear glasses; the portrait's white ID tag is the other
+    // signature. Both were missing from the 3D pass.
+    accessories: ['name_tag', 'glasses'],
     widthScale: 1.10, heightScale: 0.92, headScale: 1.05,
+    // THE HUNCHED-IN SILHOUETTE. His spine and shoulders were as erect and square
+    // as Andrew's, so he read as a composed junior associate rather than the
+    // portrait's terrified intern. hunch 0→0.15 (forward spine), headPitch 0.14
+    // (≈8° cervical curl), shoulderLift 0.02 (shoulders in AND up).
+    hunch: 0.15, headPitch: 0.14, shoulderLift: 0.02, shoulderScale: 0.90,
     neckScale: 0.68,       // slight timid teenager — a slim neck, not jaw-wide
     // Portrait has NO glasses and warm-brown hair; the raised 'short' hairline now
     // shows a strip of forehead so fringe / brow / eyes still read as three bands.
@@ -119,11 +126,22 @@ export const CHARACTER_CONFIGS = {
     tieColor: null,
     skinColor: 0xf0c0a0,
     hairColor: 0xe8d7ae,   // PLATINUM blonde (hair texture no longer darkens 2 stops)
-    hairStyle: 'karen',
-    accessories: ['purse'],
-    hunch: 0.06, headScale: 1.05, neckScale: 0.92,
+    hairStreakColor: 0xfcf7ea,  // the portrait's pale streak on the long sweep
+    hairUnderColor: 0x9a7f4e,   // producer ruling: platinum bob, DARK underlayer
+    hairStyle: 'karen',    // → 'bob_asym': side-parted asymmetric sweep
+    // Identity per the canonical portrait (round-2 gate): pearl studs + the gold
+    // lapel brooch, not just "palette + one prop".
+    accessories: ['purse', 'pearl_earrings', 'gold_brooch'],
+    hunch: 0.06, headScale: 1.05,
+    // THE NECK (producer: "too much neck and none at all"). A narrower column
+    // (0.92→0.76) plus 0.024 of extra length gives a clear, correctly-proportioned
+    // lit taper between jaw and collar instead of a short wide skin slab.
+    neckScale: 0.76, neckExtra: 0.046,
+    // The pink blazer used to terminate exactly at the leg-split Y with zero hem
+    // relief — a pink leotard over leggings. Now a real hem 0.07 below the hip.
+    jacketHem: 0.07, necklineWide: true,
     // v5 face/proportion fields — bold DARK brows + red lip per the portrait
-    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.88, chin: 0.94, lipColor: 0xc83a52, browColor: 0x3e2f20, headForward: 0.03,
+    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.88, chin: 0.94, lipColor: 0xc83a52, browColor: 0x3e2f20, headForward: 0.02,
   },
   chad: {
     tone: 'silly',
@@ -134,22 +152,28 @@ export const CHARACTER_CONFIGS = {
     tieColor: null,
     skinColor: 0xd99a70,   // gym tan
     hairColor: 0xa88a4e,   // blonde quiff (bible 0x8a6a38, lifted for the dark venue)
-    hairStyle: 'short',    // blonde hair under the backwards cap (portrait signature)
+    hairStyle: 'quiff',    // real forward volume under the backwards cap
     accessories: ['protein_shake', 'gold_chain', 'backwards_cap'],
     belt: true,
+    // The polo hem used to dip ~0.06 BELOW the belt with khaki thighs starting
+    // separately underneath — briefs-over-pants. The shell now ends AT the
+    // waistband and a real trouser rise owns the pelvis.
+    trouserRise: 0.10, jacketHem: -0.098,
+    muscular: true,        // deltoid/bicep swell lives in the ARM loft (LAW 2)
     lapels: false,         // a POLO, not a blazer — kill the rectangular pec-slab lapels
     polo: true,            // knit collar + placket, so the garment CLASS reads as a polo
     shortSleeve: true,     // red polo w/ BARE muscular forearms (was red long sleeves)
-    beard: 'stubble', beardColor: 0x6a5236, // light stubble per the portrait
-    // Shoulders capped near LAW 1's 2.0 head-widths: widthScale 1.35→1.2 and
-    // shoulderScale 1.25→1.12 pull the flat coat-hanger shelf into a rounded V.
-    // Round-3: widthScale scales the ARM radius too, so 1.2 pushed total span to
-    // 2.3–2.4 head-widths. 1.06 + a stronger shoulderScale keeps the athletic V
-    // while landing inside LAW 1's 2.0 cap.
+    beard: 'stubble', beardColor: 0x55452c, // portrait stubble (deeper than 0x6a5236)
     widthScale: 1.06, heightScale: 1.06, headScale: 1.0,
-    // v5 face/proportion fields — broad jaw, jutting chin
-    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.08, browColor: 0x4a3720,
-    shoulderScale: 1.22, waistScale: 0.80, neckScale: 1.08,
+    // v5 face/proportion fields. Round-4: chin 1.08→1.00 and jaw 0.98→0.94 —
+    // the nose-to-chin span measured ~45% of the skull, outside LAW 4's ±15% band
+    // ("shorten the jaw shell ~8%"). The eye line rises back toward 50% with it.
+    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.94, chin: 1.00, browColor: 0x4a3720,
+    // Round-4 — THE GYM-BRO V. His shoulder line was congruent with the Intern's
+    // (~2.3 head-widths on both). shoulderScale 1.22→1.45 against the stronger
+    // broad-response, plus `muscular` arms, lands the deltoid line at ≈2.6
+    // head-widths in ONE loft while waistScale 0.80 holds the waist near 1.05.
+    shoulderScale: 1.45, waistScale: 0.80, neckScale: 1.08,
   },
   grandma: {
     name: 'Grandma Henderson',
@@ -159,9 +183,16 @@ export const CHARACTER_CONFIGS = {
     tieColor: null,
     skinColor: 0xe6c2a6,
     hairColor: COLORS.HAIR_WHITE,
-    hairStyle: 'shawl',
-    accessories: ['cane'],
-    heightScale: 0.78, hunch: 0.12, widthScale: 1.10, headScale: 1.10,
+    hairStyle: 'shawl',      // → 'bun_soft': top bun over a FULL skin head
+    // Signature kit per the canonical portrait (round-2 gate): the shawl drape,
+    // the cameo at the throat, the cane. Without these the flat periwinkle
+    // jumpsuit read institutional-inmate rather than warm knitter.
+    accessories: ['cane', 'shawl', 'cameo_brooch'],
+    shawlColor: 0xa79fc6,
+    // Producer ruling: she may stay a touch petite (~5.5–6 heads) but her FACE
+    // must go fully human. heightScale 0.78 measured ≈0.86 of Karen, so the extra
+    // 12% comes out of the LEGS (legScale) — the torso/head keep their mass.
+    heightScale: 0.80, legScale: 0.86, hunch: 0.12, widthScale: 1.10, headScale: 1.10,
     // v5 face/proportion fields — elderly read
     gender: 'f', age: 'old', eyeColor: 0x4a3a2a, jaw: 0.92, glasses: 'reading',
     lipColor: 0xb0645c, browColor: 0x8a8078,
@@ -196,7 +227,7 @@ export const CHARACTER_CONFIGS = {
     gender: 'm', eyeColor: 0x4a3828, jaw: 0.90, chin: 1.05,
   },
   ross_boss: {
-    name: 'Ross (Unhinged)',
+    name: 'Skip Hartley (Unhinged)',
     bodyColor: 0x2a4a2a, // Dark power polo
     pantsColor: COLORS.KHAKI,
     shirtColor: null,
@@ -210,7 +241,7 @@ export const CHARACTER_CONFIGS = {
   },
   rachel: {
     tone: 'scary',
-    name: 'Rachel',
+    name: 'Meredith Sterling',
     bodyColor: 0x1a1a3a, // Navy power suit
     pantsColor: 0x1a1a3a,
     shirtColor: COLORS.SHIRT_WHITE,
@@ -224,18 +255,42 @@ export const CHARACTER_CONFIGS = {
     // the human band 0.85; her severity lives in the tall/narrow silhouette)
     gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.85, chin: 1.02,
   },
+  // Rachel — trust officer in the cubicle farm. NOT Meredith Sterling above
+  // (whose internal ids are `rachel` / `rachel_boss`). Quiet, warm, first one in.
+  // Draft field mapping: the draft labelled 0xf0d6b0 "fair skin" and 0x7a9ab5
+  // "soft blue blouse". In this builder `bodyColor` IS the torso garment and
+  // `skinColor` is skin, so the two values are assigned by intent, not by the
+  // field names in the draft.
+  rachel_to: {
+    tone: 'warm',
+    name: 'Rachel',
+    bodyColor: 0x7a9ab5,   // soft blue blouse — not corporate-severe, not casual
+    pantsColor: 0x3a3a5a,  // navy trousers
+    shirtColor: null,      // blouse only; no jacket-over-shirt collar wedge
+    tieColor: null,
+    skinColor: 0xf0d6b0,   // fair skin
+    hairColor: 0xd4b87a,   // long blonde
+    hairStyle: 'long',     // lane K adds the sculpt; resolves to 'short' until then
+    shoeColor: 0x3a2a1a,
+    // face — warm, unperformed; hazel-green eyes rather than steel
+    gender: 'f', eyeColor: 0x6a8a5a, jaw: 1.0, chin: 1.0,
+  },
   isaiah: {
     name: 'Isaiah',
     bodyColor: 0x3a5a8a, // Blue button-down
     pantsColor: 0x2a2a3a,
     shirtColor: null,
     tieColor: null,
-    skinColor: COLORS.SKIN_DARK,
-    hairColor: COLORS.HAIR_DARK,
+    // v6 round-5 — Hispanic redo per the producer: warm medium-tan skin and
+    // near-black hair with a warm cast (COLORS.SKIN_DARK/HAIR_DARK read as the
+    // Janitor's/Diane's deep tone, which is not this character). His dignity stays
+    // in the stance and the level, unhurried face — nothing else changes.
+    skinColor: 0xd9a173,
+    hairColor: 0x2b1d12,
     hairStyle: 'short',
     accessories: ['glasses'],
     // v5 face — calm balanced Stoic, deep-brown eyes
-    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.84, chin: 1.0,
+    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.84, chin: 1.0, browColor: 0x241708,
   },
   hr_rep: {
     name: 'HR Representative',
@@ -376,7 +431,7 @@ export const CHARACTER_CONFIGS = {
   },
   rachel_boss: {
     tone: 'scary',
-    name: 'Rachel, SVP',
+    name: 'Meredith Sterling, SVP',
     bodyColor: 0x1a1a3a, // navy power suit
     pantsColor: 0x1a1a3a,
     shirtColor: COLORS.SHIRT_WHITE,

@@ -38,7 +38,7 @@ After defeating The Algorithm, a **Renovations** tab appears in the Supply Shop.
 | `renovation_marble_counter` | Reception | Marble Reception Counter | Premium planters and stonework |
 | `renovation_lobby_sculpture` | Reception | Lobby Sculptures | Commissioned bronze pieces |
 | `renovation_projection_wall` | Conference Room | Smart Projection Wall | Full AV display wall |
-| `renovation_corner_office` | Ross's Office | Corner Office Renovation | Grand paintings and executive furnishings |
+| `renovation_corner_office` | Skip's Office | Corner Office Renovation | Grand paintings and executive furnishings |
 | `renovation_trophy_wall` | The Board Room | Victory Trophy Wall | Trophy cases, stock ticker, whiskey wall |
 | `renovation_penthouse` | The Penthouse | Executive Suite Upgrade | **10M AUM** — unlocks three wing rooms: The Reef & Reel, Analytics Suite, Private Lounge |
 
@@ -76,11 +76,11 @@ Achievements are tracked across all saves and viewable in the Pause Menu → Ach
 |------|------|---------------|
 | ⚔ | First Blood | Win any combat |
 | 🏆 | Family Meeting Over | Defeat all three Hendersons |
-| 📎 | First Day Jitters | Complete Act 1 — receive your assignment from Ross |
+| 📎 | First Day Jitters | Complete Act 1 — receive your assignment from Skip |
 | ⚖ | The Bill Comes Due | Complete Act 2 — survive the Executive Floor reckoning |
 | 🗂 | Follow the Money | Complete Act 3 — uncover the truth in the Archive |
 | 📜 | The Building Has Spoken | Complete Act 4 — retrieve the 1947 charter from the Vault |
-| 🏢 | Hostile Takeover Blocked | Complete Act 5 — defeat Rachel and drive out the restructuring team |
+| 🏢 | Hostile Takeover Blocked | Complete Act 5 — defeat Meredith and drive out the restructuring team |
 | 🤝 | United We Stand | Complete Act 6 — rally the team and secure the Janitor's Rolex |
 | 💻 | Trust Issues Resolved | Complete Act 7 — defeat The Algorithm |
 | 🖋 | The Countersignature | Act 6½ — get the charter certified by the Recorder's living deputy |
@@ -156,7 +156,7 @@ Cosmetics are equipped in the Pause Menu → Cosmetics tab. Each item occupies o
 |------|-----------|---------------|
 | Intern Badge | +5 HP | Defeat The Intern (Act 1 tutorial) |
 | Compliance Pin | +2 DEF | Defeat the Compliance Auditor (Act 2 Finale) |
-| Corner Office Key | +2 ATK, +2 DEF | Defeat Ross (Act 2 secret ending only) |
+| Corner Office Key | +2 ATK, +2 DEF | Defeat Skip Hartley (Act 2 secret ending only) |
 
 ### Accessories
 

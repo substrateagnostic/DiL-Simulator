@@ -182,7 +182,23 @@ class EngineClass {
     import('../effects/BuildingShell.js').then(({ BuildingShell }) => {
       this.buildingShell = new BuildingShell(this.scene);
       if (this._pendingShellRoom) this.buildingShell.buildFor(this._pendingShellRoom);
+      if (this._pendingShellHold) this.buildingShell.setHold(true);
     });
+  }
+
+  // ── Building shell pulse ────────────────────────────────────────────────
+  // The shell is an event, not a backdrop: it fades in / holds / fades out
+  // on room entry (BuildingShell.buildFor fires that automatically). These
+  // are for the cases that want it on demand — the elevator ride holds it
+  // glowing for the duration of the trip, and a future pause-map can pin it
+  // open. Safe to call before the lazy import lands.
+  pulseBuildingShell() {
+    this.buildingShell?.pulse();
+  }
+
+  holdBuildingShell(on) {
+    this._pendingShellHold = !!on;
+    this.buildingShell?.setHold(!!on);
   }
 
   // Story-driven time of day — drives the city backdrop palette + fog
@@ -997,6 +1013,7 @@ class EngineClass {
     }
 
     this.cityBackdrop?.update(dt);
+    this.buildingShell?.update(dt);
     if (this._retroPass) this._retroPass.uniforms.time.value += dt;
 
     // Exterior sleeve mirrors the walk-behind wall fade — the shell

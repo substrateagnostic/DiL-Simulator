@@ -255,6 +255,19 @@ export const ROOMS = {
       { id: 'intern', x: 13, z: 5.8, facing: 0, sitting: true, condition: { flag: 'lunch_thief_complete' } },  // seated at his workstation post-quest (occupied-office read)
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'briefing_complete' } }, // water cooler, paces — hidden once briefing starts
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
+      // Rachel (trust officer, `rachel_to`) — SW pod, the cubicle two bays over
+      // from Andrew's (desk 6,10 / chair 6,10.8), seated facing her monitor.
+      // Present Acts 1-3; gone from act3_complete on, when the sticky note on
+      // her monitor takes over. The three entries are mutually exclusive; her
+      // first-meeting intro is routed in ExplorationState._getDialogId() so an
+      // unmet Rachel can still introduce herself in Act 2 or 3 without a second
+      // NPC instance appearing on the same tile.
+      { id: 'rachel_to', x: 6, z: 10.8, facing: 0, sitting: true,
+        condition: { notFlag: 'briefing_complete' }, dialogId: 'rachel_return_act1' },
+      { id: 'rachel_to', x: 6, z: 10.8, facing: 0, sitting: true,
+        condition: { flag: 'briefing_complete', notFlag: 'act2_complete' }, dialogId: 'rachel_return_act2' },
+      { id: 'rachel_to', x: 6, z: 10.8, facing: 0, sitting: true,
+        condition: { flag: 'act2_complete', notFlag: 'act3_complete' }, dialogId: 'rachel_return_act3' },
     ],
     exits: [
       // NORTH exits -> Alex's Office
@@ -300,6 +313,8 @@ export const ROOMS = {
       { x: 13, z: 10, type: 'poster', dialogId: 'tuesday_sticky_note' },
       // Printer's Soul: ethernet port on the wall near the printer
       { x: 13, z: 2,  type: 'poster', dialogId: 'printer_ethernet_port' },
+      // Rachel's empty desk — sticky note on her monitor once she's gone (Act 4+)
+      { x: 6,  z: 10, type: 'monitor', dialogId: 'rachel_note', condition: { flag: 'act3_complete' } },
     ],
     playerSpawn: { x: 5, z: 12 },
   },
@@ -400,7 +415,7 @@ export const ROOMS = {
   // ----------------------------------------------------------
   ross_office: {
     id: 'ross_office',
-    name: "Ross's Office",
+    name: "Skip's Office",
     width: 8,
     height: 8,
     floorColor: 0x4a6741,  // nicer carpet for the boss
@@ -467,7 +482,7 @@ export const ROOMS = {
   // Loaded automatically instead of ross_office when renovation_corner_office flag is set
   ross_office_large: {
     id: 'ross_office_large',
-    name: "Ross's Office",
+    name: "Skip's Office",
     width: 12,
     height: 10,
     floorColor: 0x2e4a28,
@@ -501,6 +516,19 @@ export const ROOMS = {
       // === East wall — abstract painting + corner bar ===
       { type: 'abstractPainting', x: 10.9, z: 2, rotation: -Math.PI / 2 },
       { type: 'cornerBar',        x: 9,    z: 6 },
+
+      // === North wall — the three motivational posters, kept ===
+      // The renovation buys Skip real art, but he never throws anything away,
+      // so the posters squeeze in between the paintings. These carry
+      // poster_rec_1/2/3 across the room swap; without them the corner-office
+      // renovation DELETED three readable interactables.
+      // Placement rules: north wall (z 0.1, rotation 0) is the camera-facing
+      // wall, so they're actually visible; x sits in the gaps left by the
+      // paintings (oil 1.65–2.35, grand 4.3–5.7, portrait 8.03–8.98) and within
+      // 0.9 of an interactable tile whose z=1 neighbour is walkable.
+      { type: 'motivationalPoster', x: 3.2, z: 0.1, rotation: 0 },   // "FIRST IMPRESSIONS ARE PERMANENT"
+      { type: 'motivationalPoster', x: 6.4, z: 0.1, rotation: 0 },   // "SERVICE IS OUR PROMISE"
+      { type: 'motivationalPoster', x: 9.8, z: 0.1, rotation: 0 },   // "YOUR CLIENT IS NOT A NUMBER"
     ],
     npcs: [
       { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
@@ -519,6 +547,11 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 5, z: 2, type: 'ross_desk', dialogId: 'ross_desk' },
+      // Motivational posters — same three dialogs as the un-renovated office,
+      // each on the wall tile in front of its motivationalPoster mesh above.
+      { x: 3,  z: 0, type: 'poster', dialogId: 'poster_rec_1' },
+      { x: 6,  z: 0, type: 'poster', dialogId: 'poster_rec_2' },
+      { x: 10, z: 0, type: 'poster', dialogId: 'poster_rec_3' },
     ],
     playerSpawn: { x: 5, z: 7 },
   },

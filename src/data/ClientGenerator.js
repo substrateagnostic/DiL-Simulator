@@ -475,6 +475,12 @@ export function generateBeneficiaryChain(playerLevel = 1) {
   // If no chain-eligible types, fall back to any type
   const pool = chainTypes.length >= 3 ? chainTypes : CLIENT_TYPES;
 
+  // One id for the whole family — computed ONCE. Computing it inside the loop
+  // let Date.now() drift between members, which would hand each member its own
+  // chain_* flag key and break the accepted/rejected bookkeeping the modifiers
+  // read (_updateChainState / applyChainModifiers in ExplorationState).
+  const chainId = `chain_${lastName.toLowerCase()}_${Date.now()}`;
+
   const members = [];
   for (let i = 0; i < 3; i++) {
     const client = generateClient(lastName, playerLevel);
@@ -485,7 +491,7 @@ export function generateBeneficiaryChain(playerLevel = 1) {
       client.visualId = typeDef.visualId;
       client.enemyStats.abilities = [...typeDef.abilities];
     }
-    client.chainId = `chain_${lastName.toLowerCase()}_${Date.now()}`;
+    client.chainId = chainId;
     client.chainIndex = i;
     client.chainSize = 3;
     members.push(client);
