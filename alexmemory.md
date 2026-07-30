@@ -4,7 +4,51 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
+## ☀ MORNING REPORT (07-30, paused ~09:10 for the Andrew demo)
+
+**The night:** Run A landed (c506182+8864a75) — Meredith Sterling & Skip
+Hartley everywhere, Rachel at her desk, Karen-as-portrait, canonical
+elevators + blueprint pulse, og.png/error-boundary/save-shim. Run B is
+~90% done (cd91112) — perf harness built (frozen-frame determinism,
+walking diff sheets, LoAF file:line attribution, tier ladder) + fixes
+(shadow-map thrash, Room.dispose VRAM leak, N8AO retune+denoise, MSAA,
+hot paths, garage tear). Two data-critic rounds run; FINAL verdict round
+pending.
+
+**RESUME WHEN BACK (one command, I'll do it — just say "resume"):**
+Run B round-3 resumes from cache via resumeFromRunId wf_d85e785f-0da.
+
+**DEMO KIT for Andrew:** `npm run dev` (fully offline) →
+- New characters: any Henderson fight (`?dev` + F2 → Act presets, or
+  backtick in combat to skip). fight-karen is the showpiece.
+- Rachel: F2 → Act 1 preset → cubicle farm — she's at her desk. (Andrew
+  the character fights back-¾ now, like a proper JRPG lead.)
+- The night city + elevator ride: take any elevator. Blueprint pulses on
+  room entry — that's YOUR feature, evolved.
+- 1998 MODE in settings for the before/after party trick.
+- screenshots/cine/ has the attack-burst contact strips.
+
 ## NEEDS YOU (current) — MORNING GATE BOARD (night shift running)
+
+- **RUN A LANDED (~02:30, commits c506182 + 8864a75, pushed):** Meredith
+  Sterling & Skip Hartley live everywhere (~429 strings, zero ghosts,
+  save-safe) · Rachel wired & at her desk · Karen finally reads as her
+  portrait (neck, asymmetric platinum bob, brooch) · Chad's gym-V
+  measured 2.67 head-widths · elevator mystery root-caused (DUPLICATE
+  elevatorDoors key silently overwriting — one canonical elevator now,
+  ride overlay on all shafts) · blueprint pulse live · og.png +
+  error boundary + save-version shim shipped. NOTE: 6 agents died to API
+  529 overloads mid-run; critics verified the surviving work on disk.
+- **NEW MORNING GATES:**
+  (a) **Countersign a draft deviation:** rachel_return act2/act3 node-0
+  ifTrue retargeted 5→6 — the draft's own value landed on an `end` node
+  so two of Rachel's return lines could never play. Fix is right; needs
+  your countersign since the draft was "approved verbatim."
+  (b) Karen's pearls (~1px) + red lip read only at zoom — accept as
+  subtlety, or ask for one notch louder?
+  (c) Rachel-at-desk is UNVERIFIED on-glass (no act1 shoot fixture
+  exists) — your playtest doubles as verification + redline.
+  (d) Isaiah's new portraits: approve style-match.
 
 - **Wave 5 FINAL committed (cabc1de):** Grandma is human (sent you the
   still). Critics: "the lumpy toddler is dead, the scrunch is dead."
