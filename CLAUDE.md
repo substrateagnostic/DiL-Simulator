@@ -51,7 +51,7 @@ Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?d
 | Act 3 — Hendersons Defeated | + `act2_complete`, all Henderson/Act 2 defeat flags |
 | Act 4 — Archive Evidence Found | + `act3_complete`, `has_archive_evidence` |
 | Act 5 — Charter Recovered | + `act4_complete`, `has_charter`, `janitor_rallied` |
-| Act 6 — Rachel Defeated | + `act5_complete`, full gauntlet defeat flags |
+| Act 6 — Meredith Defeated (id rachel) | + `act5_complete`, full gauntlet defeat flags |
 | Act 7 — Penthouse Unlocked | + `act6_complete`, `has_rolex`, all Act 6 ally flags |
 
 ## Architecture
@@ -229,7 +229,7 @@ Critical flags that are easy to get wrong (not derivable from a single file):
 | `read_janitor_act3` | End of `janitor_act3` dialog | Guards Janitor riddle unlock — riddles only become available after this is set |
 | `has_archive_password` | Compliance crossword (talk to Compliance Auditor at act >= 3) | Gates `archive_terminal` interactable; player must complete crossword first |
 | `janitor_rallied` | `janitor_act4` dialog | Simultaneously sets `vault_accessible`, `hr_accessible`, and `vault_code_1` |
-| `act5_complete` | After Rachel defeated | Starts Act 6; hides archive janitor |
+| `act5_complete` | After Meredith Sterling (id rachel) defeated | Starts Act 6; hides archive janitor |
 | `janet_act6_rallied` | `janet_act6` dialog | Act 6 ally counter — NOT `janet_rallied` |
 | `diane_act6_rallied` | `diane_act6` dialog | Act 6 ally counter |
 | `diane_evidence` | `diane_documents` dialog (HR cabinet at x:14, z:8) | Act 6 evidence counter |

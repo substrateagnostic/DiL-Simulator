@@ -270,7 +270,7 @@ export const CHARACTER_CONFIGS = {
     tieColor: null,
     skinColor: 0xf0d6b0,   // fair skin
     hairColor: 0xd4b87a,   // long blonde
-    hairStyle: 'long',     // lane K adds the sculpt; resolves to 'short' until then
+    hairStyle: 'long',     // long-hair sculpt implemented in CharacterBuilder
     shoeColor: 0x3a2a1a,
     // face — warm, unperformed; hazel-green eyes rather than steel
     gender: 'f', eyeColor: 0x6a8a5a, jaw: 1.0, chin: 1.0,

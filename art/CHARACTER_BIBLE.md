@@ -90,7 +90,7 @@ The scrunch comes from heavy lids + hard socket shadow + a default frown. Strip 
 
 - **Every facial feature stays within ±15% of human-average** proportion. Eyes,
   nose, mouth, jaw, chin all sit inside that band. `jaw`/`chin` dials clamp
-  **0.85–1.15**; audit the outliers (Chad `chin:1.2`→1.15, Rachel `jaw:0.78`→0.85).
+  **0.85–1.15**; audit the outliers (Chad `chin:1.2`→1.15, Meredith/id-rachel `jaw:0.78`→0.85).
   No bug-eyes, no tiny mouth, no lantern jaw.
 - **Archetype is expressed by SILHOUETTE + COSTUME + POSTURE + PALETTE**, never
   by warping the face into a cartoon. A "formidable" character is formidable in
@@ -125,7 +125,7 @@ The scrunch comes from heavy lids + hard socket shadow + a default frown. Strip 
    green polo `0x4a7c59` / khaki `0xc4b078`; comb-over energy, bluetooth earpiece, boss mug.
 6. **janet** (~45, dry, tired-smart) — slim, slight slump, narrow jaw (0.81); mauve
    cardigan `0x8b6e8b` / worn lip `0x9a5a54`; dark bun, wine tumbler, deadpan level brow.
-7. **rachel** (~45 severe exec, cold poise) — **tall, narrow, sharp** (1.08 ht, 0.86
+7. **rachel (display: Meredith Sterling)** (~45 severe exec, cold poise) — **tall, narrow, sharp** (1.08 ht, 0.86
    width), erect; navy suit `0x1a1a3a` / silver bob `0xc0c0c0` / pearls; steel eyes `0x6a7078`, poise in the cut — face still human.
 8. **intern** (~19, timid, slight) — small, oversized suit swallowing the frame,
    hunched-in; gray-blue suit `0x4a4a6a` / brown tie `0x884422`; clear glasses + name tag, face open and young.
