@@ -64,7 +64,7 @@ export class CombatScene {
     // survives the darker key (Clair-Obscur close-up grammar). Base intensities
     // are stored so the cinematic rig can darken the key + spike the rim for
     // power beats and always restore them.
-    const BI = { ambient: 0.30, dir: 0.60, fill: 0.46, eye: 0.27, faceKey: 0.32, rimCyan: 0.66, rimMagenta: 0.60, rimLow: 0.58, hero: 0.34 };
+    const BI = { ambient: 0.30, dir: 0.60, fill: 0.52, eye: 0.30, faceKey: 0.62, rimCyan: 0.62, rimMagenta: 0.56, rimLow: 0.55, hero: 0.40 };
     this._baseIntensity = BI;
 
     const ambient = new THREE.AmbientLight(0xffffff, BI.ambient);
@@ -98,8 +98,8 @@ export class CombatScene {
     // a first-class rig light (base intensity in BI, dimmed in update) so the
     // power-beat darken still owns it and setArenaLighting never clobbers it.
     const faceKey = new THREE.DirectionalLight(0xffdcbe, BI.faceKey);
-    faceKey.position.set(0.8, 4.6, 5.2);
-    faceKey.target.position.set(0.8, 1.5, 1.2);
+    faceKey.position.set(0.6, 3.9, 5.6);
+    faceKey.target.position.set(0.4, 1.35, 0.6);
     this.scene.add(faceKey);
     this.scene.add(faceKey.target);
     this.faceKey = faceKey;
@@ -130,8 +130,8 @@ export class CombatScene {
     // spot lights ONLY the ally area (cone-limited, so it never flattens the
     // back-stage enemy) and BRIGHTENS as the world dims, so the hero stays lit.
     const heroSpot = new THREE.SpotLight(0xfff0e0, BI.hero, 14, Math.PI * 0.20, 0.6, 1.0);
-    heroSpot.position.set(3.4, 4.2, 5.6);
-    heroSpot.target.position.set(2.2, 1.1, 3.4);
+    heroSpot.position.set(2.9, 4.2, 5.4);
+    heroSpot.target.position.set(1.62, 1.0, 2.62);
     this.scene.add(heroSpot);
     this.scene.add(heroSpot.target);
     this.heroSpot = heroSpot;
@@ -375,7 +375,9 @@ export class CombatScene {
       const animator = new CharacterAnimator(group);
       const pos = partyPositions[i];
       group.position.set(pos.x, 0, pos.z);
-      group.scale.setScalar(1.8);
+      // Scale trimmed with the move forward (1.8→1.45): at ~2.4 units from the
+      // lens a 1.8-scale figure is ~2.9 world-units tall and crops its own head.
+      group.scale.setScalar(1.45);
       // Turn to face the enemy centroid, but hold ~30% shy of dead-on (blended
       // toward the stage-left profile). A dead-on turn buries the face toward the
       // BACK stage where the enemy stands, so the reaction-cut camera can only
@@ -391,9 +393,9 @@ export class CombatScene {
       const faceRotY = enemyAngle + (-Math.PI / 2 - enemyAngle) * 0.30;
       group.rotation.y = faceRotY;
       animator.setFacing(faceRotY);
-      this._addContactBounce(group, 1.8);
+      this._addContactBounce(group, 1.45);
       this.scene.add(group);
-      this.allyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: faceRotY, baseScale: 1.8, characterId: id });
+      this.allyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: faceRotY, baseScale: 1.45, characterId: id });
     }
   }
 
@@ -486,12 +488,18 @@ export class CombatScene {
     return out;
   }
 
+  // LAW 6 — the ally must be ON CAMERA, back-3/4, with the lens looking over his
+  // shoulder at the foe. At x 2.2 / z 3.5 he sat ~55° off the 36° half-FOV: every
+  // contact still and rest frame showed the enemy ALONE, first-person, and the
+  // over-the-shoulder composition existed nowhere. Pulled inboard and forward-
+  // right so he occupies the lower-right foreground and reads as the camera's
+  // shoulder. x/(5−z) must stay under ~0.70 or he leaves frame again.
   _allyPositions(count) {
-    if (count <= 1) return [{ x: 2.2, z: 3.5 }];
-    if (count === 2) return [{ x: 1.8, z: 3.4 }, { x: 3.0, z: 4.2 }];
-    if (count === 3) return [{ x: 1.4, z: 3.3 }, { x: 2.6, z: 4.1 }, { x: 3.6, z: 3.5 }];
+    if (count <= 1) return [{ x: 1.62, z: 2.62 }];
+    if (count === 2) return [{ x: 1.34, z: 2.50 }, { x: 2.10, z: 3.20 }];
+    if (count === 3) return [{ x: 1.06, z: 2.42 }, { x: 1.86, z: 3.06 }, { x: 2.50, z: 2.60 }];
     const out = [];
-    for (let i = 0; i < count; i++) out.push({ x: 1.4 + i * 1.0, z: 3.3 + (i % 2) * 0.8 });
+    for (let i = 0; i < count; i++) out.push({ x: 1.06 + i * 0.74, z: 2.42 + (i % 2) * 0.62 });
     return out;
   }
 

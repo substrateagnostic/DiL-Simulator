@@ -248,7 +248,7 @@ export class CharacterAnimator {
         if (!this.group.head.userData.baseY) this.group.head.userData.baseY = baseY;
         this.group.head.position.y = baseY + Math.sin(t * ANIM.IDLE_SPEED + 0.5) * ANIM.IDLE_BOUNCE * 0.7;
       }
-      this._updateFacing();
+      this._updateFacing(dt);
       return;
     }
 
@@ -317,7 +317,7 @@ export class CharacterAnimator {
     // flinching, or holding a signature stance.
     this._applyCombatPose(dt);
 
-    this._updateFacing();
+    this._updateFacing(dt);
   }
 
   // Drive the arms / legs / lean / head from the active gesture or held
@@ -370,12 +370,21 @@ export class CharacterAnimator {
     }
   }
 
-  _updateFacing() {
+  // Producer frame-data note (2026-08-02): "his rotation when changing walk
+  // direction is too slow — he visibly lags his movement vector." The old
+  // per-frame `diff * 0.15` was both frame-rate dependent and far too soft
+  // (~9.7/s → the heading took ~7 frames to close 90%). This is now a
+  // dt-correct exponential ease at TURN_RATE ≈ 2.6× the old responsiveness, so
+  // the body aligns with the movement vector inside ~2–3 frames at 60fps while
+  // keeping a whisper of smoothing (no instant snap).
+  _updateFacing(dt = 1 / 60) {
+    const TURN_RATE = 26.0;                     // 1/s (was ≈9.75 equivalent)
     const targetY = this.facingAngle;
     const currentY = this.group.rotation.y;
     let diff = targetY - currentY;
     while (diff > Math.PI) diff -= Math.PI * 2;
     while (diff < -Math.PI) diff += Math.PI * 2;
-    this.group.rotation.y += diff * 0.15;
+    const k = 1 - Math.exp(-Math.max(0, dt) * TURN_RATE);
+    this.group.rotation.y += diff * Math.min(1, k);
   }
 }

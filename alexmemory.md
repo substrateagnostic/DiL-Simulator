@@ -6,6 +6,17 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ## NEEDS YOU (current)
 
+- **WHAT'S-MISSING PROPOSALS READY (07-29):**
+  `.claude/plans/proposals-whats-missing.md` — 24 ranked, nothing
+  implemented. Headline: content is built; the gap is CONVERGENCE (Board
+  Room scene missing while five arcs point at it; mystery answer never
+  named; Quiet Floor behind a 20% roll). Your per-item go/no-go when
+  ready. Live-site bugs found en route (og.png missing → broken link
+  unfurls; no error boundary) routed to Run A.
+- **Villain renames:** pick from chat — Meredith Sterling / Blair Winters
+  / Donna Prescott / Cassidy Vale · Skip Hartley / Dale Pemberton / Chip
+  Fairbanks / Gary Bloom (mix-and-match welcome).
+
 - **WAVE 5 LANDED AT THE WINDOW (7a31dd9, pushed ~17:55):** the humans
   are HUMAN now — 6.5–7.3 head proportions, sleek lofts, open catchlight
   eyes, no horror lighting, Andrew fights back-¾ to camera. Your portrait
@@ -40,6 +51,54 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 ---
 
 ## LOG
+
+### 2026-07-29 (late) — ALL 24 PROPOSALS CO-SIGNED + THREE STANDING ORDERS
+- **All 24 co-signed** → Run F created (Convergence & Carry). Proposals
+  doc now carries your rulings in its header.
+- **Naming ledger (save-safety, my design, your collision warning):**
+  internal IDs `rachel`/`ross` NEVER change (live saves depend on their
+  flags); display names → **Meredith Sterling** / **Skip Hartley**. New
+  friendly NPC = id `rachel_officer`, display "Rachel." Ledger goes
+  verbatim into every brief touching them.
+- **Opus 4.6 = standing first-pass dialog writer** for all new story
+  content (the homage, extended). Rachel draft in flight now.
+- **Music domain shift (this game only):** agents will COMPOSE — WebAudio
+  leitmotifs, act/combat layers — delivered as auditionable pieces for
+  your approve/veto. Banked with the why: drawdown + soft_landing (+
+  maybe ILL WILL) own your recording time, and "this game is intended to
+  show off LLM's creative potential more than mine."
+
+### 2026-07-29 — THE FIVE-RUN CAMPAIGN (your follow-ups, banked)
+- **BuildingShell:** your blueprint wasn't deleted — critics flagged it
+  noisy, Wave 1 dimmed it 4×, GradePass crushed the rest; code intact.
+  **Your ruling: (c) intentional pulse** — room-entry fade (~1.5s),
+  elevator rides, future pause-screen map. Goes into Run A.
+- **Run order:** A Polish (bugs/elevators/dialog-truth/renames/kind-Rachel
+  /Isaiah redo) → B Performance (flicker/stutter + autonomous harness +
+  Vercel delivery research) → C Gameplay (comps-driven) → D Audio (music
+  stays yours) · E What's-Missing = proposals only, running now.
+- **Research launched (3 agents):** gameplay comps · perf harness +
+  img2threejs · what's-missing. Reports → .claude/plans/.
+- **Kind-Rachel spec (yours):** first in, first out, a little shy, kind,
+  long blonde hair, trust officer. Isaiah redo: when it makes sense (Run
+  A). Platform: browser-first on your Vercel site; packaged split only if
+  perf demands.
+- Villain renames: corny-Americana candidates proposed in chat — your
+  pick pending.
+
+### 2026-07-29 — YOU'RE BACK: PLAYTEST RULINGS + LOOP RESUMED
+- Your playtest notes (frame-data grade, banked into fix-2's brief
+  verbatim): combat pacing good · FPS fine but **flicker + stutter while
+  walking** (→ Run B; suspects: N8AO shimmer under a moving ortho cam,
+  fluorescent flicker over-tuned) · **Andrew's turn rotation too slow** —
+  facing lerp gets 2-3× snap.
+- Rulings: Grandma softened (~5.5–6 heads, face fully human) · Karen goes
+  full portrait bob + neck/jaw junction rebuilt ("terrifying squishy
+  faced blob with both too much neck and none at all" — your words, now
+  the acceptance bar) · **NO MERGE until follow-ups + playtest clear —
+  game is LIVE on the site.**
+- Wave 5 loop resumed from cache: fix-2 live with your notes, round-3
+  verdict follows. Straggler combat.css HUD-legibility commit: 91206ec.
 
 ### 2026-07-27 ~10:10 — WAVE 3.5 COMMITTED (9677007) + WAVE 4 FINALE FLIES
 - Figure finish landed: Karen's "horns" replaced by a continuous scalp

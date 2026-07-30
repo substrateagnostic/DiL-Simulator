@@ -118,12 +118,20 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // an OPEN ALMOND: modest width, WIDER than tall (human), properly spaced at
   // ~one eye-width inter-gap (pupils ~2 eye-widths apart), bright sclera + clear
   // iris + a guaranteed catchlight. Small clean beats big and dark.
-  const eyeY = S * 0.520;
+  // v6 round-3 — LAW 3 metrology. The patch maps texture-V linearly onto the
+  // skull's POLAR angle, so a V value is only meaningful together with the patch
+  // band (makeFacePatch: thetaStart 0.68, thetaLen 1.62) and the skull's
+  // lower-hemisphere compression (makeHead: 0.80). Solved against those:
+  //   eye-line   → 50% of crown→chin      → V 0.480
+  //   nose base  → 68%                    → V 0.702
+  //   mouth      → 79% (mouth→chin ≈ 21%) → V 0.875
+  // Moving any of those three constants requires re-solving these.
+  const eyeY = S * 0.480;
   const eyeDX = S * 0.176;        // pupil ≈ 2 eye-widths apart, gap ≈ one eye-width
   const eyeW = S * 0.100;         // half-width (full eye ≈ 0.20S)
   const eyeH = S * 0.058 * E.openY; // half-height < half-width → relaxed almond
-  const browY = S * 0.430;
-  const noseTipY = S * 0.680;
+  const browY = S * 0.405;        // ≈0.5 eye-heights above the eye (LAW 3)
+  const noseTipY = S * 0.702;
   // Mouth dropped ~15% lower toward the jaw (item 5: "flat line floating high
   // above an enormous blank chin"). Seats the mouth on the lower face so the
   // jaw region reads as anatomy, not Easter Island.
@@ -133,7 +141,11 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // band and read as a blank chin (cast bug). Pulling it up to just under the
   // nose puts it on the brightly-lit, camera-facing front of the face where it
   // survives the squash.
-  const mouthY = S * (old ? 0.836 : 0.808);
+  // mouth→chin lands at ≈21% of skull height (was 33% — "she is all jaw").
+  // Elderly faces sit a hair higher: the hunched head pitch foreshortens their
+  // lower face hardest, so pulling the mouth up keeps it on the lit, camera-
+  // facing front instead of the curved-away underside (grandma's "no mouth").
+  const mouthY = S * (old ? 0.848 : 0.875);
 
   // ── base skin: FLAT fill at exactly skin so the feathered patch edge
   // blends seamlessly into the head skin. Shaping is centered overlays that
@@ -163,9 +175,9 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     ctx.fillRect(0, 0, S, S);
   }
 
-  // cheek warmth / blush
+  // cheek warmth / blush (re-seated between the new eye line and mouth)
   for (const sx of [cx - S * 0.176, cx + S * 0.176]) {
-    const cg = ctx.createRadialGradient(sx, S * 0.63, S * 0.016, sx, S * 0.63, S * 0.14);
+    const cg = ctx.createRadialGradient(sx, S * 0.66, S * 0.016, sx, S * 0.66, S * 0.14);
     cg.addColorStop(0, rgba(female ? 0xd06860 : 0xc07858, female ? 0.24 : 0.16));
     cg.addColorStop(1, rgba(0, 0));
     ctx.fillStyle = cg;
@@ -300,7 +312,19 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     const inner = E.browInner * (E.asym ? (s === E.asym ? 1.4 : 0.3) : 1);
     const outer = E.browOuter * (E.asym ? (s === E.asym ? 1.4 : 0.3) : 1);
     ctx.strokeStyle = browBase;
-    ctx.lineWidth = (female ? 0.023 : 0.027) * S;   // relaxed but legible — a real brow, not a furrowed slab
+    // v6 round-3 — "zero eyebrows" on karen + chad. The stroke was thin enough
+    // that the mip chain at fight framing ate it. Thicker, and drawn twice (a
+    // soft under-pass then the crisp brow) so it survives downsampling.
+    ctx.lineWidth = (female ? 0.030 : 0.034) * S;
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = (female ? 0.042 : 0.046) * S;
+    ctx.beginPath();
+    ctx.moveTo(bx - s * S * 0.062, browY + outer);
+    ctx.quadraticCurveTo(bx - s * S * 0.006, browY - S * 0.016 + (inner + outer) * 0.5, bx + s * S * 0.054, browY + inner);
+    ctx.stroke();
+    ctx.restore();
+    ctx.lineWidth = (female ? 0.030 : 0.034) * S;
     ctx.beginPath();
     // inner end is toward center (+s* -small), outer end away
     ctx.moveTo(bx - s * S * 0.066, browY + outer);
@@ -361,8 +385,8 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     ctx.lineWidth = 0.0032 * S;
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
-      ctx.moveTo(cx - S * 0.156, S * 0.293 + i * S * 0.027);
-      ctx.quadraticCurveTo(cx, S * 0.277 + i * S * 0.027, cx + S * 0.156, S * 0.293 + i * S * 0.027);
+      ctx.moveTo(cx - S * 0.156, S * 0.268 + i * S * 0.026);
+      ctx.quadraticCurveTo(cx, S * 0.252 + i * S * 0.026, cx + S * 0.156, S * 0.268 + i * S * 0.026);
       ctx.stroke();
     }
     for (const s of [-1, 1]) {
@@ -384,9 +408,11 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // ── stubble / beard ──────────────────────────────────────────────
   if (config.beard === 'stubble' || (config.beard === true && config.beardStyle === 'stubble')) {
     const bc = config.beardColor ?? hairC;
-    const spots = [[cx, S * 0.82, S * 0.117], [cx - S * 0.102, S * 0.781, S * 0.082],
-      [cx + S * 0.102, S * 0.781, S * 0.082], [cx - S * 0.152, S * 0.695, S * 0.066],
-      [cx + S * 0.152, S * 0.695, S * 0.066]];
+    // Re-seated against the new mouth line (0.875): jaw/chin band, never up on
+    // the cheekbones.
+    const spots = [[cx, S * 0.905, S * 0.112], [cx - S * 0.102, S * 0.868, S * 0.080],
+      [cx + S * 0.102, S * 0.868, S * 0.080], [cx - S * 0.152, S * 0.792, S * 0.064],
+      [cx + S * 0.152, S * 0.792, S * 0.064]];
     for (const [sx, sy, sr] of spots) {
       const bg = ctx.createRadialGradient(sx, sy, 2, sx, sy, sr);
       bg.addColorStop(0, rgba(bc, 0.2));
@@ -397,11 +423,11 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   } else if (config.beard) {
     ctx.fillStyle = rgba(config.beardColor ?? hairC, 0.88);
     ctx.beginPath();
-    ctx.moveTo(cx - S * 0.172, S * 0.637);
-    ctx.quadraticCurveTo(cx - S * 0.176, S * 0.816, cx, S * 0.875);
-    ctx.quadraticCurveTo(cx + S * 0.176, S * 0.816, cx + S * 0.172, S * 0.637);
-    ctx.quadraticCurveTo(cx + S * 0.086, S * 0.727, cx, S * 0.738);
-    ctx.quadraticCurveTo(cx - S * 0.086, S * 0.727, cx - S * 0.172, S * 0.637);
+    ctx.moveTo(cx - S * 0.172, S * 0.700);
+    ctx.quadraticCurveTo(cx - S * 0.176, S * 0.900, cx, S * 0.955);
+    ctx.quadraticCurveTo(cx + S * 0.176, S * 0.900, cx + S * 0.172, S * 0.700);
+    ctx.quadraticCurveTo(cx + S * 0.086, S * 0.800, cx, S * 0.812);
+    ctx.quadraticCurveTo(cx - S * 0.086, S * 0.800, cx - S * 0.172, S * 0.700);
     ctx.fill();
   }
 
@@ -428,7 +454,10 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // ~65% opaque, which is exactly the shield-shaped seam / jaw goatee-shadow
   // the addendum called out. The vertical squash pulls the fade in above and
   // below so the chin AND hairline edges dissolve into the head skin. ──
-  const mCx = cx, mCy = S * 0.56;
+  // Mask centre moved DOWN with the feature stack (eye 0.480 → mouth 0.875) and
+  // the opaque core widened, or the new low mouth would sit inside the feather
+  // ramp and dissolve (grandma's "no mouth exists in any frame").
+  const mCx = cx, mCy = S * 0.625;
 
   // ── patch-edge vignette: darken the patch toward its border so the rim's
   // luminance matches the skull curving away into shadow. Without it the flat-lit
@@ -437,7 +466,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // Composited BEFORE the alpha feather so it shades the same skin the feather
   // then dissolves. ───────────────────────────────────────────────────────
   {
-    const eg = ctx.createRadialGradient(mCx, mCy, S * 0.24, mCx, mCy, S * 0.47);
+    const eg = ctx.createRadialGradient(mCx, mCy, S * 0.30, mCx, mCy, S * 0.50);
     eg.addColorStop(0, rgba(0x1a0f08, 0));
     eg.addColorStop(0.74, rgba(0x1a0f08, 0));
     eg.addColorStop(1, rgba(0x140c06, 0.30));   // v6: lighter rim so the face doesn't gain a dark mask edge
@@ -452,7 +481,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // Wider, softer feather (opaque core 0.24, fade out to 0.50 — was 0.28→0.46)
   // so every geometry edge dissolves over a long ramp and the visible boundary
   // is always soft skin, never the patch rim (item 6, whole cast).
-  const mask = ctx.createRadialGradient(mCx, mCy, S * 0.24, mCx, mCy, S * 0.50);
+  const mask = ctx.createRadialGradient(mCx, mCy, S * 0.30, mCx, mCy, S * 0.53);
   mask.addColorStop(0, 'rgba(255,255,255,1)');
   mask.addColorStop(0.20, 'rgba(255,255,255,1)');
   mask.addColorStop(1, 'rgba(255,255,255,0)');
@@ -483,8 +512,8 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
   ctx.fillStyle = rgba(0x2a1810, 0.07);
   ctx.fillRect(cx - S * 0.012, noseTipY + S * 0.012, S * 0.024, mouthY - noseTipY - S * 0.016);
 
-  const upperA = female ? 0.86 : 0.5;
-  const lowerA = female ? 0.9 : 0.55;
+  const upperA = female ? 1.0 : 0.62;
+  const lowerA = female ? 1.0 : 0.68;
 
   if (E.mouth === 'grin' || E.mouth === 'open') {
     // open mouth: dark cavity + teeth + lips around it

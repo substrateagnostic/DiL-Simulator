@@ -11,9 +11,13 @@ export const CHARACTER_CONFIGS = {
     skinColor: COLORS.SKIN,
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'short',
-    accessories: ['coffee_mug'],
+    // LAW 7 #1: "dark short bob + glasses, coffee mug, light stubble". The
+    // glasses were simply absent, which is half of why the front view read as a
+    // back view (no glasses, no tie, no shirt-front).
+    accessories: ['coffee_mug', 'glasses'],
     // v5 face/proportion fields
-    gender: 'm', eyeColor: 0x4a3222, jaw: 0.84, chin: 1.05,
+    gender: 'm', eyeColor: 0x4a3222, jaw: 0.88, chin: 1.02,
+    browColor: 0x3a2a1e,
     beard: 'stubble', beardColor: 0x2a2016,
   },
   ross: {
@@ -65,17 +69,17 @@ export const CHARACTER_CONFIGS = {
     bodyColor: 0x4a4a6a, // Oversized suit (gray-blue)
     pantsColor: 0x3a3a4a,
     shirtColor: COLORS.SHIRT_WHITE,
-    tieColor: 0x884422,
+    tieColor: 0xa8622c,
     skinColor: COLORS.SKIN,
     hairColor: 0x5a3f28,   // warm brown to match the portrait (was near-black)
     hairStyle: 'short',
     accessories: ['name_tag'],
-    widthScale: 1.18, heightScale: 0.92, headScale: 1.05,
-    neckScale: 0.78,       // slight timid teenager — a slim neck, not jaw-wide
+    widthScale: 1.10, heightScale: 0.92, headScale: 1.05,
+    neckScale: 0.68,       // slight timid teenager — a slim neck, not jaw-wide
     // Portrait has NO glasses and warm-brown hair; the raised 'short' hairline now
     // shows a strip of forehead so fringe / brow / eyes still read as three bands.
     // v5 face — young, timid, small chin (early-Charlie-Brown big head)
-    gender: 'm', eyeColor: 0x4a3a2a, jaw: 0.80, chin: 0.94,
+    gender: 'm', eyeColor: 0x4a3a2a, jaw: 0.88, chin: 0.94, browColor: 0x3a2a1c,
   },
   diane: {
     name: 'Diane',
@@ -114,12 +118,12 @@ export const CHARACTER_CONFIGS = {
     shirtColor: 0xf2e8dc,   // cream blouse in the collar V
     tieColor: null,
     skinColor: 0xf0c0a0,
-    hairColor: 0xdccaa0,   // PLATINUM blonde to match the portrait (was ochre-gold)
+    hairColor: 0xe8d7ae,   // PLATINUM blonde (hair texture no longer darkens 2 stops)
     hairStyle: 'karen',
     accessories: ['purse'],
-    hunch: 0.10, headScale: 1.05,
+    hunch: 0.06, headScale: 1.05, neckScale: 0.92,
     // v5 face/proportion fields — bold DARK brows + red lip per the portrait
-    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.86, lipColor: 0xc83a52, browColor: 0x4a3a28, headForward: 0.05,
+    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.88, chin: 0.94, lipColor: 0xc83a52, browColor: 0x3e2f20, headForward: 0.03,
   },
   chad: {
     tone: 'silly',
@@ -129,18 +133,23 @@ export const CHARACTER_CONFIGS = {
     shirtColor: null,
     tieColor: null,
     skinColor: 0xd99a70,   // gym tan
-    hairColor: 0xbfa066,   // dirty-blonde quiff to match the portrait (was chocolate-brown)
-    hairStyle: 'slick',    // pompadour quiff, not a bald-fronted backwards cap
-    accessories: ['protein_shake', 'gold_chain'],
+    hairColor: 0xa88a4e,   // blonde quiff (bible 0x8a6a38, lifted for the dark venue)
+    hairStyle: 'short',    // blonde hair under the backwards cap (portrait signature)
+    accessories: ['protein_shake', 'gold_chain', 'backwards_cap'],
     belt: true,
     lapels: false,         // a POLO, not a blazer — kill the rectangular pec-slab lapels
+    polo: true,            // knit collar + placket, so the garment CLASS reads as a polo
     shortSleeve: true,     // red polo w/ BARE muscular forearms (was red long sleeves)
     beard: 'stubble', beardColor: 0x6a5236, // light stubble per the portrait
     // Shoulders capped near LAW 1's 2.0 head-widths: widthScale 1.35→1.2 and
     // shoulderScale 1.25→1.12 pull the flat coat-hanger shelf into a rounded V.
-    widthScale: 1.2, heightScale: 1.06, headScale: 1.0,
+    // Round-3: widthScale scales the ARM radius too, so 1.2 pushed total span to
+    // 2.3–2.4 head-widths. 1.06 + a stronger shoulderScale keeps the athletic V
+    // while landing inside LAW 1's 2.0 cap.
+    widthScale: 1.06, heightScale: 1.06, headScale: 1.0,
     // v5 face/proportion fields — broad jaw, jutting chin
-    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.15, shoulderScale: 1.12, waistScale: 0.82,
+    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.98, chin: 1.08, browColor: 0x4a3720,
+    shoulderScale: 1.22, waistScale: 0.80, neckScale: 1.08,
   },
   grandma: {
     name: 'Grandma Henderson',
@@ -152,9 +161,10 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_WHITE,
     hairStyle: 'shawl',
     accessories: ['cane'],
-    heightScale: 0.76, hunch: 0.22, widthScale: 1.12, headScale: 1.12,
+    heightScale: 0.78, hunch: 0.12, widthScale: 1.10, headScale: 1.10,
     // v5 face/proportion fields — elderly read
-    gender: 'f', age: 'old', eyeColor: 0x5a4a38, jaw: 0.9, glasses: 'reading',
+    gender: 'f', age: 'old', eyeColor: 0x4a3a2a, jaw: 0.92, glasses: 'reading',
+    lipColor: 0xb0645c, browColor: 0x8a8078,
     lapels: false, shoulderScale: 0.92, headForward: 0.05,
   },
   compliance: {
