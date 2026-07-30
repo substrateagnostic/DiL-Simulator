@@ -215,11 +215,17 @@
 
 .combat-enemy-info {
   text-align: center;
-  padding: 4px 6px;
-  border-radius: 6px;
-  border: 2px solid transparent;
+  padding: 7px 14px 9px;
+  border-radius: 8px;
+  /* A real backing plate so the name + HP bar survive busy venues — over the
+     Algorithm's matrix rain the transparent plate let the nameplate drown
+     (critic: "no backing plate … they drown in the matrix rain"). */
+  border: 1px solid rgba(255, 255, 255, 0.14);
   transition: border-color 0.15s, background 0.15s;
-  background: rgba(10, 10, 20, 0.0);
+  background: rgba(8, 8, 16, 0.62);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
 }
 
 .combat-enemy-info.targeted {
@@ -371,9 +377,15 @@
 .floating-damage {
   position: absolute;
   font-family: 'Press Start 2P', cursive;
-  font-size: 28px;
-  color: #ff4444;
-  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+  font-size: 30px;
+  color: #ff6a5a;
+  /* Full black outline (all 8 directions) + a soft glow so damage numbers stay
+     legible over the near-black stage floor — the old thin 2-way shadow left a
+     dark-red number illegible on dark ground (critic: the "29"). */
+  text-shadow:
+    2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000,
+    2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
+    0 0 10px rgba(0,0,0,0.95);
   pointer-events: none;
   z-index: 30;
   animation: floatUp 1.2s ease-out forwards;
@@ -389,8 +401,32 @@
 }
 
 .floating-damage.critical {
-  font-size: 36px;
-  color: #ffff00;
+  font-size: 52px;
+  color: #ffef4d;
+  text-shadow:
+    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000,
+    3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
+    0 0 18px rgba(255, 180, 0, 0.9);
+}
+
+/* The enemy-dealt hit on Andrew — the loudest object on screen (P5's "WEAK
+   104"): a big, hot, hard-outlined number riding high where the reaction cut
+   frames him, not a dull dark-red "28" down at the ankles (critic). */
+.floating-damage.bigdamage {
+  font-size: 50px;
+  color: #ff3b4e;
+  text-shadow:
+    3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000,
+    3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
+    0 0 16px rgba(255, 40, 60, 0.85);
+  animation: floatUpBig 1.2s ease-out forwards;
+}
+
+@keyframes floatUpBig {
+  0%   { transform: translateY(8px) scale(0.7); opacity: 1; }
+  16%  { transform: translateY(-14px) scale(1.4); opacity: 1; }
+  30%  { transform: translateY(-22px) scale(1.12); opacity: 1; }
+  100% { transform: translateY(-70px) scale(0.9); opacity: 0; }
 }
 
 .floating-damage.status {
@@ -404,28 +440,33 @@
   100% { transform: translateY(-80px) scale(0.8); opacity: 0; }
 }
 
-/* Combat message */
+/* Combat message — a bottom-center SUBTITLE, not a plate parked dead-center
+   over the actors' hands (critic: "the one region where an attack gesture would
+   live"). It rides in the clear band between the stat panel (bottom-left) and
+   the action buttons (bottom-right), Persona-style. */
 .combat-message {
   position: absolute;
-  top: 50%;
+  top: auto;
+  bottom: 14%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   font-family: 'Press Start 2P', cursive;
   font-size: 18px;
   color: #fff;
   text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
   text-align: center;
   z-index: 25;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.72);
   padding: 16px 32px;
   border-radius: 8px;
   border: 2px solid #e94560;
+  max-width: 60vw;
   animation: messageAppear 0.3s ease-out;
 }
 
 @keyframes messageAppear {
-  from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
-  to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  from { transform: translateX(-50%) scale(0.86); opacity: 1; }
+  to { transform: translateX(-50%) scale(1); opacity: 1; }
 }
 
 /* Ability tooltip in combat */
