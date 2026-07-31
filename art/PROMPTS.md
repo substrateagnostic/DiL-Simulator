@@ -37,3 +37,38 @@ reads as one set. Output: 512×512 PNG → `src/assets/portraits/<stem>.png`. Mo
 |------|------|--------|-------|
 | 2026-06-10 | — | pipeline wired, awaiting first batch | DialogBox auto-detects PNGs in src/assets/portraits/ |
 | 2026-07-29 | isaiah | rev 2 shipped (neutral only — no mood variants exist for isaiah) | Generated via `codex exec` + `$imagegen2`, style-refed against janet/alex_it/andrew 1024 raws. 1024 raw → `art/portraits_raw/isaiah.png`, LANCZOS → 256 in `src/assets/portraits/isaiah.png`. |
+
+---
+
+# Epilogue Card Art — OPEN REQUEST (added 2026-07-30, run F1)
+
+`src/states/EpilogueState.js` renders one illustrated 512×512 card per epilogue beat.
+Eight plates exist in `src/assets/epilogues/`; **five cards added in run F ship with no
+plate** and currently render inside an empty frame (`EpilogueState._renderCard` draws a
+plate-pending panel so the sequence keeps its rhythm). This is the last unfinished piece of
+proposal 2 and it should land before the producer's emotional-finale playtest.
+
+Missing stems (drop the PNG in `src/assets/epilogues/<stem>.png`; the `import.meta.glob`
+loader picks it up with no code change — keep a 1024 raw in `art/epilogues_raw/`):
+
+`epilogue_janitor` · `epilogue_skip` · `epilogue_intern` · `epilogue_grandma` · `epilogue_voice`
+
+## EPILOGUE STYLE PREFIX (use verbatim; matched to the eight shipped plates)
+
+> Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+> amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+> desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+> composition, no text, no watermark, no logos, no captions
+
+| stem | prompt suffix | card text it must sit under |
+|------|---------------|------------------------------|
+| epilogue_janitor | ", an empty sixth-floor corridor seen from floor level, a mop standing upright in its bucket against the wall handle-up, waxed linoleum holding the reflection of the blinds, nobody in frame" | the mop in the closet, handle up; nobody has learned his name |
+| epilogue_skip | ", an empty board room with fourteen executive chairs around a long mahogany table, one chair at the far end pulled out and turned slightly toward the room, a pressed dress shirt on a hanger hooked over the door frame" | Skip ironed his shirt again the following Tuesday / the folded speech / STORAGE B |
+| epilogue_intern | ", a dim conference room with a projector still running, a slide of a bar chart thrown across an empty screen and across the empty chairs, one abandoned cheap tie draped over a chair back, a fern in the corner" | the 47-slide deck, cited in two compliance reviews; apologized to the projector |
+| epilogue_grandma | ", a small elderly woman's hands in close framing setting a tin of snickerdoodles on a bank counter, a knitting bag beside it, a numbered ticket dispenser out of focus behind" | banks on the second floor every Wednesday at ten; counts the exits |
+| epilogue_voice | ", a single empty office chair at a desk photographed from behind, a suit jacket over its back, the window beyond showing city dusk, one desk lamp lit, the room otherwise dark — a portrait of a person by their absence" | WHO YOU BECAME — the voice-profile card; must read for both the kind and the hardened variant |
+
+**Constraints:** no faces in `epilogue_voice` (it must fit four different closing lines);
+no readable text anywhere in any plate; keep to the eight existing plates' palette so the
+sequence reads as one set. Photo-privacy rule applies as always — describe textually, never
+pass a reference photo.
