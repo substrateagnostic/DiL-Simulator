@@ -3321,7 +3321,7 @@ export const DIALOGS = {
     /* 53 */ { type: 'text', speaker: 'Narrator', text: "She did, in fact, bring a file drawer. It is sitting next to her chair. Several board members stare at it as though it might contain a bomb, which, in a way, it does.", next: 48 },
     // D-DIANE
     /* 54 */ { type: 'action', action: 'set_flag', flag: 'bm_diane_done', value: true, next: 55 },
-    /* 55 */ { type: 'text', speaker: 'Diane', text: "I process every person who enters this building. I have done that for nineteen years. I know who takes cream, who takes sugar, and who stopped coming in after we lost the coffee machine." },
+    /* 55 */ { type: 'text', speaker: 'Diane', text: "I process every person who enters this building. I have done that for nineteen years. I know their children's names, and which ones bring donuts on Fridays." },
     /* 56 */ { type: 'text', speaker: 'Diane', text: "Last month, they took our coffee machine. And the straws. I am being precise because precision is what I have instead of a corner office." },
     /* 57 */ { type: 'text', speaker: 'Diane', text: "You are voting on whether those people — the ones I buzz in every morning — still have someone in this building who is required by law to put them first. That's what a trust officer is. That's the whole job." },
     /* 58 */ { type: 'text', speaker: 'Narrator', text: "She sits down. She does not look at the board. She looks at the clock, because Diane has never been late for anything and she isn't starting now.", next: 48 },
