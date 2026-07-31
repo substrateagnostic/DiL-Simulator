@@ -8,6 +8,7 @@ release/
 .playwright-mcp/
 screenshots/
 art/portraits_raw/
+art/portraits_archive/
 art/comp_refs/
 art/char_refs/
 art/epilogues_raw/

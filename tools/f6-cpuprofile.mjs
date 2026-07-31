@@ -33,6 +33,11 @@ const arg = (k, d) => process.argv.find((a) => a.startsWith(`--${k}=`))?.slice(k
 const ROOMS = arg('room', arg('rooms', 'cubicle_farm')).split(',').filter(Boolean);
 const SECONDS = +arg('seconds', 10);
 const RATES = arg('rates', '1,4').split(',').map(Number);
+// Quality tier to PIN for the profile. Engine's adaptive governor ships on, so
+// without a pin the profile would be a blend of whatever tiers it wandered
+// through. 'low' is the mobile-floor tier and is where the remaining CPU-4x
+// tail lives, so it is worth profiling on its own.
+const TIER = arg('tier', 'high');
 const OUT = 'screenshots/perf/f6';
 
 mkdirSync(OUT, { recursive: true });
@@ -124,6 +129,8 @@ for (const room of ROOMS) {
       await page.keyboard.up('Enter'); await page.waitForTimeout(280);
     }
     await page.waitForTimeout(2500);   // warm-up: compiles/uploads land here
+    await page.evaluate((t) => { const E = window.__engine; E.setAdaptiveQuality(false); E.setQualityTier(t); }, TIER);
+    await page.waitForTimeout(500);
 
     const cdp = await ctx.newCDPSession(page);
     await cdp.send('Profiler.enable');
@@ -198,7 +205,7 @@ for (const room of ROOMS) {
       });
 
     const r = {
-      room, rate, frames: dt.length, wallS: wall,
+      room, rate, tier: TIER, frames: dt.length, wallS: wall,
       p50: pct(0.5), p95: pct(0.95), p99: pct(0.99), max: sorted.length ? +sorted[sorted.length - 1].toFixed(2) : null,
       fps_p50: pct(0.5) ? +(1000 / pct(0.5)).toFixed(2) : null,
       profiledMs: +(totalUs / 1000).toFixed(1),

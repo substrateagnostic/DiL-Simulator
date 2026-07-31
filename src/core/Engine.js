@@ -53,8 +53,24 @@ class EngineClass {
     // The single in-flight requestAnimationFrame handle. `null` means "no loop
     // is scheduled" and is what start() checks so two loops can never stack.
     this._raf = null;
-    // 'high' | 'medium' | 'low' — see setQualityTier(). Never auto-selected.
+    // 'high' | 'medium' | 'low' — see setQualityTier() and the governor below.
     this.qualityTier = 'high';
+    // ── Adaptive quality governor state (see _updateAdaptiveQuality) ────────
+    // ON by default. On hardware that holds 60fps it never fires and the tier
+    // stays 'high' forever; on hardware that cannot, it walks COMP_CARD's
+    // degrade ladder down until the frame fits. Any explicit setQualityTier()
+    // call from a settings menu turns it off (the player's choice wins).
+    this._adaptiveQuality = true;
+    this._qWin = new Float64Array(30);   // rolling frame-time window, ms
+    this._qWinI = 0;
+    this._qFilled = 0;
+    this._qCooldown = 0;                 // frames to wait before the next move
+    this._qUpHold = 5;                   // consecutive good windows needed to step UP
+    this._qUpGood = 0;
+    this._qDownBad = 0;
+    this._qCeil = 0;        // lowest tier index we may probe UP to (0 = 'high')
+    this._qLastUpAt = 0;    // when the last promotion happened, for failed-probe detection
+    this._qScratch = new Float64Array(30);
   }
 
   init() {
@@ -255,6 +271,8 @@ class EngineClass {
     // The city outside (lazy import avoids a cycle; fire-and-forget)
     import('../effects/CityBackdrop.js').then(({ CityBackdrop }) => {
       this.cityBackdrop = new CityBackdrop(this.scene);
+      // Lazy import: a tier change can land before this resolves.
+      if (this._atmosVisible === false) this.cityBackdrop.group.visible = false;
       if (this._pendingTimeOfDay) this.cityBackdrop.setTimeOfDay(this._pendingTimeOfDay);
       if (this._pendingStreetLevel !== undefined) this.cityBackdrop.setStreetLevel(this._pendingStreetLevel);
     });
@@ -393,6 +411,9 @@ class EngineClass {
     const after = this.renderer.info.programs?.length ?? 0;
     const ms = (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
     this._lastWarm = { programs: after - before, textures, ms };
+    // A room build is a discontinuity: the frames either side of it are not
+    // comparable, and the build frame itself would demote a healthy machine.
+    this.resetAdaptiveWindow();
     return this._lastWarm;
   }
 
@@ -444,12 +465,17 @@ class EngineClass {
   // knob here is its resolution, and `low` drops it entirely only because the
   // measurement above shows it is worth 13 draw calls and ~2ms at 4x.
   //
-  // NOT automatic. Nothing calls this on boot: guessing a device class from a
-  // user-agent string is how a 4090 ends up running the mobile tier. It is
-  // wired for a settings menu and for the harness, and `Engine.qualityTier`
-  // reports what is in force.
-  setQualityTier(tier) {
+  // AUTOMATIC, via the governor in _updateAdaptiveQuality(). Guessing a device
+  // class from a user-agent string is how a 4090 ends up running the mobile
+  // tier, so nothing guesses — the governor watches the frame time this machine
+  // actually produces and moves only on evidence. Calling this method directly
+  // (settings menu, harness) pins the tier and turns the governor off; pass
+  // `{ adaptive: true }` to move without surrendering automatic control.
+  // `Engine.qualityTier` always reports what is in force.
+  setQualityTier(tier, { adaptive = false } = {}) {
     const t = ['high', 'medium', 'low'].includes(tier) ? tier : 'high';
+    if (!adaptive) this._adaptiveQuality = false;
+    const changed = t !== this.qualityTier;
     this.qualityTier = t;
     this.setAmbientOcclusion(t === 'high');
     this.setTiltShift(t !== 'low');
@@ -460,16 +486,162 @@ class EngineClass {
       if (t === 'medium') this._bloomPass.setSize(this.width * 0.5, this.height * 0.5);
       else if (t === 'high') this._bloomPass.setSize(this.width, this.height);
     }
+    // Shadow cadence is the second axis of the ladder. 'high' refreshes the map
+    // at 30Hz (interval 2), 'medium' at 15Hz (4) — with radius-4 PCF soft edges
+    // a 15Hz character shadow is not readable as lag — and 'low' turns the map
+    // off entirely below.
+    this.setShadowInterval(t === 'medium' ? 4 : 2);
     if (this.renderer) {
       // Shadows are not in COMP_CARD's ladder because they were not a post
       // pass. They belong at the bottom of it anyway: the cost ladder prices
-      // the shadow-map re-render at ~100 draw calls for 0.0ms of GPU on this
-      // machine, i.e. it is pure main-thread submission — the exact currency a
-      // CPU-bound floor is short of.
+      // the shadow-map re-render at ~100-130 draw calls for 0.0ms of GPU on
+      // this machine, i.e. it is pure main-thread submission — the exact
+      // currency a CPU-bound floor is short of.
       this.renderer.shadowMap.enabled = t !== 'low';
       this.invalidateShadows();
     }
+    // ── 'low' also drops the two pure-atmosphere scene branches ────────────
+    // These are NOT in COMP_CARD's written ladder (it stops at bloom) and this
+    // is a deliberate, signed extension of it, measured rather than guessed.
+    // Draw-call attribution on a frozen frame (screenshots/perf/AFTER.md):
+    // city_backdrop is 48 calls in cubicle_farm, 36 in reception and **95 in
+    // parking_garage**; room_fx is 87 / 31 / 12. Together they are a third of
+    // the mobile-floor frame and neither is load-bearing for readability — the
+    // city is seen through windows, room_fx is the authored light-pool overlay.
+    // They come back the instant the governor steps back up. An art owner who
+    // disagrees should change THIS branch, not the 'high' tier.
+    //
+    // KNOWN RISK, stated rather than hidden: rooms whose composition is the view
+    // out of the window — penthouse and its three wings, executive_floor — lose
+    // the city entirely at 'low', and that may read as broken rather than as
+    // degraded. The side-by-side stills for the decision are
+    // `screenshots/perf/f7/tier-look.html` (tools/f7-tier-look-sheet.mjs). If the
+    // verdict is "keep something", the cheap version is a reduced city (towers
+    // only, no beacons/streaks/mist) rather than none.
+    const atmos = t !== 'low';
+    if (this.cityBackdrop?.group) this.cityBackdrop.group.visible = atmos;
+    if (this._roomFX) this._roomFX.visible = atmos;
+    this._atmosVisible = atmos;
+    if (changed) this._qCooldown = Math.max(this._qCooldown, 45);
     return t;
+  }
+
+  // ── Adaptive quality governor ─────────────────────────────────────────────
+  //
+  // The problem it solves, stated as QA stated it: the perf harness measured
+  // COMP_CARD's *mobile floor* (30fps) with COMP_CARD's *top tier* running, and
+  // it failed — correctly, and uninformatively, because no shipping game asks a
+  // phone to run the desktop preset. The ladder existed but nothing walked it.
+  // This walks it, from measured frame time, with no device sniffing.
+  //
+  // Design constraints that shape the numbers below:
+  //  - vsync pins a healthy frame at 16.67ms, so "is there headroom" cannot be
+  //    read off p50 directly. Stepping DOWN is evidence-driven (p50 above the
+  //    down threshold means frames are genuinely being missed); stepping UP is
+  //    a probe — try it, and if the probe fails, wait exponentially longer
+  //    before probing again. That is what _qUpHold doubling implements, and it
+  //    is what stops a machine sitting exactly on the boundary from oscillating
+  //    (which would be far more visible than either tier).
+  //  - Room transitions produce a legitimately huge frame (the build, ~230ms,
+  //    hidden behind the wipe). Feeding that to the governor would demote a
+  //    machine that is perfectly healthy, so samples above _qIgnoreMs are
+  //    dropped and warmScene() resets the window.
+  _updateAdaptiveQuality(rawMs) {
+    if (!this._adaptiveQuality) return;
+    if (rawMs > 100) return;              // transition / tab-switch, not steady state
+    const w = this._qWin;
+    w[this._qWinI++ % w.length] = rawMs;
+    if (this._qFilled < w.length) this._qFilled++;
+    if (this._qCooldown > 0) { this._qCooldown--; return; }
+    if (this._qFilled < w.length || this._qWinI % w.length !== 0) return;
+
+    const s = this._qScratch;
+    s.set(w);
+    s.sort();
+    const p50 = s[w.length >> 1];
+    // p90 of the window, and it carries the whole step-UP decision. p50 CANNOT:
+    // vsync pins a healthy frame at 16.67ms, so every tier that is keeping up at
+    // all reports p50 ≈ 16.7 and the median is blind to how much headroom is
+    // behind it. p90 is not — a tier with real room to spare lands its slow
+    // frames on vsync too, while a tier that is only just holding on shows its
+    // strain in the tail. Measured: reception at CPU 4x on 'low' reported p50
+    // 16.8ms (looks like plenty of headroom) with p95 23.8ms (there is none),
+    // and promoting on the p50 reading produced the exact oscillation this
+    // guards against — low@4471ms → medium@15709ms → low@17590ms.
+    const p90 = s[Math.min(w.length - 1, Math.floor(w.length * 0.9))];
+
+    const TIERS = ['high', 'medium', 'low'];
+    const i = TIERS.indexOf(this.qualityTier);
+    // Two demotion triggers, because "how bad is it" and "how sure am I" are
+    // different questions and a single threshold cannot answer both:
+    //
+    //   p50 > 28ms (< 36fps) — SEVERE. Move on the first window. A machine this
+    //     far under is not going to be rescued by more evidence, and every extra
+    //     window is another second of a player watching it stutter.
+    //   p50 > 20ms (< 50fps) — MARGINAL. Require two consecutive windows. That
+    //     is not belt-and-braces, it is a measured fix: with a single-window
+    //     trigger, CPU 2x demoted cubicle_farm all the way to 'low' (60.6fps)
+    //     when 'medium' was holding 57.8fps — one heavy stretch of the patrol
+    //     pushed a 17.3ms-p50 tier over 20ms for one window. Over-demotion costs
+    //     AO, tilt-shift, bloom, shadows and the whole city on hardware that did
+    //     not need to give up any of it. (tools/f7-tier-governor.mjs.)
+    //
+    // Window is 30 frames, not 60, for the same reason: at the throttled frame
+    // rates where this fires, a 60-frame window is ~1.5-2s, and two of those
+    // plus a 90-frame cooldown put the second demotion 13.9s after launch —
+    // measured. 30 frames + a 45-frame cooldown puts the settled tier inside
+    // ~4s, which is the difference between "it adjusted" and "it was broken for
+    // a while".
+    if (p50 > 20 && i < TIERS.length - 1) {
+      this._qUpGood = 0;
+      if (p50 <= 28 && ++this._qDownBad < 2) return;
+      this._qDownBad = 0;
+      this._qUpHold = Math.min(80, this._qUpHold * 2);   // probing up got it wrong
+      // A demotion that lands within 5s of a promotion IS a failed probe: the
+      // tier above is measurably not sustainable in this room. Nail the ceiling
+      // shut so we never oscillate back into it. resetAdaptiveWindow() (room
+      // build, combat entry) lifts it again, because a different room is a
+      // different question.
+      const t = (typeof performance !== 'undefined' ? performance.now() : 0);
+      if (t - this._qLastUpAt < 5000) this._qCeil = i + 1;
+      this.setQualityTier(TIERS[i + 1], { adaptive: true });
+      return;
+    }
+    this._qDownBad = 0;
+    if (p90 < 18.5 && i > 0 && i - 1 >= this._qCeil) {
+      // Real headroom (see p90 above), the tier above has not already failed a
+      // probe in this room, and _qUpHold consecutive good windows have passed —
+      // 5 windows = 150 frames = ~2.5s at first, doubling after every failed
+      // probe, capped at 80 windows / ~40s so a boundary machine probes rarely
+      // rather than never.
+      if (++this._qUpGood >= this._qUpHold) {
+        this._qUpGood = 0;
+        this._qLastUpAt = (typeof performance !== 'undefined' ? performance.now() : 0);
+        this.setQualityTier(TIERS[i - 1], { adaptive: true });
+      }
+      return;
+    }
+    this._qUpGood = 0;
+  }
+
+  // Re-arm the governor after a discontinuity (room build, combat entry). The
+  // frames either side of one of those are not comparable.
+  resetAdaptiveWindow() {
+    this._qFilled = 0;
+    this._qWinI = 0;
+    this._qUpGood = 0;
+    this._qDownBad = 0;
+    this._qCeil = 0;        // a new room is a new question — probing up is allowed again
+    this._qUpHold = 5;
+    this._qCooldown = 30;
+  }
+
+  // Hard off-switch (harness pins the tier; a settings menu that exposes tiers
+  // should call setQualityTier() instead, which turns this off implicitly).
+  setAdaptiveQuality(on) {
+    this._adaptiveQuality = !!on;
+    if (on) this.resetAdaptiveWindow();
+    return this._adaptiveQuality;
   }
 
   // Re-gate the post chain for whatever scene/camera this frame renders.
@@ -996,6 +1168,10 @@ class EngineClass {
 
     this.scene.add(g);
     this._roomFX = g;
+    // The group is rebuilt per room load, so the tier's atmosphere decision has
+    // to be re-applied to the NEW group or 'low' silently regains 12-87 draw
+    // calls on the first door the player walks through.
+    if (this._atmosVisible === false) g.visible = false;
   }
 
   // Exterior sleeve gradient: obsidian night shell, slightly lifted at
@@ -1292,8 +1468,16 @@ class EngineClass {
     this._raf = requestAnimationFrame(() => this._loop());
 
     const now = performance.now();
-    const dt = Math.min((now - this._lastFrameTime) / 1000, 0.05); // Cap delta at 50ms
+    const rawMs = now - this._lastFrameTime;
+    const dt = Math.min(rawMs / 1000, 0.05); // Cap delta at 50ms
     this._lastFrameTime = now;
+
+    // Frame-time governor. Reads the RAW delta (not the 50ms-clamped one) so a
+    // machine that is genuinely missing frames is seen missing them. The very
+    // first frame has _lastFrameTime = 0 and therefore a nonsense delta; it is
+    // dropped by the >100ms filter inside, along with room builds and tab
+    // switches.
+    if (rawMs > 0) this._updateAdaptiveQuality(rawMs);
 
     // Fluorescent flicker — barely-perceptible hum with the odd buzz-dip.
     // DESIGN FEATURE (subliminal dread), not a bug: the four rooms carrying

@@ -26,7 +26,7 @@ reads as one set. Output: 512×512 PNG → `src/assets/portraits/<stem>.png`. Mo
 | intern | ", a terrified college intern swimming in an oversized gray-blue suit, crooked name tag, deer-in-headlights expression, clutching a stack of folders" |
 | janitor | ", a mysterious elderly Black man in a gray-blue jumpsuit, white stubble, gold Rolex glinting on his wrist, mop handle over shoulder, knowing half-smile of a man who owns more than he appears to" |
 | rachel | ", a severe executive woman with a silver angular bob, navy power suit, pearl earrings, tablet clutched like a weapon, cold restructuring smile that does not reach her eyes" |
-| isaiah | ", a calm Black man in his 30s in a blue button-down and glasses, thoughtful steady expression, the only emotionally regulated person in the building" |
+| isaiah | ", a calm Hispanic man in his early 40s with warm medium-tan skin, short dark hair neatly cut, thin wire-frame glasses, trim dark stubble, steady deep-brown eyes, the faintest knowing half-smile, quiet unshakeable dignity, business casual: a slate-blue button-down shirt open at the collar, relaxed shoulders, composed and unhurried — the only emotionally regulated person in the building, a stoic who journals" *(rev 2, 2026-07-29: recast Hispanic at producer request; modeled on a real colleague — never pass the reference photo to codex. Old Black-man rev 1 archived in `art/portraits_archive/isaiah/`.)* |
 | compliance | ", a pale auditor in a black suit and red tie wearing indoor sunglasses, clipboard held to chest, completely unreadable expression" |
 | regional | ", a silver-haired regional manager in a power suit with gold tie, golf tan, predatory salesman grin, holding a putter like a scepter" |
 | algorithm | ", a monolithic black server slab with a single glowing red optical sensor, cascading teal code reflections, faint cyan edge lighting, ominous and serene, no face, no humanity" |
@@ -36,3 +36,4 @@ reads as one set. Output: 512×512 PNG → `src/assets/portraits/<stem>.png`. Mo
 | date | stem | status | notes |
 |------|------|--------|-------|
 | 2026-06-10 | — | pipeline wired, awaiting first batch | DialogBox auto-detects PNGs in src/assets/portraits/ |
+| 2026-07-29 | isaiah | rev 2 shipped (neutral only — no mood variants exist for isaiah) | Generated via `codex exec` + `$imagegen2`, style-refed against janet/alex_it/andrew 1024 raws. 1024 raw → `art/portraits_raw/isaiah.png`, LANCZOS → 256 in `src/assets/portraits/isaiah.png`. |
