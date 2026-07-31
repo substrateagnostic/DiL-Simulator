@@ -4,6 +4,24 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
+## ✅ RUN C — THE GAME GOT DEEP (~04:15, commit fc8ac61, pushed)
+- **Combat:** LOCKS on telegraphs (clear them and the attack fizzles),
+  visible COMPOSURE/BREAK bar, Press Advantage keeps your turn, perfect
+  Brace chips composure, Loop In ally baton pass, Confuse no longer
+  steals your chosen action, all_in is no longer a sucker's bet.
+- **THE BILLABLE DAY:** reception's roster board — 3–5 escalating
+  clients, Billable Hours boons between them, AUM banks at the 5:15 bell,
+  subtractive mutators (Under NDA hides telegraphs; Retained Counsel
+  disables your legal abilities...). Old walk-in loop untouched.
+- **Meta:** vault keypad accepts 47-19-82 from Act 1 if you KNOW it ·
+  free "Restructure" respec · achievements now grant Review Points with a
+  small shop · NG+ actually gets harder and unlocks an ending variant.
+- Old saves load SAFE (verified). Your 5h-cap prediction hit EXACTLY:
+  the final critic pair died at 03:50; the 05:47 cron collects their
+  verdict from cache after reset.
+- **PLAYTEST LIST grew:** the Day, the keypad, boon names, Diane's bell
+  lines, respec confirm text — plus everything from F1.
+
 ## ✅ RUN F1 — THE CONVERGENCE LANDS (~23:50, commit 1f23a58)
 - **THE BOARD MEETING EXISTS.** 177 nodes: you feed Skip his speech, every
   Act-6 ally you earned adds a beat, four outcome tiers. Plus: the Janitor

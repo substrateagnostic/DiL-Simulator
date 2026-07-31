@@ -1,3 +1,139 @@
+# Run C FIX round 2 — July 31, 2026 — producer critic pass (branch `display-case`, uncommitted)
+
+Six notes ([A1]-[A6]) on the Run C gameplay wave. **All six addressed.** Nothing committed, nothing
+merged. `npm run validate:data` green, `npm run check` green. Every new player-facing string was
+first-drafted by **Opus 4.6 via CLI** per the standing order and wired verbatim.
+
+| # | Note | Fix | Files |
+|---|------|-----|-------|
+| A1 | The memo ladder paid out from the settings menu — `noteReviewLevel()` fired on the shop TOGGLE, so 40 CP could be switched on, all four Meredith memos read, and everything switched back off without a round fought. | High-water is now written in the combat victory path, from a level snapshotted at fight START. `unlockedMemos()` reads only `pb_review_level` (it used to `Math.max` in the live level). The tab shows *active* vs *on file* and says what closes the gap. | `data/review.js`, `states/ShopState.js`, `states/CombatState.js` |
+| A2 | Unmeasured whale EV distortion — `generateDayClient`'s asset-floor rejection sampling re-rolled the 5% whale chance up to 12x per slot, and a whale always clears the floor and breaks the loop. Measured 4.08% walk-in vs **12.35%** on day slot 4. | The whale is rolled **once per slot** before the retry loop; `generateClient` takes a `suppressWhale` flag for the retries. Re-measured flat at ~5% on every slot. New `day-sim.mjs --whale` audit is the regression test. | `data/ClientGenerator.js`, `tools/day-sim.mjs` |
+| A3 | Day-scoped stat boons leaked into story fights — Firm Handshake / Deep Breath are repeatable, and leaving Reception mid-day is allowed, so ~+9/+9 could be carried into a boss. | Boons are now **floor-scoped**: `revokeDayStats` on leaving Reception, `applyDayStats` on return, via `_syncDayStatScope(roomId)` in the room-load path. The day record is untouched — a pause, not a forfeit. Legacy in-flight days (no `statsApplied` key) read as applied. | `data/billableDay.js`, `states/ExplorationState.js` |
+| A4 | CASUAL archetype out of the 40-85% band at documented intended levels; no God Mode analogue, no QTE-widening cosmetic. | **Performance Improvement Plan** (Hades God Mode: 20% + 2%/death, cap 80%, opt-in, **0 RP**, locks nothing out) and **Ergonomic Wrist Support** (accessory, +40% Brace window / -20% Retaliate damage). At the PIP's floor, CASUAL clears 40% on every documented rung. | `data/review.js`, `combat/CombatEngine.js`, `states/CombatState.js`, `data/cosmetics.js`, `entities/CharacterBuilder.js` |
+| A5 | NG+ top rung was a wall, not a ladder — `rachel_boss` 1.0% / `algorithm` 4.0% at CARRY@NG+3, contradicting the code comment beside the constants. | Per-lap Patience scaling 1.35 -> **1.15** plus a new `NG_PLUS_LAP.decay = 0.35` that softens **only** lap 3 (laps 1-2 have exponents 0 and 1 at any decay, so those columns are bit-identical). NG+3 finale now 29.8% / 35.6%. | `combat/CombatEngine.js`, `tools/ng-sim.mjs` |
+| A6 | Dead gate row — `vault: { flag: 'vault_accessible' }` in `gatedRooms` is unreachable behind the keypad intercept. | Row removed, replaced with the same NOTE the `archive` row already carried. `CLAUDE.md`'s room-gating bullet corrected to match (it still listed both). | `states/ExplorationState.js`, `CLAUDE.md` |
+
+**Save-safety.** New flags only (`pb_review_level` already existed; `rp_pip` / `pip_active` /
+`statsApplied` are new). No renames, no removals, no schema growth. Verified against a hand-built
+legacy save and a legacy in-flight day record: both load, play, and round-trip.
+
+**New harness modes** (all report-only, nothing written back to `src/`):
+`combat-sim.mjs --pip` (the CASUAL floor ladder), `combat-sim.mjs --relic` (the Brace/Retaliate
+trade under two aim models), `ng-sim.mjs --hpscale` and `--lapdecay` (the two NG+ sweeps),
+`day-sim.mjs --whale` (whale rate + AUM share, day vs walk-in).
+
+**One finding worth a producer's eye.** With whales counted on both sides at the corrected rate, the
+**solo** Billable Day's AUM/fight ratio against walk-in spam is x0.87-x1.03 — a coin flip, not the
+x1.10-x1.14 the old whale-free-only table implied — because a forfeited solo board voids a whale's
+$1M-$2.5M fee that a walk-in banks on the spot. With a party it is clearly positive (x1.28-x1.40).
+Documented honestly in `Gameplay.md` rather than rebalanced; Diane already warns solo players out
+loud, and recruiting is the intended answer. Flagging it in case you want the premium re-priced.
+
+---
+
+# Run F1 FIX — July 30, 2026 — convergence wave pre-gate (branch `display-case`, uncommitted)
+
+Producer critic pass on the Run F convergence wave returned nine notes. All nine addressed.
+Nothing merged to main; nothing committed. **`npm run validate:data` green, `npm run check` green.**
+Prose for every changed line was first-drafted by **Opus 4.6 via CLI** per the standing order —
+brief + output: `art/drafts/f1_fix_draft.md` (sections A–G). Wired verbatim except where a
+mechanical node-flow change is logged below for countersign.
+
+## Producer decisions still open — READ BEFORE PLAYTEST
+
+1. **Two triads await your call (WRITING.md anti-LLM rule 1).** Left as written; alternates are
+   drafted and ready to paste from `art/drafts/f1_fix_draft.md` §G.
+   - `src/data/dialogs/index.js:3439` — Narrator, worst board-meeting tier: *"…collect their
+     phones, their pens, their untouched water glasses."* Alternate cuts "their pens."
+   - `src/data/dialogs/index.js:3314` — Diane on the floor: *"I know their names, their children's
+     names, and which ones bring donuts on Fridays."* Alternate cuts "their names."
+   - A third triad, Isaiah's *"Every one acquired… Every one 'restructured.' Every one dissolved…"*
+     (`:3339`), is earned anaphora and was deliberately left alone.
+
+2. **Five epilogue plates do not exist.** `epilogue_janitor` / `_skip` / `_intern` / `_grandma` /
+   `_voice` are referenced by `EpilogueState` and absent from `src/assets/epilogues/`. Prompts,
+   style prefix and constraints are now written up in **`art/PROMPTS.md` → "Epilogue Card Art —
+   OPEN REQUEST"**; the pipeline is `codex exec` + `$imagegen2`, same as the portraits. Until they
+   land, `_renderCard` draws a plate-pending frame so the sequence keeps its rhythm instead of
+   collapsing to bare text mid-sequence. **This is the last unfinished piece of proposal 2.**
+
+## Placement change, logged (spec deviation from proposal 6)
+
+The proposal placed the Board Meeting *"between `has_rolex` and the penthouse."* The wiring puts it
+**before** the Rolex — entry is Skip in the Board Room on `ross_speech_ready`, and it closes on
+`board_meeting_closed`. That matches the acceptance criterion and is the better scene order (the
+Rolex is the ascent, not the argument), but it had never been written down anywhere. It is written
+down now. Consequence: taking the Rolex ends the meeting forever, which is note (a) below.
+
+## Fixes
+
+| # | Note | Fix |
+|---|------|-----|
+| 1 | **Continuity, flagship scene.** Skip attributed Janet's 1994 pen-on-folders detail to Diane, and Janet reclaimed it verbatim 35 nodes later in the same meeting — with Diane stating her nineteen-year tenure (started ~2007) in between. | `dialogs/index.js:3247` Diane → **Janet**. Draft-inherited; `art/drafts/board_meeting_draft.md` corrected in place with a `[F1 CORRECTION]` marker so it cannot re-mint. |
+| 2 | **Wrong flag key.** The printer-archive payoff thought was keyed to `printer_quest_done` (the Act-1/2 toner fetch) and fired acts before Andrew knew about a port or an archive. | `thoughts.js` rekeyed to **`quest_network_ghost_complete`** (`dialogs/index.js:2777`), which is the archive reveal. |
+| 3 | **Ending contradiction.** Skip's "sits in the board room fifteen minutes before the meeting" card was gated only on `board_meeting_held`; in `ending_dissolution` the department is gone and he has been relocated to "a corner office in a building with no corners." | `EpilogueState.js` Skip card now branches **dissolution first**, then `board_meeting_won`, then `board_meeting_held`, then default — four variants, new prose (§E). `board_member_spoke` appends the seat-twelve line to the top variant. |
+| 4 | **Latent bug + spec shortfall.** The team card's ally counter read `isaiah_act6_rallied` and `alex_act6_rallied` — neither written anywhere in `src`. Max 3/5, so `allies >= 5` → "All of them" was unreachable and a full-rally run got the diminished line. The promised individualized ally cards were never shipped. | Counter now reads the five real flags: `janet_act6_rallied`, `diane_act6_rallied`, `isaiah_evidence`, `read_alex_it_act6`, `janitor_rallied`. Five per-ally lines added, each gated on that ally's **personal-mission** flag (`janet_vacancy_complete`, `diane_handbook_complete`, `alex_badge_audit_complete`, `isaiah_receipts_complete`, `janitor_names_complete`), shared sentence retained as the closing line (§F). |
+| 5 | **Missing plates.** | See "Producer decisions still open" #2. |
+| 6 | **Triads.** | See "Producer decisions still open" #1. |
+| 7 | **Janet explains the joke.** "Pen doesn't have an undo button. Neither does trust." | `:3309` — second sentence cut. The thirty-one-pound drawer two nodes later carries it. |
+| 8 | **Self-echo inside one ending.** The hardened Dissolution coda reused the reclining seats and the trunk-of-filing-cabinets jokes from node 7 of the same ending, nine nodes earlier. | `:3723` rewritten — *"The parking meter has never expired."* |
+| 9 | **Silent point of no return.** `has_rolex` derives `act6_complete` → `board_meeting_closed`, which closes the meeting forever, and `janitor_act6` handed the watch over with no warning. | Warning line + a two-option choice inserted in `janitor_act6`. WAIT branch writes **no flag** and the scene is fully re-enterable (its room condition is `act6_ready && !has_rolex`, unchanged). |
+
+## Mechanical deviations from the 4.6 draft — countersign please
+
+- **`janitor_act6` renumbered.** 4.6 wrote the warning, the prompt, both option labels and the
+  WAIT response as prose; turning that into a `choice` node required inserting two nodes and
+  renumbering 3→11 (old end node 8 is now 11). No prose was altered. The TAKE branch is byte-identical
+  to the old linear path.
+- **Alex's ally signal.** 4.6 had no say here; `alex_it_act6` sets no flag of its own, so rather than
+  minting a new one (which existing saves could never have) the counter reads the automatic
+  `read_alex_it_act6` that `DialogState._endDialog()` already writes. Save-safe by construction.
+- **Plate-pending frame** in `EpilogueState._renderCard` is new code, not draft prose.
+
+## Observed, not fixed (out of scope for F1, no note covered it)
+
+`ExplorationState._getDialogId():1732` gives the Janitor's riddles priority over his hardcoded
+`dialogId` for the whole game from act 3 onward. A player who reaches `act6_ready` with riddle 1
+unfinished gets the riddle instead of `janitor_act6` and must clear all three before the Rolex
+scene is reachable. It resolves itself (the riddles are completable and repeatable on failure), so
+it is a detour, not a block — but it is an unintended gate on the finale and worth a decision.
+
+## Files touched
+
+`src/data/dialogs/index.js` · `src/data/thoughts.js` · `src/states/EpilogueState.js` ·
+`CLAUDE.md` (Key Story Flags: 10 new rows incl. the previously write-only `board_meeting_won` /
+`board_member_spoke`) · `art/PROMPTS.md` · `art/drafts/board_meeting_draft.md` ·
+`art/drafts/f1_fix_draft.md` (new)
+
+---
+
+# The Campaign — July 29–31 — Runs A/B/F1/C (branch `display-case`, HEAD fc8ac61)
+
+**Producer-cosigned campaign, executed across two nights.** Commits:
+`cabc1de` Wave-5 final chars → `91206ec` HUD legibility → `c506182`+
+`8864a75` Run A (renames Meredith Sterling/Skip Hartley display-only per
+the SAVE-SAFETY NAMING LEDGER in `.claude/plans/proposals-whats-missing.md`
+— read it before touching those characters; Rachel/`rachel_to` wired;
+elevators canonical; blueprint pulse; og.png/error-boundary/save-shim) →
+`cd91112`+`706e9bc` Run B PASSED (perf harness `npm run perf`; shadow
+cadence; Room.dispose leak; N8AO retune; garage tear; tier governor) →
+`1f23a58` Run F1 (BOARD MEETING 177-node set-piece + Name the Pattern +
+Floor 13 button + voice-carry + goodbye cards; all prose Opus 4.6 —
+standing order: 4.6 first-drafts ALL dialog via `claude -p --model
+claude-opus-4-6`, wire byte-identical, producer redlines IN PLAYTEST) →
+`fc8ac61` Run C (Locks/Break/agency economy; THE BILLABLE DAY; vault
+keypad 47-19-82; respec; Review Points; NG+ fix; sim-verified).
+
+**Open threads:** Run C's round-3 critics died to the 5h usage cap — a
+05:47 cron resumes `wf_651657f7-5fc` for the final verdict (resume:
+`Workflow scriptPath .claude/../workflows/scripts/trust-issues-run-c-*.js
++ resumeFromRunId wf_651657f7-5fc`). Board: #8 Audio (music AUDITIONS
+invited by Alex — his veto), #10 remaining proposals, #11 JOINT character
+pass (imagegen refs + img2threejs — WITH Alex only; his morning gate;
+face-topology bible amendments are the bar; epilogue-card art rides
+here). Alex's playtest-redline list is in alexmemory.md NEEDS YOU. NO
+MERGE to main (game live on his site) until he says.
+
 # Wave 5 addendum — July 27 ~17:55 — AAA CHARACTER PASS (commit 7a31dd9)
 
 Alex's colleagues' critique ("scrunched/scary faces, lumpy bodies,
