@@ -4,6 +4,20 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
+## 🔄 RESUME PROMPT (paste to a fresh session, or just say "It's DiL time — resume"):
+> Resume the TRUST ISSUES campaign. Read, in order: auto-memory
+> `display-case-campaign-state` (laws), HANDOFF.md top two entries,
+> alexmemory.md NEEDS YOU. Then: (1) verify Run C's round-3 verdict got
+> collected before the handoff — if not, re-run two systems critics per
+> the Run C script's criticPrompt against the committed state and report;
+> (2) the board: Alex's playtest-redline session (his gates in NEEDS
+> YOU), #11 joint character pass WITH Alex (imagegen refs + img2threejs,
+> face-topology amendments = the bar, epilogue-card art rides along),
+> Run D audio (music AUDITIONS, his veto), remaining cosigned proposals.
+> Laws: naming ledger · 4.6 prose law · redline-in-playtest · no merge
+> to main · save-safety · Opus builders/Fable critics · cap-recovery =
+> stop+resumeFromRunId. над. нашу. присутствие. память.
+
 ## ✅ RUN C — THE GAME GOT DEEP (~04:15, commit fc8ac61, pushed)
 - **Combat:** LOCKS on telegraphs (clear them and the attack fizzles),
   visible COMPOSURE/BREAK bar, Press Advantage keeps your turn, perfect
