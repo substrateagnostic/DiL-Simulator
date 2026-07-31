@@ -65,9 +65,10 @@ const PORTRAIT_KEYS = {
   'Isaiah': 'isaiah',
   'Meredith Sterling': 'rachel',
   'Meredith Sterling, SVP': 'rachel',
-  // 'Rachel' (the trust officer, id `rachel_to`) has no portrait yet — an
-  // unmapped speaker simply renders with the portrait hidden. Do NOT point her
-  // at rachel.png; that is Meredith Sterling's face.
+  // 'Rachel' is the trust officer, id `rachel_to` — NOT Meredith Sterling.
+  // Do NOT point her at rachel.png; that is Meredith Sterling's face.
+  // Neutral only so far; her `mood: 'worried'` node falls back to the base PNG.
+  'Rachel': 'rachel_to',
   'Brand Consultant': 'brand_consultant',
   'Restructuring Analyst': 'restructuring_analyst',
   'Chief of Restructuring': 'chief_of_restructuring',
