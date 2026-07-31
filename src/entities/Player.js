@@ -6,6 +6,7 @@ import { PLAYER_BASE_STATS, PLAYER_ABILITIES, XP_TABLE, LEVEL_GROWTH } from '../
 import { ALLY_STATS } from '../data/allies.js';
 import { STARTING_INVENTORY } from '../data/items.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
+import { applyReviewPurchases } from '../data/review.js';
 import { PLAYER } from '../utils/constants.js';
 import { EventBus } from '../core/EventBus.js';
 
@@ -436,6 +437,13 @@ export class Player {
     }
     // Combat ally-control preference
     this.allyControl = (data.allyControl === 'auto') ? 'auto' : 'manual';
+    // Review Point purchases are a localStorage ledger, deliberately NOT part
+    // of the save (so they survive New Game+, slot switches and deleted
+    // files). `this.flags` was just replaced wholesale by the save's flags,
+    // so the purchase flags have to be re-stamped here — ExplorationState
+    // enters BEFORE deserialize on the Continue path, so its own call is not
+    // enough on its own.
+    applyReviewPurchases(this);
     this.setPosition(this.position.x, this.position.z);
   }
 }

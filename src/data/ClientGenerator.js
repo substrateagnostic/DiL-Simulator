@@ -1,6 +1,7 @@
 // Procedural client generation for the Reception roguelite system
 
 import { COLORS } from '../utils/constants.js';
+import { DAY_BALANCE, rollDayMutators, partyEscalationScale } from './billableDay.js';
 
 const MALE_NAMES = [
   'Robert', 'James', 'William', 'Richard', 'Charles', 'Thomas',
@@ -375,7 +376,9 @@ function scaleEnemyStats(assets, playerLevel = 1, postGame = false) {
   };
 }
 
-export function generateClient(overrideLastName, playerLevel = 1, postGame = false, forceWhale = false) {
+export function generateClient(
+  overrideLastName, playerLevel = 1, postGame = false, forceWhale = false, suppressWhale = false,
+) {
   let pool = postGame ? POST_GAME_CLIENT_TYPES : CLIENT_TYPES;
   let typeDef = pick(pool);
   const lastName = overrideLastName || pick(LAST_NAMES);
@@ -384,8 +387,14 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
 
   // 5% chance of a pre-algorithm whale client (100M+ AUM) — rare big fish.
   // forceWhale: a signed whale referred a friend (whale_referral_pending flag).
+  // suppressWhale: the CALLER already rolled for the whale and it missed. This
+  // exists for generateDayClient, whose asset-floor rejection sampling re-rolls
+  // this function up to 12 times per slot: an unsuppressed 5% roll inside the
+  // loop compounds to ~12% on the late slots (measured 4.08% walk-in vs 12.35%
+  // on day slot 4), and because a whale always clears the floor it also breaks
+  // the loop, so the distortion is one-directional. See generateDayClient.
   let isWhale = forceWhale;
-  if (!postGame && !isWhale && Math.random() < 0.05) {
+  if (!postGame && !isWhale && !suppressWhale && Math.random() < 0.05) {
     isWhale = true;
     typeDef = pick(POST_GAME_CLIENT_TYPES);
   } else if (forceWhale) {
@@ -441,6 +450,11 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
     xpReward: scaled.xpReward,
     abilities: [...typeDef.abilities],
     mutators,
+    // Always present (even null) — ENEMY_STATS.reception_client is mutated in
+    // place between fights, so an Escalation Clause day client must not leave
+    // its phases behind for the next walk-in. Same reasoning as `mutators`.
+    phases: null,
+    phaseMessages: null,
   };
 
   const visualConfig = generateVisualConfig(firstName, typeDef.type);
@@ -462,6 +476,116 @@ export function generateClient(overrideLastName, playerLevel = 1, postGame = fal
     isPostGame: postGame || isWhale,
     isWhale,
   };
+}
+
+// ── The Billable Day: day-slot client generation ──────────────────────────────
+// A day is 3-5 clients on one board. Slot 0 is the walk-in the player already
+// knows how to fight; every slot after it is scaled up and can carry a
+// subtractive mutator. The last slot (Close of Business) gets an extra bump
+// and always carries one. See src/data/billableDay.js for the tunables and
+// .claude/plans/research-gameplay-comps.md P2.2/P2.4 for why.
+
+/**
+ * Scale an already-generated client into a day slot and attach its mutators.
+ * Mutates and returns the client.
+ */
+export function applyDayEscalation(client, index = 0, total = 3, partySize = 0) {
+  const B = DAY_BALANCE;
+  const step = Math.max(0, index);
+  const closing = index >= total - 1;
+  // One dial for both ends of the fairness band — see DAY_BALANCE.partyEscalationScale.
+  const pScale = partyEscalationScale(partySize);
+
+  // A whale (100M-250M assets) is already pinned to the top of the wealth
+  // curve and scaled as post-game. Stacking slot escalation on top of that
+  // produced an unwinnable outlier, so whales keep their slot stamp and the
+  // closer's mutator but skip the stat multipliers. The XP bump still applies.
+  const stats = !client.isWhale;
+  const hpMult  = stats ? 1 + (step * B.hpPerStep  + (closing ? B.closingHpBonus  : 0)) * pScale : 1;
+  const atkMult = stats ? 1 + (step * B.atkPerStep + (closing ? B.closingAtkBonus : 0)) * pScale : 1;
+  const defMult = stats ? 1 + step * B.defPerStep * pScale : 1;
+  const spdMult = stats ? 1 + step * B.spdPerStep * pScale : 1;
+  // XP is NOT party-scaled: the day pays for the slot you cleared, not for how
+  // many people helped. Scaling it would make going alone pay less as well as
+  // hurt more, which is a punishment, not a trade.
+  const xpMult  = 1 + step * B.xpPerStep;
+
+  const es = client.enemyStats;
+  es.maxHP = Math.max(1, Math.round(es.maxHP * hpMult));
+  es.hp = es.maxHP;
+  es.atk = Math.max(1, Math.round(es.atk * atkMult));
+  es.def = Math.max(0, Math.round(es.def * defMult));
+  es.spd = Math.max(1, Math.round(es.spd * spdMult));
+  es.xpReward = Math.max(1, Math.round(es.xpReward * xpMult));
+
+  // Subtractive mutators ride alongside the additive ones the generator
+  // already produced (thorns / volatile / compound).
+  const dayMutators = rollDayMutators(index, total);
+  if (dayMutators.length > 0) {
+    client.mutators = [...(client.mutators || []), ...dayMutators];
+    es.mutators = [...(es.mutators || []), ...dayMutators];
+  }
+
+  // Escalation Clause used to bolt a second phase with a heavier ability pool
+  // onto the client at 50% HP. That shipped `subtractive: true` while being a
+  // straight stat check — it took nothing from Andrew, which is exactly the
+  // shape P2.4 says does NOT produce the "I know why I lost" clarity. It is
+  // now the report's named version: momentum decays 10 per turn, enforced in
+  // CombatEngine.processTurnStart. No enemy data to write, so nothing happens
+  // here any more — the rule lives entirely in the engine.
+
+  client.daySlot = index;
+  client.dayTotal = total;
+  client.isClosing = closing;
+  return client;
+}
+
+/** Minimum assets a client must carry to belong in slot `index` of a day. */
+export function dayAssetFloor(index, postGame = false) {
+  const MAX_ASSET = postGame ? 100_000_000 : 25_000_000;
+  const pct = Math.min(DAY_BALANCE.assetFloorMax, Math.max(0, index) * DAY_BALANCE.assetFloorPerStep);
+  return Math.round(pct * MAX_ASSET);
+}
+
+/**
+ * Generate a client for a given slot in a Billable Day.
+ * Wraps generateClient so the walk-in path is untouched.
+ *
+ * The slot's asset floor is met by rejection sampling rather than by rewriting
+ * the type tables: a handful of rolls is cheap, the wealth mix stays organic,
+ * and if the pool simply cannot reach the floor (early game, thin types) the
+ * richest candidate is kept instead of hanging.
+ *
+ * THE WHALE IS ROLLED ONCE, HERE, BEFORE THE LOOP. Leaving the 5% roll inside
+ * generateClient made it fire on every retry, and since a whale (100M-250M)
+ * always clears the floor and breaks the loop, the effective rate climbed with
+ * the floor: measured 4.08% walk-in against 4.70 / 6.45 / 7.95 / 10.17 / 12.35%
+ * on day slots 0-4, i.e. ~0.42 whales per five-slot day against ~0.20 per five
+ * walk-ins. A whale's 1M-2.5M fee also collects the closing premium, so that
+ * was quietly the dominant AUM term in the mode whose whole justification is a
+ * MEASURED risk premium (report P2.1). One roll per slot, same 5% as a walk-in.
+ */
+export function generateDayClient({
+  index = 0,
+  total = 3,
+  playerLevel = 1,
+  postGame = false,
+  forceWhale = false,
+  lastName = null,
+  partySize = 0,
+} = {}) {
+  const floor = dayAssetFloor(index, postGame);
+  // One roll per SLOT, not one per retry. postGame days draw from the elite
+  // pool already and never rolled a whale in the first place.
+  const isWhale = forceWhale || (!postGame && Math.random() < 0.05);
+  let best = null;
+  const tries = Math.max(1, DAY_BALANCE.assetFloorTries);
+  for (let i = 0; i < tries; i++) {
+    const c = generateClient(lastName, playerLevel, postGame, isWhale, true);
+    if (c.assets >= floor) { best = c; break; }
+    if (!best || c.assets > best.assets) best = c;
+  }
+  return applyDayEscalation(best, index, total, partySize);
 }
 
 // ── Beneficiary Chain Generation ──────────────────────────────────────────────

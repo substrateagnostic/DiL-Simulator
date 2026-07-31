@@ -263,6 +263,11 @@ export const ENEMY_STATS = {
     xpReward: 25,
     abilities: ['paper_jam', 'confused_filing'],
     weakness: 'legal', resistance: null,
+    // NG+ reads: they have had this meeting before (CombatState._enemyTaunt).
+    ngTaunts: [
+      "I am so sorry, I think I already did this to you? I am so sorry.",
+      "Oh no. I remember your face. That is - I am sorry, that is not a good sign.",
+    ],
   },
   karen: {
     name: 'Karen Henderson',
@@ -287,6 +292,11 @@ export const ENEMY_STATS = {
       '"My attorney is on speed dial and I am not afraid to use it!"',
       '"One star. Zero. Stars. I am telling EVERYONE."',
       '"Do you know who my father was?! DO YOU?!"',
+    ],
+    // New Game+ only — mixed into the pool by CombatState._pickTaunt.
+    ngTaunts: [
+      '"I filed this exact complaint last quarter and I am filing it again because nothing was done."',
+      '"You look familiar. I do not mean that warmly. I have been a member since March."',
     ],
   },
   chad: {
@@ -313,6 +323,11 @@ export const ENEMY_STATS = {
       '"ALPHA DOES NOT LOSE, BRO. ALPHA. DOES. NOT. LOSE."',
       '"I\'m going to put everything in crypto and there\'s nothing you can do!"',
     ],
+    // New Game+ only — mixed into the pool by CombatState._pickTaunt.
+    ngTaunts: [
+      '"I literally had this exact conversation with someone here last quarter."',
+      '"Didn\x27t we do this already? I had my Montblanc out and everything."',
+    ],
   },
   grandma: {
     name: 'Grandma Henderson',
@@ -338,6 +353,11 @@ export const ENEMY_STATS = {
       '*dabs eyes* "I just want what\'s best. For everyone. Except you, apparently."',
       '"The church has been very understanding. Very generous, actually."',
     ],
+    // New Game+ only — mixed into the pool by CombatState._pickTaunt.
+    ngTaunts: [
+      '"Oh, you again, dear. I\x27ve already started your row."',
+      '"I thought we settled this last time, sweetheart. My needles remember even if you don\x27t."',
+    ],
   },
   compliance: {
     name: 'Compliance Auditor',
@@ -349,6 +369,11 @@ export const ENEMY_STATS = {
     xpReward: 150,
     abilities: ['regulation_cite', 'audit_trail', 'form_27b_stroke_6'],
     weakness: 'legal', resistance: 'audit',
+    // NG+ reads: they have had this meeting before (CombatState._enemyTaunt).
+    ngTaunts: [
+      "This finding was closed in the prior review cycle. It has been reopened.",
+      "Your remediation plan from last quarter has been rejected on procedural grounds.",
+    ],
   },
   regional: {
     name: 'Regional Manager',
@@ -418,6 +443,11 @@ export const ENEMY_STATS = {
     xpReward: 160,
     abilities: ['downsize', 'efficiency_report', 'outsource_threat'],
     weakness: 'audit', resistance: null,
+    // NG+ reads: they have had this meeting before (CombatState._enemyTaunt).
+    ngTaunts: [
+      "Your headcount was reduced in the previous cycle. The reduction still applies.",
+      "The model has already accounted for this interaction. You are a known input.",
+    ],
   },
   brand_consultant: {
     name: 'Brand Consultant',
@@ -429,6 +459,11 @@ export const ENEMY_STATS = {
     xpReward: 150,
     abilities: ['rebrand', 'focus_group', 'logo_redesign'],
     weakness: 'social', resistance: 'audit',
+    // NG+ reads: they have had this meeting before (CombatState._enemyTaunt).
+    ngTaunts: [
+      "We are literally rebranding the rebrand! Fresh eyes, same deliverables!",
+      "The deck is the same deck but we changed the font so it is new!",
+    ],
   },
   data_analytics_lead: {
     name: 'Data Analytics Lead',
@@ -462,6 +497,11 @@ export const ENEMY_STATS = {
     xpReward: 250,
     abilities: ['cease_desist', 'legal_jargon', 'billable_assault'],
     weakness: 'audit', resistance: 'legal',
+    // NG+ reads: they have had this meeting before (CombatState._enemyTaunt).
+    ngTaunts: [
+      "Opposing counsel notes for the record that this matter was previously adjudicated.",
+      "I have filed a motion to dismiss on the grounds that we have already done this.",
+    ],
   },
   rachel_boss: {
     name: 'Meredith Sterling, SVP',
@@ -477,6 +517,11 @@ export const ENEMY_STATS = {
       { hpThreshold: 0.6, abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'] },
       { hpThreshold: 0.3, abilities: ['hostile_takeover', 'board_resolution', 'golden_handcuffs'] },
       { hpThreshold: 0, abilities: ['hostile_takeover', 'board_resolution', 'final_assessment'] },
+    ],
+    // New Game+ only — mixed into the pool by CombatState._pickTaunt.
+    ngTaunts: [
+      '"We have already allocated resources to this interaction. The return was suboptimal."',
+      '"Your case metrics are consistent with the previous cycle. I am not encouraged."',
     ],
   },
   cfos_assistant: {
@@ -520,6 +565,11 @@ export const ENEMY_STATS = {
       { hpThreshold: 0.7, abilities: ['data_harvest', 'pattern_recognition', 'risk_assessment', 'system_overload'] },
       { hpThreshold: 0.35, abilities: ['predictive_model', 'algorithmic_trading', 'data_harvest', 'process_termination', 'system_overload'] },
       { hpThreshold: 0, abilities: ['total_optimization', 'algorithmic_trading', 'predictive_model', 'process_termination', 'pattern_recognition'] },
+    ],
+    // New Game+ only — mixed into the pool by CombatState._pickTaunt.
+    ngTaunts: [
+      'This interaction has been logged previously. The outcome has not changed.',
+      'Your case has been reopened. The previous findings still apply.',
     ],
   },
 
@@ -1100,7 +1150,18 @@ export const ENEMY_ABILITIES = {
 // Merge the Act 6½ city abilities (declared above pickMessage)
 Object.assign(ENEMY_ABILITIES, CITY_ABILITIES);
 
+// ESCALATED TO COMMITTEE — the denial tax (CombatEngine._noteDenial). Deny an
+// enemy two turns in a row and the organisation closes ranks: the next
+// telegraphed move is sealed. {name} is substituted at display time.
+export const SEAL_COPY = {
+  banner: 'ESCALATED TO COMMITTEE',
+  message: '{name} has escalated the matter to committee. The decision is already made.',
+};
+
 export const ANDREW_TAUNTS = {
+  escalated: [
+    "Oh good. They've stopped listening to me individually.",
+  ],
   crit: [
     "That's going in the quarterly report.",
     "Documented. Timestamped. Witnessed.",
@@ -1185,6 +1246,14 @@ export const ITEMS = {
     type: 'restore_hp',
     amount: 10,
   },
+  // Review Point purchase (src/data/review.js → Standard Audit Kit). The
+  // information item: it does not heal, it reads the file out loud. Uses the
+  // free-action budget of a normal item turn, which is the trade.
+  due_diligence_memo: {
+    name: 'Due Diligence Memo',
+    description: "Opens the target's case file. Reveals weakness and resistance tags, plus their next move.",
+    type: 'reveal',
+  },
 };
 
 // Apply balance.json overrides (set via npm run editor)
@@ -1201,4 +1270,12 @@ for (const [id, o] of Object.entries(_balance.enemies || {})) {
 }
 for (const [id, o] of Object.entries(_balance.abilities || {})) {
   if (PLAYER_ABILITIES[id]) Object.assign(PLAYER_ABILITIES[id], o);
+}
+// Enemy-ability overrides. Same shape as `abilities`, keyed by ENEMY_ABILITIES id.
+// This is where the editor can author LOCKS per move — `locks: ['legal','audit']`
+// for an explicit tag row, or `lockCount: 2` to keep the derived tags but change
+// how many are demanded. Enemy Composure size is authored through the existing
+// `enemies` block as `maxComposure`.
+for (const [id, o] of Object.entries(_balance.enemyAbilities || {})) {
+  if (ENEMY_ABILITIES[id]) Object.assign(ENEMY_ABILITIES[id], o);
 }

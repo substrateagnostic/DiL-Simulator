@@ -82,6 +82,17 @@ export const COSMETICS = {
     visual: { type: 'badge', color: 0xdd4444 },
     unlock: { flag: 'compliance_defeated' },
   },
+  // Review Point exclusive — see src/data/review.js. The unlock flag is
+  // stamped onto the player by applyReviewPurchases() on every load, so it
+  // survives New Game+ and brand-new saves.
+  appreciation_cert: {
+    name: 'Certificate of Appreciation',
+    description: 'Awarded in lieu of a raise, Q3 2004. Laminated. +3 DEF',
+    slot: 'badge',
+    stats: { def: 3 },
+    visual: { type: 'badge', color: 0xf2e6c8 },
+    unlock: { flag: 'rp_appreciation_cert' },
+  },
   corner_office_key: {
     name: 'Corner Office Key',
     description: 'Worn around the neck. Subtle power move. +2 ATK, +2 DEF',
@@ -124,4 +135,51 @@ export const COSMETICS = {
     visual: { type: 'calculator', color: 0xdaa520 },
     unlock: { flag: 'regional_director_defeated' },
   },
+  // ── The Relic slot ────────────────────────────────────────────────────
+  // Report P1.6: forgiveness ships as LOOT WITH A TRADEOFF, never as a shame
+  // slider. Sea of Stars' Sixth Sense widens the timed-block window; its
+  // Adamant Shard guarantees lock-breaks but costs 50% of the timing bonus.
+  // This is that shape in one equip slot the game already had: the Brace QTE
+  // gets 40% more window, and Retaliate — the reward Brace arms — gives up 20%
+  // of its damage for it. Available from the start, because an accessibility
+  // aid you have to earn is not one. `qte` is read by CombatState via
+  // qteModifiers() below; a cosmetic without the field changes nothing.
+  ergonomic_wrist_support: {
+    name: 'Ergonomic Wrist Support',
+    description: 'Requisitioned from Supply after a documented repetitive-strain complaint. Approved without a doctor\'s note. Wider Brace window, weaker Retaliate.',
+    slot: 'accessory',
+    stats: {},
+    qte: { braceWindow: 1.4, retaliateDamage: 0.8 },
+    visual: { type: 'wrist_rest', color: 0x3d4550 },
+    unlock: 'default',
+  },
+  // Review Point exclusive — see src/data/review.js.
+  svp_tumbler: {
+    name: 'SVP-Grade Tumbler',
+    description: 'Vacuum-sealed. Previously restricted to Senior VP and above. +2 ATK, +5 MP',
+    slot: 'accessory',
+    stats: { atk: 2, maxMP: 5 },
+    visual: { type: 'tumbler', color: 0x9aa3ad },
+    unlock: { flag: 'rp_svp_tumbler' },
+  },
 };
+
+/**
+ * Aggregate QTE modifiers from everything the player has equipped.
+ * Multiplicative, so two relics that both widen a window stack sanely, and a
+ * player with nothing equipped gets the identity object — which is what keeps
+ * every existing save's combat feel bit-identical.
+ */
+export function qteModifiers(player) {
+  const out = { braceWindow: 1, retaliateDamage: 1 };
+  const equipped = player?.equipped;
+  if (!equipped) return out;
+  for (const slot of COSMETIC_SLOTS) {
+    const q = COSMETICS[equipped[slot]]?.qte;
+    if (!q) continue;
+    for (const key of Object.keys(out)) {
+      if (typeof q[key] === 'number') out[key] *= q[key];
+    }
+  }
+  return out;
+}

@@ -178,13 +178,99 @@ export class CombatHUD {
         <div class="combat-enemy-hp-bar">
           <div class="combat-enemy-hp-fill" style="width: ${e.maxHP > 0 ? (e.hp / e.maxHP) * 100 : 0}%"></div>
         </div>
+        <div class="combat-composure" style="display:none;">
+          <span class="combat-composure-label">COMPOSURE</span>
+          <div class="combat-composure-bar"><div class="combat-composure-fill"></div></div>
+        </div>
+        <div class="combat-locks" style="display:none;"></div>
         <div class="combat-telegraph" style="display:none;"></div>
       `;
       const hpFill = wrap.querySelector('.combat-enemy-hp-fill');
       const telegraphEl = wrap.querySelector('.combat-telegraph');
+      const locksEl = wrap.querySelector('.combat-locks');
+      const composureEl = wrap.querySelector('.combat-composure');
+      const composureFill = wrap.querySelector('.combat-composure-fill');
       this.enemyRowEl.appendChild(wrap);
-      this.enemyEntries.push({ index: i, infoEl: wrap, hpFill, telegraphEl });
+      this.enemyEntries.push({ index: i, infoEl: wrap, hpFill, telegraphEl, locksEl, composureEl, composureFill });
     });
+  }
+
+  // ── Composure / Break bar (one per enemy, under the HP bar) ───────────
+  // Fills ONLY on weakness-tag hits. Empty it and the enemy loses a turn.
+  updateComposureAll(enemies) {
+    enemies.forEach((e, i) => {
+      const entry = this.enemyEntries[i];
+      if (!entry || !entry.composureEl) return;
+      if (!e.maxComposure || e.hp <= 0) { entry.composureEl.style.display = 'none'; return; }
+      entry.composureEl.style.display = '';
+      const pct = Math.max(0, Math.min(100, (e.composure / e.maxComposure) * 100));
+      entry.composureFill.style.width = `${pct}%`;
+      const broken = (e.broken || 0) > 0;
+      entry.composureEl.classList.toggle('broken', broken);
+      const label = entry.composureEl.querySelector('.combat-composure-label');
+      // The bar names its own key. Composure only ever moves on a hit that
+      // matches the target's weakness tag, and single-lock Objections
+      // deliberately never ask for that tag — so the player is always choosing
+      // between cancelling the move and breaking the person. Saying WEAKNESS
+      // ONLY on the label is the cheapest way to make that trade visible
+      // instead of something you infer after forty fights.
+      if (label) {
+        label.textContent = broken
+          ? 'VISIBLY RATTLED'
+          : (e.weakness ? `COMPOSURE — ${String(e.weakness).toUpperCase()} ONLY` : 'COMPOSURE');
+      }
+    });
+  }
+
+  // One-shot flash on the bar when it empties.
+  pulseComposureBreak(idx) {
+    const entry = this.enemyEntries[idx];
+    if (!entry || !entry.composureEl) return;
+    entry.composureEl.classList.remove('breaking');
+    void entry.composureEl.offsetWidth;   // restart the animation
+    entry.composureEl.classList.add('breaking');
+  }
+
+  // ── LOCKS row (Sea of Stars) ─────────────────────────────────────────
+  // locksPerEnemy: array parallel to enemies, each [{ tag, cleared }] or [].
+  // sealedPerEnemy: parallel booleans — an enemy that has ESCALATED TO
+  // COMMITTEE still shows its Objections, but none of them can be cleared.
+  updateLocksAll(locksPerEnemy, sealedPerEnemy = []) {
+    const TAG_LABEL = { legal: 'LEGAL', social: 'SOCIAL', audit: 'AUDIT', technical: 'TECH' };
+    this.enemyEntries.forEach((entry, i) => {
+      if (!entry.locksEl) return;
+      const locks = locksPerEnemy?.[i];
+      const sealed = !!sealedPerEnemy?.[i];
+      if (!Array.isArray(locks) || locks.length === 0) {
+        entry.locksEl.style.display = 'none';
+        entry.locksEl.innerHTML = '';
+        entry._lockSig = '';
+        return;
+      }
+      // Only rewrite when the row actually changed. _refreshHUD() runs on every
+      // beat and an unconditional innerHTML rewrite tore the shatter animation
+      // off the chip that had just cleared (verified: shatter never survived
+      // to a frame).
+      const sig = locks.map(l => `${l.tag}:${l.cleared ? 1 : 0}`).join('|') + (sealed ? '|S' : '');
+      if (entry._lockSig === sig) return;
+      entry._lockSig = sig;
+      entry.locksEl.style.display = '';
+      entry.locksEl.classList.toggle('sealed', sealed);
+      entry.locksEl.innerHTML =
+        `<span class="combat-locks-label">${sealed ? 'COMMITTEE SEALED' : 'OBJECTIONS'}</span>` +
+        locks.map(l => `<span class="combat-lock-chip lock-${l.tag}${l.cleared ? ' cleared' : ''}">${l.cleared ? '✓ ' : ''}${TAG_LABEL[l.tag] || l.tag.toUpperCase()}</span>`).join('');
+    });
+  }
+
+  // Shatter animation on a single chip that just cleared.
+  pulseLockCleared(enemyIndex, tag) {
+    const entry = this.enemyEntries[enemyIndex];
+    if (!entry || !entry.locksEl) return;
+    const chip = entry.locksEl.querySelector(`.combat-lock-chip.lock-${tag}.cleared`);
+    if (!chip) return;
+    chip.classList.remove('shatter');
+    void chip.offsetWidth;
+    chip.classList.add('shatter');
   }
 
   setEnemies(enemies) {
@@ -284,7 +370,10 @@ export class CombatHUD {
   }
 
   // ── Main / sub menus ─────────────────────────────────────────────────
-  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false, pressAdvantageCost = 25, voicesAvailable = []) {
+  // opts (8th arg, optional): { pressAdvantageUsed } — Press Advantage no
+  // longer ends the turn, so the button must vanish once it has been used
+  // this turn rather than relying on the momentum tier to hide it.
+  showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false, pressAdvantageCost = 25, voicesAvailable = [], opts = {}) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
     this.menuItems = [
@@ -308,10 +397,12 @@ export class CombatHUD {
       this.menuItems.push({ label, action: 'thoughts', voiceBtn: true });
     }
 
-    if (momentum >= pressAdvantageCost && momentum < 50) {
-      this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
-    } else if (momentum >= 50 && momentum < 100) {
-      this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}%)`, action: 'press_advantage', momentumSpend: true });
+    // Press Advantage is a FREE action now (it does not end the turn), so it is
+    // offered at any momentum tier and disappears once spent for this turn.
+    if (momentum >= pressAdvantageCost && !opts.pressAdvantageUsed) {
+      this.menuItems.push({ label: `▶ Press Advantage (${pressAdvantageCost}% · free)`, action: 'press_advantage', momentumSpend: true });
+    }
+    if (momentum >= 50 && momentum < 100) {
       this.menuItems.push({ label: `★ Second Wind (+75 HP)`, action: 'second_wind', momentumSpend: true });
     }
     if (momentum >= 100) {
@@ -744,6 +835,56 @@ export class CombatHUD {
     return el;
   }
 
+  // ── LOOP IN (Baton Pass) prompt ──────────────────────────────────────
+  // Fires right after Andrew lands a weakness hit with an ally on the bench.
+  // candidates: [{ index, name }]; onPick(index) / onDecline().
+  // Reuses the minigame-overlay pattern (Desperate Gamble / Retaliate) so it
+  // reads as part of the same family of player-priced choices.
+  showLoopInPrompt(candidates, onPick, onDecline) {
+    this._closeLoopIn();
+    const options = [...candidates, { index: -1, name: 'Keep it on my desk', decline: true }];
+    const overlay = document.createElement('div');
+    overlay.className = 'minigame-overlay loop-in-overlay';
+    overlay.innerHTML = `
+      <div class="minigame-title">Loop In a Colleague?</div>
+      <div class="gamble-options">
+        ${options.map((o, i) => `
+          <div class="gamble-option${i === 0 ? ' selected' : ''}" data-i="${i}">
+            <div class="gamble-option-name" style="color:${o.decline ? '#88aaff' : '#ffd700'}">${o.decline ? o.name : `Loop in ${o.name}`}</div>
+            <div class="gamble-option-desc">${o.decline ? 'Andrew finishes the turn alone.' : 'Your colleague attacks with +50% damage.'}</div>
+          </div>`).join('')}
+      </div>
+      <div class="minigame-hint">↑↓/WS navigate · ENTER/E confirm · ESC to decline</div>
+    `;
+    this.container.appendChild(overlay);
+
+    let sel = 0;
+    const optEls = overlay.querySelectorAll('.gamble-option');
+    const updateSel = () => optEls.forEach((el, i) => el.classList.toggle('selected', i === sel));
+    const finish = (i) => {
+      const chosen = options[i];
+      this._closeLoopIn();
+      if (!chosen || chosen.decline) onDecline();
+      else onPick(chosen.index);
+    };
+    const keyHandler = (e) => {
+      if (e.code === 'ArrowUp' || e.code === 'KeyW') { sel = Math.max(0, sel - 1); updateSel(); e.preventDefault(); }
+      else if (e.code === 'ArrowDown' || e.code === 'KeyS') { sel = Math.min(options.length - 1, sel + 1); updateSel(); e.preventDefault(); }
+      else if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') { e.preventDefault(); finish(sel); }
+      else if (e.code === 'Escape') { e.preventDefault(); finish(options.length - 1); }
+    };
+    optEls.forEach((el, i) => el.addEventListener('click', () => { sel = i; updateSel(); finish(i); }));
+    document.addEventListener('keydown', keyHandler);
+    this._loopInCleanup = () => {
+      document.removeEventListener('keydown', keyHandler);
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    };
+  }
+
+  _closeLoopIn() {
+    if (this._loopInCleanup) { this._loopInCleanup(); this._loopInCleanup = null; }
+  }
+
   showTaunt(text, side = 'player') {
     const el = document.createElement('div');
     el.className = `combat-taunt combat-taunt-${side}`;
@@ -797,6 +938,7 @@ export class CombatHUD {
 
   remove() {
     this._closeTargetPicker();
+    this._closeLoopIn();
     if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);
     if (this.enemyRowEl && this.enemyRowEl.parentNode) this.enemyRowEl.parentNode.removeChild(this.enemyRowEl);

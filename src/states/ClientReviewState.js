@@ -1,5 +1,7 @@
 // DOM UI state shown after defeating a reception client — accept or decline
 
+import { readDay } from '../data/billableDay.js';
+
 export class ClientReviewState {
   constructor(stateManager, player, clientData, onDecision) {
     this.stateManager = stateManager;
@@ -54,6 +56,24 @@ export class ClientReviewState {
       `;
     }).join('');
 
+    // ── Billable Day framing ──────────────────────────────────────────────
+    // Inside a day the review is a slot on the board, the AUM goes to escrow
+    // rather than the bank, and any restriction the client carried is named
+    // here so a hard fight is legible after the fact, not just during it.
+    const day = readDay(this.player);
+    const dayBanner = day ? `
+      <div class="cr-day-banner">
+        <span class="cr-day-slot">CLIENT ${Math.min(day.index + 1, day.total)} OF ${day.total}${c.isClosing ? ' · CLOSE OF BUSINESS' : ''}</span>
+        ${day.lastHours ? `<span class="cr-day-hours">+${day.lastHours} Billable Hours</span>` : ''}
+        <span class="cr-day-escrow">Escrow ${fmtDollars(day.aumPending)}</span>
+      </div>` : '';
+
+    const subMutators = (c.mutators || []).filter(m => m.subtractive);
+    const mutatorHtml = subMutators.length ? `
+      <div class="cr-day-mutators">
+        ${subMutators.map(m => `<span class="day-badge" title="${m.desc}">${m.label}</span>`).join('')}
+      </div>` : '';
+
     const el = document.createElement('div');
     el.className = 'cr-overlay';
     el.innerHTML = `
@@ -64,9 +84,11 @@ export class ClientReviewState {
         </div>
 
         <div class="cr-body">
+          ${dayBanner}
           <div class="cr-name-block">
             <div class="cr-client-name">${c.name}</div>
             <div class="cr-client-type">${c.type}</div>
+            ${mutatorHtml}
           </div>
 
           <div class="cr-financials">
@@ -112,7 +134,9 @@ export class ClientReviewState {
             Decline <span class="cr-btn-key">→</span>
           </button>
         </div>
-        <div class="cr-hint">Arrow Keys to select · Enter to confirm · Negotiate: +50% fees or the boss hears about it</div>
+        <div class="cr-hint">${day
+          ? 'Arrow Keys to select · Enter to confirm · Fees are held in escrow until the day closes at 5:15'
+          : 'Arrow Keys to select · Enter to confirm · Negotiate: +50% fees or the boss hears about it'}</div>
       </div>
     `;
 

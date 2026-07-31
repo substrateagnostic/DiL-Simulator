@@ -10,6 +10,207 @@ import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
 // allies[0] is always the player (Andrew). Additional allies are AI-controlled.
 // enemies[] has 1+ entries; AoE abilities hit all alive enemies.
 
+// ── Tunables (COMBAT DEPTH pass) ────────────────────────────────────────
+// All of these are plain module constants so the editor's balance layer can
+// still override the DATA they act on (ENEMY_STATS.maxComposure,
+// ENEMY_ABILITIES[id].locks) without needing to know about the engine.
+export const COMBAT_DEPTH = {
+  // LOCKS (Sea of Stars). A telegraphed enemy move can carry 1–3 damage-type
+  // locks. Landing a matching-tag hit before the enemy acts clears one.
+  LOCK_TAGS: ['legal', 'social', 'audit', 'technical'],
+  // Each cleared lock shaves this much off the telegraphed hit. All clear = fizzle.
+  LOCK_PARTIAL_REDUCTION: 0.30,
+  LOCK_MIN_MULTIPLIER: 0.10,
+
+  // COMPOSURE / BREAK (Honkai: Star Rail Toughness model).
+  // Only weakness-tag hits reduce it. At zero the enemy loses a turn and
+  // takes +20% damage until it recovers.
+  // Sim-tuned: bars land at 60/90/120 → 2/3/4 weakness hits to Break, which
+  // puts roughly one Break per fight in reach without making it automatic.
+  COMPOSURE_PER_WEAKNESS_HIT: 30,
+  COMPOSURE_STEP: 30,          // bars are multiples of 30, HSR-style
+  COMPOSURE_MIN: 60,
+  COMPOSURE_MAX: 120,
+  BROKEN_DAMAGE_BONUS: 1.20,
+  // HSR's standing pre-Break tax: while an enemy still has Composure, your
+  // damage is 0.9×. It is what makes Breaking read as "unlocking your real
+  // damage" rather than a bonus. It is a REFRAMING, not a nerf — it only
+  // works paired with PLAYER_DAMAGE_COMPENSATION below, which is why the two
+  // constants are documented as one decision.
+  UNBROKEN_DAMAGE_TAX: 0.90,
+  // …and the base-damage raise the tax is REQUIRED to ship with. Report P1.2:
+  // "Pair with the 0.9× pre-break tax ONLY IF you also raise base damage —
+  // otherwise it reads as a nerf." The first pass shipped the tax alone, and
+  // the sim caught it: a naive basic-attack policy — the median player, who
+  // never engages with Break at all — lost roughly 10pp of win rate at every
+  // level (see tools/combat-sim.mjs --tax-ab). Competent play was untouched,
+  // so the skill floor dropped while the ceiling held: exactly the failure
+  // Broche names in P1.7.
+  //
+  // 1.13, not the arithmetic 1/0.90 = 1.111: the band ends in a Math.floor,
+  // which costs another ~0.5 damage per hit on top of the multiply. 1.13 is
+  // the value that MEASURES back to parity, not the one that looks tidy
+  // (tools/combat-sim.mjs --dps, 200k basic attacks vs Karen at L7:
+  //  no band 30.240 · tax alone 27.009 · 1.11 comp 29.257 · 1.13 comp 30.284).
+  // Applied to player-and-ally damage against any enemy that HAS a Composure
+  // bar, immediately before the band, so:
+  //   unbroken  1.13 × 0.90 → 30.28 vs a 30.24 baseline — held harmless
+  //   broken    1.13 × 1.20 → +33% over baseline, not +20%
+  // Raising COMBAT.BASE_DAMAGE_MULTIPLIER instead would have buffed every
+  // enemy too (the formula is shared), which is why the raise lives here.
+  // Do not change one of these three numbers without the other two.
+  PLAYER_DAMAGE_COMPENSATION: 1.13,
+  // Metaphor deny-model: a PERFECT Brace takes something from the enemy.
+  BRACE_COMPOSURE_STRIP: 0.20,
+
+  // AGENCY ECONOMY
+  LOOP_IN_DAMAGE_BONUS: 1.5,   // P5R Baton Pass rank-2 analogue
+  LOOP_IN_MOMENTUM: 10,
+
+  // FAIRNESS: confusion scrambles targeting / dampens force. It never
+  // replaces the chosen action (Sandfall: "no frustrating deaths").
+  CONFUSED_POWER_MULT: 0.65,
+  CONFUSED_SCRAMBLE_CHANCE: 0.5,
+
+  // Desperate Gamble. The menu is meant to be a real trichotomy — no row may
+  // dominate the other two, in either direction.
+  //   safe    1.00× guaranteed
+  //   risky   60% × 1.5 + 40% × 0.5 = EV 1.10×, moderate variance
+  //   all_in  40% × 2.7             = EV 1.08×, maximum variance, plus a
+  //           25-momentum floor on the whiff so it is never a dead turn
+  // It shipped at 30% × 2.5 = EV 0.75× (strictly worse than safe, with an
+  // achievement attached teaching players to take a bad bet — report G9). The
+  // first fix over-corrected to 40% × 3.0 = EV 1.20× with 40 consolation
+  // momentum, which made all_in the EV-dominant row for anyone doing the
+  // arithmetic and turned a designed trap into a designed answer. 2.7 × 25
+  // puts it a hair UNDER risky on raw EV, so choosing it is a statement about
+  // variance and about the momentum floor, not a calculation.
+  // Measured: tools/combat-sim.mjs --gamble.
+  ALL_IN_CHANCE: 0.40,
+  ALL_IN_MULTIPLIER: 2.7,
+  ALL_IN_CONSOLATION_MOMENTUM: 25,
+
+  // ── DENIAL TAX ("Escalated to Committee") ───────────────────────────────
+  // The counterweight to perfect play, and a deliberate deviation from the
+  // brief: it is in neither Sea of Stars nor the comps report. It exists
+  // because Locks and Break stack — voiding a telegraph takes an enemy turn,
+  // Breaking takes another, and a player who reads both correctly can take a
+  // boss's whole kit away indefinitely with nothing given back.
+  //
+  // At DENIAL_LIMIT consecutive denied turns the enemy stops improvising and
+  // its next telegraphed move is SEALED: the locks are shown but cannot be
+  // cleared, and its Composure will not move while the seal holds. The counter
+  // resets once the sealed move resolves. It is announced, it is on the HUD,
+  // and it has a one-time teach line — it is a rule, not a gotcha.
+  //
+  // Measured (`node tools/combat-sim.mjs --denial-ab`, 300 runs, competent
+  // policy — DENIAL_LIMIT off vs 2, Andrew's HP at victory):
+  //   rachel_boss L9   78.8% -> 77.0%    win 99.3% -> 98.7%
+  //   algorithm  L10   65.0% -> 66.8%    win 99.3% -> 100.0%
+  //   grandma     L8   91.3% -> 88.8%    win 100%  -> 100%
+  // i.e. against a *competent* policy it is nearly free — it is priced against
+  // the ceiling, not the floor, and it does not move the win rate. Do not
+  // raise DENIAL_LIMIT past 2 expecting a difficulty knob; it is not one.
+  DENIAL_LIMIT: 2,
+  // What a sealed move is WORTH. The seal used to only guarantee that one move
+  // would land un-reduced; this makes the move the player cannot answer also
+  // the move that hurts, which is the only shape that reads as the enemy being
+  // paid back rather than merely not being robbed again.
+  //
+  // Honest measurement, because the number invites a bigger claim than it can
+  // support (`node tools/combat-sim.mjs --denial-ab 1.0,1.35,1.6`, 400 runs,
+  // competent policy, Andrew's HP at victory):
+  //   rachel_boss L9   denial off 78.3% | 1.00x 76.7% | 1.35x 76.5% | 1.60x 76.4%
+  //   algorithm   L10  denial off 65.3% | 1.00x 66.0% | 1.35x 65.7% | 1.60x 65.4%
+  //   grandma     L8   denial off 90.5% | 1.00x 90.6% | 1.35x 90.9% | 1.60x 90.8%
+  // A seal fires at most once or twice a fight, so the premium is worth a few
+  // tenths of a point of margin, not several points. It is shipped for
+  // LEGIBILITY — the sealed move visibly hits harder, so the rule teaches
+  // itself — and NOT as a difficulty dial. Raising it will not move the win
+  // rate; it will only start manufacturing the unanswerable burst that
+  // Sandfall's "no frustrating deaths" rule forbids, because a sealed move is
+  // by definition one the player was given no counter to.
+  // The lever that actually moves the ceiling is DENIAL_LIMIT (78.3% -> 76.7%
+  // on Meredith), and even that is deliberately small.
+  SEALED_DAMAGE_BONUS: 1.35,
+  // Momentum decay per player turn under Escalation Clause / the Open-Door
+  // Policy stretch goal. The report's named version of both.
+  MOMENTUM_DECAY: 10,
+};
+
+// ── New Game+ ladder ────────────────────────────────────────────────────
+// Two numbers, not one. `NG_PLUS_ENTRY` is the ENTRY RUNG — applied once the
+// moment you step onto any NG+ lap; `NG_PLUS_SCALING` compounds for every lap
+// beyond the first. Kept as plain exports so the balance editor and the
+// headless sims (tools/ng-sim.mjs) can read the same numbers.
+//
+// Why an entry rung exists at all: the first version of this ladder was
+// 1.35/1.15/1.10 compounding from lap 1, which was WEAKER on lap 1 than the
+// flat 1.4/1.3/1.2 it replaced — and lap 1 is the only lap most players ever
+// run. NG+ hands back every ability, every upgrade point and all the AUM, so
+// lap 1 has to be priced against the CARRY, not against the base enemy, or it
+// lands in the documented Dark Souls anti-pattern (report P4.1 / G3) where the
+// second lap is easier than the first.
+//
+// Harness: `node tools/ng-sim.mjs` — 500 runs/cell, competent policy, FRESH
+// kit (abilities per the level curve) vs CARRIED kit (all 19 abilities plus
+// maxed permanent shop upgrades: +9 atk, +9 def, +60 maxHP, +6 spd).
+// The ladder is correct when CARRY@NG+1 <= FRESH@NG. As shipped:
+//
+//   encounter    lvl   FRESH@NG   CARRY@NG   CARRY@NG+1  CARRY@NG+2  CARRY@NG+3
+//   karen         4       96.0%     100.0%        95.8%       82.8%       75.4%
+//   chad          6      100.0%     100.0%       100.0%       99.8%       98.6%
+//   grandma       8       99.8%     100.0%        99.4%       97.2%       97.0%
+//   rachel_boss   9       98.4%     100.0%        82.6%       48.2%       29.8%
+//   algorithm    10       99.6%     100.0%        80.8%       51.4%       35.6%
+//
+// Read the table honestly: karen/chad/grandma sit at the ceiling in BOTH the
+// FRESH@NG and CARRY@NG+1 columns, so those rows cannot demonstrate the ladder
+// either way — a couple of points of wobble there is sampling noise. The two
+// rows with headroom are the ones that carry the claim: rachel_boss
+// 98.4% -> 82.6% -> 48.2% -> 29.8% and algorithm 99.6% -> 80.8% -> 51.4% ->
+// 35.6%. That is a staircase; the previous constants (maxHP per-lap 1.35, no
+// decay) produced 27.3% -> 1.0% and 27.7% -> 4.0%, i.e. a wall, which
+// contradicted this comment's own "ends somewhere a human can stand". maxHP
+// per-lap was cut 1.35 -> 1.15 (`--hpscale` sweep) because the two finales are
+// damage races and HP compounding is the term that turns them into a cliff;
+// the decay below then softens only the top rung.
+//
+// Re-run it before touching any of these constants. `--sweep` sweeps the maxHP
+// entry rung, `--hpscale` the per-lap maxHP, `--lapdecay` the top-rung decay.
+export const NG_PLUS_ENTRY   = { maxHP: 1.70, atk: 1.45, def: 1.30, xpReward: 1.25 };
+export const NG_PLUS_SCALING = { maxHP: 1.15, atk: 1.15, def: 1.10, xpReward: 1.20 };
+export const NG_PLUS_CAP = 3;   // laps beyond this stop compounding
+
+// Per-lap DECAY on the compounding exponent. The exponent for `laps` is
+// 1 + d + d^2 + ... (laps-1 terms), so lap 1 and lap 2 are IDENTICAL at any d
+// (exponents 0 and 1) and only lap 3 is affected. It exists because the first
+// version compounded flat and the top rung stopped being a ladder: at d = 1.0
+// with the old 1.35 HP scaling the finale rows measured rachel_boss 1.0% and
+// algorithm 4.0% at CARRY@NG+3 — functionally unwinnable, which contradicts the
+// "ends somewhere a human can stand" claim above. NG+3 now lands at 29.8% /
+// 35.6%: below the 40-85% story band on purpose, because the top rung of a
+// voluntary ladder is a flex, not a checkpoint — but a flex you can pass.
+// Swept in tools/ng-sim.mjs --lapdecay.
+// Held on an object (like NG_PLUS_ENTRY) so the harness can sweep it in place.
+export const NG_PLUS_LAP = { decay: 0.35 };
+
+/**
+ * Compounding exponent for a given lap count: a decaying geometric sum so each
+ * further lap adds less than the last. laps 0/1/2 return 0/0/1 at every decay
+ * value, which is why the shipped NG and NG+1/NG+2 numbers are untouched.
+ * Exported so tools/ng-sim.mjs prints the same multipliers the engine builds.
+ */
+export function ngLapExponent(laps) {
+  let e = 0;
+  for (let k = 0; k < Math.max(0, laps - 1); k++) e += Math.pow(NG_PLUS_LAP.decay, k);
+  return e;
+}
+
+// ── Overtime (Performance Review hard mode) ─────────────────────────────
+// Opt-in, reversible, locks nothing out. Multiplies on top of the NG+ lap.
+export const OVERTIME_SCALING = { maxHP: 1.25, atk: 1.25, xpReward: 1.50 };
+
 export class CombatEngine {
   constructor(playerStats, enemyId, enemyOverrides = {}, opts = {}) {
     // Build allies — allies[0] is always the player
@@ -27,9 +228,23 @@ export class CombatEngine {
       const eid = enemyIds[i];
       // Apply enemyOverrides only to the enemy whose id matches the original arg
       const overrides = (eid === enemyId) ? enemyOverrides : (opts.enemyOverrides?.[eid] || {});
-      const enemy = this._buildEnemy(eid, overrides, !!opts.ngPlus);
+      const enemy = this._buildEnemy(eid, overrides, !!opts.ngPlus, opts.ngPlusCount || 0, !!opts.overtime);
       if (enemy) this.enemies.push(enemy);
     }
+    // Remembered by CombatState for the NG+ taunt pool and the XP payout.
+    this.ngPlusCount = opts.ngPlus ? Math.max(1, opts.ngPlusCount || 1) : 0;
+    this.overtime = !!opts.overtime;
+    // Player-authored difficulty (src/data/review.js). A plain Set of ids —
+    // every stretch goal is SUBTRACTIVE, so the engine only ever asks
+    // "is this one on?" and takes something away. Old saves pass nothing.
+    this.stretch = new Set(opts.stretch || []);
+    // Performance Improvement Plan — the opt-in forgiveness layer (P1.6, the
+    // Hades God Mode analogue). A flat fraction of incoming damage removed from
+    // ANDREW only; allies, enemies and every other multiplier are untouched, so
+    // it cannot interact with weakness, Break, Locks or the mutators. Computed
+    // in src/data/review.js from `player.deaths`; 0 for anyone who never
+    // requisitioned it, which is what keeps old saves bit-identical.
+    this.pipResist = Math.max(0, Math.min(0.95, Number(opts.pipResist) || 0));
 
     this.activeAllyIndex = 0;        // Index of ally currently taking a turn
     this.targetEnemyIndex = this._firstAliveEnemyIndex(); // Default target for single-target attacks
@@ -40,6 +255,9 @@ export class CombatEngine {
     this.log = [];
     this.counterActive = false;
     this.posterJustTriggered = false;
+    // Baton pass ("Loop In") — armed by a weakness hit while an ally is alive.
+    this.loopInReady = false;
+    this._allyDamageMult = 1;   // set during a Loop In so the ally hits harder
     // Voice ("Reasonable Doubt") state — see src/data/voices.js
     this.voiceState = {
       fired: { apprentice: false, litigator: false, skeptic: false, witness: false },
@@ -69,6 +287,10 @@ export class CombatEngine {
       bracing: false,
       retaliateReady: false,
       posterUsed: false,
+      // Per-turn agency guards. Live only on the engine's working copy of the
+      // player stats — nothing here is persisted, so saves are unaffected.
+      pressAdvantageUsedThisTurn: false,
+      loopInUsedThisTurn: false,
       isPlayer: true,
       allyId: 'andrew',
       name: playerStats.name || 'Andrew',
@@ -109,21 +331,40 @@ export class CombatEngine {
     };
   }
 
-  _buildEnemy(enemyId, overrides = {}, ngPlus = false) {
+  _buildEnemy(enemyId, overrides = {}, ngPlus = false, ngCount = 0, overtime = false) {
     const base = ENEMY_STATS[enemyId];
     if (!base) return null;
     // New Game+ scaling — applied before overrides so scripted fights
-    // (e.g. first-Karen atk:999) keep their explicit values
-    const scaled = ngPlus ? {
-      maxHP: Math.round((base.maxHP || 100) * 1.4),
-      atk: Math.round((base.atk || 10) * 1.3),
-      def: Math.round((base.def || 5) * 1.2),
-      xpReward: Math.round((base.xpReward || 0) * 1.25),
+    // (e.g. first-Karen atk:999) keep their explicit values.
+    //
+    // This used to be a FLAT ×1.4 HP / ×1.3 ATK no matter how many laps you
+    // had run, while NG+ carried every ability, upgrade point and quest state
+    // forward — the documented Dark Souls anti-pattern, where NG+ is easier
+    // than NG. `ng_plus_count` was written by MenuState and read by nothing.
+    // It is now the exponent: each completed lap compounds, capped at 3 laps
+    // so the ladder ends somewhere a human can stand.
+    // Entry rung × per-lap compounding for every lap after the first, so lap 1
+    // is priced against the carried loadout rather than against a fresh save.
+    const laps = ngPlus ? Math.max(1, Math.min(NG_PLUS_CAP, ngCount || 1)) : 0;
+    const rung = (key) => NG_PLUS_ENTRY[key] * Math.pow(NG_PLUS_SCALING[key], ngLapExponent(laps));
+    const scaled = laps ? {
+      maxHP: Math.round((base.maxHP || 100) * rung('maxHP')),
+      atk: Math.round((base.atk || 10) * rung('atk')),
+      def: Math.round((base.def || 5) * rung('def')),
+      xpReward: Math.round((base.xpReward || 0) * rung('xpReward')),
     } : {};
+    // Overtime — the opt-in Performance Review hard mode. Stacks on top of
+    // NG+ multiplicatively and is reversible at any time from the shop.
+    if (overtime) {
+      const src = laps ? scaled : base;
+      scaled.maxHP = Math.round((src.maxHP || base.maxHP || 100) * OVERTIME_SCALING.maxHP);
+      scaled.atk = Math.round((src.atk || base.atk || 10) * OVERTIME_SCALING.atk);
+      scaled.xpReward = Math.round((src.xpReward ?? base.xpReward ?? 0) * OVERTIME_SCALING.xpReward);
+    }
+    const merged = { ...base, ...scaled, ...overrides };
+    const maxComposure = this._defaultMaxComposure(merged);
     return {
-      ...base,
-      ...scaled,
-      ...overrides,
+      ...merged,
       enemyId,
       hp: overrides.hp ?? scaled.maxHP ?? base.hp ?? base.maxHP,
       buffs: [],
@@ -137,8 +378,35 @@ export class CombatEngine {
       confuseCooldown: 0,
       telegraphedAbility: null,
       abilityIndex: 0,
+      // ── Composure / Break (HSR Toughness). Depletes on weakness-tag hits.
+      maxComposure,
+      composure: maxComposure,
+      broken: 0,
+      brokenBonus: 0,
+      // ── Locks on the currently telegraphed move
+      locks: [],
+      lockAbilityId: null,
+      // ── Denial tax. Counts consecutive turns taken away from this enemy
+      // (fizzle / Break / block / silence). At COMBAT_DEPTH.DENIAL_LIMIT the
+      // next telegraphed move is sealed. See _noteDenial().
+      denialStreak: 0,
+      sealed: false,
       _alive: true,
     };
+  }
+
+  // ── Stretch goals (player-authored difficulty) ────────────────────────
+  hasStretch(id) { return this.stretch.has(id); }
+
+  // Composure bar size. Authorable per enemy via ENEMY_STATS[id].maxComposure
+  // (and therefore via balance.json's `enemies` override block); otherwise
+  // derived from maxHP in HSR-style steps of 30, clamped so the final bosses
+  // don't need fifteen weakness hits to Break.
+  _defaultMaxComposure(merged) {
+    if (typeof merged.maxComposure === 'number') return merged.maxComposure;
+    const { COMPOSURE_STEP: step, COMPOSURE_MIN: lo, COMPOSURE_MAX: hi } = COMBAT_DEPTH;
+    const hp = merged.maxHP || 100;
+    return Math.max(lo, Math.min(hi, Math.round(hp / 100) * step || step));
   }
 
   // ── Backward-compat getters ───────────────────────────────────────────
@@ -174,6 +442,199 @@ export class CombatEngine {
     return this.enemies[idx];
   }
 
+  // ── LOCKS (Sea of Stars) ──────────────────────────────────────────────
+  // A telegraphed enemy move names its own counter: a row of damage-type
+  // chips. Clear them all with matching-tag hits before the enemy acts and
+  // the move fizzles, consuming the turn. Partial clears weaken it.
+
+  // Stable string hash so a given ability always requests the same tags —
+  // Locks must be LEARNABLE, not re-rolled every fight.
+  _lockHash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+
+  // How many locks a move carries. Authorable per ability via
+  // ENEMY_ABILITIES[id].locks (explicit tag array) or .lockCount.
+  // Sim-tuned: ONLY genuinely heavy moves and hard denial carry locks. Putting
+  // locks on every jab made every enemy turn fizzle and combat stopped hurting.
+  // NOTE: the lock floor (20) sits BELOW the telegraph's HEAVY threshold (26)
+  // on purpose — a 20-25 power swing is worth announcing a counter for even
+  // though the hint does not call it heavy. Do not "fix" one to match the
+  // other without re-running `node tools/combat-sim.mjs --lock-audit`, which
+  // prints per-enemy lock coverage: at this floor 23 of the game's 24 enemies
+  // carry at least one locked move (the exception is `intern`, the two-ability
+  // tutorial fodder, which is deliberately outside the mechanic). Raising the
+  // floor to 26 drops coverage and whole encounters stop teaching Locks.
+  _lockCountFor(ability) {
+    if (!ability) return 0;
+    if (Array.isArray(ability.locks)) return ability.locks.length;
+    if (typeof ability.lockCount === 'number') return Math.max(0, ability.lockCount);
+    const p = ability.power || 0;
+    switch (ability.type) {
+      case 'attack':
+      case 'dot':
+      case 'summon':
+      case 'repeat':
+        // Sim-tuned band. Andrew solo gets ONE tagged hit per turn, so a
+        // 1-lock move is the fizzle he can actually earn on his own; the 34+
+        // haymakers need two, which is what a party is for. The floor sits at
+        // 20 so every enemy in the game has at least one locked move — below
+        // that, whole encounters never showed the mechanic.
+        if (p >= 34) return 2;
+        if (p >= 20) return 1;
+        return 0;
+      case 'stun':    return 1;
+      case 'confuse': return 1;
+      case 'counter': return 1;
+      default:        return 0;
+    }
+  }
+
+  // Tag pool for an enemy. `technical` is quest-gated for Andrew, so it is only
+  // ever requested by an enemy actually weak to it — or by an explicit authored
+  // `locks` array. The resisted tag STAYS in the pool on purpose: sometimes the
+  // only way to cancel the move is to swing with the type it shrugs off, and
+  // that trade is the point.
+  _lockTagPool(enemy) {
+    const pool = [];
+    for (const t of COMBAT_DEPTH.LOCK_TAGS) {
+      if (t === 'technical' && enemy.weakness !== 'technical') continue;
+      pool.push(t);
+    }
+    return pool;
+  }
+
+  // Which of an enemy's moves announce a counter at all. Capped at a third of
+  // the kit (heaviest first), with a guaranteed minimum of one.
+  // Sim finding: without the cap, enemies whose whole kit sat in the lockable
+  // power band (Chad) could be fizzled every single turn — 100% win, 100% HP.
+  // With it, the big swings telegraph a counter and the jabs still land.
+  _lockableSet(enemy) {
+    if (enemy._lockable) return enemy._lockable;
+    const all = new Set(enemy.abilities || []);
+    for (const p of enemy.phases || []) for (const a of (p.abilities || [])) all.add(a);
+    const ids = [...all];
+    const power = (id) => ENEMY_ABILITIES[id]?.power || 0;
+    const qualifying = ids
+      .filter(id => this._lockCountFor(ENEMY_ABILITIES[id]) > 0)
+      .sort((a, b) => (power(b) - power(a)) || (a < b ? -1 : 1));
+    const cap = Math.max(1, Math.ceil(ids.length / 3));
+    let picked = qualifying.slice(0, cap);
+    if (picked.length === 0) {
+      // Guarantee most enemies show the mechanic at least once: promote the
+      // heaviest offensive move even if it sits under the power floor. The
+      // floor of 12 keeps the tutorial Intern (4-power jabs) lock-free — a
+      // first fight should not open with a puzzle.
+      const OFFENSIVE = ['attack', 'dot', 'summon', 'stun', 'confuse', 'counter', 'repeat'];
+      const heaviest = ids
+        .filter(id => OFFENSIVE.includes(ENEMY_ABILITIES[id]?.type))
+        .filter(id => power(id) >= 12 || !['attack', 'dot', 'summon', 'repeat'].includes(ENEMY_ABILITIES[id]?.type))
+        .sort((a, b) => (power(b) - power(a)) || (a < b ? -1 : 1))[0];
+      if (heaviest) picked = [heaviest];
+    }
+    enemy._lockable = new Set(picked);
+    return enemy._lockable;
+  }
+
+  _buildLocks(enemy, abilityId) {
+    if (!abilityId) return [];
+    const ability = ENEMY_ABILITIES[abilityId];
+    if (!ability) return [];
+    if (Array.isArray(ability.locks)) {
+      return ability.locks.map(tag => ({ tag, cleared: false }));
+    }
+    if (!this._lockableSet(enemy).has(abilityId)) return [];
+    const fullPool = this._lockTagPool(enemy);
+    // Promoted moves floor at 1 so the guarantee above actually produces a lock.
+    const count = Math.min(Math.max(1, this._lockCountFor(ability)), fullPool.length);
+    if (count <= 0) return [];
+    // A SINGLE-lock move never asks for the tag the enemy is already weak to.
+    // Otherwise spamming the one weakness ability voids the enemy's whole kit
+    // for free (sim: Rachel finished at 95% HP against an unaware policy).
+    // Making the lone lock a second tag is the forcing function that actually
+    // pays off carrying one ability per damage type.
+    const pool = (count === 1 && fullPool.length > 1)
+      ? fullPool.filter(t => t !== enemy.weakness)
+      : fullPool;
+    // Hash-rotated so a given move always demands the same tags — Locks must be
+    // learnable, not re-rolled per fight.
+    const off = this._lockHash(abilityId) % pool.length;
+    const tags = [];
+    for (let i = 0; i < count; i++) tags.push(pool[(off + i) % pool.length]);
+    return tags.map(tag => ({ tag, cleared: false }));
+  }
+
+  // Land a tagged hit on a target: clears at most one matching lock.
+  // Returns the number cleared (0 or 1). A SEALED move (see _noteDenial) shows
+  // its locks and refuses every one of them.
+  _clearLocks(target, abilityTag) {
+    if (!abilityTag || !target || !Array.isArray(target.locks)) return 0;
+    if (target.sealed) return 0;
+    const lock = target.locks.find(l => !l.cleared && l.tag === abilityTag);
+    if (!lock) return 0;
+    lock.cleared = true;
+    return 1;
+  }
+
+  // ── DENIAL TAX ("Escalated to Committee") ─────────────────────────────
+  // Called every time an enemy's turn is taken away from it. Two consecutive
+  // denials and the organisation closes ranks: the next telegraphed move is
+  // sealed (locks visible, unclearable) and Composure will not move while the
+  // seal holds. This is the price of the fizzle+Break stack — without it an
+  // optimal policy finished the last two bosses above 87% HP.
+  _noteDenial(enemy) {
+    if (!enemy || enemy.hp <= 0) return false;
+    enemy.denialStreak = (enemy.denialStreak || 0) + 1;
+    if (enemy.denialStreak >= COMBAT_DEPTH.DENIAL_LIMIT) {
+      enemy.denialStreak = 0;
+      enemy.sealed = true;
+      return true;
+    }
+    return false;
+  }
+
+  /** Reset the streak: the enemy got to act, so nothing is owed. */
+  _clearDenial(enemy) {
+    if (!enemy) return;
+    enemy.denialStreak = 0;
+    enemy.sealed = false;
+  }
+
+  /** Public read for the HUD. */
+  isSealed(enemyIndex = this.targetEnemyIndex) {
+    return !!this.enemies[enemyIndex]?.sealed;
+  }
+
+  // Public read for the HUD: [{ tag, cleared }] for a given enemy.
+  getLocks(enemyIndex = this.targetEnemyIndex) {
+    return this.enemies[enemyIndex]?.locks || [];
+  }
+
+  // ── COMPOSURE / BREAK (HSR Toughness) ─────────────────────────────────
+  // Only weakness-tag hits fill it. At zero the enemy loses its next turn and
+  // takes +20% damage until it recovers.
+  _reduceComposure(target, amount) {
+    if (!target || target.hp <= 0 || !target.maxComposure) return { broke: false, amount: 0 };
+    if (target.broken > 0) return { broke: false, amount: 0 };   // already broken
+    // Sealed: the committee is not available for comment.
+    if (target.sealed) return { broke: false, amount: 0, sealed: true };
+    const applied = Math.min(amount, target.composure);
+    target.composure = Math.max(0, target.composure - amount);
+    if (target.composure <= 0) {
+      // Spec parity with the P1.2 mapping: a Break opens a real window.
+      // `broken` costs the enemy its next turn; `brokenBonus` carries the +20%
+      // through the remainder of this player turn AND the whole next one, so
+      // "takes +20% for a round" is true without having to bank a second action.
+      target.broken = 1;
+      target.brokenBonus = 2;
+      target.vulnerable = 1;
+      return { broke: true, amount: applied };
+    }
+    return { broke: false, amount: applied };
+  }
+
   // ── Damage calc ───────────────────────────────────────────────────────
   _calcDamage(attackerAtk, power, defenderDef, target = null, abilityTag = null) {
     const baseDmg = (attackerAtk + power) * COMBAT.BASE_DAMAGE_MULTIPLIER;
@@ -192,7 +653,16 @@ export class CombatEngine {
     }
 
     let effective = null;
+    let composureHit = 0;
+    let broke = false;
+    let lockCleared = 0;
     const isEnemy = target && this.enemies.includes(target);
+    // A Broken enemy eats +20% until the window closes. Sampled BEFORE this hit
+    // can itself cause the Break, so the breaking hit doesn't double-dip.
+    const wasBroken = isEnemy && (target.brokenBonus > 0 || target.broken > 0);
+    // Same guard for the vulnerability window: a Break now SETS vulnerable, so
+    // without this the breaking hit would consume the window it just opened.
+    const wasVulnerable = isEnemy && target.vulnerable > 0;
     if (abilityTag && isEnemy) {
       if (target.weakness === abilityTag) {
         damage = Math.floor(damage * 1.5);
@@ -202,11 +672,38 @@ export class CombatEngine {
         effective = 'resist';
       }
     }
+    if (isEnemy && target.maxComposure > 0) {
+      // Compensation × band. The compensation exists so the standing pre-Break
+      // tax is a REFRAMING of the same damage rather than a nerf — see
+      // PLAYER_DAMAGE_COMPENSATION above. Both factors are gated on the enemy
+      // actually having a Composure bar, so an enemy authored with
+      // maxComposure: 0 is outside the system entirely in both directions.
+      const band = wasBroken ? COMBAT_DEPTH.BROKEN_DAMAGE_BONUS : COMBAT_DEPTH.UNBROKEN_DAMAGE_TAX;
+      damage = Math.floor(damage * COMBAT_DEPTH.PLAYER_DAMAGE_COMPENSATION * band);
+    }
 
-    if (isEnemy && target.vulnerable > 0) {
+    if (isEnemy && abilityTag) {
+      // Locks clear on a matching tag regardless of weakness.
+      lockCleared = this._clearLocks(target, abilityTag);
+      // Composure only moves on a genuine weakness hit.
+      if (effective === 'super') {
+        const res = this._reduceComposure(target, COMBAT_DEPTH.COMPOSURE_PER_WEAKNESS_HIT);
+        composureHit = res.amount;
+        broke = res.broke;
+      }
+    }
+
+    if (isEnemy && wasVulnerable) {
       damage = Math.floor(damage * 1.5);
       target.vulnerable = 0;
       effective = effective || 'vulnerable';
+    }
+
+    // Performance Improvement Plan: applied last and only to Andrew, so it is
+    // a clean scalar on whatever the rest of the pipeline produced. Floors at
+    // 1 so a fully-vested PIP still cannot make Andrew immortal.
+    if (this.pipResist > 0 && target && target.isPlayer) {
+      damage = Math.max(1, Math.floor(damage * (1 - this.pipResist)));
     }
 
     // Roguelite mutator: Billable Hours — every hit you land on a litigious
@@ -217,7 +714,7 @@ export class CombatEngine {
       this.player.hp = Math.max(1, this.player.hp - thorns);
     }
 
-    return { damage, critical, effective, thorns };
+    return { damage, critical, effective, thorns, composureHit, broke, lockCleared, wasBroken };
   }
 
   _getEffective(entity) {
@@ -230,19 +727,48 @@ export class CombatEngine {
     return stats;
   }
 
-  _maybeConfuseActor(actor, actionLabel) {
-    if (!actor.confusedThisTurn) return null;
-    if (Math.random() >= 0.5) return null;
-    const stats = this._getEffective(actor);
-    const selfHit = this._calcDamage(stats.atk, 6, stats.def);
-    actor.hp = Math.max(0, actor.hp - selfHit.damage);
-    this._checkDefeat();
-    return {
-      type: 'confused',
-      damage: selfHit.damage,
-      critical: selfHit.critical,
-      message: `Confused by corporate nonsense, ${actor.isPlayer ? 'your' : actor.name + '\'s'} ${actionLabel} backfires!`,
-    };
+  // Confusion no longer steals the turn. Sandfall's first principle for
+  // Expedition 33 was "no frustrating deaths" — a 50% coin-flip that replaces
+  // the action you chose with a self-hit is exactly the failure mode they
+  // named. Confusion now scrambles WHO you hit and dampens HOW HARD; the
+  // action you picked always happens.
+  // Returns { targetIndex, damageMult, scrambled, dampened }.
+  _applyConfusion(actor, requestedTargetIndex) {
+    if (!actor || !actor.confusedThisTurn) {
+      return { targetIndex: requestedTargetIndex, damageMult: 1, scrambled: false, dampened: false };
+    }
+    const alive = this.aliveEnemies();
+    let targetIndex = requestedTargetIndex;
+    let scrambled = false;
+    if (alive.length > 1 && Math.random() < COMBAT_DEPTH.CONFUSED_SCRAMBLE_CHANCE) {
+      const intended = this.enemies[requestedTargetIndex] ?? this.enemy;
+      const others = alive.filter(e => e !== intended);
+      if (others.length > 0) {
+        targetIndex = this.enemies.indexOf(others[Math.floor(Math.random() * others.length)]);
+        scrambled = true;
+      }
+    }
+    return { targetIndex, damageMult: COMBAT_DEPTH.CONFUSED_POWER_MULT, scrambled, dampened: true };
+  }
+
+  // Arm / disarm the Loop In baton pass. Called at the end of every offensive
+  // Andrew action: a weakness hit with a living ally on the bench arms it,
+  // anything else clears it.
+  _noteLoopIn(effective) {
+    // Matrixed Reporting (stretch goal): allies run on a rotation you do not
+    // control, so the baton never comes back to you.
+    if (this.hasStretch('matrixed')) { this.loopInReady = false; return; }
+    if (this.player.loopInUsedThisTurn) { this.loopInReady = false; return; }
+    const benchAlive = this.allies.some((a, i) => i > 0 && a.hp > 0);
+    this.loopInReady = effective === 'super' && benchAlive && !this.isOver;
+  }
+
+  // Ally indices eligible to receive a Loop In right now.
+  getLoopInCandidates() {
+    if (!this.loopInReady) return [];
+    const out = [];
+    for (let i = 1; i < this.allies.length; i++) if (this.allies[i].hp > 0) out.push(i);
+    return out;
   }
 
   _enemyHasDebuff(enemy) {
@@ -255,10 +781,9 @@ export class CombatEngine {
 
   // ── Player (Andrew) actions ───────────────────────────────────────────
   playerAttack(targetIndex) {
-    const target = this._resolveTarget(targetIndex);
+    const conf = this._applyConfusion(this.player, targetIndex);
+    const target = this._resolveTarget(conf.targetIndex);
     if (!target) return null;
-    const confusion = this._maybeConfuseActor(this.player, 'attack');
-    if (confusion) return confusion;
 
     if (this.counterActive) {
       this.counterActive = false;
@@ -279,6 +804,7 @@ export class CombatEngine {
     const combo = this._enemyHasDebuff(target);
     let finalDamage = dmg.damage;
     if (combo) finalDamage = Math.floor(finalDamage * 1.25);
+    if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
     target.hp = Math.max(0, target.hp - finalDamage);
 
     const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
@@ -286,7 +812,13 @@ export class CombatEngine {
 
     this.log.push({ type: 'attack', damage: finalDamage, critical: dmg.critical });
     this._checkVictory();
-    return { ...dmg, type: 'attack', damage: finalDamage, combo, momentumGain, targetIndex: this.targetEnemyIndex };
+    this._noteLoopIn(dmg.effective);
+    return {
+      ...dmg, type: 'attack', damage: finalDamage, combo, momentumGain,
+      targetIndex: this.targetEnemyIndex,
+      confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
+      locksCleared: dmg.lockCleared, brokeComposure: dmg.broke,
+    };
   }
 
   playerAbility(abilityId, targetIndex) {
@@ -294,8 +826,8 @@ export class CombatEngine {
     if (!ability || this.player.mp < ability.cost) return null;
     this.player.mp -= ability.cost;
 
-    const confusion = this._maybeConfuseActor(this.player, ability.name);
-    if (confusion) return confusion;
+    const conf = this._applyConfusion(this.player, targetIndex);
+    targetIndex = conf.targetIndex;
 
     const isAoE = ability.type === 'attack_aoe';
 
@@ -319,10 +851,15 @@ export class CombatEngine {
         const combo = this._enemyHasDebuff(target);
         let finalDamage = dmg.damage;
         if (combo) finalDamage = Math.floor(finalDamage * 1.25);
+        if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
         target.hp = Math.max(0, target.hp - finalDamage);
         const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
         this._gainMomentum(momentumGain);
-        result = { ...result, damage: finalDamage, critical: dmg.critical, effective: dmg.effective, combo, momentumGain, targetIndex: this.targetEnemyIndex };
+        result = {
+          ...result, damage: finalDamage, critical: dmg.critical, effective: dmg.effective, combo, momentumGain,
+          targetIndex: this.targetEnemyIndex,
+          locksCleared: dmg.lockCleared, brokeComposure: dmg.broke,
+        };
         if (ability.stripBuffs) {
           target.buffs = [];
           result.strippedBuffs = true;
@@ -336,18 +873,23 @@ export class CombatEngine {
         let comboAny = false;
         let critAny = false;
         let superAny = false;
+        let locksClearedTotal = 0;
+        let brokeAny = false;
         for (const t of targets) {
           const eStats = this._getEffective(t);
           const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, t, ability.tag);
           const combo = this._enemyHasDebuff(t);
           let finalDamage = dmg.damage;
           if (combo) finalDamage = Math.floor(finalDamage * 1.25);
+          if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
           t.hp = Math.max(0, t.hp - finalDamage);
           if (ability.stripBuffs) t.buffs = [];
-          hits.push({ targetIndex: this.enemies.indexOf(t), damage: finalDamage, critical: dmg.critical, effective: dmg.effective, combo });
+          hits.push({ targetIndex: this.enemies.indexOf(t), damage: finalDamage, critical: dmg.critical, effective: dmg.effective, combo, brokeComposure: dmg.broke });
           comboAny = comboAny || combo;
           critAny = critAny || dmg.critical;
           superAny = superAny || dmg.effective === 'super';
+          locksClearedTotal += dmg.lockCleared;
+          brokeAny = brokeAny || dmg.broke;
         }
         const momentumGain = 10 + (critAny ? 10 : 0) + (superAny ? 10 : 0) + (comboAny ? 5 : 0) + Math.min(10, (targets.length - 1) * 5);
         this._gainMomentum(momentumGain);
@@ -361,13 +903,16 @@ export class CombatEngine {
           combo: comboAny,
           momentumGain,
           strippedBuffs: !!ability.stripBuffs,
+          locksCleared: locksClearedTotal,
+          brokeComposure: brokeAny,
         };
         break;
       }
       case 'heal': {
         // healPerLevel: heals grow with the player so a flat ceiling
         // can't make sustained-damage enemies unwinnable (sim finding)
-        const healAmt = ability.healAmount + (ability.healPerLevel || 0) * (this.player.level || 1);
+        let healAmt = ability.healAmount + (ability.healPerLevel || 0) * (this.player.level || 1);
+        if (conf.dampened) healAmt = Math.max(1, Math.floor(healAmt * conf.damageMult));
         this.player.hp = Math.min(this.player.maxHP, this.player.hp + healAmt);
         result = { ...result, healAmount: healAmt, skipsTurn: ability.skipsTurn };
         break;
@@ -393,7 +938,10 @@ export class CombatEngine {
           duration: ability.debuffDuration,
           name: ability.name,
         });
-        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration, targetIndex: this.targetEnemyIndex };
+        // Tagged debuffs are still tagged hits: they clear a Lock. They do not
+        // move Composure — that stays weakness-damage-only (HSR rule).
+        const cleared = this._clearLocks(target, ability.tag);
+        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration, targetIndex: this.targetEnemyIndex, locksCleared: cleared };
         break;
       }
       case 'stall': {
@@ -421,6 +969,9 @@ export class CombatEngine {
     }
 
     this._checkVictory();
+    this._noteLoopIn(result.effective);
+    if (conf.scrambled) result.confusedScramble = true;
+    if (conf.dampened) result.confusedDampened = true;
     return result;
   }
 
@@ -428,35 +979,62 @@ export class CombatEngine {
     const item = ITEMS[itemId];
     if (!item) return null;
 
-    const confusion = this._maybeConfuseActor(this.player, item.name);
-    if (confusion) return confusion;
+    const conf = this._applyConfusion(this.player, this.targetEnemyIndex);
+    const dampen = (n) => conf.dampened ? Math.max(1, Math.floor(n * conf.damageMult)) : n;
 
-    let result = { type: 'item', itemName: item.name };
+    let result = { type: 'item', itemName: item.name, confusedDampened: conf.dampened };
     switch (item.type) {
       case 'restore_hp':
-        this.player.hp = Math.min(this.player.maxHP, this.player.hp + item.amount);
-        result.healAmount = item.amount;
+        this.player.hp = Math.min(this.player.maxHP, this.player.hp + dampen(item.amount));
+        result.healAmount = dampen(item.amount);
         result.healType = 'hp';
         break;
       case 'restore_mp':
-        this.player.mp = Math.min(this.player.maxMP, this.player.mp + item.amount);
-        result.healAmount = item.amount;
+        this.player.mp = Math.min(this.player.maxMP, this.player.mp + dampen(item.amount));
+        result.healAmount = dampen(item.amount);
         result.healType = 'mp';
         break;
       case 'restore_mp_buff':
-        this.player.mp = Math.min(this.player.maxMP, this.player.mp + item.amount);
+        this.player.mp = Math.min(this.player.maxMP, this.player.mp + dampen(item.amount));
         if (item.buff) {
           this.player.buffs.push({ stats: item.buff, duration: item.duration, name: item.name });
         }
-        result.healAmount = item.amount;
+        result.healAmount = dampen(item.amount);
         result.healType = 'mp';
         break;
       case 'buff':
         this.player.buffs.push({ stats: item.buff, duration: item.duration, name: item.name });
         result.buffAmount = item.buff;
         break;
+      // Due Diligence Memo — the lock-reveal. Weakness/resistance are real
+      // mechanical depth that most players never perceive (a 1.5× multiplier
+      // inside _calcDamage produces no distinct feedback), and the lock chips
+      // on a telegraphed heavy move are the read the whole turn hangs on.
+      // This item just says it out loud.
+      case 'reveal':
+        result.revealText = this._buildRevealText(this.enemies[this.targetEnemyIndex] || this.enemy);
+        break;
     }
     return result;
+  }
+
+  /** One line naming a target's weakness, resistance and telegraphed locks. */
+  _buildRevealText(target) {
+    if (!target) return 'The file is empty.';
+    const up = (s) => String(s).toUpperCase();
+    const parts = [];
+    parts.push(target.weakness ? `weak ${up(target.weakness)}` : 'no exploitable weakness');
+    if (target.resistance) parts.push(`resists ${up(target.resistance)}`);
+    const abilityId = target.telegraphedAbility;
+    const ability = abilityId ? ENEMY_ABILITIES[abilityId] : null;
+    if (ability) {
+      const locks = (target.locks || []).filter(l => !l.cleared).map(l => up(l.tag));
+      parts.push(locks.length
+        ? `next: ${ability.name} [${locks.join(' / ')}]`
+        : `next: ${ability.name}`);
+    }
+    if (target.maxComposure) parts.push(`composure ${target.composure}/${target.maxComposure}`);
+    return `FIDUCIARY DISCLOSURE: ${target.name} — ${parts.join(', ')}.`;
   }
 
   playerFlee() {
@@ -479,34 +1057,28 @@ export class CombatEngine {
     const ally = this.allies[allyIndex];
     if (!ally || ally.hp <= 0) return null;
 
-    const confusion = this._maybeConfuseActor(ally, 'attack');
-    if (confusion) {
-      return { ...confusion, allyIndex };
-    }
+    const conf = this._applyConfusion(ally, this.targetEnemyIndex);
+    // `_allyDamageMult` is 1 normally and LOOP_IN_DAMAGE_BONUS during a baton pass.
+    const allyMult = this._allyDamageMult * (conf.dampened ? conf.damageMult : 1);
+    const scaleDmg = (n) => Math.max(1, Math.floor(n * allyMult));
 
     const abilityId = this._pickAllyAbility(ally);
     const ability = ALLY_ABILITIES[abilityId];
-    if (!ability) {
-      // Default basic attack
-      const target = this._resolveTarget();
+    if (!ability || (ability.cost && ally.mp < ability.cost)) {
+      // Default / fallback basic attack
+      const target = this._resolveTarget(conf.scrambled ? conf.targetIndex : undefined);
       if (!target) return null;
       const aStats = this._getEffective(ally);
       const eStats = this._getEffective(target);
       const dmg = this._calcDamage(aStats.atk, 0, eStats.def, target, null);
-      target.hp = Math.max(0, target.hp - dmg.damage);
+      const finalDamage = scaleDmg(dmg.damage);
+      target.hp = Math.max(0, target.hp - finalDamage);
       this._checkVictory();
-      return { type: 'ally_attack', allyIndex, allyName: ally.name, abilityName: 'Strike', damage: dmg.damage, critical: dmg.critical, targetIndex: this.targetEnemyIndex };
-    }
-
-    if (ability.cost && ally.mp < ability.cost) {
-      // Fallback to basic if not enough MP
-      const target = this._resolveTarget();
-      const aStats = this._getEffective(ally);
-      const eStats = this._getEffective(target);
-      const dmg = this._calcDamage(aStats.atk, 0, eStats.def, target, null);
-      target.hp = Math.max(0, target.hp - dmg.damage);
-      this._checkVictory();
-      return { type: 'ally_attack', allyIndex, allyName: ally.name, abilityName: 'Strike', damage: dmg.damage, critical: dmg.critical, targetIndex: this.targetEnemyIndex };
+      return {
+        type: 'ally_attack', allyIndex, allyName: ally.name, abilityName: 'Strike',
+        damage: finalDamage, critical: dmg.critical, targetIndex: this.targetEnemyIndex,
+        confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
+      };
     }
     if (ability.cost) ally.mp = Math.max(0, ally.mp - ability.cost);
 
@@ -515,25 +1087,37 @@ export class CombatEngine {
 
     switch (ability.type) {
       case 'attack': {
-        const target = this._pickAllyAttackTarget(ally);
+        const target = conf.scrambled
+          ? (this.enemies[conf.targetIndex] || this._pickAllyAttackTarget(ally))
+          : this._pickAllyAttackTarget(ally);
         if (!target) return null;
         const eStats = this._getEffective(target);
         const dmg = this._calcDamage(aStats.atk, ability.power || 10, eStats.def, target, ability.tag);
-        target.hp = Math.max(0, target.hp - dmg.damage);
-        result = { ...result, damage: dmg.damage, critical: dmg.critical, effective: dmg.effective, targetIndex: this.enemies.indexOf(target) };
+        const finalDamage = scaleDmg(dmg.damage);
+        target.hp = Math.max(0, target.hp - finalDamage);
+        result = {
+          ...result, damage: finalDamage, critical: dmg.critical, effective: dmg.effective,
+          targetIndex: this.enemies.indexOf(target),
+          locksCleared: dmg.lockCleared, brokeComposure: dmg.broke,
+        };
         break;
       }
       case 'attack_aoe': {
         const targets = this.aliveEnemies();
         if (targets.length === 0) return null;
         const hits = [];
+        let locksClearedTotal = 0;
+        let brokeAny = false;
         for (const t of targets) {
           const eStats = this._getEffective(t);
           const dmg = this._calcDamage(aStats.atk, ability.power || 10, eStats.def, t, ability.tag);
-          t.hp = Math.max(0, t.hp - dmg.damage);
-          hits.push({ targetIndex: this.enemies.indexOf(t), damage: dmg.damage, critical: dmg.critical, effective: dmg.effective });
+          const finalDamage = scaleDmg(dmg.damage);
+          t.hp = Math.max(0, t.hp - finalDamage);
+          hits.push({ targetIndex: this.enemies.indexOf(t), damage: finalDamage, critical: dmg.critical, effective: dmg.effective, brokeComposure: dmg.broke });
+          locksClearedTotal += dmg.lockCleared;
+          brokeAny = brokeAny || dmg.broke;
         }
-        result = { ...result, aoe: true, hits, damage: hits.reduce((s, h) => s + h.damage, 0) };
+        result = { ...result, aoe: true, hits, damage: hits.reduce((s, h) => s + h.damage, 0), locksCleared: locksClearedTotal, brokeComposure: brokeAny };
         break;
       }
       case 'heal_ally': {
@@ -567,7 +1151,8 @@ export class CombatEngine {
         const target = this._pickAllyAttackTarget(ally);
         if (!target) return null;
         target.buffs.push({ stats: ability.debuffAmount, duration: ability.debuffDuration || 2, name: ability.name });
-        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration || 2, targetIndex: this.enemies.indexOf(target) };
+        const cleared = this._clearLocks(target, ability.tag);
+        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration || 2, targetIndex: this.enemies.indexOf(target), locksCleared: cleared };
         break;
       }
       case 'silence': {
@@ -578,12 +1163,15 @@ export class CombatEngine {
         // difficulty depend on party comp (100% vs 22% identical stats)
         const dur = target.phases ? 1 : (ability.duration || 2);
         target.silenced = Math.max(target.silenced || 0, dur);
-        result = { ...result, duration: dur, targetIndex: this.enemies.indexOf(target) };
+        const cleared = this._clearLocks(target, ability.tag);
+        result = { ...result, duration: dur, targetIndex: this.enemies.indexOf(target), locksCleared: cleared };
         break;
       }
     }
 
     this._checkVictory();
+    if (conf.scrambled) result.confusedScramble = true;
+    if (conf.dampened) result.confusedDampened = true;
     return result;
   }
 
@@ -632,21 +1220,73 @@ export class CombatEngine {
 
     if (enemy.silencedThisTurn) {
       enemy.telegraphedAbility = null;
+      this._resetLocks(enemy);
+      const sealing = this._noteDenial(enemy);
       this.turnCount++;
-      return { type: 'silenced', message: `${enemy.name} is force-quit and loses the turn.`, enemyIndex };
+      return { type: 'silenced', message: `${enemy.name} is force-quit and loses the turn.`, enemyIndex, sealing };
+    }
+
+    // COMPOSURE BREAK — the bar hit zero. The enemy loses this turn and its
+    // Composure refills. The +20% window (brokenBonus) outlives the recovery
+    // by design; it expires at the start of the player turn after next.
+    if (enemy.broken > 0) {
+      enemy.broken--;
+      enemy.telegraphedAbility = null;
+      this._resetLocks(enemy);
+      enemy.composure = enemy.maxComposure;
+      const sealing = this._noteDenial(enemy);
+      this.turnCount++;
+      return {
+        type: 'broken',
+        message: `${enemy.name} has lost their composure. The turn goes with it.`,
+        enemyIndex, sealing,
+      };
     }
 
     // blockNext consumes only the FIRST enemy turn that comes after it
     if (this.player.blockNext) {
       this.player.blockNext = false;
       enemy.telegraphedAbility = null;
+      this._resetLocks(enemy);
+      const sealing = this._noteDenial(enemy);
       this.turnCount++;
-      return { type: 'blocked', message: `Blocked! ${enemy.name}'s action was nullified!`, enemyIndex };
+      return { type: 'blocked', message: `Blocked! ${enemy.name}'s action was nullified!`, enemyIndex, sealing };
     }
 
     const abilityId = enemy.telegraphedAbility ?? this._pickEnemyAbility(enemy);
     enemy.telegraphedAbility = null;
     const previousAbilityId = enemy.lastAbility;
+
+    // ── Resolve LOCKS on the telegraphed move ───────────────────────────
+    const locks = (enemy.lockAbilityId === abilityId && Array.isArray(enemy.locks)) ? enemy.locks : [];
+    const locksTotal = locks.length;
+    const locksClear = locks.filter(l => l.cleared).length;
+    this._resetLocks(enemy);
+    if (locksTotal > 0 && locksClear >= locksTotal) {
+      // FULL CLEAR — the move fizzles and the enemy's turn is consumed.
+      enemy.lastAbility = abilityId;
+      const sealing = this._noteDenial(enemy);
+      this.turnCount++;
+      return {
+        type: 'fizzle',
+        abilityName: ENEMY_ABILITIES[abilityId]?.name || 'that',
+        message: `${enemy.name} reaches for it and finds nothing there.`,
+        enemyIndex, enemyName: enemy.name, locksTotal, locksCleared: locksClear, sealing,
+      };
+    }
+    // The enemy is about to act, so nothing is owed to it: the seal it may
+    // have been holding is spent and the streak starts over.
+    const wasSealed = !!enemy.sealed;
+    this._clearDenial(enemy);
+    // A sealed move could never have its locks cleared, so the partial-clear
+    // ladder below cannot apply to it. Instead it lands with the denial
+    // premium: this is the one place the enemy is paid back for the turns it
+    // was denied. See COMBAT_DEPTH.SEALED_DAMAGE_BONUS.
+    const lockMult = wasSealed
+      ? (COMBAT_DEPTH.SEALED_DAMAGE_BONUS ?? 1)
+      : (locksTotal > 0
+        ? Math.max(COMBAT_DEPTH.LOCK_MIN_MULTIPLIER, 1 - COMBAT_DEPTH.LOCK_PARTIAL_REDUCTION * locksClear)
+        : 1);
 
     // Pick an ally target (aggro). Confuse/counter/heal/buff/repeat are special and stay player-centric.
     const ability = ENEMY_ABILITIES[abilityId];
@@ -662,7 +1302,7 @@ export class CombatEngine {
 
     const eStats = this._getEffective(enemy);
     const tStats = this._getEffective(target);
-    const result = this._executeEnemyAbility(enemy, abilityId, eStats, tStats, previousAbilityId, target);
+    const result = this._executeEnemyAbility(enemy, abilityId, eStats, tStats, previousAbilityId, target, lockMult);
 
     if (abilityId && ENEMY_ABILITIES[abilityId]?.type !== 'repeat') {
       enemy.lastAbility = abilityId;
@@ -670,7 +1310,17 @@ export class CombatEngine {
 
     this.turnCount++;
     this._checkDefeat();
-    return result ? { ...result, enemyIndex, enemyName: enemy.name, targetAllyIndex, targetAllyName: target.name } : null;
+    return result ? {
+      ...result, enemyIndex, enemyName: enemy.name, targetAllyIndex, targetAllyName: target.name,
+      locksTotal, locksCleared: locksClear,
+      lockPartial: locksTotal > 0 && locksClear > 0,
+      wasSealed,
+    } : null;
+  }
+
+  _resetLocks(enemy) {
+    enemy.locks = [];
+    enemy.lockAbilityId = null;
   }
 
   // Pick which ally an enemy attacks. 60% bias toward Andrew (the player main),
@@ -686,11 +1336,22 @@ export class CombatEngine {
     return alive.slice().sort((a, b) => (a.hp / a.maxHP) - (b.hp / b.maxHP))[0];
   }
 
-  // Pre-roll telegraphed abilities for ALL alive enemies — call at start of player phase
+  // Pre-roll telegraphed abilities for ALL alive enemies — call at start of player phase.
+  // A telegraph is a PROMISE, not a preview: once rolled it is not re-rolled
+  // until the enemy consumes it. Re-rolling would throw away Locks the player
+  // has already paid tagged hits to clear.
   telegraph() {
     for (const e of this.enemies) {
-      if (e.hp > 0) e.telegraphedAbility = this._pickEnemyAbility(e);
-      else e.telegraphedAbility = null;
+      if (e.hp <= 0) {
+        e.telegraphedAbility = null;
+        this._resetLocks(e);
+        continue;
+      }
+      if (!e.telegraphedAbility) e.telegraphedAbility = this._pickEnemyAbility(e);
+      if (e.lockAbilityId !== e.telegraphedAbility) {
+        e.locks = this._buildLocks(e, e.telegraphedAbility);
+        e.lockAbilityId = e.telegraphedAbility;
+      }
     }
     return this.enemies.map(e => e.telegraphedAbility);
   }
@@ -698,12 +1359,15 @@ export class CombatEngine {
   // Per-target enemy-ability execution.
   // `target` is the ally being acted on (defaults to Andrew). pStats == effective stats of target.
   // Bracing/retaliateReady only applies when target IS Andrew (it's a player-input mechanic).
-  _executeEnemyAbility(enemy, abilityId, eStats, pStats, previousAbilityId = null, target = this.player) {
+  _executeEnemyAbility(enemy, abilityId, eStats, pStats, previousAbilityId = null, target = this.player, lockMult = 1) {
     const ability = ENEMY_ABILITIES[abilityId];
+    // Partially-cleared Locks shave the incoming hit down proportionally.
+    const shave = (n) => Math.max(1, Math.floor(n * lockMult));
     if (!ability) {
       const dmg = this._calcDamage(eStats.atk, 10, pStats.def, target);
-      target.hp = Math.max(0, target.hp - dmg.damage);
-      return { type: 'attack', damage: dmg.damage, critical: dmg.critical, message: `${enemy.name} attacks ${target.isPlayer ? 'you' : target.name}!` };
+      const finalDamage = shave(dmg.damage);
+      target.hp = Math.max(0, target.hp - finalDamage);
+      return { type: 'attack', damage: finalDamage, critical: dmg.critical, message: `${enemy.name} attacks ${target.isPlayer ? 'you' : target.name}!` };
     }
 
     let result = { type: ability.type, abilityName: ability.name, message: pickMessage(ability.messages || ability.message) };
@@ -711,7 +1375,7 @@ export class CombatEngine {
     switch (ability.type) {
       case 'attack': {
         const dmg = this._calcDamage(eStats.atk, ability.power, pStats.def, target);
-        let finalDamage = dmg.damage;
+        let finalDamage = shave(dmg.damage);
         let braced = false;
         if (target.isPlayer && this.player.bracing) {
           finalDamage = Math.floor(finalDamage * 0.5);
@@ -727,7 +1391,7 @@ export class CombatEngine {
       }
       case 'dot': {
         target.dots.push({
-          damage: ability.power,
+          damage: shave(ability.power),
           duration: ability.duration,
           name: ability.name,
         });
@@ -779,21 +1443,22 @@ export class CombatEngine {
       }
       case 'repeat': {
         if (previousAbilityId && previousAbilityId !== abilityId) {
-          const repeated = this._executeEnemyAbility(enemy, previousAbilityId, eStats, pStats, previousAbilityId, target);
+          const repeated = this._executeEnemyAbility(enemy, previousAbilityId, eStats, pStats, previousAbilityId, target, lockMult);
           if (repeated) {
             repeated.message = `${pickMessage(ability.messages || ability.message)} ${repeated.message}`.trim();
             return repeated;
           }
         }
         const dmg = this._calcDamage(eStats.atk, 15, pStats.def, target);
-        target.hp = Math.max(0, target.hp - dmg.damage);
-        result.damage = dmg.damage;
+        const finalDamage = shave(dmg.damage);
+        target.hp = Math.max(0, target.hp - finalDamage);
+        result.damage = finalDamage;
         result.message = `${pickMessage(ability.messages || ability.message)} It devolves into a louder basic attack.`;
         break;
       }
       case 'summon': {
         const dmg = this._calcDamage(eStats.atk, ability.power || 8, pStats.def, target);
-        let finalDamage = dmg.damage;
+        let finalDamage = shave(dmg.damage);
         let braced = false;
         if (target.isPlayer && this.player.bracing) {
           finalDamage = Math.floor(finalDamage * 0.5);
@@ -956,6 +1621,40 @@ export class CombatEngine {
       entity.stunnedThisTurn = entity.stunned > 0;
       entity.confusedThisTurn = entity.confused > 0;
     }
+    if (isPlayerSide) {
+      // Agency guards reset at the top of every Andrew turn: Press Advantage is
+      // free (doesn't end the turn) but strictly once per turn, and Loop In is
+      // armed only by a weakness hit taken this turn.
+      entity.pressAdvantageUsedThisTurn = false;
+      entity.loopInUsedThisTurn = false;
+      this.loopInReady = false;
+
+      // The Break window (+20%) outlives the enemy's skipped turn by exactly
+      // one player turn — see _reduceComposure. Expire it here so the bonus
+      // covers "the rest of this turn plus the next one" rather than only the
+      // remainder of the turn that landed the Break.
+      for (const e of this.enemies) {
+        if (e.brokenBonus > 0) e.brokenBonus--;
+      }
+
+      // Momentum decay. Two sources, same number: the Escalation Clause
+      // mutator (a client who takes something instead of adding a stat) and
+      // the Open-Door Policy stretch goal. Applied before the player acts so
+      // the HUD they read is the number they get.
+      const decayers = this.aliveEnemies().filter(
+        e => e.mutators?.some(m => m.id === 'escalation_clause')
+      );
+      if (decayers.length > 0 || this.hasStretch('open_door')) {
+        const before = entity.momentum;
+        entity.momentum = Math.max(0, entity.momentum - COMBAT_DEPTH.MOMENTUM_DECAY);
+        if (before > 0) {
+          results.push({
+            type: 'status_expire',
+            message: `Confidence slips ${before - entity.momentum}.`,
+          });
+        }
+      }
+    }
     if (isEnemySide) {
       entity.silencedThisTurn = entity.silenced > 0;
     }
@@ -1088,31 +1787,67 @@ export class CombatEngine {
     }[quality] || { defBonus: 5, duration: 2, halve: true };
     if (cfg.halve) this.player.bracing = true;
     this.player.buffs.push({ stats: { def: cfg.defBonus }, duration: cfg.duration, name: 'Brace Stance' });
-    return { type: 'brace', defBonus: cfg.defBonus, duration: cfg.duration, quality };
+
+    // Metaphor's deny-model: a defensive action that takes something from the
+    // enemy instead of only protecting you. A PERFECT stance strips 20% of the
+    // target's Composure, which makes Brace a legitimate route to a Break
+    // rather than a turn spent standing still.
+    let composureStripped = 0;
+    let brokeComposure = false;
+    if (quality === 'perfect') {
+      const target = this.enemy;
+      if (target && target.hp > 0 && target.maxComposure > 0 && target.broken <= 0) {
+        const strip = Math.max(1, Math.round(target.maxComposure * COMBAT_DEPTH.BRACE_COMPOSURE_STRIP));
+        const res = this._reduceComposure(target, strip);
+        composureStripped = res.amount;
+        brokeComposure = res.broke;
+      }
+    }
+    return { type: 'brace', defBonus: cfg.defBonus, duration: cfg.duration, quality, composureStripped, brokeComposure };
   }
 
   playerPowerMove(targetIndex) {
     if (this.player.momentum < 100) return null;
-    const target = this._resolveTarget(targetIndex);
+    // Approval Process (stretch goal): the two comeback valves are off.
+    if (this.hasStretch('approval_process')) return null;
+    const conf = this._applyConfusion(this.player, targetIndex);
+    const target = this._resolveTarget(conf.targetIndex);
     if (!target) return null;
     const pStats = this._getEffective(this.player);
     const baseDmg = (pStats.atk + 75) * COMBAT.BASE_DAMAGE_MULTIPLIER;
-    const damage = Math.max(10, Math.floor(baseDmg + randomRange(-5, 5)));
+    let damage = Math.max(10, Math.floor(baseDmg + randomRange(-5, 5)));
+    if (conf.dampened) damage = Math.max(1, Math.floor(damage * conf.damageMult));
     target.hp = Math.max(0, target.hp - damage);
     this.player.momentum = 0;
     this._checkVictory();
-    return { type: 'power_move', damage, targetIndex: this.targetEnemyIndex };
+    return {
+      type: 'power_move', damage, targetIndex: this.targetEnemyIndex,
+      confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
+    };
   }
 
+  // Press Advantage no longer ends the turn, so it is priced accordingly:
+  // base 40 (was 25), floor 25 (was 15). At high SPD it lands around 34,
+  // i.e. roughly every third turn — tempo, not a free extra action every turn.
   getPressAdvantageCost() {
     const spd = this._getEffective(this.player).spd;
-    return Math.max(15, 25 - Math.floor((spd - 8) * 0.5));
+    return Math.max(25, 40 - Math.floor((spd - 8) * 0.5));
   }
 
+  // E33's Gradient Attack model: Press Advantage costs momentum but does NOT
+  // end the turn — it slots BETWEEN actions, so momentum reads as tempo rather
+  // than a damage battery. Hard-capped at once per turn so it can never loop.
   playerPressAdvantage(targetIndex) {
     const cost = this.getPressAdvantageCost();
     if (this.player.momentum < cost) return null;
-    const target = this._resolveTarget(targetIndex);
+    if (this.player.pressAdvantageUsedThisTurn) return null;
+    // Confusion has to apply here too. It was skipped on Press Advantage,
+    // Retaliate, Assert Dominance and Desperate Gamble, which made confusion a
+    // player-favouring inconsistency in a system whose whole pitch is that it
+    // is consistent: the action you chose always happens, at reduced force and
+    // possibly on the wrong target.
+    const conf = this._applyConfusion(this.player, targetIndex);
+    const target = this._resolveTarget(conf.targetIndex);
     if (!target) return null;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(target);
@@ -1120,15 +1855,52 @@ export class CombatEngine {
     const combo = this._enemyHasDebuff(target);
     let finalDamage = dmg.damage;
     if (combo) finalDamage = Math.floor(finalDamage * 1.25);
+    if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
     target.hp = Math.max(0, target.hp - finalDamage);
     target.buffs.push({ stats: { def: -5 }, duration: 2, name: 'Press Advantage' });
     this.player.momentum = Math.max(0, this.player.momentum - cost);
+    this.player.pressAdvantageUsedThisTurn = true;
     this._checkVictory();
-    return { type: 'press_advantage', damage: finalDamage, critical: dmg.critical, combo, targetIndex: this.targetEnemyIndex };
+    return {
+      type: 'press_advantage', damage: finalDamage, critical: dmg.critical, combo,
+      targetIndex: this.targetEnemyIndex, freeAction: true,
+      confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
+    };
+  }
+
+  // ── LOOP IN (Persona 5 Royal Baton Pass) ──────────────────────────────
+  // Armed by a weakness hit while a recruited ally is alive and on the bench.
+  // Hands the follow-up to that ally: they act immediately at +50% damage and
+  // are spent for the round. Once per Andrew turn.
+  playerLoopIn(allyIndex) {
+    if (!this.loopInReady) return null;
+    if (this.player.loopInUsedThisTurn) return null;
+    const ally = this.allies[allyIndex];
+    if (!ally || ally.hp <= 0 || ally.isPlayer) return null;
+
+    this.loopInReady = false;
+    this.player.loopInUsedThisTurn = true;
+    this._allyDamageMult = COMBAT_DEPTH.LOOP_IN_DAMAGE_BONUS;
+    let res;
+    try {
+      res = this.allyTurn(allyIndex);
+    } finally {
+      this._allyDamageMult = 1;
+    }
+    if (!res) return null;
+    this._gainMomentum(COMBAT_DEPTH.LOOP_IN_MOMENTUM);
+    return {
+      ...res,
+      loopIn: true,
+      loopInAllyIndex: allyIndex,
+      loopInAllyName: ally.name,
+      momentumGain: COMBAT_DEPTH.LOOP_IN_MOMENTUM,
+    };
   }
 
   playerSecondWind() {
     if (this.player.momentum < 50) return null;
+    if (this.hasStretch('approval_process')) return null;
     const healAmt = 75;
     this.player.hp = Math.min(this.player.maxHP, this.player.hp + healAmt);
     let clearedStatus = null;
@@ -1141,20 +1913,27 @@ export class CombatEngine {
   playerRetaliate(multiplier = 1.0, targetIndex) {
     if (!this.player.retaliateReady) return null;
     this.player.retaliateReady = false;
-    const target = this._resolveTarget(targetIndex);
+    const conf = this._applyConfusion(this.player, targetIndex);
+    const target = this._resolveTarget(conf.targetIndex);
     if (!target) return null;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(target);
     const dmg = this._calcDamage(pStats.atk, 22, eStats.def, target);
-    const finalDamage = Math.max(1, Math.floor(dmg.damage * multiplier));
+    let finalDamage = Math.max(1, Math.floor(dmg.damage * multiplier));
+    if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
     target.hp = Math.max(0, target.hp - finalDamage);
     this._gainMomentum(Math.floor(15 * multiplier));
     this._checkVictory();
-    return { type: 'retaliate', damage: finalDamage, critical: dmg.critical && multiplier >= 1.0, targetIndex: this.targetEnemyIndex };
+    return {
+      type: 'retaliate', damage: finalDamage, critical: dmg.critical && multiplier >= 1.0,
+      targetIndex: this.targetEnemyIndex,
+      confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
+    };
   }
 
   playerDesperateGamble(risk, targetIndex) {
-    const target = this._resolveTarget(targetIndex);
+    const conf = this._applyConfusion(this.player, targetIndex);
+    const target = this._resolveTarget(conf.targetIndex);
     if (!target) return null;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(target);
@@ -1162,19 +1941,33 @@ export class CombatEngine {
     let multiplier = 1.0;
     let success = true;
     if (risk === 'risky') {
+      // EV 1.1× — already a fair bet, left alone.
       success = Math.random() < 0.6;
       multiplier = success ? 1.5 : 0.5;
     } else if (risk === 'all_in') {
-      success = Math.random() < 0.3;
-      multiplier = success ? 2.5 : 0;
+      // 40% × 2.7× = EV 1.08×, a hair under risky's 1.10×, with a 25-momentum
+      // floor on the whiff. See COMBAT_DEPTH.ALL_IN_* for the full history —
+      // this row is priced so that neither it nor risky dominates.
+      success = Math.random() < COMBAT_DEPTH.ALL_IN_CHANCE;
+      multiplier = success ? COMBAT_DEPTH.ALL_IN_MULTIPLIER : 0;
     }
-    const finalDamage = Math.max(success ? 1 : 0, Math.floor(dmg.damage * multiplier));
+    let finalDamage = Math.max(success ? 1 : 0, Math.floor(dmg.damage * multiplier));
+    if (conf.dampened && finalDamage > 0) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
+    let consolationMomentum = 0;
     if (finalDamage > 0) {
       target.hp = Math.max(0, target.hp - finalDamage);
       this._gainMomentum(10);
+    } else if (risk === 'all_in') {
+      consolationMomentum = COMBAT_DEPTH.ALL_IN_CONSOLATION_MOMENTUM;
+      this._gainMomentum(consolationMomentum);
     }
     this._checkVictory();
-    return { type: 'desperate_gamble', damage: finalDamage, risk, success, critical: dmg.critical && success && multiplier >= 1.5, targetIndex: this.targetEnemyIndex };
+    return {
+      type: 'desperate_gamble', damage: finalDamage, risk, success,
+      critical: dmg.critical && success && multiplier >= 1.5,
+      targetIndex: this.targetEnemyIndex, consolationMomentum,
+      confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
+    };
   }
 
   // Returns the currently-active phase index for the primary (target) enemy. Used for boss phase animations.
@@ -1203,6 +1996,8 @@ export class CombatEngine {
   // Returns the list of voices that are currently available to fire.
   // Called at the start of each player (Andrew) turn by CombatState.
   getAvailableVoices() {
+    // Routine Inspection (stretch goal): internal counsel is unavailable.
+    if (this.hasStretch('routine_inspection')) return [];
     const out = [];
     for (const [id, voice] of Object.entries(VOICES)) {
       if (this.voiceState.fired[id]) continue;

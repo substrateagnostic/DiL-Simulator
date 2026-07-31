@@ -871,3 +871,149 @@
     font-size: 9px;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   COMBAT DEPTH pass — Locks (Sea of Stars) + Composure/Break (HSR)
+   Both live inside .combat-enemy-info, between the HP bar and the telegraph.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Composure / Break bar — fills only on weakness-tag hits */
+.combat-composure {
+  margin: 5px auto 0;
+  width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.combat-enemy-row.single .combat-composure { width: 300px; }
+.combat-enemy-row.crowded .combat-composure { width: 180px; }
+
+.combat-composure-label {
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #7fd4ff;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+.combat-enemy-row.crowded .combat-composure-label { font-size: 10px; }
+
+.combat-composure-bar {
+  flex: 1;
+  height: 6px;
+  background: #0b0b14;
+  border: 1px solid #2a3a55;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.combat-composure-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #2b6cb0, #7fd4ff);
+  transition: width 0.35s ease;
+}
+
+.combat-composure.broken .combat-composure-label { color: #ffd700; }
+.combat-composure.broken .combat-composure-bar { border-color: #7a5c00; }
+.combat-composure.broken .combat-composure-fill {
+  background: linear-gradient(90deg, #7a5c00, #ffd700);
+}
+
+.combat-composure.breaking { animation: composureShatter 0.6s ease-out; }
+@keyframes composureShatter {
+  0%   { transform: translateX(0)   scaleY(1);   filter: brightness(1); }
+  12%  { transform: translateX(-5px) scaleY(2.0); filter: brightness(3); }
+  26%  { transform: translateX(5px)  scaleY(1.6); filter: brightness(2.2); }
+  44%  { transform: translateX(-3px) scaleY(1.2); filter: brightness(1.6); }
+  100% { transform: translateX(0)   scaleY(1);   filter: brightness(1); }
+}
+
+/* Locks row — one chip per required damage type */
+.combat-locks {
+  margin-top: 5px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+}
+.combat-enemy-row.single .combat-locks { max-width: 300px; }
+.combat-enemy-row.crowded .combat-locks { max-width: 180px; }
+
+.combat-locks-label {
+  font-family: 'VT323', monospace;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #b9c4d6;
+  opacity: 0.75;
+  margin-right: 2px;
+}
+
+.combat-lock-chip {
+  font-family: 'VT323', monospace;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.5px;
+  padding: 3px 6px;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+  background: rgba(0, 0, 0, 0.55);
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.9);
+  /* An uncleared lock breathes so the row reads as a live demand, not a label */
+  animation: lockPulse 1.6s ease-in-out infinite;
+}
+/* Tag colors match the ability-tag colors used in the Special submenu */
+.combat-lock-chip.lock-legal     { color: #ff9966; }
+.combat-lock-chip.lock-social    { color: #66bbff; }
+.combat-lock-chip.lock-audit     { color: #66ff99; }
+.combat-lock-chip.lock-technical { color: #cc88ff; }
+
+.combat-lock-chip.cleared {
+  color: #6a6a6a;
+  border-color: #3a3a3a;
+  background: rgba(0, 0, 0, 0.35);
+  text-decoration: line-through;
+  animation: none;
+  opacity: 0.6;
+}
+
+@keyframes lockPulse {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 255, 255, 0); }
+  50%      { box-shadow: 0 0 8px currentColor; }
+}
+
+/* ESCALATED TO COMMITTEE — the denial tax. The Objections are still printed,
+   they simply will not be heard. Chips go grey-gold and stop breathing, and
+   the label changes rather than the row vanishing, so the player can see the
+   move they were counting on cancelling. */
+.combat-locks.sealed .combat-locks-label {
+  color: #ffd27a;
+  opacity: 1;
+  text-shadow: 0 0 6px rgba(255, 200, 90, 0.55);
+}
+.combat-locks.sealed .combat-lock-chip {
+  color: #8b7a52;
+  border-color: #6b5c34;
+  border-style: dashed;
+  background: rgba(30, 24, 8, 0.6);
+  animation: none;
+  opacity: 0.82;
+}
+
+/* Lock-shatter beat — fires the instant a chip is cleared */
+.combat-lock-chip.shatter { animation: lockShatter 0.45s cubic-bezier(0.2, 1.4, 0.4, 1); }
+@keyframes lockShatter {
+  0%   { transform: scale(1.55) rotate(-7deg); opacity: 1; filter: brightness(3.2); color: #fff; }
+  35%  { transform: scale(0.82) rotate(4deg);  opacity: 1; filter: brightness(1.6); }
+  70%  { transform: scale(1.06) rotate(-2deg); }
+  100% { transform: scale(1)    rotate(0);     filter: brightness(1); }
+}
+
+/* Loop In (Baton Pass) prompt — inherits the minigame-overlay family */
+.loop-in-overlay .minigame-title { color: #ffd700; }
+
+@media (max-width: 700px), (max-height: 540px) {
+  .combat-lock-chip { font-size: 11px; padding: 2px 4px; }
+  .combat-locks-label, .combat-composure-label { font-size: 10px; }
+}

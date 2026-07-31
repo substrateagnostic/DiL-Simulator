@@ -52,6 +52,14 @@ const ACHIEVEMENTS = [
   { id: 'supply_run',        category: 'Roguelite',      name: 'Supply Run',           desc: 'Buy from all three shop categories',                    icon: '🛍', check: (p) => !!p.getFlag('bought_category_consumable') && !!p.getFlag('bought_category_upgrade') && !!p.getFlag('bought_category_decor') },
   { id: 'millionaire',       category: 'Roguelite',      name: 'AUM Millionaire',      desc: 'Accumulate 1,000,000 AUM',                              icon: '💰', check: (p) => (p.getFlag('portfolioAUM') || 0) >= 1000000 },
   { id: 'hard_pass',         category: 'Roguelite',      name: 'Hard Pass',            desc: 'Decline a client after winning combat',                 icon: '🚪', check: (p, ctx) => ctx.event === 'client_declined' },
+
+  // The Billable Day. `day_closed` is emitted by ExplorationState._closeDay
+  // with { aum, clients, signed, total, perfect }; it used to be emitted into
+  // a void — no achievement consumed it. ctx.clients is the number actually
+  // served, so a forfeited day (which never reaches _closeDay) cannot pay out.
+  { id: 'day_closed',        category: 'Roguelite',      name: 'Billable Human',       desc: 'Close your first Billable Day',                          icon: '🔔', check: (p, ctx) => ctx.event === 'day_closed' },
+  { id: 'day_perfect',       category: 'Roguelite',      name: 'Full Conversion Event', desc: 'Close a Billable Day with every client signed',         icon: '✒', check: (p, ctx) => ctx.event === 'day_closed' && !!ctx.perfect },
+  { id: 'day_five',          category: 'Roguelite',      name: 'Fully Utilized',       desc: 'Close a five-client Billable Day',                       icon: '📅', check: (p, ctx) => ctx.event === 'day_closed' && (ctx.clients || 0) >= 5 },
   { id: 'dream_client',      category: 'Roguelite',      name: 'Dream Client',         desc: 'Accept a client with no negative attributes',           icon: '⭐', check: (p, ctx) => ctx.event === 'client_accepted' && ctx.attributes && ctx.attributes.every(a => a.positive) },
   { id: 'high_roller',       category: 'Roguelite',      name: 'High Roller',          desc: 'Accept a client with 5,000,000 or more in assets',      icon: '💸', check: (p, ctx) => ctx.event === 'client_accepted' && ctx.assets >= 5_000_000 },
   { id: 'total_renovation',  category: 'Roguelite',      name: 'Full Renovation',      desc: 'Complete every office renovation',                       icon: '🏗', check: (p) =>
@@ -96,6 +104,22 @@ class AchievementManagerClass {
   getAll() {
     this._load();
     return ACHIEVEMENTS.map(a => ({ ...a, unlocked: this._unlocked.has(a.id) }));
+  }
+
+  /**
+   * How many achievements are unlocked. This is the Review Point supply
+   * (see src/data/review.js) — one point per commendation, ever, retroactive
+   * for anyone who was playing before Review Points existed.
+   * Filtered against the live definitions so a retired achievement id left
+   * behind in localStorage cannot inflate the ledger.
+   */
+  getUnlockedCount() {
+    this._load();
+    return ACHIEVEMENTS.reduce((n, a) => n + (this._unlocked.has(a.id) ? 1 : 0), 0);
+  }
+
+  getTotalCount() {
+    return ACHIEVEMENTS.length;
   }
 
   /**

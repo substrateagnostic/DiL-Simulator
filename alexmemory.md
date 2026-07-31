@@ -4,6 +4,29 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
+## ✅ RUN F1 — THE CONVERGENCE LANDS (~23:50, commit 1f23a58)
+- **THE BOARD MEETING EXISTS.** 177 nodes: you feed Skip his speech, every
+  Act-6 ally you earned adds a beat, four outcome tiers. Plus: the Janitor
+  finally NAMES the pattern; Floor 13 guaranteed once + a "13" elevator
+  button; WHO YOU BECAME endings; goodbye cards for the Janitor, Skip, the
+  Intern, Grandma. All prose = Opus 4.6, wired byte-identical.
+- **YOUR PLAYTEST-REDLINE LIST (the true gate, at your leisure):**
+  1. Play the Board Meeting (act 5–6 window, board room, needs Rolex NOT
+     yet taken — F2 panel Act-5 preset is perfect).
+  2. Meet Rachel (Act 1 preset, cubicle farm) — her 5 dialogs + the note.
+  3. Voice flags the critic raised for YOUR pen (kept as 4.6 wrote them
+     where defensible): two "banned triad" lines + one Janet line that
+     explained its own joke (that one was cut in fix). Locations in the
+     critic notes inside the Run F1 output if you want file:line.
+  4. Isaiah's new portraits (style-match approval).
+  5. Epilogue cards for the four goodbyes are TEXT-ONLY until an art pass
+     — queued into our joint session (#11) with the character refs.
+- **NEXT (chair's call, running overnight): RUN C — gameplay** per your
+  cosigned comps report: Locks, Composure/Break bar, Press-Advantage
+  keeps your turn, Billable Day run structure, subtractive mutators,
+  typeable vault code, free respec, achievements→Review Points, NG+ fix.
+  The joint character pass (#11) waits for you — it's a WITH-you task.
+
 ## ✅ RUN B PASSED (~21:50, commit 706e9bc) — first full critic pass
 - **Your flicker:** the walking-shimmer class is DEAD in the diff sheets
   (N8AO retune + denoise + the whole evidence chain). **Your stutter:**

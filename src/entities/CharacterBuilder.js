@@ -2092,6 +2092,36 @@ function _addCosmeticVisual(group, cosmeticId, rig) {
       calc.position.set(-handX, rig.legLength + rig.torsoH * 0.35, handZ + 0.02);
       group.add(calc);
     },
+    ergonomic_wrist_support: () => {
+      // A padded brace on the writing wrist. Sits on the forearm rather than
+      // in the hand, so it never fights a held-prop cosmetic for the same spot.
+      const brace = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.028, 0.026, 0.055, 10), Materials.custom(0x3d4550));
+      brace.position.set(handX, rig.legLength + rig.torsoH * 0.42, handZ);
+      group.add(brace);
+      const strap = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.03, 0.03, 0.012, 10), Materials.custom(0x22272e));
+      strap.position.set(handX, rig.legLength + rig.torsoH * 0.42 + 0.018, handZ);
+      group.add(strap);
+    },
+    // ── Review Point exclusives (src/data/review.js) ──
+    appreciation_cert: () => {
+      const card = new THREE.Mesh(new THREE.BoxGeometry(0.062, 0.044, 0.005), Materials.custom(0xf2e6c8));
+      card.position.set(0.07, rig.legLength + rig.torsoH * 0.76, rig.frontZ * 0.4 + 0.1);
+      group.add(card);
+      const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.004, 10), Materials.custom(0xdaa520));
+      seal.rotation.x = Math.PI / 2;
+      seal.position.set(0.09, rig.legLength + rig.torsoH * 0.745, rig.frontZ * 0.4 + 0.104);
+      group.add(seal);
+    },
+    svp_tumbler: () => {
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.021, 0.1, 12), Materials.custom(0x9aa3ad));
+      body.position.set(-handX, rig.legLength + rig.torsoH * 0.34, handZ + 0.02);
+      group.add(body);
+      const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.027, 0.027, 0.014, 12), Materials.custom(0x2a2f36));
+      lid.position.set(-handX, rig.legLength + rig.torsoH * 0.34 + 0.055, handZ + 0.02);
+      group.add(lid);
+    },
   };
   const fn = COSMETIC_VISUALS[cosmeticId];
   if (fn) fn();

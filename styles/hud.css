@@ -424,3 +424,37 @@
     left: 50%;
   }
 }
+
+/* ── THE BILLABLE DAY — HUD chip ────────────────────────────────────────
+   Sits directly under the mini-stat row and only exists while a day is
+   running. Shows the slot you are on and the Hours banked so far. */
+.hud-day-chip {
+  position: absolute;
+  top: 74px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(218, 165, 32, 0.5);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #ffe9a8;
+  pointer-events: none;
+  z-index: 14;
+}
+
+.hud-day-chip:empty { display: none; }
+
+.hud-day-chip .day-chip-label {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 7px;
+  color: #daa520;
+  letter-spacing: 0.05em;
+}
+
+.hud-day-chip .day-chip-hours { color: #ffd700; }
+.hud-day-chip .day-chip-escrow { color: #9fd39f; }
+.hud-day-chip .day-chip-closing { color: #f87171; }

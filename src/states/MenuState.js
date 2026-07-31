@@ -21,6 +21,7 @@ export class MenuState {
       this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
     }
     this._ngPlusArmed = false;
+    this._restructureArmed = false;
     this.achievementsOverlay = null;
     this.controlsOverlay = null;
     this.audioOverlay = null;
@@ -224,8 +225,16 @@ export class MenuState {
     freshData.deaths = data.deaths || 0;
     freshData.equipped = { ...data.equipped };
     freshData.unlockedAbilities = data.unlockedAbilities;
-    freshData.upgradePoints = data.upgradePoints;
     freshData.questStates = data.questStates;
+    // Ally-taught abilities are bought with the SAME upgradePoints as Andrew's
+    // tree (1 each, counted by _spentUpgradePoints), but `party` and
+    // `allyState` deliberately do not carry into a new lap — so every point a
+    // player sank into Janet or Isaiah used to evaporate at the lap change,
+    // silently, while the docs promised "you keep your upgrade points". Refund
+    // the ally share into the carried pool. Andrew's own tree is not refunded:
+    // `unlockedAbilities` carries, so those points are still doing their job.
+    const allyRefund = this._spentAllyUpgradePoints();
+    freshData.upgradePoints = (data.upgradePoints || 0) + allyRefund;
 
     const CARRY_PREFIXES = ['arcade_', 'bestiary_', 'pb_'];
     const cosmeticFlags = (Array.isArray(COSMETICS) ? COSMETICS : Object.values(COSMETICS))
@@ -642,6 +651,15 @@ export class MenuState {
     this._abilityCount = itemIndex;
     panel.appendChild(grid);
 
+    // ── Restructure (free respec) ──────────────────────────────────────
+    // Experimentation volume is a function of the cost of being wrong.
+    // Hades refunds the whole Mirror for one Key; Vampire Survivors refunds
+    // PowerUps at 100% with no penalty. This tree has hard `requires` chains
+    // and 19 abilities, so a player who spent into the wrong branch was stuck
+    // with it for the rest of the run. Free, unlimited, two-press confirm.
+    // Quest abilities are untouched — those are earned, not bought.
+    panel.appendChild(this._buildRestructureButton());
+
     // Sell last upgrade point — only when every ability is already learned
     const allUpgradeUnlocked = Object.entries(PLAYER_ABILITIES)
       .filter(([, a]) => a.upgradePointCost)
@@ -678,6 +696,85 @@ export class MenuState {
 
   _rerenderAbilities() {
     this._renderAbilities();
+  }
+
+  // How many upgrade points are currently sunk into unlockable abilities —
+  // Andrew's tree plus anything taught to an ally. Refunding exactly this
+  // means the Liquidate-Final-Point sale can never be farmed by respeccing:
+  // a liquidated point was never spent on an ability, so it never comes back.
+  _spentUpgradePoints() {
+    let spent = 0;
+    for (const [id, a] of Object.entries(PLAYER_ABILITIES)) {
+      if (a.unlockQuest || (a.tier ?? 0) === 0) continue;
+      if (this.player.unlockedAbilities.has(id)) spent += a.upgradePointCost || 1;
+    }
+    return spent + this._spentAllyUpgradePoints();
+  }
+
+  /** Just the ally half of the ledger — refunded on New Game+. */
+  _spentAllyUpgradePoints() {
+    let spent = 0;
+    for (const allyId of (this.player.party || [])) {
+      const cfg = ALLY_STATS[allyId];
+      const starters = new Set(cfg?.starterAbilities || cfg?.abilities || []);
+      for (const abilityId of this.player.getAllyUnlockedAbilities(allyId)) {
+        if (!starters.has(abilityId)) spent += 1;
+      }
+    }
+    return spent;
+  }
+
+  _buildRestructureButton() {
+    const btn = document.createElement('div');
+    btn.className = 'menu-item';
+    btn.style.cssText = 'margin-top:12px;color:#53a8b6;border:1px solid #53a8b6;padding:6px 12px;border-radius:4px;cursor:pointer;text-align:center;';
+    const spent = this._spentUpgradePoints();
+    btn.textContent = 'Request Restructuring';
+    btn.addEventListener('click', () => {
+      if (spent === 0) {
+        this._flashAbilityMessage('Andrew has no skill investments to liquidate. The assessment took four seconds.');
+        return;
+      }
+      if (!this._restructureArmed) {
+        this._restructureArmed = true;
+        btn.textContent = 'Press again to liquidate all skill investments';
+        btn.style.color = '#ffaa44';
+        btn.style.borderColor = '#ffaa44';
+        return;
+      }
+      this._restructure(spent);
+    });
+    return btn;
+  }
+
+  _restructure(refund) {
+    const STARTERS = ['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check'];
+    this.player.unlockedAbilities = new Set(STARTERS);
+    for (const allyId of (this.player.party || [])) {
+      const cfg = ALLY_STATS[allyId];
+      if (!cfg || !this.player.allyState[allyId]) continue;
+      this.player.allyState[allyId].unlockedAbilities = [...(cfg.starterAbilities || cfg.abilities || [])];
+    }
+    this.player.upgradePoints += refund;
+    this._restructureArmed = false;
+    AudioManager.playSfx('confirm');
+    this._rerenderAbilities();
+    this._flashAbilityMessage("All skill investments have been liquidated. Andrew's file is, briefly, pristine.");
+  }
+
+  _flashAbilityMessage(text) {
+    const host = this.abilitiesOverlay || document.getElementById('ui-overlay');
+    if (!host) return;
+    const el = document.createElement('div');
+    el.style.cssText = `
+      position:absolute; bottom:12%; left:50%; transform:translateX(-50%);
+      max-width:min(520px, 86vw); text-align:center;
+      background:rgba(6,6,12,0.92); border:1px solid #53a8b6; border-radius:4px;
+      padding:10px 18px; font-family:'VT323', monospace; font-size:19px; color:#d8d4cc;
+      z-index:80; pointer-events:none;`;
+    el.textContent = text;
+    host.appendChild(el);
+    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 2600);
   }
 
   _buildCharacterTabs() {
@@ -826,6 +923,7 @@ export class MenuState {
       this.abilitiesOverlay.parentNode.removeChild(this.abilitiesOverlay);
     }
     this.abilitiesOverlay = null;
+    this._restructureArmed = false;
     if (this.element) this.element.style.display = '';
   }
 
@@ -1224,6 +1322,26 @@ export class MenuState {
           <div style="display:flex;justify-content:space-between;margin-top:4px">
             <span style="color:#8aa;font-size:16px">Longest Accept Streak</span>
             <span style="color:#ffd700;font-size:16px">${this.player.getFlag('pb_accept_streak') || 0}</span>
+          </div>
+        </div>` : ''}
+        ${this.player.getFlag('daysWorked') ? `
+        <div style="border-top:1px solid #1a2a3a;margin-top:14px;padding-top:10px">
+          <div style="color:#53a8b6;font-size:14px;letter-spacing:1px;margin-bottom:6px">BILLABLE DAY RECORDS${this.player.getFlag('pb_perfect_day') ? ' <span style="color:#ffd700">★</span>' : ''}</div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="color:#8aa;font-size:16px">Days Closed</span>
+            <span style="color:#ffd700;font-size:16px">${this.player.getFlag('daysWorked') || 0}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="color:#8aa;font-size:16px">Highest Daily AUM</span>
+            <span style="color:#ffd700;font-size:16px">$${(this.player.getFlag('pb_best_day_aum') || 0).toLocaleString()}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="color:#8aa;font-size:16px">Largest Board Closed</span>
+            <span style="color:#ffd700;font-size:16px">${this.player.getFlag('pb_longest_day') || 0}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px">
+            <span style="color:#8aa;font-size:16px">Most Hours Earned</span>
+            <span style="color:#ffd700;font-size:16px">${this.player.getFlag('pb_best_day_hours') || 0}</span>
           </div>
         </div>` : ''}
       </div>

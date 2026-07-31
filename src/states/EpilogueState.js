@@ -164,6 +164,21 @@ function buildCards(player) {
     }
   }
 
+  // ── THE SECOND LAP (NG+). `ng_plus_count` was written by MenuState and read
+  // by nothing — the documented Dark Souls anti-pattern, where the only thing
+  // a second run buys is bigger enemy numbers. Chrono Trigger's answer is that
+  // carry-over exists to reach what the first run could not. This is not a new
+  // ending: it is one card, gated on having run the story before AND having
+  // held the optional Board Meeting this time, that only a prepared Andrew
+  // could have earned. Prose first-draft: Opus 4.6, wired verbatim.
+  if ((Number(f('ng_plus_count')) || 0) >= 1 && f('board_meeting_held')) {
+    cards.push({
+      img: 'epilogue_board',
+      title: 'THE PREPARED REMARKS',
+      lines: ['The board met on a Tuesday in April. Andrew brought fourteen months of fiduciary reports, tabbed and indexed, and a three-minute speech that made two board members look at their hands.'],
+    });
+  }
+
   cards.push({
     img: 'epilogue_building',
     title: 'VAULTS FARGO BRANCH No. 1',

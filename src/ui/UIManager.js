@@ -172,6 +172,32 @@ export class UIManager {
   }
 
   /**
+   * Update the Billable Day chip (client slot, Hours banked, AUM in escrow).
+   * Pass null / no day to hide it — `.hud-day-chip:empty` handles the hiding.
+   * @param {object|null} day - the day record from src/data/billableDay.js
+   * @param {string} hoursLabel - label for the Hours counter (DAY_TEXT.ui.hours_label)
+   */
+  updateDayChip(day, hoursLabel = 'Billable Hours') {
+    if (!this.dayChip) {
+      this.dayChip = document.createElement('div');
+      this.dayChip.className = 'hud-day-chip';
+      this.hud.appendChild(this.dayChip);
+    }
+    if (!day || !day.active) {
+      this.dayChip.innerHTML = '';
+      return;
+    }
+    const slot = Math.min(day.index + 1, day.total);
+    const closing = slot >= day.total;
+    this.dayChip.innerHTML = `
+      <span class="day-chip-label">DAY ${day.dayNumber}</span>
+      <span class="${closing ? 'day-chip-closing' : ''}">Client ${slot}/${day.total}</span>
+      <span class="day-chip-hours">${hoursLabel} ${day.hours}</span>
+      <span class="day-chip-escrow">Escrow $${Number(day.aumPending || 0).toLocaleString()}</span>
+    `;
+  }
+
+  /**
    * Show a notification toast that auto-hides.
    * @param {string} text - Notification text
    * @param {number} duration - Display duration in ms (default 3000)

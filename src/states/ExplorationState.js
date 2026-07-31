@@ -9,11 +9,25 @@ import { DialogState } from './DialogState.js';
 import { CombatState } from './CombatState.js';
 import { MenuState } from './MenuState.js';
 import { ClientReviewState } from './ClientReviewState.js';
+import { DayState } from './DayState.js';
 import { DIALOGS } from '../data/dialogs/index.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { TransitionOverlay } from '../ui/TransitionOverlay.js';
 import { ElevatorRide } from '../ui/ElevatorRide.js';
-import { generateClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
+import { generateClient, generateDayClient, generateBeneficiaryChain, applyChainModifiers, calculatePortfolioHealth } from '../data/ClientGenerator.js';
+import {
+  DAY_TEXT,
+  applyDayStats,
+  clearDay,
+  closingPremiumParts,
+  computeHours,
+  newDay,
+  readDay,
+  revertDayStats,
+  revokeDayStats,
+  rollDayLength,
+  writeDay,
+} from '../data/billableDay.js';
 import { ENEMY_STATS, XP_TABLE } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
@@ -23,6 +37,8 @@ import { DEV_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
 import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
 import { showDevPanel } from '../ui/DevPanel.js';
+import { VaultKeypad } from '../ui/VaultKeypad.js';
+import { applyReviewPurchases } from '../data/review.js';
 
 const INTERACTION_OFFSETS = [
   [0, 0],
@@ -116,8 +132,6 @@ export class ExplorationState {
     this._nearbyExitTarget = { x: 0, z: 0, data: null };
     this._nearbyInteractableTarget = { x: 0, z: 0, data: null };
     this._nearbyTargets = { exit: null, interactable: null };
-    this._lastClientPromptRaw = undefined;
-    this._clientPromptText = null;
     this._lastSupplyShopAum = null;
     this._supplyShopPromptText = null;
     this._lastElevatorLinkFrom = null;
@@ -145,6 +159,10 @@ export class ExplorationState {
 
   enter() {
     if (DEV_MODE) window.__explore = this; // harness/debug handle
+    // Review Point purchases live outside the save (localStorage, beside the
+    // achievement list) so they survive New Game+ and brand-new files. Stamp
+    // them onto this player as flags on every load. Idempotent.
+    applyReviewPurchases(this.player);
     Engine.scene.add(this.player.mesh);
     this._createHUD();
     this._loadRoom(this.player.currentRoom);
@@ -448,6 +466,28 @@ export class ExplorationState {
       EventBus.on('room-entered', (roomId) => {
         this._updateLocationDisplay(roomId);
         this._refreshStoryProgress(true);
+        this._updateDayChip();
+
+        // ── NG+ reads ─────────────────────────────────────────────────
+        // `ng_plus_count` used to be written by MenuState and read by exactly
+        // one thing (the enemy ladder). These are the Undertale half of P4.1:
+        // a second-lap Andrew who knows, and a Diane who does not say so.
+        // Two one-time flags, both `ng_` prefixed so they reset with the story.
+        if (this.player.getFlag('ng_plus')) {
+          if (roomId === 'cubicle_farm' && !this.player.getFlag('ng_read_farm')) {
+            this.player.setFlag('ng_read_farm', true);
+            setTimeout(() => this._showMonologue(
+              'The carpet is the same. The fluorescent hum is the same. I know where the printer jams. That is the part that should not bother me.'
+            ), 1600);
+          }
+          if (roomId === 'reception' && !this.player.getFlag('ng_read_diane')) {
+            this.player.setFlag('ng_read_diane', true);
+            setTimeout(() => this._showToast(
+              'Diane: "You look tired in a way that is not about sleep. Sit down. I will get you the same coffee I got you the first time."',
+              'objective',
+            ), 2200);
+          }
+        }
 
         // Inner monologue on first room visit
         const thoughtKey = `thought_${roomId}`;
@@ -457,6 +497,10 @@ export class ExplorationState {
           const thought = thoughts[Math.floor(Math.random() * thoughts.length)];
           setTimeout(() => this._showMonologue(thought), 1500);
         }
+
+        // Day boons are floor-scoped. Runs for EVERY room (including a load
+        // straight into a save), so the state can never drift out of sync.
+        this._syncDayStatScope(roomId);
 
         if (roomId === 'reception') {
           this._onReceptionEntered();
@@ -515,7 +559,13 @@ export class ExplorationState {
         }
 
         // Act 5 trigger: entering cubicle farm with charter triggers restructuring team cutscene (one-time)
-        if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && !this.player.getFlag('act4_complete') && !this.player.getFlag('act5_triggered') && DIALOGS.act5_trigger) {
+        // `act3_complete` is the safety catch for the vault keypad: a player
+        // who cracks 47-19-82 in Act 1 and lifts the charter must not detonate
+        // Act 5 (a level-1 Andrew against the 3v2 Restructuring trio) on the
+        // walk back to his desk. The sequence break gives you the object early;
+        // it does not skip three acts of story. In the normal path act3_complete
+        // is long since set, so this changes nothing.
+        if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && this.player.getFlag('act3_complete') && !this.player.getFlag('act4_complete') && !this.player.getFlag('act5_triggered') && DIALOGS.act5_trigger) {
           this.player.setFlag('act5_triggered');
           setTimeout(() => {
             const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
@@ -578,6 +628,7 @@ export class ExplorationState {
   exit() {
     Engine.scene.remove(this.player.mesh);
     this._removeHUD();
+    if (this._vaultKeypad) { this._vaultKeypad.close(); this._vaultKeypad = null; }
     for (const unsub of this._listeners) {
       unsub();
     }
@@ -648,6 +699,7 @@ export class ExplorationState {
     this._refreshStoryProgress(true);
     this._updateMiniStats();
     this._updatePortfolioDisplay();
+    this._updateDayChip();
     this._updateLocationDisplay(this.player.currentRoom);
   }
 
@@ -724,6 +776,110 @@ export class ExplorationState {
     }
   }
 
+  /**
+   * The stairwell service door. The Archive is the ONLY room the Vault opens
+   * off, and the Archive was flag-gated on `archive_accessible`, which the
+   * story does not set until the Act 3 Alex-from-IT conversation. So the
+   * Vault's "openable from minute one" keypad could never actually be reached
+   * in Act 1 — the knowledge gate was nested inside a flag gate and the real
+   * sequence break was one act, not six.
+   *
+   * The fix is a second door, not a smaller promise: the steel fire door at the
+   * bottom landing of the stairwell takes the same building service override
+   * the vault door does (documented on the circuit panel in the Janitor's
+   * supply closet, first room of the game). A player who read that panel can
+   * walk down in Act 1. The story path is untouched — `alex_it_act3` still sets
+   * `archive_accessible` for everyone who did not.
+   *
+   * It is a DOOR, not an elevator: BUILDING_MAP runs the stairwell shaft from
+   * floor 2 down to B2, the room's landings descend to Archive level on foot,
+   * and ElevatorRide's LINKS table deliberately excludes stairwell>archive.
+   * Every line of copy on this path has to stay true to that.
+   */
+  _openArchiveKeypad() {
+    if (this._vaultKeypad) return;
+    const early = !this.player.getFlag('act3_complete');
+    this.paused = true;
+    this._vaultKeypad = new VaultKeypad(
+      () => {
+        this._vaultKeypad = null;
+        this.paused = false;
+        this.player.setFlag('archive_accessible', true);
+        if (early) this.player.setFlag('archive_cracked_early', true);
+        AudioManager.playSfx('door');
+        this._showToast('The steel door swings open with the reluctance of something closed for longer than intended.', 'objective');
+        setTimeout(() => this._showMonologue(early
+          ? "I memorized those numbers off a circuit panel in the supply closet this morning without meaning to. It didn't occur to me at the time that this was the sort of thing a building should try harder to prevent."
+          : 'The code worked, which has stopped being surprising. The building has been very agreeable this week.'), 1100);
+        this._autoSave();
+      },
+      () => {
+        this._vaultKeypad = null;
+        this.paused = false;
+      },
+      'service',
+    );
+    this._vaultKeypad.open();
+  }
+
+  /**
+   * The vault keypad. Accepts the combination at any point in the game,
+   * regardless of act or story flag. Entering it correctly proves the player
+   * knows all three numbers, so all three code flags are granted along with
+   * access — refusing to set them would leave the vault open and its contents
+   * unreachable, which is the flag-gate this whole feature exists to remove.
+   */
+  _openVaultKeypad() {
+    if (this._vaultKeypad) return;
+    // Cracking it before the Janitor ever hands over the Rolex is the Tunic
+    // payoff, and it is the only case that earns the monologue.
+    const early = !this.player.getFlag('janitor_rallied');
+    this.paused = true;
+    this._vaultKeypad = new VaultKeypad(
+      () => {
+        this._vaultKeypad = null;
+        this.paused = false;
+        this.player.setFlag('vault_code_1', true);
+        this.player.setFlag('vault_code_2', true);
+        this.player.setFlag('vault_code_3', true);
+        if (early) this.player.setFlag('vault_cracked_early', true);
+        // Set last: the flag-set listener toasts on this one, and it should
+        // land after the codes so the objective text reads correctly.
+        this.player.setFlag('vault_accessible', true);
+        AudioManager.playSfx('door');
+        setTimeout(() => this._showMonologue(early
+          ? "I typed in three numbers I noticed this morning and the vault opened. I would like to file a concern, but I'm not sure with whom."
+          : "The vault opened on the first try. In this building, that's usually a sign that something worse is behind it."), 900);
+        this._autoSave();
+      },
+      () => {
+        this._vaultKeypad = null;
+        this.paused = false;
+      },
+    );
+    this._vaultKeypad.open();
+  }
+
+  /**
+   * Day-scoped stat boons are Reception-floor only. Suspend them the moment
+   * Andrew steps off the floor and reinstate them when he steps back on, so
+   * banked Hours can never be carried into a story boss or the Act 5 gauntlet.
+   * The day record is not touched — only whether its tempStats are live.
+   */
+  _syncDayStatScope(roomId) {
+    const day = readDay(this.player);
+    if (!day) return;
+    const changed = roomId === 'reception'
+      ? applyDayStats(this.player, day)
+      : revokeDayStats(this.player, day);
+    if (!changed) return;
+    writeDay(this.player, day);
+    this._showToast(
+      roomId === 'reception' ? DAY_TEXT.ui.boons_resumed : DAY_TEXT.ui.boons_suspended,
+      'info',
+    );
+  }
+
   async _changeRoom(targetRoom, spawnX, spawnZ) {
     // Room gating — check access before allowing entry
     const gatedRooms = {
@@ -731,9 +887,14 @@ export class ExplorationState {
       // block), so standing on it bypassed the elevator dialog's
       // branch_chosen check entirely (logic-sweep MAJOR #10)
       executive_floor: { flag: 'branch_chosen', message: 'The keycard reader blinks red. AUTHORIZED PERSONNEL ONLY.' },
-      archive: { flag: 'archive_accessible', message: "The freight elevator won't move. You need a keycard." },
+      // NOTE: `archive` is NOT in this table any more. The stairwell service
+      // door is a knowledge gate, not a flag gate — see the block below this
+      // gate table, which intercepts it before this lookup ever runs.
       hr_department: { flag: 'hr_accessible', message: "The HR Department is locked down. You need authorization." },
-      vault: { flag: 'vault_accessible', message: "The vault door is sealed shut. You need more information." },
+      // NOTE: `vault` is NOT in this table either, for the same reason as
+      // `archive` — the vault keypad intercept below returns before this
+      // lookup runs, so a `vault_accessible` row here could never fire. Both
+      // knowledge-gated doors are handled in one place; do not re-add either.
       board_room: { flag: 'board_room_accessible', message: "The Board Room is restricted. Executive access only." },
       penthouse: { flag: 'act6_complete', message: "The staircase to the Penthouse is sealed. You need the Janitor's Rolex." },
       city_street: { flag: 'city_unlocked', message: "The garage door is down. You've never had a reason to open it." },
@@ -771,6 +932,30 @@ export class ExplorationState {
       }
       return;
     }
+    // ── THE KNOWLEDGE GATE ────────────────────────────────────────────
+    // Every other lock in this building is a flag check. These two ask the
+    // player. The combination (47-19-82) is the building service override and
+    // it is documented in the world from Act 1 — the circuit panel in the
+    // Janitor's supply closet, first room of the game.
+    //
+    // BOTH doors on the route have to take it, or neither does: the Vault
+    // opens only off the Archive, and the Archive is `archive_accessible`,
+    // which the story does not set until Act 3. A keypad on the inner door
+    // alone was a knowledge gate nested inside a flag gate, i.e. still a flag
+    // gate. With the stairwell service door taking the same code, the walk from
+    // supply closet to the charter is genuinely open in Act 1.
+    //
+    // Both story paths are untouched: `alex_it_act3` still sets
+    // `archive_accessible` and `janitor_act4` still sets `vault_accessible`.
+    if (targetRoom === 'archive' && !this.player.getFlag('archive_accessible')) {
+      this._openArchiveKeypad();
+      return;
+    }
+    if (targetRoom === 'vault' && !this.player.getFlag('vault_accessible')) {
+      this._openVaultKeypad();
+      return;
+    }
+
     const gate = gatedRooms[targetRoom];
     if (gate && !this.player.getFlag(gate.flag)) {
       this._showToast(gate.message, 'info');
@@ -938,7 +1123,7 @@ export class ExplorationState {
         this.stateManager,
         this.player,
         encounterId,
-        (result) => {
+        (result, perf) => {
           // Restore cookie debuff stats
           if (cookieDebuff) {
             this.player.stats.atk = savedAtk;
@@ -971,6 +1156,14 @@ export class ExplorationState {
             if (encounterId === 'reception_client') {
               this._updateMiniStats();
 
+              // Billable Day: bill the meeting before the review screen opens
+              // so the review can show what the hour was worth.
+              const activeDay = readDay(this.player);
+              if (activeDay) {
+                const earned = this._awardDayHours(activeDay, perf);
+                this._showToast(`+${earned} Billable Hours`, 'item');
+              }
+
               // Tutorial: track wins toward level 3 after first Karen loss
               if (this.player.getFlag('retry_karen') && !this.player.getFlag('defeated_karen')) {
                 const wins = (this.player.getFlag('roguelite_tutorial_wins') || 0) + 1;
@@ -996,7 +1189,13 @@ export class ExplorationState {
                 if (!clientData) {
                   this.player.setFlag('currentClient', null);
                   this._autoSave(false);
-                  this._scheduleNextClient();
+                  // A corrupt client still counts as a slot served, otherwise
+                  // the day can never reach its own end.
+                  if (activeDay) {
+                    activeDay.served += 1;
+                    writeDay(this.player, activeDay);
+                  }
+                  this._afterClientResolved();
                   return;
                 }
                 setTimeout(() => {
@@ -1048,6 +1247,10 @@ export class ExplorationState {
   }
 
   _handleDefeat() {
+    // Void an in-progress Billable Day before the generic client reset, so the
+    // day's temporary boons are reversed exactly once and the escrowed AUM is
+    // forfeited. Permanent progress is untouched.
+    this._abandonDay('defeat');
     this.player.rest();
     this._resetClientSystem();
     // Reset ending gate so boss fights can be retried
@@ -1111,6 +1314,33 @@ export class ExplorationState {
 
     const postGame = !!this.player.getFlag('algorithm_defeated');
 
+    // ── Billable Day: resume an interrupted day ─────────────────────────────
+    // Leaving the floor mid-day does NOT void the board — the day record lives
+    // in a player flag and therefore survives a save/reload. Only a defeat or
+    // an explicit walk-off voids the billing (see _abandonDay).
+    const day = readDay(this.player);
+    if (day) {
+      // Defensive: a board that is already full has nothing left to serve.
+      // Close it rather than booking a sixth client onto a five-client day.
+      if (day.served >= day.total) { this._closeDay(); return; }
+      const existingRaw = this.player.getFlag('currentClient');
+      let dayClient = null;
+      if (existingRaw) { try { dayClient = JSON.parse(existingRaw); } catch { dayClient = null; } }
+      if (!dayClient) {
+        dayClient = this._makeDayClient(day, day.index);
+        this.player.setFlag('currentClient', JSON.stringify(dayClient));
+      }
+      this._applyClientToGameData(dayClient);
+      this._updateDayChip();
+      const left = Math.max(0, day.total - day.served);
+      setTimeout(() => this._showToast(
+        `Diane: "${DAY_TEXT.diane.day_resume.replace('{left}', left)}"`, 'objective',
+      ), 600);
+      this._announceMutators(dayClient);
+      return;
+    }
+    this._updateDayChip();
+
     // One-time unlock toast on first post-game reception entry
     if (postGame && !this.player.getFlag('postGameReceptionUnlocked')) {
       this.player.setFlag('postGameReceptionUnlocked', true);
@@ -1153,10 +1383,18 @@ export class ExplorationState {
     }
 
     // Surface combat mutators before the fight
-    if (client.mutators?.length) {
-      const labels = client.mutators.map(m => `${m.label} — ${m.desc}`).join('  ·  ');
-      setTimeout(() => this._showToast(`⚠ ${labels}`, 'info'), 1500);
-    }
+    this._announceMutators(client);
+
+    // The Billable Day is the featured way to work reception; the walk-in loop
+    // stays available for the tutorial and for casual play. Diane makes the
+    // offer, and the reception desk opens the roster.
+    setTimeout(() => this._showToast(`Diane: "${DAY_TEXT.diane.day_offer}"`, 'info'), 2400);
+  }
+
+  _announceMutators(client) {
+    if (!client?.mutators?.length) return;
+    const labels = client.mutators.map(m => `${m.label} — ${m.desc}`).join('  ·  ');
+    setTimeout(() => this._showToast(`⚠ ${labels}`, 'info'), 1500);
   }
 
   _applyClientToGameData(client) {
@@ -1177,9 +1415,15 @@ export class ExplorationState {
     if (npc) npc.rebuild(CHARACTER_CONFIGS.reception_client);
   }
 
-  _handleReceptionDesk() {
+  _receptionUnlocked() {
     const tutorialPhase = this.player.getFlag('retry_karen') && !this.player.getFlag('defeated_karen');
-    if (!this.player.getFlag('defeated_karen') && !tutorialPhase) {
+    return !!this.player.getFlag('defeated_karen') || !!tutorialPhase;
+  }
+
+  // Meeting the client sitting in the waiting area — the fight itself.
+  // This is the old reception-desk behaviour and is what the client NPC does.
+  _meetCurrentClient() {
+    if (!this._receptionUnlocked()) {
       this._showToast('You need to handle the Henderson meetings first.', 'info');
       return;
     }
@@ -1192,9 +1436,274 @@ export class ExplorationState {
     this._startCombat('reception_client');
   }
 
+  // The reception desk itself now opens the Daily Roster: start a Billable Day,
+  // take a single walk-in (the original loop, preserved), or return to / walk
+  // off an in-progress board.
+  _handleReceptionDesk() {
+    if (!this._receptionUnlocked()) {
+      this._showToast('You need to handle the Henderson meetings first.', 'info');
+      return;
+    }
+    AudioManager.playSfx('confirm');
+    const day = readDay(this.player);
+    // Diane says the quiet part before the escrow is staked, not after. A solo
+    // day was landing well under the fairness band and the only place that was
+    // written down was Gameplay.md.
+    const solo = !day && this._partySize() === 0;
+    this.stateManager.push(new DayState(this.stateManager, this.player, {
+      mode: 'board',
+      day,
+      dianeLine: day
+        ? DAY_TEXT.diane.day_resume.replace('{left}', Math.max(0, day.total - day.served))
+        : DAY_TEXT.diane.day_offer,
+      dianeWarning: solo ? DAY_TEXT.diane.solo_warning : '',
+      onResult: (action) => this._onBoardResult(action),
+    }));
+  }
+
+  _onBoardResult(action) {
+    if (action === 'start_day') { this._startDay(); return; }
+    if (action === 'walk_in') {
+      this._showToast(`Diane: "${DAY_TEXT.diane.walk_in}"`, 'info');
+      if (!this.player.getFlag('currentClient')) this._onReceptionEntered();
+      return;
+    }
+    if (action === 'abandon') { this._abandonDay('abandon'); return; }
+    // 'resume' and 'cancel' both just return control to the floor.
+  }
+
+  // ── The Billable Day ────────────────────────────────────────────────────
+  // Run structure for reception, per .claude/plans/research-gameplay-comps.md
+  // P2.1 (Hades currency-scope split). Billable Hours are run-scoped and die
+  // at 5:15; AUM is meta-scoped but held in escrow until the day closes.
+
+  _partySize() { return Math.min(2, (this.player.party || []).length); }
+
+  _startDay() {
+    const total = rollDayLength(this._partySize());
+    const dayNumber = (this.player.getFlag('daysWorked') || 0) + 1;
+    const day = newDay(dayNumber, total, this.player, this._partySize());
+    writeDay(this.player, day);
+
+    const client = this._makeDayClient(day, 0);
+    this.player.setFlag('currentClient', JSON.stringify(client));
+    this._applyClientToGameData(client);
+    this._updateDayChip();
+    this._autoSave(false);
+
+    this._showToast(`Diane: "${DAY_TEXT.diane.day_start.replace('{n}', total)}"`, 'objective');
+    this._announceMutators(client);
+  }
+
+  /**
+   * Build the client for a given slot. Beneficiary chains are a walk-in
+   * feature and are deliberately not started inside a day — a queued chain
+   * waits and resumes once the board is clear, so the escalation curve stays
+   * legible. Whale referrals still honour their flag.
+   */
+  _makeDayClient(day, index) {
+    const postGame = !!this.player.getFlag('algorithm_defeated');
+    const referral = !postGame && !!this.player.getFlag('whale_referral_pending');
+    if (referral) this.player.setFlag('whale_referral_pending', false);
+    return generateDayClient({
+      index,
+      total: day.total,
+      playerLevel: this.player.stats.level,
+      postGame,
+      forceWhale: referral,
+      // The board is priced against who is actually walking in with him.
+      // Read from the day record so a mid-day recruit cannot retune the
+      // clients Andrew has already been quoted.
+      partySize: Number.isFinite(day.partySize) ? day.partySize : this._partySize(),
+    });
+  }
+
+  /** Award Billable Hours for a cleared day client. `perf` comes from CombatState. */
+  _awardDayHours(day, perf) {
+    const { hours, parts } = computeHours(perf || {}, day.index);
+    day.hours += hours;
+    day.hoursEarned += hours;
+    day.lastHours = hours;
+    day.lastHoursParts = parts;
+    writeDay(this.player, day);
+    this._updateDayChip();
+    return hours;
+  }
+
+  /**
+   * Called after a reception client has been accepted or declined.
+   * Routes to the day flow when a board is running, otherwise to the original
+   * single-client loop.
+   */
+  _afterClientResolved() {
+    const day = readDay(this.player);
+    if (!day) { this._scheduleNextClient(); return; }
+
+    if (day.served >= day.total) { this._closeDay(); return; }
+
+    day.index = day.served;
+    const nextClient = this._makeDayClient(day, day.index);
+    this.player.setFlag('currentClient', JSON.stringify(nextClient));
+    this._applyClientToGameData(nextClient);
+    writeDay(this.player, day);
+    this._updateDayChip();
+    this._autoSave(false);
+
+    const left = Math.max(0, day.total - day.served);
+    const dianeLine = nextClient.isClosing
+      ? DAY_TEXT.diane.day_final_client
+      : DAY_TEXT.diane.day_midway.replace('{left}', left);
+
+    setTimeout(() => {
+      this.stateManager.push(new DayState(this.stateManager, this.player, {
+        mode: 'between',
+        day,
+        nextClient,
+        dianeLine,
+        onReroll: () => {
+          const fresh = this._makeDayClient(day, day.index);
+          this.player.setFlag('currentClient', JSON.stringify(fresh));
+          this._applyClientToGameData(fresh);
+          return fresh;
+        },
+        onResult: () => {
+          // Boons may have changed stats; keep the HUD honest.
+          this._updateMiniStats();
+          this._updateDayChip();
+          const c = this.player.getFlag('currentClient');
+          if (c) {
+            try { this._announceMutators(JSON.parse(c)); } catch { /* ignore */ }
+          }
+          this._autoSave(false);
+        },
+      }));
+    }, 700);
+  }
+
+  /** 5:15. Bank the escrow, retire the day, show the summary. */
+  _closeDay() {
+    const day = readDay(this.player);
+    if (!day) return;
+
+    revertDayStats(this.player, day);
+    // The closing premium. Escrow used to bank at face value, which made the
+    // staked mode pay LESS per fight than walk-in spam once the ~50% solo
+    // forfeit rate and the 20% victory heal were priced in — a risky mode with
+    // a negative risk premium (measured: tools/day-sim.mjs). The bell now pays
+    // for closing the day, for signing the whole board, and for the share of
+    // Billable Hours left unspent.
+    const escrow = Math.max(0, Math.round(day.aumPending || 0));
+    const premium = closingPremiumParts(day);
+    const aumBanked = Math.round(escrow * premium.multiplier);
+    this.player.stats.aum = (this.player.stats.aum || 0) + aumBanked;
+    const xpGained = Math.max(0, (this.player.stats.xp || 0) - (day.xpStart || 0));
+
+    // The bell is when the day's clients go on the books — the same moment the
+    // fee banks. Before this, a forfeited day voided the money but kept the
+    // signed clients and the personal bests they minted.
+    if (day.pendingClients) {
+      this.player.setFlag('portfolioClients', (this.player.getFlag('portfolioClients') || 0) + day.pendingClients);
+      this.player.setFlag('portfolioAUM',     (this.player.getFlag('portfolioAUM')     || 0) + (day.pendingAUM  || 0));
+      this.player.setFlag('portfolioFees',    (this.player.getFlag('portfolioFees')    || 0) + (day.pendingFees || 0));
+      this._updatePortfolioDisplay();
+    }
+    if ((day.pbRichest || 0) > (this.player.getFlag('pb_richest_client') || 0)) {
+      this.player.setFlag('pb_richest_client', day.pbRichest);
+    }
+    if ((day.pbBestAum || 0) > (this.player.getFlag('pb_best_aum_single') || 0)) {
+      this.player.setFlag('pb_best_aum_single', day.pbBestAum);
+    }
+
+    this.player.setFlag('daysWorked', (this.player.getFlag('daysWorked') || 0) + 1);
+
+    // Personal bests — the day is its own scoreboard alongside the per-client
+    // pb_ flags that already exist.
+    const pbHits = [];
+    if (aumBanked > (this.player.getFlag('pb_best_day_aum') || 0)) {
+      this.player.setFlag('pb_best_day_aum', aumBanked);
+      pbHits.push(`Best day banked: $${aumBanked.toLocaleString()}`);
+    }
+    if (day.served > (this.player.getFlag('pb_longest_day') || 0)) {
+      this.player.setFlag('pb_longest_day', day.served);
+      pbHits.push(`Longest day: ${day.served} clients`);
+    }
+    if (day.hoursEarned > (this.player.getFlag('pb_best_day_hours') || 0)) {
+      this.player.setFlag('pb_best_day_hours', day.hoursEarned);
+      pbHits.push(`Most hours billed: ${day.hoursEarned}`);
+    }
+    const perfect = day.total > 0 && day.signed >= day.total;
+    if (perfect) this.player.setFlag('pb_perfect_day', true);
+
+    const closed = { ...day };
+    clearDay(this.player);
+    this.player.setFlag('currentClient', null);
+    this._updateMiniStats();
+    this._updateDayChip();
+    this._autoSave(false);
+    AchievementManager.check(this.player, {
+      event: 'day_closed',
+      aum: aumBanked,
+      clients: closed.served,
+      signed: closed.signed || 0,
+      total: closed.total || 0,
+      perfect,
+    });
+
+    let dianeLine = (perfect ? DAY_TEXT.diane.bell_perfect : DAY_TEXT.diane.bell)
+      .replace('{aum}', `$${aumBanked.toLocaleString()}`);
+    // One-time teach: the premium is a table row unless someone says out loud
+    // that the whole day pays better than the pieces.
+    if (premium.multiplier > 1 && !this.player.getFlag('day_premium_explained')) {
+      this.player.setFlag('day_premium_explained', true);
+      dianeLine += ` ${DAY_TEXT.diane.premium}`;
+    }
+
+    setTimeout(() => {
+      this.stateManager.push(new DayState(this.stateManager, this.player, {
+        mode: 'summary',
+        day: closed,
+        dianeLine,
+        summary: { aumBanked, xpGained, pbHits, escrow, premium },
+        // The bell is where the day's signed clients actually join the book,
+        // so it is also where the review has to be able to fire — checking
+        // only on a client decision left day players permanently short.
+        onResult: () => { if (!this._maybeQuarterlyReview()) this._scheduleNextClient(); },
+      }));
+    }, 700);
+  }
+
+  /**
+   * Void the day. Called on a mid-day defeat and on an explicit walk-off.
+   * Permanent progress (XP, achievements, unlocks, day-length records) is
+   * untouched. What goes is everything the day had in escrow: the AUM, the
+   * temporary boons, AND — since this pass — the signed clients and the
+   * per-client personal bests, which used to survive a forfeit and leave a
+   * record minted from revenue that never banked.
+   */
+  _abandonDay(reason = 'abandon') {
+    const day = readDay(this.player);
+    if (!day) return;
+    revertDayStats(this.player, day);
+    clearDay(this.player);
+    this.player.setFlag('currentClient', null);
+    this._updateMiniStats();
+    this._updateDayChip();
+    const line = reason === 'defeat' ? DAY_TEXT.diane.day_forfeit : DAY_TEXT.diane.day_abandon;
+    setTimeout(() => this._showToast(`Diane: "${line}"`, 'objective'), reason === 'defeat' ? 3200 : 400);
+  }
+
   _onClientDecision(accepted, clientData, opts = {}) {
     // Track chain state if this client is part of a beneficiary chain
     this._updateChainState(clientData, accepted);
+
+    // Billable Day bookkeeping. The day counts every client Andrew actually
+    // sat down with, signed or not.
+    const day = readDay(this.player);
+    if (day) {
+      day.served += 1;
+      if (accepted) day.signed += 1; else day.declined += 1;
+      writeDay(this.player, day);
+    }
 
     // Every client actually reviewed — accepted OR declined. This is the counter
     // the beneficiary-chain gate in _getNextClient() reads; it was never written
@@ -1210,26 +1719,53 @@ export class ExplorationState {
       const anger = Math.min(10, Math.max(0, (this.player.getFlag('bossAnger') || 0) + clientData.netAngerDelta + negotiationAnger));
       this.player.setFlag('bossAnger', anger);
 
-      this.player.setFlag('portfolioClients', (this.player.getFlag('portfolioClients') || 0) + 1);
-      this.player.setFlag('portfolioAUM',     (this.player.getFlag('portfolioAUM')     || 0) + clientData.assets);
-      this.player.setFlag('portfolioFees',    (this.player.getFlag('portfolioFees')    || 0) + clientData.annualFees);
-      this._updatePortfolioDisplay();
+      // Book of business. Inside a day this rides in escrow with the fee: a
+      // forfeited day used to void the money and keep the signed client, the
+      // portfolio AUM and the personal best it minted — a record built out of
+      // revenue that never banked. One rule now: nothing from an unclosed day
+      // is on the books.
+      if (day) {
+        day.pendingClients = (day.pendingClients || 0) + 1;
+        day.pendingAUM     = (day.pendingAUM     || 0) + clientData.assets;
+        day.pendingFees    = (day.pendingFees    || 0) + clientData.annualFees;
+      } else {
+        this.player.setFlag('portfolioClients', (this.player.getFlag('portfolioClients') || 0) + 1);
+        this.player.setFlag('portfolioAUM',     (this.player.getFlag('portfolioAUM')     || 0) + clientData.assets);
+        this.player.setFlag('portfolioFees',    (this.player.getFlag('portfolioFees')    || 0) + clientData.annualFees);
+        this._updatePortfolioDisplay();
+      }
 
       // Award AUM currency (player's spending money) — 1% of assets, minimum 50.
       // Negotiation gamble: 1.5x on success, 0.75x on failure.
       let aumEarned = Math.max(50, Math.floor(clientData.assets * 0.01));
       if (opts.negotiated) aumEarned = Math.floor(aumEarned * (opts.success ? 1.5 : 0.75));
-      this.player.stats.aum = (this.player.stats.aum || 0) + aumEarned;
+      if (day) {
+        // Escrow: inside a day the fee is not banked until the 5:15 bell, and
+        // is voided outright by a defeat or a walk-off (report P2.1).
+        day.aumPending = (day.aumPending || 0) + aumEarned;
+        if (aumEarned > (day.bestAum || 0)) day.bestAum = aumEarned;
+        writeDay(this.player, day);
+        this._updateDayChip();
+      } else {
+        this.player.stats.aum = (this.player.stats.aum || 0) + aumEarned;
+      }
       this._updateMiniStats();
       AchievementManager.check(this.player, { event: 'client_accepted', assets: clientData.assets, attributes: clientData.attributes });
 
-      // Personal bests (shown in the Stats tab)
-      if (clientData.assets > (this.player.getFlag('pb_richest_client') || 0)) {
-        this.player.setFlag('pb_richest_client', clientData.assets);
+      // Personal bests (shown in the Stats tab). Escrowed alongside the fee for
+      // the same reason — see the portfolio block above.
+      if (day) {
+        day.pbRichest = Math.max(day.pbRichest || 0, clientData.assets);
+        day.pbBestAum = Math.max(day.pbBestAum || 0, aumEarned);
+      } else {
+        if (clientData.assets > (this.player.getFlag('pb_richest_client') || 0)) {
+          this.player.setFlag('pb_richest_client', clientData.assets);
+        }
+        if (aumEarned > (this.player.getFlag('pb_best_aum_single') || 0)) {
+          this.player.setFlag('pb_best_aum_single', aumEarned);
+        }
       }
-      if (aumEarned > (this.player.getFlag('pb_best_aum_single') || 0)) {
-        this.player.setFlag('pb_best_aum_single', aumEarned);
-      }
+      if (day) writeDay(this.player, day);
       const streak = (this.player.getFlag('pb_accept_streak_cur') || 0) + 1;
       this.player.setFlag('pb_accept_streak_cur', streak);
       if (streak > (this.player.getFlag('pb_accept_streak') || 0)) {
@@ -1244,12 +1780,13 @@ export class ExplorationState {
         ), 2200);
       }
 
+      const escrowNote = day ? ' (held until 5:15)' : '';
       if (opts.negotiated && opts.success) {
-        this._showToast(`Negotiated premium fees! ${clientData.name} onboarded at +${aumEarned.toLocaleString()} AUM.`, 'item');
+        this._showToast(`Negotiated premium fees! ${clientData.name} onboarded at +${aumEarned.toLocaleString()} AUM${escrowNote}.`, 'item');
       } else if (opts.negotiated) {
-        this._showToast(`They haggled you down. +${aumEarned.toLocaleString()} AUM — and the boss heard about it.`, 'info');
+        this._showToast(`They haggled you down. +${aumEarned.toLocaleString()} AUM${escrowNote} — and the boss heard about it.`, 'info');
       } else {
-        this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned.`, 'item');
+        this._showToast(`${clientData.name} onboarded! +${aumEarned.toLocaleString()} AUM earned${escrowNote}.`, 'item');
       }
       this._checkBossAnger();
     } else {
@@ -1266,14 +1803,10 @@ export class ExplorationState {
     this._autoSave(false);
 
     // Quarterly review every 5 accepted clients
-    const portfolioCount = this.player.getFlag('portfolioClients') || 0;
-    if (portfolioCount > 0 && portfolioCount % 5 === 0) {
-      setTimeout(() => this._showQuarterlyReview(), 800);
-      return; // quarterly review will generate next client when dismissed
-    }
+    if (this._maybeQuarterlyReview()) return; // it continues the loop when dismissed
 
-    // Generate the next client after a short pause if still in reception
-    this._scheduleNextClient();
+    // Day board or the original single-client loop
+    this._afterClientResolved();
   }
 
   _scheduleNextClient() {
@@ -1328,6 +1861,34 @@ export class ExplorationState {
     if (accepted) state.acceptedCount++;
     else state.rejectedCount++;
     this.player.setFlag(key, state);
+  }
+
+  /**
+   * Fire a quarterly review if the book of business has grown by five clients
+   * since the last one. Returns true if a review was scheduled.
+   *
+   * This used to be an exact `portfolioClients % 5 === 0` test evaluated only
+   * on a single client decision. Inside a Billable Day the book does not grow
+   * one at a time — every signed client rides in escrow and the whole lot is
+   * added in one lump at the 5:15 bell (see _closeDay). A lump of +3 then +5
+   * walks 3 -> 8 -> 13 and never once lands on a multiple of five, so a player
+   * who mostly works days could go the entire game without a second review.
+   * A high-water mark cannot be jumped over.
+   */
+  _maybeQuarterlyReview() {
+    const count = this.player.getFlag('portfolioClients') || 0;
+    if (count < 5) return false;
+    // Legacy saves have no high-water mark. Seed it from the current book so
+    // an existing player is not handed a free review the moment they load.
+    if (!('lastQuarterlyReviewAt' in this.player.flags)) {
+      this.player.setFlag('lastQuarterlyReviewAt', Math.floor(count / 5) * 5);
+      return false;
+    }
+    const last = this.player.getFlag('lastQuarterlyReviewAt') || 0;
+    if (count < last + 5) return false;
+    this.player.setFlag('lastQuarterlyReviewAt', Math.floor(count / 5) * 5);
+    setTimeout(() => this._showQuarterlyReview(), 800);
+    return true;
   }
 
   _showQuarterlyReview() {
@@ -1438,7 +1999,7 @@ export class ExplorationState {
     const dismiss = () => {
       if (el.parentNode) el.parentNode.removeChild(el);
       window.removeEventListener('keydown', keyHandler);
-      this._scheduleNextClient();
+      this._afterClientResolved();
     };
 
     const keyHandler = (e) => {
@@ -1585,21 +2146,11 @@ export class ExplorationState {
     }
 
     if (interactableTarget.data.type === 'reception_desk') {
-      const clientRaw = this.player.getFlag('currentClient');
-      if (clientRaw) {
-        if (clientRaw !== this._lastClientPromptRaw) {
-          this._lastClientPromptRaw = clientRaw;
-          this._clientPromptText = null;
-          try {
-            const client = JSON.parse(clientRaw);
-            if (client) this._clientPromptText = `Meet ${client.name}`;
-          } catch {
-            this._clientPromptText = null;
-          }
-        }
-        if (this._clientPromptText) return this._clientPromptText;
-      }
-      return 'Reception Desk';
+      // The desk is the Daily Roster now; the client NPC in the waiting area
+      // is what starts a meeting.
+      const day = readDay(this.player);
+      if (day) return `Daily Roster (${Math.max(0, day.total - day.served)} left)`;
+      return 'Daily Roster';
     }
 
     if (this._getInteractableDialogId(interactableTarget.data) === 'branch_decision') {
@@ -1641,9 +2192,10 @@ export class ExplorationState {
     if (npc) {
       npc.faceTowards(this.player.position.x, this.player.position.z);
 
-      // Reception client NPC triggers roguelike combat directly
+      // Reception client NPC triggers roguelike combat directly.
+      // The desk (below) opens the Daily Roster instead.
       if (npc.id === 'reception_client') {
-        this._handleReceptionDesk();
+        this._meetCurrentClient();
         return;
       }
 
@@ -2046,6 +2598,12 @@ export class ExplorationState {
     this._updateMiniStats();
     this.hudElement.appendChild(this.miniStatsElement);
 
+    // Billable Day chip — only rendered while a day is running.
+    this.dayChipElement = document.createElement('div');
+    this.dayChipElement.className = 'hud-day-chip';
+    this.hudElement.appendChild(this.dayChipElement);
+    this._updateDayChip();
+
     this.questElement = document.createElement('div');
     this.questElement.className = 'hud-quest-tracker';
     this.questElement.style.display = 'none';
@@ -2109,6 +2667,25 @@ export class ExplorationState {
         <span class="label">XP</span>
         <span class="value xp">${xp}/${nextXP}</span>
       </div>
+    `;
+  }
+
+  // Billable Day HUD chip: which slot you are on, Hours banked, AUM in escrow.
+  // Empty markup hides itself via `.hud-day-chip:empty`.
+  _updateDayChip() {
+    if (!this.dayChipElement) return;
+    const day = readDay(this.player);
+    if (!day) {
+      this.dayChipElement.innerHTML = '';
+      return;
+    }
+    const slot = Math.min(day.index + 1, day.total);
+    const closing = slot >= day.total;
+    this.dayChipElement.innerHTML = `
+      <span class="day-chip-label">DAY ${day.dayNumber}</span>
+      <span class="${closing ? 'day-chip-closing' : ''}">Client ${slot}/${day.total}</span>
+      <span class="day-chip-hours">${DAY_TEXT.ui.hours_label} ${day.hours}</span>
+      <span class="day-chip-escrow">Escrow $${Number(day.aumPending || 0).toLocaleString()}</span>
     `;
   }
 
@@ -2338,10 +2915,15 @@ export class ExplorationState {
     }
 
     // Act 4
-    if (this.player.getFlag('has_charter')) {
+    // Both branches now require act3_complete. In the normal path that flag
+    // is always already set (vault_accessible comes from janitor_act4, which
+    // needs ross_rallied, which needs act3_complete), so nothing changes —
+    // but a player who cracked the keypad in Act 1 must not have the Act 4
+    // objective overwrite whatever they are actually supposed to be doing.
+    if (this.player.getFlag('has_charter') && this.player.getFlag('act3_complete')) {
       return 'Return to the cubicle farm with the charter';
     }
-    if (this.player.getFlag('vault_accessible') && !this.player.getFlag('has_charter')) {
+    if (this.player.getFlag('vault_accessible') && this.player.getFlag('act3_complete') && !this.player.getFlag('has_charter')) {
       const codes = [this.player.getFlag('vault_code_1'), this.player.getFlag('vault_code_2'), this.player.getFlag('vault_code_3')];
       const codeCount = codes.filter(Boolean).length;
       if (codeCount < 3) {

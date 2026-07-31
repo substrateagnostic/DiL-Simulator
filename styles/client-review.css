@@ -271,3 +271,276 @@
   border-color: rgba(248, 113, 113, 0.3);
   background: rgba(248, 113, 113, 0.05);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE BILLABLE DAY — reception board, between-client boons, 5:15 summary
+   (DayState.js). Reuses .cr-overlay / .cr-panel for continuity with the
+   client review screen the player already knows.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.day-panel {
+  border-color: #daa520;
+  box-shadow: 0 0 40px rgba(218, 165, 32, 0.35), 0 0 80px rgba(0,0,0,0.6);
+}
+
+.day-panel .cr-header {
+  background: linear-gradient(90deg, #17130a, #241c0d);
+  border-bottom-color: #daa520;
+}
+
+.day-panel .cr-title { color: #daa520; }
+
+.day-diane {
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+  color: #cfc7b6;
+  line-height: 1.35;
+  padding: 10px 12px;
+  border-left: 3px solid #daa520;
+  background: rgba(218, 165, 32, 0.06);
+}
+
+/* The solo-day warning. Same voice, hotter border — she is not stopping you,
+   she is creating a record. */
+.day-diane-warning {
+  margin-top: 8px;
+  color: #e8d9b0;
+  border-left-color: #e9a045;
+  background: rgba(233, 160, 69, 0.09);
+}
+
+.day-ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 5px;
+}
+
+.day-ledger-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'VT323', monospace;
+  font-size: 19px;
+}
+
+.day-earned {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #9fd39f;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.day-part {
+  font-size: 15px;
+  color: #7f9f7f;
+  border: 1px solid rgba(159, 211, 159, 0.25);
+  border-radius: 3px;
+  padding: 0 5px;
+}
+
+/* Next-client card */
+.day-next {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 5px;
+  padding: 10px 12px;
+}
+
+.day-next-open { border-color: rgba(218, 165, 32, 0.45); }
+
+.day-next-title {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  color: #daa520;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.day-next-name {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  color: #fff;
+}
+
+.day-next-type {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #53a8b6;
+  margin-top: 2px;
+}
+
+.day-next-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #ccc;
+}
+
+.day-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.day-badges-clear {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #6f8f6f;
+}
+
+.day-badge {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.08);
+  border-radius: 3px;
+  padding: 1px 7px;
+  letter-spacing: 0.02em;
+}
+
+/* Rows (boons + actions) */
+.day-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.day-row {
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: 5px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+}
+
+.day-row-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.day-row-label {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  color: #fff;
+}
+
+.day-row-cost {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #daa520;
+  white-space: nowrap;
+}
+
+.day-row-hint {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  color: #999;
+  margin-top: 3px;
+  line-height: 1.25;
+}
+
+.day-row-featured { border-color: rgba(218, 165, 32, 0.45); }
+.day-row-danger .day-row-label { color: #f87171; }
+
+.day-row-focused {
+  border-color: #daa520;
+  background: rgba(218, 165, 32, 0.12);
+}
+
+.day-row-locked {
+  opacity: 0.45;
+}
+
+.day-row-locked .day-row-cost { color: #888; }
+
+/* Personal bests on the summary */
+.day-pb {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 12px;
+  border: 1px solid rgba(218, 165, 32, 0.3);
+  border-radius: 5px;
+  background: rgba(218, 165, 32, 0.05);
+}
+
+.day-pb-row {
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+  color: #daa520;
+}
+
+/* Closing-premium line items — indented under Gross Day Receipts so the
+   breakdown reads as an accounting sub-total rather than five equal rows. */
+.day-fin-sub .cr-fin-label {
+  padding-left: 14px;
+  opacity: 0.85;
+}
+
+.day-fin-detail {
+  opacity: 0.6;
+  font-size: 0.85em;
+}
+
+/* In-panel purchase feedback */
+.day-toast {
+  position: absolute;
+  bottom: 6%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'VT323', monospace;
+  font-size: 20px;
+  color: #fff;
+  background: rgba(0,0,0,0.9);
+  border: 2px solid #daa520;
+  border-radius: 6px;
+  padding: 8px 20px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 60;
+}
+
+.day-toast-on { opacity: 1; }
+
+/* Billable Day framing inside the client review */
+.cr-day-banner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  padding: 6px 10px;
+  border: 1px solid rgba(218, 165, 32, 0.4);
+  border-radius: 5px;
+  background: rgba(218, 165, 32, 0.07);
+  font-family: 'VT323', monospace;
+  font-size: 18px;
+}
+
+.cr-day-slot {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  color: #daa520;
+  letter-spacing: 0.05em;
+}
+
+.cr-day-hours  { color: #9fd39f; }
+.cr-day-escrow { color: #ffd700; margin-left: auto; }
+
+.cr-day-mutators {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}

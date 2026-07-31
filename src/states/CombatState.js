@@ -5,12 +5,21 @@ import { CombatScene } from '../combat/CombatScene.js';
 import { CombatEngine } from '../combat/CombatEngine.js';
 import { CombatHUD } from '../ui/CombatHUD.js';
 import { FloatingText } from '../ui/FloatingText.js';
-import { ITEMS, ENEMY_ABILITIES, ENEMY_STATS, ANDREW_TAUNTS, XP_TABLE, PLAYER_ABILITIES } from '../data/stats.js';
+import { ITEMS, ENEMY_ABILITIES, ENEMY_STATS, ANDREW_TAUNTS, SEAL_COPY, XP_TABLE, PLAYER_ABILITIES } from '../data/stats.js';
 import { VOICE_ACTIONS, VOICES } from '../data/voices.js';
+// Manual ally control reads ability definitions directly (_handleAllyAction /
+// _handleAllyAbility / _executeAllyAbility). This import was missing, so every
+// manual-mode ally ability threw a ReferenceError.
+import { ALLY_ABILITIES } from '../data/allies.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
 import { CombatCinematics, ARENA_PALETTES, resolveArena } from '../combat/CombatCinematics.js';
+import { DAY_BALANCE, dayMutatorActive, readDay } from '../data/billableDay.js';
+import { qteModifiers } from '../data/cosmetics.js';
+import {
+  activeStretchIds, reviewLevel, noteReviewLevel, pipResistance, REVIEW_COPY,
+} from '../data/review.js';
 import { DEV_MODE } from '../utils/constants.js';
 
 export class CombatState {
@@ -48,6 +57,11 @@ export class CombatState {
     // The "primary" enemy — used for backdrop colors / ENEMY_STATS lookup for legacy code
     this.actualEnemyId = this.enemyIdsList[0];
     this.canFlee = this.encounterConfig.canFlee !== false;
+    // Belt and braces for the Billable Day: ENCOUNTERS.reception_client already
+    // sets canFlee:false, and it must stay that way inside a day — HP is only
+    // written back to the player on victory, so a flee would hand back a free
+    // full bar and erase the day's attrition.
+    if (enemyId === 'reception_client' && readDay(this.player)) this.canFlee = false;
 
     this.scene = new CombatScene();
     this.engine = null;
@@ -68,6 +82,46 @@ export class CombatState {
     this._pendingAbilityForTarget = null; // Stored ability waiting on target pick
     this._pendingActionForTarget = null;  // 'attack' | 'press_advantage' | 'power_move' | 'retaliate' | etc.
     this._targetIndex = 0;
+    // Billable Day: subtractive mutators carried by this fight's client, and
+    // the performance counters the day's Hours award is computed from.
+    this._subMutators = [];
+    this._itemsUsed = 0;
+    this._perf = null;
+    // Review Level snapshotted at the START of the fight. The memo ladder pays
+    // for winning under a set of stretch goals, so the level that gets recorded
+    // has to be the one that was running when the bell went — not one the
+    // player could otherwise flip on afterwards. Nothing can change it mid-
+    // fight today (the toggles live in the break-room shop, which is an
+    // exploration state), but snapshotting makes that a guarantee rather than
+    // a coincidence.
+    this._reviewLevelAtStart = reviewLevel(this.player);
+  }
+
+  // ── Billable Day mutator helpers ──────────────────────────────────────
+  // Subtractive mutators (see src/data/billableDay.js) take a capability away
+  // from Andrew instead of inflating the client — the Balatro Boss Blind model
+  // from the comps report (P2.4). They are read off the built enemies so a
+  // scripted or multi-enemy fight can never inherit a stale client's rules.
+  _hasMutator(id) { return dayMutatorActive(this._subMutators, id); }
+
+  _collectMutators() {
+    const seen = new Set();
+    const out = [];
+    for (const e of (this.engine?.enemies || [])) {
+      for (const m of (e.mutators || [])) {
+        if (!m || !m.subtractive || seen.has(m.id)) continue;
+        seen.add(m.id);
+        out.push(m);
+      }
+    }
+    return out;
+  }
+
+  // Abilities available to Andrew right now, minus anything a mutator bans.
+  _availableAbilities() {
+    const list = this.player.getAbilities();
+    if (!this._hasMutator('retained_counsel')) return list;
+    return list.filter(a => a.tag !== 'legal');
   }
 
   enter() {
@@ -112,6 +166,16 @@ export class CombatState {
         // encounter tune its members without touching their solo fights
         enemyOverrides: this.encounterConfig.enemyOverrides || {},
         ngPlus: !!this.player.getFlag?.('ng_plus'),
+        // ng_plus_count was written by MenuState and read by nothing until
+        // now — the enemy ladder compounds off it (see NG_PLUS_SCALING).
+        ngPlusCount: Number(this.player.getFlag?.('ng_plus_count')) || 0,
+        // Overtime: the opt-in Performance Review hard mode (src/data/review.js)
+        overtime: !!this.player.getFlag?.('overtime_active'),
+        // Stretch Goals: the subtractive, player-priced difficulty ladder.
+        // Empty array on any save that never opened the Performance Review tab.
+        stretch: activeStretchIds(this.player),
+        // Performance Improvement Plan: 0 unless the player filed it.
+        pipResist: pipResistance(this.player),
       }
     );
 
@@ -153,6 +217,15 @@ export class CombatState {
     const introName = this.engine.enemies[0]?.name || 'Opponent';
     this.hud.showEnemyIntro(introName, this._introTaunt(), { hold: 1650 });
     this.cine.play('intro', {});
+
+    // Billable Day: read the fight's subtractive mutators and announce them
+    // once the intro banner clears, so a restriction is never a surprise the
+    // player only discovers by finding a greyed-out button.
+    this._subMutators = this._collectMutators();
+    if (this._subMutators.length > 0) {
+      const line = this._subMutators.map(m => `${m.label} — ${m.desc}`).join('   ·   ');
+      setTimeout(() => this.hud.showMessage(line), 1800);
+    }
 
     this._resizeHandler = () => this.scene.resize();
     window.addEventListener('resize', this._resizeHandler);
@@ -211,6 +284,14 @@ export class CombatState {
       if (x.kind !== y.kind) return x.kind === 'ally' ? -1 : 1;
       return 0;
     });
+    // Client-First Scheduling (stretch goal): every enemy acts before the
+    // department on the opening round. Subtractive — it takes the initiative
+    // away rather than adding a stat — and it only costs the first round, so
+    // it reads as one bite, exactly like an Ascension tier.
+    this._roundNumber = (this._roundNumber || 0) + 1;
+    if (this._roundNumber === 1 && this.engine.hasStretch?.('client_first')) {
+      queue.sort((x, y) => (x.kind === y.kind ? 0 : (x.kind === 'enemy' ? -1 : 1)));
+    }
     this._turnQueue = queue;
     this._processNextTurn();
   }
@@ -410,6 +491,8 @@ export class CombatState {
       damage: dmg.damage,
       critical: dmg.critical,
       targetIndex: this.engine.enemies.indexOf(target),
+      locksCleared: dmg.lockCleared,
+      brokeComposure: dmg.broke,
     };
     const delay = this._playAllyResult(result, allyIndex);
     this._refreshHUD();
@@ -438,19 +521,23 @@ export class CombatState {
         const eStats = this.engine._getEffective(target);
         const dmg = this.engine._calcDamage(aStats.atk, ability.power || 10, eStats.def, target, ability.tag);
         target.hp = Math.max(0, target.hp - dmg.damage);
-        result = { ...result, damage: dmg.damage, critical: dmg.critical, effective: dmg.effective, targetIndex: this.engine.enemies.indexOf(target) };
+        result = { ...result, damage: dmg.damage, critical: dmg.critical, effective: dmg.effective, targetIndex: this.engine.enemies.indexOf(target), locksCleared: dmg.lockCleared, brokeComposure: dmg.broke };
         break;
       }
       case 'attack_aoe': {
         const targets = this.engine.aliveEnemies();
         const hits = [];
+        let locksClearedTotal = 0;
+        let brokeAny = false;
         for (const t of targets) {
           const eStats = this.engine._getEffective(t);
           const dmg = this.engine._calcDamage(aStats.atk, ability.power || 10, eStats.def, t, ability.tag);
           t.hp = Math.max(0, t.hp - dmg.damage);
           hits.push({ targetIndex: this.engine.enemies.indexOf(t), damage: dmg.damage, critical: dmg.critical, effective: dmg.effective });
+          locksClearedTotal += dmg.lockCleared;
+          brokeAny = brokeAny || dmg.broke;
         }
-        result = { ...result, aoe: true, hits, damage: hits.reduce((s, h) => s + h.damage, 0) };
+        result = { ...result, aoe: true, hits, damage: hits.reduce((s, h) => s + h.damage, 0), locksCleared: locksClearedTotal, brokeComposure: brokeAny };
         break;
       }
       case 'heal_ally': {
@@ -483,14 +570,14 @@ export class CombatState {
         const target = this.engine._resolveTarget(targetIndex);
         if (!target) { this._processNextTurn(); return; }
         target.buffs.push({ stats: ability.debuffAmount, duration: ability.debuffDuration || 2, name: ability.name });
-        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration || 2, targetIndex: this.engine.enemies.indexOf(target) };
+        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration || 2, targetIndex: this.engine.enemies.indexOf(target), locksCleared: this.engine._clearLocks(target, ability.tag) };
         break;
       }
       case 'silence': {
         const target = this.engine._resolveTarget(targetIndex);
         if (!target) { this._processNextTurn(); return; }
         target.silenced = Math.max(target.silenced || 0, ability.duration || 2);
-        result = { ...result, targetIndex: this.engine.enemies.indexOf(target) };
+        result = { ...result, targetIndex: this.engine.enemies.indexOf(target), locksCleared: this.engine._clearLocks(target, ability.tag) };
         break;
       }
     }
@@ -536,16 +623,63 @@ export class CombatState {
         return;
       }
 
+      // ESCALATED TO COMMITTEE — the denial tax fired on THIS turn. Announced
+      // once, over whatever denial beat produced it, and every downstream
+      // timeout in this function is pushed back by `sealPad` so the two
+      // banners never fight for the same second.
+      const sealPad = result.sealing ? 1500 : 0;
+      if (result.sealing) this._announceSeal(enemyIndex);
+
       if (result.type === 'blocked') {
         this.hud.showMessage(result.message);
         AudioManager.playSfx('confirm');
         this.particles.burst({ x: 0, y: 1, z: 4 }, 15, 0x4488ff, 3, 0.8);
         this._refreshHUD();
-        setTimeout(() => this._processNextTurn(), 1500);
+        this._refreshDepthHUD();
+        setTimeout(() => this._processNextTurn(), 1500 + sealPad);
+        return;
+      }
+
+      // LOCKS full clear — the telegraphed move never happens and the turn goes
+      // with it. This is the payoff beat for the whole Locks read, so it gets a
+      // banner, a shatter flash and the enemy's own confusion animation.
+      if (result.type === 'fizzle') {
+        this.hud.showBanner('MOTION VOID', 1200);
+        setTimeout(() => this.hud.showMessage(result.message), 500);
+        AudioManager.playSfx('confirm');
+        this.scene.flash(0xffd700, 0.20);
+        this.hud.pulseOverlay('grid', '#ffd700', 480);
+        this.scene.enemyCastAnim(enemyIndex);
+        this.particles.ring({ x: 0, y: 1.2, z: 0 }, 26, 0xffd700, 4.0, 0.9);
+        this.particles.rise({ x: 0, y: 0.6, z: 0 }, 14, 0xfff0a0, 1.6);
+        const entry = this.scene.enemyGroups?.[enemyIndex];
+        if (entry?.animator) entry.animator.setExpression('worried');
+        this._refreshHUD();
+        this._refreshDepthHUD();
+        setTimeout(() => this._processNextTurn(), 1700 + sealPad);
+        return;
+      }
+
+      // COMPOSURE BREAK — the enemy skips the turn it just lost.
+      if (result.type === 'broken') {
+        this.hud.showMessage(result.message);
+        AudioManager.playSfx('cancel');
+        this.scene.flash(0x7fd4ff, 0.14);
+        this.particles.rise({ x: 0, y: 0.5, z: 0 }, 16, 0x7fd4ff, 1.7);
+        const entry = this.scene.enemyGroups?.[enemyIndex];
+        if (entry?.animator) entry.animator.setExpression('defeated');
+        this._refreshHUD();
+        this._refreshDepthHUD();
+        setTimeout(() => this._processNextTurn(), 1500 + sealPad);
         return;
       }
 
       if (result.message) this.hud.showMessage(result.message);
+      // Partially-cleared Locks: say so, so the reduced number is legible.
+      if (result.lockPartial && result.locksTotal > 0) {
+        const pct = Math.round(30 * result.locksCleared);
+        setTimeout(() => this.hud.showMessage(`The motion lands — ${pct}% weaker than filed.`), 900);
+      }
 
       if (result.damage) {
         // Cinematic: lean on the coil, recoil on impact. HEAVY telegraphed
@@ -612,13 +746,27 @@ export class CombatState {
     // Voice triggers reset their "took damage recently" signal at the top of each player turn
     if (this.engine.clearRecentDamageNote) this.engine.clearRecentDamageNote();
 
-    // Telegraph all enemies for the upcoming enemy phase
+    // Telegraph all enemies for the upcoming enemy phase.
+    // Under NDA (Billable Day mutator) the roll still happens — the enemy will
+    // do exactly what it decided — but the player is not told what it is.
     this.engine.telegraph();
+    const sealed = this._hasMutator('under_nda');
+    const briefingOnly = !!this.engine.hasStretch?.('summary_briefing');
     const hints = this.engine.enemies.map(e => {
       if (e.hp <= 0) return null;
+      if (sealed) return `${e.name}: sealed (Under NDA)`;
       const t = e.telegraphedAbility;
       const vulnerable = e.vulnerable > 0;
-      return this._getTelegraphHint(t, e) + (vulnerable ? ' (VULNERABLE — hit for 1.5×!)' : '');
+      // Summary Briefing (stretch goal): the move keeps its name, the
+      // Objections are redacted. Information denial, not stat inflation.
+      if (briefingOnly) {
+        const name = ENEMY_ABILITIES[t]?.name || 'something';
+        return `${e.name}: ${name} [redacted]`;
+      }
+      const committee = e.sealed ? ' — COMMITTEE SEALED' : '';
+      return this._getTelegraphHint(t, e)
+        + committee
+        + (vulnerable ? ' (VULNERABLE — hit for 1.5×!)' : '');
     });
     this.hud.updateTelegraphAll(hints);
 
@@ -638,6 +786,8 @@ export class CombatState {
       this._enemyTelegraphInfo[i] = { attack: isAttack, heavy: isAttack && (ab?.power || 0) >= 26 };
       const entry = this.scene.enemyGroups?.[i];
       if (!entry || !entry.animator) return;
+      // Under NDA the face must not leak the intent the banner just hid.
+      if (sealed) { entry.animator.setExpression('angry'); return; }
       const scheming = type === 'heal' || type === 'buff' || type === 'debuff' || type === 'confuse';
       entry.animator.setExpression(scheming ? 'smug' : 'angry');
     });
@@ -656,6 +806,7 @@ export class CombatState {
       this.engine.player.hp / this.engine.player.maxHP < 0.25,
       this.engine.getPressAdvantageCost(),
       this._currentVoices,
+      { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
     );
     this.hud.updatePlayerStats({
       ...this.player.stats,
@@ -670,6 +821,109 @@ export class CombatState {
     });
     this.hud.updateAllEnemies(this.engine.enemies);
     this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy?.buffs || []);
+    this._refreshDepthHUD();
+    this._maybeTeachLockComposureTrade();
+  }
+
+  // ONE-TIME TEACH: Objections and Composure pull against each other on
+  // purpose (a single-lock move never asks for the tag the enemy is weak to,
+  // so cancelling a move and Breaking the person can never be the same swing).
+  // The trade is close to TOTAL, not marginal, and it is measured:
+  // `node tools/combat-sim.mjs --trade --runs 300` runs one policy twice,
+  // differing only in whether it chases objections —
+  //   karen L4        lock-first 0.38 breaks / 63.6% cleared | break-first 0.81 / 0.0%
+  //   grandma L8      lock-first 0.81 / 81.9%                | break-first 0.96 / 0.0%
+  //   rachel_boss L9  lock-first 0.29 / 76.7%                | break-first 1.01 / 0.0%
+  // Three of four rows clear ZERO objections the moment the weakness tag wins
+  // the turn. A player will not infer that from the HUD, so Andrew says it.
+  // Fires once, ever.
+  _maybeTeachLockComposureTrade() {
+    if (this.player.getFlag?.('taught_lock_composure')) return;
+    const e = this.engine.enemy;
+    if (!e || e.hp <= 0) return;
+    const hasLocks = Array.isArray(e.locks) && e.locks.some(l => !l.cleared);
+    if (!hasLocks || !e.maxComposure || !e.weakness) return;
+    if (this._hasMutator?.('under_nda') || this.engine.hasStretch?.('summary_briefing')) return;
+    this.player.setFlag('taught_lock_composure', true);
+    setTimeout(() => this.hud.showTaunt(
+      'The moves they want me to stop are never the ones that would actually hurt them. Which means stopping them and hurting them are two different budgets. That seems like something I should remember.',
+      'player',
+    ), 900);
+  }
+
+  // ── COMBAT DEPTH HUD ─────────────────────────────────────────────────
+  // Locks row + Composure bar. Called whenever either can have changed.
+  // Under NDA (Billable Day mutator) the Locks row is sealed along with the
+  // telegraph — the objections are still live, the player just isn't told.
+  _refreshDepthHUD() {
+    // Two different kinds of "sealed" meet here, and they are not the same
+    // thing. Under NDA / Summary Briefing HIDE the Objections (the player is
+    // not told). ESCALATED TO COMMITTEE SHOWS them and refuses them.
+    const hidden = (this._hasMutator && this._hasMutator('under_nda'))
+      || !!this.engine.hasStretch?.('summary_briefing');
+    const locks = this.engine.enemies.map(e => (e.hp > 0 && !hidden) ? (e.locks || []) : []);
+    const committee = this.engine.enemies.map(e => e.hp > 0 && !!e.sealed);
+    this.hud.updateLocksAll(locks, committee);
+    this.hud.updateComposureAll(this.engine.enemies);
+  }
+
+  // ESCALATED TO COMMITTEE. Banner + log line + one Andrew read. Kept in one
+  // place so every denial path (fizzle / Break / block / silence) announces the
+  // same way and the player learns the cause from the first time it happens.
+  _announceSeal(enemyIndex) {
+    const enemy = this.engine.enemies[enemyIndex];
+    if (!enemy) return;
+    setTimeout(() => {
+      this.hud.showBanner(SEAL_COPY.banner, 1300);
+      this.hud.showMessage(SEAL_COPY.message.replace('{name}', enemy.name));
+      AudioManager.playSfx('cancel');
+      this.scene.flash(0xffc85a, 0.16);
+      const entry = this.scene.enemyGroups?.[enemyIndex];
+      if (entry?.animator) entry.animator.setExpression('smug');
+      this._refreshDepthHUD();
+    }, 900);
+    if (!this._sealTaunted) {
+      this._sealTaunted = true;
+      setTimeout(() => this.hud.showTaunt(ANDREW_TAUNTS.escalated[0], 'player'), 1700);
+    }
+  }
+
+  // Fire the lock-shatter beat + banner for whatever a player/ally action cleared.
+  _playLockFeedback(result, tag = null) {
+    if (!result || !result.locksCleared) return;
+    const ti = result.targetIndex ?? this.engine.targetEnemyIndex ?? 0;
+    const enemy = this.engine.enemies[ti];
+    this._refreshDepthHUD();
+    // The chip has to be rendered as `cleared` before we can shatter it.
+    if (tag) this.hud.pulseLockCleared(ti, tag);
+    const remaining = (enemy?.locks || []).filter(l => !l.cleared).length;
+    AudioManager.playSfx(remaining === 0 ? 'critical' : 'confirm');
+    this.scene.flash(remaining === 0 ? 0xffd700 : 0x88ccff, remaining === 0 ? 0.18 : 0.09);
+    this.particles.burst({ x: 0, y: 1.6, z: 0 }, remaining === 0 ? 26 : 14, remaining === 0 ? 0xffd700 : 0x88ccff, 3, 0.8);
+    setTimeout(() => {
+      this.hud.showMessage(remaining === 0
+        ? 'ALL LOCKS CLEARED — motion void'
+        : 'LOCK CLEARED — others remain on file');
+    }, 320);
+  }
+
+  // Fire the Composure-break beat.
+  _playBreakFeedback(result) {
+    if (!result || !result.brokeComposure) return;
+    const ti = result.targetIndex ?? this.engine.targetEnemyIndex ?? 0;
+    this._refreshDepthHUD();
+    this.hud.pulseComposureBreak(ti);
+    setTimeout(() => {
+      this.hud.showBanner('COMPOSURE BROKEN', 1300);
+      AudioManager.playSfx('critical');
+      this.scene.flash(0xffffff, 0.26);
+      this.scene.shake(1.1);
+      this.hud.pulseOverlay('vignette', '#7fd4ff', 620);
+      this.scene.enemyHurtAnim(ti);
+      this.particles.burst({ x: 0, y: 1.4, z: 0 }, 40, 0x7fd4ff, 5, 1.1);
+      this.particles.ring({ x: 0, y: 1.0, z: 0 }, 26, 0xffffff, 4.5, 0.9);
+      setTimeout(() => this.hud.showMessage('Loses next turn. All incoming damage increased 20% until composure recovers.'), 700);
+    }, 420);
   }
 
   _runAllyAITurn(allyIndex) {
@@ -695,6 +949,11 @@ export class CombatState {
     if (!result) return 600;
     const ally = this.engine.allies[allyIndex];
     if (result.message) this.hud.showMessage(result.message);
+    // Allies clear Locks and fill Composure with their tagged abilities too —
+    // that is what makes a mixed party able to void a two-lock haymaker.
+    this._playLockFeedback(result, null);
+    this._playBreakFeedback(result);
+    this._noteConfusion(result);
 
     if (result.type === 'confused') {
       this.scene.flash(0xffaa00, 0.10);
@@ -780,14 +1039,35 @@ export class CombatState {
       case 'attack':
         this._beginTargetedAction('attack');
         break;
-      case 'special':
+      case 'special': {
         this.inputEnabled = true;
-        this.hud.showAbilities(this.player.getAbilities(), this.engine.player.mp);
+        const list = this._availableAbilities();
+        if (list.length === 0) {
+          this.hud.showMessage('Opposing counsel has objected to everything you know.');
+          this.hud.showMainMenu(
+            this.engine.player.silencedThisTurn,
+            this.engine.player.momentum,
+            this.engine.player.bracing,
+            this.engine.player.retaliateReady,
+            this.engine.player.hp / this.engine.player.maxHP < 0.25,
+            this.engine.getPressAdvantageCost(),
+            this._currentVoices,
+            { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
+          );
+          break;
+        }
+        this.hud.showAbilities(list, this.engine.player.mp);
         break;
+      }
       case 'brace':
         this._executeBrace();
         break;
       case 'item':
+        if (this._hasMutator('expense_freeze')) {
+          this.inputEnabled = true;
+          this.hud.showMessage('Expense Freeze: accounting has locked the account.');
+          break;
+        }
         this.inputEnabled = true;
         this.hud.showItems(this.player.inventory, ITEMS);
         break;
@@ -971,7 +1251,9 @@ export class CombatState {
         this.engine.player.bracing,
         this.engine.player.retaliateReady,
         this.engine.player.hp / this.engine.player.maxHP < 0.25,
-        this.engine.getPressAdvantageCost()
+        this.engine.getPressAdvantageCost(),
+        this._currentVoices,
+        { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
       );
     });
   }
@@ -996,6 +1278,12 @@ export class CombatState {
     AudioManager.playSfx('confirm');
     const ability = PLAYER_ABILITIES[abilityId];
     if (!ability) return;
+    // Retained Counsel bans the legal tag outright — belt and braces behind
+    // the filtered menu, so a keyboard shortcut can't slip one through.
+    if (ability.tag === 'legal' && this._hasMutator('retained_counsel')) {
+      this.hud.showMessage('Retained Counsel: opposing counsel objects. Sustained.');
+      return;
+    }
 
     const needsTarget = ability.type === 'attack' || ability.type === 'debuff';
     const isAoE = ability.type === 'attack_aoe' || ability.type === 'special'; // double_turn applies to all
@@ -1012,7 +1300,7 @@ export class CombatState {
       }, () => {
         this.phase = 'ally_turn';
         this.inputEnabled = true;
-        this.hud.showAbilities(this.player.getAbilities(), this.engine.player.mp);
+        this.hud.showAbilities(this._availableAbilities(), this.engine.player.mp);
       });
     } else {
       this.inputEnabled = false;
@@ -1042,11 +1330,16 @@ export class CombatState {
     if (result.critical) this._fireTaunt('crit');
     if (result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
     if (result.combo) AchievementManager.check(this.player, { event: 'combo_hit' });
+    this._playLockFeedback(result, ability?.tag);
+    this._playBreakFeedback(result);
+    this._noteConfusion(result);
     this._checkPhaseChange();
     this._refreshHUD();
     setTimeout(() => {
       if (this.engine.isOver) {
         this._handleResult();
+      } else if (this._maybeOfferLoopIn(() => this._processNextTurn())) {
+        // Loop In prompt owns the continuation
       } else if (result.doubleTurn) {
         const msg = result.debuffAmount ? 'Enemy DEF reduced! Double turn!' : 'Double turn!';
         this.hud.showMessage(msg);
@@ -1062,8 +1355,17 @@ export class CombatState {
 
   _handleItem(itemId) {
     if (!this.inputEnabled) return;
+    if (this._hasMutator('expense_freeze')) {
+      this.hud.showMessage('Expense Freeze: accounting has locked the account.');
+      return;
+    }
+    if (this.engine.hasStretch?.('lean_ops')) {
+      this.hud.showMessage('Lean Operations: the revised supply policy does not permit this.');
+      return;
+    }
     if (!this.player.useItem(itemId)) return;
     this.inputEnabled = false;
+    this._itemsUsed++;
     AudioManager.playSfx('confirm');
 
     const result = this.engine.playerItem(itemId);
@@ -1073,6 +1375,8 @@ export class CombatState {
     this.hud.disableInput();
     const delay = this._playPlayerActionResult(result);
     if (result.type === 'item') this.hud.showMessage(`Used ${result.itemName}!`);
+    // Due Diligence Memo: the file gets read out after the "used it" beat.
+    if (result.revealText) setTimeout(() => this.hud.showMessage(result.revealText), 1100);
 
     this._refreshHUD();
     setTimeout(() => {
@@ -1093,12 +1397,64 @@ export class CombatState {
     if (result && result.critical) { this._fireTaunt('crit'); this.engine.noteCrit && this.engine.noteCrit(); }
     if (result && result.effective === 'super') { this._fireTaunt('weakness_hit'); AchievementManager.check(this.player, { event: 'weakness_hit' }); }
     if (result && result.combo) AchievementManager.check(this.player, { event: 'combo_hit' });
+    this._playBreakFeedback(result);
+    this._noteConfusion(result);
     this._checkPhaseChange();
     this._refreshHUD();
     setTimeout(() => {
       if (this.engine.isOver) this._handleResult();
+      else if (this._maybeOfferLoopIn(() => this._processNextAllyTurn())) { /* prompt owns it */ }
       else this._processNextAllyTurn();
     }, delay);
+  }
+
+  // Confusion no longer steals the turn — it scrambles targeting and dampens
+  // force. Surface which one actually happened so the player can read it.
+  _noteConfusion(result) {
+    if (!result) return;
+    const who = result.allyName || 'Andrew';
+    if (result.confusedScramble) {
+      setTimeout(() => this.hud.showMessage(`${who} swings with conviction at the wrong person.`), 260);
+    } else if (result.confusedDampened && result.damage) {
+      setTimeout(() => this.hud.showMessage('Right target. The swing arrives at 65% force.'), 260);
+    }
+  }
+
+  // ── LOOP IN (Baton Pass) ─────────────────────────────────────────────
+  // Offered the instant Andrew lands a weakness hit with a recruited ally on
+  // the bench. Returns true if the prompt took ownership of the continuation.
+  _maybeOfferLoopIn(continueFn) {
+    if (!this.engine.loopInReady) return false;
+    const candidates = this.engine.getLoopInCandidates()
+      .map(i => ({ index: i, name: this.engine.allies[i]?.name || 'Colleague' }))
+      .filter(c => c.name);
+    if (candidates.length === 0) return false;
+
+    this.phase = 'targeting';
+    this.hud.showLoopInPrompt(
+      candidates,
+      (allyIndex) => {
+        const res = this.engine.playerLoopIn(allyIndex);
+        if (!res) { continueFn(); return; }
+        // The ally has spent their action — drop them from this round's queue.
+        const qi = (this._turnQueue || []).findIndex(q => q.kind === 'ally' && q.index === allyIndex);
+        if (qi >= 0) this._turnQueue.splice(qi, 1);
+        this.phase = 'animating';
+        this.hud.disableInput();
+        this.hud.showBanner(`${res.loopInAllyName} replies all — +50% damage!`, 1100);
+        AudioManager.playSfx('confirm');
+        this.scene.flash(0xffd700, 0.14);
+        // _playAllyResult already fires the lock/break beats — don't double them.
+        const delay = this._playAllyResult(res, allyIndex);
+        this._refreshHUD();
+        setTimeout(() => {
+          if (this.engine.isOver) this._handleResult();
+          else continueFn();
+        }, delay + 200);
+      },
+      () => { this.engine.loopInReady = false; continueFn(); },
+    );
+    return true;
   }
 
   _executeFlee() {
@@ -1493,18 +1849,58 @@ export class CombatState {
       // Defeat anim for any enemies still in scene at hp 0
       this.engine.enemies.forEach((e, i) => { if (e.hp <= 0) this.scene.enemyDefeatAnim(i); });
 
+      // Billable Day performance snapshot — taken BEFORE the post-fight heal,
+      // because "what shape you finished in" is the thing the Hours award
+      // reads. Harmless for every other fight; onEnd's second arg is optional.
+      this._perf = {
+        hpRatio: this.engine.player.maxHP > 0
+          ? this.engine.player.hp / this.engine.player.maxHP
+          : 0,
+        turns: this.engine.turnCount,
+        itemsUsed: this._itemsUsed,
+      };
+
+      // Attrition inside a Billable Day: a reception client does not hand back
+      // a full bar. Walk-in mode and every story fight keep the full restore.
+      const inDay = this.enemyId === 'reception_client' && !!readDay(this.player);
+      let healPct = inDay ? DAY_BALANCE.victoryHealPct : 1;
+      // Expedited Recovery (stretch goal): Ascension A5's shape — you still
+      // heal, you just heal half as much of what you were going to get.
+      if (this.engine.hasStretch?.('lasting_consequences')) healPct *= 0.5;
+
       const xp = this.engine.getXPReward();
       setTimeout(() => {
         this.hud.showMessage(`Victory! +${xp} XP`);
-        this.player.stats.hp = this.player.stats.maxHP;
-        this.player.stats.mp = this.player.stats.maxMP;
-        // Restore allies to full after victory (matches Andrew's restoration). Persisted to allyState.
+        if (healPct >= 1) {
+          this.player.stats.hp = this.player.stats.maxHP;
+          this.player.stats.mp = this.player.stats.maxMP;
+        } else {
+          this.player.stats.hp = Math.min(
+            this.player.stats.maxHP,
+            Math.max(1, Math.round(this.engine.player.hp + this.player.stats.maxHP * healPct)),
+          );
+          this.player.stats.mp = Math.min(
+            this.player.stats.maxMP,
+            Math.round(this.engine.player.mp + this.player.stats.maxMP * healPct),
+          );
+        }
+        // Restore allies after victory (matches Andrew's restoration). Persisted to allyState.
         for (let i = 1; i < this.engine.allies.length; i++) {
           const ally = this.engine.allies[i];
           if (!ally.allyId || !this.player.allyState[ally.allyId]) continue;
-          this.player.allyState[ally.allyId].hp = ally.maxHP;
-          this.player.allyState[ally.allyId].mp = ally.maxMP;
+          if (healPct >= 1) {
+            this.player.allyState[ally.allyId].hp = ally.maxHP;
+            this.player.allyState[ally.allyId].mp = ally.maxMP;
+          } else {
+            this.player.allyState[ally.allyId].hp = Math.min(ally.maxHP, Math.round(ally.hp + ally.maxHP * healPct));
+            this.player.allyState[ally.allyId].mp = Math.min(ally.maxMP, Math.round(ally.mp + ally.maxMP * healPct));
+          }
         }
+        // The memo ladder's payout point. Kaycee's Mod (report P4.2) unlocks
+        // its dev logs for CLEARING Challenge Level N; this used to fire on the
+        // shop toggle, which meant all four of Meredith's memos could be read
+        // from a menu without a single round fought under the modifiers.
+        const levelled = noteReviewLevel(this.player, this._reviewLevelAtStart);
         const levels = this.player.gainXP(xp);
         if (levels.length > 0) {
           AchievementManager.check(this.player, { event: 'level_up' });
@@ -1513,7 +1909,16 @@ export class CombatState {
             this.hud.showMessage(`Level Up! Lv.${levels[levels.length - 1]}! +${levels.length} Upgrade Point${levels.length > 1 ? 's' : ''}!`);
           }, 1500);
         }
-        setTimeout(() => this._endCombat('victory'), levels.length > 0 ? 3500 : 2000);
+        // Queued behind the level-up line so two messages never collide, and
+        // the close-out is pushed back to leave room for whatever fired.
+        let endDelay = levels.length > 0 ? 3500 : 2000;
+        if (levelled) {
+          setTimeout(() => this.hud.showMessage(
+            REVIEW_COPY.levelUpToast.replace('{level}', levelled),
+          ), levels.length > 0 ? 3000 : 1500);
+          endDelay += 1500;
+        }
+        setTimeout(() => this._endCombat('victory'), endDelay);
       }, 1000);
     } else if (this.engine.result === 'defeat') {
       AudioManager.playSfx('defeat');
@@ -1525,7 +1930,9 @@ export class CombatState {
   }
 
   _endCombat(result) {
-    if (this.onEnd) this.onEnd(result);
+    // Second arg is the Billable Day performance snapshot (null on defeat/flee).
+    // Every existing onEnd callback takes one argument and ignores it.
+    if (this.onEnd) this.onEnd(result, this._perf);
     this.stateManager.pop();
   }
 
@@ -1546,6 +1953,7 @@ export class CombatState {
     this.hud.updateAllEnemies(this.engine.enemies);
     this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy?.buffs || []);
     this.hud.refreshPartyRow(this._buildPartyView());
+    this._refreshDepthHUD();
   }
 
   _spawnDamageNumberAtEnemy(text, type, enemyIndex) {
@@ -1595,7 +2003,9 @@ export class CombatState {
         } else if (effect.type === 'stunned') {
           this.hud.showMessage('Still stunned!');
         } else if (effect.type === 'confused') {
-          this.hud.showMessage('Confused! Your next action may backfire.');
+          // Confusion no longer replaces the chosen action — it scrambles the
+          // target and takes 35% off the force. Say exactly that.
+          this.hud.showMessage("Andrew can't tell them apart. Swings land randomly at 65% force.");
         } else if (effect.type === 'silenced') {
           this.hud.showMessage(effect.message || 'Silenced! Can only use basic attacks.');
         } else if (effect.type === 'status_expire') {
@@ -1629,8 +2039,21 @@ export class CombatState {
       if (quality !== 'miss') this.particles.orbit({ x: 0, y: 1.0, z: 4 }, 12, 0x88aaff, 1.0, 1.2);
       if (quality === 'perfect') AchievementManager.check(this.player, { event: 'perfect_brace' });
 
+      // Metaphor deny-model: a PERFECT stance takes Composure off the target,
+      // so Brace is a route to a Break rather than a turn spent standing still.
+      let extra = 0;
+      if (result.composureStripped > 0) {
+        extra = 900;
+        setTimeout(() => {
+          this.hud.showMessage("Andrew doesn't flinch. Their Composure drops 20%.");
+          this.particles.stream({ x: 0, y: 1.2, z: 3.6 }, { x: 0, y: 1.4, z: 0.2 }, 16, 0xffd700, 0.28);
+        }, 900);
+        this._playBreakFeedback({ brokeComposure: result.brokeComposure, targetIndex: this.engine.targetEnemyIndex });
+      }
+
       this._refreshHUD();
-      setTimeout(() => this._processNextAllyTurn(), 1200);
+      this._refreshDepthHUD();
+      setTimeout(() => this._processNextAllyTurn(), 1200 + extra);
     });
   }
 
@@ -1665,13 +2088,20 @@ export class CombatState {
     };
     animId = requestAnimationFrame(tick);
 
+    // Relic slot: Ergonomic Wrist Support widens both bands by 40% (P1.6).
+    // Identity multiplier for anyone with nothing equipped, so the shipped
+    // 0.10 / 0.35 feel is untouched by default.
+    const widen = qteModifiers(this.player).braceWindow;
+    const perfectBand = 0.10 * widen;
+    const goodBand = 0.35 * widen;
+
     const resolve = () => {
       if (done) return;
       done = true;
       cancelAnimationFrame(animId);
       const center = TRACK_W / 2;
       const pct = Math.abs(pos - center) / (TRACK_W / 2);
-      const quality = pct <= 0.10 ? 'perfect' : pct <= 0.35 ? 'good' : 'miss';
+      const quality = pct <= perfectBand ? 'perfect' : pct <= goodBand ? 'good' : 'miss';
       overlay.remove();
       onComplete(quality);
     };
@@ -1731,12 +2161,18 @@ export class CombatState {
 
   _executePressAdvantage(targetIndex) {
     const result = this.engine.playerPressAdvantage(targetIndex);
-    if (!result) return;
+    if (!result) {
+      // Already spent this turn (or no momentum) — hand input straight back
+      // rather than eating the turn on a no-op.
+      this.hud.showMessage('Advantage already filed. Choose your action.');
+      this._enablePlayerInput();
+      return;
+    }
 
     this.phase = 'animating';
     this.hud.disableInput();
     this.cine.play('attack', { crit: !!result.critical, targetIndex });
-    this.hud.showMessage('Press Advantage! Enemy DEF lowered!');
+    this.hud.showMessage('Advantage filed. Your action remains unspent.');
     this.scene.playerAbilityLunge(0.6, this._activeAllyIndex);
     this.scene.flash(0x8844ff, 0.10);
     this.particles.stream({ x: 0.1, y: 1.0, z: 3.5 }, { x: 0, y: 1.2, z: 0.3 }, 18, 0xaa66ff, 0.30);
@@ -1751,9 +2187,11 @@ export class CombatState {
     if (result.critical) this._fireTaunt('crit');
     this._checkPhaseChange();
     this._refreshHUD();
+    this._refreshDepthHUD();
     setTimeout(() => {
-      if (this.engine.isOver) this._handleResult();
-      else this._processNextAllyTurn();
+      if (this.engine.isOver) { this._handleResult(); return; }
+      // E33 Gradient model: this does NOT end the turn. Andrew still acts.
+      this._enablePlayerInput();
     }, 1400);
   }
 
@@ -1783,7 +2221,11 @@ export class CombatState {
 
   _executeRetaliate(targetIndex) {
     this._showRetaliateQTE((multiplier) => {
-      const result = this.engine.playerRetaliate(multiplier, targetIndex);
+      // The other half of the Ergonomic Wrist Support trade: a wider Brace
+      // window is paid for out of Retaliate's damage. 1 with nothing equipped.
+      const result = this.engine.playerRetaliate(
+        multiplier * qteModifiers(this.player).retaliateDamage, targetIndex,
+      );
       if (!result) return;
 
       this.phase = 'animating';
@@ -1929,7 +2371,7 @@ export class CombatState {
     const options = [
       { risk: 'safe',   label: 'Safe Bet',  desc: 'Guaranteed hit at normal damage (1×)', color: '#88aaff' },
       { risk: 'risky',  label: 'Risky Move', desc: '60% chance of 1.5× damage — or 0.5× on fail', color: '#ffaa44' },
-      { risk: 'all_in', label: 'All-In',     desc: '30% chance of 2.5× damage — or nothing', color: '#ff4466' },
+      { risk: 'all_in', label: 'All-In',     desc: '40% chance to deal 3× damage. Miss banks 40 Confidence.', color: '#ff4466' },
     ];
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay';
@@ -2000,8 +2442,13 @@ export class CombatState {
       }, 200);
     }
 
+    if (!result.success && result.consolationMomentum > 0) {
+      setTimeout(() => this.hud.showMessage(`Nothing lands. The attempt itself was worth ${result.consolationMomentum} Confidence.`), 700);
+    }
+
     this._checkPhaseChange();
     this._refreshHUD();
+    this._refreshDepthHUD();
     setTimeout(() => {
       if (this.engine.isOver) this._handleResult();
       else this._processNextAllyTurn();
@@ -2035,9 +2482,16 @@ export class CombatState {
 
   _pickTaunt(side) {
     const enemyData = ENEMY_STATS[this.actualEnemyId];
-    if (!enemyData || !enemyData.taunts) return null;
-    const taunts = enemyData.taunts;
-    return taunts[Math.floor(Math.random() * taunts.length)];
+    if (!enemyData) return null;
+    // New Game+: they have had this meeting before. `ngTaunts` is mixed into
+    // the normal pool rather than replacing it, so the repetition reads as a
+    // recurring quarter and not as a second script.
+    const ngPlus = !!this.player.getFlag?.('ng_plus');
+    const pool = (ngPlus && enemyData.ngTaunts)
+      ? [...(enemyData.taunts || []), ...enemyData.ngTaunts]
+      : enemyData.taunts;
+    if (!pool || pool.length === 0) return null;
+    return pool[Math.floor(Math.random() * pool.length)];
   }
 
   // A single opening taunt line for the intro banner (falls back to a generic).
@@ -2054,17 +2508,20 @@ export class CombatState {
     // Magnitude matters: brace-everything turtling loses fights
     // (sim-validated), so big hits announce themselves
     const heavy = (ability.power || 0) >= 26 ? ' (HEAVY — brace!)' : '';
+    // LOCKS: if this move carries objections, the telegraph line says so and
+    // the chip row underneath names the types that cancel it.
+    const locked = (enemy?.locks || []).some(l => !l.cleared) ? ' — file an objection' : '';
     switch (ability.type) {
-      case 'attack': return `${name}: attack${heavy}`;
-      case 'dot': return `${name}: lingering`;
-      case 'heal': return `${name}: heal`;
-      case 'debuff': return `${name}: weaken`;
-      case 'confuse': return `${name}: confuse`;
-      case 'stun': return `${name}: stun — brace!`;
-      case 'counter': return `${name}: counter — no abilities!`;
-      case 'buff': return `${name}: power up`;
-      case 'repeat': return `${name}: repeat`;
-      default: return `${name}: ?`;
+      case 'attack': return `${name}: attack${heavy}` + locked;
+      case 'dot': return `${name}: lingering` + locked;
+      case 'heal': return `${name}: heal` + locked;
+      case 'debuff': return `${name}: weaken` + locked;
+      case 'confuse': return `${name}: confuse` + locked;
+      case 'stun': return `${name}: stun — brace!` + locked;
+      case 'counter': return `${name}: counter — no abilities!` + locked;
+      case 'buff': return `${name}: power up` + locked;
+      case 'repeat': return `${name}: repeat` + locked;
+      default: return `${name}: ?` + locked;
     }
   }
 
@@ -2104,7 +2561,16 @@ export class CombatState {
       if (InputManager.isConfirmPressed()) this.hud.selectCurrent();
       if (InputManager.isCancelPressed()) {
         if (this.hud.currentMenu !== 'main') {
-          this.hud.showMainMenu();
+          this.hud.showMainMenu(
+            this.engine.player.silencedThisTurn,
+            this.engine.player.momentum,
+            this.engine.player.bracing,
+            this.engine.player.retaliateReady,
+            this.engine.player.hp / this.engine.player.maxHP < 0.25,
+            this.engine.getPressAdvantageCost(),
+            this._currentVoices,
+            { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
+          );
           AudioManager.playSfx('cancel');
         }
       }

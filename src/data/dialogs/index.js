@@ -1362,6 +1362,16 @@ export const DIALOGS = {
     { type: 'text', speaker: 'Narrator', text: 'Inside: a mop, industrial cleaner, and... a mahogany bookshelf with first-edition business books?' },
     { type: 'text', speaker: 'Narrator', text: 'There\'s a framed MBA from Wharton on the wall. Next to it, an "EMPLOYEE OF THE MONTH" certificate from every single month in 2003.' },
     { type: 'text', speaker: 'Narrator', text: 'A small plaque: "Sometimes the best office is the one nobody expects." — The Mysterious Janitor, Former SVP' },
+    // THE EARLY VAULT CLUE. TWO panels accept 47-19-82 from Act 1 onward
+    // regardless of story flags — the freight elevator down to the Archive and
+    // the Vault door itself — which is only fair if the numbers are genuinely
+    // in the world early. They are: here, in the first room of the game, and
+    // the second line below is what tells an attentive reader they are an
+    // override rather than three dead breakers. (Tunic model — see
+    // .claude/plans/research-gameplay-comps.md P3.3.) Do not move either line
+    // without moving the payoff with it.
+    { type: 'text', speaker: 'Narrator', text: 'The circuit panel by the door covers the garage sublevel; breakers 47, 19, and 82 have been switched off since 2005.' },
+    { type: 'text', speaker: 'Narrator', text: 'A maintenance tag on the panel housing reads: "47-19-82 is the building service override. Do not share with tenants. — Facilities, 2003."' },
     { type: 'end' },
   ],
 
