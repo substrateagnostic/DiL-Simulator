@@ -13,3 +13,6 @@ art/comp_refs/
 art/char_refs/
 art/epilogues_raw/
 trust-issues-itch.zip
+
+__pycache__/
+*.pyc

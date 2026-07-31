@@ -1,0 +1,71 @@
+{
+  "reference": "C:\\Users\\agall\\projects\\DiL_Simulator\\art\\char_refs\\generated\\karen_body_v2.png",
+  "render": "C:\\Users\\agall\\projects\\DiL_Simulator\\screenshots\\contact\\fight-karen.png",
+  "admission": {
+    "admitted": false,
+    "reasons": [
+      "mask coherence: largest connected blob is 0.39 of foreground < 0.6 (fragmented/scattered subject — ambiguous)"
+    ],
+    "provenance": {
+      "viewpoint": "reference",
+      "sourcePath": "C:\\Users\\agall\\projects\\DiL_Simulator\\art\\char_refs\\generated\\karen_body_v2.png",
+      "width": 1254,
+      "height": 1254,
+      "foregroundCoverage": 0.3537,
+      "largestComponentFraction": 0.3886,
+      "pHash": 17231879964756968066,
+      "duplicateOfHash": null
+    }
+  },
+  "divineEye": {
+    "verdict": "reject",
+    "action": "refine-code",
+    "fidelity": 0.3237,
+    "fidelityTarget": 0.85,
+    "hardGateFailures": [
+      "silhouette IoU 0.263 < 0.85",
+      "scale delta 0.315 > 0.08"
+    ],
+    "disagreementSpread": 1.0,
+    "signals": {
+      "silhouetteIoU": 0.2625,
+      "scaleDelta": 0.3153,
+      "aspectRatioDelta": 0.0909,
+      "symmetryParity": 0.7206,
+      "phashSimilarity": 0.5938,
+      "ssim": 0.0,
+      "edgeOverlap": 0.1727,
+      "blowoutParity": 1.0,
+      "flatRegionScore": 0.0,
+      "tonalParity": 0.0623,
+      "objectness": 0.6377,
+      "hueZoneParity": 0.0
+    },
+    "specularWash": {
+      "satRatio": 2.019,
+      "hueDriftDeg": 14.6,
+      "towardCyan": true,
+      "flagged": false,
+      "advice": null
+    },
+    "reportOnlySignals": [
+      "hueZoneParity",
+      "specularWash"
+    ],
+    "reconstructionModeSuspected": false,
+    "weights": {
+      "proportion": 1.0,
+      "symmetry": 0.5,
+      "phash": 1.0,
+      "ssim": 1.5,
+      "edgeOverlap": 1.0,
+      "blowoutParity": 0.8,
+      "flatRegion": 0.8,
+      "tonalParity": 1.0,
+      "objectness": 1.5
+    },
+    "reference": "C:\\Users\\agall\\projects\\DiL_Simulator\\art\\char_refs\\generated\\karen_body_v2.png",
+    "render": "C:\\Users\\agall\\projects\\DiL_Simulator\\screenshots\\contact\\fight-karen.png",
+    "note": "deterministic ensemble; zero VLM/token. hueZoneParity is REPORT-ONLY (colour-aware, CIEDE2000) — not yet in the weighted fidelity; promote after corpus calibration. VLM layer (§3.4) runs only if this passes."
+  }
+}
