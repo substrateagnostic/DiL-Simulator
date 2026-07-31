@@ -4,6 +4,14 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
+## ✅ RUN C VERDICT COLLECTED — PASSED (both critics, ~12:45)
+- Critic A's cold read is a rave; closing line: "Nothing anywhere asks
+  you to come back tomorrow." Punch list (3, small): (1) PIP assist needs
+  a post-death toast ("HR has a form for this") — it's invisible in the
+  shop tab; (2) low-end difficulty band leans on that discoverability;
+  (3) Break's 1.5x window expires before a basic-attack breaker can use
+  it — extend one turn. All banked for next session.
+
 ## 🔄 RESUME PROMPT (paste to a fresh session, or just say "It's DiL time — resume"):
 > Resume the TRUST ISSUES campaign. Read, in order: auto-memory
 > `display-case-campaign-state` (laws), HANDOFF.md top two entries,
