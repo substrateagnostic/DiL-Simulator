@@ -55,12 +55,12 @@ export const CHARACTER_CONFIGS = {
     shirtColor: 0x8a6a4a, // plaid flannel under the hawaiian
     tieColor: null,
     skinColor: COLORS.SKIN,
-    hairColor: 0x9a7a4a, // sandy brown
+    hairColor: 0x8a7c62, // ash-blond with grey flecks (producer likeness rev, 07-31 — no ginger)
     hairStyle: 'short',
     beard: true,
-    beardColor: 0x8a5f38, // ginger-brown
+    beardColor: 0x6e6152, // taupe grey-brown trim beard
     accessories: [],
-    // v5 face — late-30s Dirk Gently, hazel eyes to pair the ginger beard
+    // v5 face — late-30s Dirk Gently, hazel-grey eyes; ash-blond + grey, no ginger (producer likeness rev)
     gender: 'm', eyeColor: 0x6a6238, jaw: 0.84, chin: 1.02,
   },
   intern: {
