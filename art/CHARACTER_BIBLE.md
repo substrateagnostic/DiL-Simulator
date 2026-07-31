@@ -134,4 +134,4 @@ The scrunch comes from heavy lids + hard socket shadow + a default frown. Strip 
 10. **diane** (~50 composed Black woman, HR) — upright, steady, 1.6-shoulder blazer
     `0x2d2d4e`; deep skin `0xd4a574` / dark bun; clipboard, deep-brown eyes `0x2e1d12`, warm and unhurried.
 11. **alex_it** (late-30s IT) — relaxed casual stance; orange Hawaiian `0xe07040` over
-    plaid `0x8a6a4a` / sandy hair `0x9a7a4a`; ginger beard `0x8a5f38`, Dirk-Gently hazel eyes, friendly and rumpled.
+    plaid `0x8a6a4a` / ash-blond hair 0x8a7c62 with grey flecks; taupe grey-brown beard 0x6e6152, Dirk-Gently hazel eyes, friendly and rumpled.

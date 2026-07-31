@@ -38,6 +38,7 @@ reads as one set. Output: 512×512 PNG → `src/assets/portraits/<stem>.png`. Mo
 |------|------|--------|-------|
 | 2026-06-10 | — | pipeline wired, awaiting first batch | DialogBox auto-detects PNGs in src/assets/portraits/ |
 | 2026-07-29 | isaiah | rev 2 shipped (neutral only — no mood variants exist for isaiah) | Generated via `codex exec` + `$imagegen2`, style-refed against janet/alex_it/andrew 1024 raws. 1024 raw → `art/portraits_raw/isaiah.png`, LANCZOS → 256 in `src/assets/portraits/isaiah.png`. |
+| 2026-07-31 | alex_it | rev 3 shipped — all four moods (neutral / angry / smug / worried) | **Likeness revision: ginger beard removed.** Now ash-blond hair with subtle grey flecks + a fuller trimmed taupe grey-brown beard, strong straight brow, steady eyes, defined jaw under the beard. Old rev-2 ginger set archived to `art/portraits_archive/alex_it/{raw,shipped_256}/`. Style-refed against each mood's OWN old raw for framing/composition, with an explicit colour-override instruction in the preamble ("same framing and rendering as the reference, but hair and beard colours per this description, not the reference's") plus a hard HAIR AND BEARD COLOUR block forbidding ginger/red/orange/copper — the reference image will otherwise re-impose the colour it is supposed to be correcting. 1254 raws → `art/portraits_raw/alex_it*.png`, LANCZOS → 256² RGBA shipped. Never pass the co-creator's reference photo. |
 | 2026-07-31 | rachel_to | rev 2 shipped (neutral only) | Generated via `codex exec` + `$imagegen2`, style-refed against karen/janet/andrew 1024 raws. Rev 1 came back soft-painterly with thin linework — correct likeness, wrong house style — so the prompt gained the explicit RENDERING block and was re-run once; rev 1 kept at `art/portraits_raw/rachel_to_alt_painterly.png` if the producer prefers it. 1254 raw → `art/portraits_raw/rachel_to.png`, LANCZOS → 256² RGBA in `src/assets/portraits/rachel_to.png`. Framing sits marginally wider (chest-up) than andrew/janet — flag if it reads out of set in DialogBox. |
 
 ---
@@ -74,3 +75,73 @@ loader picks it up with no code change — keep a 1024 raw in `art/epilogues_raw
 no readable text anywhere in any plate; keep to the eight existing plates' palette so the
 sequence reads as one set. Photo-privacy rule applies as always — describe textually, never
 pass a reference photo.
+
+---
+
+# Character Model Reference Sheets — LOCKED TEMPLATE (added 2026-07-31, run G1)
+
+Topology/proportion references for the 3D character rebuild. **Not shipped game art** —
+they live in `art/char_refs/generated/` (gitignored) and exist to guide `CharacterBuilder.js`.
+Producer ballot 2026-07-31 confirmed: **three views, height pinned at 7 heads, and the
+semi-realistic rendering drift is KEPT** for these sheets (the flat-cel law in the style prefix
+above binds *shipped portraits only*).
+
+Pipeline is the same as the portraits — `codex exec` + `$imagegen2`, one character per call,
+style-refed against that character's own 1024 raw in `art/portraits_raw/`:
+
+```
+codex exec -C <repo> -s danger-full-access --dangerously-bypass-approvals-and-sandbox \
+  -i <repo>/art/portraits_raw/<id>.png - < <prompt>.txt
+```
+
+## Template blocks (concatenate in this order)
+
+1. **VIEWS** — "THREE views of the SAME character standing in a row at identical scale with
+   heads and feet aligned: a straight FRONT view; a TRUE THREE-QUARTER view rotated 45 degrees
+   so one shoulder is clearly nearer the camera and the far shoulder is partly hidden; a PURE
+   SIDE PROFILE rotated a full 90 degrees so only one eye, one arm and one leg are visible in
+   silhouette. Standing neutral relaxed A-pose, complete crown to shoes, nothing cropped."
+   *The profile view is the highest-value one — it is the only angle that adjudicates the
+   hair-containment law and the neck taper.*
+2. **CHARACTER** — silhouette, palette hexes and signature props per `CHARACTER_BIBLE.md` LAW 7
+   and the character's `characters.js` entry.
+3. **HAND CALLOUT ROW** — "along the bottom, clearly separated by empty space, four larger hand
+   studies: one open relaxed hand front, the same side, one closed gripping hand front wrapped
+   around <that character's prop>, the same side."
+4. **STYLE** — "matching the attached portrait's palette and rendering — clean shapes, limited
+   muted office palette, cel shading with clear form, one soft warm key light from upper left,
+   semi-realistic reference-sheet rendering that reads the volumes clearly."
+5. **PROPORTION LAW** — "EXACTLY 7 head-heights, do not elongate the legs in a
+   fashion-illustration way, the crotch line sits at half the total standing height, small head,
+   natural <2.0 male / 1.6 female / 2.4 Chad> head-widths shoulder width, visible neck column no
+   more than half a head wide, hair contained above the jawline and never wrapping forward past
+   the ear line — verify this in the side profile view — face on human thirds with the eye line
+   at half the skull height, relaxed pleasant open eyes, fingertips reach mid-thigh, arm span
+   equal to standing height, single-silhouette limbs with no lumpy ball joints, no caricature,
+   no chibi." **Grandma is the one exception at 6 heads** (bible ruling: she may stay petite).
+6. **HYGIENE** — "plain flat light neutral-gray background, even flat lighting, no text, no
+   lettering, no labels, no watermark, no captions, no logos, no measurement lines."
+
+## `_hands_reference.png`
+
+One standalone universal hand sheet covering the characters generated before the hand-callout
+row was added (andrew, karen). It documents the **game's actual hand vocabulary** as built in
+`CharacterBuilder.js:499–508` — a soft mitten-like palm mass with the four fingers merged plus
+ONE separated thumb sphere — in three rows: open/relaxed, gripping-empty, and gripping the
+game's real props (coffee mug, smartphone, briefcase handle), each front + side.
+
+**Known divergence, logged:** the per-character hand callout rows came back with *realistic
+articulated* hands on every sheet despite asking for the mitten form — the surrounding
+semi-realistic figure overrides it. That is arguably the more useful reference (it shows the
+anatomy the mitten is abstracting), so it was left alone; `_hands_reference.png` is the
+authority on the simplified vocabulary the 3D build actually uses.
+
+## Sheet log
+
+| date | sheet | notes |
+|------|-------|-------|
+| 2026-07-31 | karen_body (v1) | 2-view calibration pass, superseded by v2; kept for comparison |
+| 2026-07-31 | andrew_body | 2-view calibration pass; predates the three-view + hand-row template |
+| 2026-07-31 | karen_body_v2 | first sheet on the locked three-view template |
+| 2026-07-31 | chad, grandma, ross, rachel, janet, intern, janitor, diane, alex_it, rachel_to | full friendly-cast batch on the locked template; `intern` needed one retry (transient generator failure, not a refusal) |
+| 2026-07-31 | _hands_reference | universal mitten+thumb hand vocabulary sheet |
