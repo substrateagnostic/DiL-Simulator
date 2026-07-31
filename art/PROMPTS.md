@@ -136,6 +136,50 @@ semi-realistic figure overrides it. That is arguably the more useful reference (
 anatomy the mitten is abstracting), so it was left alone; `_hands_reference.png` is the
 authority on the simplified vocabulary the 3D build actually uses.
 
+## Style-reference substitution rule (added 2026-07-31, run G1-b)
+
+Most enemies have **no portrait of their own** in `art/portraits_raw/`. Attaching *some*
+reference is still much better than attaching none — the reference is what holds the batch to
+one rendering language. So: attach the **nearest cousin portrait** (same suit register, same
+era, same rendering) and neutralise the identity carry-over in the preamble:
+
+> "The attached image is a STYLE AND RENDERING reference only — match its palette, line
+> quality, cel-shading language and overall illustration feel, but the character's identity,
+> face, hair, build, clothing and colours come from THIS description and NOT from the
+> reference image."
+
+That preamble is the generalised form of the alex_it colour-override lesson above, and it held
+across all 18 enemy sheets — none of them came back wearing the reference's clothes.
+Cousins used: `compliance.png` for black-suit males, `regional.png` for exec/silver males,
+`janitor.png` for deep-skin males, `janet.png`/`diane.png`/`rachel.png` for women,
+`ross.png` for soft/earpiece males, `andrew.png` for the modular sheets.
+
+**Anti-likeness escalation.** When a sheet comes back resembling a specific real person, the
+identity preamble is NOT enough — the reference itself is the likeness vector. The fix that
+worked (janitor v3) has two parts: (1) **swap the reference** for a sheet of a *different*
+character so no likeness can transfer at all, and (2) steer the features **positively away**
+from the archetype rather than only forbidding it — "full rounded face not long lean, wide
+flat cheeks with no sharp cheekbones, broad low nose, square heavy jaw, short thick neck,
+even unfreckled skin." Negative-only instructions ("must not resemble any actor") were tried
+first in v2 and did not move the face.
+
+## Modular client sheets
+
+Three sheets serve `ClientGenerator`'s procedural variety instead of one character each. They
+break the three-view rule on purpose — they are **rows of alternatives**, not turnarounds:
+
+- `_client_modular_bodies` — four male body archetypes (slight-young / average-trim /
+  broad-heavy / petite-elderly at 6 heads) in an identical plain grey base layer on one ground
+  line so only build differs, plus a six-study hair row on identical bald bust forms.
+- `_client_modular_bodies_f` — the same for women, at the 1.6-head-width shoulder line, with a
+  women's hair row (low bun / loose bun / structured blonde wedge / short crop / long loose
+  blonde / silver elder bun with periwinkle shawl). Generated because the first bodies sheet
+  came back all-male and `generateVisualConfig()` branches ~50/50 on `MALE_NAME_SET`.
+- `_client_modular_outfits` — three full outfits on one identical body (business formal /
+  business casual / eccentric-wealthy) plus a six-object accessory row matching the
+  `accessories` strings in `generateVisualConfig()` (coffee mug, protein shake, purse, cane,
+  clipboard, sunglasses).
+
 ## Sheet log
 
 | date | sheet | notes |
@@ -145,3 +189,26 @@ authority on the simplified vocabulary the 3D build actually uses.
 | 2026-07-31 | karen_body_v2 | first sheet on the locked three-view template |
 | 2026-07-31 | chad, grandma, ross, rachel, janet, intern, janitor, diane, alex_it, rachel_to | full friendly-cast batch on the locked template; `intern` needed one retry (transient generator failure, not a refusal) |
 | 2026-07-31 | _hands_reference | universal mitten+thumb hand vocabulary sheet |
+| 2026-07-31 | **ross_body rev 2** | accuracy re-run. v1 came back trim and confident — wrong man. Fixed with a hard body block: "ROUNDED THROUGH THE MIDDLE with a visible soft belly … shoulders faintly slumped forward and rolled inward … weak receding chin … NOT trim, NOT athletic, NOT confident … the belly must be clearly readable in the SIDE PROFILE view." One pass; kit intact (earpiece, red mug, khakis, brown belt, loafers). Old sheet kept at `ross_body_v1.png`. **Lesson: for a soft build, name the view that has to prove it** — "visible belly" alone gets absorbed by the figure, "readable in the side profile" does not. |
+| 2026-07-31 | **janitor_body rev 3** | de-actoring re-run, two passes. v2 (kept at `janitor_body_v2.png`) added "wholly original face, must not resemble any actor" while still style-refed against `janitor.png` — the resemblance survived, because the reference *was* the likeness. v3 swapped the reference to `diane_body.png` (different character entirely) and steered features positively away from the archetype; resemblance broken. Gold Rolex now visible in all three views AND in all four hand studies. Old sheets at `janitor_body_v1.png` / `_v2.png`. |
+| 2026-07-31 | compliance, regional, corporate_lawyer, chief_of_restructuring, cfos_assistant, restructuring_analyst, brand_consultant, data_analytics_lead, security_guard, hr_rep, regional_director, rachel_boss, ross_boss, parking_enforcer, networking_guy, firm_partner, firm_associate, firm_paralegal | full enemy roster on the locked template, 18 sheets. `algorithm` skipped (canon monolith, not a person). `parking_enforcer` and `networking_guy` each needed one retry — same transient generator failure the `intern` sheet hit ("The single image is still rendering; I'm waiting for that same generation call to finish", no path returned). Retry-on-non-path guard handled both on the first re-run. |
+| 2026-07-31 | _client_modular_bodies, _client_modular_bodies_f, _client_modular_outfits | modular construction sheets for `ClientGenerator` variety (see section above) |
+
+### Open notes from the G1-b batch
+
+- **`parking_enforcer` gender mismatch.** `src/data/characters.js` has `gender: 'm'`, but
+  `dialogs/index.js` `parking_enforcer_intro` says *"she says, already writing"* and
+  *"Reyes smiles for the first time…"*. Prose is canon, so the sheet is drawn female. The
+  `characters.js` field should be corrected to `'f'` before the model is built.
+- **Recurring proportion drift.** Sheets with narrow/tall briefs (`cfos_assistant`,
+  `brand_consultant`, `corporate_lawyer`, `hr_rep`, `rachel_boss`, `_client_modular_outfits`)
+  land nearer **8 heads** than the stated 7, with fashion-illustration leg length. "EXACTLY 7
+  head-heights" is losing to the word *tall* / *narrow* / *slim* elsewhere in the prompt.
+  Treat the 7-head law as authored by `CHARACTER_BIBLE.md` LAW 1, not by these sheets, when
+  the two disagree.
+- **The Firm's relative heights are NOT readable off the sheets** — each was drawn
+  independently. Use the `characters.js` scalars (partner 1.08 / associate 1.02 /
+  paralegal 0.96) for the trio's staging.
+- **Neutral-face law was applied to villains too** (bible LAW 3/4): menace lives in
+  silhouette, tailoring and stance, never in a warped face. `ross_boss` is the one deliberate
+  exception — a wide-eyed unhinged neutral, because that *is* his character state.

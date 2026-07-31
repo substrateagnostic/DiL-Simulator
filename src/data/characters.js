@@ -472,7 +472,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['clipboard'],
     widthScale: 1.15, browAngle: -0.15,
     // v5 face — broad, stern municipal jaw
-    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.90, chin: 1.05,
+    gender: 'f' // prose is canon: Reyes is 'she' in her own dialog (sheet-batch catch), eyeColor: 0x2e1d12, jaw: 0.90, chin: 1.05,
   },
   networking_guy: {
     tone: 'silly',
