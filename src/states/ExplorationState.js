@@ -1231,7 +1231,7 @@ export class ExplorationState {
             }
           } else if (result === 'defeat') {
             this.player.setFlag('retry_' + encounterId, true);
-            this._handleDefeat();
+            this._handleDefeat(encounterId);
           }
         },
         enemyOverrides
@@ -1246,7 +1246,7 @@ export class ExplorationState {
     if (showToast) this._showToast('Game saved.', 'info');
   }
 
-  _handleDefeat() {
+  _handleDefeat(encounterId = null) {
     // Void an in-progress Billable Day before the generic client reset, so the
     // day's temporary boons are reversed exactly once and the escrowed AUM is
     // forfeited. Permanent progress is untouched.
@@ -1295,6 +1295,39 @@ export class ExplorationState {
     setTimeout(() => {
       if (msg.parentNode) msg.parentNode.removeChild(msg);
     }, 3000);
+
+    this._offerPIP(encounterId);
+  }
+
+  /**
+   * PIP discoverability. The Performance Improvement Plan is this game's God
+   * Mode — free, opt-in, 20% resistance rising 2% per recorded defeat to a cap
+   * of 80%, locking out nothing (see src/data/review.js). It lifts CASUAL play
+   * over the 40% floor on every story boss (Karen L3: 16.8% -> 62.7%; Grandma
+   * L7: 5.8% -> 40.8%, per `node tools/combat-sim.mjs --pip`). None of which
+   * matters if the player never opens the shop tab it lives in.
+   *
+   * Hades' rule is that the aid finds the player, not the reverse. So the
+   * building files the form AT you: once per story boss, never on the roguelite
+   * loop, and never once the plan is already on file.
+   */
+  _offerPIP(encounterId) {
+    if (!encounterId || encounterId === 'reception_client') return;
+    if (this.player.getFlag('rp_pip')) return;          // already found it
+    const seen = `pip_notice_${encounterId}`;
+    if (this.player.getFlag(seen)) return;              // once per boss
+    this.player.setFlag(seen, true);
+
+    // Fires after the wake-up message has had its beat, so the two do not read
+    // as one paragraph. Longer dwell than the default — it is a filing address,
+    // not a status ping.
+    setTimeout(() => {
+      this._showToast(
+        "Per policy, a Performance Improvement Plan has been placed in the Break Room's Performance Review tab. Participation is voluntary.",
+        'objective',
+        6000
+      );
+    }, 3200);
   }
 
   // ── Reception roguelite system ──────────────────────────────────────────────
@@ -3238,7 +3271,7 @@ export class ExplorationState {
     }
   }
 
-  _showToast(text, tone = 'info') {
+  _showToast(text, tone = 'info', duration = 2600) {
     if (!this.toastContainer || !text) return;
 
     const toast = document.createElement('div');
@@ -3257,7 +3290,7 @@ export class ExplorationState {
           toast.parentNode.removeChild(toast);
         }
       }, 250);
-    }, 2600);
+    }, duration);
   }
 
   _checkUpgradeTooltip() {

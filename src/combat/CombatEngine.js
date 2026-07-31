@@ -629,7 +629,21 @@ export class CombatEngine {
       // "takes +20% for a round" is true without having to bank a second action.
       target.broken = 1;
       target.brokenBonus = 2;
-      target.vulnerable = 1;
+      // ...and the same off-by-one applies to the 1.5x vulnerability window.
+      // `vulnerable` is decremented in processTurnStart on the ENEMY side, and a
+      // broken enemy still runs its turn-start before losing the turn itself. At
+      // 1, the counter therefore hit zero before the player ever got to swing:
+      // the hit that broke the bar is excluded by `wasVulnerable` in _calcDamage
+      // (so it cannot double-dip), and by the player's next turn the window was
+      // already gone. Anyone whose route to a Break was a plain weakness hit or a
+      // perfect Brace never saw the 1.5x at all.
+      //
+      // 2 spends one tick on the enemy's skipped turn and leaves exactly one
+      // full player turn to cash in — the same shape as brokenBonus above.
+      // Heal/Confuse still set vulnerable = 1 (see _pickEnemyAbility): those fire
+      // DURING the enemy's turn, so their single tick already lands after the
+      // player has had a swing. Only the Break-sourced window is extended.
+      target.vulnerable = 2;
       return { broke: true, amount: applied };
     }
     return { broke: false, amount: applied };
@@ -1732,6 +1746,10 @@ export class CombatEngine {
       entity.protected--;
       if (entity.protected <= 0) results.push({ type: 'status_expire', message: 'Protect wore off.' });
     }
+    // Ticks on the enemy's own turn-start, which a broken enemy still runs
+    // before losing the turn. Heal/Confuse arm this at 1 (one tick = one player
+    // turn); a Composure Break arms it at 2 so the skipped turn does not eat the
+    // whole window. See _reduceComposure.
     if (isEnemySide && entity.vulnerable > 0) entity.vulnerable--;
 
     if (isPlayerSide) this._checkDefeat();

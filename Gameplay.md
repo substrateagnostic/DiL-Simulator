@@ -500,6 +500,11 @@ for exactly one reason: **hits that exploit their weakness**.
   Breaking is not a bonus, it is when your real damage turns on.
 - Empty the bar and the enemy **loses their next turn** and takes **+20% damage** until they recover.
   Their Composure refills as they do.
+- A Break also leaves them **VULNERABLE**: the first hit you land afterwards deals **×1.5** on top of
+  everything above, and clears the flag. The window is armed to survive the turn the enemy loses, so
+  it is still open when you next get to act — the swing that broke the bar is deliberately excluded
+  from it, so breaking and cashing in are two separate hits and the Break is never a self-consuming
+  bonus. Squander the turn and the window shuts; it never carries into a second one.
 
 **The tax is a reframing, not a nerf.** Player and ally damage against anything with a Composure bar
 also carries a flat ×1.13 baseline raise, so the arithmetic against a pre-Break enemy comes out at
@@ -598,15 +603,20 @@ The 40–85% win-rate band that gets quoted at this game **cannot be met by one 
 the spread between how a first-time player fights and how an optimal one fights is roughly 50 points.
 `node tools/combat-sim.mjs --runs 500` and `--casual`, at each encounter's intended level:
 
-| Encounter (intended level) | CASUAL policy | COMPETENT policy |
-|----------------------------|---------------|------------------|
-| Karen, L4 | 49.0% | 96.2% |
-| Chad, L6 | 74.8% | 100.0% |
-| Grandma, L8 | 24.8% | 100.0% |
-| Restructuring trio, L8 | 90.6% | 99.8% |
-| Meredith Sterling, L9 | 28.4% | 98.0% |
-| Regional Director, L10 | 57.0% | 100.0% |
-| The Algorithm, L10 | 86.8% | 99.4% |
+| Encounter (intended level) | CASUAL policy | CASUAL + PIP filed | COMPETENT policy |
+|----------------------------|---------------|--------------------|------------------|
+| Karen, L4 | 49.0% | 77.8% | 96.2% |
+| Chad, L6 | 74.8% | 97.9% | 100.0% |
+| Grandma, L8 | 24.8% | 61.2% | 100.0% |
+| Restructuring trio, L8 | 90.6% | 99.9% | 99.8% |
+| Meredith Sterling, L9 | 28.4% | 71.5% | 98.0% |
+| Regional Director, L10 | 57.0% | 91.1% | 100.0% |
+| The Algorithm, L10 | 86.8% | 95.2% | 99.4% |
+
+The middle column is the same CASUAL policy with the Performance Improvement Plan filed at its
+weakest setting — zero recorded defeats, 20% resistance — from `--pip --runs 6000`; the ladder it
+comes from is below. It is the column that carries the floor, and it only ever reaches a player who
+knows the plan exists, which is why the game now files the form at them (next paragraph).
 
 CASUAL is basic attacks plus the free heal and Assert Dominance when the bar fills on its own —
 no tags, no Locks, no Composure, no Brace. NAIVE (basic attacks and nothing else, no sustain) wins
@@ -622,25 +632,45 @@ The argument above defends the **ceiling** end of 40–85% and says nothing abou
 the floor the table above fails at the *low* rung of every documented intent band (CLAUDE.md:
 Karen 3–4, Chad 5–6, Grandma 7–8). The instrument for that end is the **Performance Improvement
 Plan** — opt-in, free, 20% damage resistance rising 2% per recorded defeat to a cap of 80%.
-`node tools/combat-sim.mjs --pip --runs 400`, CASUAL policy throughout:
+`node tools/combat-sim.mjs --pip --runs 6000` and `--pip 1 --runs 6000`, CASUAL policy throughout:
 
-| Encounter (lvl) | PIP unfiled | filed, 0 deaths (20%) | 5 (30%) | 10 (40%) | 20 (60%) | 30 (80%) |
-|-----------------|-------------|-----------------------|---------|----------|----------|----------|
-| Karen L3 | 16.8% | **62.7%** | 74.3% | 84.3% | 99.8% | 100.0% |
-| Karen L4 | 47.5% | **80.5%** | 86.3% | 94.3% | 100.0% | 100.0% |
-| Chad L5 | 62.5% | **92.3%** | 100.0% | 100.0% | 100.0% | 100.0% |
-| Chad L6 | 75.0% | **98.3%** | 99.5% | 100.0% | 100.0% | 100.0% |
-| Grandma L7 | 5.8% | **40.8%** | 61.8% | 69.0% | 98.3% | 100.0% |
-| Grandma L8 | 24.8% | **62.0%** | 72.0% | 82.8% | 99.8% | 100.0% |
-| Restructuring trio L8 | 86.0% | 100.0% | 100.0% | 100.0% | 100.0% | 100.0% |
-| Meredith Sterling L9 | 26.8% | **69.0%** | 89.0% | 98.5% | 100.0% | 100.0% |
-| Regional Director L10 | 55.8% | **92.3%** | 97.5% | 99.3% | 100.0% | 100.0% |
-| The Algorithm L10 | 86.0% | 97.0% | 97.0% | 99.0% | 100.0% | 100.0% |
+| Encounter (lvl) | PIP unfiled | filed, 0 deaths (20%) | 1 (22%) | 5 (30%) | 10 (40%) | 20 (60%) | 30 (80%) |
+|-----------------|-------------|-----------------------|---------|---------|----------|----------|----------|
+| Karen L3 | 17.1% | 61.3% | **63.7%** | 74.1% | 85.4% | 99.8% | 100.0% |
+| Karen L4 | 47.4% | 77.8% | **79.1%** | 85.9% | 94.2% | 100.0% | 100.0% |
+| Chad L5 | 60.3% | 94.3% | **97.6%** | 99.8% | 100.0% | 100.0% | 100.0% |
+| Chad L6 | 74.6% | 97.9% | **98.4%** | 99.6% | 100.0% | 100.0% | 100.0% |
+| Grandma L7 | 5.5% | 37.6% | **42.2%** | 55.5% | 69.9% | 98.7% | 100.0% |
+| Grandma L8 | 23.8% | 61.2% | **63.8%** | 71.0% | 83.4% | 99.9% | 100.0% |
+| Restructuring trio L8 | 88.8% | 99.9% | **99.8%** | 100.0% | 100.0% | 100.0% | 100.0% |
+| Meredith Sterling L9 | 26.9% | 71.5% | **76.6%** | 90.5% | 99.1% | 100.0% | 100.0% |
+| Regional Director L10 | 58.8% | 91.1% | **94.5%** | 98.0% | 99.0% | 100.0% | 100.0% |
+| The Algorithm L10 | 86.5% | 95.2% | **95.6%** | 97.5% | 99.4% | 100.0% | 100.0% |
 
-At its **floor** — filed on a save with zero recorded defeats — the PIP puts CASUAL play above the
-40% line on every row, including Grandma at L7, which was 5.8%. It climbs from there for the player
-who keeps losing, which is the point: Hades' God Mode is the model and its whole argument is that
-the aid should find you, not the other way around.
+The bolded column is the one that matters, and it is bolded rather than the 0-death column for a
+mechanical reason: **the plan is surfaced by losing.** `player.deaths` has already incremented by
+the time the offer reaches anyone, so 22% is the weakest resistance a player can actually arrive
+with. At that setting the PIP clears the 40% floor on every row — including Grandma at L7, which
+is 5.5% unassisted. It climbs from there for the player who keeps losing, which is the point:
+Hades' God Mode is the model and its whole argument is that the aid should find you.
+
+One row does need saying out loud: **filed cold on an untouched save, Grandma L7 sits at 37.6%**,
+just under the line. Nobody reaches that cell by the intended route, but the honest reading is that
+the floor instrument is worth about two points less than the round number suggests at its
+theoretical minimum, and it is Grandma who exposes it.
+
+**How the plan finds you.** A free item in a shop tab is not an accessibility feature if the player
+who needs it never opens the tab, and the two worst cells above (Karen L3 at 17.1%, Grandma L7 at
+5.5%) belong to exactly the player least likely to be browsing Employee Development. So the building
+files the form at them: on any **story-boss defeat**, once per boss and never again once the plan is
+on file, a HUD toast reads
+
+> Per policy, a Performance Improvement Plan has been placed in the Break Room's Performance Review
+> tab. Participation is voluntary.
+
+It is suppressed on the scripted first-Karen loss (that beat has its own tutorial) and on the
+reception roguelite loop (`ExplorationState._offerPIP`). It states the item, the room and the tab,
+and it does not ask twice.
 
 Two honest caveats. **The shipped default is still unassisted**, so the unfiled column is what an
 untouched save plays and it is the column the ceiling argument above is about. And the PIP pushes
