@@ -27,6 +27,14 @@ import * as THREE from 'three';
 const EXPRESSIONS = ['neutral', 'angry', 'smug', 'worried', 'hurt', 'victory'];
 const cache = {};
 
+// Solved against the v7 skull canon (CharacterBuilder: SKULL/LM/faceLayout).
+// Only used if a caller paints a face without going through CharacterBuilder.
+const V7_FALLBACK_LAYOUT = {
+  hairlineF: 0.0762, browF: 0.2463, eyeF: 0.3228, noseF: 0.5457, mouthF: 0.6203, chinF: 0.8958,
+  eyeDXF: 0.1715, eyeWF: 0.0921, eyeHF: 0.0468, noseWF: 0.0864, mouthWF: 0.2005, jawWF: 0.24,
+  mouthHF: 0.0568, maskCY: 0.5765, maskR0: 0.30, maskR1: 0.50, maskSX: 1.0, maskSY: 1.231,
+};
+
 // ── small color helpers ──────────────────────────────────────────────
 function shadeHex(c, f) {
   const r = Math.min(255, Math.max(0, Math.round(((c >> 16) & 255) * f)));
@@ -89,6 +97,13 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   const key = `${id}_${expression}_${size}`;
   if (cache[key]) return cache[key];
 
+  // ── V7 LAYOUT (solved by the geometry, consumed here) ─────────────────
+  // CharacterBuilder.faceLayout() converts the skull's anatomical landmarks into
+  // canvas fractions, INCLUDING the conformal width correction for how far the
+  // surface has turned away at each row. The painter no longer owns any vertical
+  // metrology of its own — if the skull changes, these numbers change with it.
+  const L = config._layout || V7_FALLBACK_LAYOUT;
+
   const S = size;
   const c = document.createElement('canvas');
   c.width = S; c.height = S;
@@ -110,60 +125,20 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   const lipC = config.lipColor ?? (female ? 0xb5615a : 0xb06a58);
   const E = exprParams(expression);
 
-  // Layout in fractions of S (prototype was authored at 512).
+  // ── LAYOUT — every vertical number now comes from the geometry solve (L).
+  // v6 owned its own metrology here and it drifted every round; the eye line
+  // measured 56% of skull height against LAW 3's 50%. In v7 the skull's equator
+  // IS the eye line, and L.eyeF is wherever that lands on the tile.
   const cx = S * 0.5;
-  // Features are placed LOW on the tile: the curved patch maps texture-V
-  // linearly to polar angle, so mid-tile lands near the head's equator
-  // (cheekbone level). Pushing eyes→mouth down to ~0.50–0.78 seats them on
-  // the front of the face and kills the long blank "muzzle" chin the higher
-  // layout produced (and reads correctly under the up-looking combat cam).
-  // eyeY pushed DOWN toward the head's equator so the eyes face the below-
-  // looking combat camera instead of tilting up over the brow — that up-tilt
-  // was the "dark eye band" (the sclera pointed away from the lens).
-  // v6 LAW 3 — PLEASANT NEUTRAL. The v5 eye was a TALL (0.118r) full-face-wide
-  // (0.160r) dark oval — the exact "scrunched / bug-eyed / scary" read. v6 lays
-  // an OPEN ALMOND: modest width, WIDER than tall (human), properly spaced at
-  // ~one eye-width inter-gap (pupils ~2 eye-widths apart), bright sclera + clear
-  // iris + a guaranteed catchlight. Small clean beats big and dark.
-  // v6 round-3 — LAW 3 metrology. The patch maps texture-V linearly onto the
-  // skull's POLAR angle, so a V value is only meaningful together with the patch
-  // band (makeFacePatch: thetaStart 0.68, thetaLen 1.62) and the skull's
-  // lower-hemisphere compression (makeHead: 0.80). Solved against those:
-  //   eye-line   → 50% of crown→chin      → V 0.480
-  //   nose base  → 68%                    → V 0.702
-  //   mouth      → 79% (mouth→chin ≈ 21%) → V 0.875
-  // Moving any of those three constants requires re-solving these.
-  // v6 round-4 — THE VERTICAL RE-SOLVE. Round-3 solved these against the polar
-  // mapping in isolation, but on the rendered head the eye/brow group measured
-  // ~72% of skull height with "a long blank slab" below it and the mouth landed
-  // exactly on the alpha-feather ramp (mask centre 0.625, core to 0.335) — which
-  // is why its luminance delta vs skin was ~0 at 1080p combat framing. Dropping
-  // the eye group and lifting the mouth closes the eye→mouth span from 0.395S to
-  // 0.270S, puts the mouth inside the opaque core, and lands the eye line back at
-  // mid-skull as seen through the hairline (not as measured against the bare crown).
-  const eyeY = S * 0.545;
-  const eyeDX = S * 0.176;        // pupil ≈ 2 eye-widths apart, gap ≈ one eye-width
-  // Elderly eyes: a NARROWER opening with a BIGGER iris. At the shared 0.100
-  // half-width the iris measured a small grey bead inside an oversized pale lens
-  // (sclera-to-iris ≈ 4:1 — "cataract glass button", Grandma).
-  const eyeW = S * (old ? 0.088 : 0.100);   // half-width (full eye ≈ 0.20S)
-  const eyeH = S * 0.058 * E.openY; // half-height < half-width → relaxed almond
-  const browY = S * 0.470;        // ≈0.5 eye-heights above the eye (LAW 3)
-  const noseTipY = S * 0.716;
-  // Mouth dropped ~15% lower toward the jaw (item 5: "flat line floating high
-  // above an enormous blank chin"). Seats the mouth on the lower face so the
-  // jaw region reads as anatomy, not Easter Island.
-  // Old faces seat the mouth notably higher, close to the nose base: grandma's
-  // lower face foreshortens hard on the up-looking combat cam and falls into
-  // shadow, so a mouth at the full drop (0.756) landed in a dark, curved-away
-  // band and read as a blank chin (cast bug). Pulling it up to just under the
-  // nose puts it on the brightly-lit, camera-facing front of the face where it
-  // survives the squash.
-  // mouth→chin lands at ≈21% of skull height (was 33% — "she is all jaw").
-  // Elderly faces sit a hair higher: the hunched head pitch foreshortens their
-  // lower face hardest, so pulling the mouth up keeps it on the lit, camera-
-  // facing front instead of the curved-away underside (grandma's "no mouth").
-  const mouthY = S * (old ? 0.796 : 0.815);
+  const eyeY = S * L.eyeF;
+  const eyeDX = S * L.eyeDXF;              // pupils ±0.40R — gap = one eye-width
+  // Elderly eyes: a narrower opening with a bigger iris.
+  const eyeW = S * L.eyeWF * (old ? 0.88 : 1.0);
+  const eyeH = S * L.eyeHF * E.openY;
+  const browY = S * L.browF;
+  const noseTipY = S * L.noseF;
+  const mouthY = S * L.mouthF + (old ? -S * 0.006 : 0);
+  const chinY = S * L.chinF;
 
   // ── base skin: FLAT fill at exactly skin so the feathered patch edge
   // blends seamlessly into the head skin. Shaping is centered overlays that
@@ -172,7 +147,11 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // the best-lit surface even in the dark arena (the matte skin material no
   // longer adds a plastic sheen to compensate). Shading stays nearly flat — the
   // lit egg geometry carries the form; painted shadow only whispers.
-  ctx.fillStyle = shadeHex(skin, 1.06);
+  // v7 — 1.06 put the painted plate a visible luminance step above the skull
+  // skin, so the patch rim read as a lighter oval mask at the temples. The combat
+  // FACE-KEY (LAW 5) is what makes faces the best-lit surface; the texture must
+  // not also try to.
+  ctx.fillStyle = shadeHex(skin, 1.015);
   ctx.fillRect(0, 0, S, S);
   {
     const g = ctx.createLinearGradient(0, S * 0.23, 0, S * 0.9);
@@ -183,11 +162,12 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     ctx.fillRect(0, S * 0.23, S, S * 0.67);
   }
 
-  // temple / side shading — barely there, just to seat the eye region (v6:
-  // halved so the face doesn't gain dark hollows that read as a gaunt scowl)
+  // temple / side shading — v7 cuts this to a whisper. The skull now carries a
+  // real temple PLANE (sculptSkull step 2), so painting a second one on top of it
+  // double-darkens the sides into the gaunt hollows LAW 3 forbids.
   for (const sx of [S * 0.14, S - S * 0.14]) {
-    const tg = ctx.createRadialGradient(sx, S * 0.52, S * 0.04, sx, S * 0.52, S * 0.3);
-    tg.addColorStop(0, rgba(0x1a0f08, 0.06));
+    const tg = ctx.createRadialGradient(sx, eyeY, S * 0.04, sx, eyeY, S * 0.3);
+    tg.addColorStop(0, rgba(0x1a0f08, 0.03));
     tg.addColorStop(1, rgba(0, 0));
     ctx.fillStyle = tg;
     ctx.fillRect(0, 0, S, S);
@@ -196,9 +176,10 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // cheek warmth / blush — v6 round-4 LAW 3: a LOCAL cheek dot. The old
   // 0.14S-radius wash reached the jaw and, stacked on the patch-edge vignette,
   // read as windburn over Karen's whole muzzle / grime on Chad's jaw.
-  for (const sx of [cx - S * 0.176, cx + S * 0.176]) {
-    const cg = ctx.createRadialGradient(sx, S * 0.63, S * 0.012, sx, S * 0.63, S * 0.095);
-    cg.addColorStop(0, rgba(female ? 0xd06860 : 0xc07858, female ? 0.22 : 0.14));
+  const cheekY = eyeY + (noseTipY - eyeY) * 0.72;
+  for (const sx of [cx - eyeDX * 1.30, cx + eyeDX * 1.30]) {
+    const cg = ctx.createRadialGradient(sx, cheekY, S * 0.012, sx, cheekY, S * 0.085);
+    cg.addColorStop(0, rgba(female ? 0xd06860 : 0xc07858, female ? 0.13 : 0.08));
     cg.addColorStop(1, rgba(0, 0));
     ctx.fillStyle = cg;
     ctx.fillRect(0, 0, S, S);
@@ -208,15 +189,15 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // bruise — kept restrained so the eye itself reads bright and open) ───
   for (const s of [-1, 1]) {
     const ex = cx + s * eyeDX;
-    const sg = ctx.createRadialGradient(ex, eyeY - S * 0.026, S * 0.010, ex, eyeY - S * 0.016, S * 0.075);
-    // v6 — the socket shadow is the #1 "scary" culprit: it merged with the lash
-    // and iris into a bruised dark slit. Cut to a whisper (0.20→0.08) — just
-    // enough to seat the eye, never a hollow.
-    sg.addColorStop(0, rgba(0x2a1810, 0.08));
-    sg.addColorStop(0.6, rgba(0x2a1810, 0.03));
+    const sg = ctx.createRadialGradient(ex, eyeY - eyeH * 0.55, S * 0.008, ex, eyeY - eyeH * 0.35, S * 0.062);
+    // v7 — the SOCKET IS GEOMETRY now (sculptSkull step 5 recesses it 0.048R under
+    // a 0.070R brow shelf), so the painted version drops to almost nothing. Two
+    // stacked shadows is exactly how v5/v6 arrived at "scrunched / scary".
+    sg.addColorStop(0, rgba(0x2a1810, 0.05));
+    sg.addColorStop(0.6, rgba(0x2a1810, 0.02));
     sg.addColorStop(1, rgba(0, 0));
     ctx.fillStyle = sg;
-    ctx.fillRect(ex - S * 0.11, eyeY - S * 0.11, S * 0.22, S * 0.13);
+    ctx.fillRect(ex - S * 0.11, eyeY - S * 0.10, S * 0.22, S * 0.12);
   }
 
   // ── eyes ── (lid drop is expression-driven)
@@ -237,9 +218,9 @@ export function paintFace(config, expression = 'neutral', size = 512) {
       wg.addColorStop(0.5, '#ffffff');
       wg.addColorStop(1, '#f6f1e8');
     } else {
-      wg.addColorStop(0, '#e6e0d6');
-      wg.addColorStop(0.5, '#fbf8f2');
-      wg.addColorStop(1, '#efe9de');
+      wg.addColorStop(0, '#ddd5c9');
+      wg.addColorStop(0.5, '#f2eee6');
+      wg.addColorStop(1, '#e6dfd3');
     }
     ctx.fillStyle = wg;
     ctx.fillRect(ex - eyeW, eyeY - eyeH, eyeW * 2, eyeH * 2);
@@ -267,12 +248,12 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     ctx.fillStyle = 'rgba(255,255,255,1)';
     // Bigger catchlight for glasses-wearers — a punchy bead that still reads as
     // a live eye once the tinted lens sits over it.
-    ctx.beginPath(); ctx.arc(ex - irisR * 0.26, iy - irisR * 0.34, irisR * (hasGlasses ? 0.50 : 0.40), 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(ex - irisR * 0.28, iy - irisR * 0.36, irisR * (hasGlasses ? 0.40 : 0.31), 0, Math.PI * 2); ctx.fill();
     // Old faces get ONE offset catchlight only (a second bead behind a lens reads
     // as a double glare pool).
     if (!old) {
-      ctx.fillStyle = 'rgba(255,255,255,0.5)';
-      ctx.beginPath(); ctx.arc(ex + irisR * 0.4, iy + irisR * 0.42, irisR * 0.16, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.34)';
+      ctx.beginPath(); ctx.arc(ex + irisR * 0.42, iy + irisR * 0.44, irisR * 0.13, 0, Math.PI * 2); ctx.fill();
     }
     // upper lid drop (lowered eyelid skin over the eye)
     if (lidDrop > 0.5) {
@@ -291,6 +272,14 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     ctx.beginPath();
     ctx.moveTo(ex - eyeW - 2, lidY - eyeH * 0.05);
     ctx.quadraticCurveTo(ex, lidY - eyeH * 0.7, ex + eyeW + 2, lidY - eyeH * 0.1);
+    ctx.stroke();
+    // upper-lid CREASE — a soft line one lid-height above the lash. Without it the
+    // eye reads as a decal; with it the socket the geometry recesses gets an edge.
+    ctx.strokeStyle = rgba(0x4a2f22, 0.26);
+    ctx.lineWidth = 0.0045 * S;
+    ctx.beginPath();
+    ctx.moveTo(ex - eyeW * 0.86, lidY - eyeH * 0.90);
+    ctx.quadraticCurveTo(ex, lidY - eyeH * 1.55, ex + eyeW * 0.92, lidY - eyeH * 0.80);
     ctx.stroke();
     // lower lid (subtle)
     ctx.strokeStyle = rgba(0x3a241a, 0.42);
@@ -321,7 +310,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // invisible against the skin.
   const browBase = (() => {
     if (config.browColor != null) return rgba(config.browColor, 1);
-    const f = old ? 0.72 : 0.55;
+    const f = old ? 0.72 : 0.62;
     let br = Math.round(((hairC >> 16) & 255) * f);
     let bg = Math.round(((hairC >> 8) & 255) * f);
     let bb = Math.round((hairC & 255) * f);
@@ -339,83 +328,72 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     // v6 round-3 — "zero eyebrows" on karen + chad. The stroke was thin enough
     // that the mip chain at fight framing ate it. Thicker, and drawn twice (a
     // soft under-pass then the crisp brow) so it survives downsampling.
-    ctx.lineWidth = (female ? 0.030 : 0.034) * S;
+    ctx.lineWidth = (female ? 0.020 : 0.024) * S;
     ctx.save();
-    ctx.globalAlpha = 0.5;
-    ctx.lineWidth = (female ? 0.042 : 0.046) * S;
+    ctx.globalAlpha = 0.34;
+    ctx.lineWidth = (female ? 0.028 : 0.032) * S;
     ctx.beginPath();
-    ctx.moveTo(bx - s * S * 0.062, browY + outer);
-    ctx.quadraticCurveTo(bx - s * S * 0.006, browY - S * 0.016 + (inner + outer) * 0.5, bx + s * S * 0.054, browY + inner);
+    ctx.moveTo(bx - s * eyeW * 0.62, browY + outer);
+    ctx.quadraticCurveTo(bx - s * eyeW * 0.06, browY - S * 0.014 + (inner + outer) * 0.5, bx + s * eyeW * 0.56, browY + inner);
     ctx.stroke();
     ctx.restore();
-    ctx.lineWidth = (female ? 0.030 : 0.034) * S;
+    ctx.lineWidth = (female ? 0.020 : 0.024) * S;
     ctx.beginPath();
     // inner end is toward center (+s* -small), outer end away
-    ctx.moveTo(bx - s * S * 0.066, browY + outer);
-    ctx.quadraticCurveTo(bx - s * S * 0.006, browY - S * 0.018 + (inner + outer) * 0.5, bx + s * S * 0.058, browY + inner);
+    ctx.moveTo(bx - s * eyeW * 0.68, browY + outer);
+    ctx.quadraticCurveTo(bx - s * eyeW * 0.06, browY - S * 0.016 + (inner + outer) * 0.5, bx + s * eyeW * 0.60, browY + inner);
     ctx.stroke();
     // strand hints
     ctx.lineWidth = 0.004 * S;
     ctx.strokeStyle = shadeHex(hairC, old ? 0.95 : 0.68);   // faint on white brows (no dark specks)
     for (let i = -2; i <= 2; i++) {
       ctx.beginPath();
-      ctx.moveTo(bx + i * S * 0.023, browY + S * 0.015 + (i < 0 ? outer : inner) * 0.5);
-      ctx.lineTo(bx + i * S * 0.023 + s * S * 0.008, browY - S * 0.006 + (i < 0 ? outer : inner) * 0.5);
+      ctx.moveTo(bx + i * eyeW * 0.24, browY + S * 0.013 + (i < 0 ? outer : inner) * 0.5);
+      ctx.lineTo(bx + i * eyeW * 0.24 + s * S * 0.007, browY - S * 0.005 + (i < 0 ? outer : inner) * 0.5);
       ctx.stroke();
     }
   }
   // angry forehead furrow between the brows
   if (E.furrow) {
-    ctx.strokeStyle = rgba(0x2a1810, 0.4);
-    ctx.lineWidth = 0.008 * S;
+    // Seated BETWEEN the brow heads and running up into the glabella, which is
+    // where a corrugator crease lives — v6's fixed offset put two thin sticks in
+    // the middle of the forehead once the brow line moved (andrew expr-angry).
+    ctx.strokeStyle = rgba(0x2a1810, 0.30);
+    ctx.lineWidth = eyeW * 0.10;
+    ctx.lineCap = 'round';
     for (const s of [-1, 1]) {
       ctx.beginPath();
-      ctx.moveTo(cx + s * S * 0.02, browY - S * 0.01);
-      ctx.lineTo(cx + s * S * 0.028, browY + S * 0.05);
+      ctx.moveTo(cx + s * eyeW * 0.24, browY + eyeH * 0.45);
+      ctx.quadraticCurveTo(cx + s * eyeW * 0.30, browY - eyeH * 0.30, cx + s * eyeW * 0.20, browY - eyeH * 0.95);
       ctx.stroke();
     }
   }
 
-  // ── nose: bridge highlight + side shadows + nostrils + tip light ──────
-  // v6 round-4 — the bridge shading was a hard fillRect of constant width, which
-  // rendered as a vertical STICK from brow to nose base ("a long bar down the
-  // middle of the face"). It is now clipped to a WEDGE: narrow at the brow,
-  // opening to the alae at the base, so the nose reads as a form.
-  const ng = ctx.createLinearGradient(cx - S * 0.05, 0, cx + S * 0.05, 0);
-  ng.addColorStop(0, rgba(0x2a1810, 0.0));
-  ng.addColorStop(0.32, rgba(0x2a1810, 0.20));
-  ng.addColorStop(0.5, rgba(0xffffff, 0.09));
-  ng.addColorStop(0.68, rgba(0x2a1810, 0.20));
-  ng.addColorStop(1, rgba(0x2a1810, 0.0));
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(cx - S * 0.020, browY + S * 0.012);
-  ctx.lineTo(cx + S * 0.020, browY + S * 0.012);
-  ctx.quadraticCurveTo(cx + S * 0.030, noseTipY - S * 0.030, cx + S * 0.052, noseTipY + S * 0.004);
-  ctx.lineTo(cx - S * 0.052, noseTipY + S * 0.004);
-  ctx.quadraticCurveTo(cx - S * 0.030, noseTipY - S * 0.030, cx - S * 0.020, browY + S * 0.012);
-  ctx.closePath();
-  ctx.clip();
-  ctx.fillStyle = ng;
-  ctx.fillRect(cx - S * 0.058, browY + S * 0.012, S * 0.116, noseTipY - browY - S * 0.004);
-  ctx.restore();
-  // under-nose / tip shadow — deeper + wider so the nose reads as a form at
-  // combat range (addendum: noses vanish at real framing)
-  const us = ctx.createRadialGradient(cx, noseTipY, S * 0.008, cx, noseTipY, S * 0.066);
-  us.addColorStop(0, rgba(0x2a1810, 0.22));
+  // ── nose ── v7: THE NOSE IS GEOMETRY (sculptSkull step 9 builds a real wedge
+  // whose half-width runs 0.075R at the bridge to 0.17R at the alae — narrower
+  // than the 0.40R eye gap, per LAW 3). The paint pass therefore drops the v6
+  // bridge gradient entirely (it was the "vertical stick down the middle of the
+  // face") and keeps only what geometry cannot carry: nostril openings, the
+  // shadow they cast, and a tip catchlight.
+  const noseW = S * L.noseWF;
+  const us = ctx.createRadialGradient(cx, noseTipY, S * 0.006, cx, noseTipY, noseW * 0.95);
+  us.addColorStop(0, rgba(0x2a1810, 0.12));
   us.addColorStop(1, rgba(0, 0));
   ctx.fillStyle = us;
-  ctx.fillRect(cx - S * 0.08, noseTipY - S * 0.04, S * 0.16, S * 0.10);
-  // nostrils — small + soft (v6: were bigger/darker blobs that read as a snout)
-  ctx.fillStyle = rgba(0x241009, 0.30);
-  ctx.beginPath(); ctx.ellipse(cx - S * 0.026, noseTipY + S * 0.004, S * 0.011, S * 0.0075, 0.3, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx + S * 0.026, noseTipY + S * 0.004, S * 0.011, S * 0.0075, -0.3, 0, Math.PI * 2); ctx.fill();
-  // tip highlight
-  ctx.fillStyle = rgba(0xffffff, 0.12);
-  ctx.beginPath(); ctx.arc(cx, noseTipY - S * 0.012, S * 0.016, 0, Math.PI * 2); ctx.fill();
+  ctx.fillRect(cx - noseW * 1.2, noseTipY - noseW * 0.6, noseW * 2.4, noseW * 1.5);
+  // nostrils — small, soft, seated at the alae the wedge actually builds
+  ctx.fillStyle = rgba(0x241009, 0.34);
+  for (const s2 of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(cx + s2 * noseW * 0.52, noseTipY + S * 0.002, noseW * 0.17, noseW * 0.12, s2 * -0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // tip highlight — a small catch on the ridge the geometry pushed forward
+  ctx.fillStyle = rgba(0xffffff, 0.10);
+  ctx.beginPath(); ctx.arc(cx, noseTipY - noseW * 0.34, noseW * 0.26, 0, Math.PI * 2); ctx.fill();
 
   // ── mouth ── (expression-driven; more saturated lips = contrast)
-  drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old);
+  drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old, S * L.mouthWF, S * (L.mouthHF || 0.0568));
 
   // ── age: wrinkles / softening ─────────────────────────────────────
   if (old) {
@@ -425,19 +403,20 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     // at 0.268S, which is now up inside the hairline)
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
-      ctx.moveTo(cx - S * 0.150, browY - S * 0.088 + i * S * 0.028);
-      ctx.quadraticCurveTo(cx, browY - S * 0.104 + i * S * 0.028, cx + S * 0.150, browY - S * 0.088 + i * S * 0.028);
+      ctx.moveTo(cx - S * 0.150, browY - S * 0.060 - i * S * 0.032);
+      ctx.quadraticCurveTo(cx, browY - S * 0.074 - i * S * 0.032, cx + S * 0.150, browY - S * 0.060 - i * S * 0.032);
       ctx.stroke();
     }
     // naso-labial: a SHORT soft crease from beside the nostril to the mouth
     // corner. At the round-4 spacing the old long curve pair closed into a
     // "wine-glass" outline around the mouth.
     ctx.save();
-    ctx.globalAlpha = 0.55;
+    ctx.globalAlpha = 0.34;
     for (const s of [-1, 1]) {
       ctx.beginPath();
-      ctx.moveTo(cx + s * S * 0.052, noseTipY + S * 0.004);
-      ctx.quadraticCurveTo(cx + s * S * 0.086, mouthY - S * 0.030, cx + s * S * 0.096, mouthY - S * 0.002);
+      ctx.moveTo(cx + s * S * L.noseWF * 0.95, noseTipY + S * 0.004);
+      ctx.quadraticCurveTo(cx + s * S * L.mouthWF * 0.86, (noseTipY + mouthY) * 0.5,
+        cx + s * S * L.mouthWF * 1.02, mouthY - S * 0.004);
       ctx.stroke();
     }
     ctx.restore();
@@ -457,9 +436,10 @@ export function paintFace(config, expression = 'neutral', size = 512) {
     // Re-seated against the new mouth line (0.875): jaw/chin band, never up on
     // the cheekbones.
     // re-seated against the round-4 mouth line (0.815): jaw/chin band only
-    const spots = [[cx, S * 0.870, S * 0.108], [cx - S * 0.102, S * 0.836, S * 0.078],
-      [cx + S * 0.102, S * 0.836, S * 0.078], [cx - S * 0.150, S * 0.764, S * 0.062],
-      [cx + S * 0.150, S * 0.764, S * 0.062]];
+    const jw = S * L.mouthWF;
+    const spots = [[cx, mouthY + jw * 0.62, jw * 0.66], [cx - jw * 0.72, mouthY + jw * 0.36, jw * 0.50],
+      [cx + jw * 0.72, mouthY + jw * 0.36, jw * 0.50], [cx - jw * 1.02, mouthY - jw * 0.16, jw * 0.42],
+      [cx + jw * 1.02, mouthY - jw * 0.16, jw * 0.42]];
     for (const [sx, sy, sr] of spots) {
       const bg = ctx.createRadialGradient(sx, sy, 2, sx, sy, sr);
       bg.addColorStop(0, rgba(bc, 0.2));
@@ -470,11 +450,13 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   } else if (config.beard) {
     ctx.fillStyle = rgba(config.beardColor ?? hairC, 0.88);
     ctx.beginPath();
-    ctx.moveTo(cx - S * 0.172, S * 0.700);
-    ctx.quadraticCurveTo(cx - S * 0.176, S * 0.900, cx, S * 0.955);
-    ctx.quadraticCurveTo(cx + S * 0.176, S * 0.900, cx + S * 0.172, S * 0.700);
-    ctx.quadraticCurveTo(cx + S * 0.086, S * 0.800, cx, S * 0.812);
-    ctx.quadraticCurveTo(cx - S * 0.086, S * 0.800, cx - S * 0.172, S * 0.700);
+    const bw = S * L.mouthWF * 1.34, bTop = noseTipY + (mouthY - noseTipY) * 0.30;
+    const bBot = chinY + (chinY - mouthY) * 0.28;
+    ctx.moveTo(cx - bw, bTop);
+    ctx.quadraticCurveTo(cx - bw * 1.02, bBot * 0.94, cx, bBot);
+    ctx.quadraticCurveTo(cx + bw * 1.02, bBot * 0.94, cx + bw, bTop);
+    ctx.quadraticCurveTo(cx + bw * 0.50, mouthY + S * 0.010, cx, mouthY + S * 0.016);
+    ctx.quadraticCurveTo(cx - bw * 0.50, mouthY + S * 0.010, cx - bw, bTop);
     ctx.fill();
   }
 
@@ -489,7 +471,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
       if (d[i + 3] < 8) continue;
       const px = (i >> 2) % S, py = (i >> 2) / S;
       const h = Math.sin(px * 12.9898 + py * 78.233) * 43758.5453;
-      const a = ((h - Math.floor(h)) - 0.5) * 2.4;   // gentler (was 4) — clean Clair-Obscur skin at 4× close-up
+      const a = ((h - Math.floor(h)) - 0.5) * 1.5;   // v7: the sculpt carries the form; noise only breaks the plastic
       d[i] += a; d[i + 1] += a; d[i + 2] += a;
     }
     ctx.putImageData(nd, 0, 0);
@@ -504,7 +486,7 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // Mask centre moved DOWN with the feature stack (eye 0.480 → mouth 0.875) and
   // the opaque core widened, or the new low mouth would sit inside the feather
   // ramp and dissolve (grandma's "no mouth exists in any frame").
-  const mCx = cx, mCy = S * 0.625;
+  const mCx = cx, mCy = S * L.maskCY;
 
   // ── patch-edge vignette: darken the patch toward its border so the rim's
   // luminance matches the skull curving away into shadow. Without it the flat-lit
@@ -513,17 +495,17 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // Composited BEFORE the alpha feather so it shades the same skin the feather
   // then dissolves. ───────────────────────────────────────────────────────
   {
-    const eg = ctx.createRadialGradient(mCx, mCy, S * 0.30, mCx, mCy, S * 0.50);
+    const eg = ctx.createRadialGradient(mCx, mCy, S * L.maskR0 * 1.02, mCx, mCy, S * L.maskR1 * 1.02);
     eg.addColorStop(0, rgba(0x1a0f08, 0));
     eg.addColorStop(0.74, rgba(0x1a0f08, 0));
     // v6 round-4 — 0.30 was dropping the lower face ~15–20% darker from mid-cheek
     // to jaw on every character (LAW 3 shading note: windburn on Karen,
     // beard-shadow grime on Chad). 0.14 still seats the patch rim into the shaded
     // skull without painting a jaw band.
-    eg.addColorStop(1, rgba(0x140c06, 0.14));
+    eg.addColorStop(1, rgba(0x140c06, 0.09));
     ctx.fillStyle = eg;
     ctx.save();
-    ctx.translate(mCx, mCy); ctx.scale(1.04, 0.98); ctx.translate(-mCx, -mCy);
+    ctx.translate(mCx, mCy); ctx.scale(L.maskSX, L.maskSY); ctx.translate(-mCx, -mCy);
     ctx.fillRect(0, 0, S, S);
     ctx.restore();
   }
@@ -535,14 +517,14 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // Opaque core widened (0.30→0.335) and the horizontal scale opened (1.02→1.10)
   // so the face plate stays skin out to ≥75% of the frontal sphere instead of
   // dissolving into an inset oval (Grandma's mask-hole).
-  const mask = ctx.createRadialGradient(mCx, mCy, S * 0.335, mCx, mCy, S * 0.53);
+  const mask = ctx.createRadialGradient(mCx, mCy, S * L.maskR0, mCx, mCy, S * L.maskR1);
   mask.addColorStop(0, 'rgba(255,255,255,1)');
   mask.addColorStop(0.20, 'rgba(255,255,255,1)');
   mask.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = mask;
   ctx.save();
   ctx.translate(mCx, mCy);
-  ctx.scale(1.10, 0.96);
+  ctx.scale(L.maskSX, L.maskSY);
   ctx.translate(-mCx, -mCy);
   ctx.fillRect(0, 0, S, S);
   ctx.restore();
@@ -559,15 +541,20 @@ export function paintFace(config, expression = 'neutral', size = 512) {
 }
 
 // ── mouth shapes ──────────────────────────────────────────────────────
-function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
-  // v6 round-4 — "let the mouth read (its luminance delta vs skin is ~0 at 1080p
-  // combat framing)". More lip MASS + a darker seam is the only thing that
-  // survives the mip chain at fight distance.
-  const mw = (female ? 0.118 : 0.104) * S;
+function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false, mouthHalfW = null, mh = null) {
+  // v7 — the mouth half-width arrives PRE-CORRECTED for the conformal squeeze at
+  // the mouth row (the surface has turned ~28° away from the lens there, so a
+  // tile-space width authored by eye always measured narrow in world space).
+  // Corner-to-corner is 0.68R ≈ 34% of head width, which is human.
+  const mw = (mouthHalfW || (female ? 0.118 : 0.104) * S) * (female ? 1.04 : 0.98);
+  // `mh` is the conformally-corrected HALF-HEIGHT of the lip pair. Every vertical
+  // lip dimension below is expressed in it, so the mouth keeps its mass wherever
+  // the mouth row lands on the skull.
+  const LH = mh || S * 0.0568;
   const curve = E.mouthCurve * (S / 512);
   // philtrum shadow above the lip
-  ctx.fillStyle = rgba(0x2a1810, 0.07);
-  ctx.fillRect(cx - S * 0.012, noseTipY + S * 0.012, S * 0.024, mouthY - noseTipY - S * 0.016);
+  ctx.fillStyle = rgba(0x2a1810, 0.06);
+  ctx.fillRect(cx - mw * 0.11, noseTipY + LH * 0.20, mw * 0.22, (mouthY - noseTipY) - LH * 0.9);
 
   // Male lip alpha raised (0.62/0.68 → 0.82/0.86): Chad's mouth rendered as a
   // single thin dark line with no lip mass at fight framing.
@@ -576,22 +563,36 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
 
   if (E.mouth === 'grin' || E.mouth === 'open') {
     // open mouth: dark cavity + teeth + lips around it
-    const open = E.mouth === 'grin' ? S * 0.05 : S * 0.032;
-    const w = E.small ? mw * 0.55 : mw;
+    const open = (E.mouth === 'grin' ? LH * 1.30 : LH * 0.86);
+    const w = (E.small ? mw * 0.58 : mw * 0.94);
     ctx.fillStyle = '#3a1418';
     ctx.beginPath();
     ctx.ellipse(cx, mouthY + open * 0.2, w, open, 0, 0, Math.PI * 2);
     ctx.fill();
-    // upper teeth
-    ctx.fillStyle = '#f3efe6';
+    // upper teeth — v7: a real arc filling the top half of the cavity. At the v6
+    // fractions they occupied ~10% of the opening and the grin read as a black
+    // hole (karen expr-victory).
+    const cy2 = mouthY + open * 0.2;
+    ctx.save();
     ctx.beginPath();
-    ctx.moveTo(cx - w * 0.9, mouthY + open * 0.2 - open * 0.7);
-    ctx.quadraticCurveTo(cx, mouthY + open * 0.2 - open * 0.95, cx + w * 0.9, mouthY + open * 0.2 - open * 0.7);
-    ctx.quadraticCurveTo(cx, mouthY + open * 0.2 - open * 0.2, cx - w * 0.9, mouthY + open * 0.2 - open * 0.7);
+    ctx.ellipse(cx, cy2, w, open, 0, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.fillStyle = '#f4f0e7';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy2 - open * 0.86, w * 0.98, open * 0.82, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.strokeStyle = rgba(0x8a7b6a, 0.30);
+    ctx.lineWidth = Math.max(1, open * 0.05);
+    for (let i = -2; i <= 2; i++) {
+      ctx.beginPath();
+      ctx.moveTo(cx + i * w * 0.30, cy2 - open * 1.0);
+      ctx.lineTo(cx + i * w * 0.30, cy2 - open * 0.10);
+      ctx.stroke();
+    }
+    ctx.restore();
     // lip outline
-    ctx.strokeStyle = rgba(lipC, 0.85);
-    ctx.lineWidth = 0.012 * S;
+    ctx.strokeStyle = rgba(lipC, 0.88);
+    ctx.lineWidth = LH * 0.34;
     ctx.beginPath();
     ctx.ellipse(cx, mouthY + open * 0.2, w, open, 0, 0, Math.PI * 2);
     ctx.stroke();
@@ -602,11 +603,11 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
     // v6 — a WINCE, not a bared tooth-grid horror mask (item: andrew "cap the
     // tooth reveal"). A shorter, narrower clenched band with soft divisions and a
     // warm (not black) outline reads as a pained grimace without the skull grin.
-    const bw = mw * 1.35, bh = S * 0.022;
+    const bw = mw * 1.06, bh = LH * 0.88;
     ctx.fillStyle = '#e8e2d6';
     ctx.fillRect(cx - bw * 0.5, mouthY - bh * 0.5, bw, bh);
     ctx.strokeStyle = rgba(0x4a2a1c, 0.32);
-    ctx.lineWidth = 0.003 * S;
+    ctx.lineWidth = LH * 0.06;
     for (let i = -2; i <= 2; i++) {
       ctx.beginPath();
       ctx.moveTo(cx + i * bw * 0.2, mouthY - bh * 0.5);
@@ -615,7 +616,7 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
     }
     // lips framing the clench (warm), so it reads as a mouth, not a floating grid
     ctx.strokeStyle = rgba(lipC, 0.7);
-    ctx.lineWidth = 0.007 * S;
+    ctx.lineWidth = LH * 0.16;
     ctx.strokeRect(cx - bw * 0.5, mouthY - bh * 0.5, bw, bh);
     return;
   }
@@ -629,56 +630,48 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
   // with corner darkening and a sub-lip shelf — so ~4× vertical squash still
   // leaves a legible mouth. (Non-old faces keep the softer lip pair below.)
   if (old) {
-    const mwo = mw * 1.05;
+    const mwo = mw * 1.02;
     const dn = curve * 0.6;                         // faint downturn, expression-nudged
-    // High-CONTRAST lit lip pair + a hard dark seam. A near-black dark-mass mouth
-    // (the prior approach) vanished into grandma's shadowed, foreshortened lower
-    // face — invisible albedo-dark on dark skin. A LIT lip (warm vermilion) framed
-    // by a black seam keeps the mouth reading even when the chin falls into shadow.
-    // upper lip
+    // A LIT lip pair framed by a warm seam: an albedo-dark mouth vanishes into a
+    // shadowed, foreshortened elderly lower face. v7 rebuilds it in LH units so it
+    // keeps real vertical mass wherever the mouth row lands.
     ctx.fillStyle = rgba(lipC, 0.92);
     ctx.beginPath();
-    ctx.moveTo(cx - mwo, mouthY - S * 0.002 + dn);
-    ctx.quadraticCurveTo(cx - mwo * 0.45, mouthY - S * 0.017, cx, mouthY - S * 0.010);
-    ctx.quadraticCurveTo(cx + mwo * 0.45, mouthY - S * 0.017, cx + mwo, mouthY - S * 0.002 + dn);
-    ctx.quadraticCurveTo(cx, mouthY + S * 0.003, cx - mwo, mouthY - S * 0.002 + dn);
+    ctx.moveTo(cx - mwo, mouthY + dn);
+    ctx.quadraticCurveTo(cx - mwo * 0.45, mouthY - LH * 0.80, cx, mouthY - LH * 0.42);
+    ctx.quadraticCurveTo(cx + mwo * 0.45, mouthY - LH * 0.80, cx + mwo, mouthY + dn);
+    ctx.quadraticCurveTo(cx, mouthY + LH * 0.10, cx - mwo, mouthY + dn);
     ctx.fill();
-    // lower lip — a lighter warm catch so the pair has volume
     ctx.fillStyle = rgba(lipC, 0.98);
     ctx.beginPath();
-    ctx.moveTo(cx - mwo * 0.86, mouthY + S * 0.002 + dn);
-    ctx.quadraticCurveTo(cx, mouthY + S * 0.026, cx + mwo * 0.86, mouthY + S * 0.002 + dn);
-    ctx.quadraticCurveTo(cx, mouthY + S * 0.006, cx - mwo * 0.86, mouthY + S * 0.002 + dn);
+    ctx.moveTo(cx - mwo * 0.88, mouthY + LH * 0.06 + dn);
+    ctx.quadraticCurveTo(cx, mouthY + LH * 0.86, cx + mwo * 0.88, mouthY + LH * 0.06 + dn);
+    ctx.quadraticCurveTo(cx, mouthY + LH * 0.20, cx - mwo * 0.88, mouthY + LH * 0.06 + dn);
     ctx.fill();
-    // lower-lip specular sliver so it catches the front fill
-    ctx.fillStyle = rgba(0xffd8c8, 0.5);
+    ctx.fillStyle = rgba(0xffd8c8, 0.42);
     ctx.beginPath();
-    ctx.ellipse(cx, mouthY + S * 0.012, mwo * 0.34, S * 0.006, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, mouthY + LH * 0.44, mwo * 0.34, LH * 0.14, 0, 0, Math.PI * 2);
     ctx.fill();
-    // central seam — v6: softened from a near-black 0.98 gash to a warm brown
-    // line so the elderly mouth reads gentle, not clamped grim.
-    ctx.strokeStyle = rgba(0x5a2e26, 0.70);
-    ctx.lineWidth = 0.011 * S;
+    ctx.strokeStyle = rgba(0x5a2e26, 0.66);
+    ctx.lineWidth = LH * 0.16;
     ctx.lineCap = 'round';
     ctx.beginPath();
     ctx.moveTo(cx - mwo, mouthY + dn);
-    ctx.quadraticCurveTo(cx, mouthY + S * 0.004 + curve, cx + mwo, mouthY + dn);
+    ctx.quadraticCurveTo(cx, mouthY + LH * 0.10 + curve, cx + mwo, mouthY + dn);
     ctx.stroke();
-    // corner accents — soft, just enough to give the mouth ends (v6: 0.9→0.45)
     for (const s of [-1, 1]) {
       const cxs = cx + s * mwo * 0.98;
       const cg = ctx.createRadialGradient(cxs, mouthY + dn, 1, cxs, mouthY + dn, mwo * 0.30);
-      cg.addColorStop(0, rgba(0x3a1c18, 0.45));
+      cg.addColorStop(0, rgba(0x3a1c18, 0.40));
       cg.addColorStop(1, rgba(0x3a1c18, 0));
       ctx.fillStyle = cg;
-      ctx.fillRect(cxs - mwo * 0.4, mouthY - S * 0.024, mwo * 0.8, S * 0.05);
+      ctx.fillRect(cxs - mwo * 0.4, mouthY - LH * 0.6, mwo * 0.8, LH * 1.4);
     }
-    // sub-lip / chin shelf shadow — a soft crescent (v6: 0.42→0.24, no gouge)
-    const slo = ctx.createRadialGradient(cx, mouthY + S * 0.034, S * 0.006, cx, mouthY + S * 0.034, S * 0.085);
-    slo.addColorStop(0, rgba(0x2a1810, 0.24));
+    const slo = ctx.createRadialGradient(cx, mouthY + LH * 1.1, LH * 0.1, cx, mouthY + LH * 1.1, mwo * 0.7);
+    slo.addColorStop(0, rgba(0x2a1810, 0.20));
     slo.addColorStop(1, rgba(0x2a1810, 0));
     ctx.fillStyle = slo;
-    ctx.fillRect(cx - S * 0.095, mouthY + S * 0.010, S * 0.19, S * 0.095);
+    ctx.fillRect(cx - mwo, mouthY + LH * 0.4, mwo * 2, mwo * 1.0);
     return;
   }
 
@@ -689,18 +682,18 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
   ctx.fillStyle = rgba(lipC, upperA);
   ctx.beginPath();
   ctx.moveTo(cx - mw, mouthY - 1 + asymL);
-  ctx.quadraticCurveTo(cx - mw * 0.45, mouthY - S * 0.012, cx - 3, mouthY - S * 0.006);
-  ctx.quadraticCurveTo(cx, mouthY - S * 0.01, cx + 3, mouthY - S * 0.006);
-  ctx.quadraticCurveTo(cx + mw * 0.45, mouthY - S * 0.012, cx + mw, mouthY - 1 + asymR);
+  ctx.quadraticCurveTo(cx - mw * 0.45, mouthY - LH * 0.86, cx - mw * 0.10, mouthY - LH * 0.46);
+  ctx.quadraticCurveTo(cx, mouthY - LH * 0.70, cx + mw * 0.10, mouthY - LH * 0.46);
+  ctx.quadraticCurveTo(cx + mw * 0.45, mouthY - LH * 0.86, cx + mw, mouthY - 1 + asymR);
   ctx.quadraticCurveTo(cx, mouthY - 1, cx - mw, mouthY - 1 + asymL);
   ctx.fill();
   // lower lip
   ctx.fillStyle = rgba(lipC, lowerA);
-  const drop = (E.mouth === 'press') ? S * 0.012 : (female ? S * 0.029 : S * 0.021);
+  const drop = (E.mouth === 'press') ? LH * 0.55 : (female ? LH * 1.10 : LH * 0.94);
   ctx.beginPath();
   ctx.moveTo(cx - mw + 5, mouthY + asymL);
   ctx.quadraticCurveTo(cx, mouthY + drop, cx + mw - 5, mouthY + asymR);
-  ctx.quadraticCurveTo(cx, mouthY + S * 0.004, cx - mw + 5, mouthY + asymL);
+  ctx.quadraticCurveTo(cx, mouthY + LH * 0.10, cx - mw + 5, mouthY + asymL);
   ctx.fill();
   // lip seam (curved per expression) — v6: softened to a warm, lighter line so
   // the closed mouth reads relaxed, not a hard grim slot cut into the face.
@@ -709,8 +702,8 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
   // rendered as a brown line (rider note 2 asks for the red lip to read). Thinner
   // and lighter on female lips; men keep the heavier seam that made their mouths
   // legible at framing.
-  ctx.strokeStyle = rgba(0x54291f, female ? 0.58 : 0.74);
-  ctx.lineWidth = (female ? 0.0068 : 0.0095) * S;
+  ctx.strokeStyle = rgba(0x54291f, female ? 0.52 : 0.66);
+  ctx.lineWidth = LH * (female ? 0.13 : 0.17);
   ctx.lineCap = 'round';
   ctx.beginPath();
   ctx.moveTo(cx - mw, mouthY - 0.5 + asymL);
@@ -722,17 +715,17 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
   ctx.lineWidth = 0.005 * S;
   ctx.beginPath();
   ctx.moveTo(cx - mw, mouthY - 1 + asymL);
-  ctx.quadraticCurveTo(cx - mw * 0.45, mouthY - S * 0.014, cx, mouthY - S * 0.008);
-  ctx.quadraticCurveTo(cx + mw * 0.45, mouthY - S * 0.014, cx + mw, mouthY - 1 + asymR);
+  ctx.quadraticCurveTo(cx - mw * 0.45, mouthY - LH * 0.98, cx, mouthY - LH * 0.58);
+  ctx.quadraticCurveTo(cx + mw * 0.45, mouthY - LH * 0.98, cx + mw, mouthY - 1 + asymR);
   ctx.stroke();
   ctx.beginPath();
   ctx.moveTo(cx - mw + 5, mouthY + asymL);
-  ctx.quadraticCurveTo(cx, mouthY + drop + S * 0.004, cx + mw - 5, mouthY + asymR);
+  ctx.quadraticCurveTo(cx, mouthY + drop + LH * 0.10, cx + mw - 5, mouthY + asymR);
   ctx.stroke();
   // lower-lip highlight
   ctx.fillStyle = rgba(0xffffff, female ? 0.26 : 0.14);
   ctx.beginPath();
-  ctx.ellipse(cx, mouthY + drop * 0.55, mw * 0.4, (female ? S * 0.006 : S * 0.0045), 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, mouthY + drop * 0.55, mw * 0.4, LH * (female ? 0.15 : 0.11), 0, 0, Math.PI * 2);
   ctx.fill();
   // mouth-corner accent — a small soft bead so the mouth has ends (v6: halved
   // from 0.55; a heavy corner bead reads as a downturned scowl on the neutral).
@@ -746,11 +739,11 @@ function drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old = false) {
   }
   // sub-lip / chin shelf shadow — a faint crescent so the lower face reads as a
   // jaw with a chin (v6: eased so it never becomes a dark gouge).
-  const sl = ctx.createRadialGradient(cx, mouthY + drop + S * 0.03, S * 0.006, cx, mouthY + drop + S * 0.03, S * 0.07);
+  const sl = ctx.createRadialGradient(cx, mouthY + drop + LH * 0.5, LH * 0.1, cx, mouthY + drop + LH * 0.5, mw * 0.62);
   sl.addColorStop(0, rgba(0x2a1810, 0.13));
   sl.addColorStop(1, rgba(0x2a1810, 0));
   ctx.fillStyle = sl;
-  ctx.fillRect(cx - S * 0.09, mouthY + drop, S * 0.18, S * 0.09);
+  ctx.fillRect(cx - mw, mouthY + drop, mw * 2, mw * 1.1);
 }
 
 // All expressions for a character, pre-painted (texture-swap expressions).

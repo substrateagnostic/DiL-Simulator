@@ -136,7 +136,10 @@ export const CHARACTER_CONFIGS = {
     // THE NECK (producer: "too much neck and none at all"). A narrower column
     // (0.92→0.76) plus 0.024 of extra length gives a clear, correctly-proportioned
     // lit taper between jaw and collar instead of a short wide skin slab.
-    neckScale: 0.76, neckExtra: 0.046,
+    // v7 — 0.76/0.046 measured a 1.59-head-radius column at 0.42R wide: a stalk
+    // (karen r9). The v7 neck is solved to `neckH` of exposed column on every
+    // build, so she only needs a hair of extra length and a normal width.
+    neckScale: 0.92, neckExtra: 0.010,
     // The pink blazer used to terminate exactly at the leg-split Y with zero hem
     // relief — a pink leotard over leggings. Now a real hem 0.07 below the hip.
     jacketHem: 0.07, necklineWide: true,
@@ -164,7 +167,9 @@ export const CHARACTER_CONFIGS = {
     polo: true,            // knit collar + placket, so the garment CLASS reads as a polo
     shortSleeve: true,     // red polo w/ BARE muscular forearms (was red long sleeves)
     beard: 'stubble', beardColor: 0x55452c, // portrait stubble (deeper than 0x6a5236)
-    widthScale: 1.06, heightScale: 1.06, headScale: 1.0,
+    // v7 — headScale tracks heightScale: at 1.0 against a 1.06 body he measured
+    // 7.29 heads (LAW 1 caps at 7.0) and the head read undersized on the frame.
+    widthScale: 1.06, heightScale: 1.06, headScale: 1.06,
     // v5 face/proportion fields. Round-4: chin 1.08→1.00 and jaw 0.98→0.94 —
     // the nose-to-chin span measured ~45% of the skull, outside LAW 4's ±15% band
     // ("shorten the jaw shell ~8%"). The eye line rises back toward 50% with it.
@@ -192,7 +197,10 @@ export const CHARACTER_CONFIGS = {
     // Producer ruling: she may stay a touch petite (~5.5–6 heads) but her FACE
     // must go fully human. heightScale 0.78 measured ≈0.86 of Karen, so the extra
     // 12% comes out of the LEGS (legScale) — the torso/head keep their mass.
-    heightScale: 0.80, legScale: 0.86, hunch: 0.12, widthScale: 1.10, headScale: 1.10,
+    // v7 — headScale 1.10 measured 4.96 heads against the producer's 5.5–6
+    // exception for her; 0.95 lands 5.59 and still reads a full head bigger,
+    // proportionally, than the rest of the cast.
+    heightScale: 0.80, legScale: 0.86, hunch: 0.12, widthScale: 1.10, headScale: 0.95,
     // v5 face/proportion fields — elderly read
     gender: 'f', age: 'old', eyeColor: 0x4a3a2a, jaw: 0.92, glasses: 'reading',
     lipColor: 0xb0645c, browColor: 0x8a8078,
@@ -315,7 +323,10 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_DARK,
     hairStyle: 'short',
     accessories: [],
-    widthScale: 1.28, heightScale: 1.08, headScale: 0.95,
+    // v7 — headScale 0.95 against a 1.08 body measured 7.75 heads (LAW 1 caps at
+    // 7.0): a pin head on a slab. 1.08 tracks the body; his bulk lives in
+    // widthScale, which is where a bouncer's bulk belongs.
+    widthScale: 1.28, heightScale: 1.08, headScale: 1.08,
     // v5 face — broad, strong square jaw
     gender: 'm', eyeColor: 0x2e1d12, jaw: 0.92, chin: 1.06,
   },

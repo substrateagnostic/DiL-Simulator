@@ -72,14 +72,39 @@ export const CHAR = {
   ARM_HEIGHT: 0.45,
   TOTAL_HEIGHT: 1.35,
 
-  // v6 body proportions — heroic-natural 6.5–7-head stylized adult (CHARACTER
-  // BIBLE LAW 1). The head SHRINKS and the figure lengthens vs v5's lumpy-toddler
-  // ~5.8 heads. legLength is the hip-pivot height; the animator seats on it
-  // (SEAT_Y). Standing crown ≈ 1.62; ÷ head-vert (≈2.2R≈0.23) ≈ 7 heads.
-  V5_HEAD_R: 0.104,   // v5 0.122 → −15% (head vert ≈ 2.2R ≈ 0.23)
-  V5_LEG_LENGTH: 0.78, // v5 0.70 → longer legs raise the figure
-  V5_TORSO_H: 0.50,   // v5 0.47
-  V5_NECK_H: 0.090,   // v5 0.075 → neck is VISIBLE, never sunk in the collar
+  // v7 body proportions — heroic-natural 6.5–7-head stylized adult (CHARACTER
+  // BIBLE LAW 1). legLength is the hip-pivot height; the animator seats on it
+  // (SEAT_Y = 0.44, unchanged).
+  //
+  // ── THE V7 HEAD RE-BASE (the "football head" fix) ────────────────────────
+  // v6 ran the skull as a sphere of radius R eased 1.05× above the equator and
+  // COMPRESSED 0.80× below it. Measured, that is 2.00R wide × 1.85R tall —
+  // width/height 1.081, i.e. the head was literally WIDER THAN TALL. A human
+  // head is ~0.72–0.75. That single number is the producer's "faces are
+  // vertically squished — football heads."
+  //
+  // v7 re-bases the dial: V7_HEAD_R is the skull HALF-WIDTH (x), and the skull
+  // is an ellipsoid V7_SKULL_UP/DOWN tall, so
+  //     head height = R × (UP + DOWN) = 2.70R      width/height = 2/2.70 = 0.741
+  // and, because UP === DOWN, the equator IS the 50% line — the eye line lands
+  // at 50% of skull height BY CONSTRUCTION instead of being re-solved each round.
+  //
+  // Head count falls out of it: crown = legLength + torsoH + neckH + 2.70R, so
+  //     6.93 heads = (1.37 + 0.2309) / 0.2309   with R = 0.0855.
+  // (v6 measured 8.18 heads on Andrew — a tiny head on a long body.)
+  V7_HEAD_R: 0.0855,       // skull HALF-WIDTH. head vert = 2.70R ≈ 0.231
+  V7_SKULL_UP: 1.35,       // crown  = +1.35R
+  V7_SKULL_DOWN: 1.35,     // chin   = −1.35R
+  V7_SKULL_FRONT: 1.02,    // brow-plane front z
+  V7_SKULL_BACK: 1.14,     // occiput
+  V5_HEAD_R: 0.0855,       // legacy alias — same number, read by CharacterBuilder
+  V5_LEG_LENGTH: 0.78,
+  V5_TORSO_H: 0.50,
+  // v7 — 0.090 left 0.94R of bare column above the garment (0.35 head-heights).
+  // Measured against a human (chin→collar ≈ 0.25 head-heights) that is ~1.4×, and
+  // it is what makes the arena close-ups read stalk-necked. 0.072 is 0.30
+  // head-heights: still plainly VISIBLE (the v6 note stands), no longer a stalk.
+  V5_NECK_H: 0.072,
 };
 
 // Animation
