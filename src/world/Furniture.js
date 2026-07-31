@@ -176,6 +176,10 @@ export const Furniture = {
     const base = new THREE.Mesh(baseGeo, Materials.monitor());
     base.position.y = 0.74;
     group.add(base);
+    // Tag the ones that whisper so Room can hand their tiles to
+    // ExplorationState — the easter egg gets one Andrew thought the first
+    // time he stands next to it, which turns noise into evidence.
+    if (variant === 'whisper') group.userData.whisper = true;
     return group;
   },
 

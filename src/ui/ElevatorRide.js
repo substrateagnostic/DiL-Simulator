@@ -34,6 +34,7 @@ function _build() {
     <div class="elev-door elev-door-r"></div>
     <div class="elev-seam"></div>
     <div class="elev-led"><span class="elev-arrow"></span><span class="elev-floor"></span></div>
+    <div class="elev-call"><button type="button" class="elev-13">13</button></div>
   `;
   const style = document.createElement('style');
   style.textContent = `
@@ -83,6 +84,30 @@ function _build() {
     }
     #elevator-ride.closed .elev-led { opacity: 1; }
     .elev-arrow { margin-right: 14px; }
+    /* The 13 button. Only mounted once the Quiet Floor has found you once —
+       after that it is a floor Andrew can ASK for, which is the whole point
+       of proposal 4. Sits under the LED like a real car's call panel. */
+    .elev-call {
+      position: absolute; top: 8%; left: 50%;
+      transform: translate(-50%, 86px);
+      opacity: 0; transition: opacity 0.25s 0.15s;
+      pointer-events: none;
+    }
+    #elevator-ride.closed .elev-call.offered { opacity: 1; pointer-events: auto; }
+    .elev-13 {
+      width: 58px; height: 58px; border-radius: 50%;
+      background: #14100b; border: 3px solid #4d545b;
+      font-family: 'Press Start 2P', monospace; font-size: 16px;
+      color: #6b5a3a; cursor: pointer; padding: 0;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 2px 8px rgba(0,0,0,0.5);
+      transition: color 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .elev-13:hover { color: #ff9a2a; border-color: #8b939b; }
+    .elev-13.lit {
+      color: #ff9a2a; border-color: #ff9a2a;
+      text-shadow: 0 0 12px rgba(255, 154, 42, 0.8);
+      box-shadow: inset 0 0 14px rgba(255, 154, 42, 0.35), 0 0 18px rgba(255, 154, 42, 0.45);
+    }
   `;
   el.appendChild(style);
   document.body.appendChild(el);
@@ -116,19 +141,50 @@ export const ElevatorRide = {
 
   // Close the doors and tick through floor labels. Resolves when the
   // ride is "arrived" (doors still closed — swap the room now).
-  async close(labels, goingUp) {
+  //
+  // `opts.offer13` mounts the Quiet Floor call button in the car. If the
+  // player presses it the ride re-routes: the tick stops, the LED climbs to
+  // 13, and `{ chose13: true }` comes back so the caller can change the
+  // destination room. Everything else about the ride is unchanged.
+  async close(labels, goingUp, opts = {}) {
     if (!el) _build();
     el.style.display = 'block';
     el.querySelector('.elev-arrow').textContent = goingUp ? '▲' : '▼';
     const floorEl = el.querySelector('.elev-floor');
+    const callEl = el.querySelector('.elev-call');
+    const btn13 = el.querySelector('.elev-13');
     floorEl.textContent = labels[0];
+    btn13.classList.remove('lit');
+    callEl.classList.toggle('offered', !!opts.offer13);
     // Doors shut
     requestAnimationFrame(() => el.classList.add('closed'));
     await new Promise(r => setTimeout(r, 420));
     AudioManager.playSfx('door');
     // Tick the floors (skippable)
     let skipped = false;
+    let chose13 = false;
     const skip = () => { skipped = true; };
+    const press13 = () => {
+      if (chose13) return;
+      chose13 = true;
+      skipped = true;
+      btn13.classList.add('lit');
+      // 13 is above every room on this shaft, so the car is going up now
+      // whichever way it was headed.
+      el.querySelector('.elev-arrow').textContent = '▲';
+      AudioManager.playSfx('confirm');
+    };
+    if (opts.offer13) {
+      // The car waits a beat with the panel lit before it starts moving. The
+      // lobby shaft is a two-label ride (G→1); without this hold the 13 button
+      // would be on screen for about half a second, which is not an offer.
+      // Keyboard skip stays unregistered until the hold is over so a held
+      // movement key can't eat the window.
+      btn13.addEventListener('click', press13);
+      for (let t = 0; t < 18 && !chose13; t++) {
+        await new Promise(r => setTimeout(r, 100));
+      }
+    }
     window.addEventListener('keydown', skip, { once: true });
     for (let i = 1; i < labels.length && !skipped; i++) {
       await new Promise(r => setTimeout(r, 340));
@@ -136,11 +192,25 @@ export const ElevatorRide = {
       AudioManager.playSfx('cursor');
     }
     window.removeEventListener('keydown', skip);
-    // However the ride ended (ticked or skipped), the LED must show where
-    // the doors are about to open — skipping used to strand it mid-shaft.
-    floorEl.textContent = labels[labels.length - 1];
+    if (opts.offer13) btn13.removeEventListener('click', press13);
+    if (chose13) {
+      // Asked-for floors get the climb the detour never gives you.
+      const from = parseInt(labels[0], 10);
+      const start = Number.isNaN(from) ? 1 : from;
+      for (let f = Math.min(start + 1, 13); f <= 13; f++) {
+        await new Promise(r => setTimeout(r, 90));
+        floorEl.textContent = floorLabel(f);
+      }
+      floorEl.textContent = floorLabel(13);
+    } else {
+      // However the ride ended (ticked or skipped), the LED must show where
+      // the doors are about to open — skipping used to strand it mid-shaft.
+      floorEl.textContent = labels[labels.length - 1];
+    }
+    callEl.classList.remove('offered');
     await new Promise(r => setTimeout(r, 300));
     AudioManager.playSfx('confirm'); // ding.
+    return { chose13 };
   },
 
   // Part the doors onto the (already swapped) room.

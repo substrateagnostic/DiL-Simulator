@@ -93,4 +93,12 @@ export const STORY_THOUGHTS = {
   ross_speech_ready: "Skip is going to be sincere. In public. The apocalypse has officially begun.",
   grandma_ally: "Grandma Henderson brought cookies to a corporate restructuring. This is either the bravest or the most Midwestern thing I've ever seen.",
   algorithm_defeated: "I told a computer that trust matters. And I meant it. And it broke.",
+  // Name the Pattern (proposal 3). The 4% whisper monitor stops being noise the
+  // first time Andrew stands next to one — set by ExplorationState._checkWhisperMonitor.
+  whisper_monitor_seen: "A monitor is showing nothing but the word REMEMBERED. Probably a screensaver. Almost certainly a screensaver.",
+  // The printer's real payoff: the building has been keeping its own archive.
+  // Keyed to Network Ghost completion (the archive reveal, dialogs `alex_printer_quest`),
+  // NOT `printer_quest_done` — that is the Act-1/2 toner fetch, which fires acts
+  // before Andrew has heard of a port or an archive.
+  quest_network_ghost_complete: "The most reliable employee in this building was plugged into the wrong port the entire time.",
 };

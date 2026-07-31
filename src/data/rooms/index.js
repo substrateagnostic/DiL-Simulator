@@ -457,7 +457,13 @@ export const ROOMS = {
       // The Algorithm is already running projections") — it only fires
       // once the Regional Director is actually defeated, never at Act 3
       // (logic-sweep MAJORs #9/#15). Acts 3-6 use generic act routing.
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'regional_director_defeated' } },
+      // Split across the Board Meeting window: once Skip has written the
+      // speech (`ross_speech_ready`) he waits in the Board Room, and returns
+      // to this office when `board_meeting_closed` derives (meeting held, or
+      // act6_complete). Two entries instead of one so he is never in two
+      // rooms at the same time.
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'ross_speech_ready' } },
+      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'board_meeting_closed', notFlag: 'regional_director_defeated' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'regional_director_defeated', notFlag: 'ross_returned_seen' } },
       { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen' } },
     ],
@@ -535,7 +541,10 @@ export const ROOMS = {
       { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
       // Mirrors ross_office: ross_returned is gated on the Regional
       // Director's defeat (Act 7), not act2_complete (MAJORs #9/#15)
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'regional_director_defeated' } },
+      // Mirrors ross_office: split across the Board Meeting window so Skip
+      // is never in this office and the Board Room simultaneously.
+      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'ross_speech_ready' } },
+      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'board_meeting_closed', notFlag: 'regional_director_defeated' } },
       { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'regional_director_defeated', notFlag: 'ross_returned_seen' } },
       { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen' } },
     ],
@@ -1185,6 +1194,12 @@ export const ROOMS = {
       // _refreshStoryProgress; logic-sweep MAJOR #7)
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete', notFlag: 'act6_ready' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act6',  movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act6_ready', notFlag: 'has_rolex' } },
+      // He does not leave when the watch does. Handing over the Rolex used to
+      // delete him from the Archive — the room's occupant vanishing exactly as
+      // the story peaks, and his ledger mission stranded on the garage NPC
+      // alone. No dialogId: routing gives him the riddles, the ledger mission,
+      // Dave, the pattern, and small talk, in that order (proposal 2).
+      { id: 'janitor', x: 5, z: 7, facing: 0, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'has_rolex' } },
     ],
     exits: [
       // SOUTH exit -> Stairwell
@@ -1399,6 +1414,22 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'rachel', x: 8, z: 2, facing: Math.PI, movement: { type: 'pace', distance: 3, axis: 'x', speed: 1.2 }, condition: { flag: 'act4_complete', notFlag: 'act5_complete' } },
+
+      // ── THE BOARD MEETING (Act 6, optional set-piece) ──────────────────────
+      // Skip is the entry point: talking to him convenes the meeting
+      // (`board_meeting`). The allies stand with him ONLY if the player
+      // rallied them — the scene's spine runs with zero of them present.
+      // Every entry clears on `board_meeting_closed`, a derived flag set in
+      // ExplorationState._refreshStoryProgress() when the meeting is held OR
+      // when act6_complete fires, so nobody is left standing in here during
+      // the penthouse ascent. Skip's office entries are split on the same
+      // flag pair so he is never in two rooms at once.
+      { id: 'ross',    x: 7,  z: 9, facing: 0, movement: { type: 'pace', distance: 1.5, axis: 'x' }, dialogId: 'board_meeting',         condition: { flag: 'ross_speech_ready',   notFlag: 'board_meeting_closed' } },
+      { id: 'diane',   x: 4,  z: 8, facing: 0,                                                      dialogId: 'board_meeting_diane',   condition: { flag: 'diane_act6_rallied',  notFlag: 'board_meeting_closed' } },
+      { id: 'intern',  x: 5,  z: 9, facing: 0, movement: { type: 'wander', radius: 1 },             dialogId: 'board_meeting_intern',  condition: { flag: 'intern_act6_rallied', notFlag: 'board_meeting_closed' } },
+      { id: 'isaiah',  x: 10, z: 8, facing: 0,                                                      dialogId: 'board_meeting_isaiah',  condition: { flag: 'isaiah_evidence',     notFlag: 'board_meeting_closed' } },
+      { id: 'janet',   x: 11, z: 9, facing: 0,                                                      dialogId: 'board_meeting_janet',   condition: { flag: 'janet_act6_rallied',  notFlag: 'board_meeting_closed' } },
+      { id: 'grandma', x: 13, z: 8, facing: 0,                                                      dialogId: 'board_meeting_grandma', condition: { flag: 'grandma_ally',        notFlag: 'board_meeting_closed' } },
     ],
     exits: [
       // SOUTH exit -> Executive Floor

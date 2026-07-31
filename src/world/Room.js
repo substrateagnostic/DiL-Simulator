@@ -438,6 +438,7 @@ export class Room {
     this.group = null; // Alias for scene, used by RoomManager
     this.tileMap = null;
     this._builtNPCData = null;
+    this.whisperSpots = [];
   }
 
   // ----------------------------------------------------------
@@ -448,6 +449,8 @@ export class Room {
 
     this.scene = new THREE.Group();
     this.scene.name = `room_${this.data.id}`;
+    // Tiles of any monitor that rolled the REMEMBERED texture this build.
+    this.whisperSpots = [];
 
     // Create the TileMap
     this.tileMap = new TileMap(width, height);
@@ -1317,6 +1320,10 @@ export class Room {
       obj.name = `${type}_${x}_${z}`;
       // Tag for Engine.applyRoomFX (contact-shadow blobs under furniture)
       obj.userData.furnitureType = type;
+      // A monitor that rolled the whisper texture (REMEMBERED). Record where
+      // it stands so ExplorationState can fire Andrew's one-time thought when
+      // he walks past one.
+      if (obj.userData.whisper) this.whisperSpots.push({ x, z });
       this.scene.add(obj);
 
       // Block tiles based on footprint

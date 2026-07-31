@@ -288,6 +288,14 @@ export class ExplorationState {
         if (key === 'diane_act6_rallied') {
           this._showToast("Diane rallied! Her documents are in the HR filing cabinet.", 'objective');
         }
+        // Board Meeting set-piece — optional, and easy to walk past, so it
+        // gets a toast on open and on close.
+        if (key === 'ross_speech_ready') {
+          this._showToast('Skip is waiting in the Board Room. The board sits at 4.', 'objective');
+        }
+        if (key === 'board_meeting_held') {
+          this._showToast('The board has been heard from. The decision was made upstairs.', 'objective');
+        }
         if (key === 'act6_complete') {
           this._showToast('The Penthouse awaits. Face The Algorithm.', 'objective');
         }
@@ -789,26 +797,41 @@ export class ExplorationState {
       // With the doors shut the building is the only thing left to look at —
       // hold the blueprint shell glowing for the length of the trip.
       Engine.holdBuildingShell(true);
-      // The Quiet Floor: late in the story, at night, the elevator
-      // sometimes stops where it isn't supposed to. Once per session.
+      // The Quiet Floor: late in the story, at night, the elevator stops
+      // where it isn't supposed to. This used to be a 20% roll once per
+      // session, which meant most players finished the game without ever
+      // seeing the best-written scene in it. It is now GUARANTEED on the
+      // first qualifying ride (proposal 4), and once Andrew has been there,
+      // the car offers him a 13 button — the floor stops being an accident
+      // and becomes a place he can choose.
       // Deliberately still limited to the lobby↔garage shaft even though
       // every shaft now rides: the executive elevator is ridden during
-      // story-critical beats and a random detour there would read as a bug
+      // story-critical beats and a detour there would read as a bug
       // rather than a chill. (Widen this pair list if the producer wants
       // the whole tower to misbehave.)
       const act = this.player.actIndex || 0;
       const quietShaft = (currentRoom === 'parking_garage' && targetRoom === 'reception')
         || (currentRoom === 'reception' && targetRoom === 'parking_garage');
-      if (quietShaft && act >= 5 && !ExplorationState._quietFloorVisited
-        && Math.random() < 0.2) {
-        ExplorationState._quietFloorVisited = true;
+      // `floor_13_sat` is the legacy signal: saves written before the guarantee
+      // landed have it set (the old 20% roll) but no `floor_13_found`. Reading
+      // both stops a live save being detoured a second time — and being told
+      // "I pressed the button this time" when it was the building's idea again.
+      const found13 = this.player.getFlag('floor_13_found') || this.player.getFlag('floor_13_sat');
+      if (quietShaft && act >= 5 && !found13) {
         const detour = ElevatorRide.labelsFor(currentRoom, 'floor_13');
         await ElevatorRide.close(detour.labels, detour.goingUp);
-        this._showToast('The elevator pauses. The doors open anyway.', 'info');
+        this._showToast('The elevator settles between floors. The doors open to a number that wasn\'t pressed.', 'info');
         targetRoom = 'floor_13';
         spawnX = 8; spawnZ = 8;
       } else {
-        await ElevatorRide.close(ride.labels, ride.goingUp);
+        const res = await ElevatorRide.close(ride.labels, ride.goingUp, {
+          offer13: quietShaft && found13,
+        });
+        if (res?.chose13) {
+          this._showToast('The elevator arrives at 13 without comment. For once, it didn\'t have to volunteer.', 'info');
+          targetRoom = 'floor_13';
+          spawnX = 8; spawnZ = 8;
+        }
       }
     } else if (goingDown) {
       await this.transition.wipeDownOut(0.4);
@@ -869,6 +892,12 @@ export class ExplorationState {
       await this.transition.fadeIn(0.3);
     }
     this.paused = false;
+    // The Quiet Floor remembers being found. Set after the doors have parted
+    // so the flag-set listener can't touch the HUD mid-transition; from here
+    // on the car offers a 13 button on the lobby shaft.
+    if (this.player.currentRoom === 'floor_13' && !this.player.getFlag('floor_13_found')) {
+      this.player.setFlag('floor_13_found', true);
+    }
     this._autoSave(false);
   }
 
@@ -1952,6 +1981,17 @@ export class ExplorationState {
       return 'janitor_dave';
     }
 
+    // Name the Pattern (proposal 3). Andrew has just handed back the ledger
+    // where every entry ends REMEMBERED — the same word that shows up on 4%
+    // of the monitors, on the label taped to Rack 7, and in what the printer
+    // said before it powered down. The Janitor points at the shape. Once.
+    if (id === 'janitor'
+        && this.player.getFlag('janitor_names_complete')
+        && !this.player.getFlag('read_janitor_pattern')
+        && DIALOGS.janitor_pattern) {
+      return 'janitor_pattern';
+    }
+
     // The Janitor never falls through to generic act routing — his act3/
     // act4/act6 story beats are served ONLY by the gated Archive entries
     // (explicit dialogIds, security_guard → act3 → needs_ross → act4
@@ -2260,13 +2300,19 @@ export class ExplorationState {
       const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
       const rallied = allyFlags.length - missingAllies.length;
       const evidence = evidenceFlags.length - missingEvidence.length;
+      // Optional-but-unmissable nudge toward the Board Meeting set-piece.
+      // Appears the moment Skip has a speech and disappears once the meeting
+      // is held (or the player ascends). Never gates anything.
+      const boardNudge = (this.player.getFlag('ross_speech_ready') && !this.player.getFlag('board_meeting_closed'))
+        ? '<br>Optional: the board sits at 4 — Skip is waiting in the Board Room'
+        : '';
       if (rallied < 5 || evidence < 2) {
         const lines = [`Prepare for the finale (${rallied}/5 allies, ${evidence}/2 evidence)`];
         if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
         if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
-        return lines.join('<br>');
+        return lines.join('<br>') + boardNudge;
       }
-      return 'Get the Janitor\'s Rolex';
+      return 'Get the Janitor\'s Rolex' + boardNudge;
     }
 
     // Act 5
@@ -2420,6 +2466,19 @@ export class ExplorationState {
       !this.player.getFlag('act6_ready')
     ) {
       this.player.setFlag('act6_ready', true);
+    }
+
+    // The Board Meeting (Act 6 set-piece) closes when it has been held, or
+    // when the player leaves for the Penthouse without holding it. Derived
+    // one-way flag: room NPC conditions support a single flag/notFlag pair,
+    // and every Board Room staging entry (plus Skip's office entries) hangs
+    // off this one. Never cleared — nobody should be standing in the Board
+    // Room during the ascent, and Skip belongs back in his office after.
+    if (
+      (this.player.getFlag('board_meeting_held') || this.player.getFlag('act6_complete')) &&
+      !this.player.getFlag('board_meeting_closed')
+    ) {
+      this.player.setFlag('board_meeting_closed', true);
     }
 
     this._syncActFromFlags();
@@ -2639,6 +2698,28 @@ export class ExplorationState {
     if (this.upgradeTooltip) this.upgradeTooltip.style.display = 'none';
   }
 
+  // ~1 in 25 monitors displays REMEMBERED instead of a spreadsheet. Until now
+  // that was pure noise; the first time Andrew stands next to one he thinks
+  // something about it, and the easter egg becomes the first piece of evidence
+  // in the game's actual mystery (proposal 3). Once per save.
+  _checkWhisperMonitor() {
+    if (this._whisperDone) return;
+    const spots = this.roomManager.currentRoom?.whisperSpots;
+    if (!spots || spots.length === 0) return;
+    if (this.player.getFlag('whisper_monitor_seen')) { this._whisperDone = true; return; }
+    const px = this.player.position.x;
+    const pz = this.player.position.z;
+    for (const s of spots) {
+      const dx = px - s.x;
+      const dz = pz - s.z;
+      if (dx * dx + dz * dz < 2.25) {
+        this._whisperDone = true;
+        this.player.setFlag('whisper_monitor_seen', true);
+        return;
+      }
+    }
+  }
+
   _showMonologue(text) {
     if (!this.monologueElement || !text) return;
     // Cancel any existing monologue timer
@@ -2696,6 +2777,8 @@ export class ExplorationState {
     this.camera.update(dt);
 
     this.roomManager.update(dt, this.player.flags, this.paused);
+
+    this._checkWhisperMonitor();
 
     const nearNPC = this.roomManager.entityManager.getNearestInteractable(
       this.player.position.x,

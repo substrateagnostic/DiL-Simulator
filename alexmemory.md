@@ -4,6 +4,20 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
+## ✅ RUN B PASSED (~21:50, commit 706e9bc) — first full critic pass
+- **Your flicker:** the walking-shimmer class is DEAD in the diff sheets
+  (N8AO retune + denoise + the whole evidence chain). **Your stutter:**
+  shadow map now renders at 30Hz cadence instead of every frame, and the
+  Room.dispose VRAM leak (why it worsened over time) is fixed. **Garage
+  tear root-caused:** facades were being stretched 2.4× by a non-uniform
+  scale while multiply-dimming crushed the tower bodies invisible —
+  stretched bright windows floating in void. All three defects fixed.
+- Numbers: p95 ≤16.6ms native on your 4050 (vsync-off), leak curve flat,
+  frozen-frame determinism zero-diff, adaptive quality governor commits
+  the mid-hardware tier ladder. `npm run perf` is now a permanent tool.
+- Honest residuals: a rare GC hitch in diagnostic mode (attributed, not
+  fixed), gates measured on the 3-room set not all rooms.
+
 ## ☀ MORNING REPORT (07-30, paused ~09:10 for the Andrew demo)
 
 **The night:** Run A landed (c506182+8864a75) — Meredith Sterling & Skip
