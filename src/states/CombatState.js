@@ -23,6 +23,23 @@ import {
 import { DEV_MODE } from '../utils/constants.js';
 
 export class CombatState {
+  // Which CHARACTER_CONFIGS ids will stand on the stage for this encounter.
+  // Split out of the constructor so the combat transition can warm exactly
+  // those Meshy GLBs (and nothing else) before the state is built — the
+  // constructor calls it too, so there is only one implementation to drift.
+  static castIds(encounterId, player) {
+    const cfg = ENCOUNTERS[encounterId] || {};
+    const enemies = (cfg.enemyIds && cfg.enemyIds.length > 0)
+      ? [...cfg.enemyIds]
+      : [cfg.enemyId || encounterId];
+    let party;
+    if (cfg.noParty) party = [];
+    else if (cfg.partyIds && cfg.partyIds.length > 0) party = [...cfg.partyIds];
+    else if (player?.party && player.party.length > 0) party = player.party.slice(0, 2);
+    else party = [];
+    return { enemies, party, all: [...enemies, 'andrew', ...party] };
+  }
+
   constructor(stateManager, player, enemyId, onEnd, enemyOverrides = {}) {
     this.stateManager = stateManager;
     this.player = player;
@@ -34,25 +51,15 @@ export class CombatState {
     // solo fights). Call-site overrides win on conflict.
     this.enemyOverrides = { ...(this.encounterConfig.enemyOverrides || {}), ...enemyOverrides };
 
-    // Resolve enemy list — multi-enemy via enemyIds, fallback to single enemyId mapping
-    this.enemyIdsList = (this.encounterConfig.enemyIds && this.encounterConfig.enemyIds.length > 0)
-      ? [...this.encounterConfig.enemyIds]
-      : [this.encounterConfig.enemyId || enemyId];
-    // Resolve party list:
+    // Resolve enemy list — multi-enemy via enemyIds, fallback to single enemyId mapping.
+    // Party list:
     //   1. Encounter `partyIds` overrides (forced narrative party, e.g. trio fight forces Janet)
-    //   2. `player.party` — recruited, persistent allies
+    //   2. `player.party` — recruited, persistent allies (capped at 2 for readability)
     //   3. Empty (Andrew alone)
     // Encounter also supports `noParty: true` to force a solo fight regardless of recruits.
-    if (this.encounterConfig.noParty) {
-      this.partyIdsList = [];
-    } else if (this.encounterConfig.partyIds && this.encounterConfig.partyIds.length > 0) {
-      this.partyIdsList = [...this.encounterConfig.partyIds];
-    } else if (this.player?.party && this.player.party.length > 0) {
-      // Cap to a reasonable number to keep the scene readable
-      this.partyIdsList = this.player.party.slice(0, 2);
-    } else {
-      this.partyIdsList = [];
-    }
+    const cast = CombatState.castIds(enemyId, player);
+    this.enemyIdsList = cast.enemies;
+    this.partyIdsList = cast.party;
     this.partyCharIds = ['andrew', ...this.partyIdsList]; // for the scene (visual)
     // The "primary" enemy — used for backdrop colors / ENEMY_STATS lookup for legacy code
     this.actualEnemyId = this.enemyIdsList[0];

@@ -18,6 +18,9 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => {
 }));
 const ids = String(args.ids || '').split(',').filter(Boolean);
 const OUTROOT = join(REPO, args.outroot || 'art/char_refs/meshy_pilot');
+// --glbdir lets the shooter aim at a candidate build (e.g. an optimizer staging
+// dir) instead of the live runtime path, for before/after parity checks.
+const GLBDIR = args.glbdir ? (args.glbdir.match(/^[A-Za-z]:|^\//) ? args.glbdir : join(REPO, args.glbdir)) : join(REPO, 'public/meshy');
 if (!ids.length) { console.error('need --ids'); process.exit(1); }
 
 const MIME = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.glb': 'model/gltf-binary', '.json': 'application/json' };
@@ -27,6 +30,7 @@ const HARNESS = `<!doctype html><html><head><meta charset="utf-8"><style>body{ma
 </head><body><script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 const q = new URLSearchParams(location.search);
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(800, 800); document.body.appendChild(renderer.domElement);
@@ -44,7 +48,9 @@ const data = new Uint8Array([80, 160, 255]);
 const ramp = new THREE.DataTexture(data, 3, 1, THREE.RedFormat);
 ramp.minFilter = THREE.NearestFilter; ramp.magFilter = THREE.NearestFilter; ramp.needsUpdate = true;
 let mixer = null, model = null, H = 1.7;
-new GLTFLoader().load(q.get('glb'), (gltf) => {
+const __loader = new GLTFLoader();
+__loader.setMeshoptDecoder(MeshoptDecoder);
+__loader.load(q.get('glb'), (gltf) => {
   model = gltf.scene;
   model.traverse(c => {
     if (c.isSkinnedMesh) c.frustumCulled = false;
@@ -79,7 +85,7 @@ new GLTFLoader().load(q.get('glb'), (gltf) => {
 const server = createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/harness.html') { res.setHeader('Content-Type', 'text/html'); return res.end(HARNESS); }
-  const roots = { '/node_modules/': join(REPO, 'node_modules'), '/meshy/': join(REPO, 'public/meshy') };
+  const roots = { '/node_modules/': join(REPO, 'node_modules'), '/meshy/': GLBDIR };
   for (const [prefix, root] of Object.entries(roots)) {
     if (url.startsWith(prefix)) {
       try {
@@ -108,7 +114,7 @@ const summary = [];
 for (const id of ids) {
   const isClient = id.startsWith('client_');
   const glb = `/meshy/${id}_idle.glb`;
-  if (!existsSync(join(REPO, 'public/meshy', `${id}_idle.glb`))) { summary.push({ id, error: 'no GLB' }); continue; }
+  if (!existsSync(join(GLBDIR, `${id}_idle.glb`))) { summary.push({ id, error: 'no GLB' }); continue; }
   const shotsDir = join(OUTROOT, isClient ? `clients/${id}` : id, 'shots');
   mkdirSync(shotsDir, { recursive: true });
   await page.goto(`http://localhost:${port}/harness.html?glb=${glb}`);

@@ -1,0 +1,11 @@
+# public/meshy/*.glb are tracked runtime assets. Git's binary auto-detection
+# already handles them, but on a Windows checkout with core.autocrlf=true a
+# single misdetection would silently corrupt a character model in the deploy.
+# Say it explicitly.
+*.glb binary
+*.gltf binary
+*.fbx binary
+*.png binary
+*.jpg binary
+*.webm binary
+*.mp4 binary

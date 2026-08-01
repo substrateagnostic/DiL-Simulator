@@ -354,7 +354,22 @@ function generateVisualConfig(firstName, clientType) {
     else                                       accessories = Math.random() > 0.5 ? ['purse'] : [];
   }
 
-  return { bodyColor, pantsColor, shirtColor, tieColor, skinColor, hairColor, hairStyle, accessories };
+  return {
+    bodyColor, pantsColor, shirtColor, tieColor, skinColor, hairColor, hairStyle, accessories,
+    meshyBody: pickMeshyBody(isMale, isRetiree, clientType),
+  };
+}
+
+// Which of the six Meshy client bodies stands on the combat stage for this
+// client (src/combat/MeshyCast.js). The bodies are neutral grey and get tinted
+// at runtime from bodyColor/pantsColor, so this only has to choose a SILHOUETTE.
+// The female pool is two bodies, so every non-elder woman uses the pro body.
+function pickMeshyBody(isMale, isRetiree, clientType) {
+  if (!isMale) return isRetiree || clientType === 'Widow/Widower' ? 'client_f_elder' : 'client_f_pro';
+  if (isRetiree || clientType === 'Widow/Widower') return 'client_m_elder';
+  if (clientType === 'Professional Athlete' || clientType === 'Entrepreneur') return 'client_m_athletic';
+  if (clientType === 'Small Business Owner' || clientType === 'Corporate Pension Fund') return 'client_m_heavy';
+  return 'client_m_young';
 }
 
 function scaleEnemyStats(assets, playerLevel = 1, postGame = false) {

@@ -1,0 +1,305 @@
+{
+  "max": 1024,
+  "quality": 0.92,
+  "rows": [
+    {
+      "f": "alex_it_idle.glb",
+      "before": 10309360,
+      "mid": 2051316,
+      "after": 739856,
+      "texBefore": 8632334,
+      "texAfter": 374370,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "andrew_idle.glb",
+      "before": 9098560,
+      "mid": 2096632,
+      "after": 653736,
+      "texBefore": 7289288,
+      "texAfter": 287358,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "brand_consultant_idle.glb",
+      "before": 9700572,
+      "mid": 2116236,
+      "after": 697720,
+      "texBefore": 7895635,
+      "texAfter": 311304,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "cfos_assistant_idle.glb",
+      "before": 9042308,
+      "mid": 1871500,
+      "after": 585376,
+      "texBefore": 7413668,
+      "texAfter": 242849,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "chad_idle.glb",
+      "before": 9345516,
+      "mid": 1918904,
+      "after": 635400,
+      "texBefore": 7704921,
+      "texAfter": 278314,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "chief_of_restructuring_idle.glb",
+      "before": 8538952,
+      "mid": 1821588,
+      "after": 540864,
+      "texBefore": 6923643,
+      "texAfter": 206280,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "client_f_elder_idle.glb",
+      "before": 9202260,
+      "mid": 1859500,
+      "after": 575172,
+      "texBefore": 7575700,
+      "texAfter": 232933,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "client_f_pro_idle.glb",
+      "before": 9054672,
+      "mid": 1789920,
+      "after": 539568,
+      "texBefore": 7484937,
+      "texAfter": 220191,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "client_m_athletic_idle.glb",
+      "before": 9214684,
+      "mid": 1872152,
+      "after": 574944,
+      "texBefore": 7568033,
+      "texAfter": 225494,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "client_m_elder_idle.glb",
+      "before": 9754620,
+      "mid": 1881148,
+      "after": 606016,
+      "texBefore": 8138937,
+      "texAfter": 265472,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "client_m_heavy_idle.glb",
+      "before": 8525424,
+      "mid": 1825660,
+      "after": 530368,
+      "texBefore": 6883201,
+      "texAfter": 183434,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "client_m_young_idle.glb",
+      "before": 9343388,
+      "mid": 1803532,
+      "after": 554256,
+      "texBefore": 7762244,
+      "texAfter": 222398,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "compliance_idle.glb",
+      "before": 9160372,
+      "mid": 1917284,
+      "after": 581168,
+      "texBefore": 7476680,
+      "texAfter": 233594,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "corporate_lawyer_idle.glb",
+      "before": 8907352,
+      "mid": 1859048,
+      "after": 570608,
+      "texBefore": 7271227,
+      "texAfter": 222919,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "data_analytics_lead_idle.glb",
+      "before": 9110524,
+      "mid": 1920560,
+      "after": 589920,
+      "texBefore": 7431063,
+      "texAfter": 241103,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "diane_idle.glb",
+      "before": 9245632,
+      "mid": 1946960,
+      "after": 601320,
+      "texBefore": 7539153,
+      "texAfter": 240472,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "firm_associate_idle.glb",
+      "before": 9048092,
+      "mid": 1858180,
+      "after": 577300,
+      "texBefore": 7423358,
+      "texAfter": 233434,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "firm_paralegal_idle.glb",
+      "before": 9144440,
+      "mid": 2131108,
+      "after": 656584,
+      "texBefore": 7286385,
+      "texAfter": 273072,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "firm_partner_idle.glb",
+      "before": 8643920,
+      "mid": 1879452,
+      "after": 570880,
+      "texBefore": 6985129,
+      "texAfter": 220669,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "grandma_idle.glb",
+      "before": 10380116,
+      "mid": 2437932,
+      "after": 839656,
+      "texBefore": 8301738,
+      "texAfter": 359623,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "hr_rep_idle.glb",
+      "before": 9548104,
+      "mid": 2106132,
+      "after": 669168,
+      "texBefore": 7720799,
+      "texAfter": 278837,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "intern_idle.glb",
+      "before": 9975492,
+      "mid": 2080644,
+      "after": 684152,
+      "texBefore": 8197744,
+      "texAfter": 302888,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "isaiah_idle.glb",
+      "before": 9224968,
+      "mid": 2001996,
+      "after": 620316,
+      "texBefore": 7478126,
+      "texAfter": 255160,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "janet_idle.glb",
+      "before": 10150540,
+      "mid": 2259952,
+      "after": 710112,
+      "texBefore": 8202938,
+      "texAfter": 312405,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "karen_idle.glb",
+      "before": 7604904,
+      "mid": 1137404,
+      "after": 426528,
+      "texBefore": 6693850,
+      "texAfter": 226342,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "networking_guy_idle.glb",
+      "before": 9030432,
+      "mid": 1864608,
+      "after": 599172,
+      "texBefore": 7423421,
+      "texAfter": 257601,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "parking_enforcer_idle.glb",
+      "before": 9001296,
+      "mid": 2028376,
+      "after": 620828,
+      "texBefore": 7211952,
+      "texAfter": 239029,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "rachel_boss_idle.glb",
+      "before": 9067428,
+      "mid": 1932212,
+      "after": 608028,
+      "texBefore": 7389003,
+      "texAfter": 253787,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "regional_director_idle.glb",
+      "before": 8915576,
+      "mid": 1856576,
+      "after": 558116,
+      "texBefore": 7262515,
+      "texAfter": 203524,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "regional_idle.glb",
+      "before": 8879620,
+      "mid": 1886244,
+      "after": 600356,
+      "texBefore": 7242423,
+      "texAfter": 249051,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "restructuring_analyst_idle.glb",
+      "before": 9267688,
+      "mid": 1922540,
+      "after": 587612,
+      "texBefore": 7581928,
+      "texAfter": 236792,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "ross_boss_idle.glb",
+      "before": 9185656,
+      "mid": 2091060,
+      "after": 670168,
+      "texBefore": 7366962,
+      "texAfter": 272353,
+      "dims": "2048->1024"
+    },
+    {
+      "f": "security_guard_idle.glb",
+      "before": 8858032,
+      "mid": 1950920,
+      "after": 567636,
+      "texBefore": 7086574,
+      "texAfter": 179447,
+      "dims": "2048->1024"
+    }
+  ],
+  "totalBefore": 303480500,
+  "totalAfter": 20142904
+}

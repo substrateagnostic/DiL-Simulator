@@ -144,9 +144,12 @@ export const DEV_MODE = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).has('dev')
   : false;
 
-// Meshy comp harness — append ?meshy (or &meshy) to swap the combat-stage
-// characters that have a rigged Meshy GLB in public/meshy/ for their
-// procedural builds. Dev-only A/B comparison; zero effect on normal play.
+// Meshy combat cast — ON BY DEFAULT (producer ruling, 08-01): the rigged
+// Meshy GLBs in public/meshy/ replace the procedural builds ON THE COMBAT
+// STAGE ONLY. Exploration is 100% procedural and is not affected by this flag.
+// Append ?nomeshy to force the procedural combat cast back (A/B escape hatch,
+// same URLSearchParams pattern as DEV_MODE). ?meshy is still accepted as a
+// no-op alias so old bookmarked comp links keep working.
 export const MESHY_MODE = typeof window !== 'undefined'
-  ? new URLSearchParams(window.location.search).has('meshy')
-  : false;
+  ? !new URLSearchParams(window.location.search).has('nomeshy')
+  : true;

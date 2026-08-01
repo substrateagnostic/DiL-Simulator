@@ -12,8 +12,14 @@ art/portraits_archive/
 art/comp_refs/
 art/char_refs/
 art/epilogues_raw/
-public/meshy/
 trust-issues-itch.zip
+
+# public/meshy/ IS TRACKED. It holds the OPTIMIZED runtime combat cast
+# (~0.5MB/character: 1024px JPEG atlas + gltfpack meshopt). A Vercel build from
+# this branch must contain the whole cast, so these are real repo assets.
+# The raw ~9MB Meshy exports they are derived from stay out of git under
+# art/char_refs/ (ignored above) — regenerate with tools/meshy-optimize.mjs.
+# _optimize_report.json rides along as the provenance record for the sizes.
 
 __pycache__/
 *.pyc

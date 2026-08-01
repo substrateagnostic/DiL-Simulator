@@ -3,51 +3,8 @@ import { buildCharacter } from '../entities/CharacterBuilder.js';
 import { CharacterAnimator } from '../entities/CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { MESHY_MODE } from '../utils/constants.js';
-import { getHouseGradientMap } from '../effects/MaterialLibrary.js';
-
-// ?meshy comp harness (dev-only): characters listed here swap their procedural
-// build for a rigged Meshy GLB served from public/meshy/ (gitignored). The GLB
-// is the self-contained idle-animation export (mesh + texture + "Idle" clip).
-// yaw: extra Y rotation if the GLB's native facing differs from the procedural
-// convention (rotation.y = 0 faces +z / the camera).
-const MESHY_MODELS = {
-  // Pilot pair (proof video, producer-signed)
-  karen: { url: '/meshy/karen_idle.glb', yaw: 0 },
-  andrew: { url: '/meshy/andrew_idle.glb', yaw: 0 },
-  // Full combat-cast wave (art/MESHY_WAVE.md). The Algorithm is intentionally
-  // absent — the monolith stays procedural by producer order. Idle clips are
-  // baked per-GLB (unique within any co-present set); mixers run at the 0.8x
-  // default timeScale unless overridden here.
-  intern: { url: '/meshy/intern_idle.glb', yaw: 0 },
-  chad: { url: '/meshy/chad_idle.glb', yaw: 0 },
-  grandma: { url: '/meshy/grandma_idle.glb', yaw: 0 },
-  compliance: { url: '/meshy/compliance_idle.glb', yaw: 0 },
-  regional: { url: '/meshy/regional_idle.glb', yaw: 0 },
-  ross_boss: { url: '/meshy/ross_boss_idle.glb', yaw: 0 },
-  security_guard: { url: '/meshy/security_guard_idle.glb', yaw: 0 },
-  hr_rep: { url: '/meshy/hr_rep_idle.glb', yaw: 0 },
-  restructuring_analyst: { url: '/meshy/restructuring_analyst_idle.glb', yaw: 0 },
-  brand_consultant: { url: '/meshy/brand_consultant_idle.glb', yaw: 0 },
-  corporate_lawyer: { url: '/meshy/corporate_lawyer_idle.glb', yaw: 0 },
-  data_analytics_lead: { url: '/meshy/data_analytics_lead_idle.glb', yaw: 0 },
-  cfos_assistant: { url: '/meshy/cfos_assistant_idle.glb', yaw: 0 },
-  chief_of_restructuring: { url: '/meshy/chief_of_restructuring_idle.glb', yaw: 0 },
-  rachel_boss: { url: '/meshy/rachel_boss_idle.glb', yaw: 0 },
-  regional_director: { url: '/meshy/regional_director_idle.glb', yaw: 0 },
-  parking_enforcer: { url: '/meshy/parking_enforcer_idle.glb', yaw: 0 },
-  networking_guy: { url: '/meshy/networking_guy_idle.glb', yaw: 0 },
-  firm_partner: { url: '/meshy/firm_partner_idle.glb', yaw: 0 },
-  firm_associate: { url: '/meshy/firm_associate_idle.glb', yaw: 0 },
-  firm_paralegal: { url: '/meshy/firm_paralegal_idle.glb', yaw: 0 },
-  // Loop-In bench allies
-  janet: { url: '/meshy/janet_idle.glb', yaw: 0 },
-  alex_it: { url: '/meshy/alex_it_idle.glb', yaw: 0 },
-  isaiah: { url: '/meshy/isaiah_idle.glb', yaw: 0 },
-  diane: { url: '/meshy/diane_idle.glb', yaw: 0 },
-  // Roguelite clients: one default archetype body for now. Per-client body
-  // selection + runtime tinting is the producer-gated second pass.
-  reception_client: { url: '/meshy/client_m_young_idle.glb', yaw: 0 },
-};
+import * as MeshyCast from './MeshyCast.js';
+import { MeshyAnimator } from './MeshyAnimator.js';
 
 // Per-boss authorship: which held silhouette + attack gesture each character
 // uses. Named bosses get bespoke choreography; everyone else gets a generic
@@ -350,26 +307,36 @@ export class CombatScene {
     this.scene.add(this.bgMesh);
   }
 
-  // Build one combatant: procedural by default; the Meshy GLB when the ?meshy
-  // comp harness is active and this character has a model. Returns
-  // { group, animator } shaped exactly like the procedural pair.
+  // Build one combatant. The Meshy cast is the DEFAULT on the combat stage
+  // (producer ruling 08-01); `?nomeshy` or any per-character load failure falls
+  // this slot back to the procedural v7 build. Returns { group, animator }
+  // shaped exactly like the procedural pair either way, so nothing downstream
+  // knows which cast it got.
   _buildCombatant(config, id) {
-    if (MESHY_MODE && MESHY_MODELS[id]) return this._buildMeshyCombatant(config, id);
+    if (MESHY_MODE) {
+      const built = this._buildMeshyCombatant(config, id);
+      if (built) return built;
+    }
     const group = buildCharacter(config, { detailed: true });
     const animator = new CharacterAnimator(group);
     return { group, animator };
   }
 
-  // Meshy comp path (dev-only, ?meshy). The GLB loads async into a placeholder
-  // group; an animator STUB no-ops every CharacterAnimator entry point that
-  // CombatState/CombatScene reach (setExpression, playGesture, setFacing,
-  // setSignaturePose, setCombatMode) and drives the idle AnimationMixer from
-  // update(dt). Scale is MEASURED, not assumed: a throwaway procedural build
-  // provides the target world height, the GLB's own Box3 provides the native
-  // height, and the ratio goes on an inner wrapper so CombatScene keeps
-  // driving the outer group's transform exactly as it does for procedural
-  // characters (hurt knockback, defeat spin, baseScale resets).
+  // Meshy path. The model comes from MeshyCast's session cache, which
+  // ExplorationState warmed during the combat fade — so this is SYNCHRONOUS and
+  // the stage is never built empty. A cache miss (not preloaded, 404, parse
+  // failure) returns null and the caller builds procedurally for that slot only.
+  //
+  // Scale is MEASURED, not assumed: a throwaway procedural build provides the
+  // target world height, the GLB's own Box3 provides the native height, and the
+  // ratio goes on an inner wrapper so CombatScene keeps driving the OUTER
+  // group's transform exactly as it does for procedural characters (hurt
+  // knockback, defeat spin, baseScale resets).
   _buildMeshyCombatant(config, id) {
+    const modelId = MeshyCast.resolveId(id, config);
+    const inst = MeshyCast.instance(modelId);
+    if (!inst) return null;
+
     const probe = buildCharacter(config, { detailed: false });
     const probeH = new THREE.Box3().setFromObject(probe).getSize(new THREE.Vector3()).y;
     probe.traverse(c => { if (c.isMesh && c.geometry) c.geometry.dispose(); }); // materials are cached — never dispose
@@ -383,50 +350,20 @@ export class CombatScene {
       group[ref] = dummy;
     }
 
-    const holder = { mixer: null };
-    import('three/addons/loaders/GLTFLoader.js').then(({ GLTFLoader }) => {
-      new GLTFLoader().load(MESHY_MODELS[id].url, (gltf) => {
-        if (!group.parent) return; // combat torn down before the load landed
-        const model = gltf.scene;
-        const glbH = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y;
-        const inner = new THREE.Group();
-        inner.scale.setScalar(glbH > 0 ? probeH / glbH : 1);
-        inner.rotation.y = MESHY_MODELS[id].yaw || 0;
-        inner.add(model);
-        group.add(inner);
-        // Convert the GLTF PBR materials to the game's toon family (keeping the
-        // Meshy base-color texture). MeshStandardMaterial under the arena's
-        // summed key/fill/rim rig blows out to white-clip and carries a
-        // specular term the art direction forbids (flat/cel, Archer read);
-        // every shipped character/prop is MeshToonMaterial on the HOUSE 3-stop
-        // ramp, so the import uses that exact gradient — same material
-        // language, no shine, metalness/roughness die with the material.
-        model.traverse(c => {
-          if (c.isSkinnedMesh) c.frustumCulled = false;
-          if (c.isMesh && c.material) {
-            c.material = new THREE.MeshToonMaterial({
-              map: c.material.map || null,
-              color: 0xffffff,
-              gradientMap: getHouseGradientMap(),
-            });
-          }
-        });
-        if (gltf.animations && gltf.animations.length) {
-          holder.mixer = new THREE.AnimationMixer(model);
-          holder.mixer.clipAction(gltf.animations[0]).play();
-          // Producer note: Meshy stock idles run hot for a held combat stance —
-          // 0.8x reads as breathing rather than fidgeting.
-          holder.mixer.timeScale = MESHY_MODELS[id].timeScale ?? 0.8;
-        }
-        console.log(`[meshy] ${id} loaded: nativeH=${glbH.toFixed(3)} targetH=${probeH.toFixed(3)} scale=${(probeH / glbH).toFixed(4)}`);
-      }, undefined, (err) => console.warn(`[meshy] failed to load ${id}:`, err));
-    });
+    const model = inst.scene;
+    const glbH = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y;
+    const inner = new THREE.Group();
+    inner.scale.setScalar(glbH > 0 ? probeH / glbH : 1);
+    inner.rotation.y = inst.def.yaw || 0;
+    inner.add(model);
+    group.add(inner);
 
-    const animator = {
-      setCombatMode() {}, setFacing() {}, setSignaturePose() {},
-      playGesture() {}, setExpression() {}, setWalking() {}, setSitting() {},
-      update(dt) { if (holder.mixer) holder.mixer.update(dt); },
-    };
+    MeshyCast.applyTint(model, id, config);
+
+    const animator = new MeshyAnimator(model, MeshyCast.clipsFor(inst), {
+      timeScale: inst.def.timeScale,
+    });
+    group.userData.meshy = true;
     return { group, animator };
   }
 
@@ -630,6 +567,13 @@ export class CombatScene {
   }
 
   _clearGroups() {
+    // Meshy combatants own an AnimationMixer bound to a cloned skeleton. The
+    // clone is throwaway but the mixer holds cached bindings against it, so it
+    // has to be released or every fight leaks one mixer's worth of tracks.
+    // Geometry/materials/textures are SHARED with the MeshyCast session cache
+    // and must never be disposed here.
+    for (const e of this.enemyGroups) e.animator?.dispose?.();
+    for (const a of this.allyGroups) a.animator?.dispose?.();
     for (const e of this.enemyGroups) this.scene.remove(e.group);
     for (const a of this.allyGroups) this.scene.remove(a.group);
     this.enemyGroups = [];

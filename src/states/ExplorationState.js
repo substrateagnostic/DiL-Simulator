@@ -33,7 +33,7 @@ import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
 import { SaveManager } from '../core/SaveManager.js';
 import { AchievementManager } from '../core/AchievementManager.js';
-import { DEV_MODE } from '../utils/constants.js';
+import { DEV_MODE, MESHY_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
 import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
 import { showDevPanel } from '../ui/DevPanel.js';
@@ -1118,7 +1118,23 @@ export class ExplorationState {
       this.player.stats.def = Math.max(1, this.player.stats.def - 2);
     }
 
-    this.transition.fadeOut(0.3).then(() => {
+    // MESHY CAST WARM-UP. Nothing is fetched at boot; exactly the GLBs this
+    // encounter needs are pulled here so the network cost hides inside the
+    // fade-out that is already on screen. Cached across fights for the rest of
+    // the session, so a repeat opponent costs nothing. Failures resolve to null
+    // and that character alone falls back to the procedural build — the fade
+    // never waits on a broken asset, and it never waits longer than the fade
+    // plus a hard 2.5s ceiling.
+    const meshyWarm = MESHY_MODE
+      ? Promise.race([
+        import('../combat/MeshyCast.js')
+          .then(m => m.preload(CombatState.castIds(encounterId, this.player).all))
+          .catch(() => null),
+        new Promise(r => setTimeout(r, 2500)),
+      ])
+      : Promise.resolve();
+
+    Promise.all([this.transition.fadeOut(0.3), meshyWarm]).then(() => {
       const combatState = new CombatState(
         this.stateManager,
         this.player,
