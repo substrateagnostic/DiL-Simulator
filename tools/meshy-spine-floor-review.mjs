@@ -1,4 +1,14 @@
-// SPINE + FLOOR REVIEW — the verification gate for the retarget/ground fix.
+// SPINE + FLOOR REVIEW — the verification gate for the V8 retarget/ground fix.
+//
+// SUPERSEDED AS A POSTURE GATE. Use tools/meshy-spine-gate.mjs.
+// window.__spine() below reads ONE joint, Hips->Spine02 — which is exactly the
+// joint the V8 pelvis retarget corrected. It is a faithful witness that the
+// retarget still works and nothing more. It is structurally blind to the five
+// joints above it, and it certified a calm stance that was a monotonic forward
+// slouch from Spine02 to the skull. Its TILE is also 240px, below the
+// resolution at which a human reviewer can adjudicate a hunch. Keep this file
+// for the retarget/ground regression it does measure honestly; never quote it
+// as evidence about posture.
 //
 // This harness imports the SHIPPING module (src/combat/MeshyRetarget.js) over
 // HTTP and drives it exactly the way CombatScene does: capture the target rest

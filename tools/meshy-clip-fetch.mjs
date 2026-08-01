@@ -36,8 +36,12 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => {
 const ACTION_IDS = String(args.ids || '').split(',').filter(Boolean).map(Number);
 const DONOR = args.donor || 'andrew';
 if (!ACTION_IDS.length) { console.error('need --ids'); process.exit(1); }
+// --outdir sends the stripped clip GLBs somewhere other than the shipping
+// clips folder. The stance AUDITION generates 20 candidates that must be
+// screened before any of them is allowed near public/meshy/clips.
+const CLIPOUT = args.outdir ? join(REPO, String(args.outdir)) : OUT;
 mkdirSync(RAW, { recursive: true });
-mkdirSync(OUT, { recursive: true });
+mkdirSync(CLIPOUT, { recursive: true });
 
 // Donor rig task id. Andrew's pilot report uses an array of stages; the wave
 // reports use an object — read both shapes.
@@ -237,7 +241,7 @@ for (const actionId of ACTION_IDS) {
     log(`action ${actionId}: downloaded ${(statSync(rawPath).size / 1048576).toFixed(2)}MB, ${credits} cr`);
   }
   const clip = extractClip(readFileSync(rawPath), actionId);
-  const dest = join(OUT, `a${actionId}.glb`);
+  const dest = join(CLIPOUT, `a${actionId}.glb`);
   writeFileSync(dest, clip);
   log(`action ${actionId}: clip -> ${dest} (${(clip.length / 1024).toFixed(1)} KB)`);
 }

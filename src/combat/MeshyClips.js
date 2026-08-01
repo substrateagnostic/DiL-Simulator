@@ -6,10 +6,15 @@
 // therefore retargeted per rig at load, preserving the target's authored rest
 // frame while keeping the one-file clip library.
 //
+// The two calm sources also carry an authored slouch whose stacked spine flexion
+// survives correct retargeting. Their target-space clips receive a bind-rebased
+// posture clamp so the cast keeps its own proportions without looking downward.
+//
 // That is why this is ~430KB of clips for the whole cast instead of 31 fresh
 // 9MB character exports per reaction.
 import { CLIP_LOADER, registerClipProvider } from './MeshyCast.js';
 import { captureRest, retargetClip } from './MeshyRetarget.js';
+import { clampPosture } from './MeshyPosture.js';
 
 // Catalog ids, chosen off preview strips AND re-judged on real characters
 // (art/char_refs/meshy_pilot/_clips/strip_*.png). Names are Meshy's.
@@ -97,7 +102,8 @@ export function clipsFor(id, modelId = id, targetRest) {
     const key = `${modelId}|${role}`;
     if (retargeted.has(key)) return retargeted.get(key);
     try {
-      const clip = retargetClip(entry.clip, entry.donorRest, targetRest);
+      let clip = retargetClip(entry.clip, entry.donorRest, targetRest);
+      if (role === 'stance_a' || role === 'stance_b') clip = clampPosture(clip, targetRest);
       retargeted.set(key, clip);
       return clip;
     } catch (err) {
