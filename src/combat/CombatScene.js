@@ -471,8 +471,12 @@ export class CombatScene {
     const ground = getGroundOffsets(modelId, model, clips, inst.restPose);
     const animator = new MeshyAnimator(model, clips, {
       timeScale: inst.def.timeScale,
-      // Two calm stances cover 33 characters, so a group fight would breathe in
-      // unison without a per-character phase offset.
+      // The reaction layer is cast for each body's BUILD, and the two
+      // performances of a beat are not the same length. Without this the same
+      // punch reads as 2.3s on one enemy and 4.4s on the next.
+      timeScales: MeshyCast.beatTimeScales(clips),
+      // Some characters share a calm stance (the slate's reuse rows), so a
+      // group fight would breathe in unison without a per-character phase.
       phase: MeshyCast.phaseFor(id),
       props: propTicks,
       ground: { node: inner, offsets: ground },

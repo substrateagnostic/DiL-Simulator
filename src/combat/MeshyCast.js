@@ -183,11 +183,14 @@ export function preload(ids) {
   const want = [...new Set(ids.map(id => resolveId(id, CHARACTER_CONFIGS[id])))]
     .filter(id => MESHY_MODELS[id]);
   if (!want.length) return Promise.resolve([]);
-  // The shared reaction clips ride along — they are a fixed ~430KB for the
-  // whole cast and are needed by whichever characters this encounter stages.
+  // The shared clips ride along: both builds' reaction pairs (a fixed ~633KB,
+  // because Loop-In can bring a bench ally of either build on stage mid-fight)
+  // plus the slate-assigned calm stance of each character this encounter
+  // actually stages. `want` is already resolved, so the roguelite client warms
+  // the stance of the BODY that will be on the floor, not the pool default.
   return Promise.all([
     ...want.map(load),
-    import('./MeshyClips.js').then(m => m.preloadClips()).catch(() => null),
+    import('./MeshyClips.js').then(m => m.preloadClips(want)).catch(() => null),
   ]);
 }
 
@@ -216,10 +219,10 @@ export function resolveId(id, config) {
   return id;
 }
 
-// The clip set handed to a MeshyAnimator. The shared calm stance REPLACES the
-// character's own baked idle when it is loaded (producer note: the wave idles
-// read as an A-pose); the baked clip stays as the fallback so a failed clip
-// fetch degrades to wave-1 behaviour rather than a frozen bind pose.
+// The clip set handed to a MeshyAnimator. The slate-assigned calm stance
+// REPLACES the character's own baked idle when it is loaded (producer note: the
+// wave idles read as an A-pose); the baked clip stays as the fallback so a
+// failed clip fetch degrades to wave-1 behaviour rather than a frozen bind pose.
 export function clipsFor(inst, id, modelId = id) {
   const clips = { idle: inst.animations?.[0] || null };
   if (_clipsFor) Object.assign(clips, _clipsFor(id, modelId, inst.restPose));
@@ -230,8 +233,15 @@ export function clipsFor(inst, id, modelId = id) {
 // indirect avoids a static import cycle (MeshyClips needs CLIP_LOADER).
 let _clipsFor = null;
 let _phaseFor = null;
-export function registerClipProvider(fn, phaseFn) { _clipsFor = fn; _phaseFor = phaseFn; }
+let _beatsFor = null;
+export function registerClipProvider(fn, phaseFn, beatsFn) {
+  _clipsFor = fn; _phaseFor = phaseFn; _beatsFor = beatsFn;
+}
 export function phaseFor(id) { return _phaseFor ? _phaseFor(id) : 0; }
+// Per-role playback multipliers that land every build's reaction on the same
+// beat length. Empty before MeshyClips has registered, which is exactly the
+// old one-for-one behaviour.
+export function beatTimeScales(clips) { return _beatsFor ? _beatsFor(clips) : {}; }
 
 // ── roguelite client body pool ──────────────────────────────────────────────
 // ClientGenerator hands CombatScene a CHARACTER_CONFIGS-shaped visual config.

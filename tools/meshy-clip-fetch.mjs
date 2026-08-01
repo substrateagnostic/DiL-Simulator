@@ -40,6 +40,14 @@ if (!ACTION_IDS.length) { console.error('need --ids'); process.exit(1); }
 // clips folder. The stance AUDITION generates 20 candidates that must be
 // screened before any of them is allowed near public/meshy/clips.
 const CLIPOUT = args.outdir ? join(REPO, String(args.outdir)) : OUT;
+// --rawdir/--rawtag read the ~9MB source exports from a research lane's raw
+// folder instead of this tool's own. A side lane that downloaded raws under its
+// own naming can therefore be RE-EXTRACTED through this extractor rather than
+// having its stripped output copied in on trust: the shipped clip is then
+// provably a product of the shipping strip policy, whatever tool fetched it.
+//   --rawdir=art/char_refs/meshy_pilot/_clips/gender/raw --rawtag=andrew_
+const RAWIN = args.rawdir ? join(REPO, String(args.rawdir)) : RAW;
+const RAWTAG = args.rawtag ? String(args.rawtag) : '';
 mkdirSync(RAW, { recursive: true });
 mkdirSync(CLIPOUT, { recursive: true });
 
@@ -220,9 +228,17 @@ const ledger = existsSync(LEDGER) ? JSON.parse(readFileSync(LEDGER, 'utf8')) : {
 let spent = 0;
 
 for (const actionId of ACTION_IDS) {
-  const rawPath = join(RAW, `action_${actionId}.glb`);
+  const rawPath = RAWIN === RAW && !RAWTAG
+    ? join(RAW, `action_${actionId}.glb`)
+    : join(RAWIN, `${RAWTAG}action_${actionId}.glb`);
   if (!existsSync(rawPath)) {
     if (args.dry) { log(`action ${actionId}: no raw on disk, skipped (--dry)`); continue; }
+    // Reading someone else's raw folder is a re-extraction job, never a spend
+    // job: a missing file there means the id was not in that lane, not that a
+    // fresh generation is wanted.
+    if (rawPath !== join(RAW, `action_${actionId}.glb`)) {
+      log(`action ${actionId}: not in ${RAWIN} — skipped (no spend from --rawdir)`); continue;
+    }
     const res = await api('POST', '/animations', { rig_task_id: rig, action_id: actionId });
     const taskId = res.result;
     log(`action ${actionId}: task ${taskId}`);

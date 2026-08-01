@@ -8,10 +8,16 @@
 // wiring in CombatState is untouched.
 //
 // ROLES are the clip slots. A GLB always ships its own baked stance as `idle`;
-// the shared reaction clips (guard / hurt / stagger / victory / attack / cast)
-// are loaded separately by MeshyClips and bound per character. Any role with no
-// clip silently resolves to `idle`, so a partial clip set degrades to the
-// wave-1 behaviour instead of freezing a character mid-pose.
+// the shared clips (the slate stance plus guard / hurt / stagger / victory /
+// attack / cast) are loaded separately by MeshyClips and bound per character.
+// Any role with no clip silently resolves to `idle`, so a partial clip set
+// degrades to the wave-1 behaviour instead of freezing a character mid-pose.
+//
+// BEAT LENGTH is a per-role playback multiplier supplied by the caller
+// (MeshyClips.beatTimeScales). The cast's reaction clips are cast for the
+// PERFORMER'S BUILD, and different performances of the same beat are different
+// lengths; played one-for-one that turns into enemies feeling arbitrarily
+// heavier or lighter. The multiplier lands every build's beat in one window.
 import * as THREE from 'three';
 
 const FADE = 0.25;          // crossfade seconds — reads as a weight shift, not a cut
@@ -35,6 +41,9 @@ export class MeshyAnimator {
     this._groundOffsets = opts.ground?.offsets || {};
     this._groundCur = this._groundOffsets.idle ?? 0;
     this._groundTarget = this._groundCur;
+    // role -> playback multiplier. Absent role = 1, so a caller that supplies
+    // nothing gets exactly the old one-for-one behaviour.
+    this._beats = opts.timeScales || {};
     if (this._groundNode) this._groundNode.position.y = -this._groundCur;
 
     for (const [role, clip] of Object.entries(clips || {})) {
@@ -69,13 +78,18 @@ export class MeshyAnimator {
 
   // Play a role once and fall back to the stance. Held roles (guard) stay up
   // until something else is played or `release()` is called.
-  play(role, { hold = false, timeScale = 1 } = {}) {
+  //
+  // `timeScale` defaults to the role's beat multiplier so every call site fires
+  // the normalized length without knowing the clip; pass an explicit number
+  // only to deliberately override the beat window.
+  play(role, { hold = false, timeScale } = {}) {
     const action = this.actions[role];
     if (!action || role === this._current) {
       if (!action) return false;
     }
+    const rate = timeScale ?? this._beats[role] ?? 1;
     const prev = this._oneShot || this.actions[this._current];
-    action.reset().setEffectiveTimeScale(timeScale).setEffectiveWeight(1);
+    action.reset().setEffectiveTimeScale(rate).setEffectiveWeight(1);
     if (hold) action.setLoop(THREE.LoopRepeat, Infinity);
     else action.setLoop(THREE.LoopOnce, 1);
     action.fadeIn(FADE).play();

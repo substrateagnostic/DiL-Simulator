@@ -52,6 +52,13 @@ const ELDERS = new Set(['grandma', 'client_m_elder', 'client_f_elder']);
 const JOINT_BUDGET = 6.0;
 const TRUNK_ABS = 6.0;
 const GAZE_ABS = 0.010;
+// THE V8 RETARGET DISCRIMINANT, now a hard gate on every role rather than a
+// reported number on the stance. A clip bound raw onto a foreign pelvis frame
+// reads 90.3-164.3 deg at Hips>Spine02; a clip through the retarget reads
+// 3.1-39.7 (the top of that band is the victory cheer's own hip drive). 60 sits
+// in the 50 deg gap between the two populations, so nothing that skipped the
+// fix can pass and nothing that took it can fail.
+const HIPS_ABS = 60.0;
 const SAMPLES = 9;
 
 const MIME = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.glb': 'model/gltf-binary', '.json': 'application/json', '.wasm': 'application/wasm' };
@@ -66,7 +73,7 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 // THE SHIPPING MODULES. clipsFor() is the function CombatScene calls.
 import { captureRest, retargetClip, groundOffsets } from '/src/combat/MeshyRetarget.js';
 import { clampPosture } from '/src/combat/MeshyPosture.js';
-import { clipsFor, preloadClips, stanceFor, CLIP_IDS } from '/src/combat/MeshyClips.js';
+import { clipsFor, preloadClips, idleIdFor, genderFor, beatTimeScales, CLIP_IDS } from '/src/combat/MeshyClips.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
 renderer.setSize(${TILE}, ${TILE}); document.body.appendChild(renderer.domElement);
@@ -150,17 +157,19 @@ window.__chain = () => {
   return out;
 };
 
-// clipsFor() hands the SHIPPED calm stance back under the idle role, so the
-// other stance is invisible to it. The gate has to see both, so the donor GLBs
-// are also loaded here and run through the same two shipping functions
-// clipsFor() itself calls. idle stays the authoritative witness: the harness
-// asserts it is track-identical to whichever of the two stanceFor() picked.
-const donorStance = {};
-window.__initClips = async () => {
-  await preloadClips();
-  for (const [role, id] of [['stance_a', CLIP_IDS.stance_a], ['stance_b', CLIP_IDS.stance_b]]) {
-    const g = await new Promise((r,j)=>loader.load('/meshy/clips/a'+id+'.glb', r, undefined, e=>j(String(e))));
-    donorStance[role] = { clip: g.animations[0], rest: captureRest(g.scene) };
+// clipsFor() hands back exactly one calm stance per character — the slate row —
+// under the idle role, already posture-clamped. The gate therefore ALSO loads
+// that character's stance donor GLB raw, so it can build the unclamped variant
+// (idle_raw) on the same instrument and report a real before column rather
+// than quoting a previous round's tool.
+const donorRaw = {};   // action id -> { clip, rest }
+window.__initClips = async (ids) => {
+  await preloadClips(ids);
+  for (const id of ids) {
+    const a = idleIdFor(id);
+    if (donorRaw[a]) continue;
+    const g = await new Promise((r,j)=>loader.load('/meshy/clips/a'+a+'.glb', r, undefined, e=>j(String(e))));
+    donorRaw[a] = { clip: g.animations[0], rest: captureRest(g.scene) };
   }
   return Object.keys(CLIP_IDS);
 };
@@ -184,17 +193,21 @@ window.__load = (id) => new Promise((res, rej) => {
       // THE SHIPPING CALL. Same arguments MeshyCast.clipsFor passes.
       clips = clipsFor(id, id, targetRest);
       const t1 = performance.now();
-      for (const [role, d] of Object.entries(donorStance)) {
+      // The before column: the same stance clip through the same retarget with
+      // the posture clamp withheld. Also the proof that clipsFor() really is
+      // clamping the idle — idleMatchesRaw MUST be false.
+      const idleId = idleIdFor(id);
+      const d = donorRaw[idleId];
+      let idleMatchesRaw = null;
+      if (d) {
         const raw = retargetClip(d.clip, d.rest, targetRest);
-        clips[role] = clampPosture(raw, targetRest);
-        clips[role + '_v8'] = raw;   // the shipped-in-V8 state, for the before column
+        clips.idle_raw = raw;
+        // Also assert the clamped idle is that same clip, not some other row.
+        idleMatchesRaw = !!clips.idle && clips.idle.tracks.length === raw.tracks.length
+          && clips.idle.tracks.every((tr, i) => tr.name === raw.tracks[i].name
+            && tr.values.length === raw.tracks[i].values.length
+            && tr.values.every((v, k) => Math.abs(v - raw.tracks[i].values[k]) < 1e-6));
       }
-      const shipped = clips[stanceFor(id)];
-      const idleMatchesShipped = !!clips.idle && !!shipped
-        && clips.idle.tracks.length === shipped.tracks.length
-        && clips.idle.tracks.every((tr, i) => tr.name === shipped.tracks[i].name
-          && tr.values.length === shipped.tracks[i].values.length
-          && tr.values.every((v, k) => Math.abs(v - shipped.tracks[i].values[k]) < 1e-6));
       offsets = groundOffsets(model, clips, { restore: targetRest });
       const t2 = performance.now();
       const lf = bones.LeftFoot, rf = bones.RightFoot;
@@ -203,7 +216,15 @@ window.__load = (id) => new Promise((res, rej) => {
         const mid = lf.getWorldPosition(new THREE.Vector3()).add(rf.getWorldPosition(new THREE.Vector3())).multiplyScalar(0.5);
         plumb.position.set(mid.x, 1.5, mid.z);
       }
-      res({ H:+H.toFixed(4), roles:Object.keys(clips), stance:stanceFor(id), offsets, idleMatchesShipped,
+      res({ H:+H.toFixed(4), roles:Object.keys(clips), stance:'a'+idleId, gender:genderFor(id, id),
+            offsets, idleMatchesRaw,
+            // clip IDENTITY per role. retargetClip preserves clip.name, and
+            // loadClip stamps it 'a<actionId>' — so this is the cell-by-cell
+            // proof of which performance each character actually got.
+            cast:Object.fromEntries(Object.entries(clips).map(([k,c])=>[k,c.name])),
+            dropped:Object.fromEntries(Object.entries(clips).map(([k,c])=>[k,c.userData?.retargetDroppedTracks ?? null])),
+            tracks:Object.fromEntries(Object.entries(clips).map(([k,c])=>[k,c.tracks.length])),
+            beats:beatTimeScales(clips),
             durations:Object.fromEntries(Object.entries(clips).map(([k,c])=>[k,+c.duration.toFixed(2)])),
             clipMs:+(t1-t0).toFixed(1), groundMs:+(t2-t1).toFixed(1),
             posture:Object.fromEntries(Object.entries(clips).map(([k,c])=>[k,!!c.userData?.postureClamped])) });
@@ -378,7 +399,7 @@ if (args.try) {
   const cands = String(args.try).split(',').map(s => s.endsWith('.glb') ? s : s + '.glb');
   const bodies = String(args.on || 'andrew,intern').split(',');
   const clamp = args.clamp !== 'false';
-  await page.evaluate(() => window.__initClips());
+  await page.evaluate(b => window.__initClips(b), bodies);
   for (const body of bodies) {
     const info = await page.evaluate(i => window.__load(i), body);
     const rows = [];
@@ -405,7 +426,8 @@ if (args.try) {
 }
 
 // ── CAST GATE ───────────────────────────────────────────────────────────────
-console.log('clips:', (await page.evaluate(() => window.__initClips())).join(','));
+console.log('clips:', (await page.evaluate(i => window.__initClips(i), ids)).join(','));
+const REACTION_ROLES = ['guard', 'hurt', 'stagger', 'victory', 'attack'];
 const data = [];
 let fails = 0;
 for (const id of ids) {
@@ -413,35 +435,45 @@ for (const id of ids) {
   try { info = await page.evaluate(i => window.__load(i), id); }
   catch (e) { console.log(`FAIL ${id}: ${String(e).slice(0, 300)}`); fails++; continue; }
   const bind = await page.evaluate(() => window.__bind());
-  const rec = { id, height_m: info.H, stanceShipped: info.stance, idleMatchesShipped: info.idleMatchesShipped,
-    offsets: {}, posture: info.posture,
+  const rec = { id, height_m: info.H, gender: info.gender, stanceShipped: info.stance,
+    cast: info.cast, dropped: info.dropped, tracks: info.tracks, beats: info.beats,
+    durations: info.durations, offsets: {}, posture: info.posture,
     clipMs: info.clipMs, groundMs: info.groundMs, bind, stances: {}, reactions: {}, verdict: {} };
   for (const [r, v] of Object.entries(info.offsets)) rec.offsets[r] = +v.toFixed(4);
-  if (!info.idleMatchesShipped) console.log(`  !! ${id}: clipsFor().idle is not the stance the gate measured`);
+
+  // CLIP-PROCESSING INTEGRITY, per cell. A clip that came through a stale strip
+  // path or a foreign rig shows up here as a dropped track or a short bind: the
+  // retargeter silently skips any track whose bone is missing from either rest
+  // map, and 24 rotations + 1 Hips translation is the whole authored rig.
+  const badTracks = Object.entries(rec.tracks).filter(([r, n]) => r !== 'cast' && n !== 25).map(([r, n]) => `${r}=${n}`);
+  const badDropped = Object.entries(rec.dropped).filter(([, n]) => n).map(([r, n]) => `${r}=${n}`);
+  if (badTracks.length) console.log(`  !! ${id}: track count not 25 — ${badTracks.join(' ')}`);
+  if (badDropped.length) console.log(`  !! ${id}: retarget DROPPED tracks — ${badDropped.join(' ')}`);
+  if (info.idleMatchesRaw === true) console.log(`  !! ${id}: clipsFor().idle is NOT posture-clamped`);
 
   const elder = ELDERS.has(id);
   let worstJointExcess = -99, worstJointName = '', worstTrunk = -99, worstGaze = 0;
   let floorLo = Infinity, floorHi = -Infinity;
   let reactLo = Infinity, reactHi = -Infinity;
-  // The V8 state, measured on the same instrument, so the before column is not
-  // a quotation from a previous round's tool.
-  let v8Joint = -99, v8Trunk = -99, v8Gaze = 0;
-  for (const role of ['stance_a_v8', 'stance_b_v8']) {
-    const rows = await page.evaluate(([r, n]) => window.__sweep(r, n), [role, SAMPLES]);
+  // The unclamped state of the SAME stance clip, measured on the same
+  // instrument, so the before column is not a quotation from another round.
+  let rawJoint = -99, rawTrunk = -99, rawGaze = 0;
+  if (info.roles.includes('idle_raw')) {
+    const rows = await page.evaluate(([r, n]) => window.__sweep(r, n), ['idle_raw', SAMPLES]);
     for (const row of rows) {
-      for (const k of ABOVE) v8Joint = Math.max(v8Joint, row.j[k].sag - bind.j[k].sag);
-      v8Trunk = Math.max(v8Trunk, elder ? row.trunk.sag - bind.trunk.sag : row.trunk.sag);
-      v8Gaze = Math.max(v8Gaze, Math.abs(row.gazeDy));
+      for (const k of ABOVE) rawJoint = Math.max(rawJoint, row.j[k].sag - bind.j[k].sag);
+      rawTrunk = Math.max(rawTrunk, elder ? row.trunk.sag - bind.trunk.sag : row.trunk.sag);
+      rawGaze = Math.max(rawGaze, Math.abs(row.gazeDy));
     }
   }
-  rec.v8 = { worstJointExcess: +v8Joint.toFixed(2), worstTrunk: +v8Trunk.toFixed(2), worstGaze: +v8Gaze.toFixed(4) };
-  for (const role of ['stance_a', 'stance_b']) {
-    const rows = await page.evaluate(([r, n]) => window.__sweep(r, n), [role, SAMPLES]);
-    rec.stances[role] = rows;
+  rec.raw = { worstJointExcess: +rawJoint.toFixed(2), worstTrunk: +rawTrunk.toFixed(2), worstGaze: +rawGaze.toFixed(4) };
+  {
+    const rows = await page.evaluate(([r, n]) => window.__sweep(r, n), ['idle', SAMPLES]);
+    rec.stances.idle = rows;
     for (const row of rows) {
       for (const k of ABOVE) {
         const excess = row.j[k].sag - bind.j[k].sag;
-        if (excess > worstJointExcess) { worstJointExcess = excess; worstJointName = `${k}@${role}t${row.t}`; }
+        if (excess > worstJointExcess) { worstJointExcess = excess; worstJointName = `${k}@idle t${row.t}`; }
       }
       worstTrunk = Math.max(worstTrunk, elder ? row.trunk.sag - bind.trunk.sag : row.trunk.sag);
       worstGaze = Math.max(worstGaze, Math.abs(row.gazeDy));
@@ -449,15 +481,20 @@ for (const id of ids) {
     }
   }
   // Reactions are supposed to bend; they are measured and reported, not gated.
-  for (const role of ['guard', 'hurt', 'stagger', 'victory', 'attack']) {
+  let hipsMax = Math.max(...rec.stances.idle.map(row => row.j['Hips>Spine02'].tot));
+  for (const role of REACTION_ROLES) {
     const rows = await page.evaluate(([r, n]) => window.__sweep(r, n), [role, 6]);
-    rec.reactions[role] = { maxExcess: +Math.max(...rows.map(row => Math.max(...ABOVE.map(k => row.j[k].sag - bind.j[k].sag)))).toFixed(2),
+    rec.reactions[role] = {
+      clip: rec.cast[role],
+      maxExcess: +Math.max(...rows.map(row => Math.max(...ABOVE.map(k => row.j[k].sag - bind.j[k].sag)))).toFixed(2),
+      hipsSpine02Max: +Math.max(...rows.map(row => row.j['Hips>Spine02'].tot)).toFixed(2),
       floorLo: +Math.min(...rows.map(r2 => r2.floor)).toFixed(4), floorHi: +Math.max(...rows.map(r2 => r2.floor)).toFixed(4) };
     reactLo = Math.min(reactLo, rec.reactions[role].floorLo); reactHi = Math.max(reactHi, rec.reactions[role].floorHi);
+    // THE V8 RETARGET WITNESS, now read across every role and not only the
+    // stance: a clip that skipped the retarget reads 90-164 deg here, a clip
+    // that went through it reads 3-40.
+    hipsMax = Math.max(hipsMax, rec.reactions[role].hipsSpine02Max);
   }
-  // Hips>Spine02 must not have moved: the round-2 judge fails the round on that
-  // number alone, because moving it means the retarget was touched.
-  const hipsMax = Math.max(...['stance_a','stance_b'].flatMap(r => rec.stances[r].map(row => row.j['Hips>Spine02'].tot)));
   rec.verdict = {
     worstJointExcess: +worstJointExcess.toFixed(2), worstJointName,
     worstTrunk: +worstTrunk.toFixed(2), trunkMode: elder ? 'delta(elder)' : 'absolute',
@@ -465,30 +502,59 @@ for (const id of ids) {
     hipsSpine02Max: +hipsMax.toFixed(2),
     floorLo: +floorLo.toFixed(4), floorHi: +floorHi.toFixed(4),
     reactFloorLo: +reactLo.toFixed(4), reactFloorHi: +reactHi.toFixed(4),
-    pass: worstJointExcess <= JOINT_BUDGET && worstTrunk <= TRUNK_ABS && worstGaze <= GAZE_ABS && info.idleMatchesShipped,
+    tracksOk: !badTracks.length && !badDropped.length,
+    clamped: info.idleMatchesRaw === false,
   };
+  // WHY, not just whether. The mechanical checks (tracks, retarget witness,
+  // joint budget, gaze) say the pipeline is intact; the absolute trunk ceiling
+  // is a CALMNESS check, authored for the two breathing stances, and the slate
+  // deliberately casts gesture idles for some characters. Separating the
+  // reasons keeps a taste call from reading as a rig failure.
+  const reasons = [];
+  if (badTracks.length) reasons.push('tracks:' + badTracks.join('/'));
+  if (badDropped.length) reasons.push('dropped:' + badDropped.join('/'));
+  if (hipsMax > HIPS_ABS) reasons.push(`retarget hips>sp02 ${hipsMax.toFixed(2)}`);
+  if (worstJointExcess > JOINT_BUDGET) reasons.push(`joint +${worstJointExcess.toFixed(2)}`);
+  if (worstGaze > GAZE_ABS) reasons.push(`gaze ${worstGaze.toFixed(4)}`);
+  if (worstTrunk > TRUNK_ABS) reasons.push(`trunk ${worstTrunk.toFixed(2)} (calmness, peak sample)`);
+  rec.verdict.reasons = reasons;
+  rec.verdict.pass = reasons.length === 0;
   if (!rec.verdict.pass) fails++;
   data.push(rec);
   const v = rec.verdict;
-  console.log(`${v.pass ? 'PASS' : 'FAIL'} ${id.padEnd(24)} joint+${String(v.worstJointExcess).padStart(6)}d (${v.worstJointName.padEnd(26)}) trunk ${String(v.worstTrunk).padStart(6)}d  gaze ${String(v.worstGaze).padStart(7)}  hips>sp02<=${String(v.hipsSpine02Max).padStart(5)}d  stance floor ${v.floorLo.toFixed(4)}..${v.floorHi.toFixed(4)}  ${info.clipMs}+${info.groundMs}ms`);
+  console.log(`${v.pass ? 'PASS' : 'FAIL'} ${id.padEnd(24)} ${info.gender} ${String(info.stance).padEnd(5)} joint+${String(v.worstJointExcess).padStart(6)}d trunk ${String(v.worstTrunk).padStart(6)}d  gaze ${String(v.worstGaze).padStart(7)}  hips>sp02<=${String(v.hipsSpine02Max).padStart(5)}d  stance floor ${v.floorLo.toFixed(4)}..${v.floorHi.toFixed(4)}  ${info.clipMs}+${info.groundMs}ms${reasons.length ? '  << ' + reasons.join('; ') : ''}`);
 }
 
-writeFileSync(join(OUT, 'gate.json'), JSON.stringify({ budget: { JOINT_BUDGET, TRUNK_ABS, GAZE_ABS, SAMPLES }, data }, null, 2));
+writeFileSync(join(OUT, 'gate.json'), JSON.stringify({ budget: { JOINT_BUDGET, TRUNK_ABS, GAZE_ABS, HIPS_ABS, SAMPLES }, data }, null, 2));
 
 console.log('\n=== GATE VERDICT ===');
 const mx = (f) => data.reduce((a, r) => Math.max(a, f(r)), -Infinity);
 const mn = (f) => data.reduce((a, r) => Math.min(a, f(r)), Infinity);
 console.log(`characters            ${data.length}`);
-console.log(`worst joint excess    V8 ${mx(r => r.v8.worstJointExcess).toFixed(2)} -> ${mx(r => r.verdict.worstJointExcess).toFixed(2)} deg  (budget ${JOINT_BUDGET})`);
-console.log(`worst trunk chord     V8 ${mx(r => r.v8.worstTrunk).toFixed(2)} -> ${mx(r => r.verdict.worstTrunk).toFixed(2)} deg  (ceiling ${TRUNK_ABS}, elders on delta)`);
+console.log(`worst joint excess    unclamped ${mx(r => r.raw.worstJointExcess).toFixed(2)} -> ${mx(r => r.verdict.worstJointExcess).toFixed(2)} deg  (budget ${JOINT_BUDGET})`);
+console.log(`worst trunk chord     unclamped ${mx(r => r.raw.worstTrunk).toFixed(2)} -> ${mx(r => r.verdict.worstTrunk).toFixed(2)} deg  (ceiling ${TRUNK_ABS}, elders on delta)`);
 const trunkExcess = r => r.verdict.worstTrunk - (ELDERS.has(r.id) ? 0 : r.bind.trunk.sag);
 console.log(`trunk over OWN bind   ${mn(trunkExcess).toFixed(2)} .. ${mx(trunkExcess).toFixed(2)} deg  (the clamp is uniform; what is left is each sculpt's own lean)`);
-console.log(`worst |gaze dy|       V8 ${mx(r => r.v8.worstGaze).toFixed(4)} -> ${mx(r => r.verdict.worstGaze).toFixed(4)}      (ceiling ${GAZE_ABS})`);
-console.log(`Hips>Spine02 max      ${mx(r => r.verdict.hipsSpine02Max).toFixed(2)} deg  (retarget-untouched witness)`);
+console.log(`worst |gaze dy|       unclamped ${mx(r => r.raw.worstGaze).toFixed(4)} -> ${mx(r => r.verdict.worstGaze).toFixed(4)}      (ceiling ${GAZE_ABS})`);
+console.log(`Hips>Spine02 max      ${mn(r => r.verdict.hipsSpine02Max).toFixed(2)} .. ${mx(r => r.verdict.hipsSpine02Max).toFixed(2)} deg  ALL ROLES  (retarget witness, ceiling ${HIPS_ABS}; unretargeted reads 90-164)`);
 console.log(`floor band STANCE     ${mn(r => r.verdict.floorLo).toFixed(4)} .. ${mx(r => r.verdict.floorHi).toFixed(4)} m`);
-console.log(`floor band REACTIONS  ${mn(r => r.verdict.reactFloorLo).toFixed(4)} .. ${mx(r => r.verdict.reactFloorHi).toFixed(4)} m  (a59 cheer and a191 jab leave the floor by design)`);
+console.log(`floor band REACTIONS  ${mn(r => r.verdict.reactFloorLo).toFixed(4)} .. ${mx(r => r.verdict.reactFloorHi).toFixed(4)} m  (the cheer and the jab leave the floor by design)`);
 console.log(`clip build            avg ${(data.reduce((a, r) => a + r.clipMs, 0) / data.length).toFixed(1)}ms  ground avg ${(data.reduce((a, r) => a + r.groundMs, 0) / data.length).toFixed(1)}ms`);
-console.log(`FAILURES              ${data.filter(r => !r.verdict.pass).map(r => r.id).join(',') || 'none'}`);
+console.log(`track integrity       ${data.filter(r => r.verdict.tracksOk).length}/${data.length} characters with 25 tracks and 0 dropped in every role`);
+console.log(`idle posture-clamped  ${data.filter(r => r.verdict.clamped).length}/${data.length}`);
+console.log(`FAILURES              ${data.filter(r => !r.verdict.pass).map(r => `${r.id} [${r.verdict.reasons.join('; ')}]`).join(', ') || 'none'}`);
+
+// ── THE CASTING SLATE, as shipped. One row per character, the clip actually
+// bound to each role and the beat multiplier it plays at.
+console.log('\n=== SLATE AS SHIPPED ===');
+console.log('character                b  idle   guard  hurt   stagger victory attack  | beat x (hurt/stag/atk)');
+for (const r of data) {
+  const c = r.cast, b = r.beats;
+  const f = (k) => String(c[k] || '-').padEnd(6);
+  console.log(`${r.id.padEnd(24)} ${r.gender}  ${f('idle')} ${f('guard')} ${f('hurt')} ${f('stagger')} ${f('victory')} ${f('attack')} | ${(b.hurt ?? 1).toFixed(3)} ${(b.stagger ?? 1).toFixed(3)} ${(b.attack ?? 1).toFixed(3)}`);
+}
+const allBeats = data.flatMap(r => Object.entries(r.beats).map(([k, v]) => v));
+console.log(`timeScale window applied: ${Math.min(...allBeats).toFixed(3)} .. ${Math.max(...allBeats).toFixed(3)}`);
 
 // ── PROOF SHEETS ────────────────────────────────────────────────────────────
 async function stitch(cells, title, cols, rowLabels, dest, tile) {
@@ -531,7 +597,7 @@ if (args.shots) {
       const info = await page.evaluate(i => window.__load(i), id);
       const rec = data.find(r => r.id === id);
       const tiles = [];
-      for (const [role, t] of [[null, 0], [info.stance, 2], [info.stance, 6], ['guard', 0.6]]) {
+      for (const [role, t] of [[null, 0], ['idle', 2], ['idle', 6], ['guard', 0.6]]) {
         await page.evaluate(p => window.__pose(p[0], p[1]), [role, t]);
         await page.evaluate(([a, tg]) => window.__shot(a, tg), [angle, false]);
         tiles.push((await page.locator('canvas').screenshot()).toString('base64'));
@@ -556,14 +622,14 @@ if (args.shots) {
   for (const id of ['andrew', 'intern'].filter(i => ids.includes(i))) {
     const info = await page.evaluate(i => window.__load(i), id);
     const rec = data.find(r => r.id === id);
-    const TS = [0, 1.4, 2.8, 4.2, 5.6, 7.0, 8.4, 9.8, 11.0].filter(t => t <= (info.durations[info.stance] ?? 0));
+    const TS = [0, 1.4, 2.8, 4.2, 5.6, 7.0, 8.4, 9.8, 11.0].filter(t => t <= (info.durations.idle ?? 0));
     const tiles = [];
     for (const t of TS) {
-      await page.evaluate(p => window.__pose(p[0], p[1]), [info.stance, t]);
+      await page.evaluate(p => window.__pose(p[0], p[1]), ['idle', t]);
       await page.evaluate(() => window.__shot('side', false));
       tiles.push((await page.locator('canvas').screenshot()).toString('base64'));
     }
-    await stitch(null, `TIME SWEEP — ${id} (${info.stance}, ${info.durations[info.stance]}s) TRUE SIDE ${TILE}px/cell   held-vs-passed-through proof`,
+    await stitch(null, `TIME SWEEP — ${id} (${info.stance}, ${info.durations.idle}s) TRUE SIDE ${TILE}px/cell   held-vs-passed-through proof`,
       TS.map(t => `t=${t}`), [{ id, pass: rec?.verdict.pass !== false, tiles, lines: [
         `joint +${rec?.verdict.worstJointExcess}d`, `trunk ${rec?.verdict.worstTrunk}d`, `gaze ${rec?.verdict.worstGaze}`] }],
       join(OUT, `sweep_${id}.png`), TILE);
