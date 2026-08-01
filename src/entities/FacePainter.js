@@ -476,16 +476,30 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   if (old) {
     // v7 FIX round-1 — 0.32 drew three hard horizontal rules across the forehead
     // that read as a ladder at arena framing (grandma fx7). 0.19 still ages her.
-    ctx.strokeStyle = rgba(0x6a4a38, 0.19);
-    ctx.lineWidth = 0.0032 * S;
-    // forehead lines re-seated against the round-4 brow line (they were painted
-    // at 0.268S, which is now up inside the hairline)
-    for (let i = 0; i < 3; i++) {
+    // v7 PRODUCER-NOTES round-2 — THE FOREHEAD LADDER. Three hard rules at 0.19
+    // running the full width of the forehead is the same defect class as the
+    // nose bar the producer named: a stack of horizontal lines under a top key.
+    // Grandma is the only face LAW 3 permits creases on at all, so they stay —
+    // but as TWO short, soft, unequal arcs at 0.11 that fade at both ends, which
+    // is how a forehead line actually reads. Feathered with a gradient stroke so
+    // neither one has an endpoint the eye can find.
+    ctx.lineWidth = 0.0026 * S;
+    for (let i = 0; i < 2; i++) {
+      const half = S * (0.118 - i * 0.016);
+      const yy = browY - S * 0.062 - i * S * 0.040;
+      const lg = ctx.createLinearGradient(cx - half, 0, cx + half, 0);
+      lg.addColorStop(0, rgba(0x6a4a38, 0));
+      lg.addColorStop(0.35, rgba(0x6a4a38, 0.11));
+      lg.addColorStop(0.65, rgba(0x6a4a38, 0.11));
+      lg.addColorStop(1, rgba(0x6a4a38, 0));
+      ctx.strokeStyle = lg;
       ctx.beginPath();
-      ctx.moveTo(cx - S * 0.150, browY - S * 0.060 - i * S * 0.032);
-      ctx.quadraticCurveTo(cx, browY - S * 0.074 - i * S * 0.032, cx + S * 0.150, browY - S * 0.060 - i * S * 0.032);
+      ctx.moveTo(cx - half, yy);
+      ctx.quadraticCurveTo(cx, yy - S * 0.013, cx + half, yy);
       ctx.stroke();
     }
+    ctx.strokeStyle = rgba(0x6a4a38, 0.19);
+    ctx.lineWidth = 0.0032 * S;
     // naso-labial: a SHORT soft crease from beside the nostril to the mouth
     // corner. At the round-4 spacing the old long curve pair closed into a
     // "wine-glass" outline around the mouth.

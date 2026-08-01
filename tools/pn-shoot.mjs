@@ -53,7 +53,7 @@ function summarize(note, m) {
   switch (note) {
     case 'neck': return `mean=${m.neckOverHeadMean}  base=${m.neckOverHeadBase}  top=${m.neckOverHeadTop}  aspect=${m.columnAspect}  taper=${m.taperPct}%  bulge=${m.maxBulgePct}%`;
     case 'bands': case 'bandsForm': return `noseMaxGrad=${m.noseBandMaxGradient}  peaks=${m.peakCount}  smear=${m.smearOverNoseWidth}`;
-    case 'skull': return `W/H=${m.headWOverH}  heads=${m.headCountSkull}  roundDev=${m.profileRoundnessDev}  structE=${m.structureEnergy}`;
+    case 'skull': return `W/H=${m.headWOverH}  heads=${m.headCountSkull}  cranialHold=${m.cranialHoldPct}%  gonialHold=${m.gonialHoldPct}%  roundDev=${m.profileRoundnessDev}`;
     case 'hands': return `placement=${m.thumbPlacement}  mirrored=${m.mirrorConsistent}  rotatedNotMirrored=${m.rotatedNotMirrored}  anteriorBoth=${m.thumbAnteriorBothHands}`;
     case 'hair': return `strandE=${m.strandEnergy}`;
     case 'expr': return `geo=${JSON.stringify(m.geoDelta)}  hasGeo=${m.hasGeometryChannel}`;

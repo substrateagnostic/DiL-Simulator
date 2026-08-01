@@ -231,7 +231,18 @@ export const CHARACTER_CONFIGS = {
     beard: 'stubble', beardColor: 0x55452c, // portrait stubble (deeper than 0x6a5236)
     // v7 — headScale tracks heightScale: at 1.0 against a 1.06 body he measured
     // 7.29 heads (LAW 1 caps at 7.0) and the head read undersized on the frame.
-    widthScale: 1.06, heightScale: 1.06, headScale: 1.06,
+    // v7 PRODUCER-NOTES round-2 — HEAD SCALE (producer note 4: "Chad: head too
+    // small + too round"). He measured headCountSkull 6.857 against LAW 1's
+    // 6.5–7.0 band, i.e. he was sitting at the SMALL-HEAD end of the legal range
+    // while the reference draws a big square-headed athlete. Solving
+    // headCount = C0/(2.70R) + 1 for 6.55 gives R x 1.055, so 1.06 -> 1.12.
+    widthScale: 1.06, heightScale: 1.06, headScale: 1.12,
+    // ...and the ROUNDNESS half of the same note. `skullSquare` adds a gonial
+    // corner, a flat frontal plane and parallel side walls (sculptSkull step 10).
+    // He is the only build that asks for it: chad_body.png is a square-jawed,
+    // flat-browed bull, and he measured a 0.096 deviation from a circular arc in
+    // profile with a 4.63 structure energy — the definition of a painted egg.
+    skullSquare: 2.00,
     // v5 face/proportion fields. Round-4: chin 1.08→1.00 and jaw 0.98→0.94 —
     // the nose-to-chin span measured ~45% of the skull, outside LAW 4's ±15% band
     // ("shorten the jaw shell ~8%"). The eye line rises back toward 50% with it.

@@ -182,11 +182,28 @@ export class CharacterAnimator {
   // Swap the painted face texture (PS1 style — expressions are textures).
   // hold > 0 reverts to neutral after that many seconds. No-ops on
   // faceless builds (monolith).
+  // v7 PRODUCER-NOTES round-2 — THE HYBRID. Expressions were texture-only, and
+  // once the skull became genuinely sculpted the two channels disagreed: painted
+  // angry brows over a neutral geometric brow ridge. The producer's ruling was
+  // to keep the swap and ADD geometry. Both channels are driven from this one
+  // call, off the same name, so they cannot drift apart.
+  //
+  // The geometry channel is combat-tier only (faceMorphIndex is null on room
+  // builds), and a name with no morph simply relaxes the face to neutral
+  // geometry — so this is a no-op on faceless builds and on the exploration
+  // tier, exactly as the texture path already was.
   setExpression(name, hold = 0) {
     const tex = this.group.faceTextures?.[name] || this.group.faceTextures?.neutral;
     if (!tex || !this.group.faceMesh) return;
     this.group.faceMesh.material.map = tex;
     this.group.faceMesh.material.needsUpdate = true;
+    const idx = this.group.faceMorphIndex;
+    const inf = this.group.faceMesh.morphTargetInfluences;
+    if (idx && inf) {
+      inf.fill(0);
+      const i = idx[name];
+      if (i != null) inf[i] = 1;
+    }
     this._exprHold = hold > 0 ? hold : 0;
   }
 

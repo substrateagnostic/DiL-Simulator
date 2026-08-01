@@ -422,12 +422,21 @@ export async function skull(id, opts = {}) {
       se += Math.hypot(gx, gy); sn++;
     }
   }
+  // FRONT-VIEW SQUARENESS — the two numbers that actually separate a skull from
+  // a ball. An ellipsoid loses ~26% of its width between the parietal eminence
+  // and the upper crown, and tapers smoothly away below the cheekbone; a
+  // structured skull holds its width up the side wall and turns a corner at the
+  // gonion instead.
+  const wAt = (yR) => { const s2 = rowSpan(f, f.rowOf(m.headY + m.headR * yR)); return s2 ? s2.width : 0; };
+  const wPar = wAt(0.35), wCrown = wAt(0.95), wCheek = wAt(-0.45), wGon = wAt(-0.75);
   renderer.dispose();
   return {
     metrics: {
       id,
       headR: m.headR, headWidth: m.headWidth, headHeight: m.headHeight,
       headWOverH: m.headWOverH,
+      cranialHoldPct: +((wCrown / Math.max(1e-6, wPar)) * 100).toFixed(1),
+      gonialHoldPct: +((wGon / Math.max(1e-6, wCheek)) * 100).toFixed(1),
       headCountSkull: +(m.crownY / (m.crownY - m.chinY)).toFixed(3),
       profileRoundnessDev: +(dev / n / Math.max(1e-6, maxW)).toFixed(4),
       structureEnergy: +(se / Math.max(1, sn)).toFixed(3),

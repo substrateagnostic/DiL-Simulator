@@ -807,6 +807,9 @@ export function buildCharacter(config, options = {}) {
     eyeSize: _clamp(config.eyeSize ?? 1, 0.88, 1.14),
     eyeGap: _clamp(config.eyeGap ?? 1, 0.90, 1.10),
     mouthWidth: _clamp(config.mouthWidth ?? 1, 0.88, 1.14),
+    // `square` is structure, not proportion, so LAW 4's ±15% face band does not
+    // govern it — but it is still clamped so no one can grow a cinder block.
+    square: Math.min(2.2, Math.max(1.0, config.skullSquare ?? 1)),
   };
   const skull = makeHead(headR, mSkin, { ...faceDial, detailed });
   head.add(skull);
@@ -892,7 +895,13 @@ export function buildCharacter(config, options = {}) {
   }
 
   collapseNode(head, [mHair, mStreak, mUnder].filter(Boolean));
-  if (facePatch) group.faceMesh = facePatch;
+  if (facePatch) {
+    group.faceMesh = facePatch;
+    // THE EXPRESSION CONTRACT: one name drives BOTH channels. CharacterAnimator
+    // reads faceTextures for the paint and faceMorphIndex for the geometry and
+    // sets them in the same call, so they can never disagree again.
+    group.faceMorphIndex = facePatch.userData.faceMorphIndex || null;
+  }
 
   // glasses as torus GEOMETRY (rework a) — parented to head, ride the bob
   if (config.glasses) {
@@ -1036,6 +1045,8 @@ function makeMaterialKit(detailed) {
           sheenColor: new THREE.Color(color).multiplyScalar(1.2), envMapIntensity: 0.45,
         });
         if (t) m.map = t;
+        const hb = hairBumpTexture();
+        if (hb) { m.bumpMap = hb; m.bumpScale = 0.010; }
         return m;
       },
       cloth: (color, opts = {}) => {
@@ -1063,6 +1074,8 @@ function makeMaterialKit(detailed) {
       const t = hairTexture();
       const m = new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: 0.5, metalness: 0.0 });
       if (t) m.map = t;
+      const hb = hairBumpTexture();
+      if (hb) { m.bumpMap = hb; m.bumpScale = 0.006; }
       return m;
     },
     cloth: (color, opts = {}) => {
@@ -1196,6 +1209,41 @@ function resolveHairStyle(style) {
 
 // ── canvas texture helpers (headless-guarded) ─────────────────────────
 const _hairTexCache = {};
+// v7 PRODUCER-NOTES round-2 — STRAND TEXTURE (producer note 6: "Grandma: the
+// hair reads as a BONNET — needs painted strand texture").
+//
+// The old texture was 150 faint strokes on a 256px canvas mapped ONCE around a
+// sphere with no `repeat` and no bump. At head scale that is roughly one visible
+// stroke per two centimetres of scalp at 20% alpha — i.e. nothing. What the
+// renders showed was a smooth pale shell with a hard rim, which is a bonnet.
+//
+// Two changes, and the second is the one that matters:
+//   · DENSITY + TILING. 520 strokes and a 2x3 repeat, so strands read as fibre
+//     at the size a head is actually drawn.
+//   · A BUMP MAP. Hair does not read as hair because it is striped; it reads as
+//     hair because the strands CATCH LIGHT along their length. A diffuse-only
+//     stripe on a smooth shell is still a smooth shell. The bump is the same
+//     stroke field rendered as height, so the key rakes across it.
+// Both stay LOW CONTRAST on the albedo (the "exposed brain" note on silver hair
+// came from dark swirls), and every stroke is near-vertical: hair falls.
+function _strandField(ctx, S, mode) {
+  const dark = mode === 'bump' ? 'rgba(40,40,40,' : 'rgba(120,120,120,';
+  const lite = mode === 'bump' ? 'rgba(240,240,240,' : 'rgba(255,255,255,';
+  for (let i = 0; i < 520; i++) {
+    const x = Math.random() * S, y = Math.random() * S;
+    const len = 30 + Math.random() * 80;
+    const up = Math.random() > 0.5;
+    const a = mode === 'bump' ? (0.20 + Math.random() * 0.30) : (0.10 + Math.random() * 0.14);
+    ctx.strokeStyle = (up ? lite : dark) + a.toFixed(3) + ')';
+    ctx.lineWidth = 0.6 + Math.random() * 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    // near-vertical sway: a strand, never a swirl (v6's swirls read as
+    // cerebral folds on white hair)
+    ctx.quadraticCurveTo(x + (Math.random() - 0.5) * 6, y + len * 0.5, x + (Math.random() - 0.5) * 9, y + len);
+    ctx.stroke();
+  }
+}
 function hairTexture(key = 'default') {
   if (typeof document === 'undefined') return null;
   if (_hairTexCache[key]) return _hairTexCache[key];
@@ -1203,32 +1251,36 @@ function hairTexture(key = 'default') {
   const c = document.createElement('canvas');
   c.width = S; c.height = S;
   const ctx = c.getContext('2d');
-  // Near-white base so the material COLOR carries the hair hue (a mid-grey base
-  // used to drag every hair toward grey — and on white/silver hair the dark
-  // swirled strands read as cerebral folds, the "exposed brain" note). Strands
-  // are now faint, thin, and mostly VERTICAL (hair falls; it doesn't swirl), so
-  // they read as fibre grain on any hair colour instead of brain wrinkles.
-  // v6 round-3 — the base was #d0d0d0 (0.82×), which MULTIPLIES the material
-  // colour: every hair in the cast rendered ~2 value-stops darker than its config
-  // hex, so Karen's platinum 0xdccaa0 read ochre-brown and Chad's blonde read
-  // chocolate. Near-white base → the config hex is the hair value you get.
+  // Near-white base so the material COLOR carries the hair hue. A mid-grey base
+  // MULTIPLIES the colour and drags every hair two value-stops darker (that is
+  // why Karen's platinum once read ochre and Chad's blonde read chocolate).
   ctx.fillStyle = '#f6f6f6';
   ctx.fillRect(0, 0, S, S);
-  for (let i = 0; i < 150; i++) {
-    const x = Math.random() * S, y = Math.random() * S;
-    const len = 26 + Math.random() * 64;
-    ctx.strokeStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.20)' : 'rgba(130,130,130,0.16)';
-    ctx.lineWidth = 0.5 + Math.random() * 1.0;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    // Gentle near-vertical sway (±5px) — a strand, not a swirl.
-    ctx.quadraticCurveTo(x + (Math.random() - 0.5) * 5, y + len * 0.5, x + (Math.random() - 0.5) * 7, y + len);
-    ctx.stroke();
-  }
+  _strandField(ctx, S, 'albedo');
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.minFilter = THREE.LinearFilter;
+  tex.repeat.set(2, 3);
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
   _hairTexCache[key] = tex;
+  return tex;
+}
+
+let _hairBumpTex = null;
+function hairBumpTexture() {
+  if (typeof document === 'undefined') return null;
+  if (_hairBumpTex) return _hairBumpTex;
+  const S = 256;
+  const c = document.createElement('canvas');
+  c.width = S; c.height = S;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#808080';
+  ctx.fillRect(0, 0, S, S);
+  _strandField(ctx, S, 'bump');
+  const tex = new THREE.CanvasTexture(c);
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.repeat.set(2, 3);
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
+  _hairBumpTex = tex;
   return tex;
 }
 
@@ -1643,7 +1695,148 @@ function sculptSkull(d, dial, out) {
     z += amp * lat * front * noseK;
   }
 
+  // 10 · SKULL STRUCTURE (`square`) — v7 PRODUCER-NOTES round-2, producer note 4:
+  //      "Chad: head too small and too round — a face painted on a baseball.
+  //      Needs skull structure and scale."
+  //
+  //      Every dial up to here changes the FACE. None of them change the fact
+  //      that the cranium is an ellipsoid: measured on the form pass, Chad's
+  //      profile deviated from a circular arc by 0.096 and carried a structure
+  //      energy of 4.63 — a smooth egg with features drawn on it. This dial adds
+  //      the three planes that make a skull read as bone rather than as a ball,
+  //      and it is off (1.0) for everyone who does not ask for it.
+  //
+  //      · GONIAL ANGLE — a real corner at the jaw angle, pushed out and back,
+  //        so the mandible turns instead of tapering away.
+  //      · FRONTAL PLANE — the forehead flattens across its width; a domed
+  //        forehead is the single biggest "baseball" tell in front view.
+  //      · SIDE WALL — the temple plane (step 2) carried down past the zygomatic
+  //        arch, so the skull has parallel sides rather than a continuous curve.
+  //      All three are sheared or laterally-belled, so none of them can become a
+  //      constant-Y ridge (the defect note 3 was written against).
+  const sqK = (dial.square ?? 1) - 1;
+  if (sqK > 0) {
+    // Amplitudes are the round-2 SECOND pass. At 0.080/0.060/0.048 the numbers
+    // moved (gonial hold 78% → 88%) but the form pass still cold-read as an egg,
+    // which is the only verdict that counts.
+    const gon = _bell(shear(y, -0.20), -0.72, 0.46) * _bell(Math.abs(d.x), 0.76, 0.46) * (1 - front * 0.25);
+    x += 0.135 * sqK * gon * Math.sign(x || 1);
+    z -= 0.045 * sqK * gon;
+    const frontal = _bell(y, 0.62, 0.58) * _bell(ax, 0.60, 0.48) * front;
+    z -= 0.078 * sqK * frontal;
+    const wall = _bell(y, -0.10, 0.80) * _bell(Math.abs(d.x), 0.90, 0.34);
+    x *= 1 - 0.062 * sqK * wall;
+    // A SQUARE CHIN. The mental protuberance (step 8) is belled at 0.40 of the
+    // half-width, which builds a narrow point; a heavy jaw carries the chin
+    // across the front of the mandible instead.
+    const chinSq = _bell(shear(y, -0.10), -1.02, 0.44) * _bell(ax, 0.0, 0.62) * front;
+    z += 0.030 * sqK * chinSq;
+    x += 0.055 * sqK * _bell(y, -1.02, 0.40) * _bell(ax, 0.42, 0.40) * Math.sign(x || 1);
+  }
+
   out.set(x * wideAt(y), y, z);
+  return out;
+}
+
+// EXPRESSION GEOMETRY (the HYBRID)
+//
+// v7 PRODUCER-NOTES round-2. Producer's ruling, 2026-07-31: expressions are
+// texture swaps, and now that the skull is genuinely sculpted the two channels
+// DISAGREE - painted angry brows sit on top of a neutral geometric brow ridge,
+// so at any distance where the sculpt reads, the face is wearing an expression
+// it is not making. Adopt the hybrid: keep the texture swaps AND add
+// per-expression geometry deltas keyed to the same six expression names.
+//
+// The deltas ship as MORPH TARGETS on the face patch (relative, with normals),
+// so a swap costs one influence write and the GPU does the rest - the texture
+// swap and the morph fire from the same setExpression call and cannot drift
+// apart. Combat tier only: the exploration camera never reads a brow ridge, and
+// morph attributes are the one thing in this file with a real memory cost.
+//
+// Every band below is either laterally belled or sheared, so none of them can
+// become a constant-Y ridge (see note 3 - that lesson is not re-learnable).
+const EXPR_KEYS = ['angry', 'smug', 'worried', 'hurt', 'victory'];
+
+// browPitch   + = inner end of the brow drives DOWN (anger), - = inner end lifts
+// browRaise   + = whole brow ridge lifts
+// browAsym    applies browRaise to ONE side only (smug's single raised brow)
+// lid         + = upper lid drives down over the eye (hooding)
+// mouthOpen   + = jaw drops, lower face lengthens
+// mouthCorner + = corners lift (smile), - = corners fall
+// cheekRaise  + = malar mass lifts (a real smile is a cheek, not a mouth)
+// chinTense   + = mental protuberance knots (grit / hurt)
+// noseFlare   + = alae widen
+function exprGeo(name) {
+  switch (name) {
+    case 'angry':   return { browPitch: 1.00, browRaise: -0.55, lid: 0.10, mouthOpen: 0.20, mouthCorner: -0.55, cheekRaise: 0.15, chinTense: 0.35, noseFlare: 0.55 };
+    case 'smug':    return { browPitch: -0.25, browRaise: 0.30, browAsym: 1, lid: 0.55, mouthOpen: 0.00, mouthCorner: 0.40, cheekRaise: 0.35, chinTense: 0.00, noseFlare: 0.00 };
+    case 'worried': return { browPitch: -0.85, browRaise: 0.35, lid: -0.15, mouthOpen: 0.45, mouthCorner: -0.30, cheekRaise: -0.15, chinTense: 0.20, noseFlare: 0.10 };
+    case 'hurt':    return { browPitch: 0.45, browRaise: -0.20, lid: 0.75, mouthOpen: 0.15, mouthCorner: -0.40, cheekRaise: 0.45, chinTense: 0.55, noseFlare: 0.30 };
+    case 'victory': return { browPitch: -0.30, browRaise: 0.60, lid: -0.10, mouthOpen: 0.55, mouthCorner: 0.85, cheekRaise: 0.80, chinTense: 0.00, noseFlare: 0.20 };
+    default:        return null;
+  }
+}
+
+// Returns the (R-unit) offset this expression adds at one point of the already
+// sculpted skull. `d` is the unit direction on the base sphere, so this reads
+// exactly like sculptSkull and shares its landmark stack.
+function sculptExprDelta(d, dial, p, out) {
+  out.set(0, 0, 0);
+  if (!p) return out;
+  const y = d.y * (d.y >= 0 ? SKULL.UP : SKULL.DOWN);
+  const ax = Math.abs(d.x);
+  const front = Math.max(0, d.z);
+  if (front < 0.05) return out;                 // nothing behind the ear line moves
+  const sx = Math.sign(d.x || 1);
+  const shear = (yy, slope) => yy + slope * ax;
+
+  // BROW - the ridge PITCHES about its own midpoint, so the inner end can drive
+  // down while the outer end lifts. That is the shape difference between anger
+  // and worry, and it is the one the painted brows have always claimed.
+  const browBand = _bell(shear(y, -0.13), LM.brow, 0.34) * _bell(ax, 0.30, 0.44);
+  const inner = Math.max(0, 1 - ax / 0.44);
+  const pitch = (p.browPitch || 0) * inner - (p.browPitch || 0) * (1 - inner) * 0.55;
+  const asym = p.browAsym ? (sx > 0 ? 1 : 0.15) : 1;
+  out.y += browBand * asym * (-pitch * 0.055 + (p.browRaise || 0) * 0.038);
+  out.z += browBand * asym * (p.browPitch || 0) * inner * 0.020;
+
+  // LID - the upper lid rolls DOWN and slightly forward over the globe.
+  const lidBand = _bell(y, -0.13, 0.22) * _bell(ax, 0.40, 0.30);
+  out.y -= lidBand * (p.lid || 0) * 0.052;
+  out.z += lidBand * (p.lid || 0) * 0.026;
+
+  // CHEEK - a real smile lifts the malar mass. It is the difference between a
+  // smile and a curve drawn on a cheek.
+  const malar = _bell(shear(y, -0.34), -0.34, 0.50) * _bell(ax, 0.60, 0.44);
+  out.y += malar * (p.cheekRaise || 0) * 0.040;
+  out.z += malar * (p.cheekRaise || 0) * 0.022;
+
+  // NOSE - alae flare outward.
+  const alae = _bell(y, LM_SUBNASAL + 0.04, 0.20) * _bell(ax, 0.16, 0.20);
+  out.x += alae * (p.noseFlare || 0) * 0.030 * sx;
+
+  // MOUTH - the whole lower face lengthens on an open mouth (a jaw, not a hole),
+  // and the corners travel on their own band.
+  const jaw = _sstep(-0.55, -1.25, y) * _bell(ax, 0.0, 0.86);
+  out.y -= jaw * (p.mouthOpen || 0) * 0.075;
+  out.z -= jaw * (p.mouthOpen || 0) * 0.016;
+  const corner = _bell(shear(y, -0.10), LM.mouth, 0.26) * _bell(ax, 0.30, 0.26);
+  out.y += corner * (p.mouthCorner || 0) * 0.050;
+  out.z += corner * (p.mouthCorner || 0) * 0.014;
+
+  // CHIN - the mental knot of a grit or a wince.
+  const chinB = _bell(y, -1.08, 0.34) * _bell(ax, 0.0, 0.36);
+  out.z += chinB * (p.chinTense || 0) * 0.026;
+  out.y += chinB * (p.chinTense || 0) * 0.014;
+
+  // Fade to nothing before the patch border, so the patch can never peel off the
+  // skull at its rim however hard an expression is driven.
+  const edge = Math.min(1, front / 0.30) * (1 - _sstep(0.70, 0.88, y)) * (1 - _sstep(-1.16, -1.34, y));
+  // Global gain. The first pass measured a mean image delta of 0.21-0.50 on the
+  // form pass - present, provable, and still too quiet to carry across an arena.
+  // 1.7 lands the deltas where the sculpt reads at fight framing without ever
+  // approaching the edge fade, which is what protects the patch rim.
+  out.multiplyScalar(edge * 1.7);
   return out;
 }
 
@@ -1691,7 +1884,17 @@ function faceLayout(dial = {}) {
     // surface has pitched ~40° away from the lens, so a lip authored in tile
     // fractions rendered as a thin ribbon (r4: "the mouth is a brown line").
     mouthHF: (faceF(mouthY - 0.12) - faceF(mouthY + 0.12)) * 0.5,
-    jawWF: faceU(jawHW * 0.92, -0.60, jawHW),
+    // v7 FIX round-2 — jawWF WAS A CONSTANT BY CONSTRUCTION. It read
+    // `faceU(jawHW * 0.92, −0.60, jawHW)`, i.e. asin(0.92)/(2·PATCH_ARC) — the
+    // jaw dial and the width dial both appear in the numerator AND the
+    // denominator and cancel exactly, so it emitted 0.4867 for every character
+    // in the cast no matter what. That is one of the identical numbers note [B]
+    // cites as evidence of "ONE FACE TEMPLATE UNDER EVERY WIG", and on this one
+    // field the evidence was an instrument bug rather than a sculpt failure.
+    // It is now the gonion half-width measured in the EYE row's conformal frame,
+    // which is a real per-character ratio. (Diagnostic only — the painter does
+    // not consume it.)
+    jawWF: faceU(jawHW, -0.60, skullHalfW(LM.eye, wide)),
     maskCY, maskR0, maskR1: 0.50,
     maskSX: 1.0,
     maskSY: ((coreBot - coreTop) * 0.5) / maskR0,
@@ -1969,9 +2172,14 @@ function makeHead(rad, mat, opts = {}) {
   const geo = new THREE.SphereGeometry(1, wSeg, hSeg);
   const pos = geo.attributes.position;
   const d = new THREE.Vector3(), o = new THREE.Vector3();
+  // Every dial the sculpt understands must be listed here AND in makeFacePatch.
+  // (`square` was added in round-2 and silently did nothing for a build because
+  // both of these rebuild the dial object with explicit keys rather than
+  // forwarding it — worth remembering the next time a dial "has no effect".)
   const dial = {
     jaw: opts.jaw ?? 0.9, chin: opts.chin ?? 1.0, nose: opts.nose ?? 1,
     wide: opts.wide ?? 1, cheek: opts.cheek ?? 1, browRidge: opts.browRidge ?? 1,
+    square: opts.square ?? 1,
   };
   for (let i = 0; i < pos.count; i++) {
     d.fromBufferAttribute(pos, i).normalize();
@@ -2002,6 +2210,7 @@ function makeFacePatch(rad, faceTex, M, detailed = false, dial = { jaw: 0.9, chi
       sculptSkull(d, {
         jaw: dial.jaw, chin: dial.chin, nose: dial.nose ?? 1,
         wide: dial.wide ?? 1, cheek: dial.cheek ?? 1, browRidge: dial.browRidge ?? 1,
+        square: dial.square ?? 1,
       }, o);
       pos.setXYZ(i, o.x * rad * PATCH_PROUD, o.y * rad * PATCH_PROUD, o.z * rad * PATCH_PROUD);
     }
@@ -2018,13 +2227,66 @@ function makeFacePatch(rad, faceTex, M, detailed = false, dial = { jaw: 0.9, chi
     const vv = (uv.getY(i) - vMin) / (vMax - vMin);
     uv.setXY(i, 1 - u, vv);
   }
+  // EXPRESSION MORPHS - the hybrid's geometry channel. Combat tier only.
+  // Deltas are RELATIVE and normals ship with them, because a brow ridge that
+  // moves without its normal moving does not read as a brow.
+  let morphIndex = null;
+  if (detailed) {
+    const basePos = geo.attributes.position;
+    const baseNrm = geo.attributes.normal;
+    const n = basePos.count;
+    const d2 = new THREE.Vector3(), e2 = new THREE.Vector3();
+    const src = new THREE.SphereGeometry(1, seg, seg,
+      Math.PI * 0.5 - PATCH_ARC, PATCH_ARC * 2, PATCH_THETA_START, PATCH_THETA_LEN);
+    const sp = src.attributes.position;
+    geo.morphTargetsRelative = true;
+    geo.morphAttributes.position = [];
+    geo.morphAttributes.normal = [];
+    morphIndex = {};
+    const tmp = new THREE.BufferGeometry();
+    tmp.setIndex(geo.index);
+    for (const name of EXPR_KEYS) {
+      const p = exprGeo(name);
+      const dp = new Float32Array(n * 3);
+      const absolute = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        d2.fromBufferAttribute(sp, i).normalize();
+        sculptExprDelta(d2, dial, p, e2);
+        const dx = e2.x * rad * PATCH_PROUD, dy = e2.y * rad * PATCH_PROUD, dz = e2.z * rad * PATCH_PROUD;
+        dp[i * 3] = dx; dp[i * 3 + 1] = dy; dp[i * 3 + 2] = dz;
+        absolute[i * 3] = basePos.getX(i) + dx;
+        absolute[i * 3 + 1] = basePos.getY(i) + dy;
+        absolute[i * 3 + 2] = basePos.getZ(i) + dz;
+      }
+      tmp.setAttribute('position', new THREE.BufferAttribute(absolute, 3));
+      tmp.computeVertexNormals();
+      const mn = tmp.attributes.normal;
+      const dn = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) {
+        dn[i * 3] = mn.getX(i) - baseNrm.getX(i);
+        dn[i * 3 + 1] = mn.getY(i) - baseNrm.getY(i);
+        dn[i * 3 + 2] = mn.getZ(i) - baseNrm.getZ(i);
+      }
+      morphIndex[name] = geo.morphAttributes.position.length;
+      geo.morphAttributes.position.push(new THREE.BufferAttribute(dp, 3));
+      geo.morphAttributes.normal.push(new THREE.BufferAttribute(dn, 3));
+    }
+    tmp.dispose();
+    src.dispose();
+  }
+
   const mat = M.skin(0xffffff, faceTex);
   mat.transparent = true;
   mat.depthWrite = true;
   mat.polygonOffset = true;
   mat.polygonOffsetFactor = -1;
   mat.polygonOffsetUnits = -1;
-  return new THREE.Mesh(geo, mat);
+  const mesh = new THREE.Mesh(geo, mat);
+  if (morphIndex) {
+    mesh.userData.faceMorphIndex = morphIndex;
+    mesh.morphTargetInfluences = new Array(EXPR_KEYS.length).fill(0);
+  }
+  return mesh;
 }
 
 
@@ -2663,6 +2925,25 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     coil.rotation.x = Math.PI / 2 - 0.30;
     coil.position.set(0, r * 0.76, -r * 0.44);
     add(coil);
+    // v7 PRODUCER-NOTES round-2 — BREAK THE BONNET RIM (producer note 6). The
+    // cap's hairline was one clean arc across the forehead, and a smooth pale
+    // shell ending in a clean arc IS a bonnet no matter what the texture does.
+    // Five small overlapping lobes of unequal size ride that arc, so the
+    // silhouette edge becomes a soft scalloped hairline — the one thing a strand
+    // texture can never do, because a texture does not change an outline.
+    // Sized to SCALLOP the rim, not to sit on it: at 0.22–0.30r they read as
+    // lumps stuck to the temple (measured by eye on grandma-r2f-hairQ). At
+    // 0.13–0.19r, flattened and pulled back into the cap, only the outline
+    // changes — which is the whole point.
+    const HAIRLINE = [[-0.84, 0.28, 0.19], [-0.52, 0.44, 0.16], [-0.15, 0.52, 0.13],
+      [0.25, 0.49, 0.15], [0.66, 0.37, 0.18]];
+    for (const [hx, hy, hr] of HAIRLINE) {
+      const lobe = new THREE.Mesh(new THREE.SphereGeometry(r * hr, 16, 12), mat);
+      lobe.scale.set(1.15, 0.52, 0.66);
+      lobe.rotation.z = -hx * 0.46;
+      lobe.position.set(hx * r * 0.90, hy * r, r * (0.54 - Math.abs(hx) * 0.24));
+      add(lobe);
+    }
   } else if (style === 'side_part') {
     scalpCap(1.5, 1.03, 0.42);
     backMass(1.0, -r * 0.05, 1.05);
