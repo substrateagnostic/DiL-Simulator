@@ -105,6 +105,16 @@ Run B round-3 resumes from cache via resumeFromRunId wf_d85e785f-0da.
 - 1998 MODE in settings for the before/after party trick.
 - screenshots/cine/ has the attack-burst contact strips.
 
+## ⚡ V7 ROUND-3 PRODUCER NOTES (08-01 ~00:20, relayed to live final-rounds agent)
+His stills verdict: MUCH CLOSER, but — (1) Andrew needs a JAW (profile
+jawless) + EARS, cast-wide ear check; (2) SIDE-VIEW metrology pass full
+cast (profile landmarks: jaw projection, chin-throat angle, nose depth,
+occiput, ear placement) — front-only measuring let profile flaws hide;
+(3) KILL the combat idle BOBBING that morphs v7 bodies (animator body
+squash-stretch warps merged shells + bob amplitude tuned for v4) — fix in
+CharacterAnimator/CombatScene, verify stable silhouette across an idle
+burst. These outrank the critic backlog; iris + cane bugs also must-land.
+
 ## ⚡ V7 PRODUCER-NOTES PASS — DONE, ALL SIX ANSWERED WITH NUMBERS (07-31 ~23:4x)
 Commits on `display-case`: 219cad6 (protective) · 3abe73a (round 1) ·
 61532db (round 2). npm run check + validate:data green; fight-karen /
