@@ -1,3 +1,67 @@
+## [CASTING SLATE WIRED - V10 (08-01 evening, wiring lane)]
+
+Commits 0dafc67 (slate) + cd04888 (instruments + art/MESHY_SLATE.md), pushed to
+display-case. Main untouched - MERGE IS ALEX'S CALL.
+
+WHAT SHIPPED. Every character now performs its OWN build. Reactions were 7
+shared clips for all 33, three of them female-performed, so 23 male bodies
+flinched like a woman and 10 female bodies punched like a man. Now each reaction
+is a PAIR keyed on the sculpt's gender field, and each character has its own
+calm stance from a 33-row table. 29 clips deployed (2278KB; public/meshy now
+21.92MB / 70 files). compliance and brand_consultant stay cast off MALE sculpts
+on purpose - the axis is the sculpt, not the pronouns. Do not re-litigate that
+on identity grounds; it is written down in art/MESHY_SLATE.md section 1.
+
+CLIP PROVENANCE, since the slate lane used its own stripper: all 29 were
+RE-EXTRACTED through tools/meshy-clip-fetch.mjs (new --rawdir/--rawtag, never
+spends). 29 of 29 differ from that lane's output ONLY in the generator string.
+Zero credits. And the V8/V9 fix cannot be skipped by a clip - it runs per
+character at LOAD, not in the stripper - which the gate now proves per cell:
+25 tracks, 0 dropped, all 33 x 7.
+
+MEASURED (tools/meshy-spine-gate.mjs, real clipsFor, all 7 roles): Hips>Spine02
+32.77-40.46 deg everywhere (raw-bound reads 90-164); joint over own bind 2.52;
+gaze 0.0060; idle clamped 33/33; worst floor PENETRATION -0.0087m against V9's
+-0.0076. Framing gate 54/54. Cold entry karen 960ms, the_firm 1347ms, ceiling
+2500. nomeshy and per-character fallback re-proved on the production build.
+
+TIMESCALE, producer-approved: each role normalizes to a WINDOW, not a point -
+reference is the clip that already shipped in the role (duration read off the
+GLB at runtime), tolerance 15 percent, and a clip is corrected only to the EDGE
+of the band. Applied 1.000..1.691. hurt m 1.496, stagger m 1.301, attack/cast f
+1.691; guard and victory untouched.
+
+FOR ALEX'S EYES, in order of how much it matters:
+
+1. BODY YAW IS NOW THE BIGGEST OPEN THING, and it is your existing pending fix
+   #2 with a bigger blast radius. Pelvis heading swing over the clip: a176 male
+   stagger 158.8 deg, a420 female guard 97.6, a174 male hurt 78.3, a214 female
+   attack 74.4 - against a138 16.3 and a191 35.1, the two you already called
+   strippable. Chad turning his back on a Composure Break in
+   _clips/fight_slate_chad_break.png is that number. It is NOT a rig defect
+   (retarget, floor and posture all measure clean); it is what these
+   performances do. Stripping Hips yaw would now cover six clips, and it would
+   materially change a420 and a176, which were picked partly BECAUSE the torso
+   turns away. Your call, and it wants the video first.
+2. brand_consultant fails the gate's 6 deg absolute trunk ceiling at 7.16 - ONE
+   sample of nine on a51 Shouting Angrily, a gesture idle judged against a
+   ceiling authored for calm breathing. The gate now prints reasons so a casting
+   choice cannot read as a rig failure. Swap on offer if the restructuring trio
+   should read calmer: brand_consultant a34, regional a333.
+3. Five idles are 2-second loops (chad a388, janet a317, hr_rep a297, a251,
+   a249) where the old stance was 11.3s. Characterful on Chad; worth a look on
+   the others.
+
+DELIVERABLES: _cast_contact_stances.png (regenerated - the old sheet predated V8
+and was binding donor clips raw with no retarget or clamp; it now drives the
+real clipsFor); comp_videos/fight-karen-slate.mp4 (74s, first 43 identical to
+the wave-1 script so it is still an A/B, tail adds both builds' Composure Break
+back to back plus the victory); _clips/fight_slate_karen_*.png and
+fight_slate_chad_*.png; _gate_v9/gate.json.
+
+NOT TOUCHED, per the gate on this lane: attack-animation re-judge against the
+Persona comp, prop attacks, Karen's purse. Those wait on your review.
+
 ## [DIRECTOR HANDOFF -> OPUS 5 (08-01, Fable out until Monday reset)]
 
 To the Opus taking the chair: read this ledger top-down, the auto-memory
