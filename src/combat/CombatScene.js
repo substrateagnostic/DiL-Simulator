@@ -2,6 +2,17 @@ import * as THREE from 'three';
 import { buildCharacter } from '../entities/CharacterBuilder.js';
 import { CharacterAnimator } from '../entities/CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
+import { MESHY_MODE } from '../utils/constants.js';
+
+// ?meshy comp harness (dev-only): characters listed here swap their procedural
+// build for a rigged Meshy GLB served from public/meshy/ (gitignored). The GLB
+// is the self-contained idle-animation export (mesh + texture + "Idle" clip).
+// yaw: extra Y rotation if the GLB's native facing differs from the procedural
+// convention (rotation.y = 0 faces +z / the camera).
+const MESHY_MODELS = {
+  karen: { url: '/meshy/karen_idle.glb', yaw: 0 },
+  andrew: { url: '/meshy/andrew_idle.glb', yaw: 0 },
+};
 
 // Per-boss authorship: which held silhouette + attack gesture each character
 // uses. Named bosses get bespoke choreography; everyone else gets a generic
@@ -304,6 +315,90 @@ export class CombatScene {
     this.scene.add(this.bgMesh);
   }
 
+  // Build one combatant: procedural by default; the Meshy GLB when the ?meshy
+  // comp harness is active and this character has a model. Returns
+  // { group, animator } shaped exactly like the procedural pair.
+  _buildCombatant(config, id) {
+    if (MESHY_MODE && MESHY_MODELS[id]) return this._buildMeshyCombatant(config, id);
+    const group = buildCharacter(config, { detailed: true });
+    const animator = new CharacterAnimator(group);
+    return { group, animator };
+  }
+
+  // Meshy comp path (dev-only, ?meshy). The GLB loads async into a placeholder
+  // group; an animator STUB no-ops every CharacterAnimator entry point that
+  // CombatState/CombatScene reach (setExpression, playGesture, setFacing,
+  // setSignaturePose, setCombatMode) and drives the idle AnimationMixer from
+  // update(dt). Scale is MEASURED, not assumed: a throwaway procedural build
+  // provides the target world height, the GLB's own Box3 provides the native
+  // height, and the ratio goes on an inner wrapper so CombatScene keeps
+  // driving the outer group's transform exactly as it does for procedural
+  // characters (hurt knockback, defeat spin, baseScale resets).
+  _buildMeshyCombatant(config, id) {
+    const probe = buildCharacter(config, { detailed: false });
+    const probeH = new THREE.Box3().setFromObject(probe).getSize(new THREE.Vector3()).y;
+    probe.traverse(c => { if (c.isMesh && c.geometry) c.geometry.dispose(); }); // materials are cached — never dispose
+
+    const group = new THREE.Group();
+    // Dummy named refs (CharacterBuilder contract) so any consumer that pokes
+    // group.body / group.head / limbs finds an inert node instead of throwing.
+    for (const ref of ['body', 'head', 'leftArm', 'rightArm', 'leftLeg', 'rightLeg']) {
+      const dummy = new THREE.Group();
+      group.add(dummy);
+      group[ref] = dummy;
+    }
+
+    const holder = { mixer: null };
+    import('three/addons/loaders/GLTFLoader.js').then(({ GLTFLoader }) => {
+      new GLTFLoader().load(MESHY_MODELS[id].url, (gltf) => {
+        if (!group.parent) return; // combat torn down before the load landed
+        const model = gltf.scene;
+        const glbH = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y;
+        const inner = new THREE.Group();
+        inner.scale.setScalar(glbH > 0 ? probeH / glbH : 1);
+        inner.rotation.y = MESHY_MODELS[id].yaw || 0;
+        inner.add(model);
+        group.add(inner);
+        // Convert the GLTF PBR materials to the game's toon family (keeping the
+        // Meshy base-color texture). MeshStandardMaterial under the arena's
+        // summed key/fill/rim rig blows out to white-clip; every shipped
+        // character is MeshToonMaterial, so the import inherits the same
+        // shading language and exposure instead of comping a lighting bug.
+        if (!CombatScene._meshyGradientMap) {
+          const data = new Uint8Array([90, 150, 210, 255]);
+          const tex = new THREE.DataTexture(data, 4, 1, THREE.RedFormat);
+          tex.minFilter = THREE.NearestFilter;
+          tex.magFilter = THREE.NearestFilter;
+          tex.needsUpdate = true;
+          CombatScene._meshyGradientMap = tex;
+        }
+        model.traverse(c => {
+          if (c.isSkinnedMesh) c.frustumCulled = false;
+          if (c.isMesh && c.material) {
+            const old = c.material;
+            c.material = new THREE.MeshToonMaterial({
+              map: old.map || null,
+              color: 0xffffff,
+              gradientMap: CombatScene._meshyGradientMap,
+            });
+          }
+        });
+        if (gltf.animations && gltf.animations.length) {
+          holder.mixer = new THREE.AnimationMixer(model);
+          holder.mixer.clipAction(gltf.animations[0]).play();
+        }
+        console.log(`[meshy] ${id} loaded: nativeH=${glbH.toFixed(3)} targetH=${probeH.toFixed(3)} scale=${(probeH / glbH).toFixed(4)}`);
+      }, undefined, (err) => console.warn(`[meshy] failed to load ${id}:`, err));
+    });
+
+    const animator = {
+      setCombatMode() {}, setFacing() {}, setSignaturePose() {},
+      playGesture() {}, setExpression() {}, setWalking() {}, setSitting() {},
+      update(dt) { if (holder.mixer) holder.mixer.update(dt); },
+    };
+    return { group, animator };
+  }
+
   // Set up the combat stage. enemyIds/partyIds are CHARACTER_CONFIGS keys.
   // partyIds defaults to ['andrew']. player is the Player entity (for cosmetic equipment merge).
   setCombatants(enemyIds, partyIds, player) {
@@ -318,8 +413,7 @@ export class CombatScene {
       const id = enemyIds[i];
       const config = CHARACTER_CONFIGS[id];
       if (!config) continue;
-      const group = buildCharacter(config, { detailed: true });
-      const animator = new CharacterAnimator(group);
+      const { group, animator } = this._buildCombatant(config, id);
       animator.setCombatMode(true);   // quiet idle: no body-shell morph at close range
       const pos = positions[i];
       // Caricature heads run bigger — slightly smaller stage scale keeps
@@ -372,8 +466,7 @@ export class CombatScene {
         }
         combatConfig.accessories = extraAccessories;
       }
-      const group = buildCharacter(combatConfig, { detailed: true });
-      const animator = new CharacterAnimator(group);
+      const { group, animator } = this._buildCombatant(combatConfig, id);
       animator.setCombatMode(true);
       const pos = partyPositions[i];
       group.position.set(pos.x, 0, pos.z);

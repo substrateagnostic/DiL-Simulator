@@ -143,3 +143,10 @@ export const LAYERS = {
 export const DEV_MODE = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).has('dev')
   : false;
+
+// Meshy comp harness — append ?meshy (or &meshy) to swap the combat-stage
+// characters that have a rigged Meshy GLB in public/meshy/ for their
+// procedural builds. Dev-only A/B comparison; zero effect on normal play.
+export const MESHY_MODE = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).has('meshy')
+  : false;
