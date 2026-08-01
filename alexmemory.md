@@ -1,3 +1,23 @@
+## [DEFAULT FLIP + PASS TWO SHIPPED (08-01 midday, Opus runner)]
+
+Commits c13702b (flip) + da2a6d4 (reactions), pushed. Main untouched.
+- 33 GLBs: 289.4MB -> 19.21MB (93.4%); all under 0.80MB/char; assets now
+  COMMITTED (deploy-safe); build 31.14MB; boot payload DOWN 700->619KB.
+- Meshy default in combat; ?nomeshy escape; per-char procedural fallback
+  proven. Cold fight load 1089ms / warm 502ms; procedural is now the
+  SLOWER path (2955ms). Exploration verifiably untouched.
+- Reaction layer: identical 24-bone rig across cast -> 7 shared
+  armature clips drive all 33 (511KB, 69cr). Stance/guard/hurt/stagger/
+  victory/attack wired to existing combat beats. Grandma cane socketed
+  (upright-constrained). Clients: body pick + honest hue-wash tint.
+- REVIEW: _cast_contact_stances.png + comp_videos/
+  fight-karen-pass2-reactions.mp4 + _clips/ fight stills.
+- MY FLAGS on the sheet (judge by VIDEO): scratch-streaks on dark
+  clothing more visible than the agent's fight-distance call implies;
+  many sheet cells caught mid-step frames of the breathe clips; guard/
+  jab carry a body yaw (strippable); cast reuses attack clip (scheming
+  a17/a18 downloaded, unwired). Merge to main = Alex's call; branch is
+  deploy-safe now.
 ## [WAVE COMPLETE - THE CAST EXISTS (08-01 overnight)]
 
 **31 characters generated, rigged, idle-animated, downloaded, wired.**
