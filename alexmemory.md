@@ -105,6 +105,40 @@ Run B round-3 resumes from cache via resumeFromRunId wf_d85e785f-0da.
 - 1998 MODE in settings for the before/after party trick.
 - screenshots/cine/ has the attack-burst contact strips.
 
+## ⚡ V7 PRODUCER-NOTES PASS — DONE, ALL SIX ANSWERED WITH NUMBERS (07-31 ~23:4x)
+Commits on `display-case`: 219cad6 (protective) · 3abe73a (round 1) ·
+61532db (round 2). npm run check + validate:data green; fight-karen /
+-chad / -grandma / -intern + room-cubicle_farm all re-shot and eyeballed.
+New instrument: **`node tools/pn-shoot.mjs --tag=X --only=neck,bands,
+bandsForm,skull,hands,hair,expr`** (+ `tools/pn-stage.js`). Six
+instruments, one per note, every number off a RENDER — not a formula.
+
+| # | note | before → after |
+|---|---|---|
+| 1 | necks too big | neck/head width **0.60 → 0.50** (andrew/karen), taper now **15–18%** with **0% bulge** at 24 sampled heights. Chad HELD at 0.50 per your ruling (neckScale 1.00→1.13 cancels the cast-wide narrowing exactly). |
+| 2 | body | untouched ✓ |
+| 3 | horizontal nose lines | form-pass ridge peaks **7→2** (karen), **10→2** (andrew), **12→2** (grandma); painted nose-band gradient **42.8 → 30.6** karen; smear **4.14 → 2.39 nose-widths**. |
+| 4 | Chad round + small | head count **6.857 → 6.543**; gonial hold **78 → 89.7%**, cranial hold **75.9 → 80.6%** (cast sits at 76/79). |
+| 5 | left hand backwards | **PROVEN and fixed.** thumbDZ was −0.029 left / +0.030 right = rotated 180°, not mirrored. Now +0.030/+0.030, `mirrored=true` on all five heroes. |
+| 6 | Grandma bonnet | strand energy **4.01 → 4.83**; hair now has a real bump map, and 5 lobes scallop the hairline (a texture can't change an outline). |
+| — | EXPRESSION HYBRID | geometry channel was **exactly 0.000** on all 5 expressions. Now **0.34–1.02** mean form-pass delta, driven from the same `setExpression` call as the texture. |
+
+**THE ROOT CAUSE you'd want to know about (note 3):** it was not really the
+paint. The nose wedge was a 9-anchor table interpolated with per-segment
+smoothstep — the *identical* bug this codebase already found and fixed in
+`jawProfile` ("zero slope at both ends, so the derivative is pinned at
+every anchor and peaks in every gap"), never converted for the nose. It
+was drawing a ridge at every anchor. Now analytic and C¹. Same class of
+find: the face patch sat 0.4% proud of a coarser skull whose chordal error
+was bigger than the gap, so the skull was poking through in stripes.
+
+**STILL OPEN (round-3 critics, both `not_yet` — their notes, not yours):**
+shoes read as discs/UFOs · Karen's blazer still reads tunic-ish at fight
+distance and her purse doesn't grip · Karen crown seam + white sideburn
+slab · headCountHair below the 6.5 band on karen/intern · Chad's cap has
+no bill from front or profile. **Runway: 1–2 rounds left of your 3–4
+before the Meshy go/no-go.**
+
 ## ⚡ V7 LIVE STATE (07-31 ~22:50, written at 98% context pre-autocompact)
 - **V7 wave running** (run wf_08e11f83-953, resumable via scriptPath in
   .claude/../workflows/scripts/trust-issues-v7-characters-*.js +
