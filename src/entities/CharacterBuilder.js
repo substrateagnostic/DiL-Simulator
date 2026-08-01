@@ -413,7 +413,7 @@ export function buildCharacter(config, options = {}) {
       const mNeckline = M.cloth(shirtC, { roughness: 0.60, sheen: 0.34, bump: 0.2, env: 0.25 });
       mNeckline.side = THREE.DoubleSide;
       const vee = buildNeckline(dims, torsoH, config.necklineWide ? 1.60 : 1.30, mNeckline,
-        headR * 0.80 * (config.neckScale ?? 1));
+        headR * (NECK.BASE * 1.333) * (config.neckScale ?? 1));
       vee.position.set(0, legLength, torsoZ);
       vee.rotation.x = hunch;
       staticNode.add(vee);
@@ -430,7 +430,7 @@ export function buildCharacter(config, options = {}) {
       // on the column at +8% of cloth, and shaded 0.94 rather than 0.84 so it
       // reads as the blouse's own collar instead of a separate grey band.
       const cArc = Math.PI * 0.62;
-      const cGeo = new THREE.TorusGeometry(headR * 0.70 * (config.neckScale ?? 1) * 1.08, 0.0098 * ws, 10, 22, cArc);
+      const cGeo = new THREE.TorusGeometry(headR * NECK.BASE * (config.neckScale ?? 1) * NECK.COLLAR, 0.0098 * ws, 10, 22, cArc);
       cGeo.rotateZ(Math.PI / 2 - cArc / 2);
       const collar = new THREE.Mesh(cGeo, M.cloth(shadeHexToInt(shirtC, 0.94), { roughness: 0.66, sheen: 0.20, bump: 0.2 }));
       collar.position.set(0, neckBaseY - 0.004, neckBaseZ + 0.010);
@@ -452,7 +452,7 @@ export function buildCharacter(config, options = {}) {
       // 0.011 air gap all the way round, which is the critic's "detached
       // life-preserver ring not touching the neck". It is now solved FROM the
       // neck lathe (which runs nBase·1.043 at the collar's y) plus 3% of cloth.
-      const nR = headR * 0.70 * (config.neckScale ?? 1) * 1.075;
+      const nR = headR * NECK.BASE * (config.neckScale ?? 1) * NECK.COLLAR;
       // Thinner and tighter than the first pass, which read as a padded neck-brace
       // roll standing proud of the shoulders.
       const cH = 0.044 * ws;
@@ -579,11 +579,11 @@ export function buildCharacter(config, options = {}) {
     const nsc = config.neckScale ?? 1;
     const nExtra = config.neckExtra ?? 0;
     const nVis = neckH + nExtra;
-    const nTop = headR * 0.55 * nsc, nBase = headR * 0.70 * nsc;
+    const nTop = headR * NECK.TOP * nsc, nBase = headR * NECK.BASE * nsc;
     const nUp = headR * 0.62;
     const neckGeo = new THREE.LatheGeometry([
       new THREE.Vector2(0.001, -0.030),
-      new THREE.Vector2(nBase * 1.08, -0.014),              // trapezius flare
+      new THREE.Vector2(nBase * NECK.FLARE, -0.014),        // trapezius flare
       new THREE.Vector2(nBase, nVis * 0.10),
       new THREE.Vector2(nBase * 0.93, nVis * 0.38),
       new THREE.Vector2(nTop * 1.05, nVis * 0.78),
@@ -602,6 +602,15 @@ export function buildCharacter(config, options = {}) {
     // headZ − neckBaseZ is ~0, so the lean is ~0).
     neck.position.set(0, neckBaseY, neckBaseZ);
     neck.rotation.x = Math.atan2(headZ - neckBaseZ, Math.max(0.02, nVis + nUp * 0.5));
+    // `probe` (dev harness only — tools/pn-stage.js) keeps the column out of the
+    // merge so an ID-colour pass can measure its silhouette at every height
+    // WITH collar/hair occlusion honoured. Zero cost in the game: nothing sets it.
+    if (options.probe) { neck.name = 'neckColumn'; neck.userData.noMerge = true; }
+    group._neckProbe = {
+      baseY: neckBaseY,
+      lathe: [[nBase * NECK.FLARE, -0.014], [nBase, nVis * 0.10], [nBase * 0.93, nVis * 0.38],
+        [nTop * 1.05, nVis * 0.78], [nTop, nVis]],
+    };
     staticNode.add(neck);
   }
   collapseNode(staticNode);
@@ -730,7 +739,7 @@ export function buildCharacter(config, options = {}) {
     // clear the garment. buildHand lofts wrist → knuckles → tapered tip in ONE
     // surface and seats the thumb INBOARD-FORWARD, where the sheet puts it (the
     // old thumb sat outboard on the right arm, i.e. on the wrong side).
-    const hand = buildHand(handLen, ws, mSkin, side, detailed);
+    const hand = buildHand(handLen, ws, mSkin, side, detailed, options.probe === true);
     hand.position.set(0, handLocalY, 0.036);
     arm.add(hand);
     collapseNode(arm);
@@ -886,7 +895,17 @@ export function buildCharacter(config, options = {}) {
   if (facePatch) group.faceMesh = facePatch;
 
   // glasses as torus GEOMETRY (rework a) — parented to head, ride the bob
-  if (config.glasses) buildGlasses(head, headR, config.glasses, detailed);
+  if (config.glasses) {
+    // Built into their own node so a review harness can isolate them: the
+    // eyewear frame is a dark torus that crosses the nose band, and it was
+    // dominating the horizontal-shadow-line measurement on every character who
+    // wears a pair (andrew / grandma / intern read 60–85 against karen's 29
+    // purely because of it). Costs one empty group in the game.
+    const eyewear = new THREE.Group();
+    eyewear.userData.pnId = 'eyewear';
+    buildGlasses(eyewear, headR, config.glasses, detailed);
+    head.add(eyewear);
+  }
 
   group.add(head);
   group.head = head;
@@ -970,7 +989,9 @@ export function buildCharacter(config, options = {}) {
       headWOverH: +((2 * cranialHalf) / (crownY - chinY)).toFixed(3),
       eyeLinePct: +(((crownY - eyeY) / (crownY - chinY)) * 100).toFixed(1),
       jawOverCranialGeo: +((gonionHalf / cranialHalf) * 100 / 100).toFixed(3),
-      neckOverHead: +((headR * 0.55 * (config.neckScale ?? 1)) / headR).toFixed(3),
+      neckOverHead: +(NECK.TOP * (config.neckScale ?? 1)).toFixed(3),
+      neckBaseY: group._neckProbe ? group._neckProbe.baseY : null,
+      neckLathe: group._neckProbe ? group._neckProbe.lathe : null,
       shoulderOverHeadW: +((dims.shoulderR * 2) / (2 * cranialHalf)).toFixed(3),
       shoulderR: dims.shoulderR, chestR: dims.chestR,
       legLength, torsoH, neckH,
@@ -1286,6 +1307,33 @@ function weaveTexture() {
 // projection, and an INTEGRATED nose wedge. Amplitudes are all ≤0.11R and every
 // falloff is smooth (smoothstep), so the Sleek Law still holds: no lumps, no
 // pasted balls, ≤3 silhouette inflections per edge.
+// ── NECK CANON (producer note 1, 2026-07-31: "necks STILL too big — measure
+//    EVERY point along the neck profile on renders") ────────────────────
+//
+// The column, the shirt collar, the polo collar and the blouse neckline used to
+// carry FOUR independent copies of `headR * 0.70`, so narrowing the column left
+// three garment rings ping-ing at the old radius (that is how the "life-
+// preserver collar" note came back twice). They all solve off this block now.
+//
+// Measured on the pn harness against the round-3 build (tools/pn-shoot.mjs
+// --only=neck): the visible column ran 0.58–0.61 of head WIDTH on andrew /
+// karen / chad with a columnAspect (visible height ÷ mean width) of 0.60–0.81 —
+// i.e. every hero's neck was wider than the exposed column was tall, which is
+// the "plinth, not a column" read amendment 2 was written against. Amendment 2
+// caps the TOP at 0.55R; 0.55 was being taken as a target rather than a ceiling.
+//
+// TOP comes down to 0.485R and BASE to 0.60R. That is a 19% taper the eye can
+// actually see (it was 21% before, but starting so wide that the taper read as
+// parallel), and it opens a real jaw/neck separation at the mandible.
+// Chad is exempt by producer ruling ("his neck is GOOD, keep") — his neckScale
+// is raised to hold his rendered width exactly where it is.
+const NECK = {
+  TOP: 0.485,     // half-width at the CHIN, in head radii
+  BASE: 0.600,    // half-width at the collar seam
+  FLARE: 1.05,    // trapezius flare at the very base (was 1.08)
+  COLLAR: 1.075,  // garment rings ride this much proud of BASE
+};
+
 const SKULL = {
   UP: CHAR.V7_SKULL_UP ?? 1.35,
   DOWN: CHAR.V7_SKULL_DOWN ?? 1.35,
@@ -1299,6 +1347,21 @@ const SKULL_H = SKULL.UP + SKULL.DOWN;          // head height in R (2.70)
 const PATCH_Y_TOP = 0.86;
 const PATCH_Y_BOT = -1.34;
 const PATCH_ARC = 1.20;                          // ±azimuth (rad) — 93% of half-width
+// How far the painted patch stands proud of the skull it is conformed to.
+// v7 PRODUCER-NOTES round-1 — 1.004 → 1.016 (producer note 3, "horizontal
+// shadow lines around the noses").
+//
+// The skull and the patch run the SAME sculpt at DIFFERENT tessellations (88×72
+// over the whole sphere vs 96×96 over a 2.14-rad band). Wherever the sculpt has
+// real curvature — the nose wedge, the lips, the chin — the coarser skull's
+// chordal error exceeds the 0.4% gap and the skull POKES THROUGH the patch in
+// latitude-aligned slivers. On the map-stripped form pass that shows as a stack
+// of hard horizontal ridges across the mouth and under the nose, which is
+// exactly the artifact the producer flagged, and it is neither paint nor sculpt
+// intent: it is two surfaces fighting. 1.6% clears the worst chordal error while
+// staying far under the patch's own alpha feather, so the rim never reads as a
+// plate edge.
+const PATCH_PROUD = 1.016;
 const PATCH_THETA_START = Math.acos(PATCH_Y_TOP / SKULL.UP);
 const PATCH_THETA_LEN = Math.acos(PATCH_Y_BOT / SKULL.DOWN) - PATCH_THETA_START;
 
@@ -1487,8 +1550,15 @@ function sculptSkull(d, dial, out) {
   //     was a 0.16-wide groove at −0.96 — a hard horizontal gutter directly
   //     under the mouth, and the exact source of the concave under-mouth scoop
   //     the profiles show — is now 0.008 over a 0.34 falloff.
-  z += 0.019 * _bell(y, LM_SUBNASAL - 0.06, 0.34) * _bell(ax, 0.12, 0.60) * front;
-  z -= 0.008 * _bell(y, LM.mouth - 0.14, 0.34) * _bell(ax, 0.0, 0.44) * front;
+  // v7 PRODUCER-NOTES round-1 — both of these were still CONSTANT-Y bells, the
+  // one shape this file's own round-2 note calls "a scar": they sat at −0.61 and
+  // −0.93, stacking two more horizontal ridges directly under the nose. They are
+  // now sheared like steps 4 and 6 (the maxilla plane falls away-and-out toward
+  // the mouth corner; the mental crease runs with the lip line) and softened —
+  // the shelf 0.019 → 0.010 over a 0.44 falloff, the sub-lip recess 0.008 →
+  // 0.005 over 0.40.
+  z += 0.010 * _bell(shear(y, -0.26), LM_SUBNASAL - 0.06, 0.44) * _bell(ax, 0.12, 0.60) * front;
+  z -= 0.005 * _bell(shear(y, -0.18), LM.mouth - 0.14, 0.40) * _bell(ax, 0.0, 0.44) * front;
 
   // 7b · MANDIBULAR FRONTAL PLANE (v7 FIX round-2 — the LAST third of the beard
   //      smudge, and the one that is nobody's paint bug).
@@ -1544,27 +1614,32 @@ function sculptSkull(d, dial, out) {
   // the human 8–13% band; at the old numbers on the old brow it was the reason
   // three of four profiles read "NO nose projection … the facial edge is
   // concave" (note [B], chad-final1-prof).
-  if (y < 0.18 && y > -0.74 && front > 0.18) {
-    // The TRAILING ramp is stretched over 0.24R (was 0.16R). A 0.23R drop in
-    // 0.16R is a 55° cliff at the sub-nasal, and on the map-stripped pass it was
-    // the second horizontal band under the nose.
-    const A = [[0.12, 0.000, 0.055], [-0.02, 0.052, 0.070], [-0.18, 0.165, 0.092],
-      [-0.32, 0.255, 0.112], [-0.42, 0.300, 0.130], [-0.50, 0.225, 0.160],
-      [-0.58, 0.135, 0.155], [-0.66, 0.055, 0.135], [-0.74, 0.000, 0.115]];
-    let amp = 0, halfW = 0.10;
-    for (let i = 0; i < A.length - 1; i++) {
-      if (y <= A[i][0] && y >= A[i + 1][0]) {
-        const u = (A[i][0] - y) / (A[i][0] - A[i + 1][0]);
-        const sm = u * u * (3 - 2 * u);
-        amp = A[i][1] + (A[i + 1][1] - A[i][1]) * sm;
-        halfW = A[i][2] + (A[i + 1][2] - A[i][2]) * sm;
-        break;
-      }
-    }
-    // 2.8 → 2.35: at 2.8 the alae row spread its falloff to 0.45R half-width,
-    // wider than the 0.40R eye gap LAW 3 caps it under, and the flanks fell into
-    // the (now much shallower) cheek plane as the "W-shaped nose-wing splay".
-    const lat = _bell(ax, 0.0, halfW * 2.35);
+  // v7 PRODUCER-NOTES round-1 — THE SCALLOP (producer note 3, and the actual
+  // root cause behind "horizontal shadow lines around the noses").
+  //
+  // The wedge used to be a 9-anchor table interpolated with `u²(3−2u)` PER
+  // SEGMENT. That is the identical defect this file already documents and fixed
+  // in `jawProfile` ("smoothstep has zero slope at both ends, so the profile's
+  // derivative was pinned to zero at every anchor and peaked in every gap"). The
+  // nose table was never converted. On the map-stripped form pass the residue is
+  // unmistakable: a STACK of horizontal ridges at y ≈ −0.55, −0.63, −0.69, −0.74
+  // and −0.79 — i.e. one at every table anchor and every gap between them, right
+  // where the producer sees bars across the nose and lip.
+  //
+  // The profile is now analytic and C¹ everywhere: one asymmetric bell for the
+  // projection (nasion → tip → sub-nasal) and one for the half-width (a narrow
+  // bridge opening to the alae). Same tip projection (0.300R at y = −0.42), same
+  // alae width, no anchors — so there is no row at which the surface can kink.
+  if (y < 0.18 && y > -0.92 && front > 0.18) {
+    const dy = y + 0.42;                                   // 0 at the nose tip row
+    const amp = 0.300 * _bell(y, -0.42, dy >= 0 ? 0.58 : 0.46);
+    const halfW = 0.055 + 0.085 * _bell(y, -0.52, 0.62);
+    // 2.8 → 2.35 → 1.90: at 2.35 the falloff reached ±0.38R at the alae row, so
+    // the surface tilt the wedge creates ran a third of the way across each
+    // cheek, which under the front-and-above key IS a horizontal bar with a nose
+    // in the middle of it (measured: a 4.14-nose-width smear on Karen). At 1.90
+    // it ends inboard of the eye gap and the cheeks stay lit.
+    const lat = _bell(ax, 0.0, halfW * 1.90);
     z += amp * lat * front * noseK;
   }
 
@@ -1703,15 +1778,35 @@ function limbSegment(rTop, rBot, len, mat, opts = {}) {
 // with a single thumb lobe and no separated fingers. Measured off that sheet the
 // mitten is ≈1.5 long : 1 wide across the knuckles, ≈1.5× the cuff width, and
 // clearly depth-tapered (a hand, not a paddle). This lofts wrist → knuckle crest
-// → rounded tip in ONE surface (LAW 2) and hangs the thumb INBOARD-AND-FORWARD,
-// which is where the sheet puts it on a relaxed arm (the v6 thumb sat outboard
-// on the right arm, on the wrong side of the hand entirely).
+// → rounded tip in ONE surface (LAW 2).
+//
+// v7 PRODUCER-NOTES round-1 — THE CHIRALITY BUG (producer note 5, 2026-07-31:
+// "Chad's LEFT HAND IS ON BACKWARDS — palm-up left thumb should be far-left").
+// The bug was not the mirror (position.x and rotation.z were both flipped by
+// `side`, so the pair WAS mirrored). The bug was the hand's ANATOMICAL FRAME.
+//
+// The mitten was built wide across X and thin across Z, which puts the palm
+// facing ±Z — i.e. straight at the camera, a fully supinated hand — on a figure
+// standing at rest. It then hung the thumb INBOARD, and an inboard thumb on a
+// palm-forward hand is a hand from the other arm. Two further tells agreed: the
+// knuckle crease (a DORSAL mark) was painted on +z, the same face the finger
+// CURL bent toward, so the same surface was being called palm and back at once.
+//
+// A relaxed standing arm is mid-pronated: the palm faces MEDIALLY (at the
+// thigh) and the thumb points ANTERIOR. So the hand is now built in that frame —
+// knuckle width along the FRONT-BACK axis, palm-to-back thickness along the
+// MEDIAL-LATERAL axis, thumb forward, crease on the dorsum, curl toward the
+// palm. `side` still mirrors it, and now the mirror is of a correct hand.
 //   `side` is −1 for the left arm, +1 for the right.
-function buildHand(hl, ws, mat, side, detailed) {
+function buildHand(hl, ws, mat, side, detailed, probe = false) {
   const g = new THREE.Group();
   const sm = (a, b, t) => { const x = Math.min(1, Math.max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x); };
   const seg = detailed ? 26 : 16;
   const geo = new THREE.SphereGeometry(1, seg, Math.max(14, Math.round(seg * 0.82)));
+  // LOCAL FRAME (before the side rotation below):
+  //   +x = ANTERIOR (thumb side)      half-extent HW = knuckle crest
+  //   +z = PALM                       half-extent HD = palm↔back thickness
+  //   -y = distal (fingertips)
   const HW = hl * 0.33;       // knuckle crest half-width  → 1.5 : 1 with length
   const HD = hl * 0.185;      // half-depth (palm ↔ back)
   const pos = geo.attributes.position;
@@ -1730,15 +1825,18 @@ function buildHand(hl, ws, mat, side, detailed) {
     const t = (1 - yb) * 0.5;                        // 0 = wrist pole, 1 = tip
     // necked wrist → knuckle crest at t≈0.38 → blunt fingertip block
     let w = 0.72 + 0.30 * sm(0.02, 0.38, t) - 0.16 * sm(0.62, 1.0, t);
-    // KNUCKLE CREASE — a shallow groove across the back of the hand, which is the
-    // one mark that says "there are fingers under this" without splitting them.
-    w -= 0.035 * Math.exp(-(((t - 0.44) / 0.055) ** 2)) * Math.max(0, v.z);
-    // a relaxed hand curls very slightly forward from the knuckles down
+    // KNUCKLE CREASE — a shallow groove across the BACK of the hand (−z, the
+    // dorsum), which is the one mark that says "there are fingers under this"
+    // without splitting them. It used to be cut on +z, the palm.
+    w -= 0.035 * Math.exp(-(((t - 0.44) / 0.055) ** 2)) * Math.max(0, -v.z);
+    // a relaxed hand curls toward its own PALM (+z) from the knuckles down
     const curl = 0.30 * sm(0.42, 1.0, t);
     pos.setXYZ(i, v.x * w * HW, yb * hl * 0.5, v.z * w * HD + curl * HD);
   }
   geo.computeVertexNormals();
-  g.add(new THREE.Mesh(geo, mat));
+  const palm = new THREE.Mesh(geo, mat);
+  if (probe) { palm.userData.pnId = 'palm'; palm.userData.noMerge = true; }
+  g.add(palm);
 
   // THUMB — v7 FIX round-2: bigger (0.145 → 0.170 of hand length in radius, 0.24
   // → 0.30 long) and seated with a real NOTCH between it and the palm, because
@@ -1755,9 +1853,26 @@ function buildHand(hl, ws, mat, side, detailed) {
   }
   tGeo.computeVertexNormals();
   const thumb = new THREE.Mesh(tGeo, mat);
-  thumb.position.set(-side * HW * 0.80, hl * 0.12, HD * 1.02);
-  thumb.rotation.set(-0.40, 0, side * 0.72);
+  // ANTERIOR (+x in the local frame) and a little to the palm side, angled up
+  // and across the way a thenar eminence sits. Identical on both hands in local
+  // space — the mirror is done once, by the frame rotation below.
+  // MEASURED FIX (pn harness, --only=hands, round-1): with a side-independent
+  // thumb the frame rotation below sent local +x to world +z on the RIGHT arm
+  // and to world −z on the LEFT — thumbDZ came back +0.030 / −0.029, a pair
+  // that is ROTATED 180 degrees rather than mirrored. That is precisely "the
+  // left hand is on backwards". `side` on the x offset lands the thumb ANTERIOR
+  // on both arms; `side` on rotation.z keeps the splay mirrored with it
+  // (rotation.x is about the local x axis, which the frame rotation already
+  // maps to opposite world axes, so it mirrors on its own).
+  thumb.position.set(side * HW * 0.86, hl * 0.12, HD * 0.42);
+  thumb.rotation.set(-0.34, 0, -side * 0.72);
+  if (probe) { thumb.userData.pnId = 'thumb'; thumb.userData.noMerge = true; }
   g.add(thumb);
+  // Rotate the whole hand into the arm's frame: local +z (palm) must point
+  // MEDIALLY, i.e. to world −side·x. Rotation about Y by θ sends +z to
+  // (sinθ, 0, cosθ), so θ = −side·π/2. The thumb therefore lands ANTERIOR on
+  // both arms, and the pair is a true mirror.
+  g.rotation.y = -side * Math.PI * 0.5;
   return g;
 }
 
@@ -1888,7 +2003,7 @@ function makeFacePatch(rad, faceTex, M, detailed = false, dial = { jaw: 0.9, chi
         jaw: dial.jaw, chin: dial.chin, nose: dial.nose ?? 1,
         wide: dial.wide ?? 1, cheek: dial.cheek ?? 1, browRidge: dial.browRidge ?? 1,
       }, o);
-      pos.setXYZ(i, o.x * rad * 1.004, o.y * rad * 1.004, o.z * rad * 1.004);
+      pos.setXYZ(i, o.x * rad * PATCH_PROUD, o.y * rad * PATCH_PROUD, o.z * rad * PATCH_PROUD);
     }
   }
   geo.computeVertexNormals();
@@ -2234,7 +2349,15 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
       // the caller's single latitude; otherwise the whole occiput extension would
       // sit past 1.0 and taper to zero thickness the moment it appeared.
       const rim = Math.min(1, Math.max(0, (theta / rimTheta - 0.76) / 0.24));
-      let g = 1 + (grow - 1) * (1 - rim * rim * (3 - 2 * rim));
+      // v7 FIX round-2b — THE TAPER USED TO REACH EXACTLY 1.0, i.e. the cap's
+      // last quarter sat ON the skull surface with zero clearance. That is a
+      // coincident-surface z-fight, and the SCULPT wins it wherever the malar or
+      // temple terms push the skull out by more than a float epsilon: measured on
+      // chad-Z-headp the hair vanished below y ≈ +0.28R and the whole side of his
+      // head rendered bald under the cap. The taper now bottoms out at 22% of the
+      // grow (≈0.66% proud at grow 1.03) — still no visible helmet ledge, but
+      // never coincident.
+      let g = 1 + (grow - 1) * (0.22 + 0.78 * (1 - rim * rim * (3 - 2 * rim)));
       // conform to the skull's own front/back depth
       v.z *= (v.z > 0 ? SKULL.FRONT : SKULL.BACK);
       v.multiplyScalar(r);
@@ -2413,7 +2536,9 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     // the blonde punched THROUGH the navy dome as a wedge — the last third of
     // "his fight still reads 'man in a pudding bowl'". A man wearing a cap has
     // flat hair under it; the front tuft is the separate `quiff` mesh below.
-    scalpCap(1.44, 1.015, 0.56, 44, 0.0);
+    // grow 1.015 was inside the z-fight band even after the taper fix; a cap worn
+    // UNDER a hat still has to be cloth-thick against a sculpted skull.
+    scalpCap(1.44, 1.030, 0.56, 44, 0.0);
     backMass(0.96, r * 0.02, 0.94);
     // v7 FIX round-1 — the quiff crested at +0.96R inside the ×1.35 scalp shell,
     // i.e. ABOVE the backwards cap's rim (+0.69R): the blonde mass burst through
@@ -2827,7 +2952,14 @@ function addAccessory(group, acc, rig, config, detailed) {
       break;
     }
     case 'glasses': {
-      buildGlasses(group.head, rig.headR, 'clear', detailed);
+      // Same isolation node as the `config.glasses` path — andrew and the intern
+      // get their pair through the ACCESSORY list, which is why tagging only the
+      // other path left their nose-band measurement pinned at 72–85 while
+      // grandma's fell 62 → 30.
+      const eyewear = new THREE.Group();
+      eyewear.userData.pnId = 'eyewear';
+      buildGlasses(eyewear, rig.headR, 'clear', detailed);
+      group.head.add(eyewear);
       break;
     }
     case 'tablet': {

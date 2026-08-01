@@ -438,22 +438,36 @@ export function paintFace(config, expression = 'neutral', size = 512) {
   // already casts: the disc is less than a third of its area at half alpha, the
   // nostrils sit ON the alae rather than under them, and the philtrum bar is
   // gone (see drawMouth).
+  // v7 PRODUCER-NOTES round-1 — THE HORIZONTAL NOSE LINE (producer note 3,
+  // 2026-07-31: "horizontal shadow lines around noses must go — painted nose
+  // shading is fighting the new 3D wedge, it is double-shading").
+  //
+  // Measured on the round-3 build (tools/pn-shoot.mjs --only=bands): the darkest
+  // row in the nose band spread 4.14 NOSE-WIDTHS on Karen, 2.5 on the Intern,
+  // 2.3 on Andrew — a shadow that crosses both cheeks is not a nose shadow, it
+  // is a bar. Two of the three painted marks were the double: the under-nose
+  // radial was a 1.4×1.1 noseW RECT of shadow laid across the exact row where
+  // sculptSkull's alae ramp already turns the surface away from the key, and the
+  // tip highlight was a hard-edged disc sitting on the ridge the same geometry
+  // already catches light on.
+  //
+  // What survives is what geometry genuinely cannot carry: the nostril openings.
+  // They are smaller, softer and darker-but-tighter, so they read as two holes
+  // rather than as the ends of a smear.
   const noseW = S * L.noseWF;
-  const us = ctx.createRadialGradient(cx, noseTipY + noseW * 0.10, S * 0.004, cx, noseTipY + noseW * 0.10, noseW * 0.52);
-  us.addColorStop(0, rgba(0x2a1810, 0.06));
-  us.addColorStop(1, rgba(0, 0));
-  ctx.fillStyle = us;
-  ctx.fillRect(cx - noseW * 0.7, noseTipY - noseW * 0.4, noseW * 1.4, noseW * 1.1);
-  // nostrils — small, soft, seated at the alae the wedge actually builds
-  ctx.fillStyle = rgba(0x241009, 0.22);
+  ctx.save();
   for (const s2 of [-1, 1]) {
+    const nx = cx + s2 * noseW * 0.44, ny = noseTipY - S * 0.002;
+    const ng = ctx.createRadialGradient(nx, ny, S * 0.001, nx, ny, noseW * 0.15);
+    ng.addColorStop(0, rgba(0x241009, 0.26));
+    ng.addColorStop(0.6, rgba(0x241009, 0.10));
+    ng.addColorStop(1, rgba(0x241009, 0));
+    ctx.fillStyle = ng;
     ctx.beginPath();
-    ctx.ellipse(cx + s2 * noseW * 0.46, noseTipY - S * 0.003, noseW * 0.14, noseW * 0.10, s2 * -0.3, 0, Math.PI * 2);
+    ctx.ellipse(nx, ny, noseW * 0.15, noseW * 0.105, s2 * -0.3, 0, Math.PI * 2);
     ctx.fill();
   }
-  // tip highlight — a small catch on the ridge the geometry pushed forward
-  ctx.fillStyle = rgba(0xffffff, 0.08);
-  ctx.beginPath(); ctx.arc(cx, noseTipY - noseW * 0.40, noseW * 0.20, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
 
   // ── mouth ── (expression-driven; more saturated lips = contrast)
   drawMouth(ctx, S, cx, noseTipY, mouthY, lipC, female, E, old, S * L.mouthWF, S * (L.mouthHF || 0.0568));

@@ -117,7 +117,11 @@ export const CHARACTER_CONFIGS = {
     // again, which was the actual defect.
     hunch: 0.15, headPitch: 0.14, shoulderLift: 0.012, shoulderScale: 0.92,
     jacketHem: 0.115, lapels: true,
-    neckScale: 0.68,       // slight timid teenager — a slim neck, not jaw-wide
+    // v7 PRODUCER-NOTES round-1 — 0.68 → 0.74 against the narrower NECK canon.
+    // He measured the thinnest column in the cast (0.43 of head width) BEFORE
+    // the cast-wide narrowing; 0.68 through the new taper would have made him a
+    // stalk, which is the opposite failure. 0.74 holds him where he was.
+    neckScale: 0.74,       // slight timid teenager — a slim neck, not jaw-wide
     // Portrait has NO glasses and warm-brown hair; the raised 'short' hairline now
     // shows a strip of forehead so fringe / brow / eyes still read as three bands.
     // v5 face — young, timid, small chin (early-Charlie-Brown big head)
@@ -247,7 +251,14 @@ export const CHARACTER_CONFIGS = {
     // The reference does support a thick gym-bro neck, but a LAW exceedance
     // ships with Alex's explicit sign-off, not silently — so this complies at
     // 1.00 (0.550) and the ask is logged for him.
-    shoulderScale: 1.45, waistScale: 0.80, neckScale: 1.00,
+    // v7 PRODUCER-NOTES round-1 — HIS NECK IS EXEMPT. Producer, 2026-07-31:
+    // "Chad: head too small + too round … his neck is GOOD, keep." The NECK
+    // canon narrowed the whole cast's column (CharacterBuilder NECK.TOP
+    // 0.55R → 0.485R), so holding Chad's RENDERED width where the producer
+    // approved it needs the dial to go UP by exactly that ratio:
+    // 0.485 × 1.13 = 0.548, which is his old 0.550 to three places — and still
+    // inside amendment 2's ≤0.55 cap, so the exemption costs no law.
+    shoulderScale: 1.45, waistScale: 0.80, neckScale: 1.13,
   },
   grandma: {
     name: 'Grandma Henderson',
