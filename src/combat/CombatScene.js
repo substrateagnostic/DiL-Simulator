@@ -3,6 +3,7 @@ import { buildCharacter } from '../entities/CharacterBuilder.js';
 import { CharacterAnimator } from '../entities/CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { MESHY_MODE } from '../utils/constants.js';
+import { getHouseGradientMap } from '../effects/MaterialLibrary.js';
 
 // ?meshy comp harness (dev-only): characters listed here swap their procedural
 // build for a rigged Meshy GLB served from public/meshy/ (gitignored). The GLB
@@ -361,31 +362,27 @@ export class CombatScene {
         group.add(inner);
         // Convert the GLTF PBR materials to the game's toon family (keeping the
         // Meshy base-color texture). MeshStandardMaterial under the arena's
-        // summed key/fill/rim rig blows out to white-clip; every shipped
-        // character is MeshToonMaterial, so the import inherits the same
-        // shading language and exposure instead of comping a lighting bug.
-        if (!CombatScene._meshyGradientMap) {
-          const data = new Uint8Array([90, 150, 210, 255]);
-          const tex = new THREE.DataTexture(data, 4, 1, THREE.RedFormat);
-          tex.minFilter = THREE.NearestFilter;
-          tex.magFilter = THREE.NearestFilter;
-          tex.needsUpdate = true;
-          CombatScene._meshyGradientMap = tex;
-        }
+        // summed key/fill/rim rig blows out to white-clip and carries a
+        // specular term the art direction forbids (flat/cel, Archer read);
+        // every shipped character/prop is MeshToonMaterial on the HOUSE 3-stop
+        // ramp, so the import uses that exact gradient — same material
+        // language, no shine, metalness/roughness die with the material.
         model.traverse(c => {
           if (c.isSkinnedMesh) c.frustumCulled = false;
           if (c.isMesh && c.material) {
-            const old = c.material;
             c.material = new THREE.MeshToonMaterial({
-              map: old.map || null,
+              map: c.material.map || null,
               color: 0xffffff,
-              gradientMap: CombatScene._meshyGradientMap,
+              gradientMap: getHouseGradientMap(),
             });
           }
         });
         if (gltf.animations && gltf.animations.length) {
           holder.mixer = new THREE.AnimationMixer(model);
           holder.mixer.clipAction(gltf.animations[0]).play();
+          // Producer note: Meshy stock idles run hot for a held combat stance —
+          // 0.8x reads as breathing rather than fidgeting.
+          holder.mixer.timeScale = MESHY_MODELS[id].timeScale ?? 0.8;
         }
         console.log(`[meshy] ${id} loaded: nativeH=${glbH.toFixed(3)} targetH=${probeH.toFixed(3)} scale=${(probeH / glbH).toFixed(4)}`);
       }, undefined, (err) => console.warn(`[meshy] failed to load ${id}:`, err));

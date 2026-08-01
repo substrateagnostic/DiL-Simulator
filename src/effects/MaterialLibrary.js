@@ -30,6 +30,11 @@ function createGradientMap(stops = 3) {
 const gradientMap3 = createGradientMap(3);
 const gradientMap4 = createGradientMap(4);
 
+// The house 3-stop toon ramp, exported for imports that must speak the same
+// material language as the cast/props (e.g. the ?meshy comp harness converts
+// Meshy GLB materials onto this exact gradient).
+export function getHouseGradientMap() { return gradientMap3; }
+
 // Material cache
 const cache = {};
 
