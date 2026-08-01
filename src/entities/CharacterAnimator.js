@@ -135,6 +135,7 @@ export class CharacterAnimator {
     this.isWalking = false;
     this.isSitting = false;
     this.facingAngle = 0; // radians
+    this.bobScale = 1;    // 0.35 in combat (setCombatMode)
     // Blink state
     this._blinkIn = 1.5 + Math.random() * 3.5;
     this._blinkDur = 0;
@@ -225,6 +226,29 @@ export class CharacterAnimator {
     this.facingAngle = angle;
   }
 
+  // Combat framing is a close-up, so the idle has to be quieter there than it is
+  // at exploration distance. 0.35 keeps a readable breath without the figure
+  // visibly rising off its own light pool between beats.
+  setCombatMode(on) {
+    this.bobScale = on ? 0.35 : 1;
+    if (!on) return;
+    this._breathe(0);
+  }
+
+  // ONE offset, applied to the whole upper body (torso + both arms + head) so
+  // nothing that shares a seam moves relative to anything else. The legs stay
+  // planted; the only join that opens is hip-to-hem, which the jacket hem already
+  // overlaps by construction.
+  _breathe(dy) {
+    for (const n of [this.group.body, this.group.head, this.group.leftArm, this.group.rightArm]) {
+      if (!n) continue;
+      if (n.userData.baseY == null) n.userData.baseY = n.position.y;
+      n.position.y = n.userData.baseY + dy;
+    }
+    // belt-and-braces: any scale a previous build of this code left on the shell
+    if (this.group.body && this.group.body.scale.y !== 1) this.group.body.scale.set(1, 1, 1);
+  }
+
   update(dt) {
     this.time += dt;
     const t = this.time;
@@ -254,17 +278,8 @@ export class CharacterAnimator {
       // Arms rest slightly forward
       if (this.group.leftArm)  this.group.leftArm.rotation.x  = 0.2;
       if (this.group.rightArm) this.group.rightArm.rotation.x = 0.2;
-      // Subtle seated idle bob
-      if (this.group.body) {
-        const baseY = this.group.body.userData.baseY || this.group.body.position.y;
-        if (!this.group.body.userData.baseY) this.group.body.userData.baseY = baseY;
-        this.group.body.position.y = baseY + Math.sin(t * ANIM.IDLE_SPEED) * ANIM.IDLE_BOUNCE;
-      }
-      if (this.group.head) {
-        const baseY = this.group.head.userData.baseY || this.group.head.position.y;
-        if (!this.group.head.userData.baseY) this.group.head.userData.baseY = baseY;
-        this.group.head.position.y = baseY + Math.sin(t * ANIM.IDLE_SPEED + 0.5) * ANIM.IDLE_BOUNCE * 0.7;
-      }
+      // Subtle seated breath — whole upper body, one offset (see _breathe).
+      this._breathe(Math.sin(t * ANIM.IDLE_SPEED) * ANIM.IDLE_BOUNCE * this.bobScale);
       this._updateFacing(dt);
       return;
     }
@@ -273,17 +288,14 @@ export class CharacterAnimator {
     const bounce = this.isWalking ? ANIM.WALK_BOUNCE : ANIM.IDLE_BOUNCE;
     const ta = t * speed;
 
-    // Body bob with squash & stretch (breathing at idle, springy on walk)
-    if (this.group.body) {
-      const baseY = this.group.body.userData.baseY || this.group.body.position.y;
-      if (!this.group.body.userData.baseY) this.group.body.userData.baseY = baseY;
-      const phase = Math.sin(ta);
-      this.group.body.position.y = baseY + phase * bounce;
-      const squash = phase * bounce * 1.8;
-      this.group.body.scale.y = 1 + squash;
-      this.group.body.scale.x = 1 - squash * 0.5;
-      this.group.body.scale.z = 1 - squash * 0.5;
-    }
+    // Breathing — see _breathe. NO squash & stretch: on a v7 build `group.body`
+    // is the ENTIRE merged torso shell and the arms, neck and head are its
+    // SIBLINGS, so scaling it 3.6% in y and 1.8% in x/z pulled the shell out
+    // from under the shoulder and the collar every idle cycle. That is the
+    // producer's "the bobbing body-morph is deforming the v7 bodies out of
+    // shape in fights". A v4 body was a small box with nothing seamed to it, so
+    // the same code was free there and is not free now.
+    this._breathe(Math.sin(ta) * bounce * this.bobScale);
 
     // Blink — eyes squeeze shut for ~0.12s every few seconds
     if (this.group.leftEye && this.group.rightEye) {
@@ -305,12 +317,8 @@ export class CharacterAnimator {
     this.group.rotation.x += newLean - this._appliedLean;
     this._appliedLean = newLean;
 
-    // Head bob (slight)
-    if (this.group.head) {
-      const baseY = this.group.head.userData.baseY || this.group.head.position.y;
-      if (!this.group.head.userData.baseY) this.group.head.userData.baseY = baseY;
-      this.group.head.position.y = baseY + Math.sin(ta + 0.5) * bounce * 0.7;
-    }
+    // (the head rides the same offset as the torso — a phase-shifted head bob
+    //  tore the neck open on every cycle now that the neck is a lit column)
 
     // Leg swing
     if (this.isWalking) {

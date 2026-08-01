@@ -20,6 +20,7 @@
 import * as THREE from 'three';
 import { buildCharacter } from '/src/entities/CharacterBuilder.js';
 import { CHARACTER_CONFIGS } from '/src/data/characters.js';
+import { CharacterAnimator } from '/src/entities/CharacterAnimator.js';
 
 const BG = 0xd8d8d8;
 const BGV = [216, 216, 216];
@@ -1089,4 +1090,247 @@ export async function iris(id, opts = {}) {
   return { metrics: out, shots };
 }
 
-window.__pn = { neck, bands, bandsForm, skull, hands, hair, expr, shoes, garment, grip, bill, iris, THREE, CHARACTER_CONFIGS };
+// ══════════════════════════════════════════════════════════════════════
+// 13 · PROFILE — side-view metrology (producer, 2026-08-01)
+// ══════════════════════════════════════════════════════════════════════
+// "The front-only measurements let profile flaws hide." Every landmark here is
+// read off the PROFILE silhouette of a FORM pass (maps stripped), so paint can
+// never stand in for a shape. In this view the camera sits on −x looking at +x,
+// so screen-right is +z: the face points RIGHT.
+//
+//   jawProjOverNeck   chin front − neck front, in head radii. A jaw is the thing
+//                     that puts the chin in FRONT of the throat.
+//   cervicomentalDeg  the angle chin → throat → neck. Human 90–115°; a jawless
+//                     build runs 140°+ because there is no corner under the jaw.
+//   gonialProjOverNeck the same test at the jaw ANGLE, not the chin.
+//   noseProjOverHeadR nose tip − brow.
+//   occiputBulgeR / occiputPeakY  the back of the skull.
+//   ear*              does the pinna actually render, and where.
+export async function profile(id, opts = {}) {
+  const cfg = opts.config || CHARACTER_CONFIGS[id];
+  const { renderer, scene } = stage(512, 512);
+  rig(scene, true);
+  const g = buildCharacter(cfg, { detailed: true, probe: true });
+  hideBlob(g);
+  scene.add(g);
+  g.updateMatrixWorld(true);
+  const m = g.metrics;
+  const R = m.headR;
+  const nb = m.neckBaseY ?? (m.chinY - m.neckH);
+  const top = m.crownY + R * 0.25, bot = nb - R * 0.55;
+  const center = { x: 0, y: (top + bot) / 2, z: 0 };
+  const halfH = (top - bot) * 0.56;
+  const SH = { center, halfH, w: 512, h: 512 };
+
+  // Lit reference shots (hair on) for the eye…
+  const litHair = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.5 });
+  const q34 = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.28 });
+  // …and an ID pass of the SKULL ITSELF for every landmark below. Scanning a
+  // whole render row is not safe: a raised arm, a shoulder, a mop handle or a
+  // cane crosses the same rows as the jaw, and the first pass of this instrument
+  // duly reported chin fronts of 2.2–2.4R (an impossible number for a head whose
+  // front is at 1.1R) on grandma, the intern and the janitor. Only the skull,
+  // the face patch and the ears are magenta here, so nothing else can answer.
+  const restoreSkull = idPassMulti(g, { skullMesh: 0xff00ff, facePatch: 0xff00ff, ear: 0xff00ff, neckColumn: 0x00ffff });
+  const form = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.5 });
+  restoreSkull();
+
+  // front-most / back-most z of the silhouette at a world height
+  // …and every z is expressed RELATIVE TO THE HEAD'S OWN CENTRE. A hunched build
+  // carries its head forward in world z (grandma's dowager curve is ~2R of it),
+  // which is what made the first pass report chin fronts of 2.2R.
+  const HZ = g.head.position.z || 0;
+  const zAt = (shot, wy, rgb = [255, 0, 255]) => {
+    const row = shot.rowOf(wy);
+    if (row < 1 || row >= shot.h - 1) return null;
+    let l = -1, r = -1;
+    for (let x = 0; x < shot.w; x++) {
+      if (!near(shot.data, (row * shot.w + x) * 4, rgb)) continue;
+      if (l < 0) l = x; r = x;
+    }
+    if (l < 0) return null;
+    const zOfCol = (c) => center.z + ((c + 0.5) - shot.w / 2) * shot.unitsPerPx - HZ;
+    return { front: zOfCol(r), back: zOfCol(l) };
+  };
+  // POGONION — the most forward point of the lower face, found by scanning
+  // rather than assumed at a row. (Sampling "chinY + 0.03R" samples the pole of
+  // the chin ball, which on any head is far behind the throat: the first pass of
+  // this instrument called every character in the cast jawless for that reason.)
+  let chin = null, chinYY = null;
+  for (let k = 0; k <= 24; k++) {
+    const y = m.chinY + (m.headY - R * 0.90 - m.chinY) * (k / 24);
+    const s = zAt(form, y);
+    if (!s) continue;
+    if (!chin || s.front > chin.front) { chin = s; chinYY = y; }
+  }
+  const neckMidY = m.chinY - (m.chinY - nb) * 0.55;
+  const neckMid = zAt(form, neckMidY, [0, 255, 255]);
+  const neckLowY = nb + (m.chinY - nb) * 0.10;
+  const neckLow = zAt(form, neckLowY, [0, 255, 255]);
+  const gonY = m.jawY ?? (m.headY - R * 0.60);
+  const gon = zAt(form, gonY);
+  const brow = zAt(form, m.eyeY + R * 0.22);
+  const noseY = (m.layout && m.layout.noseF != null) ? m.headY - R * 0.42 : m.headY - R * 0.42;
+  const nose = zAt(form, noseY);
+
+  // THROAT: the deepest point of the front line between the chin and the collar.
+  let throat = null, throatY = null;
+  const throatTop = chinYY != null ? Math.min(chinYY, m.chinY) : m.chinY;
+  for (let k = 0; k <= 20; k++) {
+    const y = throatTop - (throatTop - nb) * (k / 20);
+    const s = zAt(form, y);
+    if (!s) continue;
+    if (throat == null || s.front < throat) { throat = s.front; throatY = y; }
+  }
+  const ang = (ax, ay, bx, by, cx, cy) => {
+    const v1 = [ax - bx, ay - by], v2 = [cx - bx, cy - by];
+    const d = (v1[0] * v2[0] + v1[1] * v2[1]) / (Math.hypot(...v1) * Math.hypot(...v2) || 1);
+    return Math.acos(Math.max(-1, Math.min(1, d))) * 180 / Math.PI;
+  };
+  const cervico = (chin && throat != null && neckLow && throatY != null && Math.abs(throatY - chinYY) > 1e-4)
+    ? +ang(chin.front, chinYY, throat, throatY, neckLow.front, neckLowY).toFixed(1) : null;
+
+  // OCCIPUT — where does the back of the skull bulge, and by how much?
+  let occ = 0, occY = null;
+  for (let k = 0; k <= 24; k++) {
+    const y = m.eyeY - R * 0.4 + (m.crownY - (m.eyeY - R * 0.4)) * (k / 24);
+    const s = zAt(form, y);
+    if (!s) continue;
+    if (-s.back > occ) { occ = -s.back; occY = y; }
+  }
+
+  // EARS — geometry first (does a pinna clear the skull at all?), then pixels.
+  const ears = [];
+  g.traverse((o) => { if (o.isMesh && o.userData.pnId === 'ear') ears.push(o); });
+  let earM = { earMeshes: ears.length };
+  if (ears.length) {
+    const eb = new THREE.Box3();
+    for (const o of ears) if ((new THREE.Box3().setFromObject(o)).max.x > 0) eb.union(new THREE.Box3().setFromObject(o));
+    // skull half-width at ear height, from everything that is NOT an ear
+    const sb = new THREE.Box3();
+    g.head.traverse((o) => { if (o.isMesh && o.userData.pnId !== 'ear' && !o.userData.noCast) sb.union(new THREE.Box3().setFromObject(o)); });
+    const restore = idPassMulti(g, { ear: 0xff00ff });
+    const idP = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.5 });
+    const idQ = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.28 });
+    restore();
+    const cnt = (s) => { let n = 0, h = 0; for (let i = 0; i < s.data.length; i += 4) { if (!isBG(s.data, i)) h++; if (near(s.data, i, [255, 0, 255])) n++; } return [n, h]; };
+    const [nP, hP] = cnt(idP), [nQ, hQ] = cnt(idQ);
+    earM = {
+      earMeshes: ears.length,
+      earOuterXOverHeadR: +(eb.max.x / R).toFixed(3),
+      skullOuterXOverHeadR: +(sb.max.x / R).toFixed(3),
+      earProudOverHeadR: +((eb.max.x - sb.max.x) / R).toFixed(3),
+      earCentreYInHeadR: +(((eb.max.y + eb.min.y) / 2 - m.headY) / R).toFixed(3),
+      earZInHeadR: +(((eb.max.z + eb.min.z) / 2 - (g.head.position.z || 0)) / R).toFixed(3),
+      earVisibleProfilePct: +(nP / Math.max(1, hP) * 100).toFixed(2),
+      earVisibleQ34Pct: +(nQ / Math.max(1, hQ) * 100).toFixed(2),
+    };
+  }
+  renderer.dispose();
+  return {
+    metrics: {
+      id,
+      jawProjOverNeck: (chin && neckMid) ? +((chin.front - neckMid.front) / R).toFixed(3) : null,
+      // neck-independent versions (a narrow neck flatters the jaw test above):
+      chinFrontOverHeadR: chin ? +(chin.front / R).toFixed(3) : null,
+      noseFrontOverHeadR: nose ? +(nose.front / R).toFixed(3) : null,
+      browFrontOverHeadR: brow ? +(brow.front / R).toFixed(3) : null,
+      chinOverNose: (chin && nose) ? +(chin.front / Math.max(1e-6, nose.front)).toFixed(3) : null,
+      gonialProjOverNeck: (gon && neckMid) ? +((gon.front - neckMid.front) / R).toFixed(3) : null,
+      cervicomentalDeg: cervico,
+      throatYInHeadR: throatY != null ? +((throatY - m.headY) / R).toFixed(3) : null,
+      pogonionYInHeadR: chinYY != null ? +((chinYY - m.headY) / R).toFixed(3) : null,
+      submentalRunOverHeadR: (chin && throat != null) ? +((chin.front - throat) / R).toFixed(3) : null,
+      noseProjOverHeadR: (nose && brow) ? +((nose.front - brow.front) / R).toFixed(3) : null,
+      occiputBulgeOverHeadR: +(occ / R).toFixed(3),
+      occiputPeakYInHeadR: occY != null ? +((occY - m.headY) / R).toFixed(3) : null,
+      ...earM,
+    },
+    shots: { profForm: form.url, profLit: litHair.url, profQ34: q34.url },
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 12 · IDLE — does the body hold its shape across an idle cycle?
+// ══════════════════════════════════════════════════════════════════════
+// Producer: "the idle up-down bob + squash-stretch is deforming the v7 merged
+// bodies out of shape in fights." Measured on the ANIMATOR ALONE — a fixed
+// camera, no combat gestures, no camera moves, no intro slide — because in the
+// live fight those all swamp the signal (a first pass through the real arena
+// reported a 374px width swing that was almost entirely Karen's signature
+// arm easing in).
+//
+// One full idle cycle is 2π/IDLE_SPEED ≈ 3.14s. Twelve samples across it.
+export async function idle(id, opts = {}) {
+  const cfg = opts.config || CHARACTER_CONFIGS[id];
+  const { renderer, scene } = stage(384, 640);
+  rig(scene);
+  const g = buildCharacter(cfg, { detailed: true });
+  hideBlob(g);
+  scene.add(g);
+  const anim = new CharacterAnimator(g);
+  if (opts.combat !== false) anim.setCombatMode?.(true);
+  const b = box(g);
+  const center = { x: 0, y: (b.max.y + b.min.y) / 2, z: (b.max.z + b.min.z) / 2 };
+  const halfH = (b.max.y - b.min.y) * 0.56;
+  const SH = { center, halfH, w: 384, h: 640 };
+
+  const N = opts.samples || 12;
+  const DT = 1 / 120;
+  const CYCLE = 3.15;
+  const per = [];
+  const shots = {};
+  for (let k = 0; k < N; k++) {
+    // step the animator in real sub-steps so nothing is skipped
+    const target = (k / N) * CYCLE;
+    while (anim.time < target) anim.update(DT);
+    const s = ortho(renderer, scene, { ...SH });
+    if (k % 3 === 0) shots[`idle_f${k}`] = s.url;
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let y = 0; y < s.h; y++) for (let x = 0; x < s.w; x++) {
+      if (isBG(s.data, (y * s.w + x) * 4)) continue;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+    const widthAt = [];
+    for (const f of [0.16, 0.28, 0.40, 0.52, 0.64]) {
+      const yy = Math.round(y0 + (y1 - y0) * f);
+      let l = 1e9, r = -1e9;
+      for (let x = 0; x < s.w; x++) if (!isBG(s.data, (yy * s.w + x) * 4)) { if (x < l) l = x; if (x > r) r = x; }
+      widthAt.push(r < l ? 0 : r - l + 1);
+    }
+    // THE DEFORMATION ITSELF, read off the live transforms. A shell that scales
+    // while the arms/neck/head that seam to it do not is a shape break, and a
+    // silhouette width is too blunt to see it.
+    per.push({
+      t: +anim.time.toFixed(3), x0, x1, y0, y1, bw: x1 - x0 + 1, bh: y1 - y0 + 1, widthAt,
+      bodyScaleY: +(g.body ? g.body.scale.y : 1).toFixed(4),
+      bodyScaleX: +(g.body ? g.body.scale.x : 1).toFixed(4),
+      headMinusBodyY: +((g.head ? g.head.position.y : 0) - (g.body ? g.body.position.y : 0)).toFixed(5),
+      armMinusBodyY: +((g.rightArm ? g.rightArm.position.y : 0) - (g.body ? g.body.position.y : 0)).toFixed(5),
+    });
+  }
+  renderer.dispose();
+  const range = (a) => Math.max(...a) - Math.min(...a);
+  const widthRangeByHeight = [0, 1, 2, 3, 4].map(k => range(per.map(m => m.widthAt[k])));
+  return {
+    metrics: {
+      id,
+      bboxWidthRangePx: range(per.map(m => m.bw)),
+      bboxHeightRangePx: range(per.map(m => m.bh)),
+      topRangePx: range(per.map(m => m.y0)),
+      widthRangeByHeight,
+      worstWidthSwingPx: Math.max(...widthRangeByHeight),
+      shellScaleYRange: +range(per.map(m => m.bodyScaleY)).toFixed(5),
+      shellScaleXRange: +range(per.map(m => m.bodyScaleX)).toFixed(5),
+      // how far the head/arm move RELATIVE to the torso they are seamed to,
+      // expressed in head-heights (0 = the upper body moves as one piece)
+      seamTravelHeadsHead: +(range(per.map(m => m.headMinusBodyY)) / (g.metrics.crownY - g.metrics.chinY)).toFixed(5),
+      seamTravelHeadsArm: +(range(per.map(m => m.armMinusBodyY)) / (g.metrics.crownY - g.metrics.chinY)).toFixed(5),
+      pxPerHeadHeight: +((g.metrics.crownY - g.metrics.chinY) / ((2 * halfH) / 640)).toFixed(1),
+      per,
+    },
+    shots,
+  };
+}
+
+window.__pn = { neck, bands, bandsForm, skull, hands, hair, expr, shoes, garment, grip, bill, iris, idle, profile, THREE, CHARACTER_CONFIGS };

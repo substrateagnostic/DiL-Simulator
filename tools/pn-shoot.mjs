@@ -61,6 +61,8 @@ function summarize(note, m) {
     case 'garment': return `hemBelowHip=${m.hemBelowHip}  /torso=${m.hemBelowHipOverTorso}  flat=${m.hemFlatness}  step=${m.hemValueStep}  waist/chest=${m.waistOverChest}  hip/waist=${m.hipOverWaist}`;
     case 'grip': return `gap=${m.gapWorld}  /hand=${m.gapOverHand}  contact=${m.contact}${m.error ? ' ' + m.error : ''}`;
     case 'bill': return `proj=${m.projectionOverHeadR}R  len=${m.billLengthOverHeadR}R  vis prof/q34/front/back=${m.billVisibleProfilePct}/${m.billVisibleQ34Pct}/${m.billVisibleFrontPct}/${m.billVisibleBack34Pct}%`;
+    case 'idle': return `top±=${m.topRangePx}px  worstWidth±=${m.worstWidthSwingPx}px  shellScaleY±=${m.shellScaleYRange}  shellScaleX±=${m.shellScaleXRange}  seamTravel head/arm=${m.seamTravelHeadsHead}/${m.seamTravelHeadsArm} heads  (head=${m.pxPerHeadHeight}px)`;
+    case 'profile': return `chin=${m.chinFrontOverHeadR}R nose=${m.noseFrontOverHeadR}R chin/nose=${m.chinOverNose}  jawProj=${m.jawProjOverNeck}R  submental=${m.submentalRunOverHeadR}R  gonial=${m.gonialProjOverNeck}R  cervico=${m.cervicomentalDeg}deg  nose=${m.noseProjOverHeadR}R  occiput=${m.occiputBulgeOverHeadR}R@${m.occiputPeakYInHeadR}  ear proud=${m.earProudOverHeadR}R vis prof/q34=${m.earVisibleProfilePct}/${m.earVisibleQ34Pct}%`;
     case 'iris': return `drift=${m.maxDriftFromNeutral} (${m.worstExpr})  consistent=${m.consistent}`;
     default: return '';
   }

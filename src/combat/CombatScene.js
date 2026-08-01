@@ -320,6 +320,7 @@ export class CombatScene {
       if (!config) continue;
       const group = buildCharacter(config, { detailed: true });
       const animator = new CharacterAnimator(group);
+      animator.setCombatMode(true);   // quiet idle: no body-shell morph at close range
       const pos = positions[i];
       // Caricature heads run bigger — slightly smaller stage scale keeps
       // faces in frame
@@ -373,6 +374,7 @@ export class CombatScene {
       }
       const group = buildCharacter(combatConfig, { detailed: true });
       const animator = new CharacterAnimator(group);
+      animator.setCombatMode(true);
       const pos = partyPositions[i];
       group.position.set(pos.x, 0, pos.z);
       // Scale trimmed with the move forward (1.8→1.45): at ~2.4 units from the

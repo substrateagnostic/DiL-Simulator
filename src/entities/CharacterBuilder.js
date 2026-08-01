@@ -613,8 +613,18 @@ export function buildCharacter(config, options = {}) {
     // her own trapezius; solving the angle from the head's actual z closes it on
     // every build, hunched or erect, and costs nothing on the erect ones (their
     // headZ − neckBaseZ is ~0, so the lean is ~0).
+    // v7 FIX round-4 — THE NECK SITS UNDER THE FACE, WHICH IS WHY NOBODY HAS A
+    // JAW. The column was centred on the head's own z axis, so the throat line
+    // ran at +0.46R — directly below the mouth — and the chin cleared it by only
+    // 0.40R. On a head the neck balances on the atlas, which is back at the EAR
+    // CANAL (≈ −0.20R), so the throat belongs well behind the face. Setting the
+    // column's top back opens the under-jaw space that a mandible reads against;
+    // no amount of chin projection can do that on its own, because the throat
+    // was moving forward with it. The BASE is untouched, so the collar still
+    // closes around it.
+    const NECK_SET_BACK = headR * 0.17;
     neck.position.set(0, neckBaseY, neckBaseZ);
-    neck.rotation.x = Math.atan2(headZ - neckBaseZ, Math.max(0.02, nVis + nUp * 0.5));
+    neck.rotation.x = Math.atan2((headZ - neckBaseZ) - NECK_SET_BACK, Math.max(0.02, nVis + nUp * 0.5));
     // `probe` (dev harness only — tools/pn-stage.js) keeps the column out of the
     // merge so an ID-colour pass can measure its silhouette at every height
     // WITH collar/hair occlusion honoured. Zero cost in the game: nothing sets it.
@@ -825,6 +835,7 @@ export function buildCharacter(config, options = {}) {
     square: Math.min(2.2, Math.max(1.0, config.skullSquare ?? 1)),
   };
   const skull = makeHead(headR, mSkin, { ...faceDial, detailed });
+  if (options.probe) { skull.userData.pnId = 'skullMesh'; skull.userData.noMerge = true; }
   head.add(skull);
 
   // v7 — HAIR + EARS RIDE A SKULL SHELL. Every hair style in this file was
@@ -870,16 +881,27 @@ export function buildCharacter(config, options = {}) {
     const earY = -headR * 0.20;
     // 0.94 put the ear's outer edge ≈0.01R proud of the skull; on the wide-face
     // builds that reads as a detached skin TAB at 3/4. 0.90 buries it.
-    const earX = side * headR * skullHalfW(-0.20, faceDial.wide) * 0.90;
+    // v7 FIX round-4 — THE EARS DID NOT RENDER. Measured cast-wide on the
+    // profile instrument: the pinna's outer edge sat INSIDE the skull's own
+    // silhouette on every single character (earProud −0.005R andrew/intern,
+    // −0.010R grandma, −0.035R chad, −0.145R karen), so the ear owned 0.0–0.8%
+    // of the profile and 0.0–0.5% of the 3/4 — i.e. the bible's "simple 3D ears
+    // at eye→nose height, tucked at 3/4" existed in the scene graph and nowhere
+    // on screen. 0.90 was tuned to kill a "detached skin bead"; it killed the
+    // ear. A real pinna stands a HAIR proud of the widest part of the skull, so
+    // that is what this now solves for (≈ +0.02R).
+    const earX = side * headR * skullHalfW(-0.20, faceDial.wide) * 0.92;
     const ear = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.185, 20, 16), mSkin);
-    ear.scale.set(0.38, 1.72, 0.98);
+    ear.scale.set(0.44, 1.72, 0.98);
     ear.position.set(earX, earY, -headR * 0.20);
     ear.rotation.z = side * 0.06;
+    if (options.probe) { ear.userData.pnId = 'ear'; ear.userData.noMerge = true; }
     head.add(ear);
     const helix = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.150, 18, 14), mSkin);
-    helix.scale.set(0.46, 1.62, 0.90);
+    helix.scale.set(0.52, 1.62, 0.90);
     helix.position.set(earX + side * headR * 0.012, earY + headR * 0.02, -headR * 0.235);
     helix.rotation.z = side * 0.06;
+    if (options.probe) { helix.userData.pnId = 'ear'; helix.userData.noMerge = true; }
     head.add(helix);
     // A shallow, low-contrast concha. At 0.58 shade / 0.10R it rendered as a dark
     // bullet hole punched through the ear (andrew r1/r2 profile).
@@ -903,6 +925,7 @@ export function buildCharacter(config, options = {}) {
   let facePatch = null;
   if (group.faceTextures && group.faceTextures.neutral) {
     facePatch = makeFacePatch(headR, group.faceTextures.neutral, M, detailed, faceDial);
+    if (options.probe) { facePatch.userData.pnId = 'facePatch'; facePatch.userData.noMerge = true; }
     facePatch.userData.noMerge = true;
     head.add(facePatch);
   }
@@ -1647,16 +1670,31 @@ function sculptSkull(d, dial, out) {
   //      measured, +2.4%) has nowhere to go.
   //      Falls off laterally (bell 0.82) so the jaw keeps its taper, and releases
   //      below −1.16 so the sub-mental still tucks under.
+  // v7 FIX round-4 (producer: "ANDREW NEEDS A JAW — his profile reads jawless").
+  //      Measured on the new profile instrument, the DEFAULT skull — Andrew's,
+  //      and every cast member with no explicit dial — put the pogonion at 0.616
+  //      of the nose's projection from the head's own centre plane, against a
+  //      human 0.75-0.85 and against the Janitor's dialled 0.935. Below the
+  //      mouth his outline ran straight down into the collar: no chin point, no
+  //      mandibular line, no gonial corner. The plane and the protuberance below
+  //      both come up, and the sub-mental tuck deepens WITH them so what appears
+  //      is a jaw with a corner under it rather than simply a longer face.
   const mandible = _sstep(-0.34, -1.16, y) * _bell(ax, 0.0, 0.82);
-  z += 0.132 * mandible * front * (1 - 0.55 * _sstep(-1.16, -1.40, y));
+  z += 0.380 * mandible * front * (1 - 0.55 * _sstep(-1.16, -1.40, y));
 
   // 8 · CHIN — a real mental protuberance, narrow and forward. Eased 0.085 →
   //     0.062 and widened, because a tall chin ball sitting under a deep sub-lip
   //     gutter is what made every profile read "toothless".
   const chinBand = _bell(y, -1.08, 0.40) * _bell(ax, 0.0, 0.40);
-  z += 0.062 * chinDial * chinBand * front;
-  // and the sub-mental plane tucks back under it
-  z -= 0.024 * _bell(y, -1.30, 0.24) * front;
+  // …and the chin's own weight no longer collapses at the pole: `front` is d.z on
+  // the unit sphere, which tends to zero exactly where the mental protuberance
+  // lives, so the term was being damped out of existence at the one row it
+  // exists for. front^0.55 keeps the falloff (nothing behind the ear moves) with
+  // usable amplitude on the lower front.
+  z += 0.170 * chinDial * chinBand * Math.pow(front, 0.55);
+  // and the sub-mental plane tucks back under it — deepened with the chin so the
+  // profile turns a CORNER under the jaw instead of sloping into the throat.
+  z -= 0.055 * _bell(y, -1.30, 0.24) * front;
 
   // 9 · NOSE WEDGE (integrated, LAW 3: "a small 3D geometric wedge").
   //     Round-1 measured the nose TIP at z 1.058R against a brow at 1.079R — the
@@ -2711,6 +2749,14 @@ function containHair(mesh, r, sy) {
   const yEar = (-0.06 * r) / sy;        // ear line
   const yJaw = (-0.66 * r) / sy;        // jaw angle
   const yFloor = (-0.98 * r) / sy;      // hard floor: above the collar, above the chin
+  // EAR RELIEF (v7 round-4). Making the pinna proud of the skull is only half a
+  // rendered ear: on every short cut in the cast the hair mass reaches z +0.62r
+  // at the ear line, i.e. it covers the ear completely, and a proud ear then
+  // pokes through it as a pale bead. The hair is therefore PARTED around the
+  // pinna — pulled in to 0.90r inside a soft (y,z) window centred on the ear —
+  // so the hair tucks behind it the way hair does on a head.
+  const eY = (-0.20 * r) / sy, eZ = -0.20 * r;
+  const bellE = (t, w) => { const d = Math.abs(t) / w; return d >= 1 ? 0 : Math.cos(d * Math.PI * 0.5) ** 2; };
   const v = new THREE.Vector3();
   for (let i = 0; i < pos.count; i++) {
     v.fromBufferAttribute(pos, i);
@@ -2720,6 +2766,12 @@ function containHair(mesh, r, sy) {
       if (v.z > zMax) v.z = zMax + (v.z - zMax) * 0.12;
     }
     if (v.y < yFloor) v.y = yFloor + (v.y - yFloor) * 0.14;
+    const k = bellE(v.y - eY, (0.44 * r) / sy) * bellE(v.z - eZ, 0.36 * r);
+    if (k > 0.02) {
+      const cap = r * (1.22 - 0.32 * k);
+      const ax2 = Math.abs(v.x);
+      if (ax2 > cap) v.x = Math.sign(v.x) * (cap + (ax2 - cap) * 0.10);
+    }
     pos.setXYZ(i, v.x, v.y, v.z);
   }
   g.computeVertexNormals();
