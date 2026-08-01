@@ -1,17 +1,30 @@
-// Meshy comp video driver — records the SAME ~50s Karen-fight beat sequence
-// in procedural mode and (with --meshy) Meshy-GLB mode, at 1920x1080.
+// Meshy comp video driver — records the SAME Karen-fight beat sequence in
+// procedural mode and (with --meshy) Meshy-GLB mode, at 1920x1080.
 //
 //   node tools/meshy-comp-video.mjs            -> fight-karen-procedural.webm
 //   node tools/meshy-comp-video.mjs --meshy    -> fight-karen-meshy.webm
+//   node tools/meshy-comp-video.mjs --meshy --tag=slate  -> fight-karen-slate.webm
 //
-// Beat sequence (absolute marks from fight-ready, so both videos cut the same):
+// Beat sequence (absolute marks from fight-ready, so every run cuts the same):
 //   0-5s    idle on the stage (both idles visible)
 //   ~5s     basic Attack -> Karen's turn resolves
 //   ~13s    Brace QTE (marker stopped after ~600ms) -> Karen's turn
 //   ~21s    Special -> first ability -> Karen's turn
 //   ~29s    Attack -> exchange
 //   ~36s    Attack -> exchange
-//   ~43-48s settle on idle, cut
+//   ~43s    settle on idle
+//   ~45s    Karen Composure Break   (female stagger)
+//   ~50s    Andrew Composure Break  (male stagger — the gender pair, back to back)
+//   ~55s    Andrew victory          (male cheer)
+//   ~60s    cut
+//
+// The first 43 seconds are unchanged from the wave-1 comps, so this is still an
+// A/B against them. The tail exists because a comp that never fires a Break or
+// a victory cannot show two of the roles the casting slate splits by build; the
+// two staggers land back to back on purpose, since the normalized beat length
+// is only judgeable against the other build's version of the same beat. Those
+// three beats go through the SAME CombatScene entry points CombatState fires,
+// not a mock — if a clip is not wired to the beat, the video shows the stance.
 //
 // Karen's HP is pinned high (identically in both runs) so no roll can end the
 // fight mid-sequence; Andrew's SPD is pinned so he acts first in both runs.
@@ -22,8 +35,9 @@ import { join } from 'path';
 
 const BASE = process.env.SHOOT_BASE || 'http://localhost:5173';
 const MESHY = process.argv.includes('--meshy');
+const TAG = (process.argv.find(a => a.startsWith('--tag=')) || '').split('=')[1];
 const OUT_DIR = 'art/char_refs/meshy_pilot/comp_videos';
-const NAME = MESHY ? 'fight-karen-meshy.webm' : 'fight-karen-procedural.webm';
+const NAME = `fight-karen-${TAG || (MESHY ? 'meshy' : 'procedural')}.webm`;
 
 const run = async () => {
   mkdirSync(OUT_DIR, { recursive: true });
@@ -108,7 +122,22 @@ const run = async () => {
 
   await atMark(43000);
   await playerTurn().catch(() => {});
-  await atMark(48000);
+
+  // ── the reaction tail. Real call paths: CombatState fires setExpression
+  // ('defeated') on a Composure Break and setExpression('victory') on a win.
+  await atMark(45000);
+  console.log('beat: Karen Composure Break (stagger, female)');
+  await page.evaluate(() => window.__combat?.scene?.enemyGroups?.[0]?.animator?.setExpression('defeated'));
+
+  await atMark(50000);
+  console.log('beat: Andrew Composure Break (stagger, male)');
+  await page.evaluate(() => window.__combat?.scene?.allyGroups?.[0]?.animator?.setExpression('defeated'));
+
+  await atMark(55000);
+  console.log('beat: Andrew victory (male cheer)');
+  await page.evaluate(() => window.__combat?.scene?.allyGroups?.[0]?.animator?.setExpression('victory', 3.5));
+
+  await atMark(60000);
   console.log('cut.');
 
   await page.close();

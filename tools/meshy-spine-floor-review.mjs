@@ -1,6 +1,7 @@
 // SPINE + FLOOR REVIEW — the verification gate for the V8 retarget/ground fix.
 //
-// SUPERSEDED AS A POSTURE GATE. Use tools/meshy-spine-gate.mjs.
+// SUPERSEDED AS A POSTURE GATE, AND NOT SLATE-AWARE. Use
+// tools/meshy-spine-gate.mjs for both.
 // window.__spine() below reads ONE joint, Hips->Spine02 — which is exactly the
 // joint the V8 pelvis retarget corrected. It is a faithful witness that the
 // retarget still works and nothing more. It is structurally blind to the five
@@ -9,6 +10,15 @@
 // resolution at which a human reviewer can adjudicate a hunch. Keep this file
 // for the retarget/ground regression it does measure honestly; never quote it
 // as evidence about posture.
+//
+// SECOND LIMIT, since the casting slate (art/MESHY_SLATE.md): this tool holds
+// ONE global role->clip map, and the shipping arrangement no longer is one. The
+// calm stance is a 33-row per-character table and each reaction is a PAIR keyed
+// on the model's build. What is below is therefore the union of both reaction
+// pairs plus the two clips that are still andrew's and isaiah's calm stances —
+// enough to exercise the retarget and the ground measure on every shared file,
+// and NOT a statement about who plays what. meshy-spine-gate.mjs drives the
+// real MeshyClips.clipsFor() per character and is the instrument for that.
 //
 // This harness imports the SHIPPING module (src/combat/MeshyRetarget.js) over
 // HTTP and drives it exactly the way CombatScene does: capture the target rest
@@ -46,8 +56,17 @@ const FLAGGED = new Set(['alex_it', 'cfos_assistant', 'chad', 'chief_of_restruct
   'client_m_heavy', 'compliance', 'corporate_lawyer', 'data_analytics_lead', 'diane', 'firm_paralegal',
   'intern', 'isaiah', 'networking_guy', 'regional', 'regional_director', 'restructuring_analyst', 'ross_boss']);
 
-// role -> clip file, mirroring MeshyClips.CLIP_IDS
-const ROLES = { stance_a: 'a336', stance_b: 'a338', guard: 'a138', hurt: 'a178', stagger: 'a391', victory: 'a59', attack: 'a191' };
+// role -> clip file. Not the shipping assignment (see the header): the union of
+// the shared reaction files in both builds, plus the two calm stances that are
+// still cast (andrew a336, isaiah a338), so every shared clip is exercised.
+const ROLES = {
+  stance_a: 'a336', stance_b: 'a338',
+  guard_m: 'a138', guard_f: 'a420',
+  hurt_m: 'a174', hurt_f: 'a178',
+  stagger_m: 'a176', stagger_f: 'a391',
+  victory_m: 'a49', victory_f: 'a59',
+  attack_m: 'a191', attack_f: 'a214',
+};
 const MIME = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.glb': 'model/gltf-binary', '.json': 'application/json', '.wasm': 'application/wasm' };
 const TILE = 240;
 
@@ -263,7 +282,7 @@ for (const id of ids) {
     rec.bands[role] = await page.evaluate(([r, s]) => window.__band(r, s), [role, 12]);
   }
   // skate check on the two clips the diagnosis called unpinned
-  for (const role of ['victory', 'attack', 'stagger']) {
+  for (const role of ['victory_m', 'victory_f', 'attack_m', 'attack_f', 'stagger_m', 'stagger_f']) {
     rec.skate[role] = {
       naive: await page.evaluate(([r, m, s]) => window.__skate(r, m, s), [role, 'naive', 12]),
       fixed: await page.evaluate(([r, m, s]) => window.__skate(r, m, s), [role, 'fixed', 12]),

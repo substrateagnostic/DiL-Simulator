@@ -1,10 +1,12 @@
 // Cast contact sheet in the SHIPPING configuration.
 //
 // Renders every character in public/meshy/ holding the calm stance the game
-// will actually give it — same clip pick and same phase offset as
-// MeshyClips.stanceFor / phaseFor (the FNV hash below is the same function) —
-// through the house toon ramp under the CombatScene light rig. Grandma gets her
-// bone-socketed cane, exactly as CombatScene attaches it.
+// will actually give it — through the REAL MeshyClips.clipsFor(), so each cell
+// carries that character's slate-assigned idle, its per-character retarget, the
+// MeshyPosture clamp and the measured foot plant, not an approximation of any
+// of them. Phase offset is the shipping phaseFor(). House toon ramp under the
+// CombatScene light rig. Grandma gets her bone-socketed cane, exactly as
+// CombatScene attaches it.
 //
 //   node tools/meshy-contact-sheet.mjs [--cols=6] [--cell=300]
 //
@@ -22,26 +24,20 @@ const COLS = Number(args.cols || 6);
 const CELL = Number(args.cell || 300);
 const OUT = join(REPO, args.out || 'art/char_refs/meshy_pilot/_cast_contact_stances.png');
 
-// Must stay identical to MeshyClips.stanceFor / phaseFor.
-const STANCES = [336, 338];
-function hash(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
-  return h >>> 0;
-}
-const stanceFor = id => STANCES[hash(id) % STANCES.length];
-const phaseFor = id => ((hash(id + '#phase') % 1000) / 1000);
 
 const ids = readdirSync(join(REPO, 'public/meshy'))
   .filter(f => f.endsWith('_idle.glb')).map(f => f.replace('_idle.glb', '')).sort();
 
-const MIME = { '.js': 'text/javascript', '.html': 'text/html', '.glb': 'model/gltf-binary' };
+const MIME = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.glb': 'model/gltf-binary', '.json': 'application/json', '.wasm': 'application/wasm' };
 const HARNESS = `<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#0b0b12}</style>
 <script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
 </head><body><script type="module">
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+// THE SHIPPING MODULES. clipsFor() is the function CombatScene calls.
+import { captureRest, groundOffset } from '/src/combat/MeshyRetarget.js';
+import { clipsFor, preloadClips, phaseFor, genderFor } from '/src/combat/MeshyClips.js';
 const CELL = ${CELL};
 const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
 renderer.setSize(CELL, CELL); document.body.appendChild(renderer.domElement);
@@ -55,22 +51,30 @@ const ramp = new THREE.DataTexture(new Uint8Array([80, 160, 255]), 3, 1, THREE.R
 ramp.minFilter = THREE.NearestFilter; ramp.magFilter = THREE.NearestFilter; ramp.needsUpdate = true;
 const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
 const load = u => new Promise((res, rej) => loader.load(u, res, undefined, rej));
-const clips = {};
+// CombatScene hangs the model under an inner wrapper and drives the measured
+// ground offset on that wrapper. Same two-node shape here, or the foot plant
+// this sheet exists to show would be the sheet's own invention.
+const inner = new THREE.Group(); scene.add(inner);
 let model = null;
 
-window.__render = async (id, actionId, phase, cane) => {
-  if (model) { scene.remove(model); model = null; }
+window.__warm = (ids) => preloadClips(ids);
+window.__phase = (id) => phaseFor(id);
+
+window.__render = async (id, phase, cane) => {
+  if (model) { inner.remove(model); model = null; }
+  inner.position.set(0, 0, 0);
   const g = await load('/meshy/' + id + '_idle.glb');
   model = g.scene;
+  // captureRest BEFORE anything touches transforms — same order as MeshyCast.load
+  const targetRest = captureRest(model);
   model.traverse(c => {
     if (c.isSkinnedMesh) c.frustumCulled = false;
     if (c.isMesh && c.material) c.material = new THREE.MeshToonMaterial({ map: c.material.map || null, color: 0xffffff, gradientMap: ramp });
   });
-  scene.add(model);
+  inner.add(model);
   model.updateMatrixWorld(true);
   const box = new THREE.Box3().setFromObject(model);
   const H = box.getSize(new THREE.Vector3()).y;
-  model.position.y -= box.min.y;
   if (cane) {
     let bone = null; model.traverse(o => { if (o.isBone && o.name === 'RightHand') bone = o; });
     if (bone) {
@@ -90,15 +94,19 @@ window.__render = async (id, actionId, phase, cane) => {
       window.__caneTick = () => { const q = new THREE.Quaternion(); bone.getWorldQuaternion(q); holder.quaternion.copy(q).invert(); };
     }
   } else window.__caneTick = null;
-  if (!clips[actionId]) clips[actionId] = (await load('/meshy/clips/a' + actionId + '.glb')).animations[0];
-  const clip = clips[actionId];
+  // THE SHIPPING CALL. Same arguments MeshyCast.clipsFor passes.
+  const clip = clipsFor(id, id, targetRest).idle;
+  if (!clip) return { H, clip: null };
+  const off = groundOffset(model, clip, { restore: targetRest });
   const mixer = new THREE.AnimationMixer(model);
   mixer.clipAction(clip).play();
   mixer.setTime(phase * clip.duration);
+  inner.position.y = -off;
+  model.updateMatrixWorld(true);
   if (window.__caneTick) window.__caneTick();
   camera.position.set(H * 0.26, H * 0.58, H * 1.58); camera.lookAt(0, H * 0.50, 0);
   renderer.render(scene, camera);
-  return H;
+  return { H, clip: clip.name, ground: +off.toFixed(4), gender: genderFor(id, id) };
 };
 window.__ready = true;
 </script></body></html>`;
@@ -106,7 +114,7 @@ window.__ready = true;
 const server = createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
   if (url === '/harness.html') { res.setHeader('Content-Type', 'text/html'); return res.end(HARNESS); }
-  const roots = { '/node_modules/': join(REPO, 'node_modules'), '/meshy/': join(REPO, 'public/meshy') };
+  const roots = { '/node_modules/': join(REPO, 'node_modules'), '/src/': join(REPO, 'src'), '/meshy/': join(REPO, 'public/meshy') };
   for (const [p, root] of Object.entries(roots)) {
     if (url.startsWith(p)) {
       try {
@@ -126,13 +134,15 @@ const page = await (await browser.newContext({ viewport: { width: CELL, height: 
 await page.goto(`http://localhost:${port}/harness.html`);
 await page.waitForFunction(() => window.__ready === true, { timeout: 30000 });
 
+await page.evaluate(i => window.__warm(i), ids);
 const cells = [];
 for (const id of ids) {
-  const a = stanceFor(id), ph = phaseFor(id);
   try {
-    const h = await page.evaluate(([i, act, p, c]) => window.__render(i, act, p, c), [id, a, ph, id === 'grandma']);
-    cells.push({ id, a, data: (await page.locator('canvas').screenshot()).toString('base64') });
-    console.log(`[cell] ${id.padEnd(24)} stance a${a}  phase ${ph.toFixed(2)}  h=${h.toFixed(2)}`);
+    const ph = await page.evaluate(i => window.__phase(i), id);
+    const r = await page.evaluate(([i, p, c]) => window.__render(i, p, c), [id, ph, id === 'grandma']);
+    if (!r.clip) { console.log(`[FAIL] ${id}: clipsFor() returned no idle`); continue; }
+    cells.push({ id, a: r.clip.replace('a', ''), data: (await page.locator('canvas').screenshot()).toString('base64') });
+    console.log(`[cell] ${id.padEnd(24)} ${r.gender} ${r.clip.padEnd(6)} phase ${ph.toFixed(2)}  ground ${String(r.ground).padStart(8)}  h=${r.H.toFixed(2)}`);
   } catch (e) { console.log(`[FAIL] ${id}: ${String(e).slice(0, 140)}`); }
 }
 
