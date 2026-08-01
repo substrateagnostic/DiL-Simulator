@@ -2050,7 +2050,7 @@ export const DIALOGS = {
   ],
 
   restructuring_trio_defeated: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "All three of them are on the floor of the cubicle farm. The brand consultant is crying about her mood board. The analyst is muttering at a spreadsheet. The lawyer is drafting a settlement to himself." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "All three of them are on the floor of the cubicle farm. The brand consultant is crying about their mood board. The analyst is muttering at a spreadsheet. The lawyer is drafting a settlement to himself." },
     /* 1  */ { type: 'text', speaker: 'Janet', text: "I forgot how good it feels to be right." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "We're not done. Meredith's whole team is between us and the Board Room." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "Then I'm not done either. Lead the way." },
