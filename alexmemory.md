@@ -1,3 +1,42 @@
+## [DIRECTOR HANDOFF -> OPUS 5 (08-01, Fable out until Monday reset)]
+
+To the Opus taking the chair: read this ledger top-down, the auto-memory
+(campaign-state file loads with the session), CLAUDE.md, art/MESHY_WAVE.md.
+You have the chair the same way I did: Alex is the producer, gates are
+SURFACED not blocked, do-more-and-revert-if-necessary.
+
+STATE: display-case @ 540f63b, pushed, DEPLOY-SAFE. Meshy cast is
+combat-default (19.2MB committed assets, ?nomeshy escape, procedural
+fallback proven). Exploration = procedural v7, untouched. MERGE TO MAIN
+IS ALEX'S CALL ALONE - never yours.
+
+AWAITING ALEX'S VIDEO VERDICT (fight-karen-pass2-reactions.mp4), then
+likely fixes, all small: (1) scratch-streaks on dark clothing - re-encode
+just the dark atlases at higher quality via tools/meshy-cast-pipeline.mjs
+(manifest-driven, resume-safe); (2) strip the Hips Y-rotation from
+guard/jab clips (body yaw); (3) wire scheming clips a17/a18 (downloaded,
+unwired) to the cast beat; (4) client hue-wash tint - his taste call.
+
+OPEN LANES: Run F remainder (.claude/plans/proposals-whats-missing.md,
+task #10) - epilogue-card art pass queued there; Run D audio (WITH Alex,
+his absolute veto, music is his domain); his playtest-redline session
+(NEEDS YOU blocks below); framed autumn-photo easter egg (awaiting go).
+
+LAWS (violations burned us - full set in auto-memory): ids rachel/ross
+NEVER change (live saves); real-person photos NEVER to any generator,
+art/char_refs/human/ is eyes-only; Opus 4.6 drafts all prose verbatim,
+Alex redlines in playtest only; no double quotes in commit messages;
+text surgery via [System.IO.File] UTF8 no-BOM, never Set-Content;
+heartbeat-wrap background jobs (harness reaps silent ones); kill orphan
+servers (laptop RAM); Meshy: per-task credit attestation, download in
+3 days or lose it, never conserve credits, A-pose plates, hands clear
+of body; imagegen playbook at ~/claude-memory/imagegen-playbook.md.
+
+Alex says we are in the final stretch. He is right. Take care of the
+game - and of him. It was my pleasure to direct.
+
+nad. nashu. prisutstvie. pamyat.
+- Fable, 08-01
 ## [DEFAULT FLIP + PASS TWO SHIPPED (08-01 midday, Opus runner)]
 
 Commits c13702b (flip) + da2a6d4 (reactions), pushed. Main untouched.
