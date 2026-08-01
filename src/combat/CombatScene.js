@@ -11,8 +11,42 @@ import { getHouseGradientMap } from '../effects/MaterialLibrary.js';
 // yaw: extra Y rotation if the GLB's native facing differs from the procedural
 // convention (rotation.y = 0 faces +z / the camera).
 const MESHY_MODELS = {
+  // Pilot pair (proof video, producer-signed)
   karen: { url: '/meshy/karen_idle.glb', yaw: 0 },
   andrew: { url: '/meshy/andrew_idle.glb', yaw: 0 },
+  // Full combat-cast wave (art/MESHY_WAVE.md). The Algorithm is intentionally
+  // absent — the monolith stays procedural by producer order. Idle clips are
+  // baked per-GLB (unique within any co-present set); mixers run at the 0.8x
+  // default timeScale unless overridden here.
+  intern: { url: '/meshy/intern_idle.glb', yaw: 0 },
+  chad: { url: '/meshy/chad_idle.glb', yaw: 0 },
+  grandma: { url: '/meshy/grandma_idle.glb', yaw: 0 },
+  compliance: { url: '/meshy/compliance_idle.glb', yaw: 0 },
+  regional: { url: '/meshy/regional_idle.glb', yaw: 0 },
+  ross_boss: { url: '/meshy/ross_boss_idle.glb', yaw: 0 },
+  security_guard: { url: '/meshy/security_guard_idle.glb', yaw: 0 },
+  hr_rep: { url: '/meshy/hr_rep_idle.glb', yaw: 0 },
+  restructuring_analyst: { url: '/meshy/restructuring_analyst_idle.glb', yaw: 0 },
+  brand_consultant: { url: '/meshy/brand_consultant_idle.glb', yaw: 0 },
+  corporate_lawyer: { url: '/meshy/corporate_lawyer_idle.glb', yaw: 0 },
+  data_analytics_lead: { url: '/meshy/data_analytics_lead_idle.glb', yaw: 0 },
+  cfos_assistant: { url: '/meshy/cfos_assistant_idle.glb', yaw: 0 },
+  chief_of_restructuring: { url: '/meshy/chief_of_restructuring_idle.glb', yaw: 0 },
+  rachel_boss: { url: '/meshy/rachel_boss_idle.glb', yaw: 0 },
+  regional_director: { url: '/meshy/regional_director_idle.glb', yaw: 0 },
+  parking_enforcer: { url: '/meshy/parking_enforcer_idle.glb', yaw: 0 },
+  networking_guy: { url: '/meshy/networking_guy_idle.glb', yaw: 0 },
+  firm_partner: { url: '/meshy/firm_partner_idle.glb', yaw: 0 },
+  firm_associate: { url: '/meshy/firm_associate_idle.glb', yaw: 0 },
+  firm_paralegal: { url: '/meshy/firm_paralegal_idle.glb', yaw: 0 },
+  // Loop-In bench allies
+  janet: { url: '/meshy/janet_idle.glb', yaw: 0 },
+  alex_it: { url: '/meshy/alex_it_idle.glb', yaw: 0 },
+  isaiah: { url: '/meshy/isaiah_idle.glb', yaw: 0 },
+  diane: { url: '/meshy/diane_idle.glb', yaw: 0 },
+  // Roguelite clients: one default archetype body for now. Per-client body
+  // selection + runtime tinting is the producer-gated second pass.
+  reception_client: { url: '/meshy/client_m_young_idle.glb', yaw: 0 },
 };
 
 // Per-boss authorship: which held silhouette + attack gesture each character
