@@ -1,3 +1,29 @@
+## [2m! MESHY RULING + PROOF DELIVERED (08-01 ~03:30)]
+
+**RULING (Alex, live): MESHY WINS - COMBAT ONLY.** v7 procedural keeps all
+exploration (portraits-for-dialog analogy, his call). Fully signed pending
+the fixed proof video - delivered to him 03:30, my frame-read: PASS.
+
+- Videos: art/char_refs/meshy_pilot/comp_videos/ (procedural + meshy,
+  webm+mp4, same 50s beat script). Meshy side re-rendered with his 3 fixes:
+  (1) shine DEAD - PBR stripped, MeshToonMaterial + house 3-stop ramp
+  (new getHouseGradientMap in MaterialLibrary); (2) Andrew's hands FIXED -
+  root cause: plate hands overlapped trousers, no silhouette separation,
+  Meshy merged them into thighs; FREE retry on identical inputs fixed it;
+  (3) calm idles: Karen Idle_7 (247), Andrew Idle_3 (243), timeScale 0.8,
+  alternates downloaded (Idle_02/Idle_6). Physical reactions replace
+  facial expressions in combat (his call - reads better at distance).
+- Perf (measured, RTX 4050): Meshy is LIGHTER - 23 vs 94 draw calls,
+  43k vs 112k tris, both vsync 60fps. Cost = 15.9MB naive GLB payload
+  (optimize in the wave: meshopt/KTX2 -> ~1.5-2.5MB/char).
+- Spend: 90cr task-attested. Commits: 1636841 / 3e4a5c5 / 2023cf7
+  (display-case, pushed). GLBs gitignored (public/meshy/ + meshy_pilot/).
+- NEXT LANE (on his watch-confirm): full combat-cast wave - Andrew,
+  bosses, Loop-In bench, roguelite client body pool + tints. Playbook
+  (~/claude-memory/imagegen-playbook.md) updated with the hands lesson.
+- Honesty: HP/SPD pinned identically in both videos; Karen's head sits
+  behind the enemy banner at rest camera in BOTH (game UI trait - polish
+  candidate for the wave); no audio.
 # ALEX MEMORY — TRUST ISSUES / DiL_Simulator
 *Claude maintains this. Newest entries at top of the log. The NEEDS YOU
 section is always current. Skim top-down; nothing below the fold is urgent.*
