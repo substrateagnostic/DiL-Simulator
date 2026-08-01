@@ -33,7 +33,7 @@ renderer.setSize(800, 800); document.body.appendChild(renderer.domElement);
 const scene = new THREE.Scene(); scene.background = new THREE.Color(0x101018);
 const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
 // approximated CombatScene rig (ambient/dir/fill/faceKey/rims at base intensities)
-scene.add(new THREE.AmbientLight(0xffffff, 0.30));
+scene.add(new THREE.AmbientLight(0xffffff, 0.45));
 const dir = new THREE.DirectionalLight(0xffffff, 0.60); dir.position.set(2, 5, 3); scene.add(dir);
 const fill = new THREE.DirectionalLight(0xc6d4f2, 0.52); fill.position.set(0.3, 1.7, 7.5); scene.add(fill);
 const faceKey = new THREE.DirectionalLight(0xffdcbe, 0.62); faceKey.position.set(0.6, 3.9, 5.6); scene.add(faceKey);
@@ -66,8 +66,9 @@ new GLTFLoader().load(q.get('glb'), (gltf) => {
   };
   window.__advance = (dt) => { if (mixer) mixer.update(dt); };
   window.__cam = (mode) => {
-    if (mode === 'front') { camera.position.set(0, H * 0.55, H * 2.4); camera.lookAt(0, H * 0.5, 0); }
-    else { camera.position.set(H * 0.85, H * 0.62, H * 1.85); camera.lookAt(0, H * 0.52, 0); }
+    if (mode === 'front') { camera.position.set(0, H * 0.55, H * 1.45); camera.lookAt(0, H * 0.5, 0); }
+    else if (mode === 'upper') { camera.position.set(H * 0.35, H * 0.68, H * 0.75); camera.lookAt(0, H * 0.62, 0); }
+    else { camera.position.set(H * 0.55, H * 0.60, H * 1.15); camera.lookAt(0, H * 0.52, 0); }
     renderer.render(scene, camera);
   };
   window.__height = H;
@@ -128,6 +129,26 @@ for (const id of ids) {
   await shoot(join(shotsDir, 'idle2_combat.png'));
   await page.evaluate(() => { window.__advance(0.6); window.__cam('front'); });
   await shoot(join(shotsDir, 'idle1_front.png'));
+  await page.evaluate(() => window.__cam('upper'));
+  await shoot(join(shotsDir, 'idle_upper.png'));
+  // 6-frame clip-register strip (combat cam): one stitched row per character so
+  // a stretch/walk clip masquerading as an idle is caught in a single glance.
+  await page.evaluate(async () => {
+    const canvas = document.querySelector('canvas');
+    const strip = document.createElement('canvas');
+    strip.width = 6 * 400; strip.height = 400;
+    const ctx = strip.getContext('2d');
+    // restart the clip from 0
+    window.__mixerStart();
+    for (let i = 0; i < 6; i++) {
+      window.__advance(i === 0 ? 0.0001 : 0.8);
+      window.__cam('combat');
+      ctx.drawImage(canvas, i * 400, 0, 400, 400);
+    }
+    window.__stripData = strip.toDataURL('image/png');
+  });
+  const stripData = await page.evaluate(() => window.__stripData);
+  writeFileSync(join(shotsDir, 'clip_strip.png'), Buffer.from(stripData.split(',')[1], 'base64'));
   summary.push({ id, aabbY: Math.round(h * 1000) / 1000, anims });
   console.log(`[shot] ${id} aabbY=${h.toFixed(3)} anims=${JSON.stringify(anims)}`);
 }

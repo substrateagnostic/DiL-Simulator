@@ -164,6 +164,37 @@ async function runCharacter(id, cfg) {
   return { id, spent };
 }
 
+// --redo-anim=<id>:<actionId>[,<id>:<actionId>...] — re-run ONLY the animation
+// stage on the already-rigged character (3 credits) and replace the runtime GLB.
+// Used when a catalog clip turns out to be the wrong register (gesture, not idle).
+if (args['redo-anim']) {
+  const pairs = String(args['redo-anim']).split(',').map(p => p.split(':'));
+  for (const [id, actionStr] of pairs) {
+    const actionId = Number(actionStr);
+    const cfg = manifest[id];
+    const outRoot = join(PILOT, cfg.outDir || id);
+    const reportPath = join(outRoot, `${id}_pipeline_report.json`);
+    const report = JSON.parse(readFileSync(reportPath, 'utf8'));
+    const rigId = report.tasks.rig.id;
+    const res = await api('POST', '/animations', { rig_task_id: rigId, action_id: actionId });
+    log(id, `redo anim task ${res.result} (action ${actionId} replaces ${report.action_id})`);
+    const t = await poll(`/animations/${res.result}`, id, 'redo-anim');
+    const animDir = join(outRoot, '03_anim', `idle${actionId}`);
+    for (const [k, v] of Object.entries(t.result || {})) {
+      if (typeof v !== 'string' || !/^https?:/.test(v)) continue;
+      const ext = v.split('?')[0].match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() || 'bin';
+      await download(v, join(animDir, `${k.replace(/_url$/, '')}.${ext}`));
+    }
+    report.tasks[`anim_redo_${actionId}`] = { id: res.result, action_id: actionId, consumed_credits: t.consumed_credits };
+    report.action_id = actionId; report.animKey = `idle${actionId}`;
+    writeFileSync(reportPath, JSON.stringify(report, null, 2));
+    const animGlb = join(animDir, 'animation_glb.glb');
+    if (existsSync(animGlb)) copyFileSync(animGlb, join(PUBLIC_MESHY, `${id}_idle.glb`));
+    log(id, `runtime GLB replaced with idle${actionId} (credits=${t.consumed_credits})`);
+  }
+  process.exit(0);
+}
+
 const ids = Object.keys(manifest).filter(id => !only || only.includes(id));
 console.log(`[${ts()}] wave start: ${ids.length} characters, concurrency ${CONCURRENCY}`);
 const queue = [...ids];
