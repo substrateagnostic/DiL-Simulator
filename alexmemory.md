@@ -105,6 +105,33 @@ Run B round-3 resumes from cache via resumeFromRunId wf_d85e785f-0da.
 - 1998 MODE in settings for the before/after party trick.
 - screenshots/cine/ has the attack-burst contact strips.
 
+## ⚡ V7 LIVE STATE (07-31 ~22:50, written at 98% context pre-autocompact)
+- **V7 wave running** (run wf_08e11f83-953, resumable via scriptPath in
+  .claude/../workflows/scripts/trust-issues-v7-characters-*.js +
+  resumeFromRunId): master sculpt DONE (per-character face dials:
+  faceWidth/cheek/browRidge/eyeSize in characters.js), rounds 1-2
+  critiqued (10+12 → 10+10), fix-2 in final g6/g7 series, ROUND-3 VOTE
+  PENDING. On landing: my-eyes 1x flinch test, commit+push, then the
+  PRODUCER-NOTES PASS below.
+- **ALEX'S SIX RENDER NOTES (verbatim inputs for the next pass):**
+  (1) necks STILL too big — measure EVERY point along the neck profile
+  on renders; (2) body much better ✓; (3) horizontal shadow lines around
+  noses must go (painted nose shading fighting the new 3D wedge —
+  double-shading); (4) Chad: head too small + too round ("face painted
+  on a baseball") — needs skull structure + scale; his neck is GOOD,
+  keep; (5) Chad's LEFT HAND IS ON BACKWARDS (palm-up left thumb should
+  be far-left) — chirality bug, right-hand geometry unmirrored; (6)
+  Grandma: nose line + hair reads as a BONNET — needs painted strand
+  texture.
+- **EXPRESSION ARCHITECTURE RULING (from his question):** expressions
+  are texture swaps; with sculpted geometry they now DISAGREE (painted
+  angry brows over neutral geometry ridge). Adopt the HYBRID: keep
+  texture swaps + add per-expression geometry deltas (brow pitch, mouth
+  displacement, lids) synced to the expression key. Explicit work item.
+- **HIS RUNWAY RULING: 3-4 more V7 rounds authorized** before the
+  go/no-go on the Meshy route (his perf worry about Meshy noted — the
+  pilot's 7.3MB/char + async costs are the counterweight).
+
 ## NEEDS YOU (current) — MORNING GATE BOARD (night shift running)
 
 - **RUN A LANDED (~02:30, commits c506182 + 8864a75, pushed):** Meredith
