@@ -1,3 +1,22 @@
+## [MERGED TO MAIN + LIVE (08-01) — and a handoff package for codex]
+
+**Alex ruled MERGE. `main` fast-forwarded 2f239f5 -> 1bad620 and pushed** (build
+verified green on main before the push). 62 commits: the whole Meshy combat cast,
+the V8/V9 spine + floor fix, the gender-matched casting slate, timeScale
+normalization. Vercel deploys from main, so this is live for playtesters.
+
+- **Chad turning his back on a Composure Break is a KEEP, not a defect** (Alex):
+  a gym-bro who breaks and cowers is characterization. Do NOT clamp it. The
+  wider body-yaw item is therefore closed unless he reopens it.
+- **HANDOFF_PACKAGE.md** written at repo root: the founding AAA prompt with the
+  comps filled in (Hinterberg / Clair Obscur / Persona 5 Royal / Link's Awakening
+  x Severance, mapped per domain), every remaining item in priority order, all
+  the conventions that were earned by a failure, the tooling map, and how to
+  document changes. Self-contained — hand it to codex or any agent cold.
+- NEXT (gated on his word after playtester feedback): attack-animation re-judge
+  vs the Persona comp, then prop attacks (Karen's purse). Everything else in
+  HANDOFF_PACKAGE.md section 2.
+- Sub usage nearly out until Monday; codex may take the next lane.
 ## [CASTING SLATE WIRED - V10 (08-01 evening, wiring lane)]
 
 Commits 0dafc67 (slate) + cd04888 (instruments + art/MESHY_SLATE.md), pushed to
