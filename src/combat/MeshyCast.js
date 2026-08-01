@@ -21,6 +21,7 @@ import * as THREE from 'three';
 import { getHouseGradientMap } from '../effects/MaterialLibrary.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { DEV_MODE } from '../utils/constants.js';
+import { captureRest } from './MeshyRetarget.js';
 
 // yaw: extra Y rotation if a GLB's native facing differs from the procedural
 // convention (rotation.y = 0 faces +z / the camera). All wave models are +z.
@@ -74,7 +75,7 @@ export const MESHY_MODELS = {
 // imports, so the base has to be applied by hand or the itch package 404s.
 const BASE = (import.meta.env?.BASE_URL || '/') + 'meshy/';
 
-const cache = new Map();    // id -> { scene, animations } (parsed once per session)
+const cache = new Map();    // id -> { scene, animations, restPose } (parsed once per session)
 const inflight = new Map(); // id -> Promise
 const failed = new Set();   // ids whose GLB 404'd or failed to parse
 
@@ -141,6 +142,7 @@ export function load(id) {
   const p = loader().then(l => new Promise(resolve => {
     l.load(BASE + def.url, gltf => {
       try {
+        const restPose = captureRest(gltf.scene);
         toonify(gltf.scene);
         // MEASURE ONCE, ON THE ORIGINAL. Box3.setFromObject on a SkeletonUtils
         // clone of a gltfpack-quantized skinned mesh reports ~0 height (the
@@ -150,7 +152,7 @@ export function load(id) {
         // and is the number every instance is fitted with.
         gltf.scene.updateMatrixWorld(true);
         const nativeHeight = new THREE.Box3().setFromObject(gltf.scene).getSize(new THREE.Vector3()).y;
-        const entry = { scene: gltf.scene, animations: gltf.animations || [], def, nativeHeight };
+        const entry = { scene: gltf.scene, animations: gltf.animations || [], def, nativeHeight, restPose };
         cache.set(id, entry);
         resolve(entry);
       } catch (err) {
@@ -200,7 +202,10 @@ export function instance(id) {
   // Object3D.clone shares the bone references and every copy would animate the
   // first one's skeleton). Materials and geometry stay shared.
   const scene = _skelUtils.clone(entry.scene);
-  return { scene, animations: entry.animations, def: entry.def, nativeHeight: entry.nativeHeight };
+  return {
+    scene, animations: entry.animations, def: entry.def,
+    nativeHeight: entry.nativeHeight, restPose: entry.restPose,
+  };
 }
 
 // Which GLB a character id should stage. Identity for everyone except the
@@ -215,9 +220,9 @@ export function resolveId(id, config) {
 // character's own baked idle when it is loaded (producer note: the wave idles
 // read as an A-pose); the baked clip stays as the fallback so a failed clip
 // fetch degrades to wave-1 behaviour rather than a frozen bind pose.
-export function clipsFor(inst, id) {
+export function clipsFor(inst, id, modelId = id) {
   const clips = { idle: inst.animations?.[0] || null };
-  if (_clipsFor) Object.assign(clips, _clipsFor(id));
+  if (_clipsFor) Object.assign(clips, _clipsFor(id, modelId, inst.restPose));
   return clips;
 }
 

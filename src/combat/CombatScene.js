@@ -6,6 +6,26 @@ import { MESHY_MODE } from '../utils/constants.js';
 import * as MeshyCast from './MeshyCast.js';
 import { MeshyAnimator } from './MeshyAnimator.js';
 import * as MeshyProps from './MeshyProps.js';
+import { groundOffsets } from './MeshyRetarget.js';
+
+// FOOT PLANT, measured once per (model, clip set) per session. The shared clips
+// are authored on andrew's hips, so without this every character stands on
+// andrew's hip height instead of its own — the whole cast hovered 0.06–0.39 m
+// over the arena floor while its contact shadow stayed planted.
+//
+// The key carries the stance clip, not just the model id: two character ids can
+// stage the SAME GLB (the roguelite client pool resolves six bodies out of seven
+// ids) while hashing to different calm stances, and a336 and a338 do not sit at
+// the same height.
+const GROUND_OFFSETS = new Map();
+
+function getGroundOffsets(modelId, model, clips, restPose) {
+  const key = `${modelId}|${clips.idle?.uuid ?? 'none'}`;
+  if (!GROUND_OFFSETS.has(key)) {
+    GROUND_OFFSETS.set(key, groundOffsets(model, clips, { restore: restPose }));
+  }
+  return GROUND_OFFSETS.get(key);
+}
 
 // Per-boss authorship: which held silhouette + attack gesture each character
 // uses. Named bosses get bespoke choreography; everyone else gets a generic
@@ -377,12 +397,16 @@ export class CombatScene {
 
     MeshyCast.applyTint(model, id, config);
 
-    const animator = new MeshyAnimator(model, MeshyCast.clipsFor(inst, id), {
+    const clips = MeshyCast.clipsFor(inst, id, modelId);
+    group.updateMatrixWorld(true);
+    const ground = getGroundOffsets(modelId, model, clips, inst.restPose);
+    const animator = new MeshyAnimator(model, clips, {
       timeScale: inst.def.timeScale,
       // Two calm stances cover 33 characters, so a group fight would breathe in
       // unison without a per-character phase offset.
       phase: MeshyCast.phaseFor(id),
       props: propTicks,
+      ground: { node: inner, offsets: ground },
     });
     group.userData.meshy = true;
     return { group, animator };

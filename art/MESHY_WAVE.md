@@ -320,3 +320,103 @@ clamp that logs and falls back to 1:1 if a ruler ever lies again.
    deliverable.
 4. `cast` reuses the attack accent. A scheming/gathering clip (catalog 17/18
    "Skill 1/2", downloaded and discarded this pass) is a later choice.
+
+---
+
+# V8 — SPINE + FLOOR FIX (2026-08-01)
+
+The producer flagged an exaggerated S-spine / sway-back on 18 of the 33 combat
+models, and "karen is hovering off the ground", off
+`_cast_contact_stances.png`. Both were the same defect, and this document's
+pass-two verification is what missed it: it checked that bone NAMES were
+byte-identical across all 33 rigs (they are) and then re-judged the stance on
+three bodies. Identical names do not imply identical rest ORIENTATIONS.
+
+## Root cause
+
+Meshy's auto-rigger emits two pelvis conventions. In one (andrew — the clip
+donor — karen, and 13 others) the Hips bone's rest rotation is ~identity and its
+child offsets run along +Y. In the other (all 18 flagged characters) the Hips
+bone is rest-rotated 112–174 deg and its child offsets are expressed in that
+rotated frame; Spine02 carries a near-inverse rotation that cancels it, so the
+BIND pose is straight either way. The bone FRAMES differ; the silhouette does
+not.
+
+The shared clips carry LOCAL rotation tracks authored on andrew's rig, and
+THREE's AnimationMixer binds by bone name and OVERWRITES each target bone's
+local quaternion. That destroys the cancellation: the lumbar offset, authored
+pointing "up" in the target's own rotated hip frame, gets interpreted in
+andrew's frame and shoots out sideways — pelvis in one place, chest 10–17 cm
+behind or in front of it, spine vertical above that. The same mechanism splays
+LeftUpLeg/RightUpLeg (rest deltas 113–175 deg).
+
+Second half, same cause: the Hips TRANSLATION track keeps andrew's ABSOLUTE hip
+height, so every pelvis was teleported to andrew's hip height regardless of its
+own. Measured hover, whole cast, shared stance: 0.060 m (security_guard) to
+0.391 m (firm_paralegal); karen 0.166 m — 10% of her height. Bind pose measured
+0.0000 m for all 33, and each character's OWN wave-1 baked idle measured −0.016
+to +0.077 m, which is what proved the models and the rigs were innocent.
+
+## Fix — `src/combat/MeshyRetarget.js`
+
+Retarget the shared clips per character, in code, at load. Zero credits, no new
+assets, the 511 KB one-file reaction layer survives.
+
+**Rotation — WORLD-SPACE delta transfer, hierarchically re-solved.**
+
+    Wt(t) = Wd(t) * inverse(Wd0) * Wt0
+    L(t)  = inverse(Wt_parent(t)) * Wt(t)
+
+Bones are solved parent-before-child, once per keyframe, over the union of the
+donor track times. The donor rest pose comes free — the stripped clip GLBs keep
+andrew's node hierarchy, so `captureRest(gltf.scene)` on the clip IS the rig the
+tracks were authored against. No hardcoded table.
+
+**The local-frame form is NOT sufficient, and this is the trap.** The obvious
+formula `T(t) = T0 * inverse(D0) * D(t)` applies the delta in the target bone's
+OWN frame instead of world. For the root that is `T0*A` where the correct answer
+is `A*T0` — they agree only when the delta commutes with the frame offset. It
+fixes the calm stance for everyone (the pelvis barely rotates there) and it
+fixes firm_paralegal completely (her frame offset is ~180 deg about X and the
+clip pelvis motion is mostly pitch about X, so it commutes) — which is exactly
+why it looks correct until you check a reaction clip. Measured, hips→Spine02
+tilt at t=0.6 with the local form: andrew 6.7 deg on the jab, intern 82.0,
+ross_boss 78.3. With the world form: intern 6.8, ross_boss 6.0.
+
+**Root translation.** Hips Y is rebased onto the target's own rest hips and
+scaled by the hip-height ratio; X and Z are PINNED to the target's rest. The pin
+also retires an asset bug: a59 and a191 were exported before the authoring-side
+root pin landed (the jab slid the character 0.64 m across the stage) and a391
+sat at a constant +11.2 cm Z. Measured root travel is now 0.0000 m on every clip
+for every character. CombatScene owns all stage travel.
+
+**Foot plant.** `groundOffsets()` samples the lowest skinned vertex over each
+clip (sole-candidate subset, 400 verts, 14 samples) and `MeshyAnimator` puts
+−min on the inner wrapper, eased over the 0.25 s crossfade so a clip change does
+not pop. It is per CLIP, not per character: the guard crouch and the stagger dip
+reach different lows on the same body, and taking the clip MINIMUM is what stops
+a crouch punching the feet through the floor.
+
+## Numbers (all 33, `tools/meshy-spine-floor-review.mjs`)
+
+| | before | after |
+|---|---|---|
+| hips→Spine02 tilt, shared stance | 90.3–166.4 deg (flagged 18) | 1.1–4.8 deg |
+| worst tilt, any of the 7 clips | 166.4 deg | 22.3 deg — and andrew, the donor, reads 19.1 on that same clip |
+| foot contact, shared stance | 0.060–0.391 m hover | −0.008 .. +0.015 m |
+| foot contact, worst clip | — | +0.079 m at the peak of the victory cheer, identical for the donor: the clip's own bounce |
+| root travel, jab | dx 0.14 / dz 0.63 m | 0.0000 m |
+| build cost | — | retarget 9.0 ms avg + ground measure 24.1 ms avg, once per model per session, inside the combat fade |
+
+The clean 15 did not regress: andrew 2.05→1.63 deg, karen 1.10→2.89, grandma
+24.26→4.61. andrew is provably bit-stable — when donor and target are the same
+rig, `Wt0 == Wd0` and the output is the donor track.
+
+## V8 review artefacts
+
+- `art/char_refs/meshy_pilot/_review_v8/review_{side,front,back,tq}_band*.png` —
+  all 33, four angles, columns BIND / NAIVE / FIXED t=2 / FIXED t=6, red floor line
+- `_review_v8/reactions_<id>.png` — guard/hurt/stagger/victory/attack strips, side view
+- `_review_v8/review.json` — per-character tilt, per-clip offsets, foot bands, skate
+- `_review_v8/ab_ross_{grounded,hovering}.png` — in-game A/B on the real arena
+- `_clips/fight_v8_{ross,grandma}_*.png` — in-game beat stills, real call path

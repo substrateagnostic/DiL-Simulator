@@ -1,19 +1,15 @@
 // SHARED REACTION CLIPS for the Meshy combat cast.
 //
-// Every Meshy auto-rig in the cast carries the IDENTICAL 24-bone skeleton with
-// identical bone names (Hips … neck, Head, head_end, headfront — verified on
-// karen / grandma / chad, then on every strip in
-// art/char_refs/meshy_pilot/_clips/). So a reaction only has to exist ONCE:
-// tools/meshy-clip-fetch.mjs generates it on a single donor rig, strips it down
-// to an armature-only GLB of rotation tracks (plus a vertical-only Hips track),
-// and THE SAME FILE drives all 33 characters. Bone lengths come from each
-// character's own rest pose, so proportions survive — verified across a male
-// suit (regional 1.80m), a female skirt suit (rachel_boss 1.70m) and a stooped
-// elder in a shawl (grandma 1.50m).
+// Every Meshy auto-rig in the cast carries the same 24 bone names, so a reaction
+// only has to exist once. The local pelvis frames do differ, though: binding the
+// donor rotations raw folds half the cast at the waist. Each shared file is
+// therefore retargeted per rig at load, preserving the target's authored rest
+// frame while keeping the one-file clip library.
 //
 // That is why this is ~430KB of clips for the whole cast instead of 31 fresh
 // 9MB character exports per reaction.
 import { CLIP_LOADER, registerClipProvider } from './MeshyCast.js';
+import { captureRest, retargetClip } from './MeshyRetarget.js';
 
 // Catalog ids, chosen off preview strips AND re-judged on real characters
 // (art/char_refs/meshy_pilot/_clips/strip_*.png). Names are Meshy's.
@@ -31,8 +27,10 @@ export const CLIP_IDS = {
 // breathe in unison. See stanceFor().
 const STANCE_ROLES = ['stance_a', 'stance_b'];
 
-const cache = new Map();   // role -> AnimationClip | null
+const cache = new Map();   // role -> { clip, donorRest } | null
 const inflight = new Map();
+const retargeted = new Map(); // modelId|role -> AnimationClip
+let warnedMissingRest = false;
 
 function hash(str) {
   let h = 2166136261;
@@ -51,7 +49,7 @@ export function phaseFor(id) {
 }
 
 function loadRole(role) {
-  if (cache.has(role)) return Promise.resolve(cache.get(role));
+  if (cache.has(role)) return Promise.resolve(cache.get(role)?.clip || null);
   if (inflight.has(role)) return inflight.get(role);
   const actionId = CLIP_IDS[role];
   if (!actionId) return Promise.resolve(null);
@@ -59,7 +57,8 @@ function loadRole(role) {
     .then(gltf => {
       const clip = gltf.animations?.[0] || null;
       if (clip) clip.name = role;
-      cache.set(role, clip);
+      const entry = clip ? { clip, donorRest: captureRest(gltf.scene) } : null;
+      cache.set(role, entry);
       return clip;
     })
     .catch(err => {
@@ -83,12 +82,35 @@ export function preloadClips() {
 // The clip set for one character: its calm stance under the `idle` role, plus
 // every reaction. Synchronous — anything not warmed is simply absent, and
 // MeshyAnimator degrades that role to the stance.
-export function clipsFor(id) {
+export function clipsFor(id, modelId = id, targetRest) {
   const out = {};
-  const stance = cache.get(stanceFor(id));
+  const clipFor = (role) => {
+    const entry = cache.get(role);
+    if (!entry?.clip) return null;
+    if (!targetRest?.size || !entry.donorRest?.size) {
+      if (!warnedMissingRest) {
+        console.warn('[meshy] rest pose unavailable; shared reaction clips will play without retargeting');
+        warnedMissingRest = true;
+      }
+      return entry.clip;
+    }
+    const key = `${modelId}|${role}`;
+    if (retargeted.has(key)) return retargeted.get(key);
+    try {
+      const clip = retargetClip(entry.clip, entry.donorRest, targetRest);
+      retargeted.set(key, clip);
+      return clip;
+    } catch (err) {
+      console.warn(`[meshy] could not retarget ${role} for ${modelId}; using donor clip:`, err);
+      retargeted.set(key, entry.clip);
+      return entry.clip;
+    }
+  };
+
+  const stance = clipFor(stanceFor(id));
   if (stance) out.idle = stance;
   for (const role of ['guard', 'hurt', 'stagger', 'victory', 'attack']) {
-    const c = cache.get(role);
+    const c = clipFor(role);
     if (c) out[role] = c;
   }
   // The scheming beat reuses the attack accent rather than holding a dead
@@ -99,4 +121,4 @@ export function clipsFor(id) {
 
 registerClipProvider(clipsFor, phaseFor);
 
-export function isLoaded(role) { return cache.has(role) && !!cache.get(role); }
+export function isLoaded(role) { return cache.has(role) && !!cache.get(role)?.clip; }

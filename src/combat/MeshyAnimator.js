@@ -31,6 +31,11 @@ export class MeshyAnimator {
     this._returnTimer = 0;
     this._oneShot = null;
     this._propTicks = opts.props || [];
+    this._groundNode = opts.ground?.node || null;
+    this._groundOffsets = opts.ground?.offsets || {};
+    this._groundCur = this._groundOffsets.idle ?? 0;
+    this._groundTarget = this._groundCur;
+    if (this._groundNode) this._groundNode.position.y = -this._groundCur;
 
     for (const [role, clip] of Object.entries(clips || {})) {
       if (!clip) continue;
@@ -59,6 +64,7 @@ export class MeshyAnimator {
     idle.reset().setEffectiveTimeScale(1).setEffectiveWeight(1)
       .setLoop(THREE.LoopRepeat, Infinity).fadeIn(FADE_BACK).play();
     this._current = 'idle';
+    this._groundTarget = this._groundOffsets.idle ?? 0;
   }
 
   // Play a role once and fall back to the stance. Held roles (guard) stay up
@@ -75,6 +81,7 @@ export class MeshyAnimator {
     action.fadeIn(FADE).play();
     if (prev && prev !== action) prev.fadeOut(FADE);
     this._current = role;
+    this._groundTarget = this._groundOffsets[role] ?? this._groundOffsets.idle ?? 0;
     this._oneShot = hold ? null : action;
     return true;
   }
@@ -127,6 +134,11 @@ export class MeshyAnimator {
 
   update(dt) {
     this.mixer.update(dt);
+    if (this._groundNode) {
+      const k = Math.min(1, dt / FADE);
+      this._groundCur += (this._groundTarget - this._groundCur) * k;
+      this._groundNode.position.y = -this._groundCur;
+    }
     // Bone-socketed props are constrained AFTER the skeleton has been posed for
     // this frame, or the constraint reads one frame stale (a visible cane
     // wobble at 60fps).
