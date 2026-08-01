@@ -67,7 +67,14 @@ export function buildCharacter(config, options = {}) {
   // own), which left NO budget for the arms inside LAW 1's 2.0-head-width
   // shoulder cap: Chad measured 2.3–2.4 as a flat shelf. A human ribcage is
   // ~1.4 head-widths, so the deltoid/arm mass — not the torso — carries the span.
-  const chestR = 0.158 * ws;
+  // v7 FIX round-1 — on a female build shoulderR = chestBase·1.083·0.88 = 0.953
+  // of chestR, i.e. the SHOULDER WAS NARROWER THAN THE RIBCAGE. The torso lathe
+  // therefore had no yoke to climb: it went straight up and in from the chest,
+  // which is half of why Karen's structured blazer reads as "a pink tunic". The
+  // shoulder line still solves off the gender-neutral base (so LAW 1's
+  // head-width cap is untouched at 1.80 for her), and only the RIBCAGE narrows.
+  const chestBase = 0.158 * ws;
+  const chestR = chestBase * (config.gender === 'f' ? 0.88 : 1.0);
   const dims = {
     hipR: 0.15 * ws * waistScale,
     waistR: 0.128 * ws * waistScale,
@@ -99,7 +106,7 @@ export function buildCharacter(config, options = {}) {
     // head-widths and the deltoid could not clear it, so the sleeve top read as a
     // hard shelf STEP off a slab. 0.55 lands his shoulder line at 2.6 head-widths
     // (rider note 7) with the arm crest still outboard of the cloth.
-    shoulderR: chestR * (1.083 + (shoulderScale - 1) * (shoulderScale > 1 ? 0.55 : 0.60))
+    shoulderR: chestBase * (1.083 + (shoulderScale - 1) * (shoulderScale > 1 ? 0.55 : 0.60))
       * (config.gender === 'f' ? 0.88 : 1.0),
     torsoH,
   };
@@ -125,7 +132,14 @@ export function buildCharacter(config, options = {}) {
   const mHair = M.hair(hairColor);
 
   // ── LEGS: hip pivot → thigh, knee pivot → shin + shoe ───────────────
-  const stanceX = dims.hipR * 0.74;
+  // v7 FIX round-1 — HIPS WIDER THAN SHOULDERS. At stance 0.74·hipR with a
+  // 0.078 thigh the leg pair spanned 0.378 against a default male shoulder line
+  // of 0.342: every figure in the cast was 10% wider at the thigh than at the
+  // deltoid, which is the "saddlebag" read the critic logged on Grandma (worst
+  // case: her 1.10 widthScale put the thighs at 0.416 against a 0.317 shoulder
+  // span). 0.64 · hipR with a 0.074 thigh lands the span at 0.340 ≈ the male
+  // shoulder line, and a hair inside it on the 0.88-scaled female builds.
+  const stanceX = dims.hipR * 0.64;
   // thigh + shin now sum to EXACTLY legLength so the sole lands on y≈0 (the old
   // 0.50/0.46 split left the figure hovering ~0.03 above the stage — "feet
   // floating").
@@ -141,7 +155,7 @@ export function buildCharacter(config, options = {}) {
     // where the side wall meets it) was still reading as a horizontal seam ring at
     // knee height on both of Grandma's legs at 4×. An open rim buried inside the
     // shin has no shading break and no silhouette.
-    const thigh = limbSegment(0.078 * ws, 0.052 * ws, thighLen, mPants, { capBot: false, openBot: true, topology: 'trouser', seat: true });
+    const thigh = limbSegment(0.074 * ws, 0.052 * ws, thighLen, mPants, { capBot: false, openBot: true, topology: 'trouser', seat: true });
     thigh.position.y = -thighLen / 2;
     thighWrap.add(thigh);
     collapseNode(thighWrap);
@@ -158,19 +172,27 @@ export function buildCharacter(config, options = {}) {
     // silhouette is one uninterrupted hip→ankle taper. rTop is solved so the
     // radius AT the knee plane still matches the thigh's 0.052 exit radius.
     const KNEE_TUCK = 0.016;
-    const shinFull = shinLen + KNEE_TUCK;
+    // v7 FIX round-2 — THE TROUSER STOPS AT THE ANKLE. The shin lathe kept its
+    // default rounded bottom cap and ran the full leg length, so its pole sat
+    // 0.044·ws BELOW the sole plane: the trouser column literally continued
+    // through and past the shoe as a stump (karen-final1-prof, chad-final1-prof,
+    // grandma-final1-prof — all three). The lathe is shortened by HEM_LIFT so its
+    // pole lands 0.050·ws ABOVE the sole, inside the shoe's ankle collar.
+    const HEM_LIFT = 0.050 * ws;
+    const shinFull = shinLen + KNEE_TUCK - HEM_LIFT - 0.044 * ws;
     const shinTopR = (0.052 * ws) + (0.052 - 0.044) * ws * (KNEE_TUCK / shinFull);
     const shin = limbSegment(shinTopR, 0.044 * ws, shinFull, mPants, { capTop: false, openTop: true, topology: 'trouser' });
     shin.position.set(0, -shinFull / 2 + KNEE_TUCK, 0);
     shinWrap.add(shin);
     // v6 SLEEK LAW — no kneecap sphere. The shin's rounded top and the thigh's
     // rounded bottom share a radius (~0.055) so they overlap into a smooth knee.
-    // shoe: ONE smooth lacquered loafer form (was a foot sphere + a heel sphere
-    // reading as two lumps). A single elongated rounded mass carries heel→toe.
-    const foot = new THREE.Mesh(new THREE.SphereGeometry(0.058 * ws, 22, 16), mShoe);
-    foot.scale.set(0.92, 0.62, 2.0);
-    // Sole flush with the stage: half-height = 0.058*ws*0.62.
-    foot.position.set(0, -shinLen + 0.058 * ws * 0.62, 0.028);
+    // v7 FIX round-2 — a real FOOT (see buildShoe): heel back, ankle collar,
+    // toe forward. `shoeHeel` gives the female builds the portrait's pump.
+    const foot = buildShoe(ws, mShoe, detailed, {
+      size: config.shoeSize ?? 1,
+      heel: config.shoeHeel ?? (config.gender === 'f' ? 0.026 : 0),
+    });
+    foot.position.set(0, -shinLen, 0.026);
     shinWrap.add(foot);
     collapseNode(shinWrap);
     knee.add(shinWrap);
@@ -185,7 +207,9 @@ export function buildCharacter(config, options = {}) {
   // ── TORSO (jacket shell) — the one animated body mesh ───────────────
   const torsoZ = Math.sin(hunch) * torsoH * 0.2;
   const hemDrop = config.jacketHem ?? 0.0;
-  const torso = buildTorso(dims, mSuit, detailed, hemDrop, config.gender === 'f');
+  // A jacket over a shirt gets lapel relief; a polo or a shawl does not.
+  const hasLapels = config.lapels ?? (config.shirtColor != null && !config.polo);
+  const torso = buildTorso(dims, mSuit, detailed, hemDrop, config.gender === 'f', hasLapels);
   torso.position.y = legLength;
   torso.position.z = torsoZ;
   torso.rotation.x = hunch;
@@ -222,17 +246,91 @@ export function buildCharacter(config, options = {}) {
   // recede: the diaper + deep-V crotch crease). It is now a thin, narrow
   // gusset that lives strictly INSIDE the thigh spread — a light-blocker
   // between the legs, contributing no silhouette inflection of its own.
-  // v7 round-12 — the gusset was still PROUD of both thighs: half-width 0.089
-  // against thigh inner surfaces at ±0.033 and a spherical front, so it bulged
-  // forward exactly where the thighs recede (the "diaper" bulge, visible on every
-  // figure in fight-the_firm). It is now narrower than the thigh gap in x and
-  // shallower than the thigh radius in z — a pure light-blocker between the legs
-  // that contributes no silhouette of its own.
-  const pelvis = new THREE.Mesh(new THREE.SphereGeometry(dims.hipR * 0.42, 20, 16), mPants);
-  pelvis.scale.set(0.90, 1.60, 0.98);
-  pelvis.position.set(0, legLength - dims.hipR * 0.42, torsoZ);
-  pelvis.rotation.x = hunch;
-  group.add(pelvis);
+  // v7 FIX round-1 — THE PELVIS TEARDROP, killed by changing the SHAPE CLASS.
+  // Every previous round shrank a hanging SPHERE and it came back, because a
+  // sphere seated below the hip pivot and narrower than the thigh spread is,
+  // by construction, a discrete rounded mass dangling in the gap between two
+  // trouser legs. Under the combat key (low 3/4, warm rim) it lights as its own
+  // form: "a glossy sac", "a diaper", "exposed anatomy" — and on Grandma it hung
+  // 0.08 BELOW her coat hem.
+  //
+  // It is now the TOP OF THE TROUSERS instead: a HIP-WIDE lathe that starts at
+  // the waistband and closes off ~0.30 of a hip-radius below the pivot. Three
+  // properties make the artifact impossible rather than merely smaller:
+  //   · width  = hipR (± the torso hem), so its silhouette is swallowed by the
+  //     thigh lofts on both sides and by the garment shell above — it can never
+  //     be a shape BETWEEN the legs, it is the shape the legs come out of;
+  //   · depth  = 0.50 × radius, i.e. half-depth 0.077 at the widest row, matched
+  //     to the thigh's own 0.078 front surface — nothing to catch a rim light;
+  //   · drop   = hipR × 0.30 (≈0.045), against the old sphere's 0.20 vertical
+  //     extent — a crotch seam, not a pod, and above every jacket hem in the cast
+  //     (the shallowest is Karen's at −0.083).
+  {
+    const hr = dims.hipR;
+    const gGeo = new THREE.LatheGeometry([
+      new THREE.Vector2(0.001, hr * 0.22),
+      new THREE.Vector2(hr * 0.72, hr * 0.20),
+      new THREE.Vector2(hr * 1.01, hr * 0.10),
+      new THREE.Vector2(hr * 1.00, -hr * 0.08),
+      new THREE.Vector2(hr * 0.86, -hr * 0.20),
+      new THREE.Vector2(hr * 0.52, -hr * 0.28),
+      new THREE.Vector2(0.001, -hr * 0.30),
+    ], detailed ? 44 : 28);
+    gGeo.scale(1, 1, 0.50);
+    gGeo.computeVertexNormals();
+    const pelvis = new THREE.Mesh(gGeo, mPants);
+    pelvis.position.set(0, legLength, torsoZ);
+    pelvis.rotation.x = hunch;
+    group.add(pelvis);
+  }
+
+  // ── SKIRT (v7 FIX round-2) ────────────────────────────────────────────
+  // Note [A]: "grandma wears TROUSERS with white cuff stripes instead of her
+  // mid-calf skirt + stockings … she is the only hero whose IoU REGRESSED this
+  // round." grandma_body.png is a full purple dress with a flared mid-calf skirt
+  // over grey stockings; there was no skirt anywhere in the builder, so her
+  // costume was carrying none of her silhouette. `config.skirt` builds one:
+  // a flared lathe from the waistband to `skirtLength` (a fraction of the leg),
+  // hem-lipped so the inside never shows, and the shins render in
+  // `stockingColor` beneath it.
+  if (config.skirt) {
+    const hr = dims.hipR;
+    const hemY = legLength * (config.skirtLength ?? 0.30);
+    const flare = config.skirtFlare ?? 1.52;
+    const mSkirt = M.cloth(tc(config.skirtColor ?? config.suitColor ?? config.bodyColor ?? 0x6a6a7a), config.suitMat || {});
+    const drop = legLength - hemY;
+    // LatheGeometry winds its normals from the point ORDER: the profile must run
+    // bottom → top or the whole cone renders inside-out (first pass did exactly
+    // that — the skirt was a translucent veil with the legs visible through it).
+    const sGeo = new THREE.LatheGeometry([
+      new THREE.Vector2(hr * flare * 0.90, -drop * 0.985),   // hem lip, turned in
+      new THREE.Vector2(hr * flare * 0.965, -drop),
+      new THREE.Vector2(hr * flare, -drop * 0.97),
+      new THREE.Vector2(hr * (1 + (flare - 1) * 0.72), -drop * 0.76),
+      new THREE.Vector2(hr * (1 + (flare - 1) * 0.30), -drop * 0.42),
+      new THREE.Vector2(hr * 1.03, -drop * 0.10),
+      new THREE.Vector2(hr * 0.98, 0.030),
+    ], detailed ? 56 : 32);
+    // soft vertical pleat modulation so the cone is cloth, not a lampshade
+    {
+      const p = sGeo.attributes.position, v = new THREE.Vector3();
+      for (let i = 0; i < p.count; i++) {
+        v.fromBufferAttribute(p, i);
+        const rad = Math.hypot(v.x, v.z);
+        if (rad < 1e-5) continue;
+        const phi = Math.atan2(v.x, v.z);
+        const down = Math.min(1, Math.max(0, -v.y / drop));
+        const k = 1 + (0.022 * Math.cos(phi * 7) + 0.012 * Math.cos(phi * 3)) * down;
+        p.setXYZ(i, v.x * k, v.y, v.z * k);
+      }
+    }
+    sGeo.scale(1, 1, 0.90);
+    sGeo.computeVertexNormals();
+    const skirt = new THREE.Mesh(sGeo, mSkirt);
+    skirt.position.set(0, legLength, torsoZ);
+    skirt.rotation.x = hunch * 0.5;
+    group.add(skirt);
+  }
 
   // TROUSER RISE — a pants-coloured shell from the hip pivot up to the belt, so
   // a waistband can sit at a human rise instead of at the crotch split (Chad:
@@ -265,9 +363,25 @@ export function buildCharacter(config, options = {}) {
   // pulled in (see deltoidR), the arm now emerges from inside the cloth.
   const shoulderY = legLength + Math.cos(hunch) * torsoH * 0.845;
   const shoulderZ = Math.sin(hunch) * torsoH * 0.845 + torsoZ;
-  const shoulderX = dims.shoulderR * 0.70;
+  // v7 FIX round-1 — the arm root moves inboard 0.70 → 0.66 of shoulderR so the
+  // upper arm's TOP RIM can be widened (see upTopR) without standing proud of
+  // the yoke. Those two numbers together are what turns Chad's "two discrete
+  // red balls sitting on the shoulders" into a deltoid that grows out of the
+  // cloth: the rim now lands within 0.002 of the torso's own radius at the arm
+  // seat, and only the crest (a real deltoid) clears it.
+  const shoulderX = dims.shoulderR * 0.66;
   const neckBaseY = legLength + Math.cos(hunch) * torsoH;
   const neckBaseZ = Math.sin(hunch) * torsoH + torsoZ;
+  // v7 FIX round-2 — THE HEAD'S Z IS SOLVED ONCE, HERE, so the NECK can be built
+  // to reach it. Note [B]: "GRANDMA PROFILE IS BROKEN GEOMETRY … head cranes
+  // forward off the neck with a visible under-jaw gap." Measured on her build the
+  // head sat at z = 0.139 and the neck column at z = 0.061 — a 0.078 gap, 1.09
+  // head-radii of nothing between mandible and trapezius. Two causes: the hunch
+  // carry-forward multiplier was 1.7, and the neck's own lean was a fixed
+  // hunch×0.5 that knew nothing about where the head had gone. The multiplier
+  // comes down to 1.25 and the neck now leans by construction (see below).
+  const headZ = neckBaseZ + Math.sin(hunch) * (headR * SKULL.DOWN + neckH) * (hunch > 0.08 ? 1.25 : 1.0)
+    + (config.headForward ?? 0);
 
   // ── STATIC dressing (shirt/collar/lapels/tie/pads/neck) → one node ──
   const staticNode = new THREE.Group();
@@ -310,10 +424,15 @@ export function buildCharacter(config, options = {}) {
       // brace" on Karen). The arc is rotated in GEOMETRY space so it is centred on
       // +Z (the front) whatever the hunch, and shaded a stop under the blouse so it
       // never out-lights the face.
+      // v7 FIX round-1 — same solve as the polo collar: headR·0.86 stood 0.011
+      // off the neck's headR·0.70 column on every shirted build, which at fight
+      // framing is Karen's "grey ring collar" floating at the collarbone. Seated
+      // on the column at +8% of cloth, and shaded 0.94 rather than 0.84 so it
+      // reads as the blouse's own collar instead of a separate grey band.
       const cArc = Math.PI * 0.62;
-      const cGeo = new THREE.TorusGeometry(headR * 0.86, 0.0105 * ws, 10, 22, cArc);
+      const cGeo = new THREE.TorusGeometry(headR * 0.70 * (config.neckScale ?? 1) * 1.08, 0.0098 * ws, 10, 22, cArc);
       cGeo.rotateZ(Math.PI / 2 - cArc / 2);
-      const collar = new THREE.Mesh(cGeo, M.cloth(shadeHexToInt(shirtC, 0.84), { roughness: 0.66, sheen: 0.20, bump: 0.2 }));
+      const collar = new THREE.Mesh(cGeo, M.cloth(shadeHexToInt(shirtC, 0.94), { roughness: 0.66, sheen: 0.20, bump: 0.2 }));
       collar.position.set(0, neckBaseY - 0.004, neckBaseZ + 0.010);
       collar.rotation.set(Math.PI / 2 + hunch, 0, 0);
       staticNode.add(collar);
@@ -328,7 +447,12 @@ export function buildCharacter(config, options = {}) {
       // ONE closed revolved band that flares outward-and-down off the neck base —
       // no end caps, no notch, and it wraps continuously at every angle.
       const mTrim = M.cloth(shadeHexToInt(suitC, 0.82), config.suitMat || {});
-      const nR = headR * 0.80 * (config.neckScale ?? 1);
+      // v7 FIX round-1 — THE LIFE-PRESERVER. The collar radius was headR·0.80
+      // while the neck column's own base radius is headR·0.70; on Chad that is a
+      // 0.011 air gap all the way round, which is the critic's "detached
+      // life-preserver ring not touching the neck". It is now solved FROM the
+      // neck lathe (which runs nBase·1.043 at the collar's y) plus 3% of cloth.
+      const nR = headR * 0.70 * (config.neckScale ?? 1) * 1.075;
       // Thinner and tighter than the first pass, which read as a padded neck-brace
       // roll standing proud of the shoulders.
       const cH = 0.044 * ws;
@@ -360,6 +484,20 @@ export function buildCharacter(config, options = {}) {
       }
     }
 
+    // JACKET BUTTON (v7 FIX round-2). karen_body.png is a SINGLE-BUTTON blazer
+    // and the button is the one element that tells the eye "this garment opens".
+    // A fastening is not a lapel plate — it stands 0.004 proud on the centre
+    // line at the waist, where the shell's own closure crease (surfaceTopology,
+    // `lapels`) meets it, so the V above it reads as an opening rather than a
+    // painted bib. Gated on lapels + a real hem, i.e. an actual jacket.
+    if (config.lapels === true || (config.shirtColor != null && !config.polo && (config.jacketHem ?? 0) > 0)) {
+      const bMat = M.cloth(shadeHexToInt(suitC, 0.62), { roughness: 0.42, sheen: 0.5 });
+      const btn = new THREE.Mesh(new THREE.CylinderGeometry(0.0092 * ws, 0.0092 * ws, 0.005, 14), bMat);
+      btn.rotation.x = Math.PI / 2 + hunch;
+      btn.position.set(0, legLength + torsoH * 0.335, torsoZ + dims.waistR * 0.70 + 0.004);
+      staticNode.add(btn);
+    }
+
     // v6 round-3 FINAL — NO lapel geometry, by ruling. Every plate-shaped
     // attempt read as damage on the cloth rather than tailoring: sunk boxes
     // showed only their edges ("two vertical drawstring lines" on Karen's blazer,
@@ -384,11 +522,15 @@ export function buildCharacter(config, options = {}) {
       // z pushed out to the torso's ACTUAL front surface (the lathe is squashed
       // to 0.66 depth, so chestR*0.5 was inside the jacket — Andrew's "front view
       // has lost … tie and shirt-front").
-      knot.position.set(0, neckBaseY - torsoH * 0.045, neckBaseZ + dims.chestR * 0.68);
+      // v7 FIX round-1 — the neckline shell now rides 4.8% proud of the torso to
+      // clear the lapel roll, so a tie at chestR·0.68 sat BEHIND the blouse and
+      // rendered as two disconnected blue chips (andrew fx6). Pushed out to
+      // chestR·0.82 / 0.80, which is just proud of the V's own front surface.
+      knot.position.set(0, neckBaseY - torsoH * 0.045, neckBaseZ + dims.chestR * 0.82);
       staticNode.add(knot);
       const tieH = torsoH * 0.42;
       const tie = new THREE.Mesh(new THREE.BoxGeometry(0.036 * ws, tieH, 0.009), mTie);
-      tie.position.set(0, neckBaseY - torsoH * 0.045 - tieH * 0.5 + 0.010, neckBaseZ + dims.chestR * 0.655);
+      tie.position.set(0, neckBaseY - torsoH * 0.045 - tieH * 0.5 + 0.010, neckBaseZ + dims.chestR * 0.80);
       tie.rotation.x = hunch;
       staticNode.add(tie);
     }
@@ -453,17 +595,34 @@ export function buildCharacter(config, options = {}) {
     neckGeo.computeVertexNormals();
     neckGeo.scale(1, 1, 0.94);                              // a neck is a hair oval
     const neck = new THREE.Mesh(neckGeo, M.skin(shadeHexToInt(skinC, 0.88), null));
-    neck.position.set(0, neckBaseY, neckBaseZ + Math.sin(hunch) * neckH * 0.5);
-    neck.rotation.x = hunch * 0.5;
+    // The column LEANS TO MEET THE HEAD (see the headZ solve above). A fixed
+    // hunch×0.5 tilt left Grandma's mandible hanging 1.09 head-radii forward of
+    // her own trapezius; solving the angle from the head's actual z closes it on
+    // every build, hunched or erect, and costs nothing on the erect ones (their
+    // headZ − neckBaseZ is ~0, so the lean is ~0).
+    neck.position.set(0, neckBaseY, neckBaseZ);
+    neck.rotation.x = Math.atan2(headZ - neckBaseZ, Math.max(0.02, nVis + nUp * 0.5));
     staticNode.add(neck);
   }
   collapseNode(staticNode);
   group.add(staticNode);
 
   // ── ARMS: shoulder pivot → upper + fore + cuff + hand ───────────────
-  const upperArmLen = torsoH * 0.5;
-  const foreArmLen = torsoH * 0.46;
-  const handLocalY = -upperArmLen - foreArmLen - 0.02;
+  // v7 FIX round-1 — ARM LENGTH against LAW 1 ("hands reach mid-thigh …
+  // fingertips land ≈0.52–0.55; if hands stop at the hip, arms are too short").
+  // 0.50/0.46 of torsoH gave a 0.545 reach and fingertips at 0.636 — the hip.
+  // On Karen that parked both hands INSIDE the blazer's 0.165 hem radius, which
+  // is why the fight still reads armless with a purse floating at the hip.
+  // 0.60/0.54 is the bible's 0.30 upper / 0.27 fore at torsoH 0.50; with the
+  // 0.052 hand the reach is 0.62 and the fingertips land at ≈0.55.
+  const upperArmLen = torsoH * 0.58;
+  const foreArmLen = torsoH * 0.52;
+  // Hand length measured off the reference sheet: the approved mitten runs
+  // ≈1.5 long : 1 wide and is ≈1.5× the cuff width. The v6 hand was 0.104 long
+  // × 0.077 wide (1.34:1) hanging off an 0.080 wrist — i.e. the hand was
+  // NARROWER than the arm it came out of, which is the whole "nub fist" read.
+  const handLen = 0.105 * ws;
+  const handLocalY = -upperArmLen - foreArmLen - handLen * 0.44;
   // shortSleeve (Chad's polo) — the forearm renders as BARE SKIN with a suit-
   // coloured sleeve hem at the bicep, instead of a full sleeve + shirt cuff.
   const shortSleeve = config.shortSleeve === true;
@@ -482,10 +641,20 @@ export function buildCharacter(config, options = {}) {
   // pads with a faceted edge"). 1.42 keeps the gym-bro V measurable while the
   // crest stays inside one continuous taper.
   const deltoidR = 0.058 * ws * (musc ? 1.42 : 1.0);
-  const upTopR = deltoidR * (musc ? 0.46 : 0.62);
+  // v7 FIX round-1 — the rim was pinched to 0.46/0.62 of the crest, so the loft
+  // had to climb 0.026 of radius in 0.012 of height (a ~66° wall) right at the
+  // sleeve top: a shoulder BALL, which is what both critics read on Chad and
+  // Karen ("boxy shoulder-cap seams standing proud of the shirt"). With the arm
+  // root pulled inboard the rim can open to 0.62/0.72 and still hide inside the
+  // yoke, and the crest is dropped from 0.74 to 0.60 of the half-length so the
+  // flare is spread over twice the run.
+  const upTopR = deltoidR * (musc ? 0.62 : 0.72);
   const upBotR = 0.05 * ws * (musc ? 1.28 : 1.0);
   const foreTopR = 0.05 * ws * (musc ? 1.28 : 1.0);
-  const foreBotR = 0.04 * ws * (musc ? 1.14 : 1.0);
+  // v7 FIX round-1 — a WRIST. 0.04 was a 20% taper off the elbow, so the forearm
+  // arrived at the hand as a 0.080 tube (a real forearm loses ~40% elbow→wrist).
+  // The hand cannot read as a hand while it is the same width as the arm.
+  const foreBotR = 0.031 * ws * (musc ? 1.14 : 1.0);
   const ELBOW_TUCK = 0.012;
   for (const side of [-1, 1]) {
     const arm = new THREE.Group();               // shoulder pivot
@@ -494,8 +663,14 @@ export function buildCharacter(config, options = {}) {
     // bicep (the old hem cylinder shared the sleeve's radius and z-fought into a
     // serrated red sawtooth ring at 4×).
     const armMat = shortSleeve ? mSkin : mSuit;
+    // v7 FIX round-1 — the top is CLOSED with a flat disc, not left as an open
+    // rim. An open tube has no back face, so any frame where the deltoid clears
+    // the yoke (walk swing, `shoulderLift` builds, Chad's 1.42 crest) showed the
+    // hollow interior: the critic's "visible shoulder-seam gaps against the
+    // sleeve caps". The disc is buried inside the torso loft, so unlike the
+    // knee/elbow butt joints it can never break a silhouette normal.
     const upper = limbSegment(upTopR, upBotR, upperArmLen, armMat,
-      { capBot: false, capTop: false, openBot: true, openTop: true, deltoidR, topology: 'sleeve' });
+      { capBot: false, capTop: false, openBot: true, openTop: false, deltoidR, topology: 'sleeve' });
     upper.position.y = -upperArmLen / 2;
     arm.add(upper);
     // Forearm built LONGER and lifted so its open rim is buried inside the upper
@@ -512,41 +687,66 @@ export function buildCharacter(config, options = {}) {
       // POLO SLEEVE — a cloth shell over the top 46% of the upper arm, riding the
       // same loft 4% proud, with an OPEN hem rim (no disc, no coplanar face). It
       // reads as a sleeve ending on the bicep instead of a band painted round it.
+      // The shell rides the SAME loft the limb now uses (crest moved 0.74 → 0.60
+      // of the half-length, rim opened): a sleeve authored against the old
+      // profile would float off the arm at the crest and pinch at the hem.
       const L = upperArmLen, PR = 1.026;
       const rMid = (deltoidR + upBotR) * 0.51;              // loft radius at −0.5L
-      const rHem = deltoidR * 0.985 + (rMid - deltoidR * 0.985) * 0.85;   // at −0.46L
+      const rHem = rMid + (deltoidR * 0.985 - rMid) * 0.19; // at −0.46L
+      // v7 FIX round-2 — a ROLLED HEM. The lathe started at full radius, so the
+      // sleeve ended in a zero-thickness open ring: from the side that rim is a
+      // visible open ellipse and the shell reads as a tube that has come off the
+      // arm ("the sleeve tube visibly detached at the armpit", chad-final1-prof).
+      // Two extra points turn the cloth back onto the limb so the hem closes.
       const sGeo = new THREE.LatheGeometry([
+        new THREE.Vector2(rHem * 0.985, -0.448 * L),
+        new THREE.Vector2(rHem * 1.004, -0.458 * L),
         new THREE.Vector2(rHem * PR, -0.46 * L),
-        new THREE.Vector2(deltoidR * 0.99 * PR, -0.24 * L),
-        new THREE.Vector2(deltoidR * PR, -0.13 * L),
-        new THREE.Vector2((deltoidR + upTopR) * 0.52 * PR, -0.04 * L),
+        new THREE.Vector2(deltoidR * 0.985 * PR, -0.29 * L),
+        new THREE.Vector2(deltoidR * PR, -0.20 * L),
+        new THREE.Vector2(deltoidR * 0.965 * PR, -0.12 * L),
+        new THREE.Vector2((deltoidR * 0.72 + upTopR * 0.28) * PR, -0.05 * L),
         new THREE.Vector2(upTopR * 1.02, 0),
       ], 44);
       sGeo.computeVertexNormals();
       const sleeve = new THREE.Mesh(sGeo, mSuit);
       arm.add(sleeve);
-    } else {
-      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.0405 * ws, 0.0405 * ws, 0.018, 16), mShirt);
-      cuff.position.set(0, -upperArmLen - foreArmLen + 0.02, 0.03);
+    } else if (config.shirtColor != null) {
+      // v7 FIX round-2 — the cuff used to be unconditional, and `mShirt` falls
+      // back to off-white when shirtColor is null. Grandma (shirtColor: null)
+      // therefore wore two bright white bands at the wrists over a purple dress:
+      // the note's "TROUSERS with white cuff stripes". No shirt → no cuff.
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.0335 * ws, 0.0335 * ws, 0.018, 16),
+        M.cloth(shadeHexToInt(shirtC, 0.88), { roughness: 0.64, sheen: 0.22, bump: 0.2 }));
+      cuff.position.set(0, -upperArmLen - foreArmLen + 0.022, 0.03);
       arm.add(cuff);
     }
-    // mitten hand + thumb
-    const palm = new THREE.Mesh(new THREE.SphereGeometry(0.045 * ws, 14, 12), mSkin);
-    palm.scale.set(0.85, 1.15, 0.6);
-    palm.position.set(0, handLocalY, 0.04);
-    arm.add(palm);
-    const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.02 * ws, 10, 8), mSkin);
-    thumb.scale.set(1, 1.5, 1);
-    thumb.position.set(side * 0.035 * ws, handLocalY + 0.01, 0.05);
-    thumb.rotation.z = side * 0.6;
-    arm.add(thumb);
+    // HAND — the reference sheet's mitten, built to its proportions.
+    // art/char_refs/generated/_hands_reference.png is unambiguous: the approved
+    // hand IS a mitten with one thumb lobe and no separated fingers. The defect
+    // the critic logged is proportion, not fingers — "pale oven-mitt paddles"
+    // (a 0.045 sphere scaled 0.85/1.15/0.60 is a flat oval with no wrist, no
+    // taper and no knuckle line) and "nub fists" once the arms were too short to
+    // clear the garment. buildHand lofts wrist → knuckles → tapered tip in ONE
+    // surface and seats the thumb INBOARD-FORWARD, where the sheet puts it (the
+    // old thumb sat outboard on the right arm, i.e. on the wrong side).
+    const hand = buildHand(handLen, ws, mSkin, side, detailed);
+    hand.position.set(0, handLocalY, 0.036);
+    arm.add(hand);
     collapseNode(arm);
 
     // `shoulderLift` pulls the shoulders IN and UP — the "oversized suit
     // swallowing a hunched frame" read the Intern was missing.
     const lift = config.shoulderLift ?? 0;
     arm.position.set(side * (shoulderX + 0.010 * ws) * (1 - lift * 3), shoulderY - 0.025 + lift, shoulderZ + lift * 0.6);
-    arm.rotation.z = side * (0.05 + lift * 4);
+    // v7 FIX round-1 — 0.05rad hung both hands inside Karen's 0.165 blazer-hem
+    // radius, so the fight still read "armless, purse floating at the hip".
+    // Then normframe measurement gave the real number: at matched framing the
+    // reference sheets have bbox width/height 0.42–0.48 and the v7 renders had
+    // 0.25–0.33 — the cast was 30–45% too narrow, and almost all of that gap is
+    // the arms hugging the ribcage. A relaxed human arm hangs ~9° out from
+    // vertical; 0.05rad is 2.9° and 0.155 is 8.9°.
+    arm.rotation.z = side * (0.155 + lift * 4);
     arm.rotation.x = hunch * 0.5 + lift * 2;
     group.add(arm);
     if (side < 0) group.leftArm = arm; else group.rightArm = arm;
@@ -563,10 +763,8 @@ export function buildCharacter(config, options = {}) {
   // head height, human) and puts the crown at legLength + torsoH + neckH + 2.70R,
   // which is the head-count equation in constants.js.
   const headY = neckBaseY + neckH + (config.neckExtra ?? 0) + headR * SKULL.DOWN;
-  // Hunched builds carry the head FORWARD of the shoulder line (×1.7) — the other
-  // half of the dowager's-curve read (see the hump above).
-  const headZ = neckBaseZ + Math.sin(hunch) * (headR * SKULL.DOWN + neckH) * (hunch > 0.08 ? 1.7 : 1.0)
-    + (config.headForward ?? 0);
+  // `headZ` is solved up by the neck base (see there) so the neck column can be
+  // built leaning to meet it — the two must never be computed independently.
   const head = new THREE.Group();
   head.position.set(0, headY, headZ);
   // Slight downward nod so the face aims at the combat camera (which looks
@@ -590,7 +788,18 @@ export function buildCharacter(config, options = {}) {
   const jawDial = _clamp(config.jaw ?? 0.9, 0.85, 1.15);
   const chinDial = _clamp(config.chin ?? 1.0, 0.85, 1.15);
   const noseDial = config.noseScale ?? 1;
-  const skull = makeHead(headR, mSkin, { jaw: jawDial, chin: chinDial, nose: noseDial, detailed });
+  // v7 FIX round-1 — per-character face shape, every dial clamped inside LAW 4's
+  // ±15% human band so identity never becomes caricature.
+  const faceDial = {
+    jaw: jawDial, chin: chinDial, nose: noseDial,
+    wide: _clamp(config.faceWidth ?? 1, 0.88, 1.12),
+    cheek: _clamp(config.cheek ?? 1, 0.80, 1.20),
+    browRidge: _clamp(config.browRidge ?? 1, 0.75, 1.25),
+    eyeSize: _clamp(config.eyeSize ?? 1, 0.88, 1.14),
+    eyeGap: _clamp(config.eyeGap ?? 1, 0.90, 1.10),
+    mouthWidth: _clamp(config.mouthWidth ?? 1, 0.88, 1.14),
+  };
+  const skull = makeHead(headR, mSkin, { ...faceDial, detailed });
   head.add(skull);
 
   // v7 — HAIR + EARS RIDE A SKULL SHELL. Every hair style in this file was
@@ -627,13 +836,26 @@ export function buildCharacter(config, options = {}) {
     // it is a tall oval rather than the near-round bead the squashed head needed.
     // Held INSIDE the skull silhouette (x 0.96 of the local half-width) so it can
     // never read as a detached bead in back-3/4.
-    const earY = -headR * 0.28;
-    const earX = side * headR * skullHalfW(-0.28) * 0.94;
+    // v7 FIX round-2 — the ear rides the landmark stack: LAW 3 seats it in the
+    // brow→nose-base band, which after the muzzle correction is +0.16R … −0.55R,
+    // centre −0.20R (it was −0.28R against the old, longer midface). A pinna is
+    // also HELIX-rimmed, not a smooth bead — the profiles read "no ear anywhere,
+    // the earring floats on the hair" — so a second thinner lobe stands a hair
+    // proud of the first as a rim, which is what makes an ear read at 3/4.
+    const earY = -headR * 0.20;
+    // 0.94 put the ear's outer edge ≈0.01R proud of the skull; on the wide-face
+    // builds that reads as a detached skin TAB at 3/4. 0.90 buries it.
+    const earX = side * headR * skullHalfW(-0.20, faceDial.wide) * 0.90;
     const ear = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.185, 20, 16), mSkin);
     ear.scale.set(0.38, 1.72, 0.98);
     ear.position.set(earX, earY, -headR * 0.20);
     ear.rotation.z = side * 0.06;
     head.add(ear);
+    const helix = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.150, 18, 14), mSkin);
+    helix.scale.set(0.46, 1.62, 0.90);
+    helix.position.set(earX + side * headR * 0.012, earY + headR * 0.02, -headR * 0.235);
+    helix.rotation.z = side * 0.06;
+    head.add(helix);
     // A shallow, low-contrast concha. At 0.58 shade / 0.10R it rendered as a dark
     // bullet hole punched through the ear (andrew r1/r2 profile).
     const concha = new THREE.Mesh(new THREE.SphereGeometry(headR * 0.078, 12, 10), mConcha);
@@ -651,12 +873,11 @@ export function buildCharacter(config, options = {}) {
   // geometry produced (see faceLayout()), so canvas landmarks land on the
   // sculpted brow / socket / nose / chin instead of being re-tuned by eye.
   const faceSize = detailed ? 512 : 256;
-  faceConfig._layout = faceLayout(jawDial, chinDial);
+  faceConfig._layout = faceLayout(faceDial);
   group.faceTextures = paintFaceSet(faceConfig, faceSize);
   let facePatch = null;
   if (group.faceTextures && group.faceTextures.neutral) {
-    facePatch = makeFacePatch(headR, group.faceTextures.neutral, M, detailed,
-      { jaw: jawDial, chin: chinDial, nose: noseDial });
+    facePatch = makeFacePatch(headR, group.faceTextures.neutral, M, detailed, faceDial);
     facePatch.userData.noMerge = true;
     head.add(facePatch);
   }
@@ -682,7 +903,22 @@ export function buildCharacter(config, options = {}) {
     handLocalY,                     // arm-local Y of the hand (for held items)
     // The torso lathe is squashed to 0.66 depth, so its front SURFACE sits at
     // chestR*0.66 — accessories anchored to chestR*0.5 were sunk inside the body.
-    frontZ: neckBaseZ + dims.chestR * 0.66,
+    // The torso lathe is squashed to 0.66 depth AND the v7 surface field adds up
+    // to ~3.5% on the chest, so accessories seated at exactly 0.66 sank into the
+    // cloth (the Intern's name tag, Karen's brooch). 0.70 keeps them on it.
+    frontZ: neckBaseZ + dims.chestR * 0.70,
+    // v7 FIX round-2 — `frontZ` is the surface at CHEST height (t≈0.58). Anything
+    // seated at the collar with it floats: the torso lathe narrows from chestR to
+    // shoulderR·0.965 up there AND the z-scale is 0.66, so on Grandma the cameo
+    // sat 0.05 proud of the cloth — the note's "detached black rectangle hovering
+    // at chest height". `collarZ`/`collarY` are the surface at t = 0.90.
+    torsoZ,
+    collarY: legLength + Math.cos(hunch) * torsoH * 0.90,
+    collarZ: torsoZ + Math.sin(hunch) * torsoH * 0.90 + Math.cos(hunch) * dims.shoulderR * 0.965 * 0.66,
+    chestR: dims.chestR,
+    waistR: dims.waistR,
+    shoulderRad: dims.shoulderR,
+    hunch,
     bodyW: dims.shoulderR * 2,
     ws,
     skinMat: mSkin,                 // plain skin (no face tex) — for grip fingers
@@ -718,12 +954,13 @@ export function buildCharacter(config, options = {}) {
     const chinY = headY - headR * SKULL.DOWN;
     const eyeY = headY + headR * LM.eye;
     // widest row = the equator (cranial taper starts above +0.35R, jaw taper below 0)
-    const cranialHalf = headR * skullHalfW(0);
+    const cranialHalf = headR * skullHalfW(0, faceDial.wide);
     // gonion half-width, with the per-character jaw dial applied exactly as
     // sculptSkull applies it (so the number the harness prints is the number the
     // vertices got).
     const eGon = Math.sqrt(1 - (0.60 / SKULL.DOWN) ** 2);
-    const gonionHalf = headR * eGon * (1 + (jawProfile(-0.60) - 1) * (1 + (jawDial - 1) * 1.6));
+    const gonionHalf = headR * eGon * faceDial.wide
+      * (1 + (jawProfile(-0.60) - 1) * (1 + (1 - jawDial) * 4.5));
     group.metrics = {
       headR, headY, crownY, chinY, eyeY,
       headWidth: 2 * cranialHalf,
@@ -1066,9 +1303,26 @@ const PATCH_THETA_START = Math.acos(PATCH_Y_TOP / SKULL.UP);
 const PATCH_THETA_LEN = Math.acos(PATCH_Y_BOT / SKULL.DOWN) - PATCH_THETA_START;
 
 // Vertical landmarks on the human face, in skull-Y (R units).
-//   crown +1.35 · hairline +0.68 · brow +0.16 · EYE 0.00 · nose base −0.62
-//   mouth −0.80 · chin −1.35        (thirds: hairline→brow→nose→chin ≈ equal)
-const LM = { hairline: 0.68, brow: 0.20, eye: 0.0, nose: -0.62, mouth: -0.86, chinPt: -1.27 };
+//
+// v7 FIX round-2 — THE MUZZLE (note [A] "lower face is ~2× its human
+// proportion"; note [B] "the midface melt"). The old stack was
+//   brow +0.20 · eye 0.00 · nose −0.62 · mouth −0.86 · chin −1.27
+// and it fails Loomis by a measurable margin. Projected to screen (which is
+// what a player sees), brow→nose ran 0.82R against nose→chin 0.64R — a
+// +28% overshoot on the middle third — so the eye-to-nose expanse was a
+// featureless 0.8R of blank cheek. That expanse is what the smudge lived in
+// and what read as a snout.
+//
+// The thirds are now solved, not authored: with brow at +0.16 and the chin
+// point at −1.26, the SUB-NASAL lands on their midpoint (−0.55) and the mouth
+// line a third of the way from there to the chin (−0.79). `nose` is the painted
+// ALAE row (the nostril line), which sits a little above the sub-nasal.
+//   brow→subnasal 0.71R  ·  subnasal→chin 0.71R    (equal, projected)
+const LM = { hairline: 0.80, brow: 0.16, eye: 0.0, nose: -0.47, mouth: -0.79, chinPt: -1.26 };
+// The sub-nasal (bottom of the nose) — the actual third boundary. Kept
+// separate from LM.nose because the painter needs the alae row and the sculpt
+// needs the plane under it.
+const LM_SUBNASAL = -0.55;
 
 // skull-Y → canvas-Y fraction (0 = top of the face tile).
 function faceF(y) {
@@ -1085,9 +1339,10 @@ function faceU(x, y, halfW) {
 }
 // Half-width of the sculpted skull at a given skull-Y (R units) — the ellipse
 // times the jaw profile below the cheekbone.
-function skullHalfW(y) {
+function skullHalfW(y, wide = 1) {
   const e = Math.sqrt(Math.max(0, 1 - (y / (y >= 0 ? SKULL.UP : SKULL.DOWN)) ** 2));
-  return e * jawProfile(y) * cranialTaper(y);
+  const w = wide === 1 ? 1 : (1 + (wide - 1) * (1 - _sstep(0.20, 1.05, y)));
+  return e * jawProfile(y) * cranialTaper(y) * w;
 }
 
 // ── the sculpt profiles ───────────────────────────────────────────────
@@ -1102,20 +1357,26 @@ function cranialTaper(y) {
   return 1 - 0.14 * k * k;
 }
 // Below the cheekbone the face planes IN to the gonion and then to the chin.
-// Anchors (y → multiplier on the ellipse half-width):
-//   0.00 → 1.000   −0.30 → 1.030 (malar crest)   −0.60 → 0.930 (gonion)
-//   −0.95 → 0.900  −1.20 → 0.910   −1.35 → 0.950
+//
+// v7 FIX round-2 — **THIS FUNCTION WAS THE CREASE GENERATOR** (note [A]
+// "horizontal shelf creases on all four heroes … reads as scars"). It was a
+// six-anchor table interpolated with `t²(3−2t)` PER SEGMENT. Smoothstep has zero
+// slope at both ends, so the profile's derivative was pinned to zero at every
+// anchor and peaked in every gap: a scalloped radius curve with an inflection
+// every 0.3R. The worst pair — 1.03 at −0.30 (a "malar crest" baked into the
+// silhouette) falling to 0.93 at −0.60 — is a 10% radius swing over 0.3R with a
+// hard slope reversal at each end, i.e. a horizontal welt right across both
+// cheeks. Measured on the map-stripped form pass it dropped a white surface from
+// L221 to L127 in twelve pixels at y ≈ −0.37R, which is the midpoint of exactly
+// that segment.
+//
+// It is now ONE monotone taper plus one gentle chin recovery — two smoothsteps,
+// each spread over ≥0.4R, so the steepest surface tilt anywhere is ~8.5°. The
+// malar crest is not lost: step 6 of sculptSkull builds it as a localised,
+// SHEARED (diagonal) swell, which is where a cheekbone belongs.
 function jawProfile(y) {
   if (y >= 0) return 1;
-  const A = [[0, 1.0], [-0.30, 1.03], [-0.60, 0.93], [-0.95, 0.90], [-1.20, 0.91], [-1.35, 0.95]];
-  for (let i = 0; i < A.length - 1; i++) {
-    if (y <= A[i][0] && y >= A[i + 1][0]) {
-      const t = (A[i][0] - y) / (A[i][0] - A[i + 1][0]);
-      const s = t * t * (3 - 2 * t);
-      return A[i][1] + (A[i + 1][1] - A[i][1]) * s;
-    }
-  }
-  return A[A.length - 1][1];
+  return 1 - 0.105 * _sstep(0.05, -1.00, y) + 0.045 * _sstep(-0.95, -1.38, y);
 }
 
 // Displace ONE point of the skull. `d` is the unit direction on the base sphere;
@@ -1123,14 +1384,41 @@ function jawProfile(y) {
 // `dial` carries the per-character jaw/chin values (LAW 4 clamps them).
 function sculptSkull(d, dial, out) {
   const jawDial = dial.jaw, chinDial = dial.chin, noseK = dial.nose ?? 1;
-  let x = d.x * SKULL.UP / SKULL.UP;                       // (kept explicit for clarity)
-  x = d.x;
+  // v7 FIX round-1 — PER-CHARACTER FACE SHAPE (critic: "ONE FACE, TWENTY
+  // COSTUMES … the cast is one skull in different wigs"). Three dials, all
+  // inside LAW 4's ±15% human band:
+  //   faceWidth — skull half-width at the FACE (below the parietal), so Karen
+  //               can be a long oval and Chad a wide square without either head
+  //               changing volume the way a global headScale would;
+  //   cheek     — malar crest amplitude (round vs planar cheekbones);
+  //   browRidge — supraorbital shelf amplitude (heavy vs soft).
+  const wideK = dial.wide ?? 1;
+  const cheekK = dial.cheek ?? 1;
+  const browK = dial.browRidge ?? 1;
+  let x = d.x;
   let y = d.y * (d.y >= 0 ? SKULL.UP : SKULL.DOWN);
   let z = d.z * (d.z >= 0 ? SKULL.FRONT : SKULL.BACK);
 
   // 1 · cranial dome + jaw taper (radial, in the x/z plane)
-  const radial = cranialTaper(y) * (1 + (jawProfile(y) - 1) * (1 + (jawDial - 1) * 1.6));
+  // v7 FIX round-1 — THE JAW DIAL WAS INVERTED AND INERT. `jawProfile(y) − 1` is
+  // NEGATIVE below the cheekbone (it is a taper), so `× (1 + (jawDial − 1)·1.6)`
+  // made a HIGHER dial produce a NARROWER gonion — the opposite of what every
+  // authored value and comment in characters.js means ("narrow jaw (0.81)" on
+  // Janet rendered as the WIDEST jaw in the cast; LAW 4 clamps "Meredith/id-
+  // rachel jaw:0.78→0.85" as a narrow outlier). And at 1.6 the whole authored
+  // range moved the ratio by 1%: measured jawOverCranialGeo across the four
+  // heroes was 0.839–0.848, which is the arithmetic behind "the cast is one
+  // skull in different wigs". Sign flipped to match the bible, gain 1.6 → 4.5,
+  // so LAW 4's 0.85–1.15 clamp now spans jaw/cranial 0.79 (narrow) → 0.88 (wide).
+  const radial = cranialTaper(y) * (1 + (jawProfile(y) - 1) * (1 + (1 - jawDial) * 4.5));
   x *= radial; z *= radial;
+  // 1b · face-width dial is applied at the very END of the sculpt (see `out`), NOT
+  //      here: every anatomical bell below keys off |x|, so narrowing the skull
+  //      first would slide the malar crest, socket and cheek plane inboard and
+  //      give narrow-faced builds (intern 0.91, karen 0.93) hollow cheeks the
+  //      wide-faced ones don't get. The anatomy is solved in canonical space and
+  //      the whole face is scaled afterwards.
+  const wideAt = (yy) => (wideK === 1 ? 1 : 1 + (wideK - 1) * (1 - _sstep(0.20, 1.05, yy)));
 
   // 2 · TEMPLE PLANE — a real skull is flat at the temples, not circular.
   //     A gentle inward pull on the side wall between brow and parietal.
@@ -1143,35 +1431,96 @@ function sculptSkull(d, dial, out) {
   const front = Math.max(0, d.z);                          // 0 at the ear line, 1 at the nose
   const ax = Math.abs(x);
 
-  // 4 · BROW RIDGE (supraorbital torus). A shelf over the eyes that is strongest
-  //     over the socket (|x|≈0.36R) and slightly relieved at the glabella, so it
-  //     reads as two brows and a bridge — not a Cro-Magnon band.
-  const browBand = _bell(y, 0.20, 0.34);
-  const browLat = 0.72 * _bell(ax, 0.36, 0.44) + 0.42 * _bell(ax, 0.03, 0.20);
-  z += 0.070 * browBand * browLat * front;
+  // ── v7 FIX round-2 — THE HORIZONTAL SHELF CREASES (note [A], all four heroes;
+  //    note [B] "the midface melt … it is GEOMETRY, not paint").
+  //
+  //    Measured off screenshots/v7/karen-fx8-f.png against the world scale the
+  //    same image gives (eye→mouth = 0.854R = 122px, so 1R = 143px), the two
+  //    lateral dark bands land at y = −0.385R and y = −0.594R. Those are, to the
+  //    pixel, the lower edge of the malar bell (centre −0.30, half-width 0.36)
+  //    and the cheekPlane/maxilla-shelf boundary. Both were built as
+  //    `_bell(y,·) × _bell(ax,·)` products — i.e. bands of constant Y, which is a
+  //    HORIZONTAL ridge. Human midface structure runs DIAGONALLY: the zygomatic
+  //    arch climbs up-and-back toward the ear, the naso-labial plane change
+  //    falls down-and-out toward the mouth corner. A horizontal ridge across a
+  //    cheek is a scar; it is why a late-20s Chad cold-read ~55.
+  //
+  //    Every band below is therefore evaluated on a SHEARED y — `y + slope·ax` —
+  //    so the form tilts with the anatomy, and every amplitude comes down. The
+  //    sub-lip recess (the "toothless old man" scoop in profile) loses two
+  //    thirds of its depth and triples its falloff width.
+  const shear = (yy, slope) => yy + slope * ax;
 
-  // 5 · EYE-SOCKET RECESSION — subtle (LAW 3: no horror shadows). The socket sits
-  //     just under the ridge and inboard of the temple.
-  const socket = _bell(y, -0.07, 0.32) * _bell(ax, 0.40, 0.34);
-  z -= 0.048 * socket * front;
+  // 4 · BROW RIDGE (supraorbital torus). Sheared UP toward the temple, which is
+  //     the direction a real supraorbital ridge runs, and softened 0.070 → 0.058
+  //     so the ridge line stops reading as a second painted brow above the real
+  //     one (visible as a crisp arc in karen-fx8-f).
+  const browBand = _bell(shear(y, -0.13), LM.brow, 0.38);
+  const browLat = 0.72 * _bell(ax, 0.36, 0.46) + 0.42 * _bell(ax, 0.03, 0.22);
+  z += 0.046 * browK * browBand * browLat * front;
 
-  // 6 · MALAR (cheekbone) CREST + the cheek plane that falls away below it.
-  const malar = _bell(y, -0.30, 0.36) * _bell(ax, 0.62, 0.40);
-  z += 0.040 * malar * front;
-  x += 0.030 * malar * Math.sign(x) * front;
-  const cheekPlane = _sstep(-0.35, -0.85, y) * _bell(ax, 0.60, 0.55);
-  z -= 0.040 * cheekPlane * front;
+  // 5 · EYE-SOCKET — REAL geometry now (note [A] "eyes are still paint-on-egg at
+  //     3/4: the far eye … floats off the head silhouette edge. No socket
+  //     geometry."). Two forms, not one: the orbit recesses (deeper than v7's
+  //     0.048 — that was inside the noise floor at fight framing), and a LOWER
+  //     LID / orbital rim ridge sits just under it, so the eye reads as sitting
+  //     IN a hollow between the brow shelf and the cheek rather than painted on
+  //     a sphere. The pair is what makes the far eye turn away with the head.
+  const socket = _bell(y, -0.05, 0.30) * _bell(ax, 0.40, 0.32);
+  z -= 0.072 * socket * front;
+  const lidRim = _bell(y, -0.26, 0.16) * _bell(ax, 0.40, 0.34);
+  z += 0.026 * lidRim * front;
 
-  // 7 · MAXILLA / PHILTRUM shelf and the sub-lip recess, so the mouth sits in a
-  //     plane instead of floating on a sphere.
-  z += 0.024 * _bell(y, -0.66, 0.26) * _bell(ax, 0.0, 0.42) * front;
-  z -= 0.018 * _bell(y, -0.96, 0.16) * _bell(ax, 0.0, 0.40) * front;
+  // 6 · MALAR (cheekbone) CREST + the cheek plane below it — both sheared.
+  //     Amplitude 0.040 → 0.026 and the Y falloff opens 0.36 → 0.54, so the
+  //     crest is a broad diagonal swell instead of a 0.72R-tall welt.
+  const malar = _bell(shear(y, -0.34), -0.30, 0.54) * _bell(ax, 0.62, 0.46);
+  z += 0.026 * cheekK * malar * front;
+  x += 0.020 * cheekK * malar * Math.sign(x) * front;
+  // The cheek plane no longer uses a smoothstep in Y (a step IS an edge); it is
+  // a wide sheared bell at a third of the old depth.
+  const cheekPlane = _bell(shear(y, -0.30), -0.66, 0.62) * _bell(ax, 0.76, 0.52);
+  z -= 0.0035 * cheekPlane * front;
 
-  // 8 · CHIN — a real mental protuberance, narrow and forward.
-  const chinBand = _bell(y, -1.10, 0.34) * _bell(ax, 0.0, 0.34);
-  z += 0.085 * chinDial * chinBand * front;
+  // 7 · MAXILLA / PHILTRUM shelf and the sub-lip recess. The shelf follows the
+  //     sub-nasal row and is halved (0.038 → 0.019); the sub-lip recess, which
+  //     was a 0.16-wide groove at −0.96 — a hard horizontal gutter directly
+  //     under the mouth, and the exact source of the concave under-mouth scoop
+  //     the profiles show — is now 0.008 over a 0.34 falloff.
+  z += 0.019 * _bell(y, LM_SUBNASAL - 0.06, 0.34) * _bell(ax, 0.12, 0.60) * front;
+  z -= 0.008 * _bell(y, LM.mouth - 0.14, 0.34) * _bell(ax, 0.0, 0.44) * front;
+
+  // 7b · MANDIBULAR FRONTAL PLANE (v7 FIX round-2 — the LAST third of the beard
+  //      smudge, and the one that is nobody's paint bug).
+  //
+  //      Measured on the lit head close-up after the crease fix: forehead
+  //      L≈172, jaw L≈112 — a 35% luminance drop across the lower third, which
+  //      at fight framing reads as a garment on the face. The cause is not the
+  //      texture (the dumped tile is flat — screenshots/v7/karen-g1-tile.png)
+  //      and not the venue rig (LAW 5 puts the key front-and-above deliberately);
+  //      it is that the lower face was a bare ELLIPSOID. On a 1.35-tall, 1.02-deep
+  //      skull the front surface recedes 0.246R between the sub-nasal and y=−1.0,
+  //      a 29° down-tilt, so the chin normal ends up nearly perpendicular to the
+  //      key (n·key ≈ 0.09 against 0.98 at the forehead).
+  //
+  //      A human mandible is a comparatively FLAT frontal plane — that is why a
+  //      real chin catches the same light as a real forehead. Raising the
+  //      lower-front toward that plane is anatomy first and lighting second, and
+  //      it is the only lever inside this file that can move the number: skin
+  //      albedo is already ≈0.80 of white, so a painted counter-light (tried,
+  //      measured, +2.4%) has nowhere to go.
+  //      Falls off laterally (bell 0.82) so the jaw keeps its taper, and releases
+  //      below −1.16 so the sub-mental still tucks under.
+  const mandible = _sstep(-0.34, -1.16, y) * _bell(ax, 0.0, 0.82);
+  z += 0.132 * mandible * front * (1 - 0.55 * _sstep(-1.16, -1.40, y));
+
+  // 8 · CHIN — a real mental protuberance, narrow and forward. Eased 0.085 →
+  //     0.062 and widened, because a tall chin ball sitting under a deep sub-lip
+  //     gutter is what made every profile read "toothless".
+  const chinBand = _bell(y, -1.08, 0.40) * _bell(ax, 0.0, 0.40);
+  z += 0.062 * chinDial * chinBand * front;
   // and the sub-mental plane tucks back under it
-  z -= 0.030 * _bell(y, -1.30, 0.22) * front;
+  z -= 0.024 * _bell(y, -1.30, 0.24) * front;
 
   // 9 · NOSE WEDGE (integrated, LAW 3: "a small 3D geometric wedge").
   //     Round-1 measured the nose TIP at z 1.058R against a brow at 1.079R — the
@@ -1181,10 +1530,27 @@ function sculptSkull(d, dial, out) {
   //     columella → sub-nasal plane) with a half-width that opens toward the alae,
   //     so it reads in profile AND casts its own shadow at 3/4 without becoming
   //     a beak from the front (the alae are far less proud than the tip).
-  if (y < 0.10 && y > -0.86 && front > 0.18) {
-    const A = [[0.06, 0.000, 0.060], [-0.10, 0.070, 0.075], [-0.30, 0.210, 0.105],
-      [-0.46, 0.300, 0.135], [-0.56, 0.330, 0.160], [-0.66, 0.190, 0.175],
-      [-0.78, 0.060, 0.150], [-0.86, 0.000, 0.130]];
+  // v7 FIX round-1 — the ridge amplitudes come down ~18% and the lateral falloff
+  // opens from 2.0× to 2.8× the local half-width. The v7 nose measured a 0.33R
+  // tip inside a 0.33R-wide falloff: correct in profile, but from the front it
+  // was a pinched blade dropping off a cliff into the cheek (the critic's
+  // "shared nose over-sculpt … long pinched ridge with dark flank creases").
+  // A wider falloff on a slightly lower ridge keeps the profile nose and lets
+  // the flank BLEND into the maxilla shelf.
+  // v7 FIX round-2 — the whole wedge moves UP with the landmark stack (the nose
+  // base is now the middle-third boundary at −0.55, not −0.78) and the tip gains
+  // projection (0.272 → 0.300). Measured against the new brow plane the tip now
+  // stands 0.227R proud of the glabella = 8.7% of head height, which is inside
+  // the human 8–13% band; at the old numbers on the old brow it was the reason
+  // three of four profiles read "NO nose projection … the facial edge is
+  // concave" (note [B], chad-final1-prof).
+  if (y < 0.18 && y > -0.74 && front > 0.18) {
+    // The TRAILING ramp is stretched over 0.24R (was 0.16R). A 0.23R drop in
+    // 0.16R is a 55° cliff at the sub-nasal, and on the map-stripped pass it was
+    // the second horizontal band under the nose.
+    const A = [[0.12, 0.000, 0.055], [-0.02, 0.052, 0.070], [-0.18, 0.165, 0.092],
+      [-0.32, 0.255, 0.112], [-0.42, 0.300, 0.130], [-0.50, 0.225, 0.160],
+      [-0.58, 0.135, 0.155], [-0.66, 0.055, 0.135], [-0.74, 0.000, 0.115]];
     let amp = 0, halfW = 0.10;
     for (let i = 0; i < A.length - 1; i++) {
       if (y <= A[i][0] && y >= A[i + 1][0]) {
@@ -1195,11 +1561,14 @@ function sculptSkull(d, dial, out) {
         break;
       }
     }
-    const lat = _bell(ax, 0.0, halfW * 2.0);
+    // 2.8 → 2.35: at 2.8 the alae row spread its falloff to 0.45R half-width,
+    // wider than the 0.40R eye gap LAW 3 caps it under, and the flanks fell into
+    // the (now much shallower) cheek plane as the "W-shaped nose-wing splay".
+    const lat = _bell(ax, 0.0, halfW * 2.35);
     z += amp * lat * front * noseK;
   }
 
-  out.set(x, y, z);
+  out.set(x * wideAt(y), y, z);
   return out;
 }
 
@@ -1211,30 +1580,43 @@ function sculptSkull(d, dial, out) {
 // already turned away from the lens, so it must be painted WIDER in tile space
 // to measure correctly in world space. v6 had no such correction, which is why
 // every round re-tuned the mouth width by eye and it kept coming out narrow.
-function faceLayout(jawDial = 0.9, chinDial = 1.0) {
-  const hwEye = skullHalfW(LM.eye);
-  const hwNose = skullHalfW(LM.nose);
-  const hwMouth = skullHalfW(LM.mouth);
+// v7 FIX round-1 — the layout now CONSUMES the per-character dials. It used to
+// take jawDial/chinDial and immediately `void` them, which is exactly why
+// screenshots/v7/_summary-final.json was byte-identical for every human in the
+// cast: hairlineF/browF/eyeF/noseF/mouthF/jawWF and every feature width were the
+// same 17 numbers on karen, chad, grandma and the intern. The reference sheets
+// draw three different face shapes; the model drew one skull in three wigs.
+function faceLayout(dial = {}) {
+  const jawDial = dial.jaw ?? 0.9, chinDial = dial.chin ?? 1.0, wide = dial.wide ?? 1;
+  const eyeK = dial.eyeSize ?? 1, gapK = dial.eyeGap ?? 1, mouthK = dial.mouthWidth ?? 1;
+  const hwEye = skullHalfW(LM.eye, wide);
+  const hwNose = skullHalfW(LM.nose, wide);
+  const hwMouth = skullHalfW(LM.mouth, wide);
+  // The chin dial lengthens/shortens the lower face, so the mouth and chin
+  // landmarks move with it; the jaw dial widens the gonion band.
+  const chinY = LM.chinPt * (0.90 + chinDial * 0.10);
+  const mouthY = LM.mouth * (0.94 + chinDial * 0.06);
   const browF = faceF(LM.brow), eyeF = faceF(LM.eye);
-  const noseF = faceF(LM.nose), mouthF = faceF(LM.mouth), chinF = faceF(LM.chinPt);
+  const noseF = faceF(LM.nose), mouthF = faceF(mouthY), chinF = faceF(chinY);
   const coreTop = browF - 0.06, coreBot = chinF + 0.05;
   const maskCY = (coreTop + coreBot) * 0.5;
   const maskR0 = 0.30;
-  void jawDial; void chinDial;
+  const jawHW = skullHalfW(-0.60, wide) / jawProfile(-0.60)
+    * (1 + (jawProfile(-0.60) - 1) * (1 + (1 - jawDial) * 4.5));
   return {
     hairlineF: faceF(LM.hairline),
     browF, eyeF, noseF, mouthF, chinF,
     // pupils at ±0.40R (gap = one eye-width), eye corner-to-corner 0.40R
-    eyeDXF: faceU(0.40, LM.eye, hwEye),
-    eyeWF: (faceU(0.60, LM.eye, hwEye) - faceU(0.20, LM.eye, hwEye)) * 0.5,
-    eyeHF: (faceF(-0.135) - faceF(0.135)) * 0.5,
-    noseWF: faceU(0.17, LM.nose, hwNose),
-    mouthWF: faceU(0.34, LM.mouth, hwMouth),
+    eyeDXF: faceU(0.40 * gapK, LM.eye, hwEye),
+    eyeWF: (faceU(0.60 * eyeK, LM.eye, hwEye) - faceU(0.20 * eyeK, LM.eye, hwEye)) * 0.5,
+    eyeHF: (faceF(-0.135 * eyeK) - faceF(0.135 * eyeK)) * 0.5,
+    noseWF: faceU(0.17 * (dial.nose ?? 1), LM.nose, hwNose),
+    mouthWF: faceU(0.34 * mouthK, mouthY, hwMouth),
     // vertical conformal correction for the lip pair: at the mouth row the
     // surface has pitched ~40° away from the lens, so a lip authored in tile
     // fractions rendered as a thin ribbon (r4: "the mouth is a brown line").
-    mouthHF: (faceF(LM.mouth - 0.12) - faceF(LM.mouth + 0.12)) * 0.5,
-    jawWF: faceU(skullHalfW(-0.60) * 0.92, -0.60, skullHalfW(-0.60)),
+    mouthHF: (faceF(mouthY - 0.12) - faceF(mouthY + 0.12)) * 0.5,
+    jawWF: faceU(jawHW * 0.92, -0.60, jawHW),
     maskCY, maskR0, maskR1: 0.50,
     maskSX: 1.0,
     maskSY: ((coreBot - coreTop) * 0.5) / maskR0,
@@ -1286,9 +1668,10 @@ function limbSegment(rTop, rBot, len, mat, opts = {}) {
   if (opts.deltoidR) {
     const d = opts.deltoidR;
     pts.push(new THREE.Vector2((d + rBot) * 0.5 * 1.02, 0));
-    pts.push(new THREE.Vector2(d * 0.985, half * 0.52));
-    pts.push(new THREE.Vector2(d, half * 0.74));          // deltoid crest
-    pts.push(new THREE.Vector2((d + rTop) * 0.52, half * 0.92));
+    pts.push(new THREE.Vector2(d * 0.985, half * 0.42));
+    pts.push(new THREE.Vector2(d, half * 0.60));          // deltoid crest
+    pts.push(new THREE.Vector2(d * 0.965, half * 0.76));
+    pts.push(new THREE.Vector2(d * 0.72 + rTop * 0.28, half * 0.90));
   } else {
     pts.push(new THREE.Vector2((rTop + rBot) * 0.5 * 1.02, 0));
   }
@@ -1315,6 +1698,151 @@ function limbSegment(rTop, rBot, len, mat, opts = {}) {
   return new THREE.Mesh(geo, mat);
 }
 
+// ── HAND (v7 FIX round-1) ─────────────────────────────────────────────
+// The approved form is art/char_refs/generated/_hands_reference.png: a MITTEN
+// with a single thumb lobe and no separated fingers. Measured off that sheet the
+// mitten is ≈1.5 long : 1 wide across the knuckles, ≈1.5× the cuff width, and
+// clearly depth-tapered (a hand, not a paddle). This lofts wrist → knuckle crest
+// → rounded tip in ONE surface (LAW 2) and hangs the thumb INBOARD-AND-FORWARD,
+// which is where the sheet puts it on a relaxed arm (the v6 thumb sat outboard
+// on the right arm, on the wrong side of the hand entirely).
+//   `side` is −1 for the left arm, +1 for the right.
+function buildHand(hl, ws, mat, side, detailed) {
+  const g = new THREE.Group();
+  const sm = (a, b, t) => { const x = Math.min(1, Math.max(0, (t - a) / (b - a))); return x * x * (3 - 2 * x); };
+  const seg = detailed ? 26 : 16;
+  const geo = new THREE.SphereGeometry(1, seg, Math.max(14, Math.round(seg * 0.82)));
+  const HW = hl * 0.33;       // knuckle crest half-width  → 1.5 : 1 with length
+  const HD = hl * 0.185;      // half-depth (palm ↔ back)
+  const pos = geo.attributes.position;
+  const v = new THREE.Vector3();
+  for (let i = 0; i < pos.count; i++) {
+    v.fromBufferAttribute(pos, i);
+    // v7 FIX round-2 — A BLUNT END (note [B] "HANDS ARE STILL PADDLES"). The
+    // mitten is the approved form (_hands_reference.png row 1), but a sphere
+    // tapers to a POINT at its pole, and a pointed mitten is a paddle. Y is
+    // remapped so the outer 16% of the sphere's length is compressed into the
+    // last 4.5% — the vertex that used to sit at 0.84 (radius 0.54) now lands at
+    // 0.955, so the fingertip end is a rounded BLOCK, which is what the sheet
+    // draws. The width profile is then solved against the new y, not the old.
+    const a = Math.abs(v.y), sgn = v.y < 0 ? -1 : 1;
+    const yb = sgn * (a < 0.84 ? a * (0.955 / 0.84) : 0.955 + (a - 0.84) * (0.045 / 0.16));
+    const t = (1 - yb) * 0.5;                        // 0 = wrist pole, 1 = tip
+    // necked wrist → knuckle crest at t≈0.38 → blunt fingertip block
+    let w = 0.72 + 0.30 * sm(0.02, 0.38, t) - 0.16 * sm(0.62, 1.0, t);
+    // KNUCKLE CREASE — a shallow groove across the back of the hand, which is the
+    // one mark that says "there are fingers under this" without splitting them.
+    w -= 0.035 * Math.exp(-(((t - 0.44) / 0.055) ** 2)) * Math.max(0, v.z);
+    // a relaxed hand curls very slightly forward from the knuckles down
+    const curl = 0.30 * sm(0.42, 1.0, t);
+    pos.setXYZ(i, v.x * w * HW, yb * hl * 0.5, v.z * w * HD + curl * HD);
+  }
+  geo.computeVertexNormals();
+  g.add(new THREE.Mesh(geo, mat));
+
+  // THUMB — v7 FIX round-2: bigger (0.145 → 0.170 of hand length in radius, 0.24
+  // → 0.30 long) and seated with a real NOTCH between it and the palm, because
+  // at the old scale it merged into the palm as a bump and the note read "no
+  // thumb". A mitten's thumb is the whole reason it is not a paddle.
+  const tSeg = detailed ? 16 : 10;
+  const tGeo = new THREE.SphereGeometry(1, tSeg, Math.max(8, Math.round(tSeg * 0.8)));
+  const tp = tGeo.attributes.position;
+  for (let i = 0; i < tp.count; i++) {
+    v.fromBufferAttribute(tp, i);
+    const t = (1 - v.y) * 0.5;
+    const w = 0.92 - 0.20 * sm(0.55, 1.0, t);
+    tp.setXYZ(i, v.x * w * hl * 0.170, v.y * hl * 0.30, v.z * w * hl * 0.160);
+  }
+  tGeo.computeVertexNormals();
+  const thumb = new THREE.Mesh(tGeo, mat);
+  thumb.position.set(-side * HW * 0.80, hl * 0.12, HD * 1.02);
+  thumb.rotation.set(-0.40, 0, side * 0.72);
+  g.add(thumb);
+  return g;
+}
+
+// ── SHOE (v7 FIX round-2) ─────────────────────────────────────────────
+// Note [B] FEET: "every hero terminates in a black discus lens that pierces the
+// trouser/skirt column sideways … karen-final1-prof shows the shoe as a
+// symmetric UFO with equal toe and heel overhang; karen-final1-q34 shows
+// 90-degree duck-splayed peanut shoes with trouser hems continuing BELOW the
+// shoe tops into stump bottoms; grandma-final1-prof runs the lens straight
+// through the skirt."
+//
+// Both halves of that were literally true in the code. The shoe was
+// `SphereGeometry(0.058) scaled (0.92, 0.62, 2.0)` — a symmetric ellipsoid, so
+// heel overhang == toe overhang by construction — and the shin lathe kept its
+// default rounded bottom cap, whose pole sat 0.044·ws BELOW the sole plane, so
+// the trouser genuinely did emerge underneath the shoe as a stump.
+//
+// This builds a FOOT: rows swept along z from a narrow heel through a tall
+// ankle collar to a low tapered toe, each row a superellipse sitting on a flat
+// sole. Asymmetric by construction (heel −0.070, toe +0.148), and the trouser
+// now terminates above the collar (see the leg loop).
+//   `heel` raises the rear of the sole and drops a block under it — a pump.
+function buildShoe(ws, mat, detailed, opts = {}) {
+  const S = (opts.size ?? 1) * ws;
+  const heel = (opts.heel ?? 0) * ws;
+  // [z, halfWidth, topY] — all in ws units before `size`
+  const ROWS = [
+    [-0.070, 0.028, 0.052],
+    [-0.055, 0.042, 0.074],
+    [-0.030, 0.050, 0.080],   // ankle collar: tall + wide, plugs the trouser
+    [0.000, 0.052, 0.072],
+    [0.035, 0.054, 0.052],
+    [0.075, 0.052, 0.038],
+    [0.110, 0.044, 0.029],
+    [0.135, 0.027, 0.021],
+    [0.148, 0.007, 0.013],
+  ];
+  const SEG = detailed ? 22 : 14;
+  const P = 3.0;                                  // superellipse exponent
+  const lift = (z) => heel * (1 - _sstep(-0.050, 0.030, z));
+  const pos = [], idx = [];
+  for (let i = 0; i < ROWS.length; i++) {
+    const [z0, hw0, top0] = ROWS[i];
+    const z = z0 * S, hw = hw0 * S, top = top0 * S, y0 = lift(z0);
+    for (let j = 0; j <= SEG; j++) {
+      const a = (j / SEG) * Math.PI * 2;
+      const cxx = Math.cos(a), syy = Math.sin(a);
+      const up = syy >= 0;
+      const u = Math.abs(cxx);
+      const shell = Math.pow(Math.max(0, 1 - Math.pow(u, P)), 1 / P);
+      const yy = up ? top * shell * Math.abs(syy) ** 0.35 : -0.004 * S * shell;
+      pos.push(cxx * hw, y0 + yy + 0.004 * S, z);
+    }
+  }
+  for (let i = 0; i < ROWS.length - 1; i++) {
+    for (let j = 0; j < SEG; j++) {
+      const a = i * (SEG + 1) + j, b = a + 1, c = a + SEG + 1, d = c + 1;
+      idx.push(a, b, c, b, d, c);
+    }
+  }
+  // end caps (heel + toe) — small fans to the row centre
+  for (const [row, flip] of [[0, true], [ROWS.length - 1, false]]) {
+    const base = row * (SEG + 1);
+    const cIdx = pos.length / 3;
+    const [z0, , top0] = ROWS[row];
+    pos.push(0, lift(z0) + top0 * S * 0.35 + 0.004 * S, z0 * S);
+    for (let j = 0; j < SEG; j++) {
+      if (flip) idx.push(cIdx, base + j + 1, base + j);
+      else idx.push(cIdx, base + j, base + j + 1);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setIndex(idx);
+  g.computeVertexNormals();
+  const group = new THREE.Group();
+  group.add(new THREE.Mesh(g, mat));
+  if (heel > 0) {
+    const hb = new THREE.Mesh(new THREE.CylinderGeometry(0.020 * S, 0.026 * S, heel, 12), mat);
+    hb.position.set(0, heel * 0.5, -0.048 * S);
+    group.add(hb);
+  }
+  return group;
+}
+
 function makeHead(rad, mat, opts = {}) {
   // v7 — the skull is SCULPTED, not painted. Tessellation is raised again on the
   // combat tier because the new brow/socket/malar/nose relief is carried by
@@ -1326,7 +1854,10 @@ function makeHead(rad, mat, opts = {}) {
   const geo = new THREE.SphereGeometry(1, wSeg, hSeg);
   const pos = geo.attributes.position;
   const d = new THREE.Vector3(), o = new THREE.Vector3();
-  const dial = { jaw: opts.jaw ?? 0.9, chin: opts.chin ?? 1.0, nose: opts.nose ?? 1 };
+  const dial = {
+    jaw: opts.jaw ?? 0.9, chin: opts.chin ?? 1.0, nose: opts.nose ?? 1,
+    wide: opts.wide ?? 1, cheek: opts.cheek ?? 1, browRidge: opts.browRidge ?? 1,
+  };
   for (let i = 0; i < pos.count; i++) {
     d.fromBufferAttribute(pos, i).normalize();
     sculptSkull(d, dial, o);
@@ -1353,7 +1884,10 @@ function makeFacePatch(rad, faceTex, M, detailed = false, dial = { jaw: 0.9, chi
     const d = new THREE.Vector3(), o = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
       d.fromBufferAttribute(pos, i).normalize();
-      sculptSkull(d, { jaw: dial.jaw, chin: dial.chin, nose: dial.nose ?? 1 }, o);
+      sculptSkull(d, {
+        jaw: dial.jaw, chin: dial.chin, nose: dial.nose ?? 1,
+        wide: dial.wide ?? 1, cheek: dial.cheek ?? 1, browRidge: dial.browRidge ?? 1,
+      }, o);
       pos.setXYZ(i, o.x * rad * 1.004, o.y * rad * 1.004, o.z * rad * 1.004);
     }
   }
@@ -1402,15 +1936,23 @@ function buildNeckline(dims, torsoH, arcTop, mat, neckR = 0) {
   // v7 — re-seated on the new yoke arc (the widest row moved 0.82→0.855) and
   // pulled in so the blouse reads as a NECKLINE, not a pale trapezoid decal on
   // the sternum (karen r9).
+  // v7 FIX round-1 — THE ROWS ARE NOW THE TORSO'S OWN ROWS. They were fixed
+  // fractions of shoulderR (0.72 / 0.82 / 0.86) at heights where buildTorso's
+  // lathe is at 0.85 / 0.965 / 0.998 of shoulderR — so every row below the
+  // collar was 15–25% INSIDE the jacket. Only the topmost ring ever cleared the
+  // cloth, which is exactly the critic's read: "a grey ring collar" on Karen and
+  // "a collarless crew tube" on the Intern, with no blouse and no V anywhere.
+  // Sampling buildTorso's profile at 2% proud puts the neckline ON the garment.
+  const dS = shoulderR - chestR;
   const rows = [
-    [Math.max(shoulderR * 0.38, neckR * 1.05), torsoH * 1.008],
-    [Math.max(shoulderR * 0.58, neckR * 1.14), torsoH * 0.980],
-    [shoulderR * 0.72, torsoH * 0.945],
-    [shoulderR * 0.82, torsoH * 0.898],
-    [shoulderR * 0.86, torsoH * 0.852],
-    [chestR * 0.86, torsoH * 0.80],
+    [Math.max(shoulderR * 0.60, neckR * 1.04), torsoH * 0.995],
+    [shoulderR * 0.85, torsoH * 0.952],
+    [shoulderR * 0.965, torsoH * 0.905],
+    [shoulderR * 0.998, torsoH * 0.855],
+    [chestR + dS * 0.76, torsoH * 0.795],
+    [chestR + dS * 0.44, torsoH * 0.735],
+    [chestR + dS * 0.16, torsoH * 0.660],
   ];
-  void chestR;
   const SEG = 22;
   const pos = [], idx = [];
   for (let i = 0; i < rows.length; i++) {
@@ -1420,8 +1962,15 @@ function buildNeckline(dims, torsoH, arcTop, mat, neckR = 0) {
     // sternum", visually detached from the collar band above it. The top row now
     // spans the same front arc the collar does (they meet as one garment) and the
     // taper carries it to a real V point at the sternum.
-    const arc = arcTop * (1 - t * 0.86) + 0.05;
-    const rr = rows[i][0] * 1.014, yy = rows[i][1];
+    // The V runs collar → sternum and closes to a point, so the JACKET edges on
+    // either side of it are what read as lapels. LAW 2 bans lapel plates; the
+    // shell's own relief (surfaceTopology `lapels`) plus this opening is the
+    // legal way to draw a suit front.
+    const arc = arcTop * (1 - t * 0.88) + 0.04;
+    // 1.048 clears the lapel roll (which stands the torso 3% proud at φ≈0.34);
+    // at 1.020 the roll punched through the blouse and the neckline rendered as
+    // two cream horns with a pink strip up the middle.
+    const rr = rows[i][0] * 1.048, yy = rows[i][1];
     for (let j = 0; j <= SEG; j++) {
       const phi = -arc / 2 + (j / SEG) * arc;
       pos.push(-rr * Math.sin(phi), yy, rr * Math.cos(phi) * 0.66);
@@ -1477,6 +2026,30 @@ function surfaceTopology(geo, opts) {
       k -= 0.024 * bell(t, 0.42, 0.24) * bell(aphi, Math.PI * 0.5, 0.55);
       // a soft clavicle shelf under the yoke
       k += 0.020 * bell(t, 0.90, 0.11) * bell(aphi, 0.0, 1.0);
+      // v7 FIX round-1 — LAPELS AS RELIEF (producer amendment 4 + LAW 2, which
+      // permits tailoring "as low relief (≤0.008 proud) or a paint pass" and
+      // bans plate geometry). The critics logged "no lapels anywhere" on Karen
+      // and the Intern, and the intern's ref sheet is a suit that is ALL lapel.
+      // Two shallow ridges run from the yoke down to a centre break at the
+      // sternum, with the placket sunk between them. Peak is 0.022 × chestR
+      // ≈ 0.0035 proud — well inside the law, and it survives the mip chain
+      // because it is a shading gradient, not an edge.
+      // v7 FIX round-2 — the roll was 0.030 of the local radius ≈ 0.0042 absolute
+      // at Karen's chestR: a shading whisper the mip chain ate, which is why the
+      // note still logs "renders as a crew-neck tunic … no lapel geometry". The
+      // roll goes to 0.055 (≈0.0077 at chestR 0.139 — at, not over, LAW 2's
+      // ≤0.008 proud cap) and the FOLD EDGE outboard of it is deepened to 0.026,
+      // because what the eye actually reads as a lapel is the crease where the
+      // facing turns back, not the swell. Still one shell; still no plate.
+      if (opts.lapels) {
+        const run = step(0.26, 0.58, t) * (1 - step(0.88, 1.0, t));
+        k += 0.055 * bell(aphi, 0.34, 0.28) * run;              // lapel roll
+        k -= 0.030 * bell(aphi, 0.0, 0.16) * run;               // centre break
+        k -= 0.026 * bell(aphi, 0.66, 0.13) * run;              // the FOLD edge
+        k += 0.014 * bell(aphi, 0.84, 0.24) * step(0.55, 0.90, t);
+        // the jacket's own front edge below the button — the closure line
+        k -= 0.018 * bell(aphi, 0.0, 0.13) * step(0.30, 0.16, t);
+      }
     } else if (opts.kind === 'trouser') {
       // trouser drape: a pressed front crease with a soft fold either side of it,
       // fading out at the ankle where the cloth breaks over the shoe
@@ -1498,7 +2071,7 @@ function surfaceTopology(geo, opts) {
   return geo;
 }
 
-function buildTorso(dims, mat, detailed = false, hem = 0, female = false) {
+function buildTorso(dims, mat, detailed = false, hem = 0, female = false, lapels = false) {
   const { hipR, waistR, chestR, shoulderR, torsoH } = dims;
   const V2 = (x, y) => new THREE.Vector2(x, y);
   const pts = [];
@@ -1542,7 +2115,7 @@ function buildTorso(dims, mat, detailed = false, hem = 0, female = false) {
   // Radial segments raised on the combat tier: the v7 surface field varies with
   // azimuth, so 56 columns quantised the chest/blade planes into visible facets.
   const geo = new THREE.LatheGeometry(pts, detailed ? 84 : 40);
-  surfaceTopology(geo, { kind: 'torso', female, t: (y) => y / torsoH });
+  surfaceTopology(geo, { kind: 'torso', female, lapels, t: (y) => y / torsoH });
   geo.scale(1, 1, 0.66);              // elliptical (flatter front-back)
   geo.computeVertexNormals();
   return new THREE.Mesh(geo, mat);
@@ -1614,18 +2187,53 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
   // reading as "horns"), the sides hug down to the ears (no bare scalp band /
   // cap-step), and the back joins seamlessly (no offset occiput). Strand grain
   // is PAINTED by the hair texture, never sculpted.
-  function scalpCap(thetaLen, grow = 1.03, hairlineY = 0.36, seg = 44, sweep = 0) {
-    const geo = new THREE.SphereGeometry(1, seg, Math.max(30, Math.round(seg * 0.8)), 0, Math.PI * 2, 0, thetaLen);
+  // v7 FIX round-2 — THE RIM IS NOW A CONTOUR, NOT A LATITUDE (note [A] "hair
+  // shells have holes … karen-final1-prof shows a large tan bald patch on the
+  // occiput; grandma/intern-final1-headp show raw shell edges with skin above
+  // the nape hairline"; Producer Amendment 1 asks for verification from 3/4 AND
+  // side, and the side view failed on 3 of 4 heroes).
+  //
+  // The cause: `thetaLen` is a single latitude, and every style passed ~1.5 rad
+  // — cos(1.5) = +0.07, i.e. the shell stopped AT THE EQUATOR all the way round.
+  // Below that the only coverage was one `backMass` sphere of half-width 0.755r
+  // sitting at z = −0.44r, which reaches neither the sides (|x| up to 0.9r) nor
+  // the nape. Everything in between was bare skull, and it rendered as a bald
+  // patch with a hard polygon edge above it.
+  //
+  // A real hairline is a CONTOUR: highest at the forehead, dropping past the ear
+  // at the temple, lowest at the nape. The cap is therefore built to a generous
+  // 2.30 rad and each vertex is clamped up to a per-azimuth rim — the caller's
+  // thetaLen at the front, +0.30 rad at the sides, 2.26 rad (y ≈ −0.64r) at the
+  // back. 8% of the overshoot is carried through so the rim is a soft roll, not
+  // a cut. The front hairline lift below is unchanged and still owns the face.
+  function scalpCap(thetaLen, grow = 1.03, hairlineY = 0.36, seg = 44, sweep = 0, partX = 0) {
+    const NAPE_THETA = 2.26;
+    const buildTheta = Math.max(thetaLen, NAPE_THETA + 0.04);
+    const geo = new THREE.SphereGeometry(1, seg, Math.max(34, Math.round(seg * 0.92)), 0, Math.PI * 2, 0, buildTheta);
     const pos = geo.attributes.position;
     const v = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
       v.fromBufferAttribute(pos, i).normalize();
-      const theta = Math.acos(Math.max(-1, Math.min(1, v.y)));
+      let theta = Math.acos(Math.max(-1, Math.min(1, v.y)));
+      const phi = Math.atan2(v.x, v.z);              // 0 = front, ±π = occiput
+      const ab = Math.abs(phi);
+      const back = _sstep(0.90, 2.50, ab);
+      const rimTheta = Math.min(buildTheta,
+        thetaLen + (NAPE_THETA - thetaLen) * back + 0.30 * (1 - back) * _sstep(0.35, 1.45, ab));
+      if (theta > rimTheta) {
+        const over = theta - rimTheta;
+        theta = rimTheta + over * 0.08;              // soft roll, never a cut edge
+        const st = Math.sin(theta);
+        v.set(st * Math.sin(phi), Math.cos(theta), st * Math.cos(phi));
+      }
       // v7 — THE RIM TAPERS TO ZERO THICKNESS. A cap held a uniform `grow` proud
       // of the scalp ends in a 2–3% ledge all the way round, which is the hard
       // "helmet edge / bowl cut" line every round has read. The proud offset now
       // eases out over the last fifth of the cap, so hair thins INTO the scalp.
-      const rim = Math.min(1, Math.max(0, (theta / thetaLen - 0.76) / 0.24));
+      // v7 FIX round-2 — measured against the LOCAL rim (see rimTheta above), not
+      // the caller's single latitude; otherwise the whole occiput extension would
+      // sit past 1.0 and taper to zero thickness the moment it appeared.
+      const rim = Math.min(1, Math.max(0, (theta / rimTheta - 0.76) / 0.24));
       let g = 1 + (grow - 1) * (1 - rim * rim * (3 - 2 * rim));
       // conform to the skull's own front/back depth
       v.z *= (v.z > 0 ? SKULL.FRONT : SKULL.BACK);
@@ -1636,7 +2244,22 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
       // the middle of the forehead — andrew r1/r2).
       if (v.z > 0 && v.y < hairlineY * r) {
         const front = Math.min(1, v.z / (r * 0.5));
-        const lateral = Math.max(0, 1 - Math.max(0, (Math.abs(v.x) - r * 0.34) / (r * 0.58)) ** 2);
+        // v7 FIX round-1 — THE WIG LINE. The lateral term was a FLAT-TOP: full
+        // lift for every |x| < 0.34r, so the cap's front rim was a dead-straight
+        // horizontal line ruled across the forehead on every character ("a
+        // straight wig-line across the forehead", karen-final-head). It is now a
+        // soft arch — least lift on the centre line, most just inboard of the
+        // temples, easing to zero at the ear plane — which is the shape of a
+        // human hairline. `partX` slides the arch off centre so a side-parted
+        // style (Karen's bob) gets an asymmetric hairline instead of a
+        // symmetrical helmet rim.
+        // MOST lift on the centre line, easing down toward the temples and out
+        // to zero at the ear plane: a hairline is highest at the middle of the
+        // forehead and recedes at the temples. (The first pass had this the other
+        // way up and drew a widow's peak on the whole cast — intern fx7.)
+        const u = Math.abs(v.x - partX * r) / r;
+        const arch = 1.0 - 0.16 * Math.min(1, u / 0.60);
+        const lateral = arch * Math.max(0, 1 - Math.max(0, (u - 0.44) / 0.62) ** 2);
         const lift = (hairlineY * r - v.y) * front * lateral;
         v.y += lift;
         v.z -= lift * 0.45;              // ease the lifted rim back off the face
@@ -1698,39 +2321,78 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     // croissant, not a bob (karen r5). This is four: cap + one long sweep + two
     // jaw-length curtains + a nape, each flat enough that the silhouette carries
     // ≤3 inflections (LAW 2).
-    scalpCap(1.46, 1.03, 0.60, 48, 0.13);
+    // v7 FIX round-1 — KAREN SAME-PERSON FAIL. Against karen_body_v2.png the v7
+    // bob failed on four counts, all logged by both critics: a straight wig-line
+    // across the forehead (fixed in scalpCap's hairline arch, driven off centre
+    // here by partX so the SIDE PART reads); "symmetric detached earmuff shells"
+    // at the ears (the curtains sat at ±0.94r with a 0.42 x-scale — isolated
+    // lobes with a visible gap to the cap, and they pushed the hair-inclusive
+    // head silhouette to 1.16r half-width, which is the football-head risk
+    // re-entering through the HAIR); "a hard polygon seam across the crown" (the
+    // sweep's rim, now sunk and laid along the skull); and a platinum underlayer
+    // that never reads because it was parked at the NAPE while both the sheet and
+    // the portrait lead with the pale streak on the long side.
+    // v7 FIX round-2 — the cap's own hairline arch and fringe volume now carry
+    // the front (the rim contour reaches the nape on its own), so the separate
+    // sweep mass below only has to say "side part", not "cover the occiput".
+    scalpCap(1.42, 1.028, 0.60, 48, 0.11, -0.24);
     // THE LONG SWEEP — one flat plane of hair crossing the part and riding down
-    // over the outer half of one brow. Flat (y-scale 0.30) so it reads as hair
-    // lying on the skull, not a second cranium.
-    const sweep = new THREE.Mesh(new THREE.SphereGeometry(r * 0.78, 30, 22), mat);
-    sweep.scale.set(1.04, 0.26, 0.80);
-    sweep.rotation.set(0.12, 0.24, 0.24);
-    sweep.position.set(-r * 0.20, r * 0.64, r * 0.30);
+    // over the outer half of one brow. Flat so it reads as hair lying on the
+    // skull, not a second cranium; seated lower and rotated less than v7 so its
+    // rim is buried in the cap instead of ruling a line across the crown.
+    // v7 FIX round-2b — on the hardware capture (screenshots/v7/karen-HW-f.png)
+    // the sweep's leading corner cleared the cap over the left temple and read as
+    // a discrete tan LUMP on the forehead rather than a lock of hair. Flatter,
+    // shallower and seated higher, so it dips to ~0.65R (the hairline is 0.81R):
+    // a lock across the brow line, not a horn.
+    const sweep = new THREE.Mesh(new THREE.SphereGeometry(r * 0.72, 30, 22), mat);
+    sweep.scale.set(1.02, 0.22, 0.72);
+    sweep.rotation.set(0.14, 0.20, 0.16);
+    sweep.position.set(-r * 0.22, r * 0.56, r * 0.20);
     add(sweep);
-    // jaw-length curtains framing the face. containHair() holds them off the chin
-    // and out of the neck, so they can be generous without becoming a chin-strap.
+    // v7 FIX round-2 — THE ASYMMETRIC BOB IS NOW ASYMMETRIC IN DEPTH, and the
+    // ear is uncovered on the tucked side. Both curtains used to sit at
+    // z = −0.14r with a 1.14 depth scale, so each one reached z = +0.50r — a
+    // quarter of a head FORWARD of the ear (whose front face is at −0.02r). The
+    // ear was buried on both sides on every build in the cast, which is why the
+    // profiles read "no ear anywhere, the earring floats on the hair", and why
+    // the note logged "a white sideburn plate" at jaw level (Amendment 1).
+    //   long side (−1): stays forward and low — this is the sweep the sheet
+    //                   leads with, and it carries the PALE STREAK as its own
+    //                   material instead of a separate slab standing proud of it.
+    //   tucked side (+1): pulled behind the ear plane entirely (z = −0.46r), so
+    //                   the ear, the lobe and the pearl stud all read.
     for (const side2 of [-1, 1]) {
-      const curtain = new THREE.Mesh(new THREE.SphereGeometry(r * 0.52, 24, 20), mat);
-      curtain.scale.set(0.42, side2 < 0 ? 1.32 : 1.14, 1.22);
-      curtain.position.set(side2 * r * 0.94, -r * (side2 < 0 ? 0.12 : 0.06), -r * 0.36);
-      curtain.rotation.z = side2 * -0.10;
+      const long = side2 < 0;
+      const curtain = new THREE.Mesh(new THREE.SphereGeometry(r * 0.54, 24, 20), mat);
+      curtain.scale.set(0.30, long ? 1.02 : 0.94, long ? 0.86 : 0.80);
+      curtain.position.set(side2 * r * 0.84, -r * (long ? 0.22 : 0.06), -r * (long ? 0.16 : 0.46));
+      curtain.rotation.z = side2 * -0.12;
       add(curtain);
     }
-    // DARK UNDERLAYER at the nape (producer ruling: platinum bob, dark underlayer)
-    const backB = new THREE.Mesh(new THREE.SphereGeometry(r * 0.72, 26, 20), underMat || mat);
-    backB.scale.set(1.04, 1.06, 0.94);
-    backB.position.set(0, -r * 0.06, -r * 0.52);
-    add(backB);
-    // THE PALE STREAK — a broad light panel through the lower half of the long
-    // side, seated ON the curtain plane so it reads from the front, not only in
-    // profile.
+    // THE PALE STREAK — a LOCK, not a plate. Giving the whole long curtain the
+    // streak material (first attempt this round) turned the entire left side of
+    // her head white against a tan crown: a two-tone helmet, not the portrait's
+    // platinum highlight. It is now a narrow lock lying on the FRONT edge of the
+    // long side, running temple → cheekbone, which is where karen_body_v2.png
+    // puts it. Seated above the jaw band so Amendment 1 is untouched.
     if (streakMat) {
       const streak = new THREE.Mesh(new THREE.SphereGeometry(r * 0.46, 22, 18), streakMat);
-      streak.scale.set(0.30, 1.06, 0.94);
-      streak.position.set(-r * 0.88, -r * 0.10, -r * 0.16);
-      streak.rotation.z = 0.16;
+      streak.scale.set(0.30, 0.86, 0.36);
+      streak.position.set(-r * 0.78, -r * 0.06, r * 0.28);
+      streak.rotation.z = 0.20;
       add(streak);
     }
+    // DARK UNDERLAYER — v7 FIX round-2: it was a 0.72r sphere at z = −0.52r whose
+    // rear pole reached −1.18r against a cap back face at −1.17r, i.e. it poked
+    // THROUGH the platinum and rendered as the tan/brown bald patch on the
+    // occiput in karen-final1-prof. An underlayer is not a second skull; it is
+    // the hair you see UNDER the outer layer at the nape. Smaller, forward of the
+    // cap's back face, and dropped so only its lower band clears the new rim.
+    const backB = new THREE.Mesh(new THREE.SphereGeometry(r * 0.66, 26, 20), underMat || mat);
+    backB.scale.set(0.94, 0.86, 0.90);
+    backB.position.set(0, -r * 0.34, -r * 0.40);
+    add(backB);
   } else if (style === 'quiff') {
     // CHAD — a gym-bro quiff with REAL forward volume (~0.3 head-heights of
     // relief across the front third). The 'short' cap he used to wear was a
@@ -1745,12 +2407,28 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     // a blonde BOWL swallowing the backwards cap (chad r7). A quiff is a crest at
     // the hairline, so that is what it is now — one flat mass, plus the cap's own
     // hairline sweep underneath it.
-    scalpCap(1.44, 1.03, 0.56, 44, 0.06);
-    backMass(0.98, r * 0.02, 0.96);
-    const quiff = new THREE.Mesh(new THREE.SphereGeometry(r * 0.50, 26, 20), mat);
-    quiff.scale.set(1.12, 0.34, 0.86);
-    quiff.rotation.x = -0.22;
-    quiff.position.set(0, r * 0.54, r * 0.50);
+    // v7 FIX round-1 — the scalp cap under the backwards cap is FLATTENED (grow
+    // 1.03 → 1.015, hairline sweep 0.06 → 0). Measured: with the sweep the hair
+    // reached z 0.795R at y=1.0R while the cap's front is only 0.756R there, so
+    // the blonde punched THROUGH the navy dome as a wedge — the last third of
+    // "his fight still reads 'man in a pudding bowl'". A man wearing a cap has
+    // flat hair under it; the front tuft is the separate `quiff` mesh below.
+    scalpCap(1.44, 1.015, 0.56, 44, 0.0);
+    backMass(0.96, r * 0.02, 0.94);
+    // v7 FIX round-1 — the quiff crested at +0.96R inside the ×1.35 scalp shell,
+    // i.e. ABOVE the backwards cap's rim (+0.69R): the blonde mass burst through
+    // the front of the cap, which is half of why the cap "collapses to a black
+    // yarmulke band". Dropped so the crest tops out at ≈0.67R — a tuft of hair
+    // showing UNDER the cap rim, which is what chad_body.png draws.
+    // v7 FIX round-2 — the crest is re-solved against the cap rim (now y = 0.52R):
+    // the blonde band must live BETWEEN the brow (0.16R) and that rim, or it
+    // either punches through the navy or disappears under it. This sits 0.26R…
+    // 0.44R and stands proud at z 0.60r, so a real fringe reads under the cap
+    // front from every angle.
+    const quiff = new THREE.Mesh(new THREE.SphereGeometry(r * 0.52, 26, 20), mat);
+    quiff.scale.set(1.16, 0.26, 0.88);
+    quiff.rotation.x = -0.26;
+    quiff.position.set(0, r * 0.26, r * 0.58);
     add(quiff);
   } else if (style === 'long') {
     // RACHEL (the friendly one — internal id `rachel_to`, display "Rachel"): long
@@ -1795,23 +2473,71 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     // the jaw: the face became an inset oval ~55% of the head width (a matryoshka
     // mask-hole) with a grey chin-strap band beneath the chin. A shallow cap +
     // high hairline + a real bun leaves the whole face plate, jaw and chin in skin.
-    scalpCap(1.28, 1.04, 0.36, 44, 0.11);
-    const backG = new THREE.Mesh(new THREE.SphereGeometry(r * 0.78, 24, 20), mat);
-    backG.scale.set(1.06, 1.00, 0.98);
-    backG.position.set(0, r * 0.06, -r * 0.40);
-    add(backG);
+    // v7 FIX round-1 — GRANDMA ASSEMBLY (this is the branch she actually gets:
+    // `hairStyle: 'shawl'` resolves to 'bun_soft'). Three defects, one geometry
+    // each, all measured:
+    //  · "hairline is a hard cut at mid-forehead" — 0.36 put the cap rim barely
+    //    above the brow. grandma_body.png has a HIGH hairline with a soft rolled
+    //    front; 0.52 plus the new hairline arch gives her a real forehead third.
+    //  · "bun is a detached sphere balanced on a hair cone (snowman/matryoshka)"
+    //    — the bun sat at +1.02r INSIDE the ×1.35 scalp shell, i.e. 1.38r up,
+    //    then added its own 0.38r on top: 0.38R of hair standing clear above the
+    //    crown, on a crown that is only 1.35R up. That single sphere is also why
+    //    headCountHair measured 4.759 against headCountSkull 5.52 (LAW 1 asks for
+    //    6.5–7.0 WITH HAIR ON) and why figureHeight read 0.815 of Andrew against
+    //    the bible's 0.76. The sheet's bun is small and on the BACK crown: it now
+    //    sits at +0.50r / z −0.62r, inside the back mass and below the crown line.
+    //  · the waves sat at +0.26r, z +0.10r — forward of the ear plane at temple
+    //    height, which is where the "matryoshka mask-hole" read came from.
+    scalpCap(1.26, 1.04, 0.40, 44, 0.14);
+    // THE ROLLED FRONT. The cap alone is a smooth dome and its rim is a clean
+    // arc, which under the arena key reads as a white SWIM CAP with a hard cut
+    // across the forehead — the critic's exact note, and the reason she still
+    // cold-read bald at fx7/fx8. grandma_body.png has an elderly updo: two soft
+    // rolls sweeping back off a centre part. These sit PROUD of the forehead
+    // (front z 0.96R against a 0.92R skull at that row) so they break the rim.
     for (const s of [-1, 1]) {
-      const wave = new THREE.Mesh(new THREE.SphereGeometry(r * 0.34, 18, 14), mat);
-      wave.scale.set(0.52, 0.86, 0.80);
-      wave.position.set(s * r * 0.80, r * 0.26, r * 0.10);
+      // v7 FIX round-2 — at 0.44r they were two small bumps on a smooth dome and
+      // she still cold-read as "a white knitted beanie" at arena framing
+      // (grandma-a3-f). Bigger, further apart and rotated harder, so the silver
+      // reads as two swept rolls off a centre part — which is the elderly updo
+      // grandma_body.png draws.
+      const roll = new THREE.Mesh(new THREE.SphereGeometry(r * 0.52, 22, 16), mat);
+      roll.scale.set(0.94, 0.46, 0.84);
+      roll.rotation.z = s * -0.30;
+      roll.position.set(s * r * 0.42, r * 0.46, r * 0.54);
+      add(roll);
+    }
+    const backG = new THREE.Mesh(new THREE.SphereGeometry(r * 0.76, 24, 20), mat);
+    backG.scale.set(1.02, 0.96, 1.00);
+    backG.position.set(0, r * 0.10, -r * 0.44);
+    add(backG);
+    // Temple waves brought FORWARD to the ear plane so the silver frames her
+    // face; parked at z −0.06r they left a bare dome and she read bald (fx7).
+    for (const s of [-1, 1]) {
+      const wave = new THREE.Mesh(new THREE.SphereGeometry(r * 0.36, 18, 14), mat);
+      wave.scale.set(0.48, 0.94, 0.90);
+      wave.position.set(s * r * 0.76, r * 0.26, r * 0.10);
       wave.rotation.z = s * -0.14;
       add(wave);
     }
-    // ONE bun. Two stacked spheres read as a snowman on the crown (grandma r6).
-    const bun = new THREE.Mesh(new THREE.SphereGeometry(r * 0.40, 26, 20), mat);
-    bun.scale.set(1.02, 0.88, 1.0);
-    bun.position.set(0, r * 1.02, -r * 0.30);
+    // ONE bun, on the BACK CROWN. Two stacked spheres read as a snowman (r6); a
+    // top bun reads as a matryoshka AND eats 1.7 heads off her proportion.
+    // v7 FIX round-2 — the bun READS AGAIN (note [A]: "grandma … has no bun").
+    // Round-1 buried it at the back crown to recover head-count, and it worked
+    // (headCountHair 4.76 → 5.96) but it also removed her only hair signature —
+    // grandma_body.png puts a small coiled bun clear of the crown at the back.
+    // It is back on the crown line, at 0.28r radius rather than 0.34r, so the
+    // silhouette gets its bun for ~0.10r of extra height rather than 0.38r.
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(r * 0.28, 24, 18), mat);
+    bun.scale.set(1.02, 0.88, 1.02);
+    bun.position.set(0, r * 0.86, -r * 0.46);
     add(bun);
+    // the coil: a flattened torus round its base so it reads as wound hair
+    const coil = new THREE.Mesh(new THREE.TorusGeometry(r * 0.20, r * 0.062, 8, 20), mat);
+    coil.rotation.x = Math.PI / 2 - 0.30;
+    coil.position.set(0, r * 0.76, -r * 0.44);
+    add(coil);
   } else if (style === 'side_part') {
     scalpCap(1.5, 1.03, 0.42);
     backMass(1.0, -r * 0.05, 1.05);
@@ -1913,9 +2639,22 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     // ~40% of the face as bare forehead (grandma r6: "a bald dome with a bun"),
     // where a human forehead is ~30% of face height. The sweep gives her the soft
     // rolled front an elderly updo has.
-    scalpCap(1.30, 1.04, 0.36, 44, 0.11);
-    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 0.80, 24, 20), mat);
-    back.scale.set(1.08, 1.02, 1.00);
+    // v7 FIX round-1 — GRANDMA ASSEMBLY. Three defects, one geometry each:
+    //  · "hairline is a hard cut at mid-forehead" — 0.36 put the rim barely
+    //    above the brow. The sheet has a HIGH hairline with a soft rolled front;
+    //    0.52 plus the new hairline arch gives her a real forehead.
+    //  · "bun is a detached sphere balanced on a hair cone (snowman/matryoshka)"
+    //    — the bun sat at +1.02r INSIDE the 1.35 scalp shell, i.e. 1.38r up, then
+    //    added its own 0.38r on top: 0.38R of hair standing above the crown. That
+    //    is also why headCountHair measured 4.76 against headCountSkull 5.52.
+    //    The sheet's bun is small and on the BACK crown; it now sits at +0.52r,
+    //    z −0.66r, tucked into the back mass — below the crown line, so hair
+    //    stops eating a head and a half off her proportion.
+    //  · "ZERO visible neck (LAW 1: neck is VISIBLE, never sunk)" — the back mass
+    //    reached the nape; it is pulled up and in.
+    scalpCap(1.26, 1.04, 0.52, 44, 0.12);
+    const back = new THREE.Mesh(new THREE.SphereGeometry(r * 0.74, 24, 20), mat);
+    back.scale.set(1.02, 0.94, 1.00);
     back.position.set(0, r * 0.04, -r * 0.42);
     add(back);
     for (const s of [-1, 1]) {
@@ -2033,10 +2772,10 @@ function addAccessory(group, acc, rig, config, detailed) {
     const arm = side < 0 ? group.leftArm : group.rightArm;
     if (!arm || !rig.skinMat) return;
     const knuck = new THREE.Mesh(
-      new THREE.TorusGeometry(0.03 * rig.ws, 0.013 * rig.ws, 6, 12, Math.PI * 1.2),
+      new THREE.TorusGeometry(0.026 * rig.ws, 0.011 * rig.ws, 6, 12, Math.PI * 1.2),
       rig.skinMat);
     knuck.rotation.set(Math.PI / 2, 0, side < 0 ? -0.5 : 0.5);
-    knuck.position.set(0, hy + dy, 0.075 + dz);
+    knuck.position.set(0, hy + dy, 0.062 + dz);
     arm.add(knuck);
   };
   switch (acc) {
@@ -2105,7 +2844,9 @@ function addAccessory(group, acc, rig, config, detailed) {
     case 'pearl_earrings': {
       // Seated on the EARLOBE and pushed forward of the hair curtain plane, or a
       // bob swallows them (they must read as the portrait's pearl studs).
-      const pearlGeo = new THREE.SphereGeometry(0.0145, 12, 10);
+      // 0.0145 is 0.16 of headR — a marble, not a stud (karen fx7: "two big white
+      // blobs at the ears"). 0.0092 is ≈0.10R, which is a pearl earring.
+      const pearlGeo = new THREE.SphereGeometry(0.0092, 12, 10);
       const pearlMat = Materials.custom(0xf6f0e2, { stops: 4 });
       for (const side of [-1, 1]) {
         const pearl = new THREE.Mesh(pearlGeo, pearlMat);
@@ -2170,35 +2911,68 @@ function addAccessory(group, acc, rig, config, detailed) {
       // v7 — re-solved for the taller skull: the dome is stretched to the v7 crown
       // (+1.35R) and its rim lands on the hairline (+0.70R). At the v6 numbers it
       // capped only to 1.19R and read as a narrow band across a bald crown.
-      const dome = new THREE.Mesh(
-        new THREE.SphereGeometry(r * 1.06, 34, 24, 0, Math.PI * 2, 0, 1.06), capMat);
-      dome.position.set(0, r * 0.02, -r * 0.05);
-      dome.scale.set(1.11, 1.35, 1.20);
-      dome.userData.noCast = true;
-      group.head?.add(dome);
-      const brim = new THREE.Mesh(
-        new THREE.CylinderGeometry(r * 0.66, r * 0.66, 0.014, 20, 1, false, 0, Math.PI), capMat);
-      brim.rotation.set(Math.PI / 2 - 0.18, Math.PI, 0);
-      brim.position.set(0, r * 0.55, -r * 1.24);
-      brim.userData.noCast = true;
-      group.head?.add(brim);
-      const btn = new THREE.Mesh(new THREE.SphereGeometry(r * 0.075, 10, 8), capMat);
-      btn.position.set(0, r * 1.46, -r * 0.04);
+      // v7 FIX round-1 — THE PITH HELMET AND THE HALO. Measured against the v7
+      // skull (half-width R, front +1.02R, back −1.14R, crown +1.35R) the v6 cap
+      // was scaled (1.11, 1.35, 1.20) on a 1.06R sphere: 1.18R at the sides and
+      // 1.27R at the FRONT, i.e. 18% and 25% PROUD of the head it was supposed to
+      // be worn on. That is the "navy pith helmet / man in a pudding bowl". The
+      // separate rim torus was worse: radius 1.03R held at y=+0.80R, where the
+      // skull is only 0.78R wide — a ring standing 0.25R off the skull all the
+      // way round, which is the "floating halo / full Saturn-ring ellipse visible
+      // from the FRONT with lateral spike tips".
+      //
+      // The cap now HUGS by construction. One solve, three numbers:
+      //   sides  cap = 1.06R  (0.06R of cloth over the skull's 1.00R)
+      //   front  cap = 1.09R  (over 1.02R)     back cap = 1.23R (over 1.14R)
+      // → z-half 1.16R centred at −0.07R, x-scale 1.00, and a y-scale that lands
+      // the rim on the hairline (+0.70R) with the crown at +1.42R. The rim band
+      // is now a SLICE OF THE SAME SPHERE, 1.5% proud — it cannot float, because
+      // it is the cap.
+      const CAP_R = r * 1.06;
+      const CAP_SX = 1.00, CAP_SY = 1.33, CAP_SZ = 1.094;
+      const CAP_Y = r * 0.01, CAP_Z = -r * 0.07;
+      // v7 FIX round-2 — rim 1.13 → 1.20 (y 0.61R → 0.52R). At 1.13 the rim sat
+      // ABOVE the quiff's crest, so the only hair anywhere was a sliver at one
+      // temple and the cap cold-read as a beanie/kippah at 3/4 (chad-a3-q).
+      const THETA = 1.20;                         // rim at cos(1.20)=0.362 of R
+      const seatCap = (mesh, proud = 1) => {
+        mesh.scale.set(CAP_SX * proud, CAP_SY, CAP_SZ * proud);
+        mesh.position.set(0, CAP_Y, CAP_Z);
+        mesh.userData.noCast = true;
+        group.head?.add(mesh);
+      };
+      seatCap(new THREE.Mesh(
+        new THREE.SphereGeometry(CAP_R, 36, 26, 0, Math.PI * 2, 0, THETA), capMat));
+      // sweatband: the bottom 16% of the SAME dome, a hair proud — a hat line
+      // above the brow that is geometrically incapable of standing off the skull.
+      seatCap(new THREE.Mesh(
+        new THREE.SphereGeometry(CAP_R, 36, 8, 0, Math.PI * 2, THETA * 0.84, THETA * 0.16), rimMat), 1.015);
+      // BILL — worn backwards: it leaves the occiput and angles down-and-back.
+      // A CylinderGeometry with phiLength π is a half-disc lying in the XZ plane
+      // occupying x ≥ 0; rotateY(π/2) swings that half onto z ≤ 0 (backwards),
+      // and only then does a small rotation.x drop its far edge. Doing the swing
+      // with rotation.y AFTER an x-rotation (as v6/v7 did) tips the disc up on
+      // edge instead — which is why the profile showed a navy FIN standing off
+      // the back of his head rather than a bill.
+      // v7 FIX round-2 — THE BILL WAS INSIDE THE CAP. Measured: the dome's back
+      // face at y = +0.73R sits at z = −1.07R, and the bill was a 0.66R half-disc
+      // centred at z = −0.57R — so 77% of its length was buried in the crown and
+      // only 0.16R ever cleared it. That is the note's "no bill from front …
+      // and none in profile; a plain navy dome". It now leaves the occiput AT the
+      // shell (z = −1.10R, where the dome's surface is at that height) and
+      // projects 0.6R clear, angled slightly down, which is a backwards cap.
+      const billGeo = new THREE.CylinderGeometry(r * 0.62, r * 0.62, 0.014, 24, 1, false, 0, Math.PI);
+      billGeo.rotateY(Math.PI / 2);
+      const bill = new THREE.Mesh(billGeo, capMat);
+      bill.rotation.x = -0.46;
+      bill.position.set(0, CAP_Y + r * 0.46, CAP_Z - r * 1.02);
+      bill.scale.set(1.06, 1.0, 1.0);
+      bill.userData.noCast = true;
+      group.head?.add(bill);
+      const btn = new THREE.Mesh(new THREE.SphereGeometry(r * 0.070, 10, 8), rimMat);
+      btn.position.set(0, CAP_Y + CAP_R * CAP_SY * 0.995, CAP_Z);
       btn.userData.noCast = true;
       group.head?.add(btn);
-      // front rim band: a shallow torus arc riding the dome's front edge, so the cap
-      // terminates in a HARD hat line above the brow instead of fading into hair.
-      // A shallow sweatband riding the dome's own rim — the v6 torus sat proud of
-      // the hair and read as a dark bar cutting THROUGH the quiff (chad arena3).
-      const rArc = Math.PI * 1.15;
-      const rimGeo = new THREE.TorusGeometry(r * 1.03, r * 0.036, 8, 30, rArc);
-      rimGeo.rotateZ(Math.PI / 2 - rArc / 2);
-      const rim = new THREE.Mesh(rimGeo, rimMat);
-      rim.rotation.set(Math.PI / 2 - 0.16, 0, 0);
-      rim.position.set(0, r * 0.80, -r * 0.06);
-      rim.scale.set(1.06, 1.0, 1.10);
-      rim.userData.noCast = true;
-      group.head?.add(rim);
       break;
     }
     case 'gold_chain': {
@@ -2229,11 +3003,14 @@ function addAccessory(group, acc, rig, config, detailed) {
       const chain = new THREE.Mesh(cGeo, chainMat);
       chain.scale.set(1.06, 0.86, 0.42);                // flatten onto the chest
       chain.rotation.x = -0.12;
-      chain.position.set(0, nb - 0.014, rig.frontZ - 0.004);
+      // v7 FIX round-2 — the arc's top ends sat at nb−0.014, INSIDE the polo
+      // collar (which runs nb−0.004 … nb+0.043): the chain rendered as a grey
+      // ring cutting across the collar with a visible break at the front-left.
+      chain.position.set(0, nb - 0.052, rig.frontZ - 0.004);
       group.add(chain);
       const pendant = new THREE.Mesh(new THREE.SphereGeometry(0.0125, 12, 10), chainMat);
       pendant.scale.set(1, 1.2, 0.62);
-      pendant.position.set(0, nb - 0.014 - cR * 0.86, rig.frontZ + 0.004);
+      pendant.position.set(0, nb - 0.052 - cR * 0.86, rig.frontZ + 0.004);
       group.add(pendant);
       break;
     }
@@ -2241,16 +3018,51 @@ function addAccessory(group, acc, rig, config, detailed) {
       // Slung cleanly OFF the left forearm and hanging outside the hip, not
       // embedded in the arm/torso (rider: orange sliver at the elbow). Parented
       // to the arm so it rides naturally, with a strap up to the shoulder.
-      const purse = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.1, 0.055), Materials.custom(0xaa6633));
-      purse.position.set(-0.02, hy + 0.02, 0.12);
-      group.leftArm?.add(purse);
-      const flap = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.04, 0.058), Materials.custom(0x8a4e22));
-      flap.position.set(-0.02, hy + 0.06, 0.12);
-      group.leftArm?.add(flap);
-      const strap = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.006, 6, 16, Math.PI), Materials.custom(0xc8a030));
-      strap.rotation.set(Math.PI / 2, 0, 0);
-      strap.position.set(-0.02, hy + 0.11, 0.12);
-      group.leftArm?.add(strap);
+      // v7 FIX round-1 — at z 0.12 the bag hung a full hand's width FORWARD of
+      // the arm with nothing joining it: the critic read "purse floating at hip".
+      // Pulled back against the forearm, shrunk to sheet scale, and the chain
+      // strap now runs UP the arm instead of hooping in mid-air.
+      // v7 FIX round-2 — IT IS A SHOULDER BAG, NOT A CUFF. Parented to the ARM at
+      // wrist height with a torus "handle" looped round the forearm, the whole
+      // assembly read exactly as the note describes: "an orange box cuffed around
+      // the wrist (oven-mitt read)" — because that is geometrically what it was.
+      // karen_body.png hangs a quilted flap bag from a CHAIN over the shoulder,
+      // resting at the hip. So: the bag is parented to the BODY at hip height and
+      // a two-run chain climbs from it to the shoulder line. Nothing rides the
+      // hand, so the hand is free to read as a hand.
+      const leather = Materials.custom(0xa9752f, { stops: 4 });
+      const dark = Materials.custom(0x8a5a20, { stops: 4 });
+      const chainM = Materials.custom(0xc8a030, { stops: 4 });
+      // Outboard enough to clear the hip, but FORWARD of the arm plane — parked
+      // level with it the bag half-disappeared behind the sleeve.
+      const bx = rig.bodyW * 0.50;
+      const byHip = rig.legLength + rig.torsoH * 0.14;
+      const bz = rig.frontZ * 0.86;
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(0.092, 0.070, 0.036), leather);
+      bag.position.set(bx, byHip, bz);
+      bag.rotation.y = -0.16;
+      group.add(bag);
+      const flap = new THREE.Mesh(new THREE.BoxGeometry(0.094, 0.026, 0.039), dark);
+      flap.position.set(bx, byHip + 0.030, bz);
+      flap.rotation.y = -0.16;
+      group.add(flap);
+      const clasp = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.004, 12), chainM);
+      clasp.rotation.x = Math.PI / 2;
+      clasp.position.set(bx + 0.004, byHip + 0.014, bz + 0.021);
+      group.add(clasp);
+      // the chain: two straight runs from the bag's top corners to the shoulder
+      const shY = rig.legLength + rig.torsoH * 0.97;
+      const shX = rig.shoulderX * 0.62;
+      for (const dz of [-1, 1]) {
+        const top = new THREE.Vector3(shX, shY, rig.shoulderZ + dz * rig.d.bodyD * 0.20);
+        const bot = new THREE.Vector3(bx + 0.024, byHip + 0.034, bz + dz * 0.014);
+        const dir = top.clone().sub(bot);
+        const len = dir.length();
+        const link = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0042, len, 7), chainM);
+        link.position.copy(bot.clone().addScaledVector(dir, 0.5));
+        link.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
+        group.add(link);
+      }
       break;
     }
     case 'mop': {
@@ -2324,38 +3136,99 @@ function addAccessory(group, acc, rig, config, detailed) {
       // and it buried the hunch the producer asked to see. It is now a SHOULDER
       // shawl: smaller radius, shallow band, no y-stretch, sitting on the yoke with
       // two slim front folds — the figure (and the lean) reads through it.
+      // v7 FIX round-1 — "a specular balloon shawl (LAW 5 says satin, low sheen)"
+      // and "arms fully swallowed by the shawl dome with two vestigial slit
+      // marks". Two causes: Materials.custom is a 3-stop toon ramp, and on a
+      // 0.29-radius smooth sphere band that ramp lands as one hard specular-
+      // looking terminator across her whole back — a balloon. And the band was
+      // wide enough to close over both deltoids.
+      // Now: the painted-cloth material (4-stop, with a woven map so the value
+      // break is broken up), a narrower band that stops INBOARD of the arms, and
+      // a scalloped knit hem so the lower edge is cloth, not a latitude line.
+      // v7 FIX round-2 — THE FLOATING CRESCENTS (note [B]: "the shawl back is a
+      // welded SPHERE hump; two crescent 'drape' ribbons float in mid-air above
+      // the shoulders attached to nothing"). Both were arithmetic, not styling:
+      //  · The band ran theta 0.50…1.32 on a sphere of R = bodyW·0.42 = 0.123,
+      //    whose horizontal radius therefore peaked at 0.969R = 0.119 — INSIDE a
+      //    torso that is 0.145 wide at that height. The only parts of it that ever
+      //    cleared the cloth were its top ring, which sat 0.06 ABOVE the shoulder
+      //    line. Two arcs floating over nothing.
+      //  · The phi window was wrong end-on: THREE seats φ=0 on −x, so
+      //    phiStart 0.30π…1.40π left the opening on her LEFT SIDE, not the front.
+      //
+      // A shawl is not a sphere band. It is a SHELL THAT RIDES THE TORSO — the
+      // same construction buildNeckline uses — sampling the jacket's own lathe
+      // rows 6% proud, open at the FRONT by construction, from the trapezius down
+      // to the waist, with a knit scallop on the hem.
       const sh = config.shawlColor ?? 0xa4a2c8;
-      const mShawl = Materials.custom(sh, { stops: 4 });
-      const R = rig.bodyW * 0.46;
-      const geo = new THREE.SphereGeometry(R, 40, 26, Math.PI * 0.22, Math.PI * 1.56, 0.52, 0.86);
-      geo.scale(1, 1.06, 0.90);
-      geo.computeVertexNormals();
-      const drape = new THREE.Mesh(geo, mShawl);
-      drape.position.set(0, rig.legLength + rig.torsoH * 0.88, rig.shoulderZ - R * 0.05);
-      group.add(drape);
-      // two slim front folds hanging off the shoulders down the chest
-      for (const s of [-1, 1]) {
-        const fold = new THREE.Mesh(new THREE.SphereGeometry(R * 0.17, 20, 16), mShawl);
-        fold.scale.set(0.40, 1.45, 0.34);
-        fold.position.set(s * R * 0.46, rig.legLength + rig.torsoH * 0.60, rig.frontZ * 0.92);
-        fold.rotation.z = s * 0.12;
-        group.add(fold);
+      const mShawl = Materials.cloth(sh);
+      const shoulderR = rig.shoulderRad, chestR = rig.chestR, waistR = rig.waistR;
+      const dS = shoulderR - chestR;
+      const rows = [
+        [shoulderR * 0.86, rig.torsoH * 0.960, 0.60],
+        [shoulderR * 0.998, rig.torsoH * 0.858, 0.52],
+        [chestR + dS * 0.76, rig.torsoH * 0.796, 0.48],
+        [chestR + dS * 0.44, rig.torsoH * 0.735, 0.46],
+        [chestR + dS * 0.16, rig.torsoH * 0.660, 0.45],
+        [chestR * 1.01, rig.torsoH * 0.575, 0.45],
+        [waistR * 1.14, rig.torsoH * 0.455, 0.46],
+        [waistR * 1.16, rig.torsoH * 0.360, 0.48],
+        [waistR * 1.12, rig.torsoH * 0.268, 0.52],
+        [waistR * 1.00, rig.torsoH * 0.230, 0.56],   // hem lip, turned back in
+      ];
+      const SEG = 40;
+      const pv = [], pi = [];
+      for (let i = 0; i < rows.length; i++) {
+        const [r0, yy, gapHalf] = rows[i];
+        // 1.06 kept the drape inside the sleeve line, so from the front it read as
+        // two narrow lilac straps rather than the reference's wide triangular
+        // knit falling to the elbow. 1.15 puts it ON the arms, where a shawl is.
+        const rr = r0 * 1.15;
+        const down = i / (rows.length - 1);
+        for (let j = 0; j <= SEG; j++) {
+          // φ measured from the FRONT (+z). The covered arc is everything outside
+          // the front gap, so the opening is at the sternum where a shawl's is.
+          const phi = gapHalf + (j / SEG) * (Math.PI * 2 - gapHalf * 2);
+          const k = 1 + (0.026 * Math.cos(phi * 8) + 0.014 * Math.cos(phi * 3)) * down;
+          pv.push(rr * k * Math.sin(phi), yy, rr * k * Math.cos(phi) * 0.68);
+        }
       }
+      for (let i = 0; i < rows.length - 1; i++) {
+        for (let j = 0; j < SEG; j++) {
+          const a = i * (SEG + 1) + j, b = a + 1, c = a + SEG + 1, d = c + 1;
+          pi.push(a, c, b, b, c, d);
+        }
+      }
+      const shGeo = new THREE.BufferGeometry();
+      shGeo.setAttribute('position', new THREE.Float32BufferAttribute(pv, 3));
+      shGeo.setIndex(pi);
+      shGeo.computeVertexNormals();
+      mShawl.side = THREE.DoubleSide;
+      const drape = new THREE.Mesh(shGeo, mShawl);
+      // seated EXACTLY like the torso lathe (same origin, same lean), because the
+      // rows above are samples of that lathe's own profile.
+      drape.position.set(0, rig.legLength, rig.torsoZ);
+      drape.rotation.x = rig.hunch;
+      group.add(drape);
       break;
     }
     case 'cameo_brooch': {
       // Grandma's cameo at the throat (portrait: a dark oval brooch closing the
       // shawl). Small, seated on the cloth, with a pale carved face inside.
-      const y = rig.legLength + rig.torsoH * 0.90;
+      // v7 FIX round-2 — seated on `collarY/collarZ` (the torso surface at the
+      // THROAT) instead of `frontZ` (the surface at the CHEST). Measured on
+      // Grandma the two differ by 0.05 — a fifth of her chest depth — which is
+      // exactly the note's "cameo brooch is a detached black rectangle hovering
+      // at chest height". It is also tilted to lie ON the sloping yoke.
       const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.021, 0.021, 0.007, 18), Materials.custom(0x2a2028, { stops: 4 }));
-      rim.rotation.x = Math.PI / 2;
+      rim.rotation.set(Math.PI / 2 - 0.30 + rig.hunch, 0, 0);
       rim.scale.set(0.82, 1, 1);
-      rim.position.set(0, y, rig.frontZ + 0.008);
+      rim.position.set(0, rig.collarY, rig.collarZ + 0.006);
       group.add(rim);
       const face = new THREE.Mesh(new THREE.CylinderGeometry(0.013, 0.013, 0.004, 16), Materials.custom(0xd8cbb8, { stops: 4 }));
-      face.rotation.x = Math.PI / 2;
+      face.rotation.set(Math.PI / 2 - 0.30 + rig.hunch, 0, 0);
       face.scale.set(0.82, 1, 1);
-      face.position.set(0, y, rig.frontZ + 0.013);
+      face.position.set(0, rig.collarY + 0.002, rig.collarZ + 0.011);
       group.add(face);
       break;
     }

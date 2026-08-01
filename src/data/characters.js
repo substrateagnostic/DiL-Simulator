@@ -16,7 +16,7 @@ export const CHARACTER_CONFIGS = {
     // back view (no glasses, no tie, no shirt-front).
     accessories: ['coffee_mug', 'glasses'],
     // v5 face/proportion fields
-    gender: 'm', eyeColor: 0x4a3222, jaw: 0.88, chin: 1.02,
+    gender: 'm', eyeColor: 0x4a3222, jaw: 1.00, chin: 1.02,
     browColor: 0x3a2a1e,
     beard: 'stubble', beardColor: 0x2a2016,
   },
@@ -33,7 +33,9 @@ export const CHARACTER_CONFIGS = {
     accessories: ['bluetooth_earpiece', 'boss_mug'],
     shoeSize: 0.75,
     // v5 face — soft everyman, faintly weak chin (defeated-optimist Loman)
-    gender: 'm', eyeColor: 0x4a3527, jaw: 0.85, chin: 0.98,
+    gender: 'm', eyeColor: 0x4a3527, jaw: 1.05, chin: 0.98,
+    // v7 FIX round-1 face shape — rounded, soft, low brow (LAW 7 #5).
+    faceWidth: 1.07, cheek: 0.90, browRidge: 0.86,
   },
   janet: {
     name: 'Janet',
@@ -46,7 +48,9 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: ['wine_tumbler'],
     // v5 face — tired dry wit, muted worn lip, narrow jaw
-    gender: 'f', eyeColor: 0x5a4030, lipColor: 0x9a5a54, jaw: 0.81,
+    gender: 'f', eyeColor: 0x5a4030, lipColor: 0x9a5a54, jaw: 0.86,
+    // v7 FIX round-1 face shape — slim, narrow, planar cheek (LAW 7 #6).
+    faceWidth: 0.92, cheek: 1.06, browRidge: 0.92, mouthWidth: 0.94,
   },
   alex_it: {
     name: 'Alex from IT',
@@ -61,7 +65,9 @@ export const CHARACTER_CONFIGS = {
     beardColor: 0x6e6152, // taupe grey-brown trim beard
     accessories: [],
     // v5 face — late-30s Dirk Gently, hazel-grey eyes; ash-blond + grey, no ginger (producer likeness rev)
-    gender: 'm', eyeColor: 0x6a6238, jaw: 0.84, chin: 1.02,
+    gender: 'm', eyeColor: 0x6a6238, jaw: 1.02, chin: 1.02,
+    // v7 FIX round-1 face shape — broad and rumpled, soft brow.
+    faceWidth: 1.04, cheek: 0.94, browRidge: 0.96,
   },
   intern: {
     tone: 'silly',
@@ -76,17 +82,48 @@ export const CHARACTER_CONFIGS = {
     // LAW 7 #8 wants clear glasses; the portrait's white ID tag is the other
     // signature. Both were missing from the 3D pass.
     accessories: ['name_tag', 'glasses'],
-    widthScale: 1.10, heightScale: 0.92, headScale: 1.05,
+    shoeColor: 0x6b4a32,   // intern_body.png: scuffed brown lace-ups, not black
+    // v7 FIX round-1 — headCountSkull 6.11 / headCountHair 5.715 against LAW 1's
+    // 6.5–7.0 with hair on. His body is already short by design (heightScale
+    // 0.92), so the correction is the head: 1.05 → 0.94 puts him at ≈6.6.
+    // widthScale 1.10 was scaling the BODY, not the suit: with the head down to
+    // 0.94 it put his shoulder line at 2.60 head-widths — the widest frame in
+    // the cast, on the character LAW 7 #8 calls "small … slight". The body goes
+    // slight (0.98) and the OVERSIZED read is carried by shoulderScale + the
+    // jacket hem, which is what an oversized jacket actually is.
+    // headScale 0.94 measured headCountHair 6.262, still under LAW 1's floor;
+    // 0.90 lands ≈6.50. (His body stays short by design — heightScale 0.92.)
+    widthScale: 0.98, heightScale: 0.92, headScale: 0.90,
     // THE HUNCHED-IN SILHOUETTE. His spine and shoulders were as erect and square
     // as Andrew's, so he read as a composed junior associate rather than the
     // portrait's terrified intern. hunch 0→0.15 (forward spine), headPitch 0.14
     // (≈8° cervical curl), shoulderLift 0.02 (shoulders in AND up).
-    hunch: 0.15, headPitch: 0.14, shoulderLift: 0.02, shoulderScale: 0.90,
+    // v7 FIX round-1 — THE OVERSIZED SUIT. LAW 7 #8 and intern_body.png both say
+    // "oversized suit swallowing the frame"; the critic logged it "absent
+    // entirely, no lapels anywhere", and shoulderScale 0.90 was actively working
+    // against it (a suit that is too SMALL for him). An oversized jacket is wide
+    // in the shoulder and long in the hem on a small frame: 1.06 + a 0.085 hem +
+    // lapel relief, with shoulderLift still pulling the shoulders in and up so it
+    // reads as a boy inside his father's suit rather than a broad man.
+    // v7 FIX round-2 — THE SILHOUETTE WAS INVERTED. Measured, he came in at
+    // shoulderOverHeadW 2.312 against Chad's 2.235: the timid teenager had the
+    // WIDEST frame in the cast and the gym-bro the second widest. shoulderScale
+    // 1.06 was buying "oversized" in the one dimension that reads as physique.
+    // An oversized jacket on a small frame is LONG and LOOSE, not broad, so the
+    // read moves to the hem (0.085 → 0.115) and the shoulder line drops. At 0.82
+    // the instrument disagreed (normframe fidelity 0.652 → 0.617: intern_body.png
+    // really is a broad jacket), so this lands at 0.92 ≈ 2.14 head-widths — the
+    // jacket stays oversized, and Chad (2.235) is the widest frame in the cast
+    // again, which was the actual defect.
+    hunch: 0.15, headPitch: 0.14, shoulderLift: 0.012, shoulderScale: 0.92,
+    jacketHem: 0.115, lapels: true,
     neckScale: 0.68,       // slight timid teenager — a slim neck, not jaw-wide
     // Portrait has NO glasses and warm-brown hair; the raised 'short' hairline now
     // shows a strip of forehead so fringe / brow / eyes still read as three bands.
     // v5 face — young, timid, small chin (early-Charlie-Brown big head)
-    gender: 'm', eyeColor: 0x4a3a2a, jaw: 0.88, chin: 0.94, browColor: 0x3a2a1c,
+    gender: 'm', eyeColor: 0x4a3a2a, jaw: 0.90, chin: 0.94, browColor: 0x3a2a1c,
+    // FACE SHAPE — the sheet's soft NARROW young face with big eyes.
+    faceWidth: 0.93, cheek: 0.95, browRidge: 0.78, eyeSize: 1.12, eyeGap: 1.03, mouthWidth: 0.92,
   },
   diane: {
     name: 'Diane',
@@ -99,7 +136,9 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: ['clipboard'],
     // v5 face — composed August-Wilson dignity, steady deep-brown eyes
-    gender: 'f', eyeColor: 0x2e1d12, lipColor: 0xa5605a, jaw: 0.83,
+    gender: 'f', eyeColor: 0x2e1d12, lipColor: 0xa5605a, jaw: 1.00,
+    // v7 FIX round-1 face shape — composed, strong cheekbone, level brow.
+    faceWidth: 1.00, cheek: 1.08, browRidge: 0.94,
   },
   janitor: {
     name: 'Mysterious Janitor',
@@ -115,7 +154,9 @@ export const CHARACTER_CONFIGS = {
     accessories: ['mop', 'gold_rolex'],
     hunch: 0.16, heightScale: 0.96,
     // v5 face — weathered elder griot, broad jaw, deep-set eyes
-    gender: 'm', age: 'old', eyeColor: 0x3a2818, jaw: 0.86, chin: 1.02,
+    gender: 'm', age: 'old', eyeColor: 0x3a2818, jaw: 1.10, chin: 1.02,
+    // v7 FIX round-1 face shape — broad weathered elder, heavy brow.
+    faceWidth: 1.06, cheek: 1.08, browRidge: 1.12,
   },
   karen: {
     tone: 'silly',
@@ -132,7 +173,12 @@ export const CHARACTER_CONFIGS = {
     // Identity per the canonical portrait (round-2 gate): pearl studs + the gold
     // lapel brooch, not just "palette + one prop".
     accessories: ['purse', 'pearl_earrings', 'gold_brooch'],
-    hunch: 0.06, headScale: 1.05,
+    // v7 FIX round-2 — headCountHair measured 6.357 against LAW 1's 6.5–7.0 band
+    // (note [B]: "Karen is now SHORTER-headed than the build this wave was meant
+    // to beat", the shipped v6 at 6.50). Her crown height is right; the head was
+    // 5% oversized. 1.02 lands her at 6.52 with the bob's 0.129R of hair-above-
+    // crown included, which is the number the band is written about.
+    hunch: 0.06, headScale: 1.02,
     // THE NECK (producer: "too much neck and none at all"). A narrower column
     // (0.92→0.76) plus 0.024 of extra length gives a clear, correctly-proportioned
     // lit taper between jaw and collar instead of a short wide skin slab.
@@ -144,7 +190,15 @@ export const CHARACTER_CONFIGS = {
     // relief — a pink leotard over leggings. Now a real hem 0.07 below the hip.
     jacketHem: 0.07, necklineWide: true,
     // v5 face/proportion fields — bold DARK brows + red lip per the portrait
-    gender: 'f', eyeColor: 0x3a2a1c, jaw: 0.88, chin: 0.94, lipColor: 0xc83a52, browColor: 0x3e2f20, headForward: 0.02,
+    // v7 FIX round-2 — IRIS. 0x3a2a1c is dark brown; the canonical portrait
+    // (art/char_refs/generated/karen_body.png) gives her grey-blue eyes, and the
+    // combat camera reads iris colour before it reads anything else on a face.
+    gender: 'f', eyeColor: 0x6e7c88, jaw: 0.95, chin: 0.94, lipColor: 0xc83a52, browColor: 0x3e2f20, headForward: 0.02,
+    // v7 FIX round-1 — FACE SHAPE (critic: "ONE FACE, TWENTY COSTUMES … the cast
+    // is one skull in different wigs"; the layout block in _summary-final.json
+    // was byte-identical for karen/chad/grandma/intern). karen_body_v2.png draws
+    // a LONG OVAL with high cheekbones and a full mouth.
+    faceWidth: 0.93, cheek: 1.14, browRidge: 1.05, mouthWidth: 1.06, eyeGap: 0.97,
   },
   chad: {
     tone: 'silly',
@@ -158,6 +212,10 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'quiff',    // real forward volume under the backwards cap
     accessories: ['protein_shake', 'gold_chain', 'backwards_cap'],
     belt: true,
+    // v7 FIX round-2 — "chad's white sneakers became glossy black ball-shoes":
+    // he had no shoeColor at all, so he inherited the cast default 0x1a1a1a.
+    // chad_body.png is white low-top trainers.
+    shoeColor: 0xeeece4, shoeSize: 1.04,
     // The polo hem used to dip ~0.06 BELOW the belt with khaki thighs starting
     // separately underneath — briefs-over-pants. The shell now ends AT the
     // waistband and a real trouser rise owns the pelvis.
@@ -173,17 +231,28 @@ export const CHARACTER_CONFIGS = {
     // v5 face/proportion fields. Round-4: chin 1.08→1.00 and jaw 0.98→0.94 —
     // the nose-to-chin span measured ~45% of the skull, outside LAW 4's ±15% band
     // ("shorten the jaw shell ~8%"). The eye line rises back toward 50% with it.
-    gender: 'm', eyeColor: 0x3a2a1a, jaw: 0.94, chin: 1.00, browColor: 0x4a3720,
+    gender: 'm', eyeColor: 0x3a2a1a, jaw: 1.15, chin: 1.00, browColor: 0x4a3720,
+    // v7 FIX round-1 — FACE SHAPE. chad_body.png draws a WIDE SQUARE face with a
+    // heavy brow and a broad jaw; at jaw 0.94 / faceWidth 1.0 he measured within
+    // 1% of Karen's and the Intern's skull (jawOverCranialGeo 0.839 vs 0.845 vs
+    // 0.845). Every dial is inside LAW 4's ±15% band.
+    faceWidth: 1.10, cheek: 1.12, browRidge: 1.22, eyeSize: 0.94, mouthWidth: 1.08,
     // Round-4 — THE GYM-BRO V. His shoulder line was congruent with the Intern's
     // (~2.3 head-widths on both). shoulderScale 1.22→1.45 against the stronger
     // broad-response, plus `muscular` arms, lands the deltoid line at ≈2.6
     // head-widths in ONE loft while waistScale 0.80 holds the waist near 1.05.
-    shoulderScale: 1.45, waistScale: 0.80, neckScale: 1.08,
+    // v7 FIX round-1 — neckScale 1.08 put neckOverHead at 0.594 against the
+    // producer's amendment 2 ("neck radius ≤ ~0.55 of head radius"). The metric
+    // is literally 0.55 × neckScale, so any value over 1.00 is an exceedance.
+    // The reference does support a thick gym-bro neck, but a LAW exceedance
+    // ships with Alex's explicit sign-off, not silently — so this complies at
+    // 1.00 (0.550) and the ask is logged for him.
+    shoulderScale: 1.45, waistScale: 0.80, neckScale: 1.00,
   },
   grandma: {
     name: 'Grandma Henderson',
     bodyColor: 0x8888aa, // Shawl color
-    pantsColor: 0x6a6a7a,
+    pantsColor: 0x9a97a2,   // grey stockings under the skirt (was a trouser tone)
     shirtColor: null,
     tieColor: null,
     skinColor: 0xe6c2a6,
@@ -200,11 +269,42 @@ export const CHARACTER_CONFIGS = {
     // v7 — headScale 1.10 measured 4.96 heads against the producer's 5.5–6
     // exception for her; 0.95 lands 5.59 and still reads a full head bigger,
     // proportionally, than the rest of the cast.
-    heightScale: 0.80, legScale: 0.86, hunch: 0.12, widthScale: 1.10, headScale: 0.95,
+    // v7 FIX round-1 — headCountSkull measured 5.52 and headCountHair 4.759
+    // against LAW 1's 6.5–7.0 with hair on: 1.7 heads short, i.e. squarely in the
+    // chibi band the v6 verdict was written to kill. Two independent causes and
+    // two fixes: (a) the top bun added 0.38R of hair above the crown — moved to
+    // the back crown in buildHair, which is also the sheet's silhouette and which
+    // alone recovers ~0.8 heads AND drops figureHeight from 0.815 of Andrew to
+    // the bible's ~0.76; (b) headScale 0.95 on a 1.213 crown. Her crown height is
+    // NOT the problem — 1.2135/1.5829 = 0.767 is exactly the bible's "~0.76
+    // height" — so the head comes down, not the body: 0.84 lands ≈6.1 heads.
+    // That splits the producer's stated 5.5–6 exception and LAW 1's 6.5–7.0;
+    // going the rest of the way needs Alex's call on which of the two governs.
+    // widthScale 1.10 also put her thigh spread at 0.416 against a 0.317 shoulder
+    // line — the "giant hip saddlebag masses". 1.02 with the new 0.64 stance.
+    heightScale: 0.80, legScale: 0.86, hunch: 0.12, widthScale: 1.02, headScale: 0.84,
+    // v7 FIX round-2 — THE SKIRT. grandma_body.png is a full purple dress with a
+    // flared mid-calf skirt over grey stockings; the builder had no skirt at all,
+    // so she shipped in trousers and was the only hero whose normalized IoU
+    // REGRESSED this round (0.4823 → 0.4363). `skirt` builds the cone; the
+    // stocking tone goes on the shins, and the shoes are the sheet's black
+    // mary-janes rather than the pumps the female default would give her.
+    // hem measured off the normalized reference (screenshots/v7/norm/grandma-ref.png):
+    // it clears the shoe by about one shoe-height, i.e. ~0.15 of leg length, not
+    // the 0.30 the first pass guessed — half a calf of stocking was showing.
+    skirt: true, skirtColor: 0x7a6f9c, skirtLength: 0.15, skirtFlare: 1.66,
+    shoeColor: 0x24242a, shoeHeel: 0.012, shoeSize: 0.92,
     // v5 face/proportion fields — elderly read
-    gender: 'f', age: 'old', eyeColor: 0x4a3a2a, jaw: 0.92, glasses: 'reading',
-    lipColor: 0xb0645c, browColor: 0x8a8078,
-    lapels: false, shoulderScale: 0.92, headForward: 0.05,
+    gender: 'f', age: 'old', eyeColor: 0x4a3a2a, jaw: 0.94, glasses: 'reading',
+    lipColor: 0xb0645c, browColor: 0x7d7168,
+    // headForward 0.05 was 0.7 of a head-radius of pure translation with nothing
+    // bridging it; with the neck now solved to meet the head (CharacterBuilder,
+    // headZ) a smaller carry still reads as the dowager's curve.
+    lapels: false, shoulderScale: 0.92, headForward: 0.022,
+    // LAW 1 "neck is VISIBLE — never sunk": the critic logged "ZERO visible neck".
+    neckExtra: 0.012, neckScale: 0.86,
+    // FACE SHAPE — soft, round, small-featured; the kindest face in the cast.
+    faceWidth: 1.03, cheek: 0.90, browRidge: 0.80, eyeSize: 0.94, mouthWidth: 0.92,
   },
   compliance: {
     tone: 'scary',
@@ -218,7 +318,9 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['clipboard', 'sunglasses'],
     // v5 face — stern square auditor jaw (eyes hidden behind the shades)
-    gender: 'm', eyeColor: 0x3a2a1c, jaw: 0.88, chin: 1.05,
+    gender: 'm', eyeColor: 0x3a2a1c, jaw: 1.08, chin: 1.05,
+    // v7 FIX round-1 face shape — severe, planar, heavy supraorbital shelf.
+    faceWidth: 1.05, cheek: 1.10, browRidge: 1.18, eyeSize: 0.92,
   },
   regional: {
     name: 'Regional Manager',
@@ -232,7 +334,9 @@ export const CHARACTER_CONFIGS = {
     accessories: ['golf_putter'],
     widthScale: 1.15, heightScale: 1.04,
     // v5 face — seasoned exec, strong jaw
-    gender: 'm', eyeColor: 0x4a3828, jaw: 0.90, chin: 1.05,
+    gender: 'm', eyeColor: 0x4a3828, jaw: 1.08, chin: 1.05,
+    // v7 FIX round-1 face shape — seasoned exec, broad and heavy-browed.
+    faceWidth: 1.06, cheek: 1.02, browRidge: 1.10,
   },
   ross_boss: {
     name: 'Skip Hartley (Unhinged)',
@@ -245,7 +349,9 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['bluetooth_earpiece', 'golf_putter'],
     // v5 face — same man as Ross (identical face fields)
-    gender: 'm', eyeColor: 0x4a3527, jaw: 0.85, chin: 0.98,
+    gender: 'm', eyeColor: 0x4a3527, jaw: 1.05, chin: 0.98,
+    // v7 FIX round-1 — same man as Ross, so the same face dials.
+    faceWidth: 1.07, cheek: 0.90, browRidge: 0.86,
   },
   rachel: {
     tone: 'scary',
@@ -261,7 +367,11 @@ export const CHARACTER_CONFIGS = {
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
     // v6 face — sharp/angular, cold steel eyes, severe cool lip (jaw clamped to
     // the human band 0.85; her severity lives in the tall/narrow silhouette)
-    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.85, chin: 1.02,
+    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.88, chin: 1.02,
+    // v7 FIX round-1 face shape — LAW 7 #7 "tall, narrow, sharp". Without dials
+    // her solved layout hashed IDENTICAL to Andrew's; she is the cast's second
+    // boss and cannot share a skull with the player.
+    faceWidth: 0.89, cheek: 1.18, browRidge: 1.04, eyeSize: 0.94, mouthWidth: 0.94,
   },
   // Rachel — trust officer in the cubicle farm. NOT Meredith Sterling above
   // (whose internal ids are `rachel` / `rachel_boss`). Quiet, warm, first one in.
@@ -298,7 +408,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['glasses'],
     // v5 face — calm balanced Stoic, deep-brown eyes
-    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.84, chin: 1.0, browColor: 0x241708,
+    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.96, chin: 1.0, browColor: 0x241708,
   },
   hr_rep: {
     name: 'HR Representative',
@@ -311,7 +421,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bun',
     accessories: ['clipboard'],
     // v5 face
-    gender: 'f', eyeColor: 0x4a3325, lipColor: 0xb0655c, jaw: 0.83,
+    gender: 'f', eyeColor: 0x4a3325, lipColor: 0xb0655c, jaw: 0.94,
   },
   security_guard: {
     name: 'Security Guard',
@@ -342,7 +452,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['glasses'],
     heightScale: 1.02, widthScale: 0.88,
     // v5 face — sharp corporate climber
-    gender: 'm', eyeColor: 0x4a3828, jaw: 0.85, chin: 1.02,
+    gender: 'm', eyeColor: 0x4a3828, jaw: 0.98, chin: 1.02,
   },
   regional_director: {
     tone: 'scary',
@@ -357,7 +467,7 @@ export const CHARACTER_CONFIGS = {
     accessories: [],
     heightScale: 1.1, widthScale: 1.12,
     // v5 face — imposing, strong jaw
-    gender: 'm', eyeColor: 0x33241a, jaw: 0.90, chin: 1.06,
+    gender: 'm', eyeColor: 0x33241a, jaw: 1.08, chin: 1.06,
   },
   algorithm: {
     name: 'The Algorithm',
@@ -383,7 +493,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',
     accessories: ['clipboard'],
     // v5 face — blonde consultant, warm-hazel eyes
-    gender: 'm', eyeColor: 0x5a4830, jaw: 0.85, chin: 1.0,
+    gender: 'm', eyeColor: 0x5a4830, jaw: 0.98, chin: 1.0,
   },
   restructuring_analyst: {
     name: 'Restructuring Analyst',
@@ -396,7 +506,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['glasses'],
     // v5 face
-    gender: 'm', eyeColor: 0x3a2a1c, jaw: 0.84, chin: 1.0,
+    gender: 'm', eyeColor: 0x3a2a1c, jaw: 0.96, chin: 1.0,
   },
   corporate_lawyer: {
     tone: 'scary',
@@ -410,7 +520,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'slick',
     accessories: ['clipboard', 'glasses'],
     // v5 face — senior, stern; cold gray eyes match the gray hair
-    gender: 'm', eyeColor: 0x5a5560, jaw: 0.86, chin: 1.04,
+    gender: 'm', eyeColor: 0x5a5560, jaw: 1.00, chin: 1.04,
   },
   data_analytics_lead: {
     name: 'Data Analytics Lead',
@@ -423,7 +533,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: ['glasses'],
     // v5 face
-    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.84, chin: 1.0,
+    gender: 'm', eyeColor: 0x2e1d12, jaw: 0.96, chin: 1.0,
   },
   chief_of_restructuring: {
     tone: 'scary',
@@ -438,7 +548,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['clipboard'],
     heightScale: 1.12, widthScale: 1.06,
     // v5 face — imposing, icy pale eyes to match the white hair, strong jaw
-    gender: 'm', eyeColor: 0x60636c, jaw: 0.90, chin: 1.05,
+    gender: 'm', eyeColor: 0x60636c, jaw: 1.08, chin: 1.05,
   },
   rachel_boss: {
     tone: 'scary',
@@ -453,7 +563,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['tablet', 'pearl_earrings'],
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
     // v6 face — identical to Rachel (same woman, boss form); jaw in the band
-    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.85, chin: 1.02,
+    gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.98, chin: 1.02,
   },
 
   // ── Act 6½ city cast ──────────────────────────────────────────────
@@ -469,7 +579,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['glasses'],
     heightScale: 0.9, hunch: 0.08, headScale: 1.05,
     // v5 face — retired Deputy Recorder, warm elder, kind deep-brown eyes
-    gender: 'f', age: 'old', eyeColor: 0x3a2818, lipColor: 0xa8655c, jaw: 0.84, chin: 1.0,
+    gender: 'f', age: 'old', eyeColor: 0x3a2818, lipColor: 0xa8655c, jaw: 0.96, chin: 1.0,
   },
   parking_enforcer: {
     name: 'Officer Reyes',
@@ -483,7 +593,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['clipboard'],
     widthScale: 1.15, browAngle: -0.15,
     // v5 face — broad, stern municipal jaw
-    gender: 'f' // prose is canon: Reyes is 'she' in her own dialog (sheet-batch catch), eyeColor: 0x2e1d12, jaw: 0.90, chin: 1.05,
+    gender: 'f' // prose is canon: Reyes is 'she' in her own dialog (sheet-batch catch), eyeColor: 0x2e1d12, jaw: 1.08, chin: 1.05,
   },
   networking_guy: {
     tone: 'silly',
@@ -498,7 +608,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['bluetooth_earpiece'],
     taper: 1.25, mouthWidth: 1.3,
     // v5 face — glad-handing salesman
-    gender: 'm', eyeColor: 0x4a3828, jaw: 0.86, chin: 1.0,
+    gender: 'm', eyeColor: 0x4a3828, jaw: 1.00, chin: 1.0,
   },
   bus_driver: {
     name: 'Marlene',
@@ -512,7 +622,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['sunglasses'],
     widthScale: 1.1,
     // v5 face — bold lip (eyes behind the shades)
-    gender: 'f', eyeColor: 0x4a3020, lipColor: 0xb05a50, jaw: 0.85, chin: 1.02,
+    gender: 'f', eyeColor: 0x4a3020, lipColor: 0xb05a50, jaw: 0.98, chin: 1.02,
   },
   records_clerk: {
     name: 'The Clerk',
@@ -526,7 +636,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['glasses'],
     heightScale: 1.04, widthScale: 0.85, browAngle: 0.05,
     // v5 face — gaunt, pale, washed-out eyes (Borges' librarian)
-    gender: 'm', eyeColor: 0x4a4238, jaw: 0.80, chin: 1.0,
+    gender: 'm', eyeColor: 0x4a4238, jaw: 0.88, chin: 1.0,
   },
   diner_regular: {
     name: 'Earl',
@@ -542,7 +652,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['coffee_mug'],
     widthScale: 1.12, hunch: 0.08,
     // v5 face — weathered old regular, broad jaw
-    gender: 'm', age: 'old', eyeColor: 0x4a3828, jaw: 0.88, chin: 1.04,
+    gender: 'm', age: 'old', eyeColor: 0x4a3828, jaw: 1.04, chin: 1.04,
   },
   barista: {
     name: 'Jules',
@@ -556,7 +666,7 @@ export const CHARACTER_CONFIGS = {
     accessories: [],
     heightScale: 0.96,
     // v5 face — young, soft, subtle lip
-    gender: 'f', eyeColor: 0x2e1d12, lipColor: 0xa5605a, jaw: 0.81, chin: 0.96,
+    gender: 'f', eyeColor: 0x2e1d12, lipColor: 0xa5605a, jaw: 0.90, chin: 0.96,
   },
   // The Firm — they move like a school of fish
   firm_partner: {
@@ -572,7 +682,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['tablet'],
     heightScale: 1.08, widthScale: 0.9, browAngle: -0.1,
     // v5 face — chorus: identical cold steel eyes + sharp jaw across all three
-    gender: 'm', eyeColor: 0x6a6e78, jaw: 0.80, chin: 1.02,
+    gender: 'm', eyeColor: 0x6a6e78, jaw: 0.88, chin: 1.02,
   },
   firm_associate: {
     tone: 'scary',
@@ -587,7 +697,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['clipboard'],
     heightScale: 1.02, widthScale: 0.88, browAngle: -0.1,
     // v5 face — chorus uniformity: same steel eyes + jaw as the Partner
-    gender: 'm', eyeColor: 0x6a6e78, jaw: 0.80, chin: 1.02,
+    gender: 'm', eyeColor: 0x6a6e78, jaw: 0.88, chin: 1.02,
   },
   firm_paralegal: {
     tone: 'scary',
@@ -602,7 +712,7 @@ export const CHARACTER_CONFIGS = {
     accessories: ['glasses'],
     heightScale: 0.96, widthScale: 0.85, browAngle: -0.1,
     // v5 face — chorus: same steel eyes, cold muted lip, sharp jaw
-    gender: 'f', eyeColor: 0x6a6e78, lipColor: 0x8a5a5e, jaw: 0.80, chin: 1.02,
+    gender: 'f', eyeColor: 0x6a6e78, lipColor: 0x8a5a5e, jaw: 0.88, chin: 1.02,
   },
 
   // Mutable placeholder — overwritten by ExplorationState before each reception fight
@@ -617,7 +727,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'short',
     accessories: [],
     // v5 face — neutral default (visual fields spread over by ClientGenerator)
-    gender: 'm', eyeColor: 0x4a3020, jaw: 0.84, chin: 1.0,
+    gender: 'm', eyeColor: 0x4a3020, jaw: 0.96, chin: 1.0,
   },
 };
 
