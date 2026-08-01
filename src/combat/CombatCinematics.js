@@ -52,8 +52,16 @@ const POSES = {
   // crossing down to the enemy mark (which clipped the lens into the enemy's body
   // — verified on the burst). Andrew's staggering face + the damage number own
   // the frame; aimed at his head (~2.05, 1.5, 3.40).
-  victim:     { pos: { x: -0.55, y: 0.44,  z: -2.72 }, look: { x: 2.05, y: 0.90,  z: 3.40  } },
-  victimHard: { pos: { x: -0.45, y: 0.38,  z: -2.88 }, look: { x: 2.08, y: 0.88,  z: 3.42  } },
+  // V8.1: the two victim poses are the only ones authored in near-ABSOLUTE terms
+  // (they aim at Andrew's head on the front stage, not at a small delta from the
+  // rest aim), so the 0.55 stage lift added to _basePos.y/_baseLook.y in
+  // CombatScene would have carried them 0.55 above his crown. Both y values are
+  // rebased by −0.55 here, which puts the camera and the aim back at the exact
+  // world position and world target they shipped at — the victim cut is
+  // unchanged. Every other pose is a small delta on the rest aim and simply
+  // translates with the stage, which is what the lift is for.
+  victim:     { pos: { x: -0.55, y: -0.11, z: -2.72 }, look: { x: 2.05, y: 0.35,  z: 3.40  } },
+  victimHard: { pos: { x: -0.45, y: -0.17, z: -2.88 }, look: { x: 2.08, y: 0.33,  z: 3.42  } },
   // Enemy coil: lean gently toward them as they wind up.
   lean:       { pos: { x: 0,     y: 0.05,  z: -0.30 }, look: { x: 0,    y: 0.05,  z: -0.18 } },
   leanHeavy:  { pos: { x: 0,     y: 0.11,  z: -0.46 }, look: { x: 0,    y: 0.05,  z: -0.26 } },

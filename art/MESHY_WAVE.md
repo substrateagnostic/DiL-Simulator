@@ -420,3 +420,132 @@ rig, `Wt0 == Wd0` and the output is the donor track.
 - `_review_v8/review.json` — per-character tilt, per-clip offsets, foot bands, skate
 - `_review_v8/ab_ross_{grounded,hovering}.png` — in-game A/B on the real arena
 - `_clips/fight_v8_{ross,grandma}_*.png` — in-game beat stills, real call path
+
+---
+
+# V8.1 — FRAMING: THE RULER AND THE CAMERA (2026-08-01)
+
+V8's spine and floor work was signed off. The round FAILED on framing: seven of
+the nine story enemies had their scalp off the top edge of the shipping combat
+view, and the enemy nameplate panel (y = 15..145) covered several more. The V8
+in-game sample was two characters — ross_boss and grandma — and grandma is the
+SHORTEST model in the cast with 164 px of headroom to spare. A sample that
+included the best case and nothing near the worst read as clean.
+
+## CORRECTION TO THE V8 RECORD — grounding did NOT push ross's head out of frame
+
+V8 reported that the foot-plant "moved him ~25 px further down, so slightly more
+of the head leaves frame." That is backwards, and it is corrected here so nobody
+spends a round hunting a regression that never happened.
+
+Re-read `_review_v8/ab_ross_hovering.png` against `_review_v8/ab_ross_grounded.png`:
+the soles drop from y≈545 to y≈570 and the SCALP DROPS WITH THEM. Moving a figure
+down moves his head down — away from the top edge. Grounding GAINED about 25 px
+of top clearance and pushed the head further BEHIND the nameplate panel, which is
+occlusion, not cropping. The crop was 100% pre-existing (a flat stage scale, see
+below) and V8 slightly improved it.
+
+## Defect 1 — the ruler lied by 5.3% on two characters
+
+`CombatScene._buildMeshyCombatant` fits the GLB by `probeH / glbH`, where probeH
+came from `Box3.setFromObject(probe).getSize().y` on a throwaway PROCEDURAL build
+of the same character. `getSize().y` is max MINUS min, and the `golf_putter`
+accessory (`CharacterBuilder` case 'golf_putter': shaft at y −0.35, head mesh at
+y −0.70, club rotated 0.2) hangs BELOW the floor plane. Measured min.y over all
+38 configs — two are negative by more than a millimetre, and both carry the putter:
+
+| id | before (max−min) | after (no accessories) | min.y | error |
+|---|---|---|---|---|
+| ross_boss | 1.680 | 1.596 | −0.084 | +5.3% |
+| regional | 1.724 | 1.660 | −0.065 | +3.9% |
+| grandma | 1.214 | 1.211 | −0.004 | +0.3% (cane ferrule) |
+| chad | 1.708 | 1.707 | 0.000 | +0.06% (cap, above the scalp) |
+| the other 34 | — | — | 0.000 | unchanged |
+
+Skip Hartley and the Regional Manager were rendered materially larger than the
+rest of the cast for no authored reason. The fix builds the probe with
+`accessories: []` — a body ruler measures the body — which is immune to the next
+prop someone hangs off a hand, rather than patching `max.y` and waiting for a
+prop that floats ABOVE the head. `tools/meshy-probe-audit.mjs` prints the whole
+table, before and after, and names every config the change moves.
+
+## Defect 2 — a flat stage scale on a cast with a 48% height spread
+
+The solo stage scale was a constant 1.9 with no reference to how tall the figure
+is. The cast runs 1.211 m (grandma) to 1.787 m (the Chief), so 1.9 put the Chief
+at 3.40 world units in a frame that holds about 2.8. Measured crown clearance
+before, live build, 1440x810, negative = off frame: chief −74, regional_director
+−58, rachel_boss −58, regional −56, security_guard −36, chad −35, ross_boss −28,
+karen +7, grandma +164.
+
+**The framing law** (`CombatScene.STAGE` / `_stageScale`): on-stage height is a
+COMPRESSED remap of true height — 1.20..1.80 m of character maps onto 2.28..2.70
+world units, clamped at both ends. Two consequences:
+
+- The tallest figure the stage can EVER produce is 2.70 units, for any character,
+  however tall, including ones nobody has made yet. That is what makes a single
+  fixed camera lift safe forever.
+- Ordering survives. The Chief still stands visibly taller than grandma (2.68 vs
+  2.19 measured on stage), just not by half again.
+
+Straight `budget / height` was the other candidate and was rejected: it collapses
+everyone at or above ~1.45 m onto exactly one height — a cast of identical
+mannequins. Neither could scale alone reach the target: the frame holds ~2.3
+units of figure with 160 px of headroom, so a scale-only fix that preserved the
+real 48% spread would have put grandma at 1.56 units — shrinking the cast into
+irrelevance, which is the failure mode the judge explicitly warned against.
+
+## Defect 2b — the camera, fitted to the tallest combatant
+
+`_basePos.y` 1.5 → **2.05** and `_baseLook.y` 0.95 → **1.50**. Camera and look
+target move by the SAME 0.55, so the pitch is unchanged: this is a pure vertical
+reframe, not a new downward angle. The old rig put the ground line at 565 px of
+an 810 px frame — 245 px of empty floor under the enemy's shoes and not enough
+sky for anyone over ~2.3 units. The lift is sized off `STAGE.HI` so a 2.70-unit
+figure crowns at ~193 px, 48 px clear of the nameplate.
+
+Side effect, and an improvement: Andrew stops being a full-height 810 px figure
+pinned to the right edge and becomes an actual over-the-shoulder foreground —
+crown ~226, cropped at the thigh.
+
+Group fights lost their extra 1.6/1.9 trim (`STAGE.GROUP` is now 1.0). The law
+already bounds height and `setCombatants` already dollies to z 5.9 for a crowd;
+the second trim just shrank the trio into the floor (crowns at 297–323 px under a
+130 px nameplate row). One law for everyone.
+
+## Defect 3 — the sampling gap, closed with an instrument
+
+`tools/meshy-framing-gate.mjs` boots the REAL preview build, starts EVERY solo
+story encounter plus the three group encounters through the game's own
+`_startCombat`, confirms which cast built each body, and measures the CROWN —
+the highest SKINNED vertex, CPU-skinned through `SkinnedMesh.applyBoneTransform`
+off `matrixWorld`. Never a geometry bounding box: `SkinnedMesh.geometry.boundingBox`
+is BIND space and reports garbage. It fails the run (exit 1) if any enemy crown
+lands above y = 160. `--nomeshy` gates the procedural fallback cast the same way;
+`--shots` writes the stills; `tools/meshy-frame-sheet.mjs` stitches them into one
+labelled sheet with the gate line drawn across every cell.
+
+The Algorithm is measured and reported but NOT gated: it has no head, and its
+topmost geometry is an unnamed FX BoxGeometry ~0.25 units above the visible
+pillar rim. (At the old flat 1.9 it stood 4.12 units and left the frame entirely;
+the law puts it at 2.71 and its visible rim at ~170 px.)
+
+## Numbers
+
+| | before | after |
+|---|---|---|
+| crown clearance, worst story enemy | −74 px (chief_of_restructuring) | **+194 px** |
+| story enemies with the crown off frame | 7 of 9 | **0 of 28 gated enemies** |
+| enemies behind the nameplate (y < 145) | 9 of 9 | **0** |
+| combatants measured in the real build | 2 (one of them the shortest model) | **54** — 28 gated enemies (20 solo Meshy + 8 in group fights), the Algorithm as info, 25 ally rows |
+| ross_boss ruler | 1.680 (+5.3%) | 1.596 |
+| regional ruler | 1.724 (+3.9%) | 1.660 |
+| on-stage height spread | 2.30–3.40 units | 2.19–2.68 units |
+| procedural (`?nomeshy`) cast | not measured | 0 failing |
+
+## V8.1 review artefacts
+
+- `art/char_refs/meshy_pilot/_framing/v81_framing_sheet.png` — the four worst
+  offenders plus the shortest character, in-game, gate line drawn
+- `_framing/frame_<encounter>.png` — every gated encounter, real build, HUD on
+- `art/char_refs/meshy_pilot/_framing_gate.json` — the full measurement table

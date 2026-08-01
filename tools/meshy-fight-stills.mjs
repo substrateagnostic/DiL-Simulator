@@ -63,7 +63,8 @@ await shot('stance');
 const allyCam = async (on) => page.evaluate((v) => {
   const s = window.__combat.scene;
   if (v) { s._basePos.x = 1.55; s._basePos.y = 1.45; s._basePos.z = 5.1; s._baseLook.x = 1.60; s._baseLook.y = 1.00; s._baseLook.z = 2.62; }
-  else { s._basePos.x = 0; s._basePos.y = 1.5; s._basePos.z = 5; s._baseLook.x = 0; s._baseLook.y = 0.95; s._baseLook.z = 0; }
+  // V8.1 stage lift — must match CombatScene's _basePos/_baseLook rest anchors.
+  else { s._basePos.x = 0; s._basePos.y = 2.05; s._basePos.z = 5; s._baseLook.x = 0; s._baseLook.y = 1.50; s._baseLook.z = 0; }
 }, on);
 
 await allyCam(true);

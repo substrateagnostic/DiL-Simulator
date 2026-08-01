@@ -51,7 +51,16 @@ export class CombatScene {
     this.shakeAmount = 0;
     this.flashTimer = 0;
     this.flashColor = null;
-    this._basePos = { x: 0, y: 1.5, z: 5 };
+    // CAMERA LIFT (V8.1). The rig used to sit at y 1.5 looking at y 0.95, which
+    // put the ground line at 565 px of an 810 px frame — 245 px of empty floor
+    // under the enemy's shoes and not enough sky for anyone taller than about
+    // 2.3 world-units. Camera and look target are raised BY THE SAME 0.55, so
+    // the pitch is unchanged and this is a pure vertical reframe, not a new
+    // downward angle: the shot translates, the perspective does not. Sized off
+    // the framing law's ceiling (STAGE.HI = 2.70) so the tallest figure the
+    // stage can ever produce crowns at ~193 px — 48 px clear of the enemy
+    // nameplate panel, which occupies y 15..145.
+    this._basePos = { x: 0, y: 2.05, z: 5 };
     // Hit feel
     this.freezeTimer = 0;     // hit-stop: freezes all animation briefly on big hits
     this._punchT = 1;         // camera punch-in progress (1 = idle)
@@ -63,7 +72,7 @@ export class CombatScene {
     // and always eases back toward zero, so the camera is GUARANTEED to
     // return to _basePos when a timeline zeroes its targets ("always return
     // to _basePos"). The rig also owns lookAt so pans/orbits are possible.
-    this._baseLook = { x: 0, y: 0.95, z: 0 };
+    this._baseLook = { x: 0, y: 1.50, z: 0 };  // +0.55 with _basePos.y — see the lift note above
     this._cinePos = { x: 0, y: 0, z: 0 };
     this._cinePosTarget = { x: 0, y: 0, z: 0 };
     this._cineLook = { x: 0, y: 0, z: 0 };
@@ -79,8 +88,8 @@ export class CombatScene {
   }
 
   _setup() {
-    this.camera.position.set(0, 1.5, 5);
-    this.camera.lookAt(0, 0.95, 0);
+    this.camera.position.set(this._basePos.x, this._basePos.y, this._basePos.z);
+    this.camera.lookAt(this._baseLook.x, this._baseLook.y, this._baseLook.z);
 
     // ARENA RELIGHT — combat was authored against the broken output transform
     // and now renders brighter. Key/fill are pulled DOWN so combatants sit in
@@ -333,6 +342,8 @@ export class CombatScene {
   // this slot back to the procedural v7 build. Returns { group, animator }
   // shaped exactly like the procedural pair either way, so nothing downstream
   // knows which cast it got.
+  // Returns { group, animator, figureH } where figureH is the combatant's height
+  // in MODEL units at scale 1 — the number the stage-framing law measures from.
   _buildCombatant(config, id) {
     if (MESHY_MODE) {
       const built = this._buildMeshyCombatant(config, id);
@@ -340,7 +351,54 @@ export class CombatScene {
     }
     const group = buildCharacter(config, { detailed: true });
     const animator = new CharacterAnimator(group);
-    return { group, animator };
+    // max.y, not getSize().y — same reason the Meshy ruler strips accessories:
+    // a prop below the floor plane would inflate the reading.
+    const figureH = new THREE.Box3().setFromObject(group).max.y;
+    return { group, animator, figureH };
+  }
+
+  // ── STAGE FRAMING LAW ────────────────────────────────────────────────────
+  // The stage scale used to be a flat 1.9 with no reference to how tall the
+  // figure actually is. The cast spans 1.21 m (grandma) to 1.79 m (the Chief of
+  // Restructuring) — a 48% spread — so a constant multiplier put the Chief at
+  // 3.40 world-units on a stage whose frame holds about 2.8, and SEVEN of the
+  // nine story enemies had their scalp off the top edge of the combat camera
+  // (measured, 1440x810: chief −74 px, regional_director −58, rachel_boss −58,
+  // regional −56, security_guard −36, chad −35, ross_boss −28, karen +7).
+  //
+  // The law: on-stage height is a COMPRESSED remap of true height. Everyone
+  // lands between STAGE_LO and STAGE_HI world-units, so the tallest figure the
+  // frame ever has to hold is STAGE_HI — a bound that holds for any future
+  // character, however tall — while the ordering survives: the Chief still
+  // stands visibly taller than grandma (2.69 vs 2.29), just not by half again.
+  //
+  // Straight `budget / height` was the other candidate and was rejected: it
+  // collapses everyone at or above ~1.45 m onto exactly one height, which reads
+  // as a cast of identical mannequins. The camera lift (see _basePos) is sized
+  // for STAGE_HI, so the two halves are one solve.
+  static STAGE = {
+    H_LO: 1.20, H_HI: 1.80,   // the cast's true height band
+    LO: 2.28, HI: 2.70,       // the on-stage band it maps onto (world units)
+    // SCALE_MIN only ever binds on the Algorithm, the one non-human body on the
+    // stage (procedural monolith, 2.17 units tall at scale 1). At the old flat
+    // 1.9 it stood 4.12 units and was off the top of the frame entirely; 1.15
+    // is the value that finally puts its crown clear of the nameplate row.
+    SCALE_MIN: 1.15, SCALE_MAX: 1.95,
+    // Group fights used to take an extra 1.6/1.9 trim purely to keep three heads
+    // in frame. The law already bounds height, and setCombatants dollies the rig
+    // to z 5.9 for a crowd, so a second trim just shrank the trio into the floor
+    // (measured crowns at 297–323 px against a 130 px nameplate row — a third of
+    // the frame empty above them). One law for everyone.
+    GROUP: 1.0,
+  };
+
+  _stageScale(figureH, count) {
+    const S = CombatScene.STAGE;
+    if (!(figureH > 0.2)) return count > 1 ? 1.6 : 1.9;   // ruler broke — old constants
+    const t = Math.max(0, Math.min(1, (figureH - S.H_LO) / (S.H_HI - S.H_LO)));
+    const worldH = S.LO + (S.HI - S.LO) * t;
+    const scale = Math.max(S.SCALE_MIN, Math.min(S.SCALE_MAX, worldH / figureH));
+    return count > 1 ? scale * S.GROUP : scale;
   }
 
   // Meshy path. The model comes from MeshyCast's session cache, which
@@ -358,7 +416,18 @@ export class CombatScene {
     const inst = MeshyCast.instance(modelId);
     if (!inst) return null;
 
-    const probe = buildCharacter(config, { detailed: false });
+    // THE RULER IS BUILT WITHOUT ACCESSORIES. getSize().y is max MINUS min, and
+    // a held prop can hang BELOW the floor plane: the golf putter
+    // (CharacterBuilder 'golf_putter' — shaft at y −0.35, head at y −0.70)
+    // drives the probe's min.y to −0.084 on ross_boss and −0.065 on regional, so
+    // the ruler over-read their height by 5.3% and 3.9% and the Meshy body was
+    // scaled up by that margin — a boss rendered materially bigger than the cast
+    // for no authored reason. Stripping accessories is the intention-revealing
+    // form (a body ruler measures the body) and is immune to the next prop
+    // someone hangs off a hand. Measured effect: ross_boss 1.680 → 1.596,
+    // regional 1.724 → 1.660, grandma 1.214 → 1.211 (cane ferrule, 4 mm),
+    // chad 1.708 → 1.707 (cap, 1 mm); the other 34 configs do not move.
+    const probe = buildCharacter({ ...config, accessories: [] }, { detailed: false });
     const probeH = new THREE.Box3().setFromObject(probe).getSize(new THREE.Vector3()).y;
     probe.traverse(c => { if (c.isMesh && c.geometry) c.geometry.dispose(); }); // materials are cached — never dispose
 
@@ -409,7 +478,9 @@ export class CombatScene {
       ground: { node: inner, offsets: ground },
     });
     group.userData.meshy = true;
-    return { group, animator };
+    // The GLB is fitted to the probe by `fit`, so this IS the on-stage height at
+    // scale 1 — including the clamped-ruler fallback, where fit is 1.
+    return { group, animator, figureH: glbH * fit };
   }
 
   // Set up the combat stage. enemyIds/partyIds are CHARACTER_CONFIGS keys.
@@ -426,12 +497,12 @@ export class CombatScene {
       const id = enemyIds[i];
       const config = CHARACTER_CONFIGS[id];
       if (!config) continue;
-      const { group, animator } = this._buildCombatant(config, id);
+      const { group, animator, figureH } = this._buildCombatant(config, id);
       animator.setCombatMode(true);   // quiet idle: no body-shell morph at close range
       const pos = positions[i];
-      // Caricature heads run bigger — slightly smaller stage scale keeps
-      // faces in frame
-      const scale = enemyIds.length === 1 ? 1.9 : 1.6;
+      // MEASURED, not constant — see _stageScale. A flat 1.9 decapitated seven
+      // of the nine story enemies in the shipping combat view.
+      const scale = this._stageScale(figureH, enemyIds.length);
       group.position.set(pos.x + 5.0, 0, pos.z);
       group.scale.setScalar(scale);
       // Face the camera from the start. Enemies used to build at Math.PI and let
