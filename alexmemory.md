@@ -1,3 +1,25 @@
+## [WAVE COMPLETE - THE CAST EXISTS (08-01 overnight)]
+
+**31 characters generated, rigged, idle-animated, downloaded, wired.**
+All behind ?meshy; Algorithm untouched; normal play unaffected.
+
+- MORNING REVIEW: art/char_refs/meshy_pilot/_cast_contact_2026-08-01.png
+  (33-cell cast sheet). Full results: art/MESHY_WAVE.md. Per-character
+  stills in meshy_pilot/<id>/shots/.
+- ALL binds PASS. Grandma's shawl + skirt genuinely DRAPE (the wave's
+  win - no bell tent). Meredith's pencil skirt too. Ross's belly reads
+  in profile. Reyes is she, with her duty belt.
+- Spend: 1334cr, per-task attested; balance 6160->4826 matches exactly.
+- Commits 3dd7901..2e77cb6 pushed (display-case; main untouched).
+- YOUR GATE: flip combat to Meshy-by-default after you review the sheet.
+- SECOND PASS (your order, banked as task #19): non-A-pose calm stances,
+  block/status stances, reaction clips; grandma's cane (Meshy dropped
+  it - needs a bone-socketed engine prop; exploration grandma keeps
+  hers); per-client body pool selection + tints; minor dark-suit
+  scratch noise + Reyes patch brightness.
+- Wave lessons: body-clamped props fuse into forearms (hands-clear
+  plates fixed all three); Meshy's numbered Idle band hides gesture
+  clips - true calm pool is nine ids, audited on clip strips.
 ## [2m! MESHY RULING + PROOF DELIVERED (08-01 ~03:30)]
 
 **RULING (Alex, live): MESHY WINS - COMBAT ONLY.** v7 procedural keeps all
