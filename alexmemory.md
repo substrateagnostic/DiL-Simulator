@@ -4,6 +4,52 @@ section is always current. Skim top-down; nothing below the fold is urgent.*
 
 ---
 
+## ⚡ V7 FINAL ROUNDS (round 4) — DONE, TWO ROUNDS SPENT (08-01 ~00:40)
+Commits on `display-case`: **0663b74** (round 4a) · **52eace4** (round 4b).
+`npm run check` green on both. Instruments added to the suite:
+`shoes · garment · grip · bill · iris · idle · profile`
+(`node tools/pn-shoot.mjs --tag=X --only=shoes,profile,idle,...`).
+Everything below is off a RENDER.
+
+**YOUR THREE 08-01 NOTES — all landed**
+| note | before → after |
+|---|---|
+| combat bobbing body-morph | torso shell scale.y swing **±3.6% → 0**, scale.x/z **±1.8% → 0**; the ARM moved **0.155–0.173 head-heights relative to the torso it is seamed to** every cycle → **0**; head **0.078–0.087 → 0**; combat bob 10px/83px-head → 4–5px. Cause: `group.body` is the whole merged v7 shell and the arms/neck/head are its SIBLINGS — a v4 body was a box with nothing seamed to it. |
+| Andrew needs a jaw | pogonion ÷ nose projection **0.616 → 0.749** (human 0.75–0.85; the Janitor's dialled jaw measures 0.935). He IS the default skull — **Diane measures byte-identical** — so this was cast-wide: karen 0.608→0.744, chad 0.670→0.793, grandma 0.698→0.872, intern 0.720→0.870. THE REAL CAUSE was not the chin: **the neck column was centred on the head's z axis, so the throat ran at +0.46R, directly under the mouth.** Set the top back 0.17R (atlas is at the ear canal) and the under-jaw space appears. |
+| ears | they existed and did not RENDER: the pinna's outer edge sat **inside** the skull silhouette on every character (proud −0.005 to −0.145R), owning 0.0–0.8% of the profile. Now +0.018–0.022R proud AND the hair is **parted around the ear** in `containHair` — proud alone just pokes a pale bead through a short cut. |
+
+**THE ROUND-3 CRITIC LIST**
+| item | before → after |
+|---|---|
+| shoes read as discs | rebuilt: upper + **welted SOLE** + heel block. plan aspect **2.02 → 2.51**, toe cap **0.13 → 0.45** of max half-width (was a knife point), toe/heel **3.3** about the leg axis, sole share of the silhouette **0.000 → 0.21–0.40**, sole value step **0 → 43–112**. The sole colour auto-solves AWAY from the upper (light welt under black leather, dark outsole under a white trainer). |
+| Karen blazer tunic-ish | waist/chest **0.909 → 0.818** (Andrew's tailored suit = 0.805), hem below hip **0.159 → 0.109 of torso** (38.5% → 40.6% of height), hem flatness 0.0039 → 0.0017, hem value step 40.2 → 55.1. NOTE: measured with the arms MASKED — they clip both rows and had been hiding this at a fake 1.000. |
+| purse doesn't grip | was parented to the BODY on a shoulder chain — nothing touched a hand. Now a handbag whose handle LOOP passes through the fist with the knuckle roll over it. prop-to-palm gap **0.000, contact=true**. |
+| Karen crown seam + white sideburn slab | the streak shell measured **0.14R proud of the curtain and 0.46R forward of the ear plane at cheek height** — an Amendment-1 break as well as the slab (2.0% of the front head). Re-seating flush did not save it; **the streak shell is retired**, platinum lives in `hairColor`. Sweep re-seated onto the crown (kills the temple blob). Also found: the lapel roll was punching **two pink prongs** into the cream blouse on every female build — clearance 1.048 → 1.075. |
+| Chad's cap has no bill | it was a 0.014-thick FLAT plate = a 2px line edge-on. Rebuilt as a **curled visor with a dark undervisor and brim edge**: profile **1.39 → 2.21%**, 3/4 **1.47 → 3.72%**, back-3/4 **4.21 → 6.56%**, projection past the occiput **0.382 → 0.669R**. |
+| headCountHair below 6.5 | **already in band on current state**: karen 6.515, andrew 6.544, intern 6.496 (0.004 under — inside one pixel of the measurement). chad 6.219 and grandma 5.834 are a CAP and a petite elder, both by design. No change made; the critic's still predates the round-2 head-scale pass. |
+
+**COORDINATOR ADDITIONS**
+- **iris flicker: NOT REPRODUCIBLE — closed by 61532db.** Max drift from neutral across the whole hero cast is **2.2–9.1 RGB units** (threshold 26); smug/hurt report OCCLUDED (lids down). The instrument's own first pass cried wolf at 147 by measuring the painted lid.
+- **Grandma's cane: FIXED.** figureBottom **−0.1523 → −0.0036**. `Math.max(0.5, handY)` floored the shaft at 0.50 on a 1.20-tall build, so the tip clipped 0.15 below every floor in the game. Shaft moved onto the grip station so the knuckles close over the wood.
+- "hurt brows = barcode" and the mid-face mustache AO: **not present** on current renders (read the paint_* sheets myself).
+
+**STILL OPEN — honest list**
+1. **Grandma's shawl is a bell tent.** Biggest remaining visual defect in the cast; her arm disappears inside it and the collar blob sits behind her head. (critic item 6, untouched — out of budget.)
+2. Karen's blazer has no **front opening/lapel** — it now has a waist and a hem but still reads knit-ish at fight distance.
+3. LAW-2 body items untouched: shoulder-ball caps, straight-pipe legs (no calf/ankle inflection), Chad's pelvis wedge seam.
+4. `profile` instrument nulls some landmarks where hair/beard/spectacles occlude the ID mask (karen occiput, intern nose, janitor nose). Reported, not papered over — extend the mask, don't trust those cells.
+5. The `?dev&portrait=<id>` fixture does not call `setCombatMode` and looks unlike the arena. Cosmetic, dev-only.
+
+**MY FLINCH READ (asked for):** the cast now clears MY bar — nothing in the
+five heroes reads as a caricature or a bug at fight distance, feet read as
+feet, Karen reads as a woman in a blazer holding a handbag, Chad's cap reads as
+a cap. **I would not call the Meshy question dead.** What is fixed here is
+legibility; what is still missing is the thing Meshy would buy — surface
+believability on BODIES (garment folds, real limb topology, a shawl that drapes
+instead of coning). If your colleagues' next cold read comes back on FACES and
+FEET, this route is winning and Meshy is a perf liability. If it comes back on
+BODIES AND CLOTH, that is the honest signal to price the 7.3MB/char.
+
 ## ✅ RUN C VERDICT COLLECTED — PASSED (both critics, ~12:45)
 - Critic A's cold read is a rave; closing line: "Nothing anywhere asks
   you to come back tomorrow." Punch list (3, small): (1) PIP assist needs
