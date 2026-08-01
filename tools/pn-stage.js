@@ -516,9 +516,10 @@ export async function hair(id, opts = {}) {
   const cfg = opts.config || CHARACTER_CONFIGS[id];
   const { renderer, scene } = stage(512, 512);
   rig(scene);
-  const g = buildCharacter(cfg, { detailed: true });
+  const g = buildCharacter(cfg, { detailed: true, probe: true });
   hideBlob(g);
   scene.add(g);
+  g.updateMatrixWorld(true);
   const m = g.metrics;
   const hb = box(g.head);
   const center = { x: 0, y: (hb.max.y + hb.min.y) / 2, z: (hb.max.z + hb.min.z) / 2 };
@@ -526,6 +527,7 @@ export async function hair(id, opts = {}) {
   const views = { hairF: 0, hairQ: -Math.PI * 0.30, hairP: -Math.PI * 0.5, hairB: -Math.PI };
   const shots = {};
   let energy = 0, count = 0;
+  const grads = [];
   for (const [name, az] of Object.entries(views)) {
     const s = ortho(renderer, scene, { center, halfH, w: 512, h: 512, az });
     shots[name] = s.url;
@@ -537,13 +539,51 @@ export async function hair(id, opts = {}) {
         const i = (y * s.w + x) * 4;
         if (isBG(s.data, i)) continue;
         const L = (a) => 0.2126 * s.data[a] + 0.7152 * s.data[a + 1] + 0.0722 * s.data[a + 2];
-        energy += Math.abs(L(i + 4) - L(i - 4)) + Math.abs(L(i + s.w * 4) - L(i - s.w * 4));
-        count++;
+        const gm = Math.abs(L(i + 4) - L(i - 4)) + Math.abs(L(i + s.w * 4) - L(i - s.w * 4));
+        energy += gm; count++; grads.push(gm);
       }
     }
   }
+  // STRAND vs SEAM. Strand texture is high-frequency everywhere (the mean);
+  // a shell junction is one LINE of very high gradient (the tail). Reporting
+  // only the mean cannot tell "hair" from "a hard polygon seam across the
+  // crown", which is what the round-3 critic logged on Karen.
+  grads.sort((a, b) => a - b);
+  const pct = (p) => grads.length ? grads[Math.min(grads.length - 1, Math.floor(grads.length * p))] : 0;
+  const seamMax = +pct(0.998).toFixed(1);
+  const seamOverStrand = +(seamMax / Math.max(1e-6, energy / Math.max(1, count))).toFixed(2);
+
+  // THE PALE LOCK — a streak is a highlight IN the hair; a slab is a lens that
+  // stands off it. Measured by ID pass: how much of the head it owns, how far
+  // BELOW the eye line it hangs, and how far FORWARD of the ear plane it sits.
+  const streaks = [];
+  g.traverse((o) => { if (o.isMesh && o.userData.pnId === 'hairStreak') streaks.push(o); });
+  let streakM = {};
+  if (streaks.length) {
+    const sb = new THREE.Box3();
+    for (const o of streaks) sb.union(new THREE.Box3().setFromObject(o));
+    const restore = idPassMulti(g, { hairStreak: 0xff00ff });
+    const sF = ortho(renderer, scene, { center, halfH, w: 512, h: 512 });
+    const sQ = ortho(renderer, scene, { center, halfH, w: 512, h: 512, az: -Math.PI * 0.30 });
+    restore();
+    const cnt = (s) => { let n = 0, h = 0; for (let i = 0; i < s.data.length; i += 4) { if (!isBG(s.data, i)) h++; if (near(s.data, i, [255, 0, 255])) n++; } return [n, h]; };
+    const [nF, hF] = cnt(sF), [nQ, hQ] = cnt(sQ);
+    streakM = {
+      streakPctFront: +(nF / Math.max(1, hF) * 100).toFixed(2),
+      streakPctQ34: +(nQ / Math.max(1, hQ) * 100).toFixed(2),
+      streakLowYInHeadR: +((sb.min.y - m.headY) / m.headR).toFixed(3),
+      streakFrontZInHeadR: +((sb.max.z - (g.head.position.z || 0)) / m.headR).toFixed(3),
+    };
+  }
   renderer.dispose();
-  return { metrics: { id, strandEnergy: +(energy / Math.max(1, count)).toFixed(3), samples: count }, shots };
+  return {
+    metrics: {
+      id,
+      strandEnergy: +(energy / Math.max(1, count)).toFixed(3),
+      seamMax, seamOverStrand, samples: count, ...streakM,
+    },
+    shots,
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════════
@@ -627,4 +667,426 @@ export async function bandsForm(id, opts = {}) {
   return { metrics: { ...r.metrics, pass: 'form' }, shots: { faceForm: r.shots.face } };
 }
 
-window.__pn = { neck, bands, bandsForm, skull, hands, hair, expr, THREE, CHARACTER_CONFIGS };
+// ══════════════════════════════════════════════════════════════════════
+// 7 · SHOES — "they read as discs" (round-3 critic)
+// ══════════════════════════════════════════════════════════════════════
+// Every number comes off a render of ONE foot (the other leg is hidden so the
+// far shoe cannot pollute a silhouette), at the two angles that matter: the
+// game's own iso camera (az 45°, el 30° — constants.js CAMERA) and profile.
+export async function shoes(id, opts = {}) {
+  const cfg = opts.config || CHARACTER_CONFIGS[id];
+  const { renderer, scene } = stage(512, 512);
+  rig(scene);
+  const g = buildCharacter(cfg, { detailed: true, probe: true });
+  hideBlob(g);
+  if (g.leftLeg) g.leftLeg.visible = false;
+  scene.add(g);
+  g.updateMatrixWorld(true);
+
+  // frame on the right foot
+  const feet = [];
+  g.traverse((o) => {
+    if (!o.isMesh || (o.userData.pnId !== 'shoe' && o.userData.pnId !== 'sole')) return;
+    const b = new THREE.Box3().setFromObject(o);
+    if ((b.max.x + b.min.x) / 2 > 0) feet.push(o);          // the RIGHT foot only
+  });
+  const bb = new THREE.Box3();
+  for (const o of feet) bb.union(new THREE.Box3().setFromObject(o));
+  if (!feet.length) { renderer.dispose(); return { metrics: { id, error: 'no shoe probe' }, shots: {} }; }
+  const center = { x: (bb.max.x + bb.min.x) / 2, y: (bb.max.y + bb.min.y) / 2, z: (bb.max.z + bb.min.z) / 2 };
+  const halfH = Math.max(bb.max.z - bb.min.z, bb.max.y - bb.min.y) * 0.72;
+  const SH = { center, halfH, w: 512, h: 512 };
+
+  const prof = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.5 });
+  const iso = ortho(renderer, scene, { ...SH, az: Math.PI * 0.25, el: Math.PI / 6 });
+  const front = ortho(renderer, scene, { ...SH });
+  // The PLAN view has to see the whole footprint; from 86° the body and the
+  // thigh hide the heel, which is why an un-masked top shot reported a 1.8
+  // aspect on a foot that measures 2.5 (an instrument artefact, not a shoe).
+  const hidden = [];
+  g.traverse((o) => { if (o.isMesh && o.visible && !feet.includes(o)) { o.visible = false; hidden.push(o); } });
+  const top = ortho(renderer, scene, { ...SH, el: 1.50 });
+
+  // ID pass: upper vs sole, so the sole's share of the silhouette is exact.
+  const restore = idPassMulti(g, { shoe: 0xff00ff, sole: 0x00ffff });
+  const idTop = ortho(renderer, scene, { ...SH, el: 1.50 });
+  for (const o of hidden) o.visible = true;
+  const idProf = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.5 });
+  const idIso = ortho(renderer, scene, { ...SH, az: Math.PI * 0.25, el: Math.PI / 6 });
+  restore();
+
+  const cnt = (shot, rgb) => { let n = 0; for (let i = 0; i < shot.data.length; i += 4) if (near(shot.data, i, rgb)) n++; return n; };
+  const extent = (shot, rgbs) => {
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (let y = 0; y < shot.h; y++) for (let x = 0; x < shot.w; x++) {
+      const i = (y * shot.w + x) * 4;
+      if (!rgbs.some(c => near(shot.data, i, c))) continue;
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+    return x1 < x0 ? null : { x0, x1, y0, y1, w: (x1 - x0 + 1) * shot.unitsPerPx, h: (y1 - y0 + 1) * shot.unitsPerPx };
+  };
+  const MAG = [255, 0, 255], CYA = [0, 255, 255];
+  const eProf = extent(idProf, [MAG, CYA]);
+  const eTop = extent(idTop, [MAG, CYA]);
+
+  // In PROFILE the camera sits on −x looking at +x, so screen-right is +z: the
+  // toe points right. Overhang is measured about the ANKLE AXIS = the LEG AXIS,
+  // which is world z = 0 by construction (the legs are built on z=0 and the foot
+  // group carries its own +0.026 offset). Reading the axis off the render's own
+  // framing keeps this exact instead of guessing at a collar row that the
+  // trouser is standing in front of.
+  let toeHeel = null, heelOver = null, toeOver = null;
+  if (eProf) {
+    const ankleCol = idProf.w / 2 + (0 - center.z) / idProf.unitsPerPx;
+    heelOver = (ankleCol - eProf.x0) * idProf.unitsPerPx;
+    toeOver = (eProf.x1 - ankleCol) * idProf.unitsPerPx;
+    toeHeel = +(toeOver / Math.max(1e-6, heelOver)).toFixed(2);
+  }
+  // TOE BOX BLUNTNESS from the plan view: half-width at 92% of the foot's
+  // length ÷ the widest half-width. A knife point → ~0.1; a real shoe ~0.3–0.45.
+  let blunt = null;
+  if (eTop) {
+    const rowW = (yy) => {
+      let l = 1e9, r = -1e9;
+      for (let x = 0; x < idTop.w; x++) {
+        const i = (yy * idTop.w + x) * 4;
+        if (near(idTop.data, i, MAG) || near(idTop.data, i, CYA)) { if (x < l) l = x; if (x > r) r = x; }
+      }
+      return r < l ? 0 : r - l + 1;
+    };
+    let maxW = 0;
+    for (let y = eTop.y0; y <= eTop.y1; y++) maxW = Math.max(maxW, rowW(y));
+    // +z (the toe) points DOWN-screen in this view, so 92% of the length is
+    // 92% of the way from y0 to y1.
+    const wToe = rowW(Math.round(eTop.y0 + (eTop.y1 - eTop.y0) * 0.92));
+    blunt = +(wToe / Math.max(1, maxW)).toFixed(3);
+  }
+  // SOLE LINE: the share of the lit silhouette the sole owns, per view. Zero =
+  // a monolithic blob (the "disc"), which is what the critic was looking at.
+  const soleShare = (idShot) => {
+    const s = cnt(idShot, CYA), u = cnt(idShot, MAG);
+    return +(s / Math.max(1, s + u)).toFixed(3);
+  };
+  // …and the actual VALUE STEP it draws on the lit render, measured across the
+  // sole's top edge in profile (a sole you cannot see is not a sole).
+  let step = 0;
+  if (eProf) {
+    const L = (sh, i) => 0.2126 * sh.data[i] + 0.7152 * sh.data[i + 1] + 0.0722 * sh.data[i + 2];
+    const cols = [];
+    for (let x = eProf.x0 + 3; x <= eProf.x1 - 3; x += 2) {
+      let best = 0;
+      for (let y = eProf.y1 - 2; y > eProf.y1 - Math.max(4, (eProf.y1 - eProf.y0) * 0.55); y--) {
+        const i = (y * prof.w + x) * 4, j = ((y - 2) * prof.w + x) * 4;
+        if (isBG(prof.data, i) || isBG(prof.data, j)) continue;
+        best = Math.max(best, Math.abs(L(prof, i) - L(prof, j)));
+      }
+      if (best) cols.push(best);
+    }
+    cols.sort((a, b) => a - b);
+    step = cols.length ? +cols[Math.floor(cols.length / 2)].toFixed(1) : 0;
+  }
+  renderer.dispose();
+  return {
+    metrics: {
+      id,
+      footprintAspect: eTop ? +(eTop.h / eTop.w).toFixed(2) : null,   // length ÷ width, plan
+      profileAspect: eProf ? +(eProf.w / eProf.h).toFixed(2) : null,  // length ÷ height
+      toeHeelRatio: toeHeel,
+      toeBoxBlunt: blunt,
+      soleShareProfile: soleShare(idProf),
+      soleShareIso: soleShare(idIso),
+      soleValueStep: step,
+      lengthWorld: eProf ? +eProf.w.toFixed(4) : null,
+      heightWorld: eProf ? +eProf.h.toFixed(4) : null,
+      heelOverWorld: heelOver != null ? +heelOver.toFixed(4) : null,
+      toeOverWorld: toeOver != null ? +toeOver.toFixed(4) : null,
+    },
+    shots: { shoeProf: prof.url, shoeIso: iso.url, shoeFront: front.url, shoeTop: top.url },
+  };
+}
+
+function near(d, i, rgb) {
+  return Math.abs(d[i] - rgb[0]) < 40 && Math.abs(d[i + 1] - rgb[1]) < 40 && Math.abs(d[i + 2] - rgb[2]) < 40;
+}
+// idPass for several named parts at once (userData.pnId or mesh.name).
+function idPassMulti(group, map, other = 0x101010) {
+  const saved = [];
+  const mats = {};
+  for (const [k, hex] of Object.entries(map)) mats[k] = new THREE.MeshBasicMaterial({ color: hex });
+  const mOther = new THREE.MeshBasicMaterial({ color: other });
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    saved.push([o, o.material]);
+    const key = (o.userData && o.userData.pnId) || o.name;
+    o.material = mats[key] || mOther;
+  });
+  return () => { for (const [o, m] of saved) o.material = m; for (const m of Object.values(mats)) m.dispose(); mOther.dispose(); };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 8 · GARMENT — "the blazer still reads tunic-ish at fight distance"
+// ══════════════════════════════════════════════════════════════════════
+// A blazer is legible when THREE things are true in the silhouette: the shell
+// narrows at the waist, its hem is a HARD horizontal edge, and that edge sits
+// near the hip with a trouser column continuing below it. A tunic fails all
+// three — one straight column, a soft domed bottom, low on the thigh.
+export async function garment(id, opts = {}) {
+  const cfg = opts.config || CHARACTER_CONFIGS[id];
+  const { renderer, scene } = stage(512, 640);
+  rig(scene);
+  const g = buildCharacter(cfg, { detailed: true, probe: true });
+  hideBlob(g);
+  scene.add(g);
+  g.updateMatrixWorld(true);
+  const m = g.metrics;
+  const hipY = m.legLength;
+  const center = { x: 0, y: hipY + m.torsoH * 0.35, z: 0 };
+  const halfH = m.torsoH * 1.15;
+  const SH = { center, halfH, w: 512, h: 640 };
+  const lit = ortho(renderer, scene, { ...SH });
+  const litQ = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.28 });
+
+  // The ARMS hang across the chest and waist rows on a female build, so an
+  // un-masked silhouette clips both to the same visible width and reports
+  // waist/chest = 1.000 on garments that do have a waist. Hidden for this pass.
+  const armsWere = [g.leftArm, g.rightArm].filter(Boolean).map(a => [a, a.visible]);
+  for (const [a] of armsWere) a.visible = false;
+  const restore = idPassMulti(g, { jacketShell: 0xff00ff });
+  const idF = ortho(renderer, scene, { ...SH });
+  restore();
+  for (const [a, v] of armsWere) a.visible = v;
+  const MAG = [255, 0, 255];
+  const wAt = (wy) => {
+    const row = idF.rowOf(wy);
+    if (row < 0 || row >= idF.h) return 0;
+    let l = 1e9, r = -1e9;
+    for (let x = 0; x < idF.w; x++) {
+      const i = (row * idF.w + x) * 4;
+      if (near(idF.data, i, MAG)) { if (x < l) l = x; if (x > r) r = x; }
+    }
+    return r < l ? 0 : (r - l + 1) * idF.unitsPerPx;
+  };
+  // hem: the LOWEST row of jacket per column, over the central 70% of the shell
+  const bottomOf = [];
+  let minX = 1e9, maxX = -1e9;
+  for (let x = 0; x < idF.w; x++) {
+    let lo = -1;
+    for (let y = idF.h - 1; y >= 0; y--) if (near(idF.data, (y * idF.w + x) * 4, MAG)) { lo = y; break; }
+    bottomOf[x] = lo;
+    if (lo >= 0) { if (x < minX) minX = x; if (x > maxX) maxX = x; }
+  }
+  const c0 = Math.round(minX + (maxX - minX) * 0.15), c1 = Math.round(maxX - (maxX - minX) * 0.15);
+  const ys = [];
+  for (let x = c0; x <= c1; x++) if (bottomOf[x] >= 0) ys.push(idF.yOf(bottomOf[x]));
+  const hemY = ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : null;
+  const hemSd = ys.length ? Math.sqrt(ys.reduce((a, b) => a + (b - hemY) ** 2, 0) / ys.length) : null;
+
+  // the value step the hem draws on the LIT render (blazer vs trouser)
+  let hemStep = 0;
+  if (hemY != null) {
+    const L = (i) => 0.2126 * lit.data[i] + 0.7152 * lit.data[i + 1] + 0.0722 * lit.data[i + 2];
+    const rowA = lit.rowOf(hemY + 0.012), rowB = lit.rowOf(hemY - 0.012);
+    const vals = [];
+    for (let x = c0; x <= c1; x += 2) {
+      const i = (rowA * lit.w + x) * 4, j = (rowB * lit.w + x) * 4;
+      if (isBG(lit.data, i) || isBG(lit.data, j)) continue;
+      vals.push(Math.abs(L(i) - L(j)));
+    }
+    vals.sort((a, b) => a - b);
+    hemStep = vals.length ? +vals[Math.floor(vals.length / 2)].toFixed(1) : 0;
+  }
+  const wChest = wAt(hipY + m.torsoH * 0.60);
+  const wWaist = wAt(hipY + m.torsoH * 0.34);
+  const wHip = wAt(hipY + m.torsoH * 0.06);
+  renderer.dispose();
+  return {
+    metrics: {
+      id,
+      hemY: hemY != null ? +hemY.toFixed(4) : null,
+      hemBelowHip: hemY != null ? +(hipY - hemY).toFixed(4) : null,
+      hemBelowHipOverTorso: hemY != null ? +((hipY - hemY) / m.torsoH).toFixed(3) : null,
+      hemFlatness: hemSd != null ? +(hemSd / m.torsoH).toFixed(4) : null,   // 0 = a straight hem
+      hemValueStep: hemStep,
+      waistOverChest: +(wWaist / Math.max(1e-6, wChest)).toFixed(3),
+      hipOverWaist: +(wHip / Math.max(1e-6, wWaist)).toFixed(3),
+      hemHeightOverFigure: hemY != null ? +(hemY / (m.crownY)).toFixed(3) : null,
+      torsoH: m.torsoH, legLength: m.legLength,
+    },
+    shots: { garmentF: lit.url, garmentQ: litQ.url, garmentId: idF.url },
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 9 · GRIP — does the held prop actually touch the hand?
+// ══════════════════════════════════════════════════════════════════════
+export async function grip(id, opts = {}) {
+  const cfg = opts.config || CHARACTER_CONFIGS[id];
+  const { renderer, scene } = stage(448, 448);
+  rig(scene);
+  const g = buildCharacter(cfg, { detailed: true, probe: true });
+  hideBlob(g);
+  scene.add(g);
+  g.updateMatrixWorld(true);
+  const props = [], palms = [];
+  g.traverse((o) => {
+    if (!o.isMesh) return;
+    if (o.userData.pnId === 'prop') props.push(o);
+    if (o.userData.pnId === 'palm') palms.push(o);
+  });
+  if (!props.length || !palms.length) { renderer.dispose(); return { metrics: { id, error: 'no prop/palm probe' }, shots: {} }; }
+  const pb = new THREE.Box3(); for (const o of props) pb.union(new THREE.Box3().setFromObject(o));
+  let best = null;
+  for (const p of palms) {
+    const hb = new THREE.Box3().setFromObject(p);
+    const gap = new THREE.Vector3(
+      Math.max(0, Math.max(hb.min.x - pb.max.x, pb.min.x - hb.max.x)),
+      Math.max(0, Math.max(hb.min.y - pb.max.y, pb.min.y - hb.max.y)),
+      Math.max(0, Math.max(hb.min.z - pb.max.z, pb.min.z - hb.max.z)));
+    const d = gap.length();
+    const hand = Math.max(hb.max.x - hb.min.x, hb.max.y - hb.min.y);
+    if (!best || d < best.gapWorld) best = { gapWorld: +d.toFixed(4), gapOverHand: +(d / Math.max(1e-6, hand)).toFixed(3), handSize: +hand.toFixed(4) };
+  }
+  const c = { x: (pb.max.x + pb.min.x) / 2, y: (pb.max.y + pb.min.y) / 2 + 0.03, z: (pb.max.z + pb.min.z) / 2 };
+  const halfH = Math.max(pb.max.y - pb.min.y, 0.14) * 1.5;
+  const shots = {
+    gripF: ortho(renderer, scene, { center: c, halfH, w: 448, h: 448 }).url,
+    gripQ: ortho(renderer, scene, { center: c, halfH, w: 448, h: 448, az: -Math.PI * 0.28 }).url,
+    gripP: ortho(renderer, scene, { center: c, halfH, w: 448, h: 448, az: Math.PI * 0.5 }).url,
+  };
+  renderer.dispose();
+  return { metrics: { id, ...best, contact: best.gapWorld < 0.006 }, shots };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 10 · BILL — Chad's backwards cap
+// ══════════════════════════════════════════════════════════════════════
+export async function bill(id, opts = {}) {
+  const cfg = opts.config || CHARACTER_CONFIGS[id];
+  const { renderer, scene } = stage(448, 448);
+  rig(scene);
+  const g = buildCharacter(cfg, { detailed: true, probe: true });
+  hideBlob(g);
+  scene.add(g);
+  g.updateMatrixWorld(true);
+  const m = g.metrics;
+  const hb = box(g.head);
+  const center = { x: 0, y: (hb.max.y + hb.min.y) / 2, z: (hb.max.z + hb.min.z) / 2 };
+  const halfH = (hb.max.y - hb.min.y) * 0.62;
+  const SH = { center, halfH, w: 448, h: 448 };
+  const views = { billP: -Math.PI * 0.5, billQ: -Math.PI * 0.28, billF: 0, billB: -Math.PI * 0.80 };
+  const shots = {};
+  for (const [k, az] of Object.entries(views)) shots[k] = ortho(renderer, scene, { ...SH, az }).url;
+
+  const billMeshes = [];
+  g.traverse((o) => { if (o.isMesh && o.userData.pnId === 'capBill') billMeshes.push(o); });
+  const billMesh = billMeshes[0] || null;
+  const restore = idPassMulti(g, { capBill: 0xff00ff });
+  const idP = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.5 });
+  const idQ = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.28 });
+  const idF = ortho(renderer, scene, { ...SH });
+  const idB = ortho(renderer, scene, { ...SH, az: -Math.PI * 0.80 });
+  restore();
+  const MAG = [255, 0, 255];
+  const px = (s) => { let n = 0; for (let i = 0; i < s.data.length; i += 4) if (near(s.data, i, MAG)) n++; return n; };
+  const headPx = (s) => { let n = 0; for (let i = 0; i < s.data.length; i += 4) if (!isBG(s.data, i)) n++; return n; };
+  let proj = null;
+  if (billMesh) {
+    const bb = new THREE.Box3();
+    for (const b of billMeshes) bb.union(new THREE.Box3().setFromObject(b));
+    // Box3.expandByObject does NOT honour `visible`, so the head box has to be
+    // built by hand from everything that is not the bill (hiding the mesh and
+    // re-boxing the group silently returns the same box — it reported a 0.63R
+    // bill as projecting 0.000R past a head it plainly sticks out of).
+    const skull = new THREE.Box3();
+    g.head.traverse((o) => { if (o.isMesh && !billMeshes.includes(o)) skull.union(new THREE.Box3().setFromObject(o)); });
+    proj = {
+      billBackZ: +bb.min.z.toFixed(4),
+      headBackZ: +skull.min.z.toFixed(4),
+      // how far past the back of the head the bill actually reaches
+      projectionOverHeadR: +((skull.min.z - bb.min.z) / m.headR).toFixed(3),
+      billLengthOverHeadR: +((bb.max.z - bb.min.z) / m.headR).toFixed(3),
+      dropOverHeadR: +((bb.max.y - bb.min.y) / m.headR).toFixed(3),
+    };
+  }
+  renderer.dispose();
+  return {
+    metrics: {
+      id, ...proj,
+      billVisibleProfilePct: +(px(idP) / Math.max(1, headPx(idP)) * 100).toFixed(2),
+      billVisibleQ34Pct: +(px(idQ) / Math.max(1, headPx(idQ)) * 100).toFixed(2),
+      billVisibleFrontPct: +(px(idF) / Math.max(1, headPx(idF)) * 100).toFixed(2),
+      billVisibleBack34Pct: +(px(idB) / Math.max(1, headPx(idB)) * 100).toFixed(2),
+    },
+    shots,
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// 11 · IRIS — do the six expression textures agree on eye colour?
+// ══════════════════════════════════════════════════════════════════════
+export async function iris(id, opts = {}) {
+  const cfg = opts.config || CHARACTER_CONFIGS[id];
+  const g = buildCharacter(cfg, { detailed: true });
+  const L = (g.metrics && g.metrics.layout) || null;
+  if (!L || !g.faceTextures) return { metrics: { id, error: 'no layout/textures' }, shots: {} };
+  const out = { id, perExpr: {} };
+  const shots = {};
+  let ref = null;
+  for (const [name, tex] of Object.entries(g.faceTextures)) {
+    const img = tex && tex.image;
+    if (!img) continue;
+    const S = img.width;
+    const cv = document.createElement('canvas'); cv.width = S; cv.height = S;
+    const cx2 = cv.getContext('2d', { willReadFrequently: true });
+    cx2.drawImage(img, 0, 0);
+    const ex = Math.round(S * (0.5 + L.eyeDXF)), ey = Math.round(S * L.eyeF);
+    const rw = Math.round(S * L.eyeWF * 0.42), rh = Math.round(S * L.eyeHF * 0.5);
+    const d = cx2.getImageData(ex - rw, ey - rh, rw * 2, rh * 2).data;
+    // The painted LID is skin, and on the lidded expressions (smug/hurt) it
+    // covers the sampling box. Counting it as "the iris" produced a 147-unit
+    // false drift on every character in the cast — the instrument was reporting
+    // a closed eye as a colour change. Skin-coloured pixels are therefore
+    // rejected, and a box with too little iris left is reported as OCCLUDED
+    // rather than as a colour.
+    const skin = cfg.skinColor ?? 0xe8b48f;
+    const sr = (skin >> 16) & 255, sg = (skin >> 8) & 255, sb = skin & 255;
+    let r = 0, gg = 0, b = 0, n = 0;
+    for (let i = 0; i < d.length; i += 4) {
+      const lum = (d[i] + d[i + 1] + d[i + 2]) / 3;
+      if (lum > 205 || lum < 26) continue;                 // sclera / pupil+lash
+      if (Math.hypot(d[i] - sr, d[i + 1] - sg, d[i + 2] - sb) < 58) continue;   // lid / skin
+      const mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]);
+      if (mx - mn < 6 && lum > 120) continue;              // flat highlight
+      r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++;
+    }
+    out.perExpr[name] = {
+      mean: n ? [Math.round(r / n), Math.round(gg / n), Math.round(b / n)] : null,
+      samples: n,
+    };
+    // a 2× crop of the eye so it can be LOOKED at, not just measured
+    const cc = document.createElement('canvas'); cc.width = rw * 4; cc.height = rh * 4;
+    cc.getContext('2d').drawImage(cv, ex - rw, ey - rh, rw * 2, rh * 2, 0, 0, rw * 4, rh * 4);
+    shots[`eye_${name}`] = cc.toDataURL('image/png');
+  }
+  // An expression whose lids are down has no iris to compare; self-calibrate the
+  // occlusion cut against the most-open expression instead of a magic constant.
+  const maxN = Math.max(...Object.values(out.perExpr).map(v => v.samples));
+  for (const v of Object.values(out.perExpr)) {
+    v.occluded = v.samples < maxN * 0.35;
+    if (v.occluded) v.mean = null;
+  }
+  ref = out.perExpr.neutral ? out.perExpr.neutral.mean : null;
+  let worst = 0, worstName = null;
+  for (const [k, v] of Object.entries(out.perExpr)) {
+    if (k === 'neutral' || !v.mean || !ref) continue;
+    const d = Math.hypot(v.mean[0] - ref[0], v.mean[1] - ref[1], v.mean[2] - ref[2]);
+    if (d > worst) { worst = d; worstName = k; }
+  }
+  out.maxDriftFromNeutral = +worst.toFixed(1);
+  out.worstExpr = worstName;
+  out.occludedExprs = Object.entries(out.perExpr).filter(([, v]) => v.occluded).map(([k]) => k);
+  out.consistent = worst < 26;
+  return { metrics: out, shots };
+}
+
+window.__pn = { neck, bands, bandsForm, skull, hands, hair, expr, shoes, garment, grip, bill, iris, THREE, CHARACTER_CONFIGS };

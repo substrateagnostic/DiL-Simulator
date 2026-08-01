@@ -192,7 +192,10 @@ export const CHARACTER_CONFIGS = {
     neckScale: 0.92, neckExtra: 0.010,
     // The pink blazer used to terminate exactly at the leg-split Y with zero hem
     // relief — a pink leotard over leggings. Now a real hem 0.07 below the hip.
-    jacketHem: 0.07, necklineWide: true,
+    // v7 FIX round-4 — the hem sat 0.0796 below the hip pivot = 38.5% of her
+    // standing height, which is mid-seat: a tunic length. A single-breasted
+    // blazer hem lands AT the hip (≈41%), with a full trouser column below it.
+    jacketHem: 0.048, necklineWide: true,
     // v5 face/proportion fields — bold DARK brows + red lip per the portrait
     // v7 FIX round-2 — IRIS. 0x3a2a1c is dark brown; the canonical portrait
     // (art/char_refs/generated/karen_body.png) gives her grey-blue eyes, and the

@@ -55,8 +55,13 @@ function summarize(note, m) {
     case 'bands': case 'bandsForm': return `noseMaxGrad=${m.noseBandMaxGradient}  peaks=${m.peakCount}  smear=${m.smearOverNoseWidth}`;
     case 'skull': return `W/H=${m.headWOverH}  heads=${m.headCountSkull}  cranialHold=${m.cranialHoldPct}%  gonialHold=${m.gonialHoldPct}%  roundDev=${m.profileRoundnessDev}`;
     case 'hands': return `placement=${m.thumbPlacement}  mirrored=${m.mirrorConsistent}  rotatedNotMirrored=${m.rotatedNotMirrored}  anteriorBoth=${m.thumbAnteriorBothHands}`;
-    case 'hair': return `strandE=${m.strandEnergy}`;
+    case 'hair': return `strandE=${m.strandEnergy}  seamMax=${m.seamMax} (${m.seamOverStrand}×)  streak front/q34=${m.streakPctFront}/${m.streakPctQ34}%  lowY=${m.streakLowYInHeadR}R  fwdZ=${m.streakFrontZInHeadR}R`;
     case 'expr': return `geo=${JSON.stringify(m.geoDelta)}  hasGeo=${m.hasGeometryChannel}`;
+    case 'shoes': return `plan=${m.footprintAspect}  prof=${m.profileAspect}  toe/heel=${m.toeHeelRatio}  blunt=${m.toeBoxBlunt}  sole(prof/iso)=${m.soleShareProfile}/${m.soleShareIso}  step=${m.soleValueStep}`;
+    case 'garment': return `hemBelowHip=${m.hemBelowHip}  /torso=${m.hemBelowHipOverTorso}  flat=${m.hemFlatness}  step=${m.hemValueStep}  waist/chest=${m.waistOverChest}  hip/waist=${m.hipOverWaist}`;
+    case 'grip': return `gap=${m.gapWorld}  /hand=${m.gapOverHand}  contact=${m.contact}${m.error ? ' ' + m.error : ''}`;
+    case 'bill': return `proj=${m.projectionOverHeadR}R  len=${m.billLengthOverHeadR}R  vis prof/q34/front/back=${m.billVisibleProfilePct}/${m.billVisibleQ34Pct}/${m.billVisibleFrontPct}/${m.billVisibleBack34Pct}%`;
+    case 'iris': return `drift=${m.maxDriftFromNeutral} (${m.worstExpr})  consistent=${m.consistent}`;
     default: return '';
   }
 }

@@ -128,7 +128,17 @@ export function buildCharacter(config, options = {}) {
   const mPants = M.cloth(pantsC, config.suitMat || {});
   const mShirt = M.cloth(shirtC, { roughness: 0.62, sheen: 0.3, bump: 0.2, env: 0.25 });
   const mSkin = M.skin(skinC, null);
-  const mShoe = M.shoe(toneColor(config.shoeColor ?? 0x1a1a1a, tone));
+  const shoeHex = toneColor(config.shoeColor ?? 0x1a1a1a, tone);
+  const mShoe = M.shoe(shoeHex);
+  // THE SOLE LINE (v7 round-4). The sole only does its job if it separates in
+  // VALUE from the upper, so the default is solved AWAY from whatever the upper
+  // is: a light welt under a black dress shoe, a dark outsole under a white
+  // trainer. Authors can still pin it with `soleColor`.
+  const mSole = M.shoe(config.soleColor != null
+    ? toneColor(config.soleColor, tone)
+    : (((shoeHex >> 16 & 255) * 0.3 + (shoeHex >> 8 & 255) * 0.59 + (shoeHex & 255) * 0.11) < 90
+      ? shadeHexToInt(0x000000 | shoeHex, 2.6) | 0x1c1c20
+      : shadeHexToInt(shoeHex, 0.42)));
   const mHair = M.hair(hairColor);
 
   // ── LEGS: hip pivot → thigh, knee pivot → shin + shoe ───────────────
@@ -191,6 +201,8 @@ export function buildCharacter(config, options = {}) {
     const foot = buildShoe(ws, mShoe, detailed, {
       size: config.shoeSize ?? 1,
       heel: config.shoeHeel ?? (config.gender === 'f' ? 0.026 : 0),
+      soleMat: mSole,
+      probe: options.probe === true,
     });
     foot.position.set(0, -shinLen, 0.026);
     shinWrap.add(foot);
@@ -213,6 +225,7 @@ export function buildCharacter(config, options = {}) {
   torso.position.y = legLength;
   torso.position.z = torsoZ;
   torso.rotation.x = hunch;
+  torso.name = 'jacketShell';           // dev harness id (tools/pn-stage.js)
   group.add(torso);
   group.body = torso;
 
@@ -879,7 +892,7 @@ export function buildCharacter(config, options = {}) {
   // hair (before collapse so it merges by material)
   const mStreak = config.hairStreakColor != null ? M.hair(tc(config.hairStreakColor)) : null;
   const mUnder = config.hairUnderColor != null ? M.hair(tc(config.hairUnderColor)) : null;
-  buildHair(scalp, headR, mHair, resolveHairStyle(config.hairStyle), mStreak, mUnder);
+  buildHair(scalp, headR, mHair, resolveHairStyle(config.hairStyle), mStreak, mUnder, options.probe === true);
 
   // face textures + curved patch. The painter is handed the SOLVED layout the
   // geometry produced (see faceLayout()), so canvas landmarks land on the
@@ -960,7 +973,7 @@ export function buildCharacter(config, options = {}) {
 
   // ── Accessories (held items attach to the arm so they ride the swing) ─
   if (config.accessories) {
-    for (const acc of config.accessories) addAccessory(group, acc, rig, config, detailed);
+    for (const acc of config.accessories) addAccessory(group, acc, rig, config, detailed, options.probe === true);
   }
 
   // ── shadows: hair + face do not self-shadow; blob does the grounding ─
@@ -1003,6 +1016,7 @@ export function buildCharacter(config, options = {}) {
       neckLathe: group._neckProbe ? group._neckProbe.lathe : null,
       shoulderOverHeadW: +((dims.shoulderR * 2) / (2 * cranialHalf)).toFixed(3),
       shoulderR: dims.shoulderR, chestR: dims.chestR,
+      waistR: dims.waistR, hipR: dims.hipR, ws, jacketHem: hemDrop,
       legLength, torsoH, neckH,
       layout: faceConfig._layout,
     };
@@ -2098,67 +2112,210 @@ function buildHand(hl, ws, mat, side, detailed, probe = false) {
 // sole. Asymmetric by construction (heel −0.070, toe +0.148), and the trouser
 // now terminates above the collar (see the leg loop).
 //   `heel` raises the rear of the sole and drops a block under it — a pump.
+//
+// v7 FIX round-4 — "SHOES READ AS DISCS" (round-3 critic, survived the round-2
+// foot). Measured on renders, the round-2 foot was a single monolithic shell:
+//   · footprint aspect (top-down) 2.02  — a lozenge; a real shoe is 2.6–2.9
+//   · toe cap half-width 0.007 of a 0.054 max — a knife point, so from the game
+//     iso the outline read as a symmetric almond, i.e. a disc
+//   · ZERO sole: one colour, one shell, no horizontal break anywhere, so nothing
+//     in the silhouette said "footwear" rather than "dark blob under a trouser"
+// The rebuild is three parts, and the SOLE is the one that does the work:
+//   1. UPPER — longer (0.250 vs 0.218) and narrower (0.098 vs 0.108), with a
+//      TALL heel counter at the back, an instep crest, and a BLUNT toe cap
+//      (0.021 half-width, not a point).
+//   2. SOLE — a real slab under it, WELTED (8.5% wider than the upper at every
+//      station) in a contrasting value, so a hard horizontal line runs all the
+//      way round the foot at every camera angle. That line is what a viewer
+//      reads as a shoe.
+//   3. HEEL BLOCK — pumps get a tapered block under the rear of the sole with
+//      the arch lifted clear of the floor between it and the ball.
 function buildShoe(ws, mat, detailed, opts = {}) {
   const S = (opts.size ?? 1) * ws;
   const heel = (opts.heel ?? 0) * ws;
-  // [z, halfWidth, topY] — all in ws units before `size`
+  // [z, halfWidth, topY] — all in ws units before `size`. y is measured from the
+  // TOP OF THE SOLE, so the upper always sits on the slab.
   const ROWS = [
-    [-0.070, 0.028, 0.052],
-    [-0.055, 0.042, 0.074],
-    [-0.030, 0.050, 0.080],   // ankle collar: tall + wide, plugs the trouser
-    [0.000, 0.052, 0.072],
-    [0.035, 0.054, 0.052],
-    [0.075, 0.052, 0.038],
-    [0.110, 0.044, 0.029],
-    [0.135, 0.027, 0.021],
-    [0.148, 0.007, 0.013],
+    [-0.078, 0.024, 0.044],   // heel, rounded off
+    [-0.062, 0.037, 0.078],   // heel counter — the back of a shoe is TALL
+    [-0.040, 0.049, 0.090],   // ankle collar: peak, plugs the trouser
+    [-0.012, 0.048, 0.076],   // instep
+    [0.020, 0.047, 0.057],    // vamp
+    [0.058, 0.046, 0.044],
+    [0.098, 0.042, 0.036],
+    [0.135, 0.034, 0.029],    // toe box
+    [0.162, 0.021, 0.020],    // BLUNT toe cap (was a 0.007 knife point)
+    [0.172, 0.009, 0.011],
   ];
+  const SOLE_H = 0.018;                           // slab thickness (ws units)
+  const WELT = 1.085;                             // sole overhang → the lip line
   const SEG = detailed ? 22 : 14;
   const P = 3.0;                                  // superellipse exponent
-  const lift = (z) => heel * (1 - _sstep(-0.050, 0.030, z));
-  const pos = [], idx = [];
-  for (let i = 0; i < ROWS.length; i++) {
-    const [z0, hw0, top0] = ROWS[i];
-    const z = z0 * S, hw = hw0 * S, top = top0 * S, y0 = lift(z0);
-    for (let j = 0; j <= SEG; j++) {
-      const a = (j / SEG) * Math.PI * 2;
-      const cxx = Math.cos(a), syy = Math.sin(a);
-      const up = syy >= 0;
-      const u = Math.abs(cxx);
-      const shell = Math.pow(Math.max(0, 1 - Math.pow(u, P)), 1 / P);
-      const yy = up ? top * shell * Math.abs(syy) ** 0.35 : -0.004 * S * shell;
-      pos.push(cxx * hw, y0 + yy + 0.004 * S, z);
-    }
-  }
-  for (let i = 0; i < ROWS.length - 1; i++) {
-    for (let j = 0; j < SEG; j++) {
-      const a = i * (SEG + 1) + j, b = a + 1, c = a + SEG + 1, d = c + 1;
-      idx.push(a, b, c, b, d, c);
-    }
-  }
-  // end caps (heel + toe) — small fans to the row centre
-  for (const [row, flip] of [[0, true], [ROWS.length - 1, false]]) {
-    const base = row * (SEG + 1);
-    const cIdx = pos.length / 3;
-    const [z0, , top0] = ROWS[row];
-    pos.push(0, lift(z0) + top0 * S * 0.35 + 0.004 * S, z0 * S);
-    for (let j = 0; j < SEG; j++) {
-      if (flip) idx.push(cIdx, base + j + 1, base + j);
-      else idx.push(cIdx, base + j, base + j + 1);
-    }
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  g.setIndex(idx);
-  g.computeVertexNormals();
+  // The arch: heeled builds lift the sole's underside behind the ball of the
+  // foot, so a real gap opens under the instep instead of a flat plank.
+  const lift = (z) => heel * (1 - _sstep(-0.055, 0.028, z));
+  const sh = (u) => Math.pow(Math.max(0, 1 - Math.pow(u, P)), 1 / P);
+
   const group = new THREE.Group();
-  group.add(new THREE.Mesh(g, mat));
+  const soleTop = SOLE_H * S;
+
+  // ── 1 · UPPER ───────────────────────────────────────────────────────
+  {
+    const pos = [], idx = [];
+    for (let i = 0; i < ROWS.length; i++) {
+      const [z0, hw0, top0] = ROWS[i];
+      const z = z0 * S, hw = hw0 * S, top = top0 * S, y0 = lift(z0) + soleTop;
+      for (let j = 0; j <= SEG; j++) {
+        const a = (j / SEG) * Math.PI * 2;
+        const cxx = Math.cos(a), syy = Math.sin(a);
+        const shell = sh(Math.abs(cxx));
+        const yy = syy >= 0 ? top * shell * Math.abs(syy) ** 0.35 : -0.006 * S * shell;
+        pos.push(cxx * hw, y0 + yy, z);
+      }
+    }
+    for (let i = 0; i < ROWS.length - 1; i++) {
+      for (let j = 0; j < SEG; j++) {
+        const a = i * (SEG + 1) + j, b = a + 1, c = a + SEG + 1, d = c + 1;
+        idx.push(a, b, c, b, d, c);
+      }
+    }
+    for (const [row, flip] of [[0, true], [ROWS.length - 1, false]]) {
+      const base = row * (SEG + 1);
+      const cIdx = pos.length / 3;
+      const [z0, , top0] = ROWS[row];
+      pos.push(0, lift(z0) + soleTop + top0 * S * 0.35, z0 * S);
+      for (let j = 0; j < SEG; j++) {
+        if (flip) idx.push(cIdx, base + j + 1, base + j);
+        else idx.push(cIdx, base + j, base + j + 1);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    const mesh = new THREE.Mesh(g, mat);
+    if (opts.probe) { mesh.userData.pnId = 'shoe'; mesh.userData.noMerge = true; }
+    group.add(mesh);
+  }
+
+  // ── 2 · SOLE ────────────────────────────────────────────────────────
+  // Three vertical stations per row (underside / welt edge / top) so the slab
+  // has a bevelled edge that catches its own highlight. The footprint runs a
+  // hair past the upper at heel and toe as well as sideways.
+  {
+    const soleMat = opts.soleMat || mat;
+    const STA = [[0.00, 0.945], [0.55, 1.000], [1.00, 0.975]];
+    const pos = [], idx = [];
+    const zEx = 0.008 * S;
+    const M = ROWS.length;
+    const zOf = (i) => ROWS[i][0] * S + (i === 0 ? -zEx : i === M - 1 ? zEx : 0);
+    // the toe/heel rows narrow to a point on the upper; a SOLE does not, so it
+    // keeps a real footprint there — that is what stops the plan view reading
+    // as an almond.
+    const wOf = (i) => Math.max(ROWS[i][1], 0.015) * WELT * S;
+    // plan outline: right chain heel→toe, then left chain toe→heel
+    const outline = [];
+    for (let i = 0; i < M; i++) outline.push([wOf(i), zOf(i), ROWS[i][0]]);
+    for (let i = M - 1; i >= 0; i--) outline.push([-wOf(i), zOf(i), ROWS[i][0]]);
+    const N = outline.length;
+    for (const [t, wm] of STA) {
+      for (const [x, z, z0] of outline) pos.push(x * wm, lift(z0) + t * soleTop, z);
+    }
+    for (let k = 0; k < STA.length - 1; k++) {
+      for (let j = 0; j < N; j++) {
+        const j2 = (j + 1) % N;
+        const a = k * N + j, b = k * N + j2, c = (k + 1) * N + j, d = (k + 1) * N + j2;
+        idx.push(a, c, b, b, c, d);
+      }
+    }
+    for (const [k, top] of [[0, false], [STA.length - 1, true]]) {
+      const base = k * N;
+      for (let i = 0; i < M - 1; i++) {
+        const r0 = base + i, r1 = base + i + 1;
+        const l0 = base + (2 * M - 1 - i), l1 = base + (2 * M - 2 - i);
+        if (top) { idx.push(r0, l1, r1, r0, l0, l1); }
+        else { idx.push(r0, r1, l1, r0, l1, l0); }
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    g.setIndex(idx);
+    g.computeVertexNormals();
+    const mesh = new THREE.Mesh(g, soleMat);
+    if (opts.probe) { mesh.userData.pnId = 'sole'; mesh.userData.noMerge = true; }
+    group.add(mesh);
+  }
+
+  // ── 3 · HEEL BLOCK (pumps) ──────────────────────────────────────────
   if (heel > 0) {
-    const hb = new THREE.Mesh(new THREE.CylinderGeometry(0.020 * S, 0.026 * S, heel, 12), mat);
-    hb.position.set(0, heel * 0.5, -0.048 * S);
+    const hb = new THREE.Mesh(new THREE.CylinderGeometry(0.019 * S, 0.030 * S, heel + soleTop * 0.5, 14),
+      opts.soleMat || mat);
+    hb.position.set(0, (heel + soleTop * 0.5) * 0.5, -0.052 * S);
+    hb.scale.set(1.15, 1, 1.5);
     group.add(hb);
   }
   return group;
+}
+
+// ── CAP BILL (v7 round-4) ─────────────────────────────────────────────
+// A curled visor, built in head-local units of the head radius. Origin is the
+// cap's own centre, so the caller positions it with (CAP_Y, CAP_Z).
+//   · leaves the shell at the cap rim (0.50R up, 1.10R back) and pitches
+//     down-and-back, so worn BACKWARDS it sits over the nape,
+//   · the side edges CURL down, deepening toward the tip — this is the whole
+//     point: it is what puts area in the profile silhouette,
+//   · real thickness (0.060R → 0.034R), so the underside catches its own shade.
+function buildCapBill(r, matTop, matUnder) {
+  const NU = 14, NV = 10;
+  const ROOT_Y = 0.50, ROOT_Z = -1.10, PITCH = 0.26, LEN = 0.80;
+  const W0 = 0.78, W1 = 0.60, CURL0 = 0.03, CURL1 = 0.32, T0 = 0.070, T1 = 0.040;
+  const pos = [], idxTop = [], idxUnder = [];
+  const LOOP = NV * 2;                              // closed loop per station
+  const station = (u) => {
+    const zA = ROOT_Z - LEN * u * Math.cos(PITCH);
+    const yA = ROOT_Y - LEN * u * Math.sin(PITCH);
+    const round = u > 0.86 ? Math.sqrt(Math.max(0, 1 - ((u - 0.86) / 0.14) ** 2)) : 1;
+    const hw = (W0 + (W1 - W0) * u) * round;
+    const curl = CURL0 + (CURL1 - CURL0) * u;
+    const t = T0 + (T1 - T0) * u;
+    const pt = (v, sign) => [v * hw * r, (yA - curl * v * v + sign * t * 0.5) * r, zA * r];
+    const loop = [];
+    for (let j = 0; j <= NV; j++) loop.push(pt(-1 + 2 * (j / NV), 1));       // top edge
+    for (let j = NV - 1; j >= 1; j--) loop.push(pt(-1 + 2 * (j / NV), -1));  // underside
+    return loop;
+  };
+  for (let i = 0; i <= NU; i++) for (const p of station(i / NU)) pos.push(p[0], p[1], p[2]);
+  // Faces j < NV are the TOP of the visor; the rest are the UNDERSIDE plus both
+  // side rims. Splitting them gives the bill a darker undervisor and a dark
+  // brim edge — the two cues that make a cap read as a cap and not as a fin.
+  for (let i = 0; i < NU; i++) {
+    for (let j = 0; j < LOOP; j++) {
+      const j2 = (j + 1) % LOOP;
+      const a = i * LOOP + j, b = i * LOOP + j2, c = (i + 1) * LOOP + j, d = (i + 1) * LOOP + j2;
+      (j < NV ? idxTop : idxUnder).push(a, c, b, b, c, d);
+    }
+  }
+  for (const [i, flip] of [[0, true], [NU, false]]) {
+    const base = i * LOOP;
+    const cIdx = pos.length / 3;
+    let sx = 0, sy = 0, sz = 0;
+    for (let j = 0; j < LOOP; j++) { sx += pos[(base + j) * 3]; sy += pos[(base + j) * 3 + 1]; sz += pos[(base + j) * 3 + 2]; }
+    pos.push(sx / LOOP, sy / LOOP, sz / LOOP);
+    for (let j = 0; j < LOOP; j++) {
+      const j2 = (j + 1) % LOOP;
+      if (flip) idxUnder.push(cIdx, base + j2, base + j);
+      else idxUnder.push(cIdx, base + j, base + j2);
+    }
+  }
+  const grp = new THREE.Group();
+  for (const [ix, mm] of [[idxTop, matTop], [idxUnder, matUnder || matTop]]) {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(pos.slice(), 3));
+    g.setIndex(ix);
+    g.computeVertexNormals();
+    grp.add(new THREE.Mesh(g, mm));
+  }
+  return grp;
 }
 
 function makeHead(rad, mat, opts = {}) {
@@ -2347,7 +2504,12 @@ function buildNeckline(dims, torsoH, arcTop, mat, neckR = 0) {
     // 1.048 clears the lapel roll (which stands the torso 3% proud at φ≈0.34);
     // at 1.020 the roll punched through the blouse and the neckline rendered as
     // two cream horns with a pink strip up the middle.
-    const rr = rows[i][0] * 1.048, yy = rows[i][1];
+    // v7 FIX round-4 — 1.048 was still being punched through by the lapel roll on
+    // the female builds: Karen's neckline rendered with two PINK PRONGS cutting
+    // down into the cream from the collar (measured on karen-r4c-garmentF). The
+    // roll stands the torso ~3.5% proud at φ≈0.34, so the blouse needs more than
+    // 4.8% of clearance to stay one continuous garment.
+    const rr = rows[i][0] * 1.075, yy = rows[i][1];
     for (let j = 0; j <= SEG; j++) {
       const phi = -arc / 2 + (j / SEG) * arc;
       pos.push(-rr * Math.sin(phi), yy, rr * Math.cos(phi) * 0.66);
@@ -2449,16 +2611,32 @@ function surfaceTopology(geo, opts) {
 }
 
 function buildTorso(dims, mat, detailed = false, hem = 0, female = false, lapels = false) {
-  const { hipR, waistR, chestR, shoulderR, torsoH } = dims;
+  const { hipR, chestR, shoulderR, torsoH } = dims;
+  // v7 FIX round-4 — THE WAIST (round-3 critic: "Karen's blazer still reads
+  // tunic-ish at fight distance — the hem/waist relationship"). Measured off the
+  // shell's own silhouette with the arms masked off, her jacket narrowed just
+  // **9%** between chest and waist (0.909) against Andrew's tailored 0.805: a
+  // straight tube ending below the hip is a tunic by definition, whatever colour
+  // it is. A STRUCTURED blazer (the bible's word for her) is suppressed at the
+  // waist and released over the hip, and that is what the eye reads as tailoring
+  // at fight distance — before it can see a lapel, a button or a seam.
+  const tailored = hem > 0 && lapels;
+  const waistR = dims.waistR * (tailored ? (female ? 0.90 : 0.95) : 1);
   const V2 = (x, y) => new THREE.Vector2(x, y);
   const pts = [];
   if (hem > 0) {
-    const hw = hipR * 1.10;                    // ~0.01 proud of the trousers
-    pts.push(V2(0.001, -hem - 0.013));
-    pts.push(V2(hw * 0.64, -hem - 0.009));
-    pts.push(V2(hw, -hem));
-    pts.push(V2(hw * 0.985, -hem * 0.42));
-    pts.push(V2(hipR * 1.02, 0.02));
+    // The hem has to stay proud of the TROUSER at the height it lands on, or the
+    // thigh punches through it; the trouser taper is 0.074→0.052 over the thigh,
+    // so a higher hem needs a wider block.
+    const hw = hipR * 1.12;
+    // …and it is a HEM, not a dome: a flat underside meeting a near-vertical
+    // edge, so the silhouette turns a corner instead of rolling under.
+    pts.push(V2(0.001, -hem - 0.005));
+    pts.push(V2(hw * 0.72, -hem - 0.004));
+    pts.push(V2(hw * 0.995, -hem - 0.002));
+    pts.push(V2(hw, -hem + 0.006));
+    pts.push(V2(hw * 0.988, -hem * 0.45));
+    pts.push(V2(hipR * 1.03, 0.02));
   } else {
     const y0 = -hem;                           // hem<0 raises the shell base
     pts.push(V2(0.001, y0 - 0.006));
@@ -2547,7 +2725,7 @@ function containHair(mesh, r, sy) {
   g.computeVertexNormals();
 }
 
-function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
+function buildHair(head, r, mat, style, streakMat = null, underMat = null, probe = false) {
   const sy = head.scale.y || 1;
   const add = (m, isCap = false) => {
     m.userData.noCast = true;
@@ -2730,10 +2908,14 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     // a discrete tan LUMP on the forehead rather than a lock of hair. Flatter,
     // shallower and seated higher, so it dips to ~0.65R (the hairline is 0.81R):
     // a lock across the brow line, not a horn.
-    const sweep = new THREE.Mesh(new THREE.SphereGeometry(r * 0.72, 30, 22), mat);
-    sweep.scale.set(1.02, 0.22, 0.72);
-    sweep.rotation.set(0.14, 0.20, 0.16);
-    sweep.position.set(-r * 0.22, r * 0.56, r * 0.20);
+    // v7 FIX round-4 — the sweep's leading corner was still clearing the cap over
+    // the left temple and rendering as a discrete pale LUMP on the forehead (the
+    // critic's "detached pale blob at her temple"). Seated higher and pulled back
+    // onto the crown, where a side-parted sweep actually lies.
+    const sweep = new THREE.Mesh(new THREE.SphereGeometry(r * 0.70, 30, 22), mat);
+    sweep.scale.set(1.00, 0.20, 0.70);
+    sweep.rotation.set(0.12, 0.20, 0.10);
+    sweep.position.set(-r * 0.20, r * 0.62, r * 0.12);
     add(sweep);
     // v7 FIX round-2 — THE ASYMMETRIC BOB IS NOW ASYMMETRIC IN DEPTH, and the
     // ear is uncovered on the tucked side. Both curtains used to sit at
@@ -2761,13 +2943,24 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null) {
     // platinum highlight. It is now a narrow lock lying on the FRONT edge of the
     // long side, running temple → cheekbone, which is where karen_body_v2.png
     // puts it. Seated above the jaw band so Amendment 1 is untouched.
-    if (streakMat) {
-      const streak = new THREE.Mesh(new THREE.SphereGeometry(r * 0.46, 22, 18), streakMat);
-      streak.scale.set(0.30, 0.86, 0.36);
-      streak.position.set(-r * 0.78, -r * 0.06, r * 0.28);
-      streak.rotation.z = 0.20;
-      add(streak);
-    }
+    // v7 FIX round-4 — THE WHITE SIDEBURN SLAB (round-3 critic). Measured against
+    // the long curtain (x −1.00r…−0.68r, z −0.62r…+0.30r), the round-2 streak sat
+    // at x −0.92…−0.64r and z +0.11…+0.44r: it stood 0.14r PROUD of the curtain's
+    // front edge and reached 0.46r forward of the ear plane at cheek height. So it
+    // was not a highlight in the hair — it was a near-white lens hanging in front
+    // of the ear down to the jaw, which is both the critic's "white sideburn slab
+    // / detached pale blob at the temple" AND a straight Amendment-1 containment
+    // break. It is now a THIN lock lying ON the curtain's outer face (0.015r
+    // proud), inside the curtain's own z span, so it reads as a platinum streak
+    // in the bob instead of a slab beside the face.
+    // …and re-seating it did not save it: at 0.015r proud on the curtain's outer
+    // face it STILL rendered as a discrete white lens over the temple (measured
+    // 2.0% of the front head, 4.0% at 3/4, hanging to −0.68R = below the ear
+    // lobe). A near-white mesh laid over a tan mesh is a second surface; it can
+    // only ever read as a slab. The platinum highlight belongs in the hair's own
+    // VALUE — `hairColor` is already 0xe8d7ae platinum with a strand bump — so
+    // the separate streak shell is gone. `hairStreakColor` is retained in the
+    // data as the colour a future texture pass should use.
     // DARK UNDERLAYER — v7 FIX round-2: it was a 0.72r sphere at z = −0.52r whose
     // rear pole reached −1.18r against a cap back face at −1.17r, i.e. it poked
     // THROUGH the platinum and rendered as the tan/brown bald patch on the
@@ -3162,7 +3355,7 @@ function buildGlasses(head, r, kind, detailed) {
 }
 
 // ── Accessories — placement recomputed for v5 arm/head geometry ───────
-function addAccessory(group, acc, rig, config, detailed) {
+function addAccessory(group, acc, rig, config, detailed, probe = false) {
   const handX = rig.handX, handY = rig.handY, handZ = rig.handZ;
   const d = rig.d;
   // Held items are placed in ARM-LOCAL space at the hand and parented to
@@ -3374,13 +3567,22 @@ function addAccessory(group, acc, rig, config, detailed) {
       // and none in profile; a plain navy dome". It now leaves the occiput AT the
       // shell (z = −1.10R, where the dome's surface is at that height) and
       // projects 0.6R clear, angled slightly down, which is a backwards cap.
-      const billGeo = new THREE.CylinderGeometry(r * 0.62, r * 0.62, 0.014, 24, 1, false, 0, Math.PI);
-      billGeo.rotateY(Math.PI / 2);
-      const bill = new THREE.Mesh(billGeo, capMat);
-      bill.rotation.x = -0.46;
-      bill.position.set(0, CAP_Y + r * 0.46, CAP_Z - r * 1.02);
-      bill.scale.set(1.06, 1.0, 1.0);
-      bill.userData.noCast = true;
+      // v7 FIX round-4 — THE FIN. Measured on renders, the round-2 bill was a
+      // FLAT half-disc 0.014 thick: it projected a real 0.382R past the occiput
+      // and covered 5.6% of the head from behind, but only **1.39%** in profile
+      // and **1.47%** at 3/4 — because a flat plate seen edge-on is a two-pixel
+      // line. That is the round-3 note "the cap has no bill": geometrically it
+      // was there, optically it was a razor blade.
+      // A real visor is CURLED — the sides drop away from the centre line, and
+      // the curl deepens toward the tip. That curl is what gives the bill a
+      // silhouette from the side, and it is the shape that says CAP rather than
+      // "dark wedge behind a head".
+      const bill = buildCapBill(r, capMat, Materials.custom(0x191c26, { stops: 4 }));
+      bill.position.set(0, CAP_Y, CAP_Z);
+      for (const bm of bill.children) {
+        bm.userData.noCast = true;
+        if (probe) { bm.userData.pnId = 'capBill'; bm.userData.noMerge = true; }
+      }
       group.head?.add(bill);
       const btn = new THREE.Mesh(new THREE.SphereGeometry(r * 0.070, 10, 8), rimMat);
       btn.position.set(0, CAP_Y + CAP_R * CAP_SY * 0.995, CAP_Z);
@@ -3443,39 +3645,37 @@ function addAccessory(group, acc, rig, config, detailed) {
       // resting at the hip. So: the bag is parented to the BODY at hip height and
       // a two-run chain climbs from it to the shoulder line. Nothing rides the
       // hand, so the hand is free to read as a hand.
+      // v7 FIX round-4 — IT IS CARRIED, NOT WORN. The round-2 rebuild hung the
+      // bag off the BODY at hip height on a two-run shoulder chain, which is why
+      // the round-3 critic logged "the purse doesn't grip": nothing about it
+      // touched a hand, so at fight distance it read as luggage parked against
+      // her hip. `_hands_reference.png` grip vocabulary is a closed fist around
+      // a handle with the knuckle roll over the front of it — the same vocabulary
+      // every other held prop in the cast uses (mug, clipboard, cane). So: the
+      // handle LOOP passes through the fist, the bag hangs from the loop's own
+      // ends, and the whole assembly is parented to the arm so it rides the swing.
       const leather = Materials.custom(0xa9752f, { stops: 4 });
       const dark = Materials.custom(0x8a5a20, { stops: 4 });
       const chainM = Materials.custom(0xc8a030, { stops: 4 });
-      // Outboard enough to clear the hip, but FORWARD of the arm plane — parked
-      // level with it the bag half-disappeared behind the sleeve.
-      const bx = rig.bodyW * 0.50;
-      const byHip = rig.legLength + rig.torsoH * 0.14;
-      const bz = rig.frontZ * 0.86;
-      const bag = new THREE.Mesh(new THREE.BoxGeometry(0.092, 0.070, 0.036), leather);
-      bag.position.set(bx, byHip, bz);
-      bag.rotation.y = -0.16;
-      group.add(bag);
-      const flap = new THREE.Mesh(new THREE.BoxGeometry(0.094, 0.026, 0.039), dark);
-      flap.position.set(bx, byHip + 0.030, bz);
-      flap.rotation.y = -0.16;
-      group.add(flap);
-      const clasp = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.004, 12), chainM);
+      const BX = 0.014, BZ = 0.056;
+      const HR = 0.050;                       // handle radius = bag half-width
+      const apexY = hy - 0.010;               // the loop's crest, inside the fist
+      const cY = apexY - HR;                  // loop centre == the bag's top line
+      const handle = new THREE.Mesh(new THREE.TorusGeometry(HR, 0.0062, 8, 22, Math.PI), chainM);
+      handle.position.set(BX, cY, BZ);
+      group.rightArm?.add(handle);
+      const bag = new THREE.Mesh(new THREE.BoxGeometry(HR * 2, 0.078, 0.038), leather);
+      bag.position.set(BX, cY - 0.039, BZ);
+      group.rightArm?.add(bag);
+      const flap = new THREE.Mesh(new THREE.BoxGeometry(HR * 2.04, 0.028, 0.041), dark);
+      flap.position.set(BX, cY - 0.012, BZ);
+      group.rightArm?.add(flap);
+      const clasp = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.005, 12), chainM);
       clasp.rotation.x = Math.PI / 2;
-      clasp.position.set(bx + 0.004, byHip + 0.014, bz + 0.021);
-      group.add(clasp);
-      // the chain: two straight runs from the bag's top corners to the shoulder
-      const shY = rig.legLength + rig.torsoH * 0.97;
-      const shX = rig.shoulderX * 0.62;
-      for (const dz of [-1, 1]) {
-        const top = new THREE.Vector3(shX, shY, rig.shoulderZ + dz * rig.d.bodyD * 0.20);
-        const bot = new THREE.Vector3(bx + 0.024, byHip + 0.034, bz + dz * 0.014);
-        const dir = top.clone().sub(bot);
-        const len = dir.length();
-        const link = new THREE.Mesh(new THREE.CylinderGeometry(0.0042, 0.0042, len, 7), chainM);
-        link.position.copy(bot.clone().addScaledVector(dir, 0.5));
-        link.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
-        group.add(link);
-      }
+      clasp.position.set(BX, cY - 0.030, BZ + 0.021);
+      group.rightArm?.add(clasp);
+      if (probe) { bag.userData.pnId = 'prop'; bag.userData.noMerge = true; }
+      grip(1, apexY - hy, BZ - 0.062);
       break;
     }
     case 'mop': {
@@ -3507,19 +3707,35 @@ function addAccessory(group, acc, rig, config, detailed) {
       // now thicker and a light honey value that holds against the stage, the crook
       // is bigger, and the ferrule is pale grey (a dark ferrule was invisible too).
       const caneMat = Materials.custom(0xe0b070, { stops: 4 });
-      const caneLen = Math.max(0.5, rig.handY);          // hand height ≈ to floor
+      // v7 FIX round-4 — TWO BUGS, both measured (critic: "cane not gripped, and
+      // figureBottom = −0.152").
+      //  (a) LENGTH: `Math.max(0.5, rig.handY)` floored the shaft at 0.50 world
+      //      units. Grandma is a 1.20-tall build whose hand hangs at ~0.35, so
+      //      the ferrule was driven 0.15 BELOW the stage — it clips through
+      //      every floor in the game. The shaft is now solved from the hand
+      //      height, which is the only number that can put the tip on the floor.
+      //  (b) GRIP: the shaft ran at arm-local (0.034, 0.100) while the fist and
+      //      its grip knuckles sit at (0, ~0.075) — 0.05 away, i.e. a stick
+      //      standing NEXT to an open hand. Shaft and knuckles now share a
+      //      station, so the fingers close over the wood.
+      const GRIP_Z = 0.078;
       const topLocalY = hy - 0.02;                        // fist, arm-local
+      // −0.004 measured figureBottom = −0.0174: the arm's own hang rotation and
+      // the ferrule cap eat ~0.014 more than the hand height predicts. Solved
+      // against the RENDER, per the harness rule, not against the formula.
+      const caneLen = Math.max(0.22, rig.handY - 0.018);
       const cane = new THREE.Mesh(new THREE.CylinderGeometry(0.019, 0.016, caneLen, 16), caneMat);
-      cane.position.set(0.034, topLocalY - caneLen / 2, 0.100);
+      cane.position.set(0.012, topLocalY - caneLen / 2, GRIP_Z);
       group.rightArm?.add(cane);
       const handle = new THREE.Mesh(new THREE.TorusGeometry(0.042, 0.017, 10, 20, Math.PI * 1.2), caneMat);
       handle.rotation.set(Math.PI / 2, 0, -0.12);
-      handle.position.set(0.034, topLocalY + 0.020, 0.100);
+      handle.position.set(0.012, topLocalY + 0.020, GRIP_Z);
       group.rightArm?.add(handle);
       const ferrule = new THREE.Mesh(new THREE.CylinderGeometry(0.020, 0.021, 0.030, 12), Materials.custom(0x8e8e96, { stops: 4 }));
-      ferrule.position.set(0.034, topLocalY - caneLen + 0.014, 0.100);
+      ferrule.position.set(0.012, topLocalY - caneLen + 0.014, GRIP_Z);
       group.rightArm?.add(ferrule);
-      grip(1, 0.0, 0.03);
+      if (probe) { cane.userData.pnId = 'prop'; cane.userData.noMerge = true; }
+      grip(1, 0.0, GRIP_Z - 0.062);
       break;
     }
     case 'name_tag': {
