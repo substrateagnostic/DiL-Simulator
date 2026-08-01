@@ -32,7 +32,9 @@ export const MESHY_MODELS = {
   // absent — the monolith stays procedural by producer order.
   intern: { url: 'intern_idle.glb' },
   chad: { url: 'chad_idle.glb' },
-  grandma: { url: 'grandma_idle.glb' },
+  // Meshy dropped her cane entirely (hands empty) — it is bone-socketed at
+  // runtime instead. See MeshyProps.attachCane.
+  grandma: { url: 'grandma_idle.glb', props: ['cane'] },
   compliance: { url: 'compliance_idle.glb' },
   regional: { url: 'regional_idle.glb' },
   ross_boss: { url: 'ross_boss_idle.glb' },
@@ -118,6 +120,15 @@ function toonify(root) {
   });
 }
 
+// Raw GLB fetch on the shared loader — used by MeshyClips for the armature-only
+// reaction clips, which need the same meshopt-aware loader but none of the
+// material/skeleton handling below.
+export function CLIP_LOADER(relUrl) {
+  return loader().then(l => new Promise((resolve, reject) => {
+    l.load(BASE + relUrl, resolve, undefined, reject);
+  }));
+}
+
 // Load one character. Resolves to the cached entry, or null on failure — the
 // caller (CombatScene) treats null as "use the procedural build".
 export function load(id) {
@@ -131,7 +142,15 @@ export function load(id) {
     l.load(BASE + def.url, gltf => {
       try {
         toonify(gltf.scene);
-        const entry = { scene: gltf.scene, animations: gltf.animations || [], def };
+        // MEASURE ONCE, ON THE ORIGINAL. Box3.setFromObject on a SkeletonUtils
+        // clone of a gltfpack-quantized skinned mesh reports ~0 height (the
+        // dequantization does not survive the clone's bounds path) — Andrew came
+        // out 853725x and vanished off the front stage. The parse-time
+        // measurement, taken after an explicit world-matrix update, is correct
+        // and is the number every instance is fitted with.
+        gltf.scene.updateMatrixWorld(true);
+        const nativeHeight = new THREE.Box3().setFromObject(gltf.scene).getSize(new THREE.Vector3()).y;
+        const entry = { scene: gltf.scene, animations: gltf.animations || [], def, nativeHeight };
         cache.set(id, entry);
         resolve(entry);
       } catch (err) {
@@ -162,7 +181,12 @@ export function preload(ids) {
   const want = [...new Set(ids.map(id => resolveId(id, CHARACTER_CONFIGS[id])))]
     .filter(id => MESHY_MODELS[id]);
   if (!want.length) return Promise.resolve([]);
-  return Promise.all(want.map(load));
+  // The shared reaction clips ride along — they are a fixed ~430KB for the
+  // whole cast and are needed by whichever characters this encounter stages.
+  return Promise.all([
+    ...want.map(load),
+    import('./MeshyClips.js').then(m => m.preloadClips()).catch(() => null),
+  ]);
 }
 
 // A ready-to-stage clone of a cached model, or null if it is not cached (either
@@ -176,7 +200,7 @@ export function instance(id) {
   // Object3D.clone shares the bone references and every copy would animate the
   // first one's skeleton). Materials and geometry stay shared.
   const scene = _skelUtils.clone(entry.scene);
-  return { scene, animations: entry.animations, def: entry.def };
+  return { scene, animations: entry.animations, def: entry.def, nativeHeight: entry.nativeHeight };
 }
 
 // Which GLB a character id should stage. Identity for everyone except the
@@ -187,17 +211,22 @@ export function resolveId(id, config) {
   return id;
 }
 
-// The clip set handed to a MeshyAnimator. `idle` is the character's own baked
-// stance; the shared reaction roles are bound in by MeshyClips (Phase 2) and
-// are absent until then — MeshyAnimator degrades every missing role to `idle`.
-export function clipsFor(inst) {
+// The clip set handed to a MeshyAnimator. The shared calm stance REPLACES the
+// character's own baked idle when it is loaded (producer note: the wave idles
+// read as an A-pose); the baked clip stays as the fallback so a failed clip
+// fetch degrades to wave-1 behaviour rather than a frozen bind pose.
+export function clipsFor(inst, id) {
   const clips = { idle: inst.animations?.[0] || null };
-  return Object.assign(clips, sharedClips());
+  if (_clipsFor) Object.assign(clips, _clipsFor(id));
+  return clips;
 }
 
-let _shared = {};
-export function setSharedClips(map) { _shared = map || {}; }
-export function sharedClips() { return _shared; }
+// MeshyClips registers itself here on first load; keeping the reference
+// indirect avoids a static import cycle (MeshyClips needs CLIP_LOADER).
+let _clipsFor = null;
+let _phaseFor = null;
+export function registerClipProvider(fn, phaseFn) { _clipsFor = fn; _phaseFor = phaseFn; }
+export function phaseFor(id) { return _phaseFor ? _phaseFor(id) : 0; }
 
 // ── roguelite client body pool ──────────────────────────────────────────────
 // ClientGenerator hands CombatScene a CHARACTER_CONFIGS-shaped visual config.
@@ -224,9 +253,42 @@ export function pickClientBody(config = {}) {
   return MESHY_MODELS[pick] ? pick : 'reception_client';
 }
 
-// Runtime tint for the neutral-grey client bodies. No-op for the authored cast —
-// their colours are baked and correct. Filled in by the client pass.
-export function applyTint(/* root, id, config */) {}
+// RUNTIME TINT for the roguelite client bodies. No-op for the authored cast —
+// their colours are baked and correct.
+//
+// Honest description of what this can and cannot do: each client body is ONE
+// mesh on ONE baked atlas, and the atlas already carries skin tone and hair
+// colour. There is no clothing-only mask, so a material tint necessarily washes
+// the whole figure. The tint is therefore built to be a HUE WASH, not a repaint:
+//   • the target is normalised so its brightest channel is 1.0 — the tint can
+//     only ever REMOVE light from the other channels, never darken overall,
+//   • then pulled 55% back toward white, so even a hot pink blazer lands as a
+//     rosy cast rather than pink skin.
+// The grey sweater/trousers, being neutral, take almost all of the visible
+// shift; skin and hair move a little. That is the trade, and it is why the
+// clients read as different people without needing 30 more Meshy generations.
+const TINT_STRENGTH = 0.45;
+const CLIENT_IDS = new Set(['client_m_young', 'client_m_athletic', 'client_m_heavy',
+  'client_m_elder', 'client_f_pro', 'client_f_elder', 'reception_client']);
+
+export function applyTint(root, id, config) {
+  const modelId = resolveId(id, config);
+  if (!CLIENT_IDS.has(modelId)) return;
+  const src = config?.bodyColor;
+  if (src == null) return;
+  const c = new THREE.Color(src);
+  const peak = Math.max(c.r, c.g, c.b) || 1;
+  c.setRGB(c.r / peak, c.g / peak, c.b / peak);
+  c.lerp(new THREE.Color(0xffffff), 1 - TINT_STRENGTH);
+  root.traverse(o => {
+    if (!o.isMesh || !o.material) return;
+    // The cached parse's materials are SHARED by every clone — tinting in place
+    // would recolour the previous client too. Clone per instance; the texture
+    // and the gradient ramp stay shared.
+    o.material = o.material.clone();
+    o.material.color.copy(c);
+  });
+}
 
 export function isCached(id) { return cache.has(id); }
 export function hasModel(id) { return !!MESHY_MODELS[id] && !failed.has(id); }

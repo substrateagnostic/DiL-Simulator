@@ -30,6 +30,7 @@ export class MeshyAnimator {
     this._current = null;
     this._returnTimer = 0;
     this._oneShot = null;
+    this._propTicks = opts.props || [];
 
     for (const [role, clip] of Object.entries(clips || {})) {
       if (!clip) continue;
@@ -39,6 +40,11 @@ export class MeshyAnimator {
     }
     if (this.actions.idle) {
       this.actions.idle.reset().setLoop(THREE.LoopRepeat, Infinity).play();
+      // Two shared calm stances cover the whole cast, so without a per-character
+      // phase offset a trio fight breathes in lockstep and reads as one puppet
+      // rig. opts.phase is a stable 0..1 hash of the character id.
+      const clip = this.actions.idle.getClip();
+      this.actions.idle.time = (opts.phase || 0) * (clip?.duration || 0);
       this._current = 'idle';
     }
     this.mixer.addEventListener('finished', (e) => {
@@ -98,6 +104,10 @@ export class MeshyAnimator {
   // them is already the body statement.
   setExpression(name, duration) {
     if (name === 'victory') return this.play('victory');
+    // COMPOSURE BREAK. CombatState already fires setExpression('defeated') on
+    // the broken enemy (CombatState.js, result.type === 'broken'), so the
+    // stagger needs no new call site — hands to the head, doubling over.
+    if (name === 'defeated') return this.play('stagger');
     // A defeat call comes in as setExpression('hurt', 999) — the group-level
     // topple in enemyDefeatAnim is the real beat; a looping flinch under it
     // fights the spin, so the stance simply holds.
@@ -115,7 +125,13 @@ export class MeshyAnimator {
   setWalking() {}
   setSitting() {}
 
-  update(dt) { this.mixer.update(dt); }
+  update(dt) {
+    this.mixer.update(dt);
+    // Bone-socketed props are constrained AFTER the skeleton has been posed for
+    // this frame, or the constraint reads one frame stale (a visible cane
+    // wobble at 60fps).
+    for (const t of this._propTicks) t();
+  }
 
   dispose() {
     this.mixer.stopAllAction();

@@ -2033,6 +2033,7 @@ export class CombatState {
 
       this.phase = 'animating';
       this.hud.disableInput();
+      this.scene.playerBraceAnim(this._activeAllyIndex, quality);
 
       const messages = {
         perfect: `Perfect stance! DEF +${result.defBonus} for ${result.duration} turns.`,

@@ -5,6 +5,7 @@ import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { MESHY_MODE } from '../utils/constants.js';
 import * as MeshyCast from './MeshyCast.js';
 import { MeshyAnimator } from './MeshyAnimator.js';
+import * as MeshyProps from './MeshyProps.js';
 
 // Per-boss authorship: which held silhouette + attack gesture each character
 // uses. Named bosses get bespoke choreography; everyone else gets a generic
@@ -351,17 +352,37 @@ export class CombatScene {
     }
 
     const model = inst.scene;
-    const glbH = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y;
+    // Bone-socketed props go on BEFORE the scaled wrapper, so every measurement
+    // inside attachProps is in the model's own units (grandma's cane).
+    const propTicks = inst.def.props ? MeshyProps.attachProps(model, inst.def.props) : [];
+    // Measured at parse time on the un-cloned model (MeshyCast.load) — see the
+    // note there; measuring the clone here reports zero.
+    const glbH = inst.nativeHeight || new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y;
     const inner = new THREE.Group();
-    inner.scale.setScalar(glbH > 0 ? probeH / glbH : 1);
+    // The procedural probe is only a RULER, and a ruler can lie: a cosmetic
+    // accessory that projects a stray vertex puts the probe's AABB in the
+    // thousands, and the ratio then scales the Meshy model off the planet
+    // (measured: Andrew came out at 853725x with a cosmetic equipped, an
+    // invisible ally on the front stage). Clamp to a sane human band and fall
+    // back to the character's own height when the ruler is clearly broken.
+    let fit = glbH > 0 ? probeH / glbH : 1;
+    if (!(fit > 0.2 && fit < 5)) {
+      console.warn(`[meshy] ${id}: implausible fit ${fit.toFixed(3)} (probeH=${probeH.toFixed(3)} glbH=${glbH.toFixed(3)}) — using 1:1`);
+      fit = 1;
+    }
+    inner.scale.setScalar(fit);
     inner.rotation.y = inst.def.yaw || 0;
     inner.add(model);
     group.add(inner);
 
     MeshyCast.applyTint(model, id, config);
 
-    const animator = new MeshyAnimator(model, MeshyCast.clipsFor(inst), {
+    const animator = new MeshyAnimator(model, MeshyCast.clipsFor(inst, id), {
       timeScale: inst.def.timeScale,
+      // Two calm stances cover 33 characters, so a group fight would breathe in
+      // unison without a per-character phase offset.
+      phase: MeshyCast.phaseFor(id),
+      props: propTicks,
     });
     group.userData.meshy = true;
     return { group, animator };
@@ -799,6 +820,17 @@ export class CombatScene {
       requestAnimationFrame(animate);
     };
     animate();
+  }
+
+  // BRACE. The QTE resolves into a held defensive stance — on the Meshy cast a
+  // real guard clip, on the procedural cast the existing 'brace' gesture if one
+  // is authored (the procedural rig has no guard pose today, so it is a no-op
+  // there and the DEF buff still reads through the HUD as it always did).
+  playerBraceAnim(allyIndex = 0, quality = 'good') {
+    const entry = this.allyGroups[allyIndex];
+    if (!entry) return;
+    entry.animator?.playGesture('guard');
+    if (quality === 'perfect') this.flash(0xffd700, 0.05);
   }
 
   // ── Player / ally animations ─────────────────────────────────────────
