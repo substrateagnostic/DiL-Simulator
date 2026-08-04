@@ -1,3 +1,108 @@
+## [THE NAMING SWEEP (08-04) - the ids finally match the names]
+
+One commit, `79291c5`, `display-case` only, pushed. `main` untouched at `08a9d84`.
+`npm run check` exit 0 verified before the commit.
+
+### What landed
+
+The save-safety naming ledger is retired. Since you ruled live saves burnable on
+08-01, the internal ids now say what the characters are called:
+
+| was | is | display |
+|---|---|---|
+| `ross`, `ross_boss` | `skip`, `skip_boss` | Skip Hartley / Skip Hartley (Unhinged) |
+| `rachel`, `rachel_boss` | `meredith`, `meredith_boss` | Meredith Sterling / Meredith Sterling, SVP |
+| `rachel_to` | `rachel` | Rachel, the friendly trust officer |
+
+Rachel gets the clean name she should always have had - she could only take it
+once the villain was off it, which is why this had to be one atomic sweep and not
+three. `met_rachel_to` becomes `met_rachel` ONLY after the old `met_rachel` has
+become `met_meredith`.
+
+**513 substitutions across 62 files**, plus 24 comment lines where a capital
+Rachel meant the SVP, plus 6 hand edits. Every flag, room id (`skip_office`),
+dialog id, enemy stat block, ability row, `balance.json` key, `MESHY_MODELS`
+entry, GLB filename, portrait stem, DevPanel preset and tool harness moved
+together.
+
+Four token families were protected **by name, not by prefix**, because
+`rachel_return` is Meredith's and `rachel_return_act1` is Rachel's and they differ
+only by suffix: `rachel_to*`, `rachel_return_act*`, `rachel_gift_act*`,
+`rachel_note`. A blind prefix rule would have handed three of Rachel's scenes to
+the villain.
+
+### Numbers, before -> after
+
+- `git grep -nE 'b(ross|ross_boss|rachel_boss)b' -- src tools *.md`: **180 -> 32**,
+  and `src/` **84 -> 0**, `tools/` **47 -> 0**. All 32 survivors are outside live
+  code: 21 in history you told me not to rewrite (`.claude/plans`, `alexmemory.md`,
+  `art/drafts`), 9 are the ledger records of this very rename, 2 are frozen
+  review-artefact filenames under gitignored trees.
+- `git grep -n rachel_to`: **36 -> 18**, **0 live**.
+
+### Gates
+
+`npm run check` 0 - `_ux-smoke` 11/11 - `_ux-dev` 0 duplicate spawns across
+7 presets x 26 rooms - `_g-board-close` all 5 legs (leg (e) is the renamed Skip
+guard: `board_meeting_after`, xp delta 0 across two presses) - `_g-stage-verify`
+276 trees, **0 structurally changed** - `_g-archive-check` exactly one Janitor in
+all 3 states - `_ux-alex` S4a/b/c - `combat-sim` ladder unchanged
+(`meredith_boss` L8 96.7%).
+
+New gate `tools/_n-rename-verify.mjs`, 13/13, headed, screenshots in
+`screenshots/naming-sweep/`: real boot; a **seeded pre-rename save**; a real
+Meredith fight walked into from the Board Room (900 HP, Meshy model on stage,
+victory sets `defeated_meredith_boss` + `act5_complete`); a real `e` press on Skip
+opening `skip_post_karen` with his portrait rendered. `tools/_n-glb-probe.mjs`
+proves both renamed GLBs return 200 and parse through the shipping loader.
+
+### One code fix that is NOT a rename
+
+Old saves carry `currentRoom: 'ross_office'`. `RoomManager.loadRoom` tears the old
+room down **before** it discovers the new id is missing, so it returned `null` onto
+an undefined `tileMap` and the first `update()` threw - a dead boot, not a graceful
+fallback. `ExplorationState._loadRoom` now falls back to `parking_garage` on any
+unknown room id. Measured: a seeded pre-rename save with 21 old-named flags now
+boots to ExplorationState with xp and AUM intact and zero page errors.
+
+**No migration shim**, per your ruling. A playtester's old save loads into a
+valid-but-early state (every unknown flag reads false) rather than crashing.
+
+### Things that would mislead you if I did not say them
+
+1. **The naming-ledger law was not in `CLAUDE.md`** - it lived in
+   `.claude/plans/proposals-whats-missing.md`, which you told me is history and
+   not to rewrite. So I left it and instead wrote the superseding law into
+   `CLAUDE.md` (new block at the top), marked item 12 of `HANDOFF_PACKAGE.md`
+   EXECUTED, and annotated the `HANDOFF.md` line that points at the old ledger.
+   The old ledger file still reads as if the ids are frozen. That is deliberate,
+   but it is a trap for a skimming agent.
+2. **Review artefacts were not renamed.** `art/char_refs/` and `screenshots/` are
+   gitignored frozen history, so `ab_ross_grounded.png`, `fight_v8_{ross,...}` and
+   `ross_body` keep their names, and two doc rows still cite them. Annotated in
+   place. The gitignored files that ARE operational - `art/portraits_raw/` and
+   `art/char_refs/meshy_pilot/_raw_runtime/` - were renamed so re-derivation keeps
+   working.
+3. **I changed 24 comment lines** where a capital `Rachel` meant Meredith
+   (`voices.js`, `stats.js`, `CombatState`, `ExplorationState`, room headers). No
+   speaker string changed - those already said the display names. I judged each
+   line by hand; if I mis-attributed one, it is a comment, not behaviour.
+4. **`_g-stage-verify` against a bare `HEAD` reports 21 trees deleted** - that is
+   the rename, not a lost scene. The 0-structurally-changed number comes from
+   running it against a rename-normalised HEAD I built with `git commit-tree`.
+5. **The editor enemy labels were wrong before and are fixed now** - the editor
+   said `Ross's Boss` and `Rachel (Boss)`. They now say `Skip Hartley (Unhinged)`
+   and `Meredith Sterling, SVP`.
+6. **I committed two new `_n-*` tools.** Every other `_`-prefixed throwaway in the
+   working tree stayed untracked; I tracked these two because they are the
+   regression gates for this rename.
+
+### Spend
+
+Zero. No vendor calls.
+
+---
+
 ## [CUTSCENE FIX ROUND (08-04 midday) - your three morning notes]
 
 One commit before this block, one after; `display-case` only. `npm run check`
