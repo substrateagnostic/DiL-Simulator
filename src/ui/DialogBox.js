@@ -1,10 +1,13 @@
 import { AudioManager } from '../core/AudioManager.js';
-import { TEXT_SPEED } from '../utils/constants.js';
+import { TEXT_SPEED, DEV_MODE } from '../utils/constants.js';
 import { SETTINGS } from '../core/Settings.js';
 
 // Speaker name colors for visual distinction
 const SPEAKER_COLORS = {
   'Andrew':             '#5588cc',
+  // The speaker string the dialog data actually uses is 'Alex from IT'. The bare
+  // 'Alex' row is a legacy alias kept only so old/branching data does not regress.
+  'Alex from IT':       '#4a7c59',
   'Alex':               '#4a7c59',
   'Janet':              '#8b6e8b',
   'Dave from IT':       '#e07040',
@@ -41,12 +44,22 @@ const SPEAKER_COLORS = {
   'Vending Machine':    '#53a8b6',
   'Fridge Note':        '#ff6b6b',
   'Archive Terminal':   '#4cc9f0',
+  'Delia Okafor':       '#d4a373',
+  'The Clerk':          '#8d99ae',
+  'The Firm':           '#6a040f',
+  'The Board Member':   '#adb5bd',
 };
 
 // Speaker → portrait file stem. Any `<stem>.png` (or `<stem>_<mood>.png`)
 // dropped into src/assets/portraits/ is picked up automatically at build time.
+// KEYS ARE THE EXACT `speaker` STRINGS IN src/data/dialogs — not NPC ids, not
+// display names from characters.js. A key that no dialog node emits is dead
+// weight: 'Alex' sat here for the whole campaign while every one of his 211
+// lines says 'Alex from IT', so his four shipped portraits never once rendered.
+// Before adding a row, grep the speaker string out of the dialog data.
 const PORTRAIT_KEYS = {
   'Andrew': 'andrew',
+  'Alex from IT': 'alex_it',
   'Alex': 'alex_it',
   'Alex (Unhinged)': 'alex_it',
   'Janet': 'janet',
@@ -69,6 +82,8 @@ const PORTRAIT_KEYS = {
   // Do NOT point her at rachel.png; that is Meredith Sterling's face.
   // Neutral only so far; her `mood: 'worried'` node falls back to the base PNG.
   'Rachel': 'rachel_to',
+  // Deputy Recorder, Act 7. Four moods shipped; her `angry` and `smug` nodes fire.
+  'Delia Okafor': 'delia',
   'Brand Consultant': 'brand_consultant',
   'Restructuring Analyst': 'restructuring_analyst',
   'Chief of Restructuring': 'chief_of_restructuring',
@@ -89,6 +104,21 @@ function portraitUrl(stem) {
     if (path.endsWith(`/${stem}.png`)) return url;
   }
   return null;
+}
+
+// Dev-only orphan guard. Alex from IT shipped four portraits that never rendered
+// because no PORTRAIT_KEYS row matched his speaker string; nothing anywhere said
+// so. This makes the next one loud instead of silent. Costs nothing in a player
+// build (DEV_MODE is false, and the block is a single boolean test at import).
+if (DEV_MODE) {
+  const wired = new Set(Object.values(PORTRAIT_KEYS));
+  const orphans = Object.keys(PORTRAIT_FILES)
+    .map((p) => p.split('/').pop().replace(/\.png$/, ''))
+    .filter((stem) => !/_(angry|smug|worried)$/.test(stem))
+    .filter((stem) => !wired.has(stem));
+  if (orphans.length) {
+    console.warn(`[DialogBox] portrait assets on disk with no PORTRAIT_KEYS row: ${orphans.join(', ')}`);
+  }
 }
 
 export class DialogBox {

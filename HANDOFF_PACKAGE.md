@@ -81,9 +81,15 @@ doesn't govern):
 5. `cast` role currently reuses the attack clip. **`a318` "Scheming Hand Rub"** is
    the recommended fill and is exactly the register for a trust officer casting a
    legal maneuver. `a17`/`a18` also downloaded, unwired.
-6. Dark-suit scratch-noise in baked base color (from `remove_lighting` on near-black
-   fabric); Reyes' shoulder patches read bright. Both judged invisible at fight
-   distance — re-judge before spending.
+6. ~~Dark-suit scratch-noise in baked base color (from `remove_lighting` on near-black
+   fabric)~~ **FIXED 2026-08-03.** `tools/meshy-destreak.mjs` re-derives every atlas
+   from the 2048 raws with a one-sided 5×5 median restricted to the dark band, then
+   the normal 1024/q92 encode. All 33 GLBs, geometry/rig/clip counts bit-identical,
+   whole cast **+0.06 MB**. Before/after at fight distance *and* inspection zoom:
+   `screenshots/g-run/misc/streak_before|after/`. The fight-distance delta is
+   0.00–0.02 % of pixels, so the earlier "invisible at fight distance" call was
+   correct — this only ever showed at inspection zoom, and cost 70 KB to clear.
+   **Reyes' bright shoulder patches are NOT addressed** and remain open.
 7. Karen's head sits behind the enemy info banner at the rest camera; Andrew's head
    crops at frame edge on his lunge. **Pre-existing arena framing traits**, not model
    defects.
@@ -143,6 +149,9 @@ Instruments — all write measurements, not opinions:
 | `tools/meshy-spine-gate.mjs` | slate-aware spine/floor discriminants (see §4.3) |
 | `tools/meshy-framing-gate.mjs` | every combatant in frame at the real combat camera |
 | `tools/meshy-comp-video.mjs` | scripted fight video capture |
+| `tools/meshy-destreak.mjs` | dark-fabric destreak; re-derives runtime GLBs from the 2048 raws (`--audit` measures only) |
+| `tools/meshy-atlas-audit.mjs` | dark-band high-pass energy per atlas; also dumps the embedded atlas |
+| `tools/meshy-cloth-zoom.mjs` | fight-distance + inspection-zoom parity stills for any texture change (headed) |
 | `tools/pn-shoot.mjs` + `pn-stage.js` | procedural v7 instruments (`--only=neck,skull,hands,hair,profile,shoes,grip,idle,…`) |
 | `tools/charmetrics/` | vendored img2threejs review instruments (pinned SHA) |
 
@@ -285,6 +294,13 @@ verification had missed.
 - 33 combat models, Meshy-generated, ~19.7 MB total (optimized from 289 MB via
   gltfpack meshopt + 1024 JPEG atlases). Committed as tracked runtime assets under
   `public/meshy/`. **The Algorithm is procedural and stays that way.**
+- **Never re-derive a runtime GLB from `public/meshy/` itself.** Those files are
+  already 1024/JPEG and meshopt-compressed; re-running the optimizer in place
+  double-encodes the atlas and its `repack()` does not understand
+  `EXT_meshopt_compression` bufferViews. Always start from
+  `art/char_refs/meshy_pilot/_raw_runtime/<id>_idle.glb` (2048 PNG, 290 MB,
+  gitignored). `meshy-optimize.mjs` defaults `--src=public/meshy` for historical
+  reasons — pass `--src` explicitly.
 - Combat uses Meshy models by default; **exploration is still procedural v7** and
   must not be touched by combat work. This split is a producer ruling, not an
   accident: portraits for dialog, procedural for the world, Meshy for the fight.

@@ -1,3 +1,6 @@
+import { readdirSync, readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { CombatEngine } from '../src/combat/CombatEngine.js';
 import { Player } from '../src/entities/Player.js';
 import { Furniture } from '../src/world/Furniture.js';
@@ -478,6 +481,58 @@ function validateCombatSmoke() {
   }
 }
 
+// Dialog portraits: an asset on disk must be reachable from a speaker string
+// that the dialog data actually emits.
+//
+// This exists because Alex from IT shipped four portraits that never once
+// rendered. `PORTRAIT_KEYS` in DialogBox.js was keyed `'Alex'`; all 211 of his
+// lines say `'Alex from IT'`. Nothing failed, nothing warned — the portrait row
+// simply stayed hidden for the whole campaign. The two halves of the bug are
+// both checked here: a stem with no reachable key at all (hard failure, that is
+// art paid for and not shipping), and a key no dialog can ever match (reported,
+// because aliases like 'Alex (Unhinged)' are deliberate).
+//
+// PORTRAIT_KEYS is read out of the source rather than imported: DialogBox.js
+// pulls in AudioManager and touches the DOM at module scope, so it cannot load
+// under node. If the block ever stops parsing, that is itself a failure — a
+// silently-skipped validator is how the original bug survived.
+function validatePortraits() {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const src = readFileSync(join(here, '../src/ui/DialogBox.js'), 'utf8');
+  const block = src.match(/const PORTRAIT_KEYS = \{([\s\S]*?)\n\};/);
+  if (!block) { fail('validate-data could not parse PORTRAIT_KEYS out of src/ui/DialogBox.js'); return; }
+  const keys = new Map(); // speaker -> stem
+  for (const m of block[1].matchAll(/^\s*(?:'([^']+)'|"([^"]+)")\s*:\s*'([^']+)'\s*,/gm)) {
+    keys.set(m[1] ?? m[2], m[3]);
+  }
+  assert(keys.size > 0, 'PORTRAIT_KEYS parsed to zero rows — the regex and the file have drifted apart');
+
+  const speakers = new Set();
+  for (const nodes of Object.values(DIALOGS)) {
+    if (!Array.isArray(nodes)) continue;
+    for (const node of nodes) if (node && typeof node.speaker === 'string') speakers.add(node.speaker);
+  }
+
+  // stems that a live speaker can actually reach
+  const reachable = new Set();
+  for (const [speaker, stem] of keys) if (speakers.has(speaker)) reachable.add(stem);
+
+  const stems = new Set(
+    readdirSync(join(here, '../src/assets/portraits'))
+      .filter((f) => f.endsWith('.png'))
+      .map((f) => f.replace(/\.png$/, '').replace(/_(angry|smug|worried)$/, '')),
+  );
+  for (const stem of stems) {
+    assert(reachable.has(stem),
+      `portrait ${stem}.png exists but no PORTRAIT_KEYS row maps a live dialog speaker to it — the art will never render`);
+  }
+  for (const [speaker, stem] of keys) {
+    if (!speakers.has(speaker) && !stems.has(stem)) {
+      fail(`PORTRAIT_KEYS row '${speaker}' -> '${stem}' is dead both ways: no dialog emits that speaker and no ${stem}.png exists`);
+    }
+  }
+}
+
 function validateSaveSmoke() {
   const player = new Player();
   player.deserialize({
@@ -497,6 +552,7 @@ validateShopAndBalance();
 validateCosmetics();
 validateVoices();
 validateThoughts();
+validatePortraits();
 validateCombatSmoke();
 validateSaveSmoke();
 
