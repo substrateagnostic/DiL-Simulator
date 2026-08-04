@@ -124,6 +124,22 @@ class Game {
     if (params.get('hud') === '0' && ex.hudElement) {
       ex.hudElement.style.display = 'none';
     }
+
+    // ?qtier=high|medium|low — PIN the quality tier for a capture.
+    //
+    // The adaptive governor (Engine._updateAdaptiveQuality) is on by default and
+    // moves on measured frame time, which is correct for players and wrong for a
+    // harness: Playwright's video recorder costs 40-60ms/frame on its own, so a
+    // long take demotes itself to 'low' MID-CAPTURE. At 'low' the city backdrop
+    // and the room-FX light-pool group are set `visible = false` and AO, bloom,
+    // tilt-shift and shadows all go off — i.e. the capture stops being a picture
+    // of the shipping game and becomes a picture of the mobile floor. That is
+    // exactly how a two-minute board-meeting video was delivered to the producer
+    // starting on the display-case look and ending on a black void.
+    // setQualityTier() with no `adaptive` flag also switches the governor off, so
+    // this pin holds for the whole take.
+    const qtier = params.get('qtier');
+    if (qtier) Engine.setQualityTier(qtier);
     const fight = params.get('fight');
     if (fight) {
       setTimeout(() => ex._startCombat(fight), 700);

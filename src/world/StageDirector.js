@@ -22,12 +22,32 @@ import { DEV_MODE } from '../utils/constants.js';
  *
  * AUTHORING — one new dialog node type:
  *
- *   { type: 'stage', beats: [ ...beats ], next?: <index> }
+ *   { type: 'stage', beats: [ ...beats ], next?: <index>, concurrent?: true }
  *
  * Beats in one node run in PARALLEL unless a beat carries `after: <n>`
  * (the index of another beat in the same node). Sequencing across a scene is
  * done by interleaving `stage` nodes with `text` nodes — line, move, line —
  * which is how the prose already reads.
+ *
+ * TWO PLAYBACK MODES, chosen per node (see DialogState._processStage):
+ *   SCHEDULED (default)     the box HIDES, the dialog BLOCKS, the actors move,
+ *                           the next line appears when they arrive. For movement
+ *                           that IS the beat — an entrance, a sit-down the next
+ *                           line refers to, a walk-out that ends a scene.
+ *   CONCURRENT (`concurrent: true`)
+ *                           the box STAYS UP and the dialog advances at once;
+ *                           the beats play UNDERNEATH the text. For motion that
+ *                           should read as happening while someone talks —
+ *                           background bodies settling, an ally crossing the
+ *                           room during another character's line, an exit under
+ *                           a closing line.
+ *
+ * THE UNPAUSE IS NARROW, AND THAT IS THE SAFETY ARGUMENT FOR CONCURRENT MODE.
+ * This director ticks the animators of the actors IT is driving and nothing
+ * else. `ExplorationState.update()` stays asleep for the whole dialog in both
+ * modes, so player input, NPC patrols, interactable proximity and exit tiles
+ * remain frozen. Do NOT "fix" a concurrent beat by unpausing ExplorationState —
+ * that hands the player their body back in the middle of their own cutscene.
  *
  * Beat grammar (every field optional except `actor` and one verb):
  *   actor       'player' | an NPC id as it appears in room data

@@ -917,7 +917,9 @@ export const DIALOGS = {
     /* 56 */ { type: 'stage', next: 1, beats: [
       { actor: 'player',  walkTo: 'table_approach', face: 'grandma', speed: 1.6 },
     ] },
-    /* 57 */ { type: 'stage', next: 4, beats: [
+    // CONCURRENT — two heads turning is not worth blanking the screen for.
+    // The turn plays under the line it is a reaction to.
+    /* 57 */ { type: 'stage', concurrent: true, next: 4, beats: [
       { actor: 'ross',    face: 'player' },
       { actor: 'grandma', face: 'player', hold: 0.3 },
     ] },
@@ -930,8 +932,10 @@ export const DIALOGS = {
       { actor: 'ross',   walkTo: 'table_seat_e', sit: true, speed: 1.3 },
       { actor: 'player', walkTo: 'table_seat_s', sit: true, speed: 1.5 },
     ] },
-    // "Grandma Henderson stands. She picks up her cane."
-    /* 60 */ { type: 'stage', next: 35, beats: [
+    // "Grandma Henderson stands. She picks up her cane." CONCURRENT — the
+    // narration has already said it; she should rise while the NEXT line reads,
+    // not in a black gap after it.
+    /* 60 */ { type: 'stage', concurrent: true, next: 35, beats: [
       { actor: 'grandma', stand: true, walkTo: [4, 6.4], face: 'ross', speed: 1.1, hold: 0.45 },
     ] },
     // "…marches toward the Regional Manager's temporary office. Skip and
@@ -947,8 +951,10 @@ export const DIALOGS = {
       { actor: 'player',  stand: true, walkTo: 'regional_flank_n', face: 'regional', speed: 1.8 },
       { actor: 'regional', face: 'grandma', after: 1 },
     ] },
-    // "Wait -- the Regional Manager flees!"
-    /* 62 */ { type: 'stage', next: 49, beats: [
+    // "Wait -- the Regional Manager flees!" CONCURRENT — a flight is only a
+    // flight if you see it happen while someone reacts to it. Scheduled, the
+    // box blanked and he jogged across an empty screen in silence.
+    /* 62 */ { type: 'stage', concurrent: true, next: 49, beats: [
       { actor: 'regional', exit: 'elevator', speed: 3.0 },
       { actor: 'player',  face: 'ross', wait: false },
       { actor: 'grandma', face: 'ross', wait: false },
@@ -3784,18 +3790,26 @@ export const DIALOGS = {
     // (`board_member_spoke`, tier 3 only). That beat needs a cast body with a
     // face and a name, which is a producer call, not a builder's.
 
+    // MODE NOTE — this scene is deliberately mixed (see DialogState._processStage).
+    // The six ally step-OUTs (180/182/184/186/188/190) stay SCHEDULED, because
+    // stepping forward to address a board IS the beat and the line lands on
+    // arrival. Everything else here is CONCURRENT: `wait: false` alone was not
+    // enough, because it only tells the gate not to wait — the node still hid the
+    // box. Eleven hides across a two-minute scene is the flicker the producer
+    // called "the dialog boxes are blocking movement".
+    //
     // Node 0 — Skip is the NPC you talk to, so he starts at (7,9) in the ally
     // line. He has to be at the head of the table before node 3 describes him
-    // there. Non-blocking: the crossing plays under the two narration
+    // there. Concurrent: the crossing plays under the two narration
     // paragraphs that open the scene instead of freezing them for five seconds.
-    /* 178 */ { type: 'stage', next: 1, beats: [
+    /* 178 */ { type: 'stage', concurrent: true, next: 1, beats: [
       { actor: 'ross',   walkTo: 'head_approach', speed: 1.7, wait: false },
       { actor: 'ross',   walkTo: 'head_stand', face: 'player', speed: 1.7, after: 0, hold: 0.3, wait: false },
       { actor: 'player', face: 'ross', hold: 0.25 },
     ] },
     // Node 9 -> 12, "I'm here. Let's do this." — the meeting is called to
     // order and Andrew steps out of the line to the table.
-    /* 179 */ { type: 'stage', next: 12, beats: [
+    /* 179 */ { type: 'stage', concurrent: true, next: 12, beats: [
       { actor: 'player',      walkTo: 'table_edge_s', face: 'ross', speed: 1.6 },
       { actor: 'board_chair', face: 'ross', hold: 0.3, wait: false },
     ] },
@@ -3806,55 +3820,55 @@ export const DIALOGS = {
     /* 180 */ { type: 'stage', next: 50, beats: [
       { actor: 'janet', walkTo: 'speak_east', face: 'board_chair', speed: 1.7, hold: 0.25 },
     ] },
-    /* 181 */ { type: 'stage', next: 48, beats: [
+    /* 181 */ { type: 'stage', concurrent: true, next: 48, beats: [
       { actor: 'janet', walkTo: [11, 9], face: 'player', speed: 1.6, wait: false },
     ] },
     /* 182 */ { type: 'stage', next: 55, beats: [
       { actor: 'diane', walkTo: 'speak_west', face: 'board_chair', speed: 1.7, hold: 0.25 },
     ] },
-    /* 183 */ { type: 'stage', next: 48, beats: [
+    /* 183 */ { type: 'stage', concurrent: true, next: 48, beats: [
       { actor: 'diane', walkTo: [4, 8], face: 'player', speed: 1.6, wait: false },
     ] },
     /* 184 */ { type: 'stage', next: 71, beats: [
       { actor: 'isaiah', walkTo: 'speak_east', face: 'board_chair', speed: 1.6, hold: 0.3 },
     ] },
-    /* 185 */ { type: 'stage', next: 48, beats: [
+    /* 185 */ { type: 'stage', concurrent: true, next: 48, beats: [
       { actor: 'isaiah', walkTo: [10, 8], face: 'player', speed: 1.6, wait: false },
     ] },
     // Isaiah speaks twice — the agreements, then the seven-branch pattern.
     /* 186 */ { type: 'stage', next: 76, beats: [
       { actor: 'isaiah', walkTo: 'speak_east', face: 'board_chair', speed: 1.6, hold: 0.3 },
     ] },
-    /* 187 */ { type: 'stage', next: 48, beats: [
+    /* 187 */ { type: 'stage', concurrent: true, next: 48, beats: [
       { actor: 'isaiah', walkTo: [10, 8], face: 'player', speed: 1.6, wait: false },
     ] },
     /* 188 */ { type: 'stage', next: 82, beats: [
       { actor: 'intern', walkTo: 'speak_west', face: 'board_chair', speed: 2.1, hold: 0.2 },
     ] },
-    /* 189 */ { type: 'stage', next: 48, beats: [
+    /* 189 */ { type: 'stage', concurrent: true, next: 48, beats: [
       { actor: 'intern', walkTo: [5, 9], face: 'player', speed: 2.0, wait: false },
     ] },
     /* 190 */ { type: 'stage', next: 88, beats: [
       { actor: 'grandma', walkTo: 'speak_east', face: 'board_chair', speed: 1.1, hold: 0.4 },
     ] },
-    /* 191 */ { type: 'stage', next: 48, beats: [
+    /* 191 */ { type: 'stage', concurrent: true, next: 48, beats: [
       { actor: 'grandma', walkTo: [13, 8], face: 'player', speed: 1.1, wait: false },
     ] },
 
     // BLOCK E close — all three endings say Skip sits down. The head chair at
     // (3,5) is the only seat one step from where he speaks, which is why room
     // data leaves it empty and seats the board chair on the north side.
-    /* 192 */ { type: 'stage', next: 116, beats: [
+    /* 192 */ { type: 'stage', concurrent: true, next: 116, beats: [
       { actor: 'ross', walkTo: 'head_chair', sit: true, speed: 1.2, hold: 0.3 },
     ] },
     // TIER 0 only — node 154 says Skip is "still standing at the end of the
     // table", so he is back on his feet before that line lands.
-    /* 193 */ { type: 'stage', next: 154, beats: [
+    /* 193 */ { type: 'stage', concurrent: true, next: 154, beats: [
       { actor: 'ross', stand: true, walkTo: 'head_stand', face: 'player', speed: 1.2, hold: 0.25 },
     ] },
     // BLOCK H — the room empties and Skip crosses back to Andrew for the
     // handoff to the Archive. Non-blocking, so the walk plays under his lines.
-    /* 194 */ { type: 'stage', next: 167, beats: [
+    /* 194 */ { type: 'stage', concurrent: true, next: 167, beats: [
       { actor: 'ross',   stand: true, walkTo: 'aisle_w', speed: 1.5, wait: false },
       { actor: 'ross',   walkTo: 'skip_after', face: 'player', speed: 1.5, after: 0, hold: 0.3, wait: false },
       { actor: 'player', face: 'ross', hold: 0.2 },

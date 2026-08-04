@@ -32,8 +32,28 @@ const arg = (k, d) => {
 const SCENES = {
   secret_ending: {
     room: 'executive_floor',
-    set: ['briefing_complete', 'karen_defeated', 'chad_defeated', 'grandma_defeated', 'branch_chosen', 'path_grandma'],
+    set: ['briefing_complete', 'retry_karen', 'karen_retry_ready', 'karen_defeated',
+      'chad_defeated', 'grandma_defeated', 'branch_chosen', 'path_grandma'],
     clear: ['ross_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started'],
+    expect: { present: ['player', 'ross', 'grandma'], absent: ['karen', 'chad'] },
+    advances: 130, gap: 460,
+  },
+  // ── ALIAS ────────────────────────────────────────────────────────────────
+  // The producer calls the Act-2 finale by its HUD objective, "Face the
+  // consequences" (_getStoryObjective on the `ending_started` flag). Nothing in
+  // the data is called that: it is `secret_ending` / `legal_eagle_ending` /
+  // `bro_code_ending`, one per branch, all auto-pushed ~1000 ms after entering
+  // `executive_floor`. A capture delivered under a data id nobody outside the
+  // code says out loud is a capture that will be identified as the wrong scene —
+  // it was. This alias writes the same take to a directory named what the
+  // producer asked for.
+  face_the_consequences: {
+    room: 'executive_floor',
+    alias: 'secret_ending',
+    set: ['briefing_complete', 'retry_karen', 'karen_retry_ready', 'karen_defeated',
+      'chad_defeated', 'grandma_defeated', 'branch_chosen', 'path_grandma'],
+    clear: ['ross_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started'],
+    expect: { present: ['player', 'ross', 'grandma'], absent: ['karen', 'chad'] },
     advances: 130, gap: 460,
   },
   legal_eagle_ending: {
@@ -71,13 +91,28 @@ const SCENES = {
     set: ['city_unlocked', 'delia_moved', 'has_ledger'],
     clear: ['firm_defeated', 'the_firm_started'],
     dialog: 'the_firm_ambush',
+    expect: { present: ['player', 'firm_partner', 'firm_associate', 'firm_paralegal'] },
     advances: 18, gap: 620,
   },
   grandma_meeting: {
     room: 'conference_room',
-    set: ['briefing_complete', 'karen_defeated', 'chad_defeated', 'ross_post_karen', 'ross_post_chad'],
+    // `retry_karen` + `karen_retry_ready` are IDENTITY flags here, not progress
+    // flags. conference_room carries three Karen entries and the FIRST one is
+    // `briefing_complete && !retry_karen` — it has no `karen_defeated` term,
+    // because the first Karen fight is a scripted, unavoidable loss
+    // (ExplorationState._startCombat, `enemyOverrides: { atk: 999 }`) and every
+    // real save therefore holds `retry_karen`. A fixture that skips the loss
+    // leaves entry 1 live, and Karen stands at the head of the table through the
+    // whole Grandma scene — which is the extra body the producer read as "the
+    // pre-grandma fight dialog got staged with Ross added". Set both and only
+    // the Grandma the scene is about is in the room.
+    set: ['briefing_complete', 'retry_karen', 'karen_retry_ready', 'karen_defeated',
+      'chad_defeated', 'ross_post_karen', 'ross_post_chad'],
     clear: ['grandma_defeated', 'branch_chosen'],
     dialog: 'grandma_meeting',
+    // Roster the take must contain, and must NOT contain. Checked against the
+    // sampled actors after the shot — see the IDENTITY block at the bottom.
+    expect: { present: ['player', 'grandma'], absent: ['karen', 'chad', 'ross'] },
     advances: 22, gap: 620,
   },
   karen_defeated: {
@@ -101,6 +136,9 @@ const SCENES = {
       'janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied', 'isaiah_evidence', 'grandma_ally'],
     clear: ['board_meeting_held', 'board_meeting_closed', 'act6_complete', 'has_rolex'],
     dialog: 'board_meeting',
+    // rachel is deliberately NOT here: her board_room entry is
+    // `act4_complete && !act5_complete` and this recipe sets act5_complete.
+    expect: { present: ['player', 'ross', 'janet', 'diane', 'intern', 'isaiah', 'grandma'], absent: ['rachel'] },
     // 178 nodes and five ally contributions, each of which returns to the
     // node-48 floor choice — a full pass is ~110 advances, so 40 stopped the
     // take before BLOCK E and never reached the staging in BLOCK H.
@@ -167,8 +205,23 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   // derivation (see ExplorationState._refreshStoryProgress) so the
   // eighteen-bodies-in-one-frame delete can be shot, not just described.
   if (process.argv.includes('--nodefer')) await page.addInitScript('window.__boardDeferOff = true;');
-  await page.goto(`http://localhost:${PORT}/?dev&fixture=act1&hud=0`, { waitUntil: 'load' });
+  // `qtier=high` PINS the quality tier — see the same-named block in main.js.
+  // Without it the adaptive governor reads Playwright's video-recorder frame
+  // time (40-60ms) as a machine that cannot cope and walks the degrade ladder
+  // down MID-TAKE. Measured on the shipped wave-G board_meeting capture:
+  // frame 000 has the city backdrop, the room-FX light pools, soft shadows and
+  // tilt-shift; frame 101, two minutes later, has a black void where the city
+  // was and flat unshadowed light — a video of the mobile floor delivered as a
+  // video of the game. Never take a judged capture off the governor.
+  await page.goto(`http://localhost:${PORT}/?dev&fixture=act1&hud=0&qtier=high`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__shotReady === true, { timeout: 40000 });
+
+  // Hold a handle on Engine so the sampler can record the tier every frame —
+  // a pin that silently stopped working must be MEASURED, not assumed.
+  await page.evaluate(async () => {
+    const { Engine } = await import('/src/core/Engine.js');
+    window.__ENGINE = Engine;
+  });
 
   // Run the typewriter fast so the take is about the STAGING, not the typing.
   // (Otherwise every node costs two Enters: one to skip the type-on, one to
@@ -239,7 +292,17 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     const ex = window.__explore;
     window.__cutT0 = performance.now();
     window.__cutTimer = setInterval(() => {
-      const row = { t: Math.round(performance.now() - window.__cutT0), a: {} };
+      const E = window.__ENGINE;
+      const row = {
+        t: Math.round(performance.now() - window.__cutT0),
+        // FIDELITY sample. `q` is the live quality tier and `city`/`fx` are the
+        // two groups 'low' switches off — the ones whose absence is what "this
+        // looks pre-AAA" actually means on screen.
+        q: E?.qualityTier ?? '?',
+        city: E?.cityBackdrop?.group ? !!E.cityBackdrop.group.visible : null,
+        fx: E?._roomFX ? !!E._roomFX.visible : null,
+        a: {},
+      };
       row.a.player = {
         x: +ex.player.position.x.toFixed(3), z: +ex.player.position.z.toFixed(3),
         r: +ex.player.mesh.rotation.y.toFixed(3), sit: !!ex.player.animator.isSitting,
@@ -351,10 +414,47 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     };
   }
 
-  fs.writeFileSync(path.join(OUT, 'actors.json'),
-    JSON.stringify({ scene: SCENE, room: CFG.room, seats: seats.length, report, errors, shots, samples }, null, 2));
+  // ── FIDELITY GATE ────────────────────────────────────────────────────────
+  // Every judged capture must run the SHIPPING visual path for its whole length.
+  // The failure this catches is silent and mid-take: the tier degrades, the city
+  // and the light pools vanish, and the still you happen to look at is the one
+  // from before it happened.
+  const tiers = [...new Set(samples.map(s => s.q).filter(Boolean))];
+  const cityOff = samples.filter(s => s.city === false).length;
+  const fxOff = samples.filter(s => s.fx === false).length;
+  const fidelity = {
+    tiers,
+    pinnedHigh: tiers.length === 1 && tiers[0] === 'high',
+    cityHiddenFrames: cityOff,
+    roomFxHiddenFrames: fxOff,
+  };
+  fidelity.pass = fidelity.pinnedHigh && cityOff === 0 && fxOff === 0;
+  if (!fidelity.pass) {
+    errors.push(`FIDELITY: tier(s) ${tiers.join(',')}; city hidden ${cityOff} frames; roomFX hidden ${fxOff} frames`
+      + ' — this capture is NOT the shipping visual path.');
+  }
 
-  const lines = [`SCENE ${SCENE}  room=${CFG.room}  seats=${seats.length}  frames=${samples.length}`];
+  // ── IDENTITY GATE ────────────────────────────────────────────────────────
+  // A capture is also a claim about WHICH scene it is. `expect.absent` catches
+  // the failure that started this round: a fixture that leaves a stale NPC
+  // condition live puts a body in the frame that the scene never mentions, and
+  // the capture reads as a different scene entirely.
+  const identity = { room: CFG.room, missing: [], stowaways: [] };
+  if (CFG.expect) {
+    for (const id of CFG.expect.present || []) if (!report[id]) identity.missing.push(id);
+    for (const id of CFG.expect.absent || []) if (report[id]) identity.stowaways.push(id);
+  }
+  identity.pass = identity.missing.length === 0 && identity.stowaways.length === 0;
+  if (!identity.pass) {
+    errors.push(`IDENTITY: missing ${identity.missing.join(',') || '-'}; stowaways ${identity.stowaways.join(',') || '-'}`);
+  }
+
+  fs.writeFileSync(path.join(OUT, 'actors.json'),
+    JSON.stringify({ scene: SCENE, room: CFG.room, seats: seats.length, fidelity, identity, report, errors, shots, samples }, null, 2));
+
+  const lines = [`SCENE ${SCENE}  room=${CFG.room}  seats=${seats.length}  frames=${samples.length}`,
+    `  FIDELITY ${fidelity.pass ? 'PASS' : 'FAIL'}  tier=${tiers.join('/')}  cityHidden=${cityOff}  roomFxHidden=${fxOff}`,
+    `  IDENTITY ${identity.pass ? 'PASS' : 'FAIL'}  missing=[${identity.missing.join(',')}]  stowaways=[${identity.stowaways.join(',')}]`];
   for (const [id, r] of Object.entries(report)) {
     lines.push(`  ${id.padEnd(18)} moved ${String(r.distanceTiles).padStart(6)} tiles   walkFrames ${String(r.walkedFrames).padStart(4)}   sitFrames ${String(r.satFrames).padStart(4)}`
       + `   end (${r.end.x}, ${r.end.z}) seat ${r.nearestSeatTiles}t`

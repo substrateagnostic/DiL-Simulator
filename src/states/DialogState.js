@@ -367,9 +367,28 @@ export class DialogState {
   }
 
   /**
-   * Stage node — hand a list of beats to whoever owns the world (normally
-   * ExplorationState's StageDirector), hide the box, and BLOCK until the
-   * director reports every blocking beat finished.
+   * Stage node. TWO MODES — the scene author picks per node.
+   *
+   * SCHEDULED (default) — hand the beats to whoever owns the world (normally
+   * ExplorationState's StageDirector), HIDE the box, and BLOCK until the
+   * director reports every blocking beat finished. The line before the move and
+   * the line after it are separated by the move itself. Use it when the movement
+   * IS the beat: an entrance, a sit-down the next line refers to, a walk-out.
+   *
+   * CONCURRENT (`concurrent: true`) — hand the beats over and advance to the next
+   * node IMMEDIATELY, leaving the box up. The director keeps driving those actors
+   * under the visible dialog, because it is ticked from main.js's global loop and
+   * not from the (suspended) ExplorationState. Use it for motion that should read
+   * as happening WHILE someone talks: background bodies repositioning, an ally
+   * crossing the room during another character's line, an exit under the last
+   * line of a scene. Producer note that earned this mode: "the dialog boxes are
+   * blocking movement from working properly in the background."
+   *
+   * The unpause stays NARROW in both modes and that is the whole safety argument:
+   * StageDirector ticks the animators of the actors IT is driving and nothing
+   * else. ExplorationState.update() is still asleep, so player input, NPC
+   * patrols, interactable proximity and exit tiles are all still frozen — a
+   * concurrent beat cannot let the player walk out from under their own cutscene.
    *
    * DialogState deliberately holds no world reference (only `player` and
    * `stateManager`) and must not grow one, so this uses the same EventBus
@@ -380,6 +399,17 @@ export class DialogState {
    * calls back; `advanced` makes `done()` idempotent (rule 5).
    */
   _processStage(node) {
+    if (node.concurrent) {
+      // No gate, no hide, no block: the beats run under the text. `done` is null
+      // because nothing is waiting on it — the director still fires its gate, and
+      // `?.()` makes that a no-op. An unclaimed payload is the same no-op it is
+      // in the scheduled path.
+      EventBus.emit('stage-beats', { beats: node.beats || [], done: null, claimed: false });
+      this.currentIndex = node.next !== undefined ? node.next : this.currentIndex + 1;
+      this._processNode();
+      return;
+    }
+
     this._stageRunning = true;
     this.dialogBox.hide();
 
