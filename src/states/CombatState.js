@@ -746,6 +746,26 @@ export class CombatState {
     }, 400);
   }
 
+  // SINGLE source of truth for the eight-argument `showMainMenu` law
+  // (CLAUDE.md). Every path back to the main menu — first render, submenu Back,
+  // target-picker cancel, Escape, "no abilities available" — must come through
+  // here. A bare `showMainMenu()` applies all eight defaults and silently
+  // deletes Press Advantage / Second Wind / Assert Dominance / Retaliate /
+  // Desperate Gamble / voices, and re-enables a Silenced Special button.
+  _showMainMenuLive() {
+    const p = this.engine.player;
+    this.hud.showMainMenu(
+      p.silencedThisTurn,
+      p.momentum,
+      p.bracing,
+      p.retaliateReady,
+      p.hp / p.maxHP < 0.25,
+      this.engine.getPressAdvantageCost(),
+      this._currentVoices,
+      { pressAdvantageUsed: !!p.pressAdvantageUsedThisTurn },
+    );
+  }
+
   _enablePlayerInput() {
     this.phase = 'ally_turn';
     this.inputEnabled = true;
@@ -805,16 +825,7 @@ export class CombatState {
       const action = VOICE_ACTIONS[v.actionId] || {};
       return { ...v, action };
     });
-    this.hud.showMainMenu(
-      this.engine.player.silencedThisTurn,
-      this.engine.player.momentum,
-      this.engine.player.bracing,
-      this.engine.player.retaliateReady,
-      this.engine.player.hp / this.engine.player.maxHP < 0.25,
-      this.engine.getPressAdvantageCost(),
-      this._currentVoices,
-      { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
-    );
+    this._showMainMenuLive();
     this.hud.updatePlayerStats({
       ...this.player.stats,
       hp: this.engine.player.hp,
@@ -1039,6 +1050,15 @@ export class CombatState {
   // ── Action handlers ──────────────────────────────────────────────────
   _handleAction(action) {
     if (!this.inputEnabled) return;
+
+    // Submenu Back is a pure UI move: it must not consume the turn, must not
+    // drop input, and must re-render the main menu from LIVE engine state.
+    if (action === 'back') {
+      AudioManager.playSfx('cancel');
+      this._showMainMenuLive();
+      return;
+    }
+
     this.inputEnabled = false;
     AudioManager.playSfx('confirm');
 
@@ -1051,16 +1071,7 @@ export class CombatState {
         const list = this._availableAbilities();
         if (list.length === 0) {
           this.hud.showMessage('Opposing counsel has objected to everything you know.');
-          this.hud.showMainMenu(
-            this.engine.player.silencedThisTurn,
-            this.engine.player.momentum,
-            this.engine.player.bracing,
-            this.engine.player.retaliateReady,
-            this.engine.player.hp / this.engine.player.maxHP < 0.25,
-            this.engine.getPressAdvantageCost(),
-            this._currentVoices,
-            { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
-          );
+          this._showMainMenuLive();
           break;
         }
         this.hud.showAbilities(list, this.engine.player.mp);
@@ -1252,16 +1263,7 @@ export class CombatState {
       this.phase = 'ally_turn';
       this.inputEnabled = true;
       this.hud.enableInput();
-      this.hud.showMainMenu(
-        this.engine.player.silencedThisTurn,
-        this.engine.player.momentum,
-        this.engine.player.bracing,
-        this.engine.player.retaliateReady,
-        this.engine.player.hp / this.engine.player.maxHP < 0.25,
-        this.engine.getPressAdvantageCost(),
-        this._currentVoices,
-        { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
-      );
+      this._showMainMenuLive();
     });
   }
 
@@ -1848,6 +1850,14 @@ export class CombatState {
 
   // ── Result handling ──────────────────────────────────────────────────
   _handleResult() {
+    // Re-entrancy guard. 20 call sites reach this, all of them guarded only by
+    // `if (this.engine.isOver)` — plus `_devInstantWin`'s unguarded 800 ms timer.
+    // A clean fight resolves once, but a corrupted stack (see the `_interact`
+    // guard in ExplorationState) turned a double resolve into duplicated
+    // one-time boss rewards. One boolean makes that structurally impossible.
+    if (this._resultHandled) return;
+    this._resultHandled = true;
+
     this.phase = 'result';
     this.inputEnabled = false;
 
@@ -2569,16 +2579,7 @@ export class CombatState {
       if (InputManager.isConfirmPressed()) this.hud.selectCurrent();
       if (InputManager.isCancelPressed()) {
         if (this.hud.currentMenu !== 'main') {
-          this.hud.showMainMenu(
-            this.engine.player.silencedThisTurn,
-            this.engine.player.momentum,
-            this.engine.player.bracing,
-            this.engine.player.retaliateReady,
-            this.engine.player.hp / this.engine.player.maxHP < 0.25,
-            this.engine.getPressAdvantageCost(),
-            this._currentVoices,
-            { pressAdvantageUsed: !!this.engine.player.pressAdvantageUsedThisTurn },
-          );
+          this._showMainMenuLive();
           AudioManager.playSfx('cancel');
         }
       }

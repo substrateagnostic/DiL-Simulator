@@ -971,6 +971,7 @@ class EngineClass {
       const blobGeo = new THREE.PlaneGeometry(1, 1);
       const SKIP = new Set([
         'parkingSpot', 'curb', 'aisleGlow', 'staircase', 'stairFlight',
+        'stairFlightWall', 'stairRail',
         'elevatorDoors', 'cobweb', 'cableTray',
       ]);
       const box = new THREE.Box3();

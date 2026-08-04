@@ -39,10 +39,17 @@ export class Player {
     this.allyControl = 'manual';
   }
 
-  setPosition(x, z) {
+  // `tileMap` is REQUIRED for any multi-level room. The terrain lerp that keeps
+  // Andrew's feet on the floor lives in `move()`, and `move()` does not run
+  // while ExplorationState is paused — which it is for the whole room-change
+  // fade. Hardcoding y = 0 here therefore rendered the player a full 1.800 m
+  // above the floor for the entire transition into the stairwell (measured,
+  // flat at delta = 1.800 through t = 4071 ms) and then dropped him. That is
+  // the "you walk through the floor" read.
+  setPosition(x, z, tileMap = null) {
     this.position.x = x;
     this.position.z = z;
-    this.mesh.position.set(x, 0, z);
+    this.mesh.position.set(x, tileMap?.heightAt ? tileMap.heightAt(x, z) : 0, z);
   }
 
   move(dx, dz, dt, tileMap) {

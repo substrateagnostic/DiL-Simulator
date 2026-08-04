@@ -183,7 +183,18 @@ export class ExplorationState {
         if (this._pendingCombat) {
           const encounterId = this._pendingCombat;
           this._pendingCombat = null;
-          setTimeout(() => this._startCombat(encounterId), 300);
+          // ARMING LATCH — `_pendingCombat` is cleared here but the fight is not
+          // pushed for another 300 ms, and `paused` is not raised until
+          // `_startCombat` runs. Without a latch covering that gap a mashing
+          // player re-opens the pre-fight dialog underneath the fight (see the
+          // re-entrancy guard in `_interact`). Cleared synchronously immediately
+          // before `_startCombat`, so it can never deadlock the interact key.
+          if (this._combatArming) return;
+          this._combatArming = true;
+          setTimeout(() => {
+            this._combatArming = false;
+            this._startCombat(encounterId);
+          }, 300);
           return;
         }
 
@@ -191,7 +202,9 @@ export class ExplorationState {
           const dialogId = this._pendingDialog;
           this._pendingDialog = null;
           if (DIALOGS[dialogId]) {
+            this._dialogArming = true;
             setTimeout(() => {
+              this._dialogArming = false;
               // If the fight was already started via the terminal, don't re-push the intro dialog
               if (dialogId === 'algorithm_combat' && this.player.getFlag('defeated_algorithm')) return;
               // If the menu is open, defer the dialog until resume() fires after it closes
@@ -230,9 +243,10 @@ export class ExplorationState {
         // Only queue pending dialogs when flags are set to truthy values — not when cleared
         if (key === 'alex_story_chosen' && value) {
           // act2_complete ceiling: past Act 2, the act2 reveal would play
-          // empty (dialogGating caps it) and strand knows_server_secret
-          const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret')
-            && !this.player.getFlag('act2_complete');
+          // empty (dialogGating caps alex_it_act2 at quest stage 299), so the
+          // Act-3 scene carries the reveal instead — and now sets
+          // knows_server_secret itself so the flag can't strand.
+          const { hasAct2 } = this._alexStoryBeats();
           this._pendingDialog = hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
           // Reset immediately so the flag can fire again for future story acts
           this.player.setFlag('alex_story_chosen', false);
@@ -760,19 +774,30 @@ export class ExplorationState {
     Engine.setTimeOfDay(TOD_BY_ACT[Math.min(act, TOD_BY_ACT.length - 1)]);
   }
 
+  // Camera pan band. A flat `setBounds(2, w - 2, ...)` inverts or collapses on
+  // any room narrower than 4 tiles — the 4-wide stairwell got `[2, 2]`, pinning
+  // the camera x permanently while the player walked ±1.1 tiles across it (the
+  // only degenerate-bounds room in the game). Cap the inset at half the room so
+  // the band is always non-negative and centred.
+  _applyCameraBounds(roomData) {
+    const insetX = Math.min(2, (roomData.width - 1) / 2);
+    const insetZ = Math.min(2, (roomData.height - 1) / 2);
+    this.camera.setBounds(insetX, roomData.width - insetX, insetZ, roomData.height - insetZ);
+  }
+
   _loadRoom(roomId, spawnX, spawnZ) {
     const actualId = this._resolveRoomId(roomId);
     const result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
     this._applyTimeOfDay(roomId);
     if (result) {
       this.tileMap = result.tileMap;
-      this.player.setPosition(result.spawnX, result.spawnZ);
+      this.player.setPosition(result.spawnX, result.spawnZ, result.tileMap);
       this.player.currentRoom = roomId;
-      this.camera.snapTo(result.spawnX, result.spawnZ);
+      this.camera.snapTo(result.spawnX, result.spawnZ, this.player.mesh.position.y);
 
       const roomData = this.roomManager.getRoomData(actualId);
       if (roomData) {
-        this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
+        this._applyCameraBounds(roomData);
       }
       // Non-transition load (boot, save load, dev fixture). Warm the new room's
       // programs and textures here too — not awaited, because this path has no
@@ -1040,14 +1065,14 @@ export class ExplorationState {
     this._applyTimeOfDay(targetRoom);
     if (result) {
       this.tileMap = result.tileMap;
-      this.player.setPosition(result.spawnX, result.spawnZ);
+      this.player.setPosition(result.spawnX, result.spawnZ, result.tileMap);
       this.player.currentRoom = targetRoom;
       Engine.scene.add(this.player.mesh);
-      this.camera.snapTo(result.spawnX, result.spawnZ);
+      this.camera.snapTo(result.spawnX, result.spawnZ, this.player.mesh.position.y);
 
       const roomData = this.roomManager.getRoomData(actualRoom);
       if (roomData) {
-        this.camera.setBounds(2, roomData.width - 2, 2, roomData.height - 2);
+        this._applyCameraBounds(roomData);
       }
       AudioManager.playMusic(this._getMusicForRoom(targetRoom));
 
@@ -2229,6 +2254,18 @@ export class ExplorationState {
   }
 
   _interact() {
+    // RE-ENTRANCY GUARD. `start_combat` / a queued follow-up dialog only SET
+    // `_pendingCombat` / `_pendingDialog`; the fight (or dialog) is pushed 300–500 ms
+    // later from the `dialog-end` handler, and `paused` is not raised until
+    // `_startCombat` actually runs. Without this guard a player mashing Enter
+    // re-opens the pre-fight dialog inside that window, CombatState is pushed on
+    // top of the orphan, and when the fight ends the orphan resumes and walks to
+    // its `start_combat` node a SECOND time — re-launching a boss that is already
+    // defeated and paying its one-time reward twice (measured: stress_ball x2).
+    // This is generic: 32 of the 34 `start_combat` dialogs open on an unguarded
+    // `text` node, so the exposure is every encounter in the game.
+    if (this._pendingCombat || this._pendingDialog || this._combatArming || this._dialogArming) return;
+
     const { exit, interactable } = this._getNearbyTargets();
 
     // Exit on the player's own tile always takes priority
@@ -2313,6 +2350,34 @@ export class ExplorationState {
     return DIALOGS.neutral_npc ? 'neutral_npc' : dialogId;
   }
 
+  // SINGLE definition of "does Alex from IT owe the player a story beat".
+  // Three places used to spell this out independently (the flag-set listener,
+  // the router, and the objective text), and they drifted: the objective
+  // demanded the Act-2 partition conversation with no `!act2_complete` term
+  // while the router required one, so past Act 2 the HUD asked for a scene the
+  // game structurally refused to serve.
+  _alexStoryBeats() {
+    const f = (k) => this.player.getFlag(k);
+    return {
+      hasAct2: !!(f('karen_defeated') && !f('knows_server_secret') && !f('act2_complete') && DIALOGS.alex_it_act2),
+      hasAct3: !!(f('act2_complete') && !f('alex_it_act3_done') && DIALOGS.alex_it_act3),
+    };
+  }
+
+  _alexStoryBeatAvailable() {
+    const { hasAct2, hasAct3 } = this._alexStoryBeats();
+    return hasAct2 || hasAct3;
+  }
+
+  // Appends the Act-2 partition lead to whatever the critical-path objective
+  // is, while and only while Alex actually owes the player that scene.
+  // `_getStoryObjective` output is injected as innerHTML by `_setQuest`, which
+  // also strips tags for the toast, so `<br>` is safe here.
+  _withAlexAct2Hint(text) {
+    if (!this._alexStoryBeats().hasAct2) return text;
+    return `${text}<br>• Alex from IT has something on the servers`;
+  }
+
   _getDialogId(npc) {
     const id = npc.id;
     const act = this.player.actIndex;
@@ -2372,7 +2437,18 @@ export class ExplorationState {
       return 'rachel_to_intro';
     }
 
-    if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]) {
+    // A STORY BEAT OUTRANKS FLAVOUR. `npc.dialogId` normally wins here (CLAUDE.md
+    // "NPC `dialogId` overrides act routing"), and that return is ABOVE every
+    // Alex-from-IT route below it — printer quest, act4 trigger, Phantom
+    // Approver, and the story router with its documented three guards. So
+    // reading a server rack (an optional Act-1 flavour interactable) set
+    // `server_secret_started`, which pins Alex's room entry to
+    // `alex_server_secret`, which then shadowed the Act-2 partition reveal the
+    // objective was sending the player to get: "finding Alex lands on his base
+    // dialog". Only `alex_server_secret` is exempted, and only while a story
+    // beat is actually on offer, so every other hardcoded dialogId is untouched.
+    if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]
+        && !(id === 'alex_it' && npc.dialogId === 'alex_server_secret' && this._alexStoryBeatAvailable())) {
       return npc.dialogId;
     }
 
@@ -2426,9 +2502,7 @@ export class ExplorationState {
 
     // Alex IT: when story beat is available, offer choice between story and side quests
     if (id === 'alex_it' && this.player.getFlag('met_alex_it')) {
-      const hasAct2 = this.player.getFlag('karen_defeated') && !this.player.getFlag('knows_server_secret')
-        && !this.player.getFlag('act2_complete') && DIALOGS.alex_it_act2;
-      const hasAct3 = this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done') && DIALOGS.alex_it_act3;
+      const { hasAct2, hasAct3 } = this._alexStoryBeats();
 
       // Player chose story from the router — go straight to the story dialog
       if ((hasAct2 || hasAct3) && this.player.getFlag('alex_story_chosen')) {
@@ -3010,12 +3084,16 @@ export class ExplorationState {
     if (this.player.getFlag('archive_accessible') && !this.player.getFlag('visited_archive')) {
       return 'Find the Archive through the back corridor';
     }
-    if (this.player.getFlag('act2_complete') && !this.player.getFlag('knows_server_secret')) {
-      return 'Talk to Alex from IT about the encrypted partition';
-    }
-
-    // Act 2 finale — after partition reveal, point back to Alex for act3 beat
-    if (this.player.getFlag('act2_complete') && !this.player.getFlag('alex_it_act3_done')) {
+    // Act 2 finale — one line, because it is one conversation. These were two
+    // separate objectives and the first was UNSATISFIABLE: it demanded the
+    // Act-2 partition reveal, but the router requires `!act2_complete` to serve
+    // `alex_it_act2` and dialogGating caps that dialog at quest stage 299. So
+    // past Act 2 the HUD asked forever for a scene the game refused to give,
+    // while Alex actually served `alex_it_act3` ("It just decrypted itself").
+    // `alex_it_act3` now sets `knows_server_secret` as well, so one visit
+    // clears both flags and this line retires honestly.
+    if (this.player.getFlag('act2_complete')
+        && (!this.player.getFlag('alex_it_act3_done') || !this.player.getFlag('knows_server_secret'))) {
       return 'Talk to Alex from IT — the partition decrypted itself';
     }
     if (this.player.getFlag('act2_complete')) {
@@ -3031,23 +3109,32 @@ export class ExplorationState {
     if (this.player.getFlag('ending_started')) {
       return 'Face the consequences';
     }
+    // ACT-2 BAND. Every one of these goes through `_withAlexAct2Hint`, which
+    // appends the partition lead while — and only while — Alex actually owes
+    // the player that scene. Before this, the Act-2 reveal that sets
+    // `knows_server_secret` had NO objective anywhere in the game: across all
+    // 183 lines of this function, the band between `karen_defeated` and
+    // `act2_complete` only ever said "Talk to Skip" / "Meet Chad" / "Head to
+    // the Executive Floor". A required-feeling story beat was 100 % missable
+    // and completely unadvertised, which is how a playthrough reaches Act 3
+    // with the state skipped and Alex opening on "It just decrypted itself".
     if (this.player.getFlag('branch_chosen')) {
-      return 'Head to the Executive Floor';
+      return this._withAlexAct2Hint('Head to the Executive Floor');
     }
     if (this.player.getFlag('grandma_defeated')) {
-      return 'Review the Henderson file at your desk';
+      return this._withAlexAct2Hint('Review the Henderson file at your desk');
     }
     if (this.player.getFlag('chad_defeated') && this.player.getFlag('ross_post_chad')) {
-      return 'Meet Grandma Henderson in the Conference Room';
+      return this._withAlexAct2Hint('Meet Grandma Henderson in the Conference Room');
     }
     if (this.player.getFlag('chad_defeated')) {
-      return "Talk to Skip in his office";
+      return this._withAlexAct2Hint("Talk to Skip in his office");
     }
     if (this.player.getFlag('karen_defeated') && this.player.getFlag('ross_post_karen')) {
-      return 'Meet Chad Henderson in the Conference Room';
+      return this._withAlexAct2Hint('Meet Chad Henderson in the Conference Room');
     }
     if (this.player.getFlag('karen_defeated')) {
-      return "Talk to Skip in his office";
+      return this._withAlexAct2Hint("Talk to Skip in his office");
     }
     if (this.player.getFlag('retry_karen')) {
       const wins = this.player.getFlag('roguelite_tutorial_wins') || 0;
@@ -3410,7 +3497,12 @@ export class ExplorationState {
     this.player.move(x, z, dt, this.tileMap);
     this.player.update(dt);
 
-    this.camera.follow(this.player.position.x, this.player.position.z, 0);
+    // Follow the player's ELEVATION too. A hardcoded 0 pinned the camera to the
+    // ground floor of the only multi-level room in the game: descending the
+    // stairwell's 1.80 m sank the player 66 px down a 900 px frame (7.3 % of
+    // frame height) before he reached the bottom. `IsometricCamera.follow`
+    // already lerps y at FOLLOW_SPEED, so this costs nothing in a flat room.
+    this.camera.follow(this.player.position.x, this.player.position.z, this.player.mesh.position.y);
     this.camera.update(dt);
 
     this.roomManager.update(dt, this.player.flags, this.paused);

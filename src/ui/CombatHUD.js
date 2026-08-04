@@ -639,19 +639,25 @@ export class CombatHUD {
       if (this.onActionSelect) this.onActionSelect(item.action);
     } else if (this.currentMenu === 'abilities') {
       if (item.action === 'back') {
-        this.showMainMenu();
+        // NEVER call showMainMenu() here — the HUD does not know the live
+        // engine state, so every default would apply and Press Advantage,
+        // Second Wind, Assert Dominance, Retaliate, Desperate Gamble, the
+        // voices AND Silence would all be wiped. Raise the action instead and
+        // let CombatState re-render with all eight arguments. Same contract the
+        // ally submenu already uses (`onAllyActionSelect('back')`).
+        if (this.onActionSelect) this.onActionSelect('back');
       } else if (this.onAbilitySelect) {
         this.onAbilitySelect(item.id, item);
       }
     } else if (this.currentMenu === 'items') {
       if (item.action === 'back') {
-        this.showMainMenu();
+        if (this.onActionSelect) this.onActionSelect('back');
       } else if (this.onItemSelect) {
         this.onItemSelect(item.id);
       }
     } else if (this.currentMenu === 'voices') {
       if (item.action === 'back') {
-        this.showMainMenu();
+        if (this.onActionSelect) this.onActionSelect('back');
       } else if (this.onVoiceSelect) {
         this.onVoiceSelect(item.id, item);
       }

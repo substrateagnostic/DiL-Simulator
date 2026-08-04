@@ -70,8 +70,18 @@ export class TileMap {
     return this.exitData[`${Math.floor(x)},${Math.floor(z)}`] || null;
   }
 
+  // Registering an interactable must NOT change what the tile is made of.
+  // `Room.build()` runs furniture blocking (step 3) BEFORE interactables
+  // (step 5), so a bare `set(x, z, 2)` here used to overwrite a 1 and punch a
+  // walk-through hole in the furniture the interactable is attached to —
+  // measured at 33 props across 12 rooms (Andrew's desk, five server racks,
+  // five HR filing cabinets, the executive grandDesk, the vending machine, and
+  // the player's own car). Grid value 2 exists only to keep a tile walkable;
+  // nothing reads it to FIND an interactable — `_getNearbyTargets` goes
+  // straight to `interactData` via `getInteractable()`. So preserve 1
+  // (furniture) and 3 (exit) and only claim a plain walkable 0.
   setInteractable(x, z, data) {
-    this.set(x, z, 2);
+    if (this.get(Math.floor(x), Math.floor(z)) === 0) this.set(x, z, 2);
     this.interactData[`${x},${z}`] = data;
   }
 

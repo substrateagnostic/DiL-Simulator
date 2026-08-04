@@ -94,6 +94,50 @@ function validateDialogs() {
   }
 }
 
+// Successor set for a dialog node, modelling DialogState._processNode /
+// _handleChoice / condition exactly: `next` wins, then ifTrue/ifFalse, then
+// fall-through to index + 1. `end` terminates.
+function dialogSuccessors(nodes, i) {
+  const n = nodes[i];
+  if (!n) return [];
+  if (n.type === 'end') return [];
+  if (n.type === 'choice') {
+    return (n.choices || []).map((c, ci) => (c.next !== undefined ? c.next : i + 1));
+  }
+  if (n.type === 'condition') {
+    return [
+      n.ifTrue !== undefined ? n.ifTrue : i + 1,
+      n.ifFalse !== undefined ? n.ifFalse : i + 1,
+    ];
+  }
+  return [n.next !== undefined ? n.next : i + 1];
+}
+
+// REWARD REACHABILITY. `team_chat_hub` drifted one slot out of step with its
+// own `/* NN */` comments and every jump was authored against the comments, so
+// 48 of 119 nodes lost all paths from node 0 — including the Skeptic's-chair
+// `modify_stat maxMP +5`, a permanent reward that could never be collected.
+// Padding `end` nodes are a deliberate convention here, so only nodes that PAY
+// something are checked: a reward with no path is always a bug.
+const REWARD_ACTIONS = new Set(['give_item', 'give_xp', 'modify_stat', 'heal', 'recruit_ally', 'unlock_ally_ability']);
+function validateRewardReachability() {
+  for (const [id, nodes] of Object.entries(DIALOGS)) {
+    if (!Array.isArray(nodes) || nodes.length === 0) continue;
+    const seen = new Set();
+    const stack = [0];
+    while (stack.length) {
+      const i = stack.pop();
+      if (seen.has(i) || nodes[i] === undefined) continue;
+      seen.add(i);
+      for (const s of dialogSuccessors(nodes, i)) if (!seen.has(s)) stack.push(s);
+    }
+    nodes.forEach((node, i) => {
+      if (node?.type !== 'action' || !REWARD_ACTIONS.has(node.action)) return;
+      assert(seen.has(i), `dialog ${id} node ${i} pays a reward (${node.action}) but has no path from node 0`);
+    });
+  }
+}
+
 function validateDialogAction(dialogId, node, index) {
   assert(DIALOG_ACTIONS.has(node.action), `dialog ${dialogId} node ${index} has unknown action ${node.action}`);
 
@@ -228,6 +272,21 @@ function validateDataReferences() {
         }
       }
     }
+
+    // POSTER PARITY (CLAUDE.md "One-time poster/side-quest pattern", read in
+    // reverse). Every `motivationalPoster` prop must have a readable
+    // interactable on or beside its tile. Three shipped without one and were
+    // visually identical to the readable ones, so the player walked up, pressed
+    // E, and got nothing — the "posters that do nothing" playtest note. Use a
+    // visually distinct prop (`abstractPainting`, `oilPainting`, …) for pure
+    // decoration instead of a poster nobody can read.
+    const roomInteractables = room.interactables || [];
+    (room.furniture || []).forEach((f, index) => {
+      if (f.type !== 'motivationalPoster') return;
+      const readable = roomInteractables.some(i =>
+        Math.abs(i.x - f.x) <= 1.0 && Math.abs(i.z - f.z) <= 1.2);
+      assert(readable, `room ${roomId} furniture ${index} is a motivationalPoster at (${f.x}, ${f.z}) with no interactable within a tile — use a decoration prop or add the poster interactable`);
+    });
 
     for (const npc of room.npcs || []) {
       if (npc.dialogId) assert(!!DIALOGS[npc.dialogId], `room ${roomId} npc ${npc.id} references missing dialog ${npc.dialogId}`);
@@ -547,6 +606,7 @@ function validateSaveSmoke() {
 }
 
 validateDialogs();
+validateRewardReachability();
 validateDataReferences();
 validateShopAndBalance();
 validateCosmetics();

@@ -1929,12 +1929,19 @@ export const Furniture = {
     return group;
   },
 
-  // A real stairwell flight along a wall. variant 'up': steps ascend
+  // A one-tile-wide decorative flight along a wall. variant 'up': steps ascend
   // northward (-z) from floor level into a shadowed upper landing.
   // variant 'down': a railed opening with step tops descending into the
   // dark — built just above the floor plane so the iso camera reads it.
   // Footprint is 1 tile wide x 4 deep, anchored at the front (south) tile.
-  stairFlight(variant) {
+  //
+  // NAME COLLISION, resolved: this was called `stairFlight` and was silently
+  // overwritten by the full-width `stairFlight(stepCount, …)` further down —
+  // `Furniture` is a plain object literal, so a duplicate key is not an error
+  // (the same hazard CLAUDE.md documents for `ENEMY_ABILITIES`). Anything
+  // writing `{ type: 'stairFlight', variant: 'up' }` got the numeric version
+  // called with stepCount = 'up' → NaN geometry. Grep before adding a key.
+  stairFlightWall(variant) {
     const dir = variant === 'down' ? 'down' : 'up';
     const group = new THREE.Group();
     const stepMat = Materials.custom(0xb0a890);
@@ -2797,6 +2804,47 @@ export const Furniture = {
       }
     }
 
+    return group;
+  },
+
+  // Handrail for a terraced `floorZones` flight. The stairwell's treads and
+  // risers come from the terrace boxes themselves (Room._buildFloorZones), so
+  // the flight needs no step geometry — what it needs is the ONE cue the iso
+  // camera actually reads as "staircase" rather than "ramp": a raked handrail
+  // with posts. Origin is the top of the flight at the landing edge; the rail
+  // descends toward -z, matching the direction the terraces step down.
+  //
+  // `variant` is the step count (room data passes it through unchanged);
+  // rise/tread must match the room's floorZones or the rail will not sit on
+  // the nosings. Stairwell: 6 steps, 0.42 rise, 1.0 tread.
+  stairRail(variant) {
+    const steps = Number(variant) > 0 ? Number(variant) : 6;
+    const RISE = 0.42;      // must equal the per-row drop in floorZones
+    const TREAD = 1.0;      // one tile
+    const RAIL_H = 0.92;
+    const group = new THREE.Group();
+    const railMat = Materials.metal();
+    const postMat = Materials.custom(0x4a5058);
+
+    const run = steps * TREAD;
+    const drop = steps * RISE;
+
+    // Raked top rail — one box rotated to the pitch of the flight.
+    const railLen = Math.sqrt(run * run + drop * drop);
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, railLen), railMat);
+    rail.position.set(0, RAIL_H - drop / 2, -run / 2);
+    rail.rotation.x = Math.atan2(drop, run);
+    rail.castShadow = true;
+    group.add(rail);
+
+    // Posts every other tread, plus a newel at each end.
+    for (let i = 0; i <= steps; i += 2) {
+      const py = -i * RISE;
+      const post = new THREE.Mesh(new THREE.BoxGeometry(0.06, RAIL_H, 0.06), postMat);
+      post.position.set(0, py + RAIL_H / 2, -i * TREAD);
+      post.castShadow = true;
+      group.add(post);
+    }
     return group;
   },
 

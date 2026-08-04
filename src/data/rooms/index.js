@@ -208,6 +208,13 @@ export const ROOMS = {
       { type: 'fileCabinetLateral', x: 15, z: 0.5 },
       { type: 'fileCabinet',        x: 16, z: 0.5 },
 
+      // Gary's desk, NE supply nook. `janet_vacancy_search` (16,3) is the
+      // quest tile and the nearest desk was two tiles away in the pod, so the
+      // dialog's "Gary's buried desk" was an empty patch of carpet
+      // (CLAUDE.md "Quest interactable visibility").
+      { type: 'desk',    x: 16, z: 3, rotation: 0 },
+      { type: 'monitor', x: 16, z: 2.7 },
+
       // ============================================================
       // STORAGE — file cabinet rows along south wall (handles face north/center)
       // Left bank (SW) and right bank (SE), flanking the south exit
@@ -224,9 +231,16 @@ export const ROOMS = {
       // ============================================================
       // North wall
       { type: 'motivationalPoster', x: 7,  z: 0.1, rotation: 0 },
-      // Where the fake windows used to be — more corporate wall comfort
-      { type: 'motivationalPoster', x: 3.5,  z: 0.1, rotation: 0 },
-      { type: 'motivationalPoster', x: 14.5, z: 0.1, rotation: 0 },
+      // Where the fake windows used to be — more corporate wall comfort.
+      // DELIBERATELY NOT posters: every `motivationalPoster` in the game is
+      // readable (there is a `poster` interactable on its tile), and these two
+      // never had one. Two identical props with different rules is a lie the
+      // player pays for by walking over and pressing E at nothing — it is the
+      // "posters that do nothing" the producer hit. Steel-framed abstracts read
+      // as decoration at a glance: 1.2 x 0.95 at y 1.78 vs the poster's
+      // 0.62 x 0.52 dark-wood frame at y 1.5.
+      { type: 'abstractPainting', x: 3.5,  z: 0.1, rotation: 0 },
+      { type: 'abstractPainting', x: 14.5, z: 0.1, rotation: 0 },
       // South wall (face inward)
       { type: 'motivationalPoster', x: 6,  z: 14.9, rotation: Math.PI },
       { type: 'motivationalPoster', x: 11, z: 14.9, rotation: Math.PI },
@@ -383,8 +397,15 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'chad', x: 4, z: 6, facing: -Math.PI / 2, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'karen_defeated' }, dialogId: 'chad_breakroom_idle' },
-      { id: 'grandma', x: 9, z: 6, facing: Math.PI, condition: { flag: 'act5_complete' } },
+      // Chad's home tile was (4,6) — dead centre of table 1's desk. He wanders
+      // (and `wander` validates its targets against canMove), so he walked out
+      // of the table and never back in, which made it read as intermittent.
+      // Home is now the open floor south of the table.
+      { id: 'chad', x: 4, z: 8, facing: 0, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'karen_defeated' }, dialogId: 'chad_breakroom_idle' },
+      // Grandma stood at (9,6) — ON TOP of table 2's desk, with no `sitting`,
+      // so from Act 5 on she rendered as a grey head embedded in the tabletop.
+      // Seated in the south chair of that table, facing the table (-z).
+      { id: 'grandma', x: 9, z: 7, facing: 0, sitting: true, condition: { flag: 'act5_complete' } },
     ],
     exits: [
       // EAST exit -> Cubicle Farm
@@ -923,6 +944,10 @@ export const ROOMS = {
 
       // The elevator up into the building (north exit tiles 6-7)
       { type: 'elevatorDoors', x: 6.5, z: -0.45, variant: 'G' },
+      // The janitor's supply locker. The `janitor_closet` interactable sits on
+      // this tile and had nothing to aim at — bare concrete (CLAUDE.md "Quest
+      // interactable visibility"). Industrial grey-green metal, on his patrol.
+      { type: 'fileCabinet', variant: 0x55605a, x: 12, z: 8, rotation: Math.PI },
     ],
     npcs: [
       { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage
@@ -1080,26 +1105,53 @@ export const ROOMS = {
     floorColor: 0xc0b8a8,
     walls: true,
     lighting: { ambient: 0xaab4c0, ambientIntensity: 0.42, dir: 0xc8d2dc, dirIntensity: 0.55, flicker: true },
-    // A TRUE stairwell: three landings connected by full-width steps.
-    // You enter at department level and physically descend two storeys
-    // to the archive door. Each step row drops 0.225 (within the
-    // TileMap ledge tolerance); landings are flat.
+    // A TRUE stairwell: three landings connected by two full-width flights.
+    // You enter at department level and physically descend two storeys to the
+    // archive door. A storey in this game is 2.5 m (Room._buildPerimeterWalls,
+    // wallHeight = 2.5), so two storeys is 5.0 m.
+    //
+    // GEOMETRY LAW for this room — these four numbers are load-bearing:
+    //   rise per step  0.42 m   (TileMap.canMove refuses a jump > 0.55, so the
+    //                            ceiling on a walkable step is 0.55; 0.42 keeps
+    //                            headroom and still reads as a riser at the iso
+    //                            camera, where 0.225 did not)
+    //   tread          1.00 m   (one tile — the grid cannot do less)
+    //   pitch          22.8°    (atan 0.42/1.00). The previous build was 0.225
+    //                            over 1.00 = 12.7°, i.e. a wheelchair ramp, and
+    //                            delivered 1.80 m total — 36 % of its own claim.
+    //   total descent  5.04 m   = 12 steps x 0.42 = 2.02 storeys. Claim is true.
+    // `Furniture.stairRail` hardcodes the same 0.42/1.00 pair. Change one, change
+    // both, or the handrail floats off the nosings.
     floorZones: [
-      { x: 0, z: 14, w: 4, h: 6, y: 0 },       // top landing (cubicle farm level)
-      { x: 0, z: 13, w: 4, h: 1, y: -0.225 },
-      { x: 0, z: 12, w: 4, h: 1, y: -0.45 },
-      { x: 0, z: 11, w: 4, h: 1, y: -0.675 },
-      { x: 0, z: 7,  w: 4, h: 4, y: -0.9 },    // mid landing
-      { x: 0, z: 6,  w: 4, h: 1, y: -1.125 },
-      { x: 0, z: 5,  w: 4, h: 1, y: -1.35 },
-      { x: 0, z: 4,  w: 4, h: 1, y: -1.575 },
-      { x: 0, z: 0,  w: 4, h: 4, y: -1.8 },    // bottom landing (archive level)
+      { x: 0, z: 16, w: 4, h: 4, y: 0 },       // TOP LANDING (cubicle farm level)
+      { x: 0, z: 15, w: 4, h: 1, y: -0.42 },   // flight A — 6 steps
+      { x: 0, z: 14, w: 4, h: 1, y: -0.84 },
+      { x: 0, z: 13, w: 4, h: 1, y: -1.26 },
+      { x: 0, z: 12, w: 4, h: 1, y: -1.68 },
+      { x: 0, z: 11, w: 4, h: 1, y: -2.10 },
+      { x: 0, z: 10, w: 4, h: 1, y: -2.52 },
+      { x: 0, z: 8,  w: 4, h: 2, y: -2.52 },   // MID LANDING (one storey down)
+      { x: 0, z: 7,  w: 4, h: 1, y: -2.94 },   // flight B — 6 steps
+      { x: 0, z: 6,  w: 4, h: 1, y: -3.36 },
+      { x: 0, z: 5,  w: 4, h: 1, y: -3.78 },
+      { x: 0, z: 4,  w: 4, h: 1, y: -4.20 },
+      { x: 0, z: 3,  w: 4, h: 1, y: -4.62 },
+      { x: 0, z: 2,  w: 4, h: 1, y: -5.04 },
+      { x: 0, z: 0,  w: 4, h: 2, y: -5.04 },   // BOTTOM LANDING (archive level)
     ],
     furniture: [
+      // Handrails. The terraces already give treads and risers; the rail is the
+      // cue that makes the flight read as a STAIRCASE rather than a slope at
+      // the shipping iso camera. Two per flight, flanking the walkable band
+      // (Player.move clamps x to 0.4-2.6 in a 4-wide room).
+      { type: 'stairRail', x: -0.3, z: 16, y: 0,     variant: 6 },
+      { type: 'stairRail', x: 3.3,  z: 16, y: 0,     variant: 6 },
+      { type: 'stairRail', x: -0.3, z: 8,  y: -2.52, variant: 6 },
+      { type: 'stairRail', x: 3.3,  z: 8,  y: -2.52, variant: 6 },
       // Motivational poster on west wall (top landing)
-      { type: 'motivationalPoster', x: 0.1, z: 16, rotation: Math.PI / 2 },
+      { type: 'motivationalPoster', x: 0.1, z: 17, rotation: Math.PI / 2 },
       // Network Ghost signal booster mount (east wall, upper section)
-      { type: 'boosterMount', x: 3.9, z: 15, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
+      { type: 'boosterMount', x: 3.9, z: 17, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     exits: [
       // EAST exits -> Cubicle Farm (the farm's stairwell door is on ITS
@@ -1111,10 +1163,15 @@ export const ROOMS = {
       { x: 2, z: 0, targetRoom: 'archive', spawnX: 6, spawnZ: 8 },
     ],
     interactables: [
+      // Poster + booster tiles moved with their props when the top landing was
+      // re-terraced from z14-19 to z16-19 (CLAUDE.md poster-placement law:
+      // the `motivationalPoster` furniture entry and the `poster` interactable
+      // must always move together, and both must sit on a LANDING — a prop on
+      // a step row would float above its own tread).
       { x: 3, z: 16, type: 'graffiti', dialogId: 'stairwell_graffiti' },
-      { x: 0, z: 16, type: 'poster', dialogId: 'poster_stair_1' },
-      // Network Ghost signal booster (east wall, upper section)
-      { x: 3, z: 15, type: 'poster', dialogId: 'network_booster_stairwell', condition: { notFlag: 'quest_network_ghost_complete' } },
+      { x: 0, z: 17, type: 'poster', dialogId: 'poster_stair_1' },
+      // Network Ghost signal booster (east wall, top landing)
+      { x: 3, z: 17, type: 'poster', dialogId: 'network_booster_stairwell', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
     playerSpawn: { x: 2, z: 18 },
   },
@@ -1325,6 +1382,11 @@ export const ROOMS = {
       { type: 'lockbox', x: 2.625, z: 7.36, rotation: Math.PI,     variant: 1.75 },
       { type: 'lockbox', x: 4.375, z: 7.36, rotation: Math.PI,     variant: 1.75 },
       { type: 'lockbox', x: 6.125, z: 7.36, rotation: Math.PI,     variant: 1.75 },
+      // West wall, south of the archive doorway (exits at z 3-4). The
+      // `janitor_names_search` interactable at (1,6) is described as "behind
+      // the low-left deposit box frame" and there was no box on that wall at
+      // all — nothing to walk up to (CLAUDE.md "Quest interactable visibility").
+      { type: 'lockbox', x: 0.64, z: 6.125, rotation: Math.PI / 2, variant: 1.75 },
     ],
     npcs: [],
     exits: [
@@ -1947,6 +2009,10 @@ export const ROOMS = {
       { type: 'bench', x: 8, z: 0.8 },
       { type: 'bench', x: 2, z: 4.2, rotation: Math.PI },
       { type: 'bench', x: 4, z: 4.2, rotation: Math.PI },
+      // Seat 12. The `bus_transfer_ledger` interactable is wedged under it at
+      // (6,4) and this bench was missing, so the quest step was an invisible
+      // press-E-at-carpet (CLAUDE.md "Quest interactable visibility").
+      { type: 'bench', x: 6, z: 4.2, rotation: Math.PI },
       { type: 'bench', x: 8, z: 4.2, rotation: Math.PI },
       // Driver's seat up front
       { type: 'chair', x: 10.5, z: 1, rotation: -Math.PI / 2 },
@@ -2020,8 +2086,11 @@ export const ROOMS = {
       { type: 'chair', x: 14, z: 5, rotation: Math.PI },
       { type: 'desk', x: 14, z: 9, rotation: 0 },
       { type: 'chair', x: 14, z: 10, rotation: Math.PI },
-      // Clear of the north window (13-16) and the stacks (S5-P6)
-      { type: 'motivationalPoster', x: 11, z: 0.1 },
+      // Clear of the north window (13-16) and the stacks (S5-P6).
+      // Decoration, NOT a poster — it never had a `poster` interactable, and a
+      // motivationalPoster the player cannot read is a false affordance. Same
+      // ruling as the two cubicle-farm north-wall pieces.
+      { type: 'abstractPainting', x: 11, z: 0.1 },
     ],
     npcs: [
       { id: 'records_clerk', x: 9, z: 5, facing: Math.PI, sitting: true, dialogId: 'records_clerk_form11c', interactRange: 2.0 },
@@ -2068,8 +2137,13 @@ export const ROOMS = {
     npcs: [
       // Delia Okafor, booth 4, holding court
       { id: 'delia', x: 2.4, z: 6, facing: Math.PI / 2, sitting: true, dialogId: 'delia_booth4', interactRange: 2.0, condition: { notFlag: 'delia_moved' } },
-      // The counter regular
-      { id: 'diner_regular', x: 6, z: 1.8, facing: 0, dialogId: 'diner_regular_chat' },
+      // The counter regular. Was at (6, 1.8) — tile (6,1), inside the
+      // loungeBar's own 5x1 blocked footprint, i.e. standing on the STAFF side
+      // of the counter. Moved to the customer side, lined up with the stool at
+      // local x -1.4 (world 6.1). NOT `sitting`: CharacterAnimator's SEAT_Y is
+      // 0.44 (a chair) and this bar's stool seats are at 0.745, so seating him
+      // would bury his hips 0.3 m inside the stool.
+      { id: 'diner_regular', x: 6.1, z: 2.0, facing: 0, dialogId: 'diner_regular_chat' },
     ],
     exits: [
       { x: 6, z: 7, targetRoom: 'city_street', spawnX: 18, spawnZ: 1 },

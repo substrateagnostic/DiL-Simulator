@@ -1599,11 +1599,21 @@ export const DIALOGS = {
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "This is FINRA territory. SEC territory. Possibly FBI territory. We're talking systematic breach of fiduciary duty at an institutional level." },
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "And the only person who had consistent executive access across all eight years is the Regional Manager. He rotated through three other branches but kept 'oversight' of this one." },
     /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "But we need proof. Physical proof. The digital trail isn't enough — they'll say I fabricated it. We need the original trust records from the Archive." },
-    /* 18 */ { type: 'action', action: 'set_flag', flag: 'alex_it_act3_done', value: true, next: 19 },
+    // CATCH-UP, routed through node 23 (appended, so no index shifts).
+    // `alex_it_act2` is the only other setter of `knows_server_secret` and it
+    // is gated to quest stages 100-299, so a player who reached Act 3 without
+    // it could never set the flag again — while the HUD objective went on
+    // demanding "Talk to Alex from IT about the encrypted partition" forever,
+    // a conversation the router structurally refuses to serve. Node 1 above
+    // re-establishes the partition in full, so this scene legitimately confers
+    // the same knowledge. NEVER insert a node mid-array in this file: every
+    // `next:` is an absolute index (see the team_chat_hub off-by-one repair).
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'alex_it_act3_done', value: true, next: 23 },
     /* 19 */ { type: 'action', action: 'set_flag', flag: 'archive_accessible', value: true, next: 20 },
     /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "Find the Archive. The Janitor might know how to get in. And Andrew — be careful. If the Regional Manager finds out we're looking..." },
     /* 21 */ { type: 'text', speaker: 'Alex from IT', text: "Well. Let's just say 'restructuring' isn't always a metaphor." },
     /* 22 */ { type: 'end' },
+    /* 23 */ { type: 'action', action: 'set_flag', flag: 'knows_server_secret', value: true, next: 19 },
   ],
 
   janet_act3: [
@@ -2271,6 +2281,17 @@ export const DIALOGS = {
     /* 36 */ { type: 'text', speaker: 'Narrator', text: "You close the charter. You sit with it on your knees for a moment. The day is heavy, and that's okay. The day is supposed to be heavy." },
     /* 37 */ { type: 'action', action: 'set_flag', flag: 'witness_charter_read', value: true, next: 38 },
     /* 38 */ { type: 'action', action: 'give_xp', xp: 100, next: 0 },
+    // OFF-BY-ONE REPAIR. The "30-39 The Witness" block reserved ten slots and
+    // wrote nine, so from here down every `/* NN */` comment was one ahead of
+    // its real array index — and every `next:` in this tree was authored
+    // against the COMMENTS. 80 of 119 labels were wrong, 48 of 119 nodes had no
+    // path from node 0 (all four ally chat blocks among them), and node 45's
+    // `next: 46` landed on the Janet dispatcher instead of the Skeptic's-chair
+    // `modify_stat maxMP +5`, so that permanent reward could never be
+    // collected. One pad node re-aligns the whole tree — the same `end`-node
+    // padding convention this dialog already uses at 59-61, 74-76, 90-91,
+    // 105-106 and 119. Do not delete it without renumbering every jump.
+    /* 39 */ { type: 'end' },
 
     // 40-49: The Skeptic — Andrew sits and lets the day press
     /* 40 */ { type: 'text', speaker: 'Narrator', text: "You sit at your desk. You don't open anything. You don't pick anything up. You just sit." },

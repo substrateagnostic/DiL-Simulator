@@ -282,6 +282,9 @@ const FURNITURE_FOOTPRINTS = {
   carSUV:             { w: 1, h: 3, ox: 0, oz: -1 },   // the old 1x2 corner block left invisible walls in the garage aisles
   carSports:          { w: 1, h: 3, ox: 0, oz: -1 },
   andrewsCar:         { w: 1, h: 3, ox: 0, oz: -1 },
+  // NOTE: `staircase` and `stairFlight` are ALSO in NO_BLOCK below, which is
+  // checked first, so neither footprint can ever fire. Kept only so a future
+  // author who removes them from NO_BLOCK gets a sane default.
   staircase:          { w: 2, h: 2 },
   safeDepositBox:     { w: 1, h: 1 },
   sculpture:          { w: 1, h: 1 },
@@ -315,7 +318,7 @@ const NO_BLOCK = new Set([
   'coffeeMachine', 'espressoMachine', 'microwave', 'waterCooler', 'printer',
   'whiteboard', 'smartBoard', 'motivationalPoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
-  'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'globeStand', 'vaultDoor',
+  'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'stairFlightWall', 'stairRail', 'globeStand', 'vaultDoor',
   'rangeHood', 'boosterMount',
   'stockTicker', 'scaledModel', 'whiskeyWall',
   // (couch, loungeBar, coffeeTable, leatherArmchair moved OUT of this set —
