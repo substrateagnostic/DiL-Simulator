@@ -157,15 +157,39 @@ export class StageDirector {
     if (this._idle()) this._despawnAll();
   }
 
-  /** Room change / state exit. Rule 6 — never leave a gate unfired. */
+  /**
+   * Room change / state exit. Rule 6 — never leave a gate unfired.
+   *
+   * Order matters and is not obvious: our own state is torn down FIRST, and the
+   * pending `done()` callbacks fire LAST, off a detached snapshot. A `done()`
+   * advances the dialog, and the very next node can be another `stage` node —
+   * which calls `run()` re-entrantly. Tearing down after that would wipe the
+   * runners and the gate that call just created, and the dialog would block
+   * forever on a scene nobody is driving.
+   */
   abort() {
-    this.finishNow();
+    const runners = this.runners.splice(0);
+    const gates = this.gates.splice(0);
+
+    for (const r of runners) {
+      if (r.phase === 'done') continue;
+      if (r.phase === 'pending') this._start(r);
+      if (r.phase === 'done') continue;
+      if (r.target && r.actor) this._place(r.actor, r.target.x, r.target.z);
+      r.hold = 0;
+      this._land(r);
+    }
     this._despawnAll();
-    this.runners.length = 0;
-    this.gates.length = 0;
     this._claimedSeats.length = 0;
     this._releaseActors(true);
     this.touched.clear();
+    this._sceneEnded = false;
+
+    for (const g of gates) {
+      if (g.fired) continue;
+      g.fired = true;
+      try { g.done?.(); } catch (e) { console.warn('[StageDirector] done() threw', e); }
+    }
   }
 
   // ── Tick ───────────────────────────────────────────────────────────────
