@@ -1,3 +1,51 @@
+# Run G / UX lane — FIX ROUND 2 — August 4, 2026 (branch `display-case`)
+
+Three notes from the judge panel (D1–D4). All three answered.
+
+**D1 + D2 — the pause key could bury a committed transition.** `dialog-end` commits a fight
+(300 ms), a queued dialog (500 ms) or the epilogue (900 ms) and *then* pushes. Exploration stays
+top-of-stack and `paused` stays false for that whole window, so one Escape inside it pushed
+`MenuState` and the fight landed **underneath** it — measured before the fix at
+`ESCAPE at +216 ms -> WEDGED=true`, stack `[ExplorationState, MenuState, CombatState]`.
+Fixed with **one source of truth**, `ExplorationState._transitionArmed()`, which now gates both
+doors (`_interact()` and the `isCancelPressed()` branch of `update()`) and carries the two
+epilogue terms the old inline guard never had. The epilogue got the `_epilogueArming` latch it
+was missing, mirroring `_combatArming`. Defence in depth on top: the combat and epilogue timers
+now defer on `menuOpen` exactly the way the dialog timer already did, and **`resume()` flushes
+both** — a deferral with no flush would lock the interact key for the session, which is worse
+than the bug. `MenuState` gained a cosmetic `pause()`/`resume()` pair so any future burial hides
+the panel instead of floating it.
+
+*Deadlock audit:* every term in `_transitionArmed()` is transient. `_pendingCombat` /
+`_pendingDialog` / `_pendingEpilogue` clear at the top of their handler branch and are re-set only
+on the menu-open deferral path, which `resume()` always drains; the three `*Arming` latches clear
+synchronously inside their own timers. The one term worth watching, `_pendingDialog` re-set at the
+menu-open check, can only be set while a `MenuState` is on the stack — `ExplorationState` is not
+updating then, so the pause key is not readable and there is no lockout.
+
+Measured after: Escape at **+122 / +193 / +303 ms** after `dialog-end` all give
+`WEDGED=false`, stack exactly `[ExplorationState, CombatState]`, `MENU DOM {present:false}`.
+Pause key unregressed: one Escape opens `MenuState` in plain exploration and again after the
+Grandma post-fight dialog is dismissed. Epilogue sibling: Escape inside the 900 ms leaves
+`[ExplorationState, EpilogueState]`, no `MenuState`.
+Evidence: `screenshots/g-run/ux/round2-*.png`, `dev-round2.json`, `s3-round2.json`.
+
+**D3 — the `showMainMenu` law was false.** `CombatHUD.show()` ended with a bare
+`this.showMainMenu()`, contradicting CLAUDE.md's "exactly one caller / never bare". Deleted.
+`CombatState._enablePlayerInput()` repaints with all eight arguments before input is enabled, so
+nothing is lost — measured `.combat-actions` = 4 buttons (`Attack/Special/Brace/Item`) the moment
+input goes live. The empty panel that the deletion exposed during the 1.7 s enemy-intro beat is
+handled in CSS (`.combat-actions:empty { display: none }`), not by restoring the call:
+intro frame is now `display:none, 0x0`. The law is true.
+
+**D4 — known orphan text nodes, do not re-file.** `alex_badge_audit_return` node 13 and
+`janet_vacancy_return` node 10 are orphan `text` nodes. They are invisible to `validate:data`
+**by design** — the reachability gate only checks nodes that pay a reward
+(`give_item`/`give_xp`/`modify_stat`/`heal`/`recruit_ally`/`unlock_ally_ability`). Pre-existing,
+not a regression from this lane.
+
+---
+
 # Run C FIX round 2 — July 31, 2026 — producer critic pass (branch `display-case`, uncommitted)
 
 Six notes ([A1]-[A6]) on the Run C gameplay wave. **All six addressed.** Nothing committed, nothing

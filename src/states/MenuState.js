@@ -141,6 +141,13 @@ export class MenuState {
     overlay.appendChild(this.element);
   }
 
+  // Defence in depth, not the fix: if anything ever lands on top of the pause
+  // menu, `GameStateManager.push()` calls these and the panel gets out of the
+  // way instead of floating over the new state. The real guard is
+  // `ExplorationState._transitionArmed()`, which stops the burial happening.
+  pause()  { if (this.element) this.element.style.display = 'none'; }
+  resume() { if (this.element) this.element.style.display = ''; }
+
   exit() {
     this._closeBestiary();
     this._closeControls();

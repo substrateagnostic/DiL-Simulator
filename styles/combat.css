@@ -129,6 +129,14 @@
   box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
 }
 
+/* The HUD no longer paints an opening action menu from inside `show()` — the
+   only caller of `showMainMenu` is `CombatState._showMainMenuLive()`, which
+   runs when input is actually enabled. Until then the panel has no children,
+   and an empty bordered strip should not sit under the enemy intro card. */
+.combat-actions:empty {
+  display: none;
+}
+
 .combat-action-btn {
   background: rgba(233, 69, 96, 0.1);
   border: 2px solid rgba(233, 69, 96, 0.3);

@@ -216,6 +216,13 @@ export class ExplorationState {
           this._combatArming = true;
           setTimeout(() => {
             this._combatArming = false;
+            // Defence in depth: `_transitionArmed()` already keeps the pause key
+            // shut for this whole window, but if a MenuState is somehow on the
+            // stack when the timer fires, defer rather than push the fight
+            // UNDERNEATH it. `resume()` flushes — never leave this set unflushed
+            // or the interact guard locks forever.
+            const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+            if (menuOpen) { this._pendingCombat = encounterId; return; }
             this._startCombat(encounterId);
           }, 300);
           return;
@@ -246,7 +253,14 @@ export class ExplorationState {
         // The epilogue plays once the ending dialog chain has fully drained
         if (this._pendingEpilogue && !this._pendingCombat && !this._pendingDialog) {
           this._pendingEpilogue = false;
+          // Same arming latch as the fight, for the same reason: 900 ms of
+          // top-of-stack exploration with `paused` still false.
+          if (this._epilogueArming) return;
+          this._epilogueArming = true;
           setTimeout(async () => {
+            this._epilogueArming = false;
+            const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+            if (menuOpen) { this._pendingEpilogue = true; return; }
             const { EpilogueState } = await import('./EpilogueState.js');
             this.stateManager.push(new EpilogueState(this.stateManager, this.player));
           }, 900);
@@ -709,6 +723,35 @@ export class ExplorationState {
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
     // Check for upgrade points tooltip
     this._checkUpgradeTooltip();
+    // Flush a fight that was deferred because the menu was open during the push
+    // window. MANDATORY counterpart to the deferral in the `dialog-end` handler:
+    // `_interact()` returns early while `_pendingCombat` is set, so a deferral
+    // with no flush would lock the interact key for the rest of the session.
+    if (this._pendingCombat) {
+      const encounterId = this._pendingCombat;
+      this._pendingCombat = null;
+      this._combatArming = true;
+      setTimeout(() => {
+        this._combatArming = false;
+        const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+        if (menuOpen) { this._pendingCombat = encounterId; return; }
+        this._startCombat(encounterId);
+      }, 300);
+      return;
+    }
+    // Same for a deferred epilogue.
+    if (this._pendingEpilogue) {
+      this._pendingEpilogue = false;
+      this._epilogueArming = true;
+      setTimeout(async () => {
+        this._epilogueArming = false;
+        const menuOpen = this.stateManager.stack.some(s => s.constructor.name === 'MenuState');
+        if (menuOpen) { this._pendingEpilogue = true; return; }
+        const { EpilogueState } = await import('./EpilogueState.js');
+        this.stateManager.push(new EpilogueState(this.stateManager, this.player));
+      }, 900);
+      return;
+    }
     // Flush any dialog that was deferred because the menu was open during the push window
     if (this._pendingDialog) {
       const dialogId = this._pendingDialog;
@@ -2296,6 +2339,24 @@ export class ExplorationState {
     return 'Examine';
   }
 
+  // A fight / queued dialog / epilogue is committed and lands within
+  // 300-900 ms. Exploration is still top-of-stack and `paused` is still
+  // false for that whole window (see the dialog-end handler), so both the
+  // interact key and the pause key have to stay shut or the pushed state
+  // lands on top of whatever the player opened.
+  //
+  // DEADLOCK LAW: every term here must be transient. `_pendingCombat` /
+  // `_pendingDialog` / `_pendingEpilogue` are cleared at the top of their
+  // handler branches and re-set only on the menu-open deferral path, which
+  // `resume()` always flushes; `_combatArming` / `_dialogArming` /
+  // `_epilogueArming` clear synchronously inside their own timers. Adding a
+  // term that can latch true is how you lock the player out of the pause menu.
+  _transitionArmed() {
+    return !!(this._pendingCombat || this._pendingDialog
+           || this._combatArming || this._dialogArming
+           || this._pendingEpilogue || this._epilogueArming);
+  }
+
   _interact() {
     // RE-ENTRANCY GUARD. `start_combat` / a queued follow-up dialog only SET
     // `_pendingCombat` / `_pendingDialog`; the fight (or dialog) is pushed 300–500 ms
@@ -2307,7 +2368,7 @@ export class ExplorationState {
     // defeated and paying its one-time reward twice (measured: stress_ball x2).
     // This is generic: 32 of the 34 `start_combat` dialogs open on an unguarded
     // `text` node, so the exposure is every encounter in the game.
-    if (this._pendingCombat || this._pendingDialog || this._combatArming || this._dialogArming) return;
+    if (this._transitionArmed()) return;
 
     const { exit, interactable } = this._getNearbyTargets();
 
@@ -3675,9 +3736,10 @@ export class ExplorationState {
       this._interact();
     }
 
-    if (InputManager.isCancelPressed()) {
-      const menuState = new MenuState(this.stateManager, this.player);
-      this.stateManager.push(menuState);
+    // Same guard as `_interact()`: during the 300-900 ms arming window the
+    // pushed fight/dialog/epilogue would land UNDER the pause menu.
+    if (InputManager.isCancelPressed() && !this._transitionArmed()) {
+      this.stateManager.push(new MenuState(this.stateManager, this.player));
     }
 
     Engine.renderScene(Engine.scene, Engine.camera);

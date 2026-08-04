@@ -162,7 +162,10 @@ export class CombatHUD {
     this._activeAllyIndex = 0;
     this._renderStats(party[0] || {});
     this._renderPartyRow(party);
-    this.showMainMenu();
+    // NO opening paint here. `showMainMenu` has exactly one caller,
+    // `CombatState._showMainMenuLive()`, which reads all eight arguments off the
+    // live engine before input is enabled. A bare call from inside the HUD
+    // applies eight defaults and is how the 9-buttons-to-4 collapse got in.
   }
 
   _renderEnemyRow(enemies) {
