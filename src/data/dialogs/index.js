@@ -3803,8 +3803,12 @@ export const DIALOGS = {
     // there. Concurrent: the crossing plays under the two narration
     // paragraphs that open the scene instead of freezing them for five seconds.
     /* 178 */ { type: 'stage', concurrent: true, next: 1, beats: [
-      { actor: 'ross',   walkTo: 'head_approach', speed: 1.7, wait: false },
-      { actor: 'ross',   walkTo: 'head_stand', face: 'player', speed: 1.7, after: 0, hold: 0.3, wait: false },
+      // 2.6, not 1.7: node 3 says Skip "IS STANDING at the far end of the
+      // table" and in concurrent mode that line lands while he walks. Prose is
+      // canon, so the number moves, not the sentence — at 2.6 he is planted
+      // before the narration describes him planted.
+      { actor: 'ross',   walkTo: 'head_approach', speed: 2.6, wait: false },
+      { actor: 'ross',   walkTo: 'head_stand', face: 'player', speed: 2.6, after: 0, hold: 0.3, wait: false },
       { actor: 'player', face: 'ross', hold: 0.25 },
     ] },
     // Node 9 -> 12, "I'm here. Let's do this." — the meeting is called to

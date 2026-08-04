@@ -1,3 +1,69 @@
+## [CUTSCENE FIX ROUND (08-04 midday) - your three morning notes]
+
+One commit before this block, one after; `display-case` only. `npm run check`
+exit 0 verified before each. `main` untouched.
+
+### 1. SCENE IDENTITY - you were right, and the mislabel was MINE, in this file
+
+Ground truth: "Face the consequences" is a HUD objective string, not a scene name.
+The scene is `secret_ending` (grandma path) / `legal_eagle_ending` /
+`bro_code_ending`, auto-pushed on entering the EXECUTIVE FLOOR main room - exactly
+where you said. **It was staged, correctly, in round 1.** What went wrong is that
+the wave-G block above says "face-the-consequences staged (grandma_meeting video)"
+and pointed you at the wrong file. `grandma_meeting` is a real, different scene:
+the conference-room pre-fight dialog for Grandma. Your read of it was correct.
+
+The extra body was not Ross - it was KAREN. conference_room's first Karen entry is
+`briefing_complete && !retry_karen`, with no `karen_defeated` term, which is right
+in play because the first Karen fight is a scripted unavoidable loss and every real
+save holds `retry_karen`. The capture fixture skipped the loss, so Karen stood at
+the head of the table for the whole Grandma scene. Fixture fixed; the capture tool
+now carries a per-scene roster (`expect: {present, absent}`) and FAILS ITSELF on a
+stowaway. New `face_the_consequences` alias so the file is named what you call it.
+
+### 2. CAPTURE FIDELITY - the governor, not the harness
+
+The harness was already booting the shipping path. The culprit was the ADAPTIVE
+QUALITY GOVERNOR: Playwright's video recorder costs 40-60ms/frame, the governor
+read that as weak hardware and walked the degrade ladder down MID-TAKE. At `low`
+the city backdrop group and the room-FX light-pool group are set `visible = false`
+and AO/bloom/tilt-shift/shadows go off. Frame 000 of the old board_meeting had the
+display-case look; frame 101, two minutes later, was a black void. New `?qtier=high`
+pins the tier, and the capture now samples the live tier plus both group
+visibilities EVERY FRAME and fails itself if either moved.
+
+### 3. MOVEMENT MODES - both, author's choice per beat
+
+`stage` nodes now have two modes. SCHEDULED (default) hides the box and blocks
+while actors move. CONCURRENT (`concurrent: true`) leaves the box up and the beats
+run UNDER the text. `wait: false` was never this - it only told the gate not to
+wait; the node still hid the box, which is why the board meeting blanked ELEVEN
+times in two minutes. The unpause is narrow on purpose: only staged actors tick,
+`ExplorationState` stays asleep, so you can never walk out from under your own
+cutscene. Measured mix off the video - face-the-consequences 12 frames of motion
+under text / 33 with the box hidden; board_meeting 12 / 19; the Firm ambush 0 / 12
+(fully scheduled - an entrance should own the frame).
+
+### Deliverables (trimmed, mp4, open on the first line - no more boot splash)
+
+    screenshots/g-run/cutscenes/face_the_consequences/face_the_consequences-cut.mp4  61s
+    screenshots/g-run/cutscenes/board_meeting/board_meeting-cut.mp4                  91s
+    screenshots/g-run/cutscenes/the_firm_ambush/the_firm_ambush-cut.mp4              16s
+    screenshots/g-run/cutscenes/grandma_meeting/grandma_meeting-cut.mp4              29s
+
+Judge (single, Opus): PASS on all three axes, cited frames. Its two non-blocking
+notes were both executed this round: the boot head/textless tail are trimmed off
+every deliverable (43% of the ambush file used to be a car park), and Skip now
+crosses at speed 2.6 so he is planted BEFORE the narration says he is standing -
+the number moved, not the line, because prose is canon.
+
+### New laws in CLAUDE.md
+
+Every judged capture runs the SHIPPING visual path (pin the tier, measure it every
+frame) and is identity-checked against the scene it claims to be. Any fixture that
+jumps past a scripted loss must set that loss's flags. Name the deliverable what
+you call it, not what the data calls it.
+
 ## [WAVE G CLOSED - ALL THREE RUNS JUDGED (08-04 morning)]
 
 28 agents, 4.57M tokens, 0 errors, ran through a laptop crash on cache

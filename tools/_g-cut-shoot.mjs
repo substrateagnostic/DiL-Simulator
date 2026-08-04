@@ -194,6 +194,13 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     fs.mkdirSync(path.join(OUT, 'video'), { recursive: true });
     ctxOpts.recordVideo = { dir: path.join(OUT, 'video'), size: { width: W, height: H } };
   }
+  // Playwright starts recording at CONTEXT creation and gives no way to defer
+  // it, so every raw take opens on the loading splash, a black frame and a few
+  // seconds of the parking garage (the fixture's boot room). On a 28 s ambush
+  // that was 43% of the deliverable. Mark the wall clock here and at the two
+  // ends of the take, and post-trim to `<scene>-cut.mp4` after the context
+  // closes. The raw .webm is kept — it is the unedited record.
+  const T_CTX = Date.now();
   const ctx = await browser.newContext(ctxOpts);
   const page = await ctx.newPage();
 
@@ -337,6 +344,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   };
 
   await shot('open');
+  const T_START = Date.now();
 
   // A confirm press during a stage beat is a SKIP (DialogState emits
   // 'stage-skip'), so the harness must wait the beats out or it measures its
@@ -382,6 +390,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   // contained the frame. Always shoot the settle.
   await sleep(1400);
   await shot('settled');
+  const T_END = Date.now();
 
   const samples = await page.evaluate(() => { clearInterval(window.__cutTimer); return window.__cutSamples; });
   const seats = SEATS;
@@ -468,4 +477,29 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   await ctx.close();
   await browser.close();
+
+  // ── Producer cut ─────────────────────────────────────────────────────────
+  // Trim the boot head and the textless tail off the raw take. 0.8s of lead-in
+  // so the first line is not already on screen at frame 0, and 0.6s of tail so
+  // the settle is seen and the file does not end mid-frame. mp4/h264 because
+  // the producer watches these outside a browser. Best-effort: a missing ffmpeg
+  // costs the cut, never the capture.
+  if (VIDEO) {
+    try {
+      const vdir = path.join(OUT, 'video');
+      const raw = fs.readdirSync(vdir).find(f => f.endsWith('.webm'));
+      if (raw) {
+        const ss = Math.max(0, (T_START - T_CTX) / 1000 - 0.8);
+        const dur = (T_END - T_START) / 1000 + 1.4;
+        const cut = path.join(OUT, `${SCENE}-cut.mp4`);
+        const { execFileSync } = await import('node:child_process');
+        execFileSync('ffmpeg', ['-v', 'error', '-y', '-ss', ss.toFixed(2), '-i', path.join(vdir, raw),
+          '-t', dur.toFixed(2), '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '22',
+          '-pix_fmt', 'yuv420p', '-an', cut], { stdio: 'inherit' });
+        console.log(`cut: ${path.relative(process.cwd(), cut)}  (head -${ss.toFixed(1)}s, ${dur.toFixed(1)}s long)`);
+      }
+    } catch (e) {
+      console.warn('[cut] skipped —', e.message.split('\n')[0]);
+    }
+  }
 })().catch(e => { console.error(e); process.exit(1); });
