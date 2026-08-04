@@ -2670,8 +2670,19 @@ export const DIALOGS = {
       { actor: 'chief_of_restructuring', spawn: true, spawnAt: [7.5, 2.2], face: 'player' },
       { actor: 'player', walkTo: [7.6, 4.6], face: 'chief_of_restructuring', speed: 1.5 },
     ] },
-    /* 9  */ { type: 'stage', next: 5, beats: [
+    /* 9  */ { type: 'stage', next: 10, beats: [
       { actor: 'chief_of_restructuring', walkTo: [5.8, 2.2], face: 'player', speed: 1.0, hold: 0.5 },
+      { actor: 'player', face: 'board_door', wait: false },
+    ] },
+    // ── EXIT BEAT (appended; routed to from 9) ───────────────────────────
+    // He was spawned by node 8, so `endScene()` despawns him IN PLACE at the
+    // end of the dialog — a body deleting itself on camera, the same defect the
+    // board meeting had. `regional_director_defeated` node 6 is the working
+    // form: walk to a real door, then hide. Stepping aside is still the beat
+    // the prose describes (node 9, unchanged); this is the follow-through that
+    // gets him off screen under his own power before the scene closes.
+    /* 10 */ { type: 'stage', next: 5, beats: [
+      { actor: 'chief_of_restructuring', exit: 'board_door', speed: 1.8 },
       { actor: 'player', face: 'board_door', wait: false },
     ] },
   ],

@@ -73,9 +73,12 @@ export class Player {
       if (tileMap.canMove(this.position.x, nz, 0.3, this.position.x, this.position.z)) {
         this.position.z = nz;
       }
-      // Clamp to room perimeter so character doesn't clip through walls
-      this.position.x = Math.max(0.4, Math.min(tileMap.width - 1.4, this.position.x));
-      this.position.z = Math.max(0.4, Math.min(tileMap.height - 1.4, this.position.z));
+      // Clamp to room perimeter so character doesn't clip through walls.
+      // These two numbers define the player's REACHABLE band and are read by
+      // Room._registerWallProp to decide whether a walk-behind fade can ever
+      // turn off in a given room — keep them in PLAYER, not inline.
+      this.position.x = Math.max(PLAYER.EDGE_CLAMP, Math.min(tileMap.width - PLAYER.EDGE_CLAMP_FAR, this.position.x));
+      this.position.z = Math.max(PLAYER.EDGE_CLAMP, Math.min(tileMap.height - PLAYER.EDGE_CLAMP_FAR, this.position.z));
     } else {
       this.position.x = nx;
       this.position.z = nz;

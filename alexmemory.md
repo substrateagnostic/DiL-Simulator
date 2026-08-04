@@ -1,3 +1,162 @@
+## [RUN G / FIX ROUND 3 (08-04) — UX lane + CUT lane, judge panels answered]
+
+One commit on `display-case`, pushed. `npm run check` exit 0 verified before it.
+Nothing merged to `main`.
+
+### UX lane — the stairwell handrails are solid again
+
+The near-camera flight had **no rails at any position the player can stand in**.
+`Room._registerWallProp` had opted them into the south/east walk-behind fade, and
+in a 4-wide room the fade trigger (`px > width - 3.5` = 0.5) covers the entire
+reachable floor (`Player.move` clamps x to 0.4–2.6). That is not a fade, it is a
+delete. Measured at the producer's five stations: **east rail materials 0.16 at
+all five**, 1.0 only at his far-west-clamp control at x 0.45 — which reproduces
+his `screenshots/tiebreak/tb-stair.json` baseline exactly.
+
+- The invariant is now written into the code, not just patched: **no prop may sit
+  at reduced opacity at EVERY position the player can occupy in its room.**
+- Two guards, both geometric, both stated against the real constants so they
+  cannot drift from the fader: **conditionality** (the solid band must be at
+  least one tile wide, checked against `WALL_FADE_INSET` exported from `Room.js`
+  and `PLAYER.EDGE_CLAMP` now exported from `constants.js`) and **solidity**
+  (box depth across the wall normal >= 0.25 m — an open post-and-rail reads
+  through and is not an occluder). `_updateWallFade` imports the inset instead of
+  re-typing 3.5.
+- Solidity cut chosen from measurement, not taste: rails **0.07 m**, every real
+  occluder **0.337 / 0.38 / 0.67 / 0.70 m**. 3.6x clear on both sides. The
+  obvious `box.min.y <= 0.35` "stands on the floor" term does NOT discriminate —
+  the rails descend to -2.52 and -5.04 and pass it. Written down so the next
+  author does not add it.
+- Both rail pairs now land on the **same render path**. Before: west pair merged
+  by `_mergeStatics` (`meshes: 0`), east pair cloned transparent (`meshes: 5`).
+  After: all four `meshes: 0`, opacity 1.0 at all five stations plus the control.
+  Fixing this the naive way would have traded an opacity asymmetry for a
+  lighting/normals one.
+- Census: **18 props / 8 rooms -> 16 props / 7 rooms**, `stairwell` absent.
+  Nothing else changed. Executive-floor `elevatorDoors` regression re-verified
+  with numbers *and* plates: **0.16 behind the south wall, 1.0 away from it**.
+- `tools/_g-wall-census.mjs` is now a **gate, not a report** — exits 1 when a
+  registered prop has no reachable solid position. Proven both ways: exit 0 on
+  the fix, **exit 1 with `--guardoff`** (which reproduces the pre-fix
+  registration). The old census printed `stairRail@3.3,16` for a whole round and
+  nobody read it.
+- Housekeeping: the `_registerWallProp` docstring said "0.75 tiles" while the
+  code said 1.4. Corrected, with the reason (posters live at `h-1.1`) — that
+  mismatch is what let the rails in unnoticed.
+
+### CUT lane — the board meeting stops emptying itself on camera
+
+`board_meeting_held` sets at node 175 and `board_meeting_closed` derived in the
+same tick, but the 18 `conditionFn` hides cannot execute until ExplorationState
+ticks again — the first frame after the dialog pops. **Measured: 18 -> 0 visible
+NPCs in one uncovered tick.** After: **largest single-tick drop while the screen
+is uncovered = 0**, cast present at dialog-end +0 ms and +1 s with control live
+(`top=ExplorationState`, `paused=false`).
+
+- Fix is the lazy flag the panel asked for: `_refreshStoryProgress()` refuses to
+  derive `board_meeting_closed` while `player.currentRoom === 'board_room'`, and
+  `_changeRoom()` flushes it after the wipe (beside the `floor_13_found` set,
+  before `_autoSave`), where the cast is already disposed. One-way law kept, the
+  `|| act6_complete` legacy bridge kept, still never set from dialog data.
+- All four probe legs pass (`tools/_g-board-close.mjs`): walk out -> flag derives,
+  re-enter -> **0 NPCs**, Skip **back in his office**; save/load inside the window
+  -> cast intact, not stranded; quit-and-reload standing in board_room -> cast
+  present until you walk out, then the flag lands.
+- **Two-Janitors law re-verified** in all three Rolex states including the legacy
+  save (`tools/_g-archive-check.mjs`): exactly one Janitor each time.
+- Rider taken: `chief_restructuring_defeated` now has an exit beat
+  (`exit: 'board_door'`, the `regional_director_defeated` node-6 form), appended
+  as node 10 and routed to from 9 — never inserted. He walks 3.35 tiles and ends
+  at (7.32, 1.14) instead of being despawned in place. `_g-stage-verify` vs
+  `8b30e2b`: **0 pre-existing nodes or edges changed**.
+
+### Board speak marks — half taken, and the other half measured down
+
+`speak_west` **6 -> 6.5** (stands in the gap between chairs): diane-vs-seated
+0.427 -> 0.506, intern 0.459 -> clear of the top ten. `speak_east` **left at 10**
+on purpose — moving it to 9.5 measured *worse*, because the east crowding is
+**transit, not standing**: Janet's route to the new mark runs through Isaiah's
+home tile and the worst pair in the whole scene went **0.319 -> 0.056 tiles**.
+The panel's ">0.6 tiles" bar is **not reachable by mark placement at all** — the
+two binding pairs are Skip's BLOCK-H return past Diane (0.14) and Janet-vs-Isaiah
+in transit (0.32). Both are walk legs. Producer's call whether that is worth a
+routing pass; the crowd read is otherwise intact.
+
+### HANDOFF to the lighting/level lane — "the Board Room goes dark"
+
+**Root-caused, and the round-2 framing was wrong in both directions.** It is not
+elapsed time and it is not decay. `BuildingShell` is an event, not a backdrop:
+`FADE_IN 0.4 + HOLD 1.2 + FADE_OUT 0.8` = **2.4 s**, then `group.visible = false`
+for good (`src/effects/BuildingShell.js:42`). Measured `building_shell.visible`:
+**true at t=2 s, false at t=47 s and t=102 s, in both populations** (cast present
+and cast absent). Everything after 2.4 s is the room's steady state — the 2 s
+reference frame was simply the only one that ever had the shell in it.
+
+So the real note is a level/lighting call, not a bug: at the Act-6 night
+time-of-day, `board_room` has no backdrop tier under it at the shipping camera,
+so once the entry shell expires the room floats in pure black — and a
+**90-second scene lives entirely in that state**. Options are a backdrop tier for
+the room or holding the shell for staged scenes (`Engine.holdBuildingShell(true)`
+already exists; the elevator ride uses it). Plates and numbers:
+`screenshots/g-run/board/dark/` (+ `dark.json`).
+
+### Harness lessons, now in CLAUDE.md
+
+Three of these were actively producing false evidence:
+
+- **`import('/src/core/Engine.js')` inside `page.evaluate()` can hand you a
+  second, uninitialised Engine.** Vite serves the running app's copy with an HMR
+  cache-buster (`?t=...`) as soon as anything has been edited that session, so the
+  bare specifier is a different URL and `scene`/`renderer` are both null. Silent,
+  because call sites null-guard — **`_g-wall-shoot`'s `--zoom` detail take
+  no-ops under exactly this condition**, which is worth knowing before trusting
+  any zoomed plate shot after an edit.
+- **In-page luminance probes read 0** — no `preserveDrawingBuffer`. Measure the
+  PNG (`tools/_g-lum.mjs`).
+- **`npc.visible` lies** when anything sits on top of ExplorationState: the
+  conditionFn is only evaluated while it is the top state, so a dialog pushed by
+  a flag-set listener freezes every conditional NPC hidden. Call
+  `conditionFn(flags)` directly when auditing.
+- `_g-cut-shoot` now shoots **`settled` (+1.4 s after `final`)**, and the
+  `board_meeting` advance cap went 140 -> 230. 140 never reached the end node
+  (it takes ~189 Enter presses), so every previous take's "final" frame was a
+  middle frame with the dialog box still up — which is how three evidence
+  packages missed a defect that lives in the last second of the scene.
+
+### What the producer should look at
+
+- `screenshots/g-run/ux/CROP-top-PREFIX.png` vs `CROP-top-FIXED.png` and
+  `CROP-mid-PREFIX.png` vs `CROP-mid-FIXED.png` — matched to his own tie-break
+  windows. Four rail runs, near flight railed.
+- `screenshots/g-run/cutscenes/board_meeting_PREFIX/100-settled.png` vs
+  `screenshots/g-run/cutscenes/board_meeting/100-settled.png` — empty room vs
+  full board, same beat.
+- `screenshots/g-run/board/close-after/report.txt` — the four probe legs.
+- `screenshots/g-run/board/dark/` — the lighting handoff.
+
+### Things that would mislead you if I did not say them
+
+- **Two new dev-only A/B switches ship in `src/`**: `window.__wallGuardOff`
+  (`Room.js`) and `window.__boardDeferOff` (`ExplorationState.js`). Same shape
+  and purpose as the existing `window.__mergeStatics`, both default off, both
+  exist so the two gates can be proven to fail on the defects they catch. If you
+  would rather not carry them, say so and they come out — the fixes do not
+  depend on them.
+- The vault's lockbox fade converges **slowly** (still 0.515 after 1.6 s of
+  standing behind it). Pre-existing, unrelated to this change, direction is
+  correct and it does reach 1.0 away from the wall. Not investigated.
+- My stairwell plates are shot at the `act7` fixture, so the dressing differs
+  slightly from the producer's tie-break plates (a monitor where his has a
+  poster). The crop windows are pixel-matched to his; the rails are the subject
+  and they are unambiguous.
+- **The ">0.6 tiles" board-spacing bar is not met and cannot be met by moving
+  marks.** I took the half that measured better and left the half that measured
+  worse. Full numbers above.
+- FIX 2's root cause is reported but **not fixed** — the second judge explicitly
+  handed it off to the lighting lane and I honoured that.
+
+---
+
 ## [RUN G / FIX ROUND 2 (08-04) — UX lane + CUT lane, both judge panels answered]
 
 Two commits on `display-case`, both pushed. `npm run check` green and exit-code

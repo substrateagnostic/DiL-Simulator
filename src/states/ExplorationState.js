@@ -4,6 +4,7 @@ import { AudioManager } from '../core/AudioManager.js';
 import { Engine } from '../core/Engine.js';
 import { IsometricCamera } from '../world/IsometricCamera.js';
 import { RoomManager } from '../world/RoomManager.js';
+import { WALL_FADE_INSET } from '../world/Room.js';
 import { StageDirector } from '../world/StageDirector.js';
 import { Player } from '../entities/Player.js';
 import { DialogState } from './DialogState.js';
@@ -827,8 +828,12 @@ export class ExplorationState {
     const px = this.player.position.x;
     const pz = this.player.position.z;
     const blend = Math.min(1, dt * 7);
-    const southTarget = pz > room.data.height - 3.5 ? 0.16 : 1.0;
-    const eastTarget = px > room.data.width - 3.5 ? 0.16 : 1.0;
+    // WALL_FADE_INSET is imported, not re-typed: Room._registerWallProp guards
+    // registration on this exact number (a room too narrow for the band to ever
+    // turn off must not register props at all), so a local literal here would
+    // silently un-guard it.
+    const southTarget = pz > room.data.height - WALL_FADE_INSET ? 0.16 : 1.0;
+    const eastTarget = px > room.data.width - WALL_FADE_INSET ? 0.16 : 1.0;
     this._fadeWallMeshes(room.getSouthWallMeshes(), southTarget, blend);
     this._fadeWallMeshes(room.getEastWallMeshes(), eastTarget, blend);
     // Props BOLTED TO those walls fade with them. Without this the wall goes
@@ -1207,6 +1212,16 @@ export class ExplorationState {
     // on the car offers a 13 button on the lobby shaft.
     if (this.player.currentRoom === 'floor_13' && !this.player.getFlag('floor_13_found')) {
       this.player.setFlag('floor_13_found', true);
+    }
+    // FLUSH THE DEFERRED BOARD CLOSE — counterpart to the deferral in
+    // `_refreshStoryProgress()`. Same placement rationale as floor_13 above:
+    // after the wipe has finished, so the flag-set listener cannot touch the HUD
+    // mid-transition. The board_room cast was disposed with the room, so the 18
+    // hides this unblocks are off-camera by definition. Ordered before
+    // `_autoSave` so the save that follows the walk-out already carries it.
+    if (this._boardCloseDeferred && this.player.currentRoom !== 'board_room') {
+      this._boardCloseDeferred = false;
+      this._refreshStoryProgress(true);
     }
     this._autoSave(false);
   }
@@ -3388,13 +3403,34 @@ export class ExplorationState {
     // when the player leaves for the Penthouse without holding it. Derived
     // one-way flag: room NPC conditions support a single flag/notFlag pair,
     // and every Board Room staging entry (plus Skip's office entries) hangs
-    // off this one. Never cleared — nobody should be standing in the Board
-    // Room during the ascent, and Skip belongs back in his office after.
+    // off this one. Never cleared, and NEVER set from dialog data.
+    //
+    // DEFERRED WHILE THE PLAYER IS STILL IN THE ROOM. `board_meeting_held` sets
+    // at node 175 and this derivation used to fire in the same tick, but the 18
+    // `conditionFn` hides it triggers cannot execute until ExplorationState
+    // ticks again — which is the first frame after the dialog pops. So the
+    // entire cast (Skip, five allies, twelve suits) deleted itself in ONE
+    // VISIBLE FRAME while the player stood there watching. A board that stays
+    // seated while Andrew walks out is fictionally correct and costs nothing;
+    // the flag's own contract is only that it be true by the time the player
+    // could RE-ENTER, and `_changeRoom` rebuilds the room from flags anyway, so
+    // the hides land off-camera either way. `_boardCloseDeferred` is flushed at
+    // the end of `_changeRoom()`.
     if (
       (this.player.getFlag('board_meeting_held') || this.player.getFlag('act6_complete')) &&
       !this.player.getFlag('board_meeting_closed')
     ) {
-      this.player.setFlag('board_meeting_closed', true);
+      // `window.__boardDeferOff` is an A/B switch in the shape of
+      // `window.__mergeStatics`: `tools/_g-board-close.mjs --nodefer` sets it to
+      // reproduce the PRE-FIX same-tick derivation so the 18-bodies-in-one-frame
+      // drop can be measured rather than described. Never true in normal play.
+      const deferOff = typeof window !== 'undefined' && window.__boardDeferOff === true;
+      if (this.player.currentRoom === 'board_room' && !deferOff) {
+        this._boardCloseDeferred = true;
+      } else {
+        this.player.setFlag('board_meeting_closed', true);
+        this._boardCloseDeferred = false;
+      }
     }
 
     this._syncActFromFlags();

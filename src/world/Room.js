@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { TileMap } from '../world/TileMap.js';
 import { Furniture } from '../world/Furniture.js';
 import { Materials } from '../effects/MaterialLibrary.js';
-import { TILE_SIZE } from '../utils/constants.js';
+import { TILE_SIZE, PLAYER } from '../utils/constants.js';
 import { BUILDING_MAP, floorLabel } from '../data/buildingMap.js';
 import { ProceduralNormals } from '../effects/ProceduralNormals.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
@@ -18,6 +18,30 @@ import _roomOverrides from '../data/room-overrides.json' with { type: 'json' };
 // produces a renderable THREE.Group, a populated TileMap, and
 // NPC placement data ready for EntityManager.
 // ============================================================
+
+// ── Walk-behind wall fade: the three numbers that must stay coupled ──────
+// `ExplorationState._updateWallFade` fades the south/east wall — and every prop
+// registered on it by `Room._registerWallProp` — while the player is inside the
+// trigger band. `Player.move` clamps the player to [EDGE_CLAMP, dim - 1.4].
+// Registration and fading are two halves of ONE predicate: when they were
+// written independently the stairwell's east rails were registered in a room
+// whose trigger band covers the whole reachable floor, which does not fade a
+// prop, it deletes it. Import these, never re-type the literals.
+export const WALL_FADE_INSET = 3.5;
+// Minimum reachable floor, in tiles, over which a registered prop must stand
+// solid for its fade to be a CONDITIONAL affordance rather than a deletion.
+export const MIN_SOLID_SPAN = 1.0;
+// Minimum depth across the wall normal for a prop to count as an occluder at
+// all. Slabs (0.337–0.70 m measured) pass; an open post-and-rail (0.07 m) does
+// not. See the docstring on _registerWallProp for the full measurement table.
+export const WALL_PROP_MIN_DEPTH = 0.25;
+// A/B switch for the two guards above, same shape and same purpose as
+// `window.__mergeStatics` below: `tools/_g-wall-census.mjs --guardoff` and
+// `tools/_g-stair-opacity.mjs --guardoff` set it to reproduce the PRE-FIX
+// registration, which is how the census gate is shown to fail on the defect it
+// exists to catch. Never true in normal play.
+const wallGuardsOn = () =>
+  typeof window === 'undefined' || window.__wallGuardOff !== true;
 
 // ── Static-batch merge ───────────────────────────────────────────────────
 // Every furniture factory returns a THREE.Group of primitives, and a room is
@@ -1442,25 +1466,79 @@ export class Room {
    * wall that had already gone glassy around it.
    *
    * The test is geometric, not a hardcoded type list, so a future prop on those
-   * walls is covered for free: centre within 0.75 tiles of the wall line AND
-   * tall enough to hide a head (> 1.2 m). Materials are cloned so the shared
-   * MaterialLibrary cache is never mutated, and marked `roomOwned` so
-   * `dispose()` frees them. Cloning also drops the prop out of `_mergeStatics`
-   * (batchStatics skips transparent materials), which is required — a batched
-   * prop cannot have its own opacity.
+   * walls is covered for free. FOUR terms, in this order:
+   *
+   *   1. PROXIMITY — centre within 1.4 tiles of the wall line. (`h-1` is the
+   *      last walkable row and posters live at `h-1.1`; 1.4 catches both and
+   *      stops short of free-standing furniture one tile off the wall. This
+   *      docstring said 0.75 for two rounds while the code said 1.4 — the
+   *      mismatch is what let the stairwell rails in unnoticed.)
+   *   2. CONDITIONALITY — the fade must be able to turn OFF somewhere the
+   *      player can actually stand. See the invariant below.
+   *   3. HEIGHT — tall enough to hide a head (> 1.2 m).
+   *   4. SOLIDITY — thick enough across the wall normal to be an occluder at
+   *      all. See below.
+   *
+   * THE INVARIANT (term 2): NO PROP MAY SIT AT REDUCED OPACITY AT EVERY
+   * POSITION THE PLAYER CAN OCCUPY IN ITS ROOM. An occlusion fade is a
+   * CONDITIONAL affordance — solid where you stand, glassy while you are
+   * behind it. When the condition is unconditional the prop is not fading, it
+   * is deleted. `stairwell` is 4 wide, so the east trigger `px > w - 3.5` sits
+   * at 0.5 while `Player.move` clamps x to [0.4, 2.6]: the two handrails on the
+   * near flight were transparent at every reachable position and the flight
+   * read as a ramp. Guarded on the same two numbers the fader and the clamp
+   * use (`WALL_FADE_INSET`, `PLAYER.EDGE_CLAMP`) so the three cannot drift —
+   * this is a class fix, any future corridor room is covered.
+   *
+   * SOLIDITY (term 4): a wall-mounted SLAB (elevatorDoors, vaultDoor, a lockbox
+   * bank, a fridge) presents a face; an open post-and-rail reads THROUGH and is
+   * not an occluder. The height test alone cannot tell them apart — a handrail
+   * raked across a 5 m drop has a 3.47 m bounding box while being a 0.07 m bar.
+   * Measured depth across the wall normal over all 18 props the test claimed
+   * before this guard (`tools/_g-wall-dims.mjs`): rails 0.07, everything real
+   * 0.337 (lockbox) / 0.38 (elevatorDoors) / 0.67 (vaultDoor) / 0.70 (fridge).
+   * The cut sits at 0.25 — 3.6x clear of both sides. Note the obvious-looking
+   * `box.min.y <= 0.35` "stands on the floor" term does NOT discriminate here:
+   * the rails descend to -2.52 and -5.04 and would pass it.
+   *
+   * Materials are cloned so the shared MaterialLibrary cache is never mutated,
+   * and marked `roomOwned` so `dispose()` frees them. Cloning also drops the
+   * prop out of `_mergeStatics` (batchStatics skips transparent materials),
+   * which is required — a batched prop cannot have its own opacity. The corollary
+   * matters when you deregister something: an unregistered prop goes BACK into
+   * the static batch, which is where its opaque twin already is. Both stairwell
+   * rail pairs now land on the same render path; leaving one pair cloned and one
+   * merged would trade an opacity asymmetry for a lighting/normals asymmetry.
    */
   _registerWallProp(obj, x, z) {
     const w = this.data.width, h = this.data.height;
     if (!this.data.walls) return;
-    // h-1 is the last walkable row; a wall-mounted prop sits on it or just
-    // beyond it (posters live at h-1.1). 1.4 catches both and stops short of
-    // free-standing furniture one tile off the wall.
+    // 1. PROXIMITY
     const onSouth = z >= h - 1.4;
     const onEast  = x >= w - 1.4;
     if (!onSouth && !onEast) return;
 
+    // 2. CONDITIONALITY. `_updateWallFade` holds the prop solid only while the
+    // player is at or below `dim - WALL_FADE_INSET`; `Player.move` will not let
+    // him below `PLAYER.EDGE_CLAMP`. If that leaves less than a tile of floor,
+    // there is no meaningful position where the prop is solid, so do not claim
+    // it. (Equivalent to `(w - 3.5) <= 1` on every integer room width the game
+    // ships; stated against the two real constants so it stays coupled to them.)
+    // Per-axis, so a corner prop keeps the wall that still works.
+    const solidSpan = (dim) => (dim - WALL_FADE_INSET) - PLAYER.EDGE_CLAMP;
+    const guards = wallGuardsOn();
+    let regEast  = onEast  && (!guards || solidSpan(w) >= MIN_SOLID_SPAN);
+    let regSouth = onSouth && (!guards || solidSpan(h) >= MIN_SOLID_SPAN);
+    if (!regEast && !regSouth) return;
+
     const box = new THREE.Box3().setFromObject(obj);
+    // 3. HEIGHT
     if (!isFinite(box.min.y) || box.max.y - box.min.y <= 1.2) return;
+    // 4. SOLIDITY — depth across the wall normal (x for an east wall, z for a
+    // south wall). A line is not an occluder.
+    regEast  = regEast  && (!guards || (box.max.x - box.min.x) >= WALL_PROP_MIN_DEPTH);
+    regSouth = regSouth && (!guards || (box.max.z - box.min.z) >= WALL_PROP_MIN_DEPTH);
+    if (!regEast && !regSouth) return;
 
     // ONE clone per distinct source material, reused across every mesh in the
     // prop. Without the dedupe the vault's eight lockbox banks alone produced
@@ -1490,8 +1568,8 @@ export class Room {
     // Diagnostic only — `tools/_g-wall-shoot.mjs` reads it to census which props
     // the geometric test actually claims per room.
     (this._wallPropTypes ||= []).push(`${obj.userData.furnitureType}@${x},${z}`);
-    if (onSouth) (this._southWallProps ||= []).push(...mats.map(m => ({ material: m })));
-    if (onEast)  (this._eastWallProps  ||= []).push(...mats.map(m => ({ material: m })));
+    if (regSouth) (this._southWallProps ||= []).push(...mats.map(m => ({ material: m })));
+    if (regEast)  (this._eastWallProps  ||= []).push(...mats.map(m => ({ material: m })));
   }
 
   // ----------------------------------------------------------

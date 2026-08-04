@@ -1676,7 +1676,17 @@ export const ROOMS = {
       // and the table blocks z 4-6, so a body standing ON the chair row cannot
       // be WALKED to — it arrives at 7.28 and the beat times out into a
       // teleport. Simulated against the real TileMap before it was authored.
-      speak_west:    [6, 7.4],
+      // WEST is nudged off the chair column, EAST is deliberately NOT — and the
+      // asymmetry is measured, not aesthetic. The south chair row is occupied at
+      // x 5,6,7,10,11 (z 7), so a mark at x 6 puts the speaker 0.40 tiles
+      // directly behind a seated body; 6.5 stands in the gap and lifts every
+      // west contributor clear (`tools/_g-board-spacing.mjs` over a full take:
+      // diane-vs-board_member_7 0.427 -> 0.505, intern 0.459 -> 0.641).
+      // Moving EAST to 9.5 measured WORSE, because the crowding there is
+      // TRANSIT, not standing: Janet's route to the mark then runs through
+      // Isaiah's home tile at (10,8) and the worst pair in the whole scene went
+      // 0.319 -> 0.056 tiles. A mark can only fix a standing position. Leave it.
+      speak_west:    [6.5, 7.4],
       speak_east:    [10, 7.4],
       // Skip's route. The table blocks x 4-12 / z 4-6 and StageDirector walks a
       // straight line with an axis slide, not a path — every leg here was

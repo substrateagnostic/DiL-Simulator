@@ -104,7 +104,11 @@ const SCENES = {
     // 178 nodes and five ally contributions, each of which returns to the
     // node-48 floor choice — a full pass is ~110 advances, so 40 stopped the
     // take before BLOCK E and never reached the staging in BLOCK H.
-    advances: 140, gap: 480,
+    // 140 was still short: measured 189 Enter presses to reach the end node, so
+    // every previous take stopped mid-scene and the `final` frame was a MIDDLE
+    // frame with the dialog box still up. The END of a staged scene is the part
+    // that has to be judged.
+    advances: 230, gap: 480,
   },
   // Fires in `board_room` — the only room with a penthouse exit — from
   // `_changeRoom`'s uncertified-charter branch. By then `act6_complete` has
@@ -159,6 +163,10 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   page.on('pageerror', e => errors.push('PAGEERROR: ' + e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push('CONSOLE: ' + m.text()); });
 
+  // --nodefer reproduces the PRE-FIX same-tick `board_meeting_closed`
+  // derivation (see ExplorationState._refreshStoryProgress) so the
+  // eighteen-bodies-in-one-frame delete can be shot, not just described.
+  if (process.argv.includes('--nodefer')) await page.addInitScript('window.__boardDeferOff = true;');
   await page.goto(`http://localhost:${PORT}/?dev&fixture=act1&hud=0`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__shotReady === true, { timeout: 40000 });
 
@@ -305,6 +313,12 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   await sleep(600);
   await shot('final');
+  // AND the second after that. A scene that empties itself on the resume frame
+  // looks fine at `final` and wrong 1000 ms later — the board meeting deleted
+  // eighteen bodies in that window and three rounds of evidence packages never
+  // contained the frame. Always shoot the settle.
+  await sleep(1400);
+  await shot('settled');
 
   const samples = await page.evaluate(() => { clearInterval(window.__cutTimer); return window.__cutSamples; });
   const seats = SEATS;

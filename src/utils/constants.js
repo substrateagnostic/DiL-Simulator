@@ -58,6 +58,13 @@ export const CAMERA = {
 export const PLAYER = {
   SPEED: 5,
   INTERACT_RANGE: 1.8,
+  // Hard perimeter clamp applied in Player.move: the player can never stand
+  // outside [EDGE_CLAMP, dim - 1.4] on either axis. Exported because
+  // Room._registerWallProp has to reason about the player's REACHABLE band to
+  // decide whether a walk-behind fade is a conditional affordance or a
+  // permanent deletion — see the wall-fade block in Room.js.
+  EDGE_CLAMP: 0.4,
+  EDGE_CLAMP_FAR: 1.4,
 };
 
 // Character dimensions
