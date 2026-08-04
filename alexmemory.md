@@ -1,3 +1,104 @@
+## [RUN G / CUTSCENE STAGING LANE (08-04) — the game gets a staging system, 21 scenes get bodies]
+
+One commit on `display-case`, pushed. `npm run check` green, exit 0, verified
+separately. Nothing merged to `main`.
+
+**The A2 audit's headline was right and it was worse than "weak": the game had
+NO staging system.** Exactly one line in `src/` moved a character in response to
+a story beat, and it did not render — `GameStateManager` ticks only the TOP
+state, so pushing a `DialogState` freezes every NPC animator, the camera and the
+facing ease. 100 dialog lines across 63 trees describe walking, sitting,
+entering, fleeing or handing something over. Zero were staged.
+
+### What landed
+
+**A primitive.** `src/world/StageDirector.js` plus one new dialog node type:
+
+```js
+{ type: 'stage', beats: [ { actor: 'ross', walkTo: 'table_seat_e', sit: true } ] }
+```
+
+Verbs: `walkTo` / `face` / `sit` / `stand` / `exit` / `gesture` / `pose` /
+`expression` / `spawn` / `show` / `speed` / `hold` / `after` / `wait:false`.
+Destinations are **named marks** in room data, so a Rooms-tab furniture drag can
+be followed by a mark edit in the same file instead of silently breaking a
+cutscene. The director is ticked from `main.js` beside `updateTweens`, OUTSIDE
+the state stack — that is the one architectural change and it is the whole
+reason any of this renders. `DialogState` still holds no world reference.
+
+**Numbers, all measured off the shipping path:**
+
+| | before | after |
+|---|---|---|
+| seated NPC entries seated on nothing or facing away from their own chair | **12 of 12** | **0 of 13** |
+| dialog trees carrying staged action | 0 | **21** |
+| stage beats, all resolving to a real actor + mark | — | **77** |
+| pre-existing dialog nodes or edges changed by the staging edit | — | **0** (mechanically proven) |
+| duplicate visible NPCs across all 7 dev presets x 26 rooms | 0 | **0** (unchanged) |
+
+`tools/_g-seat-census.mjs --ref=<git ref>` prints that first row for any commit.
+`tools/_g-stage-verify.mjs` proves the fourth: it diffs every dialog tree against
+a git ref treating `stage` nodes as transparent, so the never-insert-into-the-
+middle law is now mechanised rather than remembered.
+
+### The bug under the bugs
+
+**`CLAUDE.md` documented the rotation convention INVERTED**, and that is where
+every one of those 12 backwards seats came from — and the six board-meeting
+allies standing with their backs to the table. `theta -> forward (sin, 0, cos)`,
+so **`rotation: 0` is SOUTH, not north.** Verified three independent ways (the
+nose is at local +z in `CharacterBuilder`; the poster face is at local +z and
+every north-wall poster ships `rotation: 0`; the chair back is at local
+z = -0.20, so a chair and its occupant carry the same value). Corrected in the
+same commit, with the evidence, per the house law.
+
+### Things that would mislead you if I didn't say them
+
+* **The audit's poster recommendation was wrong and I did not follow it.** It
+  said move the executive floor's four posters to the east wall. Shot on the
+  real camera: the iso camera sits at +x/+z and reads the **north and west**
+  inner faces — east and south wall art is a grey smear seen through glass from
+  behind. Both plates are in `screenshots/g-run/cutscenes/posters/`. They went
+  on the **west** wall as three new `executivePoster` props (0.98 x 0.82, aged
+  brass bead, cream mat, picture light), fourth text rehoused in the Board Room.
+  **This means there are other rooms with art on the wrong wall** — the
+  conference room and the break room each have one — which I did not touch.
+* **The Board Meeting is still not staged.** It is the biggest hole in the
+  audit and I stopped short of it on purpose: it needs eleven seated board
+  members, and *who they are* is a casting decision, not an engineering one. I
+  did fix the six rallied allies' facing (they had their backs to the table) and
+  the primitive is ready for the twelfth-member crossing whenever you cast it.
+* **Two "elevator" lines in the Penthouse are still false.** There is no
+  elevator up there (`ElevatorRide.LINKS` has no `board_room>penthouse`; the
+  exit is a plain door). I staged the characters to the DOOR and left the prose
+  alone — dialog is yours to redline, not mine to quietly rewrite. Same for
+  `charter_challenge`, where the Janitor speaks five lines in a room he has no
+  body in.
+* **Karen never leaves the conference room after you beat her on the first
+  try.** Her first NPC entry is gated `briefing_complete && !retry_karen`, both
+  still true post-victory. Pre-existing, and fixing it properly needs a derived
+  flag (the three entries have to stay mutually exclusive), so I logged it
+  instead of half-fixing it. Her staged walk-out now works because `exit` sets a
+  sticky flag — but reload the room and she is back at the table.
+* **There is a black slab standing in the executive floor's conference corner.**
+  It is a `building_shell` column rendering in front of the room. It is in the
+  A2 audit's own baseline plate at the same place, so it predates this lane —
+  but it lands exactly on the seed-(a) tableau and you will see it in the video.
+* **My `chief_restructuring_defeated` capture double-fired** — the fixture also
+  satisfied `legal_eagle_ending`, so two dialogs stacked and the player's
+  distance in that one report includes both. The Chief's own numbers are clean.
+* The captures were served by a dev server I started on **:5177** and killed;
+  ports 5173-5175 were free when I started.
+
+### What to look at
+
+`screenshots/g-run/cutscenes/<scene>/video/*.webm` — the judges judge motion.
+`secret_ending` is the seed: Skip out of his chair on "Mom!", back into it on
+"sit down", Andrew walking to the table and taking a chair, Grandma standing and
+marching, and the Regional Manager — who had no body at all on that path —
+confronted and fled.
+
+
 ## [RUN G / A3 BOARD-GATING LANE (08-03) — the Rolex stops eating the board meeting]
 
 One commit on `display-case`, pushed. `npm run check` green, exit 0, verified

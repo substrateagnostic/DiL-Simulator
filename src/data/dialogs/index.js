@@ -5019,7 +5019,10 @@ export const DIALOGS = {
     // entry), so three of them come down the only door in the room and take
     // formation while Andrew turns around.
     /* 11 */ { type: 'stage', next: 1, beats: [
-      { actor: 'firm_partner',   spawn: true, spawnAt: 'stairs', walkTo: 'firm_a', face: 'player', speed: 1.9 },
+      // `show: true` as well as `spawn` — old_vault carries a RETRY-only
+      // firm_partner entry (gated on has_recorder_seal), so on the first
+      // ambush a hidden body already exists and rule 4 would no-op the beat.
+      { actor: 'firm_partner',   spawn: true, show: true, spawnAt: 'stairs', walkTo: 'firm_a', face: 'player', speed: 1.9 },
       { actor: 'firm_associate', spawn: true, spawnAt: 'stairs', walkTo: 'firm_b', face: 'player', speed: 1.75 },
       { actor: 'firm_paralegal', spawn: true, spawnAt: 'stairs', walkTo: 'firm_c', face: 'player', speed: 1.6 },
       { actor: 'player', face: 'stairs', wait: false },

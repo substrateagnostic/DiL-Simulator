@@ -223,6 +223,14 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     }, 66);
   });
 
+  // Entry-driven scenes are pushed by the game's own room-entered listener on
+  // an 800-2000ms timer; wait for the DialogState rather than racing it.
+  for (let i = 0; i < 30; i++) {
+    const top = await page.evaluate(() => window.__explore?.stateManager?.current?.constructor?.name ?? '');
+    if (top === 'DialogState') break;
+    await sleep(200);
+  }
+
   let n = 0;
   const shots = [];
   const shot = async (tag) => {
