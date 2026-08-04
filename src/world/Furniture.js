@@ -1493,6 +1493,93 @@ export const Furniture = {
     return group;
   },
 
+  // The executive floor's wall art. NOT motivationalPoster: `poster_exec_1`
+  // promises "chrome-framed, museum-quality lighting" and `poster_exec_4` says
+  // "The frame is gold. Real gold, probably." — the cubicle asset is a
+  // 0.62x0.52 thin dark-wood frame at y 1.5 and reads as a switch plate beside
+  // a window span. This is 0.98x0.82 at y 1.65 with an aged-brass bead and a
+  // cream mat, matching the exec DOOR dress (aged brass 0x9c7f3a, never pure
+  // gold — with no env map a 0.98-metalness gold blows out to a white blob;
+  // same reason DOOR_STYLES.exec makes the call). NO_BLOCK, wall-mounted.
+  executivePoster() {
+    const group = new THREE.Group();
+    const Y = 1.65;
+    const accents = ['#1f3a5f', '#3d2b1f', '#22403a', '#4a1f2b', '#2e2a4a'];
+    const accent = accents[Math.floor(Math.random() * accents.length)];
+
+    // Outer frame — deeper section than the cubicle poster so the bead reads
+    const frame = new THREE.Mesh(
+      new THREE.BoxGeometry(0.98, 0.82, 0.045),
+      Materials.custom(0x2e2118)
+    );
+    frame.position.y = Y;
+    group.add(frame);
+
+    // Aged-brass bead around the opening (four thin bars, front face)
+    const bead = Materials.custom(0x9c7f3a);
+    const beadBars = [
+      [0.86, 0.035, 0, 0.345],
+      [0.86, 0.035, 0, -0.345],
+      [0.035, 0.73, 0.4125, 0],
+      [0.035, 0.73, -0.4125, 0],
+    ];
+    for (const [w, h, ox, oy] of beadBars) {
+      const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.02), bead);
+      b.position.set(ox, Y + oy, 0.024);
+      group.add(b);
+    }
+
+    // Cream mat board behind the print — the museum-quality tell
+    const mat = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.84, 0.68),
+      Materials.custom(0xefe9dc)
+    );
+    mat.position.set(0, Y, 0.026);
+    group.add(mat);
+
+    // The print itself: a restrained corporate landscape over a caption band
+    const canvas = document.createElement('canvas');
+    canvas.width = 72;
+    canvas.height = 58;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#f7f3ea';
+    ctx.fillRect(0, 0, 72, 58);
+    ctx.fillStyle = accent;
+    ctx.fillRect(4, 4, 64, 34);
+    ctx.fillStyle = 'rgba(255,255,255,0.22)';
+    ctx.fillRect(4, 4, 64, 9);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fillRect(4, 31, 64, 7);
+    // Single-word caption, centred, serif-weight block
+    ctx.fillStyle = '#241f18';
+    const capW = 22 + Math.floor(Math.random() * 16);
+    ctx.fillRect(36 - capW / 2, 44, capW, 5);
+    ctx.fillStyle = '#8a8074';
+    ctx.fillRect(24, 52, 24, 2);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.minFilter = THREE.LinearFilter;
+    tex.magFilter = THREE.NearestFilter;
+    tex.generateMipmaps = false;
+    const face = new THREE.Mesh(
+      new THREE.PlaneGeometry(0.7, 0.56),
+      new THREE.MeshToonMaterial({ map: tex })
+    );
+    face.position.set(0, Y + 0.02, 0.028);
+    group.add(face);
+
+    // Picture light — the "museum-quality lighting" the copy claims
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.16, 0.03), bead);
+    arm.position.set(0, Y + 0.47, 0.02);
+    group.add(arm);
+    const hood = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.05, 0.11), bead);
+    hood.position.set(0, Y + 0.55, 0.07);
+    group.add(hood);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   trashCan() {
     const group = new THREE.Group();
     const bodyMat = Materials.custom(0x4a4a4a);

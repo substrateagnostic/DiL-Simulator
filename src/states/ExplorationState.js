@@ -4,6 +4,7 @@ import { AudioManager } from '../core/AudioManager.js';
 import { Engine } from '../core/Engine.js';
 import { IsometricCamera } from '../world/IsometricCamera.js';
 import { RoomManager } from '../world/RoomManager.js';
+import { StageDirector } from '../world/StageDirector.js';
 import { Player } from '../entities/Player.js';
 import { DialogState } from './DialogState.js';
 import { CombatState } from './CombatState.js';
@@ -118,6 +119,10 @@ export class ExplorationState {
     this.player = new Player();
     this.camera = new IsometricCamera();
     this.roomManager = new RoomManager(Engine.scene);
+    // Cutscene staging. Owned here (it needs the room, the player and the
+    // tileMap) but TICKED FROM main.js, because this state stops updating the
+    // moment a DialogState is pushed over it. See src/world/StageDirector.js.
+    this.stage = new StageDirector(this);
     this.transition = new TransitionOverlay();
     this.tileMap = null;
     this.paused = false;
@@ -186,7 +191,18 @@ export class ExplorationState {
         const encounterId = typeof data === 'string' ? data : data.encounter;
         this._pendingCombat = encounterId;
       }),
+      // Cutscene staging hand-off. `claimed` is the ack DialogState checks —
+      // without a listener a `stage` node degrades to a no-op instead of
+      // blocking the tree forever.
+      EventBus.on('stage-beats', (payload) => {
+        payload.claimed = true;
+        this.stage.run(payload.beats, payload.done);
+      }),
+      EventBus.on('stage-skip', () => this.stage.finishNow()),
       EventBus.on('dialog-end', () => {
+        // Transient actors a scene spawned live exactly as long as their
+        // dialog; anything still walking finishes first.
+        this.stage.endScene();
         if (this._pendingCombat) {
           const encounterId = this._pendingCombat;
           this._pendingCombat = null;
@@ -668,6 +684,7 @@ export class ExplorationState {
   }
 
   exit() {
+    this.stage.dispose();
     Engine.scene.remove(this.player.mesh);
     this._removeHUD();
     if (this._vaultKeypad) { this._vaultKeypad.close(); this._vaultKeypad = null; }
@@ -808,6 +825,9 @@ export class ExplorationState {
   }
 
   _loadRoom(roomId, spawnX, spawnZ) {
+    // Rule 6: a room change mid-scene would otherwise be a permanent dialog
+    // freeze — the actors the director is holding are about to be disposed.
+    this.stage.abort();
     const actualId = this._resolveRoomId(roomId);
     const result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
     this._applyTimeOfDay(roomId);
@@ -1016,6 +1036,7 @@ export class ExplorationState {
     }
 
     this.paused = true;
+    this.stage.abort();   // rule 6 — nothing keeps walking through the wipe
     AudioManager.playSfx('door');
 
     const currentRoom = this.player.currentRoom;
@@ -2304,7 +2325,17 @@ export class ExplorationState {
     );
 
     if (npc) {
-      npc.faceTowards(this.player.position.x, this.player.position.z);
+      // Turn to face the player — through the StageDirector, not by setting
+      // facingAngle and hoping. `faceTowards` only moves the animator's TARGET
+      // angle (a ~2-3 frame ease at TURN_RATE 26/s), and this state stops
+      // updating on the very next frame when DialogState is pushed, so the ease
+      // never ran: the game's one line of staging did not render. A 0.4 s
+      // non-blocking beat is ticked from main.js and does. Seated NPCs keep
+      // their chair heading — a receptionist who swivels 180 degrees in her seat
+      // to look at you is worse than one who does not.
+      if (!npc.sitting) {
+        this.stage.run([{ actor: npc, face: 'player', hold: 0.4, wait: false }]);
+      }
 
       // Reception client NPC triggers roguelike combat directly.
       // The desk (below) opens the Daily Roster instead.
@@ -3585,9 +3616,14 @@ export class ExplorationState {
       }, 2000);
     }
 
-    const { x, z } = InputManager.getMovementVector();
-    this.player.move(x, z, dt, this.tileMap);
-    this.player.update(dt);
+    // A staged beat owns Andrew's body (position, facing and the animator
+    // tick). Input would otherwise fight the director for the same position
+    // and `move()` would overwrite the facing every frame.
+    if (!this.player._stageDriven) {
+      const { x, z } = InputManager.getMovementVector();
+      this.player.move(x, z, dt, this.tileMap);
+      this.player.update(dt);
+    }
 
     // Follow the player's ELEVATION too. A hardcoded 0 pinned the camera to the
     // ground floor of the only multi-level room in the game: descending the

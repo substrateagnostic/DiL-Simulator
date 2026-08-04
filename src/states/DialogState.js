@@ -66,6 +66,8 @@ export class DialogState {
 
   exit() {
     this.active = false;
+    this._stageRunning = false;
+    clearTimeout(this._stageNet);
     this.dialogBox.hide();
     this.dialogBox.destroy();
   }
@@ -86,6 +88,17 @@ export class DialogState {
 
   update(dt) {
     if (!this.active) return;
+
+    // A stage beat is playing: the box is hidden and the world is moving.
+    // Any confirm/cancel press snaps every beat to its end state rather than
+    // making the player watch a walk they have already seen.
+    if (this._stageRunning) {
+      if (InputManager.isJustPressed('escape') || InputManager.isJustPressed('enter')
+        || InputManager.isJustPressed('e') || InputManager.isJustPressed(' ')) {
+        EventBus.emit('stage-skip');
+      }
+      return;
+    }
 
     // Update typewriter
     this.dialogBox.update(dt);
@@ -134,6 +147,10 @@ export class DialogState {
 
       case 'action':
         this._processAction(node);
+        break;
+
+      case 'stage':
+        this._processStage(node);
         break;
 
       case 'end':
@@ -347,6 +364,40 @@ export class DialogState {
     // Continue to next node
     this.currentIndex = node.next !== undefined ? node.next : this.currentIndex + 1;
     this._processNode();
+  }
+
+  /**
+   * Stage node — hand a list of beats to whoever owns the world (normally
+   * ExplorationState's StageDirector), hide the box, and BLOCK until the
+   * director reports every blocking beat finished.
+   *
+   * DialogState deliberately holds no world reference (only `player` and
+   * `stateManager`) and must not grow one, so this uses the same EventBus
+   * hand-off as `start_combat`. `payload.claimed` is the listener's ack: if
+   * nothing is listening — a dialog pushed with no exploration state under it,
+   * which the fixture/test harnesses do — the node degrades to a no-op instead
+   * of hanging the tree. The 20 s net covers a director that somehow never
+   * calls back; `advanced` makes `done()` idempotent (rule 5).
+   */
+  _processStage(node) {
+    this._stageRunning = true;
+    this.dialogBox.hide();
+
+    let advanced = false;
+    const go = () => {
+      if (advanced) return;
+      advanced = true;
+      this._stageRunning = false;
+      clearTimeout(this._stageNet);
+      if (!this.active) return;
+      this.currentIndex = node.next !== undefined ? node.next : this.currentIndex + 1;
+      this._processNode();
+    };
+
+    const payload = { beats: node.beats || [], done: go, claimed: false };
+    EventBus.emit('stage-beats', payload);
+    if (!payload.claimed) { go(); return; }
+    this._stageNet = setTimeout(go, 20000);
   }
 
   /**

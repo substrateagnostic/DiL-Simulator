@@ -15,6 +15,7 @@ import { SHOP_CATEGORIES, SHOP_ITEMS } from '../src/data/shop.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../src/data/cosmetics.js';
 import { VOICES, VOICE_ACTIONS } from '../src/data/voices.js';
 import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../src/data/thoughts.js';
+import { CHARACTER_CONFIGS } from '../src/data/characters.js';
 import BALANCE from '../src/data/balance.json' with { type: 'json' };
 import {
   ENEMY_ABILITIES,
@@ -90,7 +91,53 @@ function validateDialogs() {
       if (node.type === 'action') {
         validateDialogAction(id, node, index);
       }
+      if (node.type === 'stage') {
+        validateStageNode(id, node, index);
+      }
     });
+  }
+}
+
+// STAGE BEATS (see src/world/StageDirector.js). Every degradation rule in the
+// director is silent by design — a missing actor is a no-op, an unresolved mark
+// falls back to "face only" — so a typo does not throw, it just plays half a
+// scene. That has to be caught at build time instead.
+const STAGE_VERBS = ['walkTo', 'face', 'sit', 'stand', 'exit', 'gesture', 'pose', 'expression', 'hold', 'show'];
+const STAGE_POINT_FIELDS = ['walkTo', 'face', 'sit', 'exit', 'spawnAt'];
+let _stageMarks = null, _stageNpcIds = null;
+function validateStageNode(id, node, index) {
+  if (_stageMarks === null) {
+    _stageMarks = new Set();
+    _stageNpcIds = new Set();
+    for (const room of Object.values(ROOMS)) {
+      for (const k of Object.keys(room.marks || {})) _stageMarks.add(k);
+      for (const n of room.npcs || []) _stageNpcIds.add(n.id);
+    }
+  }
+  assert(Array.isArray(node.beats) && node.beats.length > 0,
+    `dialog ${id} node ${index} stage node has no beats`);
+  for (const b of node.beats || []) {
+    assert(typeof b.actor === 'string' && b.actor.length > 0,
+      `dialog ${id} node ${index} stage beat has no actor`);
+    if (typeof b.actor !== 'string') continue;
+    assert(b.actor === 'player' || _stageNpcIds.has(b.actor) || !!CHARACTER_CONFIGS[b.actor],
+      `dialog ${id} node ${index} stage beat actor "${b.actor}" is neither 'player', a room NPC id, nor a CHARACTER_CONFIGS id`);
+    if (b.spawn) {
+      assert(!!CHARACTER_CONFIGS[b.actor],
+        `dialog ${id} node ${index} stage beat spawns "${b.actor}" but there is no CHARACTER_CONFIGS entry for it`);
+    }
+    assert(STAGE_VERBS.some(v => b[v] !== undefined),
+      `dialog ${id} node ${index} stage beat for "${b.actor}" carries no verb (${STAGE_VERBS.join('/')})`);
+    for (const f of STAGE_POINT_FIELDS) {
+      const v = b[f];
+      if (typeof v !== 'string') continue;
+      assert(_stageMarks.has(v) || v === 'player' || _stageNpcIds.has(v) || !!CHARACTER_CONFIGS[v],
+        `dialog ${id} node ${index} stage beat ${f}: "${v}" is neither a room mark nor an actor id`);
+    }
+    if (b.after !== undefined) {
+      assert(Number.isInteger(b.after) && b.after >= 0 && b.after < node.beats.length,
+        `dialog ${id} node ${index} stage beat after:${b.after} is out of range`);
+    }
   }
 }
 
@@ -282,11 +329,22 @@ function validateDataReferences() {
     // decoration instead of a poster nobody can read.
     const roomInteractables = room.interactables || [];
     (room.furniture || []).forEach((f, index) => {
-      if (f.type !== 'motivationalPoster') return;
+      if (f.type !== 'motivationalPoster' && f.type !== 'executivePoster') return;
       const readable = roomInteractables.some(i =>
         Math.abs(i.x - f.x) <= 1.0 && Math.abs(i.z - f.z) <= 1.2);
-      assert(readable, `room ${roomId} furniture ${index} is a motivationalPoster at (${f.x}, ${f.z}) with no interactable within a tile — use a decoration prop or add the poster interactable`);
+      assert(readable, `room ${roomId} furniture ${index} is a ${f.type} at (${f.x}, ${f.z}) with no interactable within a tile — use a decoration prop or add the poster interactable`);
     });
+
+    // STAGING MARKS. A `stage` beat that names a mark this room does not have
+    // silently degrades to "face only" at runtime, which reads as a scene that
+    // half-played. Marks are cheap to typo, so they are checked here.
+    for (const [name, m] of Object.entries(room.marks || {})) {
+      assert(Array.isArray(m) && m.length >= 2 && typeof m[0] === 'number' && typeof m[1] === 'number',
+        `room ${roomId} mark "${name}" must be [x, z]`);
+      if (!Array.isArray(m)) continue;
+      assert(m[0] >= 0 && m[0] <= room.width && m[1] >= 0 && m[1] <= room.height,
+        `room ${roomId} mark "${name}" (${m[0]}, ${m[1]}) is outside the room (${room.width}x${room.height})`);
+    }
 
     for (const npc of room.npcs || []) {
       if (npc.dialogId) assert(!!DIALOGS[npc.dialogId], `room ${roomId} npc ${npc.id} references missing dialog ${npc.dialogId}`);

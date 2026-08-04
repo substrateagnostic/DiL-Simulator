@@ -262,11 +262,14 @@ export const ROOMS = {
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_fridge_done', notFlag: 'lunch_thief_culprit_revealed' }, dialogId: 'janet_lunch_thief_investigate' },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'janet_lunch_thief_investigate' },
       { id: 'janet', x: 6, z: 5, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'lunch_thief_complete', notFlag: 'janet_quest_resolved' }, dialogId: 'janet_lunch_thief_resolved' },
-      { id: 'janet', x: 6, z: 3.8, facing: 0, sitting: true, condition: { flag: 'janet_quest_resolved' } },  // settles at her desk once the lunch-thief case is closed (occupied-office read)
+      // FACING LAW (see CLAUDE.md "Furniture rotation convention"): theta -> forward
+      // (sin, 0, cos), so 0 = SOUTH and Math.PI = NORTH. A seated NPC must carry its
+      // CHAIR'S rotation. Every seated entry in the game was one half-turn out.
+      { id: 'janet', x: 6, z: 3.8, facing: Math.PI, sitting: true, condition: { flag: 'janet_quest_resolved' } },  // settles at her desk (chair 6,3.8 r=PI, desk at z=3 north of her)
       // Intern — conditional entries covering lunch thief confrontation
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
       { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'intern_lunch_thief_confrontation' },
-      { id: 'intern', x: 13, z: 5.8, facing: 0, sitting: true, condition: { flag: 'lunch_thief_complete' } },  // seated at his workstation post-quest (occupied-office read)
+      { id: 'intern', x: 13, z: 5.8, facing: Math.PI, sitting: true, condition: { flag: 'lunch_thief_complete' } },  // seated at his workstation (chair 13,5.8 r=PI)
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'briefing_complete' } }, // water cooler, paces — hidden once briefing starts
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
       // Rachel (trust officer, `rachel_to`) — SW pod, the cubicle two bays over
@@ -276,11 +279,11 @@ export const ROOMS = {
       // first-meeting intro is routed in ExplorationState._getDialogId() so an
       // unmet Rachel can still introduce herself in Act 2 or 3 without a second
       // NPC instance appearing on the same tile.
-      { id: 'rachel_to', x: 6, z: 10.8, facing: 0, sitting: true,
+      { id: 'rachel_to', x: 6, z: 10.8, facing: Math.PI, sitting: true,
         condition: { notFlag: 'briefing_complete' }, dialogId: 'rachel_return_act1' },
-      { id: 'rachel_to', x: 6, z: 10.8, facing: 0, sitting: true,
+      { id: 'rachel_to', x: 6, z: 10.8, facing: Math.PI, sitting: true,
         condition: { flag: 'briefing_complete', notFlag: 'act2_complete' }, dialogId: 'rachel_return_act2' },
-      { id: 'rachel_to', x: 6, z: 10.8, facing: 0, sitting: true,
+      { id: 'rachel_to', x: 6, z: 10.8, facing: Math.PI, sitting: true,
         condition: { flag: 'act2_complete', notFlag: 'act3_complete' }, dialogId: 'rachel_return_act3' },
     ],
     exits: [
@@ -308,6 +311,7 @@ export const ROOMS = {
       { x: 12, z: 2, type: 'printer', dialogId: 'printer_interact' },
       { x: 3, z: 10, type: 'andrews_desk', dialogId: 'andrews_desk' },
       // Janet — The Vacancy: Gary's buried desk in the NE "supply nook"
+      // (staging marks for this room live in `marks` at the end of the entry)
       { x: 16, z: 3, type: 'gary_desk', dialogId: 'janet_vacancy_search', condition: { flag: 'janet_vacancy_started' } },
       // Motivational posters
       { x: 7,  z: 0,  type: 'poster', dialogId: 'poster_cf_1' },
@@ -330,6 +334,18 @@ export const ROOMS = {
       // Rachel's empty desk — sticky note on her monitor once she's gone (Act 4+)
       { x: 6,  z: 10, type: 'monitor', dialogId: 'rachel_note', condition: { flag: 'act3_complete' } },
     ],
+    // Staging marks. The central corridor is x 8-11; the south exits to
+    // Reception are at (9,15)/(10,15), which is "the path to the elevator" the
+    // Restructuring trio blocks.
+    marks: {
+      aisle_mid:    [9.5, 10.4],
+      aisle_south:  [9.5, 13],
+      block_w:      [8.4, 12],   // the three suits, abreast across the corridor
+      block_c:      [9.5, 12],
+      block_e:      [10.6, 12],
+      andrews_desk: [3.6, 10.6],
+      exit_south:   [9.5, 14.2],
+    },
     playerSpawn: { x: 5, z: 12 },
   },
 
@@ -404,8 +420,10 @@ export const ROOMS = {
       { id: 'chad', x: 4, z: 8, facing: 0, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'karen_defeated' }, dialogId: 'chad_breakroom_idle' },
       // Grandma stood at (9,6) — ON TOP of table 2's desk, with no `sitting`,
       // so from Act 5 on she rendered as a grey head embedded in the tabletop.
-      // Seated in the south chair of that table, facing the table (-z).
-      { id: 'grandma', x: 9, z: 7, facing: 0, sitting: true, condition: { flag: 'act5_complete' } },
+      // Seated in the south chair of that table, facing the table (-z = NORTH
+      // = Math.PI; the chair at (9,7) is r=PI and an occupant carries its
+      // chair's rotation). The old `facing: 0` pointed her at the south wall.
+      { id: 'grandma', x: 9, z: 7, facing: Math.PI, sitting: true, condition: { flag: 'act5_complete' } },
     ],
     exits: [
       // EAST exit -> Cubicle Farm
@@ -649,7 +667,10 @@ export const ROOMS = {
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_not_ready', condition: { flag: 'retry_karen', notFlag: 'karen_retry_ready' } },
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'karen_retry_ready', notFlag: 'karen_defeated' } },
       { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'ross_post_karen', notFlag: 'chad_defeated' } },
-      { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, dialogId: 'grandma_meeting', condition: { flag: 'ross_post_chad', notFlag: 'grandma_defeated' } },
+      // She opens with "Come sit down. I made cookies." and then offers Andrew
+      // the chair opposite — so she is SEATED. Chair (6,5) is r=PI (seats north
+      // at the table), which is the facing she already carried.
+      { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, sitting: true, dialogId: 'grandma_meeting', condition: { flag: 'ross_post_chad', notFlag: 'grandma_defeated' } },
     ],
     exits: [
       // WEST exit -> Alex's Office
@@ -665,6 +686,17 @@ export const ROOMS = {
       // Network Ghost signal booster (east wall)
       { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
+    // Staging marks (see src/world/StageDirector.js). The conference table
+    // blocks x 5-7 at z=4, so anything crossing the room routes via `aisle_s`
+    // — the walker is a straight line with an axis slide, not a pathfinder.
+    marks: {
+      chair_west:  [4, 4],
+      chair_east:  [8, 4],
+      chair_n_mid: [6, 3],
+      chair_s_mid: [6, 5],
+      aisle_s:     [7.6, 5.9],
+      door_west:   [0.7, 3.5],
+    },
     playerSpawn: { x: 1, z: 4 },
   },
 
@@ -812,7 +844,11 @@ export const ROOMS = {
       { type: 'monitor', x: 7.5, z: 2.8, rotation: Math.PI },
       { type: 'deskPlant', x: 8.0, z: 2.9 },
       { type: 'keyboard', x: 7, z: 3.3 },
-      { type: 'chair', x: 7, z: 2, rotation: Math.PI },  // behind desk, facing south
+      // Behind the desk, seating SOUTH toward the lobby. The desk (7,3 r=0) and
+      // both monitors (z 2.8 r=PI, screens facing north into the seat) were
+      // already built for a receptionist looking south; the chair and Diane
+      // were the two things pointing at the back wall.
+      { type: 'chair', x: 7, z: 2, rotation: 0 },
 
       // === Waiting area (southwest) ===
       { type: 'chair', x: 2, z: 5, rotation: Math.PI / 2 },
@@ -851,12 +887,14 @@ export const ROOMS = {
       { type: 'marbleStatue', x: 11.5, z: 1.5, condition: { flag: 'renovation_lobby_sculpture' } },
     ],
     npcs: [
-      { id: 'diane', x: 7, z: 1.5, facing: Math.PI, sitting: true, interactRange: 1.2 },  // behind desk, facing south
+      { id: 'diane', x: 7, z: 2, facing: 0, sitting: true, interactRange: 1.2 },  // ON the chair at (7,2), facing south at the lobby
       // Hidden once ross_post_chad is set — at that point she is seated in the
       // conference room, and two Grandmas at once was a continuity bug, not a
       // Christie twist. grandma_defeated implies ross_post_chad (#14).
       { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { flag: 'chad_defeated', notFlag: 'ross_post_chad' }, dialogId: 'grandma_reception_idle' },
-      { id: 'reception_client', x: 10, z: 5, facing: -Math.PI / 2, interactable: true, sitting: true },
+      // Waiting-area chair (10,5) is r=PI/2 (seats EAST, across the side table
+      // at 11,5.5); the client was the only thing reversed.
+      { id: 'reception_client', x: 10, z: 5, facing: Math.PI / 2, interactable: true, sitting: true },
       // INTENTIONALLY VESTIGIAL (#27): the trio post-dialog sets
       // restructuring_defeated and corporate_lawyer_defeated in the same
       // frame, so this solo-gauntlet lawyer can never spawn today. Kept (with
@@ -1036,12 +1074,27 @@ export const ROOMS = {
       // === Whiteboard ===
       { type: 'whiteboard', x: 15, z: 6, rotation: -Math.PI / 2 },
 
-      // === Power decor: motivational posters (ironic executive versions) ===
-      // Flank the board-room door (x 7-8), clear of both window spans
-      { type: 'motivationalPoster', x: 5, z: 0.1, rotation: 0 },
-      { type: 'motivationalPoster', x: 6, z: 0.1, rotation: 0 },
-      { type: 'motivationalPoster', x: 9, z: 0.1, rotation: 0 },
-      { type: 'motivationalPoster', x: 10, z: 0.1, rotation: 0 },
+      // === Power decor: the executive gallery (WEST wall) ===
+      // Was FOUR cubicle-grade 0.62x0.52 dark-wood frames at y 1.5, crammed
+      // into the two 2-tile slivers between the north window spans and the
+      // board-room door casing at exactly 1.00 tile apart. Measured across all
+      // 11 poster-bearing rooms (31 posters), that was the ONLY room in the
+      // building with any two posters closer than 1.6 tiles — and it had two
+      // such pairs.
+      //
+      // WHICH WALL — the load-bearing part. The iso camera sits at +x/+z, so it
+      // reads the inner faces of the NORTH (z=0) and WEST (x=0) walls; the east
+      // and south walls are between the camera and the room and render as
+      // near-transparent glass seen from BEHIND. Art on them is a grey smear.
+      // The A2 audit's "move them to the east wall" recommendation was shot and
+      // rejected on that render (screenshots/g-run/cutscenes/posters/). The west
+      // wall is the room's only long camera-facing surface with nothing on it.
+      // Three `executivePoster`s, 3 and 4 tiles apart, clear of the file cabinet
+      // at (1,1) and the water cooler at (1,8). Keep in sync with the
+      // interactables below.
+      { type: 'executivePoster', x: 0.1, z: 3,  rotation: Math.PI / 2 },
+      { type: 'executivePoster', x: 0.1, z: 6,  rotation: Math.PI / 2 },
+      { type: 'executivePoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
 
 
       // === Printer / fax near east wall ===
@@ -1063,10 +1116,14 @@ export const ROOMS = {
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { notFlag: 'compliance_defeated' } },
       // Re-appears in Act 3+ for bro-path players who defeated him — needed to issue archive crossword password
       { id: 'compliance', x: 13, z: 6, facing: Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'x' }, condition: { flag: 'compliance_defeated', notFlag: 'compliance_crossword_done' } },
-      // Ross appears at conference table after Henderson decision
-      { id: 'ross', x: 6, z: 7, facing: Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'act2_complete' } },
-      // Grandma appears on executive floor for the secret path — seated north side of table, facing south
-      { id: 'grandma', x: 4, z: 6.5, facing: Math.PI, sitting: true, dialogId: 'grandma_exec_idle', condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
+      // Skip appears at the conference table after the Henderson decision. ON
+      // the east-end chair (6.1,8) r=-PI/2, facing WEST down the table — he was
+      // crouched in mid-air 1.00 tiles off the nearest seat, looking at the wall.
+      { id: 'ross', x: 6.1, z: 8, facing: -Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'act2_complete' } },
+      // Grandma appears on the executive floor for the secret path — ON the
+      // north-side chair (4,7) r=0, facing SOUTH across the table at Skip. She
+      // was half a tile behind the chair row with her back to both.
+      { id: 'grandma', x: 4, z: 7, facing: 0, sitting: true, dialogId: 'grandma_exec_idle', condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
       // Rachel surveys her future territory during Acts 3-4. Her intro/act3/
       // return dialogs were unreachable before — no Rachel NPC existed
       // anywhere until the board room (#20). Routing in _getDialogId serves
@@ -1085,12 +1142,32 @@ export const ROOMS = {
       { x: 8, z: 3, type: 'executive_desk', dialogId: 'executive_desk' },
       { x: 1, z: 8, type: 'water_cooler', dialogId: 'executive_water_cooler' },
       { x: 8, z: 11, type: 'elevator', dialogId: 'elevator_executive' },
-      // Motivational posters — kept in sync with the furniture entries above
-      { x: 5,  z: 0, type: 'poster', dialogId: 'poster_exec_1' },
-      { x: 6,  z: 0, type: 'poster', dialogId: 'poster_exec_2' },
-      { x: 9,  z: 0, type: 'poster', dialogId: 'poster_exec_3' },
-      { x: 10, z: 0, type: 'poster', dialogId: 'poster_exec_4' },
+      // Executive gallery — kept in sync with the furniture entries above
+      { x: 0, z: 3,  type: 'poster', dialogId: 'poster_exec_1' },
+      { x: 0, z: 6,  type: 'poster', dialogId: 'poster_exec_2' },
+      { x: 0, z: 10, type: 'poster', dialogId: 'poster_exec_3' },
     ],
+    // Named staging marks — see the `stage` dialog node in CLAUDE.md and
+    // src/world/StageDirector.js. Keeping the coordinates HERE (rather than in
+    // dialogs/index.js) means a Rooms-tab furniture drag can be followed by a
+    // mark edit in the same file instead of silently invalidating a cutscene.
+    marks: {
+      table_approach:  [5.4, 9.7],   // where Andrew stops at the conference table
+      table_seat_s:    [5, 9],       // south-side chair Andrew takes
+      table_seat_sw:   [4, 9],
+      table_seat_e:    [6.1, 8],     // Skip's east-end chair
+      table_seat_n:    [4, 7],       // Grandma's north-side chair
+      table_seat_ne:   [5, 7],
+      table_stand_n:   [5, 6.3],     // standing at the table on the north side
+      regional_post:     [10, 5],    // where the Regional Manager stands (his NPC home)
+      regional_confront: [9, 5],     // one tile short of him, face to face
+      regional_flank_s:  [8.8, 6.2],
+      regional_flank_n:  [8.6, 4.3],
+      confront_north:  [8, 5.6],     // face-off tile north of the floor's centre
+      exec_center:     [8, 7.6],
+      elevator:        [8, 10.3],
+      board_door:      [7.5, 1],
+    },
     playerSpawn: { x: 8, z: 10 },
   },
 
@@ -1240,7 +1317,11 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'security_guard', x: 5, z: 7, facing: 0, dialogId: 'security_guard_combat', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { notFlag: 'security_guard_info' } },
+      // He is described as stepping out FROM BEHIND a row of filing cabinets,
+      // so he waits in the east bank's z=6 gap rather than in the open aisle
+      // the player spawns into. The `security_guard_combat` stage node walks
+      // him out to block the stairs.
+      { id: 'security_guard', x: 8, z: 6, facing: 0, dialogId: 'security_guard_combat', movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { notFlag: 'security_guard_info' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act3', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'security_guard_info', notFlag: 'read_janitor_act3' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'read_janitor_act3', notFlag: 'act3_complete' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_needs_ross', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
@@ -1275,6 +1356,11 @@ export const ROOMS = {
       // Isaiah's buried receipts — mislabeled HVAC cabinet, only visible once quest started
       { x: 1, z: 5, type: 'filing_cabinets', dialogId: 'isaiah_receipts_pull', condition: { flag: 'isaiah_receipts_started' } },
     ],
+    marks: {
+      guard_hide:  [8, 6],
+      guard_block: [6.4, 7.7],
+      aisle_mid:   [5.6, 7],
+    },
     playerSpawn: { x: 6, z: 8 },
   },
 
@@ -1457,6 +1543,14 @@ export const ROOMS = {
       // ── Executive globe — NE corner ──
       { type: 'globeStand', x: 14, z: 2 },
 
+      // ── The fourth executive poster ("The frame is gold. Real gold,
+      //    probably.") — rehoused here off the executive floor's overcrowded
+      //    north wall. The Board Room had zero posters and two grand paintings.
+      //    North wall, 2 tiles clear of the grand painting at x=3 (see the
+      //    which-wall note on the executive floor: north and west are the only
+      //    camera-facing surfaces).
+      { type: 'executivePoster', x: 1, z: 0.1, rotation: 0 },
+
       // ── Corner bar — behind globe in NE corner ──
       { type: 'cornerBar', x: 13, z: 0 },
 
@@ -1490,12 +1584,17 @@ export const ROOMS = {
       // when act6_complete fires, so nobody is left standing in here during
       // the penthouse ascent. Skip's office entries are split on the same
       // flag pair so he is never in two rooms at once.
-      { id: 'ross',    x: 7,  z: 9, facing: 0, movement: { type: 'pace', distance: 1.5, axis: 'x' }, dialogId: 'board_meeting',         condition: { flag: 'ross_speech_ready',   notFlag: 'board_meeting_closed' } },
-      { id: 'diane',   x: 4,  z: 8, facing: 0,                                                      dialogId: 'board_meeting_diane',   condition: { flag: 'diane_act6_rallied',  notFlag: 'board_meeting_closed' } },
-      { id: 'intern',  x: 5,  z: 9, facing: 0, movement: { type: 'wander', radius: 1 },             dialogId: 'board_meeting_intern',  condition: { flag: 'intern_act6_rallied', notFlag: 'board_meeting_closed' } },
-      { id: 'isaiah',  x: 10, z: 8, facing: 0,                                                      dialogId: 'board_meeting_isaiah',  condition: { flag: 'isaiah_evidence',     notFlag: 'board_meeting_closed' } },
-      { id: 'janet',   x: 11, z: 9, facing: 0,                                                      dialogId: 'board_meeting_janet',   condition: { flag: 'janet_act6_rallied',  notFlag: 'board_meeting_closed' } },
-      { id: 'grandma', x: 13, z: 8, facing: 0,                                                      dialogId: 'board_meeting_grandma', condition: { flag: 'grandma_ally',        notFlag: 'board_meeting_closed' } },
+      // FACING: all six stood at z 8-9 with `facing: 0` = SOUTH, i.e. six
+      // rallied allies lined up with their BACKS to the table they came to
+      // face. theta -> (sin, cos), so north is Math.PI. (CLAUDE.md's rotation
+      // bullet said the opposite until this commit; that is where these came
+      // from.)
+      { id: 'ross',    x: 7,  z: 9, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, dialogId: 'board_meeting',         condition: { flag: 'ross_speech_ready',   notFlag: 'board_meeting_closed' } },
+      { id: 'diane',   x: 4,  z: 8, facing: Math.PI,                                                      dialogId: 'board_meeting_diane',   condition: { flag: 'diane_act6_rallied',  notFlag: 'board_meeting_closed' } },
+      { id: 'intern',  x: 5,  z: 9, facing: Math.PI, movement: { type: 'wander', radius: 1 },             dialogId: 'board_meeting_intern',  condition: { flag: 'intern_act6_rallied', notFlag: 'board_meeting_closed' } },
+      { id: 'isaiah',  x: 10, z: 8, facing: Math.PI,                                                      dialogId: 'board_meeting_isaiah',  condition: { flag: 'isaiah_evidence',     notFlag: 'board_meeting_closed' } },
+      { id: 'janet',   x: 11, z: 9, facing: Math.PI,                                                      dialogId: 'board_meeting_janet',   condition: { flag: 'janet_act6_rallied',  notFlag: 'board_meeting_closed' } },
+      { id: 'grandma', x: 13, z: 8, facing: Math.PI,                                                      dialogId: 'board_meeting_grandma', condition: { flag: 'grandma_ally',        notFlag: 'board_meeting_closed' } },
     ],
     exits: [
       // SOUTH exit -> Executive Floor
@@ -1507,7 +1606,23 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 8, z: 1, type: 'charter_plaque', dialogId: 'board_charter' },
+      { x: 1, z: 0, type: 'poster', dialogId: 'poster_exec_4' },
     ],
+    // Staging marks. The boardroom table blocks x 4-12 at z 4-6, so every
+    // crossing routes around it through z=8 (south) or z=2 (north).
+    marks: {
+      head_chair:    [3, 5],      // the chairman's seat, west end
+      head_stand:    [2.4, 5],    // standing at the head of the table
+      table_s_mid:   [8, 7],      // south-side chair, Andrew's side
+      table_s_east:  [9, 7],
+      table_n_mid:   [8, 3],      // north-side chair
+      table_edge_s:  [8, 8],      // standing at the table, south side
+      carafe:        [13.4, 4],   // the credenza the twelfth member crosses to
+      aisle_s:       [8, 9],
+      aisle_n:       [8, 2],
+      door_south:    [7.5, 10.4],
+      door_north:    [7.5, 1],
+    },
     playerSpawn: { x: 8, z: 10 },
   },
 
@@ -1590,8 +1705,13 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'cfos_assistant', x: 8, z: 7, facing: Math.PI, condition: { notFlag: 'cfos_defeated' }, dialogId: 'cfos_assistant_combat' },
-      { id: 'regional_director', x: 8, z: 4, facing: Math.PI, condition: { flag: 'cfos_defeated', notFlag: 'regional_director_defeated' }, dialogId: 'regional_director_combat' },
+      // Both ambushers stood in open floor with `facing: Math.PI` = NORTH, i.e.
+      // backs to the door Andrew walks in through at (8,10). The Assistant is
+      // now tucked at the terminal he is described as stepping out from
+      // behind (the desk run blocks z=2, so z=3 is the tile behind it), and
+      // both face SOUTH at the arrival.
+      { id: 'cfos_assistant', x: 8, z: 3, facing: 0, condition: { notFlag: 'cfos_defeated' }, dialogId: 'cfos_assistant_combat' },
+      { id: 'regional_director', x: 8, z: 4, facing: 0, condition: { flag: 'cfos_defeated', notFlag: 'regional_director_defeated' }, dialogId: 'regional_director_combat' },
     ],
     exits: [
       // SOUTH exit -> Board Room
@@ -1601,6 +1721,12 @@ export const ROOMS = {
     interactables: [
       { x: 8, z: 2, type: 'algorithm_terminal', dialogId: 'algorithm_terminal' },
     ],
+    marks: {
+      terminal_back: [8, 3],     // behind the desk run — where the Assistant waits
+      arena_north:   [8, 5.4],   // where an ambusher steps out to
+      arena_mid:     [8, 7.4],   // where Andrew stops
+      door_south:    [7.6, 10.4],
+    },
     playerSpawn: { x: 8, z: 10 },
   },
 
@@ -2097,7 +2223,9 @@ export const ROOMS = {
       { type: 'abstractPainting', x: 11, z: 0.1 },
     ],
     npcs: [
-      { id: 'records_clerk', x: 9, z: 5, facing: Math.PI, sitting: true, dialogId: 'records_clerk_form11c', interactRange: 2.0 },
+      // Chair (9,5) r=0 seats SOUTH — over the desk at z=6 and down the queue
+      // that enters at z=13. The clerk was the one turned away from both.
+      { id: 'records_clerk', x: 9, z: 5, facing: 0, sitting: true, dialogId: 'records_clerk_form11c', interactRange: 2.0 },
     ],
     exits: [
       { x: 9, z: 13, targetRoom: 'city_street', spawnX: 5, spawnZ: 1 },
@@ -2139,8 +2267,11 @@ export const ROOMS = {
       { type: 'coffeeMachine', x: 10, z: 0.8 },
     ],
     npcs: [
-      // Delia Okafor, booth 4, holding court
-      { id: 'delia', x: 2.4, z: 6, facing: Math.PI / 2, sitting: true, dialogId: 'delia_booth4', interactRange: 2.0, condition: { notFlag: 'delia_moved' } },
+      // Delia Okafor, booth 4, holding court. ON the north bench: the booth at
+      // (1.4,6) r=PI/2 puts its two benches at local x +/-0.61, i.e. world
+      // (1.4, 5.39) and (1.4, 6.61), and an occupant faces ACROSS the table,
+      // not along the booth. She was 1.0 tiles out in the aisle facing down it.
+      { id: 'delia', x: 1.4, z: 5.39, facing: 0, sitting: true, dialogId: 'delia_booth4', interactRange: 2.2, condition: { notFlag: 'delia_moved' } },
       // The counter regular. Was at (6, 1.8) — tile (6,1), inside the
       // loungeBar's own 5x1 blocked footprint, i.e. standing on the STAFF side
       // of the counter. Moved to the customer side, lined up with the stool at
@@ -2249,6 +2380,13 @@ export const ROOMS = {
       // Box 0001 — Delia's seal, oiled and waiting since 2009
       { x: 4, z: 1, type: 'box_0001', dialogId: 'vault_box_0001' },
     ],
+    marks: {
+      stairs: [0.8, 1.4],   // the foot of the stairs (the room's only door)
+      firm_a: [1.7, 2.5],   // formation, three abreast facing the boxes
+      firm_b: [2.7, 3.3],
+      firm_c: [1.7, 4.1],
+      boxes:  [4, 1.7],
+    },
     playerSpawn: { x: 1, z: 1 },
   },
 };

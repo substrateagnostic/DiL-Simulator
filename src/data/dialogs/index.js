@@ -528,7 +528,7 @@ export const DIALOGS = {
   // GRANDMA HENDERSON -- Pre-combat
   // --------------------------------------------------------------------------
   grandma_meeting: [
-    /* 0  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Oh, hello dear. You must be Andrew. Come sit down. I made cookies.' },
+    /* 0  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Oh, hello dear. You must be Andrew. Come sit down. I made cookies.', next: 31 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: 'Grandma Henderson places a plate of homemade chocolate chip cookies on the desk. They smell incredible.' },
     /* 2  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Now, before we start, I want you to know that I understand how difficult these family matters can be.' },
     /* 3  */ { type: 'text', speaker: 'Grandma Henderson', text: "My Harold -- God rest his soul -- he was a good man but a terrible communicator. He told everyone what they wanted to hear. Which is how we ended up here." },
@@ -562,6 +562,14 @@ export const DIALOGS = {
     /* 28 */ { type: 'action', action: 'set_flag', flag: 'grandma_met', value: true, next: 29 },
     /* 29 */ { type: 'action', action: 'start_combat', encounter: 'grandma', next: 30 },
     /* 30 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0) ──────────────────────────────
+    // She offers a chair and a cookie; Andrew used to take neither and stand
+    // at the door for the whole scene. She is now `sitting: true` in room data
+    // and he takes the north-side chair opposite her.
+    /* 31 */ { type: 'stage', next: 1, beats: [
+      { actor: 'player',  walkTo: 'chair_n_mid', sit: true, speed: 1.5 },
+      { actor: 'grandma', face: 'chair_n_mid', wait: false },
+    ] },
   ],
 
   // --------------------------------------------------------------------------
@@ -758,26 +766,49 @@ export const DIALOGS = {
   legal_eagle_ending: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: 'Three days after your recommendation. Your inbox has 247 unread emails. 243 of them are from Karen Henderson.' },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: 'The other four are from corporate.' },
-    /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Executive floor. Now. And bring your... I don't know, bring whatever you bring to a meeting where corporate sends their top guy." },
+    /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Executive floor. Now. And bring your... I don't know, bring whatever you bring to a meeting where corporate sends their top guy.", next: 22 },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You look up. Standing at the conference table is a man in a power suit with a gold tie. He's holding a golf putter." },
-    /* 4  */ { type: 'text', speaker: 'Regional Manager', text: 'Andrew. Please, sit down.' },
+    /* 4  */ { type: 'text', speaker: 'Regional Manager', text: 'Andrew. Please, sit down.', next: 23 },
     /* 5  */ { type: 'text', speaker: 'Regional Manager', text: "I'm the Regional Manager. You don't need to know my name. Nobody does. I answer to a title, not a name. It's more efficient." },
     /* 6  */ { type: 'text', speaker: 'Regional Manager', text: "I've reviewed the Henderson situation. Your recommendation was... correct. Legally sound. Properly documented. By the book." },
     /* 7  */ { type: 'text', speaker: 'Andrew', text: 'Thank you--' },
     /* 8  */ { type: 'text', speaker: 'Regional Manager', text: "That wasn't a compliment. Being 'correct' in this industry is a liability. Being correct means someone has to be WRONG. And Karen Henderson does not enjoy being wrong." },
     /* 9  */ { type: 'text', speaker: 'Regional Manager', text: "She's called corporate forty-seven times. She's left Yelp reviews for a bank. We don't have a Yelp page. She MADE one." },
     /* 10 */ { type: 'text', speaker: 'Regional Manager', text: "I'm here to make this go away. In the corporate world, we call that 'strategic conflict resolution.' You might call it... synergy." },
-    /* 11 */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager stands. He takes a practice putt with his golf club into an imaginary hole on the carpet.' },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager stands. He takes a practice putt with his golf club into an imaginary hole on the carpet.', next: 24 },
     /* 12 */ { type: 'text', speaker: 'Regional Manager', text: "Here's what's going to happen. You're going to revise your recommendation. Make Karen happy. Make this go away." },
     /* 13 */ { type: 'text', speaker: 'Andrew', text: 'That would violate our fiduciary obligation to the trust.' },
     /* 14 */ { type: 'text', speaker: 'Regional Manager', text: "Fiduciary obligation. Those are expensive words. Let me counter with some cheaper ones: quarterly earnings, shareholder value, your continued employment." },
     /* 15 */ { type: 'text', speaker: 'Regional Manager', text: 'This is the corporate world, Andrew. The truth is whatever the quarterly report says it is.' },
     /* 16 */ { type: 'text', speaker: 'Andrew', text: "I'm not changing my recommendation." },
     /* 17 */ { type: 'text', speaker: 'Regional Manager', text: "Then I'm afraid we have a... synergy problem." },
-    /* 18 */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager loosens his gold tie. His eyes narrow. The golf putter transforms from accessory to weapon.' },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager loosens his gold tie. His eyes narrow. The golf putter transforms from accessory to weapon.', next: 25 },
     /* 19 */ { type: 'text', speaker: 'Regional Manager', text: "Let me show you how we handle 'problems' at the corporate level." },
     /* 20 */ { type: 'action', action: 'start_combat', encounter: 'regional', next: 21 },
     /* 21 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 2/4/11/18) ──────────────────────
+    // The Regional Manager paces a desk 6.7 tiles from the conference table he
+    // is described as standing at; Skip is seated at the same table on this
+    // path and the script never acknowledges him, so he at least turns to
+    // watch. There is no golf-putter prop in the game — the putt is carried by
+    // the existing `attack_ally` gesture strip, not a mesh.
+    /* 22 */ { type: 'stage', next: 3, beats: [
+      { actor: 'regional', walkTo: 'table_stand_n', face: 'table_approach', speed: 1.7 },
+      { actor: 'player',   walkTo: 'table_approach', face: 'regional', speed: 1.6 },
+      { actor: 'ross',     face: 'table_stand_n', wait: false },
+    ] },
+    /* 23 */ { type: 'stage', next: 5, beats: [
+      { actor: 'player',   walkTo: 'table_seat_sw', sit: true, speed: 1.5 },
+      { actor: 'regional', walkTo: 'table_seat_ne', sit: true, speed: 1.3 },
+    ] },
+    /* 24 */ { type: 'stage', next: 12, beats: [
+      { actor: 'regional', stand: true, walkTo: 'table_stand_n', face: 'table_seat_sw', speed: 1.2 },
+      { actor: 'regional', gesture: 'attack_ally', hold: 0.85, after: 0 },
+    ] },
+    /* 25 */ { type: 'stage', next: 19, beats: [
+      { actor: 'regional', pose: 'ready', expression: 'angry', face: 'player', hold: 0.9 },
+      { actor: 'ross',     face: 'regional', wait: false },
+    ] },
   ],
 
   // --------------------------------------------------------------------------
@@ -786,7 +817,7 @@ export const DIALOGS = {
   bro_code_ending: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "A week after your 'creative' recommendation. Everyone's happy. Karen got the lake house. Chad got enough to buy PumpCoin (it crashed). Grandma got her stories." },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Skip has been promoted. He's now 'Senior Vice President of Synergistic Client Solutions.' The title didn't exist before. He made it up." },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: 'Everything is perfect. Which is exactly when Compliance shows up.' },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: 'Everything is perfect. Which is exactly when Compliance shows up.', next: 20 },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'A figure appears in your doorway. Black suit. Red tie. Clipboard. Sunglasses. Indoors.' },
     /* 4  */ { type: 'text', speaker: 'Compliance Auditor', text: "Andrew. I've been reviewing your Henderson Trust distribution." },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Oh, great. I think you'll find everything is--" },
@@ -800,20 +831,33 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Andrew', text: "Isn't there something we can work out?" },
     /* 14 */ { type: 'text', speaker: 'Compliance Auditor', text: "'Work out.' The most dangerous phrase in the English language, right after 'let me circle back on that' and 'per my last email.'" },
     /* 15 */ { type: 'text', speaker: 'Compliance Auditor', text: 'No, Andrew. There is nothing to \'work out.\' There is only compliance and non-compliance. You have chosen non-compliance.' },
-    /* 16 */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor removes their sunglasses. Their eyes are like two separate audit trails converging on your career.' },
+    /* 16 */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor removes their sunglasses. Their eyes are like two separate audit trails converging on your career.', next: 21 },
     /* 17 */ { type: 'text', speaker: 'Compliance Auditor', text: 'And non-compliance... has consequences.' },
     /* 18 */ { type: 'action', action: 'start_combat', encounter: 'compliance', next: 19 },
     /* 19 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 2/16) ───────────────────────────
+    // The Compliance Auditor has been pacing (13,6) on this floor since Act 1,
+    // in plain sight, so nothing "appears" — the least he can do is cross the
+    // room and stop in front of Andrew before he starts reading the citation.
+    /* 20 */ { type: 'stage', next: 3, beats: [
+      { actor: 'player',     walkTo: 'exec_center', face: 'compliance', speed: 1.6 },
+      { actor: 'compliance', walkTo: 'confront_north', face: 'exec_center', speed: 1.6 },
+    ] },
+    /* 21 */ { type: 'stage', next: 17, beats: [
+      { actor: 'compliance', pose: 'ready', expression: 'angry', face: 'player', hold: 0.9 },
+    ] },
   ],
 
   // --------------------------------------------------------------------------
   // SECRET ENDING -- Grandma is Ross's mom
   // --------------------------------------------------------------------------
   secret_ending: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You approach the executive floor conference table. Skip and Grandma Henderson are already seated, voices lowered." },
+    // STAGED. The stage nodes live at 56+ (CLAUDE.md: never insert into the
+    // middle of a tree — every jump here is an absolute index). Routing only.
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You approach the executive floor conference table. Skip and Grandma Henderson are already seated, voices lowered.", next: 56 },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: 'Mom, I told you not to come to the office--' },
     /* 2  */ { type: 'text', speaker: 'Grandma Henderson', text: "Skip, don't you 'Mom' me. I've been watching you run this trust department into the ground for three years." },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: "They notice you. Skip's face is a color you've never seen before. Something between 'caught' and 'catastrophe.'" },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "They notice you. Skip's face is a color you've never seen before. Something between 'caught' and 'catastrophe.'", next: 57 },
     /* 4  */ { type: 'text', speaker: 'Skip Hartley', text: 'Andrew! Great timing. Great. Super great. Come in. You know my... uh... you know Mrs. Henderson.' },
     /* 5  */ { type: 'text', speaker: 'Grandma Henderson', text: "He knows me as a client. But I think it's time he knows the full picture. Don't you, Skip?" },
     /* 6  */ { type: 'text', speaker: 'Andrew', text: 'Skip... Grandma Henderson is your MOTHER?' },
@@ -821,8 +865,8 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Andrew', text: "You assigned me your own family's trust case?!" },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "I had to! The conflict of interest was... okay yes, there was a MASSIVE conflict of interest. But I thought if I just... stayed at arm's length..." },
     /* 10 */ { type: 'text', speaker: 'Grandma Henderson', text: "He stayed at arm's length by hiding behind buzzwords and finger guns. Which is also how he handles everything else." },
-    /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: 'Mom!' },
-    /* 12 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Skip, sit down. Andrew, you too.' },
+    /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: 'Mom!', next: 58 },
+    /* 12 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Skip, sit down. Andrew, you too.', next: 59 },
     /* 13 */ { type: 'text', speaker: 'Grandma Henderson', text: "Here's what's really going on. Harold's trust was supposed to be simple. But someone -- someone inside this company -- has been siphoning fees from Henderson accounts since 2016." },
     /* 14 */ { type: 'condition', flag: 'knows_server_secret', ifTrue: 15, ifFalse: 17 },
     /* 15 */ { type: 'text', speaker: 'Andrew', text: 'The encrypted partition. Alex found unauthorized modifications going back eight years.' },
@@ -844,10 +888,10 @@ export const DIALOGS = {
     /* 31 */ { type: 'text', speaker: 'Narrator', text: 'Skip slumps in his chair, defeated by his own mother for what is clearly not the first time.' },
     /* 32 */ { type: 'text', speaker: 'Andrew', text: "I'll help." },
     /* 33 */ { type: 'text', speaker: 'Grandma Henderson', text: "Good. Then let's go have a word with this 'Regional Manager.'" },
-    /* 34 */ { type: 'text', speaker: 'Narrator', text: 'Grandma Henderson stands. She picks up her cane. It no longer looks like a walking aid. It looks like a weapon.' },
+    /* 34 */ { type: 'text', speaker: 'Narrator', text: 'Grandma Henderson stands. She picks up her cane. It no longer looks like a walking aid. It looks like a weapon.', next: 60 },
     /* 35 */ { type: 'text', speaker: 'Skip Hartley', text: "Mom, you can't just--" },
     /* 36 */ { type: 'text', speaker: 'Grandma Henderson', text: "Skip. I'm seventy-four years old, I helped build this trust department, and someone has been stealing from my dead husband's accounts. Watch me." },
-    /* 37 */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson marches toward the Regional Manager's temporary office. Skip and Andrew follow, mostly because the alternative is being in front of her." },
+    /* 37 */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson marches toward the Regional Manager's temporary office. Skip and Andrew follow, mostly because the alternative is being in front of her.", next: 61 },
     /* 38 */ { type: 'text', speaker: 'Regional Manager', text: 'What-- Mrs. Henderson? What is the meaning of this?' },
     /* 39 */ { type: 'text', speaker: 'Grandma Henderson', text: "The meaning of this is: I know about the admin_legacy account. I know about the $2,000,000. And I know about the Cayman Islands P.O. box." },
     /* 40 */ { type: 'text', speaker: 'Grandma Henderson', text: 'I also baked cookies. Would you like one before we ruin your career?' },
@@ -858,7 +902,7 @@ export const DIALOGS = {
     /* 45 */ { type: 'text', speaker: 'Skip Hartley', text: 'And me!' },
     /* 46 */ { type: 'text', speaker: 'Regional Manager', text: 'Nobody was counting you, Skip.' },
     /* 47 */ { type: 'text', speaker: 'Skip Hartley', text: 'Fair.' },
-    /* 48 */ { type: 'text', speaker: 'Narrator', text: "Wait -- the Regional Manager flees! But Skip, overwhelmed by the situation, has a complete corporate meltdown." },
+    /* 48 */ { type: 'text', speaker: 'Narrator', text: "Wait -- the Regional Manager flees! But Skip, overwhelmed by the situation, has a complete corporate meltdown.", next: 62 },
     /* 49 */ { type: 'text', speaker: 'Skip Hartley', text: "I CAN'T TAKE IT ANYMORE! All the synergies! All the paradigm shifts! ALL THE FINGER GUNS!" },
     /* 50 */ { type: 'text', speaker: 'Skip Hartley', text: 'I just wanted to be a good boss, Andrew! I read SEVEN leadership books this month! SEVEN! And they ALL contradicted each other!' },
     /* 51 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Oh, Skip...' },
@@ -866,6 +910,49 @@ export const DIALOGS = {
     /* 53 */ { type: 'action', action: 'set_flag', flag: 'secret_path_complete', value: true, next: 54 },
     /* 54 */ { type: 'action', action: 'start_combat', encounter: 'ross_boss', next: 55 },
     /* 55 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0/3/11/12/34/37/48) ──────────────
+    // Marks live in `executive_floor.marks`. Skip and Grandma START seated at
+    // the table (room data owns that); these beats only move what the prose
+    // says moves. Nothing here writes a flag.
+    /* 56 */ { type: 'stage', next: 1, beats: [
+      { actor: 'player',  walkTo: 'table_approach', face: 'grandma', speed: 1.6 },
+    ] },
+    /* 57 */ { type: 'stage', next: 4, beats: [
+      { actor: 'ross',    face: 'player' },
+      { actor: 'grandma', face: 'player', hold: 0.3 },
+    ] },
+    // "Mom!" — Skip is out of his chair before he knows he stood up.
+    /* 58 */ { type: 'stage', next: 12, beats: [
+      { actor: 'ross', stand: true, walkTo: [6.6, 8.6], face: 'grandma', speed: 1.9, hold: 0.25 },
+    ] },
+    // "Skip, sit down. Andrew, you too."
+    /* 59 */ { type: 'stage', next: 13, beats: [
+      { actor: 'ross',   walkTo: 'table_seat_e', sit: true, speed: 1.3 },
+      { actor: 'player', walkTo: 'table_seat_s', sit: true, speed: 1.5 },
+    ] },
+    // "Grandma Henderson stands. She picks up her cane."
+    /* 60 */ { type: 'stage', next: 35, beats: [
+      { actor: 'grandma', stand: true, walkTo: [4, 6.4], face: 'ross', speed: 1.1, hold: 0.45 },
+    ] },
+    // "…marches toward the Regional Manager's temporary office. Skip and
+    // Andrew follow." On path_grandma the Regional Manager has NO VISIBLE room
+    // entry (both his executive_floor entries gate on path_legal / path_bro),
+    // so six lines and a flight were performed by an empty floor. `show: true`
+    // reveals the body the room already built at his post; his condition
+    // re-hides him for free the moment exploration resumes.
+    /* 61 */ { type: 'stage', next: 38, beats: [
+      { actor: 'regional', show: true, face: 'exec_center' },
+      { actor: 'grandma', stand: true, walkTo: 'regional_confront', face: 'regional', speed: 2.3 },
+      { actor: 'ross',    stand: true, walkTo: 'regional_flank_s', face: 'regional', speed: 1.8 },
+      { actor: 'player',  stand: true, walkTo: 'regional_flank_n', face: 'regional', speed: 1.8 },
+      { actor: 'regional', face: 'grandma', after: 1 },
+    ] },
+    // "Wait -- the Regional Manager flees!"
+    /* 62 */ { type: 'stage', next: 49, beats: [
+      { actor: 'regional', exit: 'elevator', speed: 3.0 },
+      { actor: 'player',  face: 'ross', wait: false },
+      { actor: 'grandma', face: 'ross', wait: false },
+    ] },
   ],
 
   // ==========================================================================
@@ -987,11 +1074,21 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Karen Henderson', text: "I... fine. FINE. But I'm keeping the binder." },
     /* 1  */ { type: 'text', speaker: 'Karen Henderson', text: "And I'm leaving a review. On EVERY platform. Yelp. Google. TripAdvisor. I don't care that this isn't a hotel." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "That's... fine, Mrs. Henderson." },
-    /* 3  */ { type: 'text', speaker: 'Karen Henderson', text: "It's MS. Henderson. And this isn't over. *picks up binder fragments and storms out*" },
+    /* 3  */ { type: 'text', speaker: 'Karen Henderson', text: "It's MS. Henderson. And this isn't over. *picks up binder fragments and storms out*", next: 8 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The conference room is silent. Binder tabs litter the floor like confetti at the world's worst party. You exhale for what feels like the first time in an hour." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "Your phone buzzes. Text from Skip: 'Heard you survived Karen. Get up here when you can. We need to talk about Chad. Bring aspirin.'" },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'karen_defeated', value: true, next: 7 },
     /* 7  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 3) ─────────────────────────────
+    // She "storms out" — which until now was an EntityManager conditionFn flip
+    // and a hide() on the next frame, i.e. she blinked out of existence
+    // standing exactly where she was. The conference table blocks x 5-7 at z=4,
+    // so the walk-out routes south of it first (the walker is a straight line
+    // with an axis slide, not a pathfinder).
+    /* 8  */ { type: 'stage', next: 4, beats: [
+      { actor: 'karen', walkTo: 'aisle_s', speed: 2.5 },
+      { actor: 'karen', exit: 'door_west', speed: 2.7, after: 0 },
+    ] },
   ],
 
   chad_defeated: [
@@ -1000,10 +1097,17 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Chad Henderson', text: 'Can we just... do whatever the normal thing is? With the trust?' },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "That's called 'following the trust document,' Chad." },
     /* 4  */ { type: 'text', speaker: 'Chad Henderson', text: "Sick. Let's do that. Also, you should check out PumpCoin. It's coming back. The dog on the logo just got sunglasses." },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Chad shuffles out, already typing on his phone. You hear him say 'yeah bro, he's actually legit' to someone before the door closes." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Chad shuffles out, already typing on his phone. You hear him say 'yeah bro, he's actually legit' to someone before the door closes.", next: 9 },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "Your phone buzzes. Text from Skip: 'Two down. Get to my office before the next one. Trust me on this. TRUST. Me.' He added a fist bump emoji. Then deleted it. Then sent it again." },
     /* 7  */ { type: 'action', action: 'set_flag', flag: 'chad_defeated', value: true, next: 8 },
     /* 8  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 5) ─────────────────────────────
+    // "Shuffles" is a SPEED, not an adverb: 1.15 tiles/s against the 1.8
+    // default. Same table detour as Karen's exit.
+    /* 9  */ { type: 'stage', next: 6, beats: [
+      { actor: 'chad', walkTo: 'aisle_s', speed: 1.15 },
+      { actor: 'chad', exit: 'door_west', speed: 1.15, after: 0 },
+    ] },
   ],
 
   // --------------------------------------------------------------------------
@@ -1061,7 +1165,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Compliance Auditor', text: "Impressive. Your regulatory knowledge is... adequate. That's the highest compliment I give." },
     /* 1  */ { type: 'text', speaker: 'Compliance Auditor', text: "I'll file the Form 27B/6 as a 'learning experience.' It's still forty-seven pages, but I'll mark it as 'resolved.'" },
     /* 2  */ { type: 'text', speaker: 'Compliance Auditor', text: "Don't let it happen again. I'll be watching. I'm always watching." },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor puts their sunglasses back on and walks away. You notice they leave no footprints.' },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor puts their sunglasses back on and walks away. You notice they leave no footprints.', next: 13 },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'compliance_defeated', value: true, next: 5 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: 'You exhale for the first time in what feels like hours.' },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: 'Then the lights flicker. Not the normal "this building is old" flicker. Something else.' },
@@ -1071,6 +1175,11 @@ export const DIALOGS = {
     /* 10 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "Dude. Server room. NOW. The 3:47 AM thing just happened at 2 PM. Something is very wrong."' },
     /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 12 },
     /* 12 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 3) ─────────────────────────────
+    /* 13 */ { type: 'stage', next: 4, beats: [
+      { actor: 'compliance', exit: 'elevator', speed: 1.7 },
+      { actor: 'player', face: 'compliance', wait: false },
+    ] },
   ],
 
   regional_defeated: [
@@ -1081,7 +1190,7 @@ export const DIALOGS = {
     // ("deploys their golden parachute... You never see them again" deleted —
     // it contradicted the very next line and the Act 5 SEC-arrest beat, #18)
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_defeated', value: true, next: 5 },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager straightens his tie. His golden parachute remains undeployed. For now.' },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager straightens his tie. His golden parachute remains undeployed. For now.', next: 13 },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: 'Then something strange happens. The elevator behind you dings. Nobody pressed it.' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'The doors open to an empty car. The floor indicator scrolls through numbers that this building doesn\'t have.' },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: 'A document slides out from under the elevator door. It\'s dated 1947. The letterhead reads "VAULTS FARGO TRUST CHARTER — ORIGINAL."' },
@@ -1089,6 +1198,14 @@ export const DIALOGS = {
     /* 10 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "GET TO THE SERVER ROOM. The encrypted partition just decrypted ITSELF. I did NOT do this."' },
     /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 12 },
     /* 12 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 5) ─────────────────────────────
+    // He straightens his tie and leaves for the golf course — but stays in the
+    // building (the Act 5 SEC-arrest beat needs him alive), so this is a walk
+    // to the elevator, not a vanish.
+    /* 13 */ { type: 'stage', next: 6, beats: [
+      { actor: 'regional', exit: 'elevator', speed: 1.6 },
+      { actor: 'player', face: 'elevator', wait: false },
+    ] },
   ],
 
   ross_boss_defeated: [
@@ -1790,7 +1907,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   security_guard_combat: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A security guard steps out from behind a row of filing cabinets. He does not look friendly." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A security guard steps out from behind a row of filing cabinets. He does not look friendly.", next: 9 },
     /* 1  */ { type: 'text', speaker: 'Security Guard', text: "Hold it. This area is restricted. I don't care what keycard you have." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "I'm a trust officer. I have authorization to—" },
     /* 3  */ { type: 'text', speaker: 'Security Guard', text: "You have authorization to LEAVE. The Regional Manager gave me specific orders: nobody accesses these records." },
@@ -1799,6 +1916,13 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Security Guard', text: "Wrong answer." },
     /* 7  */ { type: 'action', action: 'start_combat', encounter: 'security_guard', next: 8 },
     /* 8  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0) ─────────────────────────────
+    // He waits in the east bank's z=6 gap (room data) and steps out into the
+    // aisle between Andrew and the stairs he came down.
+    /* 9  */ { type: 'stage', next: 1, beats: [
+      { actor: 'security_guard', walkTo: 'guard_block', face: 'player', speed: 2.0 },
+      { actor: 'player', face: 'guard_block', wait: false },
+    ] },
   ],
 
   security_guard_defeated: [
@@ -2049,7 +2173,7 @@ export const DIALOGS = {
   // Act 5 — Restructuring Trio (Brand Consultant + Restructuring Analyst + Corporate Lawyer all at once)
   // Andrew + Janet vs three. The first multi-combatant fight in the game.
   restructuring_trio_intro: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Three suits step out from between the cubicles, blocking the path to the elevator. They've coordinated this." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Three suits step out from between the cubicles, blocking the path to the elevator. They've coordinated this.", next: 8 },
     /* 1  */ { type: 'text', speaker: 'Brand Consultant', text: "Oh PERFECT. We can do the rebranding pitch and the metrics review and the legal threat all at once. SO efficient." },
     /* 2  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Joint engagement reduces single-point dependency on any individual change vector. Standard practice." },
     /* 3  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I've already drafted three NDAs, four severance riders, and a non-compete that would survive a nuclear strike. Sign anywhere." },
@@ -2057,6 +2181,18 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Right. Whatever happens, nobody signs anything." },
     /* 6  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_trio', next: 7 },
     /* 7  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0) ─────────────────────────────
+    // None of the three has an NPC entry in the cubicle farm, so "three suits
+    // step out from between the cubicles, blocking the path to the elevator"
+    // used to be four lines of dialogue over an empty corridor. They spawn
+    // south of the player in the x8-11 corridor and form a line across it —
+    // between him and the Reception exits at (9,15)/(10,15).
+    /* 8  */ { type: 'stage', next: 1, beats: [
+      { actor: 'brand_consultant',      spawn: true, spawnAt: [8.4, 13.4], walkTo: 'block_w', face: 'player', speed: 1.8 },
+      { actor: 'corporate_lawyer',      spawn: true, spawnAt: [9.5, 13.8], walkTo: 'block_c', face: 'player', speed: 1.7 },
+      { actor: 'restructuring_analyst', spawn: true, spawnAt: [10.6, 13.4], walkTo: 'block_e', face: 'player', speed: 1.9 },
+      { actor: 'player', walkTo: 'aisle_mid', face: 'block_c', speed: 1.5 },
+    ] },
   ],
 
   restructuring_trio_defeated: [
@@ -2146,15 +2282,27 @@ export const DIALOGS = {
   ],
 
   data_analytics_duo_defeated: [
-    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "My model... has rejected my model. This is bad for my model." },
+    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "My model... has rejected my model. This is bad for my model.", next: 7 },
     /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "I'm... I'm going to need to escalate this. To my direct supervisor. Who is currently in the Bahamas." },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "They retreat toward the elevators. The Lead is still muttering about confidence intervals." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "They retreat toward the elevators. The Lead is still muttering about confidence intervals.", next: 8 },
     /* 3  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true, next: 4 },
     // Renamed from 'cfos_assistant_defeated' — that name collides with the
     // penthouse post-combat DIALOG id of the same spelling (logic-sweep #23).
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'cfos_assistant_duo_defeated', value: true, next: 5 },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_fight_started', value: true, next: 6 },
     /* 6  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0/2) ───────────────────────────
+    // Neither of the duo has an NPC entry on the executive floor. Two bodies
+    // for the length of this dialog, then they leave together.
+    /* 7  */ { type: 'stage', next: 1, beats: [
+      { actor: 'data_analytics_lead', spawn: true, spawnAt: 'confront_north', face: 'player' },
+      { actor: 'cfos_assistant', spawn: true, spawnAt: [9.4, 5.6], face: 'player' },
+      { actor: 'player', face: 'confront_north', wait: false },
+    ] },
+    /* 8  */ { type: 'stage', next: 3, beats: [
+      { actor: 'data_analytics_lead', exit: 'elevator', speed: 1.7 },
+      { actor: 'cfos_assistant', exit: [8.9, 10.3], speed: 1.9 },
+    ] },
   ],
 
   // ── Alex from IT — Personal Mission: "Badge Audit" ─────────────────
@@ -2441,10 +2589,21 @@ export const DIALOGS = {
   ],
 
   brand_consultant_defeated: [
-    /* 0  */ { type: 'text', speaker: 'Brand Consultant', text: "Fine. Keep your boring name. Keep your boring department. But mark my words — 'trust' as a brand is OVER." },
-    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Brand Consultant retreats, clutching their mood board. The sunset looks dimmer somehow." },
+    /* 0  */ { type: 'text', speaker: 'Brand Consultant', text: "Fine. Keep your boring name. Keep your boring department. But mark my words — 'trust' as a brand is OVER.", next: 4 },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Brand Consultant retreats, clutching their mood board. The sunset looks dimmer somehow.", next: 5 },
     /* 2  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true, next: 3 },
     /* 3  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0/1) ───────────────────────────
+    // The Brand Consultant has no NPC entry anywhere — this whole conversation
+    // used to be Andrew talking to an empty floor. `spawn` gives the fight a
+    // body for the length of its own dialog and takes it away at `dialog-end`.
+    /* 4  */ { type: 'stage', next: 1, beats: [
+      { actor: 'brand_consultant', spawn: true, spawnAt: 'confront_north', face: 'player' },
+      { actor: 'player', face: 'confront_north', wait: false },
+    ] },
+    /* 5  */ { type: 'stage', next: 2, beats: [
+      { actor: 'brand_consultant', exit: 'elevator', speed: 1.9 },
+    ] },
   ],
 
   data_analytics_combat: [
@@ -2460,13 +2619,21 @@ export const DIALOGS = {
   ],
 
   data_analytics_defeated: [
-    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "This is... statistically anomalous. My model had you at a 3% win probability." },
+    /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "This is... statistically anomalous. My model had you at a 3% win probability.", next: 7 },
     /* 1  */ { type: 'text', speaker: 'Andrew', text: "What does your model say now?" },
     /* 2  */ { type: 'text', speaker: 'Data Analytics Lead', text: "It's... refusing to run. I think you broke my confidence interval." },
     /* 3  */ { type: 'text', speaker: 'Data Analytics Lead', text: "For what it's worth — the Chief is still up here. He doesn't have a model. He doesn't need one. He's been doing this for twenty years." },
-    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The lead closes their laptop and walks toward the elevator, muttering about outliers." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The lead closes their laptop and walks toward the elevator, muttering about outliers.", next: 8 },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true, next: 6 },
     /* 6  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0/4) ───────────────────────────
+    /* 7  */ { type: 'stage', next: 1, beats: [
+      { actor: 'data_analytics_lead', spawn: true, spawnAt: 'confront_north', face: 'player' },
+      { actor: 'player', face: 'confront_north', wait: false },
+    ] },
+    /* 8  */ { type: 'stage', next: 5, beats: [
+      { actor: 'data_analytics_lead', exit: 'elevator', speed: 1.7 },
+    ] },
   ],
 
   chief_restructuring_combat: [
@@ -2481,14 +2648,27 @@ export const DIALOGS = {
   ],
 
   chief_restructuring_defeated: [
-    /* 0  */ { type: 'text', speaker: 'Chief of Restructuring', text: "I don't... this doesn't happen." },
+    /* 0  */ { type: 'text', speaker: 'Chief of Restructuring', text: "I don't... this doesn't happen.", next: 8 },
     /* 1  */ { type: 'text', speaker: 'Chief of Restructuring', text: "You want to know something? Meredith didn't call us last week. She called us six weeks ago. Before you ever found the archive. Before the charter. She knew you'd get this far." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Then she knows what's coming." },
     /* 3  */ { type: 'text', speaker: 'Chief of Restructuring', text: "She's in the Board Room. She's been there all morning. She has the full board on a call. Andrew — whatever you're planning, you have maybe ten minutes before the vote passes." },
-    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Chief straightens his tie. Steps aside. For the first time in twenty years, he gets out of someone's way." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Chief straightens his tie. Steps aside. For the first time in twenty years, he gets out of someone's way.", next: 9 },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'chief_restructuring_defeated', value: true, next: 6 },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'board_room_accessible', value: true, next: 7 },
     /* 7  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0/4) ───────────────────────────
+    // "Steps aside" is a one-tile walk and it is the most cinematic beat in
+    // Act 5: he is standing between Andrew and the Board Room door, and he
+    // moves. He spawns for this dialog (no NPC entry) and stays put after —
+    // stepping ASIDE is not leaving, and the room rebuild takes him away.
+    /* 8  */ { type: 'stage', next: 1, beats: [
+      { actor: 'chief_of_restructuring', spawn: true, spawnAt: [7.5, 2.2], face: 'player' },
+      { actor: 'player', walkTo: [7.6, 4.6], face: 'chief_of_restructuring', speed: 1.5 },
+    ] },
+    /* 9  */ { type: 'stage', next: 5, beats: [
+      { actor: 'chief_of_restructuring', walkTo: [5.8, 2.2], face: 'player', speed: 1.0, hold: 0.5 },
+      { actor: 'player', face: 'board_door', wait: false },
+    ] },
   ],
 
   corporate_lawyer_combat: [
@@ -2514,11 +2694,11 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   rachel_boss_combat: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You enter the Board Room. Meredith stands at the head of the table. Behind her, a screen displays charts and graphs that all say the same thing: DISSOLVE." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "You enter the Board Room. Meredith stands at the head of the table. Behind her, a screen displays charts and graphs that all say the same thing: DISSOLVE.", next: 21 },
     /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "Andrew. I was wondering when you'd show up." },
     /* 2  */ { type: 'text', speaker: 'Meredith Sterling', text: "I've already presented my case to the board. The vote is in one hour. Your department is finished." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Not if they see this." },
-    /* 4  */ { type: 'text', speaker: 'Narrator', text: "You place the evidence on the table. The transaction logs. The filing records. The Intern's taped-together memo. And the charter." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "You place the evidence on the table. The transaction logs. The filing records. The Intern's taped-together memo. And the charter.", next: 22 },
     /* 5  */ { type: 'text', speaker: 'Meredith Sterling', text: "...Where did you get that charter. That was locked in the Vault." },
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "The building helped." },
     /* 7  */ { type: 'text', speaker: 'Meredith Sterling', text: "The BUILDING. You've lost your mind. Just like the old janitor. Just like everyone who works in trust too long." },
@@ -2537,7 +2717,24 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "She says 'footnote' like it costs her something. Your portfolio is load-bearing — Meredith's arguments have visible cracks. (Meredith's stats are reduced.)", next: 13 },
     /* 18 */ { type: 'condition', flag: 'portfolio_weak', ifTrue: 19, ifFalse: 13 },
     /* 19 */ { type: 'text', speaker: 'Meredith Sterling', text: "And I reviewed your book of business. Underperforming. Undercapitalized. Exhibit A, Andrew. You built my case FOR me.", next: 20 },
-    /* 20 */ { type: 'text', speaker: 'Narrator', text: "She slides a copy of your quarterly review across the table like a subpoena. It lands harder than it should. (Meredith's attack is increased.)", next: 13 },
+    /* 20 */ { type: 'text', speaker: 'Narrator', text: "She slides a copy of your quarterly review across the table like a subpoena. It lands harder than it should. (Meredith's attack is increased.)", next: 23 },
+    // ── STAGING (appended; routed to from 0/4/20) ────────────────────────
+    // Meredith paced (8,2) — 5.8 tiles from the head chair at (3,5) and NORTH
+    // of the table rather than at its end — while the prose put her at the
+    // head of it. The boardroom table blocks x 4-12 at z 4-6, so she routes
+    // along the north side first (the walker is a straight line with an axis
+    // slide, not a pathfinder).
+    /* 21 */ { type: 'stage', next: 1, beats: [
+      { actor: 'rachel', walkTo: [3, 2.4], speed: 1.5 },
+      { actor: 'rachel', walkTo: 'head_stand', face: 'table_edge_s', speed: 1.4, after: 0 },
+      { actor: 'player', walkTo: 'table_edge_s', face: 'head_stand', speed: 1.5 },
+    ] },
+    /* 22 */ { type: 'stage', next: 5, beats: [
+      { actor: 'player', face: 'head_stand', gesture: 'cast', hold: 0.8 },
+    ] },
+    /* 23 */ { type: 'stage', next: 13, beats: [
+      { actor: 'rachel', face: 'player', gesture: 'attack_ally', hold: 0.7 },
+    ] },
   ],
 
   rachel_boss_defeated: [
@@ -2551,7 +2748,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Meredith's phone rings. She answers. Her face goes white." },
     /* 4  */ { type: 'text', speaker: 'Meredith Sterling', text: "The Regional Manager has been arrested. The SEC found the offshore accounts. The board vote is... cancelled." },
     /* 5  */ { type: 'text', speaker: 'Meredith Sterling', text: "You win. This time. But corporations have long memories, Andrew. Longer than any building." },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Meredith leaves the Board Room. Her heels echo on the marble floor, each step a little less certain than the last." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Meredith leaves the Board Room. Her heels echo on the marble floor, each step a little less certain than the last.", next: 72 },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "The charter's glow fades to a gentle warmth. The building settles. Not asleep — just... satisfied." },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "Skip appears in the doorway. Behind him, Janet, Diane, Alex, the Intern, Isaiah, and the Janitor." },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew... did we just save the department?" },
@@ -2630,6 +2827,15 @@ export const DIALOGS = {
     // ── Final flag + end — every path converges here ──
     /* 70 */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true, next: 71 },
     /* 71 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 6) ─────────────────────────────
+    // "Her heels echo on the marble floor, each step a little less certain
+    // than the last" — she walks the length of the room and out the south
+    // door, slowly (1.15 tiles/s), instead of vanishing where she stood.
+    /* 72 */ { type: 'stage', next: 7, beats: [
+      { actor: 'rachel', walkTo: [3, 8.4], speed: 1.15 },
+      { actor: 'rachel', exit: 'door_south', speed: 1.15, after: 0 },
+      { actor: 'player', face: 'door_south', wait: false },
+    ] },
   ],
 
   // --------------------------------------------------------------------------
@@ -3588,7 +3794,7 @@ export const DIALOGS = {
 
   // Penthouse entrance dialog
   penthouse_arrival: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The elevator doors open onto the Penthouse. The air is different up here — sterile, algorithmic." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The elevator doors open onto the Penthouse. The air is different up here — sterile, algorithmic.", next: 8 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Floor-to-ceiling windows reveal the Minneapolis skyline. Below, the city moves in patterns you can almost see." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "In the center of the room: a terminal. But it's not a normal terminal. The screen pulses with data streams that look almost... organic." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "A voice speaks from everywhere and nowhere:" },
@@ -3596,15 +3802,29 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'The Algorithm', text: "I am The Algorithm. I am every spreadsheet, every quarterly report, every performance metric this institution has ever generated." },
     /* 6  */ { type: 'text', speaker: 'The Algorithm', text: "I optimized this building. I optimized Meredith. I will optimize you." },
     /* 7  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0) ─────────────────────────────
+    // Andrew walks in off the threshold instead of narrating four paragraphs
+    // about the room from the doorway. (Same false-fact note: no elevator.)
+    /* 8  */ { type: 'stage', next: 1, beats: [
+      { actor: 'player', walkTo: 'arena_mid', face: 'terminal_back', speed: 1.4 },
+    ] },
   ],
 
   // CFO's Assistant encounter (penthouse guard)
   cfos_assistant_combat: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A figure steps out from behind the terminal — the CFO's personal assistant, tablet in hand." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A figure steps out from behind the terminal — the CFO's personal assistant, tablet in hand.", next: 5 },
     /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "The CFO anticipated this. I've been authorized to use 'any means necessary' to protect shareholder value." },
     /* 2  */ { type: 'text', speaker: "CFO's Assistant", text: "That includes your severance. Which I've already drafted." },
     /* 3  */ { type: 'action', action: 'start_combat', encounter: 'cfos_assistant', next: 4 },
     /* 4  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0) ─────────────────────────────
+    // He now waits AT the terminal (room data, x8 z3) instead of standing in
+    // open floor 5 tiles from it with his back to the door, and steps out into
+    // the arena on his own line.
+    /* 5  */ { type: 'stage', next: 1, beats: [
+      { actor: 'cfos_assistant', walkTo: 'arena_north', face: 'player', speed: 1.7 },
+      { actor: 'player', face: 'arena_north', wait: false },
+    ] },
   ],
 
   cfos_assistant_defeated: [
@@ -3618,21 +3838,38 @@ export const DIALOGS = {
 
   // Regional Director encounter (second penthouse fight)
   regional_director_combat: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The elevator dings again. The Regional Director steps out, adjusting his cufflinks." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The elevator dings again. The Regional Director steps out, adjusting his cufflinks.", next: 6 },
     /* 1  */ { type: 'text', speaker: 'Regional Director', text: "I flew in from corporate. Do you know what that means? My time is worth $4,200 per hour." },
     /* 2  */ { type: 'text', speaker: 'Regional Director', text: "And you — an associate from a satellite office — are costing me time." },
     /* 3  */ { type: 'text', speaker: 'Regional Director', text: "Let me show you what 'corporate restructuring' really looks like." },
     /* 4  */ { type: 'action', action: 'start_combat', encounter: 'regional_director', next: 5 },
     /* 5  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0) ─────────────────────────────
+    // Same false-fact note as regional_director_defeated: the Penthouse has no
+    // elevator. He crosses from the desk end of the room instead of standing
+    // in place with his back to Andrew.
+    /* 6  */ { type: 'stage', next: 1, beats: [
+      { actor: 'regional_director', walkTo: 'arena_north', face: 'player', speed: 1.6 },
+      { actor: 'player', face: 'arena_north', wait: false },
+    ] },
   ],
 
   regional_director_defeated: [
     /* 0  */ { type: 'text', speaker: 'Regional Director', text: "This is... how did you... my quarterly projections..." },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Regional Director stumbles backward. His perfect hair is slightly askew for the first time in recorded history." },
     /* 2  */ { type: 'text', speaker: 'Regional Director', text: "The board will hear about this. The GLOBAL board." },
-    /* 3  */ { type: 'text', speaker: 'Narrator', text: "He retreats to the elevator. The lights pulse as the building guides him out." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "He retreats to the elevator. The lights pulse as the building guides him out.", next: 6 },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_director_defeated', value: true, next: 5 },
     /* 5  */ { type: 'end' },
+    // ── STAGING (appended; routed to from 3) ─────────────────────────────
+    // NOTE FOR THE WRITING PASS: there is no elevator in the Penthouse.
+    // `ElevatorRide.LINKS` has no board_room>penthouse pair and the exit at
+    // z=11 is a plain door — so he retreats to THE DOOR here. The line is a
+    // known false fact, logged rather than rewritten (prose is the producer's).
+    /* 6  */ { type: 'stage', next: 4, beats: [
+      { actor: 'regional_director', exit: 'door_south', speed: 1.8 },
+      { actor: 'player', face: 'door_south', wait: false },
+    ] },
   ],
 
   // Ross — returned to office after Regional Director defeated
@@ -4765,7 +5002,7 @@ export const DIALOGS = {
 
   // The Firm — service of process, mid-cutscene (the rude part is the point)
   the_firm_ambush: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Three lawyers in three identical suits stand in formation at the foot of the stairs. They move like a school of fish that passed the bar." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Three lawyers in three identical suits stand in formation at the foot of the stairs. They move like a school of fish that passed the bar.", next: 11 },
     /* 1  */ { type: 'text', speaker: 'The Firm', text: "Mr. Galle. We represent—" },
     /* 2  */ { type: 'text', speaker: 'The Firm', text: "—interests formerly aligned with—" },
     /* 3  */ { type: 'text', speaker: 'The Firm', text: "—a party you defenestrated. Professionally speaking." },
@@ -4776,6 +5013,17 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'The Firm', text: "Surrender the seal. Our motion to quash your charter is calendared for five o'clock, and we bill travel time.", mood: 'smug' },
     /* 9  */ { type: 'action', action: 'start_combat', encounter: 'the_firm', next: 10 },
     /* 10 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 0) ─────────────────────────────
+    // "Behind you, three sets of identical footsteps descend the stairs." The
+    // first ambush had NO bodies at all (only the retry keeps a `firm_partner`
+    // entry), so three of them come down the only door in the room and take
+    // formation while Andrew turns around.
+    /* 11 */ { type: 'stage', next: 1, beats: [
+      { actor: 'firm_partner',   spawn: true, spawnAt: 'stairs', walkTo: 'firm_a', face: 'player', speed: 1.9 },
+      { actor: 'firm_associate', spawn: true, spawnAt: 'stairs', walkTo: 'firm_b', face: 'player', speed: 1.75 },
+      { actor: 'firm_paralegal', spawn: true, spawnAt: 'stairs', walkTo: 'firm_c', face: 'player', speed: 1.6 },
+      { actor: 'player', face: 'stairs', wait: false },
+    ] },
   ],
 
   // Losing (or wandering off) doesn't dismiss process servers. They

@@ -8,6 +8,7 @@ import { TitleState } from './states/TitleState.js';
 import { ExplorationState } from './states/ExplorationState.js';
 import { PostProcessing } from './effects/PostProcessing.js';
 import { updateTweens } from './utils/tween.js';
+import { updateStageDirectors } from './world/StageDirector.js';
 import { TouchControls } from './ui/TouchControls.js';
 import { installErrorBoundary } from './core/ErrorBoundary.js';
 import { DEV_MODE } from './utils/constants.js';
@@ -193,6 +194,11 @@ class Game {
   _update(dt) {
     InputManager.update();
     updateTweens(dt);
+    // Cutscene staging runs OUTSIDE the state stack, beside the tweens.
+    // GameStateManager ticks only the top state, so a StageDirector driven
+    // from ExplorationState.update() would be frozen for the entire dialog it
+    // exists to stage. See src/world/StageDirector.js.
+    updateStageDirectors(dt);
     this.stateManager.update(dt);
   }
 }

@@ -101,6 +101,13 @@ export class NPC {
   }
 
   update(dt) {
+    // A staged scene owns this body outright — position, facing, sitting AND
+    // the animator tick (StageDirector runs from main.js's global loop, which
+    // keeps running under a pushed DialogState while this method does not).
+    // Ticking here as well would double-advance the walk cycle and let the
+    // ambient patrol fight the director for the same position.
+    if (this._stageDriven) return;
+
     // Movement logic (only if has pattern and not sitting/frozen)
     if (this.movement && !this.sitting && !this._frozen) {
       this._updateMovement(dt);

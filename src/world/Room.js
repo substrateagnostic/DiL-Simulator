@@ -311,12 +311,37 @@ const FURNITURE_FOOTPRINTS = {
   lockbox:            { w: 1, h: 1, ox: 0, oz: 0 },    // vault boxes sit at .875 fractions
 };
 
+// ── SEATS ─────────────────────────────────────────────────────────────────
+// Every prop a character may legitimately SIT on, with the local offsets of
+// its seat pads and the facing an occupant adopts relative to the prop's own
+// rotation. `CharacterAnimator.SEAT_Y` is 0.44, so only props whose seat pad
+// tops land at ~0.42-0.46 belong here — this bar's stools seat at 0.745 and
+// are deliberately absent (CLAUDE.md: "do not seat anyone on a stool").
+//
+// `faceOffset` is added to the furniture's `rotation`. A chair's back sits at
+// local z = -0.20, so its occupant looks down local +z, i.e. the same heading
+// as the chair itself (offset 0). A diner booth has two benches at local
+// x = +/-0.61 and their occupants look ACROSS the table, i.e. along local -/+x.
+//
+// Read by Room.build() into `room.seats` (world coordinates, post-override,
+// post-condition) and consumed by StageDirector's `sit` beat.
+const SEAT_PROPS = {
+  chair:           [{ dx: 0, dz: 0, faceOffset: 0 }],
+  executiveChair:  [{ dx: 0, dz: 0, faceOffset: 0 }],
+  operatorChair:   [{ dx: 0, dz: 0, faceOffset: 0 }],
+  leatherArmchair: [{ dx: 0, dz: 0, faceOffset: 0 }],
+  dinerBooth: [
+    { dx:  0.61, dz: 0, faceOffset: -Math.PI / 2 },
+    { dx: -0.61, dz: 0, faceOffset:  Math.PI / 2 },
+  ],
+};
+
 // Small/decorative items that should NOT block movement.
 // Players can clip through these slightly for smoother pathing.
 const NO_BLOCK = new Set([
   'monitor', 'keyboard', 'chair', 'executiveChair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan', 'marblePlanter', 'marbleStatue', 'trophyCase',
   'coffeeMachine', 'espressoMachine', 'microwave', 'waterCooler', 'printer',
-  'whiteboard', 'smartBoard', 'motivationalPoster', 'parkingSpot',
+  'whiteboard', 'smartBoard', 'motivationalPoster', 'executivePoster', 'parkingSpot',
   'deskPlant', 'deskPlantSucculent', 'speakerphone',
   'cobweb', 'oilPainting', 'grandPainting', 'abstractPainting', 'portraitPainting', 'staircase', 'stairFlight', 'stairFlightWall', 'stairRail', 'globeStand', 'vaultDoor',
   'rangeHood', 'boosterMount',
@@ -454,6 +479,10 @@ export class Room {
     this.scene.name = `room_${this.data.id}`;
     // Tiles of any monitor that rolled the REMEMBERED texture this build.
     this.whisperSpots = [];
+    // Every real seat placed this build, in world tiles, with the heading its
+    // occupant should adopt. StageDirector's `sit` beat reads this so nobody
+    // can be seated on air. See SEAT_PROPS.
+    this.seats = [];
 
     // Create the TileMap
     this.tileMap = new TileMap(width, height);
@@ -1327,6 +1356,20 @@ export class Room {
       // it stands so ExplorationState can fire Andrew's one-time thought when
       // he walks past one.
       if (obj.userData.whisper) this.whisperSpots.push({ x, z });
+      // Register real seat pads (post-override, post-condition) for staging.
+      const pads = SEAT_PROPS[type];
+      if (pads) {
+        const rot = rotation || 0;
+        const cos = Math.cos(rot), sin = Math.sin(rot);
+        for (const p of pads) {
+          this.seats.push({
+            type,
+            x: x + p.dx * cos + p.dz * sin,
+            z: z - p.dx * sin + p.dz * cos,
+            facing: rot + p.faceOffset,
+          });
+        }
+      }
       this.scene.add(obj);
 
       // Block tiles based on footprint

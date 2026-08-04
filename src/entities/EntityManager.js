@@ -45,13 +45,22 @@ export class EntityManager {
     for (const npc of this.npcs) {
       // Check condition function
       if (npc.conditionFn) {
-        const shouldShow = npc.conditionFn(flags);
+        // `_stageExited` — a cutscene walked this character out of the room.
+        // It outranks the condition until the room is rebuilt; see
+        // StageDirector's `exit` beat.
+        const shouldShow = !npc._stageExited && npc.conditionFn(flags);
         if (shouldShow && !npc.visible) npc.show();
         if (!shouldShow && npc.visible) npc.hide();
+      } else if (npc._stageExited && npc.visible) {
+        npc.hide();
       }
-      // Freeze/unfreeze NPCs based on pause state
-      if (paused && !npc._frozen) npc.freeze();
-      if (!paused && npc._frozen) npc.unfreeze();
+      // Freeze/unfreeze NPCs based on pause state. A staged actor is skipped:
+      // freeze() clears the walk flag, which would stop a StageDirector walk
+      // cycle dead while the body kept sliding.
+      if (!npc._stageDriven) {
+        if (paused && !npc._frozen) npc.freeze();
+        if (!paused && npc._frozen) npc.unfreeze();
+      }
 
       if (npc.visible) {
         npc.update(dt);
