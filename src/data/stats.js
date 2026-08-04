@@ -386,7 +386,7 @@ export const ENEMY_STATS = {
     abilities: ['synergy_blast', 'corporate_restructure', 'golden_parachute'],
     weakness: 'social', resistance: 'legal',
   },
-  ross_boss: {
+  skip_boss: {
     name: 'Skip Hartley (Unhinged)',
     maxHP: 520,
     hp: 520,
@@ -503,7 +503,7 @@ export const ENEMY_STATS = {
       "I have filed a motion to dismiss on the grounds that we have already done this.",
     ],
   },
-  rachel_boss: {
+  meredith_boss: {
     name: 'Meredith Sterling, SVP',
     maxHP: 720,
     hp: 720,
@@ -1038,7 +1038,7 @@ export const ENEMY_ABILITIES = {
     'Each word costs $50. The lawyer uses a LOT of words. Violently.',
   ]},
 
-  // Rachel SVP (3-phase boss)
+  // Meredith SVP (3-phase boss)
   strategic_pivot: { name: 'Strategic Pivot', power: 20, type: 'attack', messages: [
     '"This department is pivoting. You\'re either on the bus or under it."',
     '"We\'re going in a new direction. You\'re not invited."',

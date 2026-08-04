@@ -186,9 +186,9 @@ export class CombatState {
       }
     );
 
-    // Reasonable Doubt: unlock the Charter voice in the Rachel fight if the
+    // Reasonable Doubt: unlock the Charter voice in the Meredith fight if the
     // player has read the charter via the team_chat_hub Witness branch.
-    const fightingRachel = this.enemyIdsList.includes('rachel_boss') || this.actualEnemyId === 'rachel_boss';
+    const fightingRachel = this.enemyIdsList.includes('meredith_boss') || this.actualEnemyId === 'meredith_boss';
     if (fightingRachel && this.player.getFlag('witness_charter_read')) {
       this.engine.voiceState.charterUnlocked = true;
     }
@@ -851,7 +851,7 @@ export class CombatState {
   // differing only in whether it chases objections —
   //   karen L4        lock-first 0.38 breaks / 63.6% cleared | break-first 0.81 / 0.0%
   //   grandma L8      lock-first 0.81 / 81.9%                | break-first 0.96 / 0.0%
-  //   rachel_boss L9  lock-first 0.29 / 76.7%                | break-first 1.01 / 0.0%
+  //   meredith_boss L9  lock-first 0.29 / 76.7%                | break-first 1.01 / 0.0%
   // Three of four rows clear ZERO objections the moment the weakness tag wins
   // the turn. A player will not infer that from the HUD, so Andrew says it.
   // Fires once, ever.
@@ -1169,7 +1169,7 @@ export class CombatState {
       if (counts.skeptic    >= 5)  this.player.setFlag('voice_skeptic_high');
       if (counts.apprentice >= 5)  this.player.setFlag('voice_apprentice_high');
     }
-    // The Charter Read sets a permanent flag the post-Rachel dialog branches on
+    // The Charter Read sets a permanent flag the post-Meredith dialog branches on
     if (result.charterInvoked) this.player.setFlag('andrew_invoked_charter');
 
     // Voice bubble — italic speech in the voice's color, top-center

@@ -16,10 +16,10 @@ const arg = (k, d) => { const a = process.argv.find(s => s.startsWith(`--${k}=`)
 const has = (k) => process.argv.includes(`--${k}`);
 
 const HERO = ['andrew', 'karen', 'chad', 'grandma'];
-const CAST = ['andrew','ross','janet','alex_it','intern','diane','janitor','karen','chad','grandma',
-  'compliance','regional','ross_boss','rachel','rachel_to','isaiah','hr_rep','security_guard',
+const CAST = ['andrew','skip','janet','alex_it','intern','diane','janitor','karen','chad','grandma',
+  'compliance','regional','skip_boss','meredith','rachel','isaiah','hr_rep','security_guard',
   'cfos_assistant','regional_director','algorithm','brand_consultant','restructuring_analyst',
-  'corporate_lawyer','data_analytics_lead','chief_of_restructuring','rachel_boss','delia',
+  'corporate_lawyer','data_analytics_lead','chief_of_restructuring','meredith_boss','delia',
   'parking_enforcer','networking_guy','bus_driver','records_clerk','diner_regular','barista',
   'firm_partner','firm_associate','firm_paralegal','reception_client'];
 const ids = (arg('ids') || (has('all') ? CAST.join(',') : HERO.join(','))).split(',').filter(Boolean);

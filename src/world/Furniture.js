@@ -5931,7 +5931,7 @@ function _buildCredenza(facing) {
   group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
   // Recenter (S5-COLL): the build is corner-origin (x 0..0.58, z 0..2.8)
   // while the 1x3 footprint blocks x±0.5, z-0.5..z+2.5 from the placement
-  // tile — players waded through the front face in ross_office_large.
+  // tile — players waded through the front face in skip_office_large.
   // Shift so the bbox sits inside the blocked tiles for both wall variants.
   group.position.set(-0.29, 0, -0.35);
   const outer = new THREE.Group();

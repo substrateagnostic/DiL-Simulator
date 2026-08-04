@@ -42,14 +42,14 @@ const SCENARIOS = [
              server_secret_started: true } },
   { name: 'C. act2_complete, partition NEVER found (the producer state)',
     flags: { ...BASE, branch_chosen: true, retry_karen: true, karen_retry_ready: true, karen_defeated: true,
-             defeated_karen: true, ross_post_karen: true, chad_defeated: true, defeated_chad: true,
+             defeated_karen: true, skip_post_karen: true, chad_defeated: true, defeated_chad: true,
              grandma_defeated: true, defeated_grandma: true, defeated_compliance: true,
-             defeated_regional: true, defeated_ross_boss: true, act2_complete: true } },
+             defeated_regional: true, defeated_skip_boss: true, act2_complete: true } },
   { name: 'D. act2_complete + partition found (normal path)',
     flags: { ...BASE, branch_chosen: true, retry_karen: true, karen_retry_ready: true, karen_defeated: true,
-             defeated_karen: true, ross_post_karen: true, chad_defeated: true, defeated_chad: true,
+             defeated_karen: true, skip_post_karen: true, chad_defeated: true, defeated_chad: true,
              grandma_defeated: true, defeated_grandma: true, defeated_compliance: true,
-             defeated_regional: true, defeated_ross_boss: true, act2_complete: true,
+             defeated_regional: true, defeated_skip_boss: true, act2_complete: true,
              knows_server_secret: true } },
 ];
 

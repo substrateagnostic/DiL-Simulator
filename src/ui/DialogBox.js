@@ -30,7 +30,7 @@ const SPEAKER_COLORS = {
   'Isaiah':             '#b08968',
   'Meredith Sterling':  '#9d4edd',
   'Meredith Sterling, SVP': '#9d4edd',
-  // Rachel the trust officer (NPC id `rachel_to`) — no relation to Meredith.
+  // Rachel the trust officer (NPC id `rachel`) — no relation to Meredith.
   'Rachel':             '#7a9ab5',
   'Brand Consultant':   '#ff9f1c',
   'Restructuring Analyst': '#6c757d',
@@ -76,17 +76,19 @@ const PORTRAIT_KEYS = {
   'Grandma Henderson': 'grandma',
   'Compliance Auditor': 'compliance',
   'Regional Manager': 'regional',
-  // Display names changed; portrait file stems are permanent (ross.png, rachel.png).
-  'Skip Hartley': 'ross',
+  // Stems follow the internal ids, which were renamed to match the display
+  // names on 2026-08-04 (see the naming law at the top of CLAUDE.md). The PNGs
+  // were renamed with them; import.meta.glob picks them up by stem.
+  'Skip Hartley': 'skip',
   'Diane': 'diane',
   'Diane (Front Desk)': 'diane',
   'Isaiah': 'isaiah',
-  'Meredith Sterling': 'rachel',
-  'Meredith Sterling, SVP': 'rachel',
-  // 'Rachel' is the trust officer, id `rachel_to` — NOT Meredith Sterling.
-  // Do NOT point her at rachel.png; that is Meredith Sterling's face.
+  'Meredith Sterling': 'meredith',
+  'Meredith Sterling, SVP': 'meredith',
+  // 'Rachel' is the trust officer, id `rachel` — NOT Meredith Sterling.
+  // Do NOT point her at meredith.png; that is Meredith Sterling's face.
   // Neutral only so far; her `mood: 'worried'` node falls back to the base PNG.
-  'Rachel': 'rachel_to',
+  'Rachel': 'rachel',
   // Deputy Recorder, Act 7. Four moods shipped; her `angry` and `smug` nodes fire.
   'Delia Okafor': 'delia',
   'Brand Consultant': 'brand_consultant',

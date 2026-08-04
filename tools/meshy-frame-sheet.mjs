@@ -5,7 +5,7 @@
 // the crown gate line drawn across every cell, so a judge can see in one glance
 // whether a scalp is above or below it.
 //
-//   node tools/meshy-frame-sheet.mjs --fights=chief_of_restructuring,regional_director,rachel_boss,chad,grandma --out=v81_worst4_plus_shortest.png
+//   node tools/meshy-frame-sheet.mjs --fights=chief_of_restructuring,regional_director,meredith_boss,chad,grandma --out=v81_worst4_plus_shortest.png
 import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
@@ -15,7 +15,7 @@ const args = Object.fromEntries(process.argv.slice(2).map(a => {
 }));
 const REPO = process.cwd();
 const DIR = join(REPO, 'art/char_refs/meshy_pilot/_framing');
-const fights = String(args.fights || 'chief_of_restructuring,regional_director,rachel_boss,chad,grandma').split(',');
+const fights = String(args.fights || 'chief_of_restructuring,regional_director,meredith_boss,chad,grandma').split(',');
 const COLS = Number(args.cols || 3);
 const CELLW = Number(args.cellw || 720);
 const OUT = join(DIR, args.out || 'framing_sheet.png');

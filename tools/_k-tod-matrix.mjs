@@ -53,7 +53,7 @@ const PAIRS = (arg('pairs', '') || '').split(',').filter(Boolean)
 // Rooms whose exit is gated need their key flag; _loadRoom skips the gate table
 // but the room's own NPC/furniture conditions still read these.
 const ROOM_KEYS = {
-  board_room: ['board_room_accessible', 'ross_speech_ready'],
+  board_room: ['board_room_accessible', 'skip_speech_ready'],
   penthouse: ['penthouse_unlocked', 'has_rolex'],
   hr_department: ['hr_accessible'],
   vault: ['vault_accessible'],

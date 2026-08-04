@@ -34,7 +34,7 @@ const power = process.argv.includes('--power');
 const FRAMES = 6;
 
 // Default subjects. --only filters by substring.
-const SUBJECTS = ['karen', 'chad', 'grandma', 'compliance', 'rachel_boss', 'algorithm'];
+const SUBJECTS = ['karen', 'chad', 'grandma', 'compliance', 'meredith_boss', 'algorithm'];
 
 // Capture the enemy-intro banner (name slide-in) BEFORE priming skips the intro
 // phase — otherwise the intro is never on the contact sheet and the rider item

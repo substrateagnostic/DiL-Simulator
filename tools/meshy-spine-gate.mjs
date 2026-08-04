@@ -589,7 +589,7 @@ async function stitch(cells, title, cols, rowLabels, dest, tile) {
 
 if (args.shots) {
   // The ten the judge named, plus the two elders and the clip donor's pilot pair.
-  const WORST = ['andrew', 'karen', 'chief_of_restructuring', 'intern', 'ross_boss', 'rachel_boss',
+  const WORST = ['andrew', 'karen', 'chief_of_restructuring', 'intern', 'skip_boss', 'meredith_boss',
     'chad', 'regional', 'brand_consultant', 'isaiah', 'grandma', 'client_m_elder'].filter(i => ids.includes(i));
   for (const angle of ['side', 'front']) {
     const rows = [];

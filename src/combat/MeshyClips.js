@@ -67,10 +67,10 @@ export const IDLE_IDS = {
   // B — Loop-In bench allies
   janet: 317, alex_it: 56, isaiah: 338, diane: 252,
   // C — story bosses
-  karen: 315, chad: 388, grandma: 247, rachel_boss: 310,
+  karen: 315, chad: 388, grandma: 247, meredith_boss: 310,
   regional_director: 2, firm_partner: 25, firm_associate: 47, firm_paralegal: 311,
   // D — gate enemies
-  compliance: 29, regional: 34, ross_boss: 333, restructuring_analyst: 251,
+  compliance: 29, regional: 34, skip_boss: 333, restructuring_analyst: 251,
   brand_consultant: 51, data_analytics_lead: 313, cfos_assistant: 314,
   chief_of_restructuring: 312, corporate_lawyer: 250,
   // E — minor enemies (↺ from solo story bosses)

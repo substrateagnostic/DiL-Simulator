@@ -2,7 +2,7 @@
 //
 // Meshy's reconstruction drops or fuses held props (art/MESHY_WAVE.md finding
 // 1). Grandma's cane vanished entirely — hands empty. Rather than re-plate her
-// holding it (which is what fused a putter into Ross's forearms), the prop is
+// holding it (which is what fused a putter into Skip's forearms), the prop is
 // built in the engine and PARENTED TO THE HAND BONE, so it grips through the
 // idle, the reactions and the attack without ever touching the reconstruction.
 //

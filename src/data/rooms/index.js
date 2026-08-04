@@ -5,12 +5,12 @@
 // Furniture types must match Furniture factory methods.
 // Connection map:
 //   cubicle_farm (hub)
-//     NORTH  -> ross_office
+//     NORTH  -> skip_office
 //     WEST   -> break_room / stairwell
 //     EAST   -> server_room
 //     SOUTH  -> reception
 //     NE     -> hr_department (Act 4+)
-//   ross_office EAST -> conference_room
+//   skip_office EAST -> conference_room
 //   reception SOUTH  -> parking_garage
 //   reception ELEVATOR -> executive_floor (Act 3)
 //   stairwell SOUTH -> cubicle_farm, NORTH -> archive (Act 3+)
@@ -40,7 +40,7 @@ export const ROOMS = {
     // lands institutional white, not khaki).
     lighting: { flicker: true, ambient: 0xeaf1f4, ambientIntensity: 0.58, dir: 0xf2f6ff, dirIntensity: 1.22 },
     // No windows: floor 6 is fully interior on the building plate —
-    // ross_office/conference sit beyond the north wall (S5-P6). The
+    // skip_office/conference sit beyond the north wall (S5-P6). The
     // department's only daylight is the break room's west exposure.
     furniture: [
       // Wave-2: institutional-green carpet runners forming a cross through the
@@ -282,24 +282,24 @@ export const ROOMS = {
       { id: 'intern', x: 13, z: 5.8, facing: Math.PI, sitting: true, condition: { flag: 'lunch_thief_complete' } },  // seated at his workstation (chair 13,5.8 r=PI)
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'briefing_complete' } }, // water cooler, paces — hidden once briefing starts
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
-      // Rachel (trust officer, `rachel_to`) — SW pod, the cubicle two bays over
+      // Rachel (trust officer, `rachel`) — SW pod, the cubicle two bays over
       // from Andrew's (desk 6,10 / chair 6,10.8), seated facing her monitor.
       // Present Acts 1-3; gone from act3_complete on, when the sticky note on
       // her monitor takes over. The three entries are mutually exclusive; her
       // first-meeting intro is routed in ExplorationState._getDialogId() so an
       // unmet Rachel can still introduce herself in Act 2 or 3 without a second
       // NPC instance appearing on the same tile.
-      { id: 'rachel_to', x: 6, z: 10.8, facing: Math.PI, sitting: true,
+      { id: 'rachel', x: 6, z: 10.8, facing: Math.PI, sitting: true,
         condition: { notFlag: 'briefing_complete' }, dialogId: 'rachel_return_act1' },
-      { id: 'rachel_to', x: 6, z: 10.8, facing: Math.PI, sitting: true,
+      { id: 'rachel', x: 6, z: 10.8, facing: Math.PI, sitting: true,
         condition: { flag: 'briefing_complete', notFlag: 'act2_complete' }, dialogId: 'rachel_return_act2' },
-      { id: 'rachel_to', x: 6, z: 10.8, facing: Math.PI, sitting: true,
+      { id: 'rachel', x: 6, z: 10.8, facing: Math.PI, sitting: true,
         condition: { flag: 'act2_complete', notFlag: 'act3_complete' }, dialogId: 'rachel_return_act3' },
     ],
     exits: [
       // NORTH exits -> Alex's Office
-      { x: 9, z: 0, targetRoom: 'ross_office', spawnX: 4, spawnZ: 6 },
-      { x: 10, z: 0, targetRoom: 'ross_office', spawnX: 4, spawnZ: 6 },
+      { x: 9, z: 0, targetRoom: 'skip_office', spawnX: 4, spawnZ: 6 },
+      { x: 10, z: 0, targetRoom: 'skip_office', spawnX: 4, spawnZ: 6 },
       // WEST exit -> Break Room
       { x: 0, z: 7, targetRoom: 'break_room', spawnX: 12, spawnZ: 5 },
       { x: 0, z: 8, targetRoom: 'break_room', spawnX: 12, spawnZ: 5 },
@@ -464,8 +464,8 @@ export const ROOMS = {
   // ----------------------------------------------------------
   // 3. ROSS'S OFFICE — 8x8, boss room
   // ----------------------------------------------------------
-  ross_office: {
-    id: 'ross_office',
+  skip_office: {
+    id: 'skip_office',
     name: "Skip's Office",
     width: 8,
     height: 8,
@@ -502,21 +502,21 @@ export const ROOMS = {
 
     ],
     npcs: [
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
-      // ross_returned is an Act-7 beat ("the Regional Director was gone…
+      { id: 'skip', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'skip_not_ready', condition: { notFlag: 'ready_for_skip' } },
+      { id: 'skip', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_skip', notFlag: 'branch_chosen' } },
+      // skip_returned is an Act-7 beat ("the Regional Director was gone…
       // The Algorithm is already running projections") — it only fires
       // once the Regional Director is actually defeated, never at Act 3
       // (logic-sweep MAJORs #9/#15). Acts 3-6 use generic act routing.
       // Split across the Board Meeting window: once Skip has written the
-      // speech (`ross_speech_ready`) he waits in the Board Room, and returns
+      // speech (`skip_speech_ready`) he waits in the Board Room, and returns
       // to this office when `board_meeting_closed` derives (meeting held, or
       // act6_complete). Two entries instead of one so he is never in two
       // rooms at the same time.
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'ross_speech_ready' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'board_meeting_closed', notFlag: 'regional_director_defeated' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'regional_director_defeated', notFlag: 'ross_returned_seen' } },
-      { id: 'ross', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen' } },
+      { id: 'skip', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'skip_speech_ready' } },
+      { id: 'skip', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'board_meeting_closed', notFlag: 'regional_director_defeated' } },
+      { id: 'skip', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'skip_returned', condition: { flag: 'regional_director_defeated', notFlag: 'skip_returned_seen' } },
+      { id: 'skip', x: 4, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'skip_returned_seen' } },
     ],
     exits: [
       // SOUTH exits -> Cubicle Farm
@@ -527,7 +527,7 @@ export const ROOMS = {
       { x: 7, z: 4, targetRoom: 'conference_room', spawnX: 1, spawnZ: 4 },
     ],
     interactables: [
-      { x: 4, z: 2, type: 'ross_desk', dialogId: 'ross_desk' },
+      { x: 4, z: 2, type: 'skip_desk', dialogId: 'skip_desk' },
       // Motivational posters
       { x: 1, z: 0, type: 'poster', dialogId: 'poster_rec_1' },
       { x: 3, z: 0, type: 'poster', dialogId: 'poster_rec_2' },
@@ -536,9 +536,9 @@ export const ROOMS = {
     playerSpawn: { x: 4, z: 6 },
   },
 
-  // Loaded automatically instead of ross_office when renovation_corner_office flag is set
-  ross_office_large: {
-    id: 'ross_office_large',
+  // Loaded automatically instead of skip_office when renovation_corner_office flag is set
+  skip_office_large: {
+    id: 'skip_office_large',
     name: "Skip's Office",
     width: 12,
     height: 10,
@@ -588,16 +588,16 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 9.8, z: 0.1, rotation: 0 },   // "YOUR CLIENT IS NOT A NUMBER"
     ],
     npcs: [
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_not_ready', condition: { notFlag: 'ready_for_ross' } },
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_ross', notFlag: 'branch_chosen' } },
-      // Mirrors ross_office: ross_returned is gated on the Regional
+      { id: 'skip', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'skip_not_ready', condition: { notFlag: 'ready_for_skip' } },
+      { id: 'skip', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ready_for_skip', notFlag: 'branch_chosen' } },
+      // Mirrors skip_office: skip_returned is gated on the Regional
       // Director's defeat (Act 7), not act2_complete (MAJORs #9/#15)
-      // Mirrors ross_office: split across the Board Meeting window so Skip
+      // Mirrors skip_office: split across the Board Meeting window so Skip
       // is never in this office and the Board Room simultaneously.
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'ross_speech_ready' } },
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'board_meeting_closed', notFlag: 'regional_director_defeated' } },
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'ross_returned', condition: { flag: 'regional_director_defeated', notFlag: 'ross_returned_seen' } },
-      { id: 'ross', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_returned_seen' } },
+      { id: 'skip', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'skip_speech_ready' } },
+      { id: 'skip', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'board_meeting_closed', notFlag: 'regional_director_defeated' } },
+      { id: 'skip', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, dialogId: 'skip_returned', condition: { flag: 'regional_director_defeated', notFlag: 'skip_returned_seen' } },
+      { id: 'skip', x: 5, z: 1.5, facing: Math.PI, movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'skip_returned_seen' } },
     ],
     exits: [
       { x: 4, z: 9, targetRoom: 'cubicle_farm',    spawnX: 9, spawnZ: 4 },
@@ -606,7 +606,7 @@ export const ROOMS = {
       { x: 11, z: 4, targetRoom: 'conference_room', spawnX: 1, spawnZ: 4 },
     ],
     interactables: [
-      { x: 5, z: 2, type: 'ross_desk', dialogId: 'ross_desk' },
+      { x: 5, z: 2, type: 'skip_desk', dialogId: 'skip_desk' },
       // Motivational posters — same three dialogs as the un-renovated office,
       // each on the wall tile in front of its motivationalPoster mesh above.
       { x: 3,  z: 0, type: 'poster', dialogId: 'poster_rec_1' },
@@ -680,16 +680,16 @@ export const ROOMS = {
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'retry_karen' } },
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_not_ready', condition: { flag: 'retry_karen', notFlag: 'karen_retry_ready' } },
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'karen_retry_ready', notFlag: 'karen_defeated' } },
-      { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'ross_post_karen', notFlag: 'chad_defeated' } },
+      { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'skip_post_karen', notFlag: 'chad_defeated' } },
       // She opens with "Come sit down. I made cookies." and then offers Andrew
       // the chair opposite — so she is SEATED. Chair (6,5) is r=PI (seats north
       // at the table), which is the facing she already carried.
-      { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, sitting: true, dialogId: 'grandma_meeting', condition: { flag: 'ross_post_chad', notFlag: 'grandma_defeated' } },
+      { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, sitting: true, dialogId: 'grandma_meeting', condition: { flag: 'skip_post_chad', notFlag: 'grandma_defeated' } },
     ],
     exits: [
       // WEST exit -> Alex's Office
-      { x: 0, z: 3, targetRoom: 'ross_office', spawnX: 6, spawnZ: 3 },
-      { x: 0, z: 4, targetRoom: 'ross_office', spawnX: 6, spawnZ: 4 },
+      { x: 0, z: 3, targetRoom: 'skip_office', spawnX: 6, spawnZ: 3 },
+      { x: 0, z: 4, targetRoom: 'skip_office', spawnX: 6, spawnZ: 4 },
     ],
     interactables: [
       { x: 6, z: 0, type: 'whiteboard', dialogId: 'conference_whiteboard', condition: { notFlag: 'renovation_projection_wall' } },
@@ -902,10 +902,10 @@ export const ROOMS = {
     ],
     npcs: [
       { id: 'diane', x: 7, z: 2, facing: 0, sitting: true, interactRange: 1.2 },  // ON the chair at (7,2), facing south at the lobby
-      // Hidden once ross_post_chad is set — at that point she is seated in the
+      // Hidden once skip_post_chad is set — at that point she is seated in the
       // conference room, and two Grandmas at once was a continuity bug, not a
-      // Christie twist. grandma_defeated implies ross_post_chad (#14).
-      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { flag: 'chad_defeated', notFlag: 'ross_post_chad' }, dialogId: 'grandma_reception_idle' },
+      // Christie twist. grandma_defeated implies skip_post_chad (#14).
+      { id: 'grandma', x: 2, z: 5, facing: Math.PI / 2, condition: { flag: 'chad_defeated', notFlag: 'skip_post_chad' }, dialogId: 'grandma_reception_idle' },
       // Waiting-area chair (10,5) is r=PI/2 (seats EAST, across the side table
       // at 11,5.5); the client was the only thing reversed.
       { id: 'reception_client', x: 10, z: 5, facing: Math.PI / 2, interactable: true, sitting: true },
@@ -1133,16 +1133,16 @@ export const ROOMS = {
       // Skip appears at the conference table after the Henderson decision. ON
       // the east-end chair (6.1,8) r=-PI/2, facing WEST down the table — he was
       // crouched in mid-air 1.00 tiles off the nearest seat, looking at the wall.
-      { id: 'ross', x: 6.1, z: 8, facing: -Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'act2_complete' } },
+      { id: 'skip', x: 6.1, z: 8, facing: -Math.PI / 2, sitting: true, condition: { flag: 'branch_chosen', notFlag: 'act2_complete' } },
       // Grandma appears on the executive floor for the secret path — ON the
       // north-side chair (4,7) r=0, facing SOUTH across the table at Skip. She
       // was half a tile behind the chair row with her back to both.
-      { id: 'grandma', x: 4, z: 7, facing: 0, sitting: true, dialogId: 'grandma_exec_idle', condition: { flag: 'path_grandma', notFlag: 'ross_defeated' } },
-      // Rachel surveys her future territory during Acts 3-4. Her intro/act3/
-      // return dialogs were unreachable before — no Rachel NPC existed
+      { id: 'grandma', x: 4, z: 7, facing: 0, sitting: true, dialogId: 'grandma_exec_idle', condition: { flag: 'path_grandma', notFlag: 'skip_defeated' } },
+      // Meredith surveys her future territory during Acts 3-4. Her intro/act3/
+      // return dialogs were unreachable before — no Meredith NPC existed
       // anywhere until the board room (#20). Routing in _getDialogId serves
-      // rachel_intro first, then rachel_act3, then rachel_return.
-      { id: 'rachel', x: 12, z: 8, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'act4_complete' } },
+      // meredith_intro first, then meredith_act3, then meredith_return.
+      { id: 'meredith', x: 12, z: 8, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'act4_complete' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -1338,8 +1338,8 @@ export const ROOMS = {
       { id: 'security_guard', x: 8, z: 6, facing: 0, dialogId: 'security_guard_combat', movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { notFlag: 'security_guard_info' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act3', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'security_guard_info', notFlag: 'read_janitor_act3' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'read_janitor_act3', notFlag: 'act3_complete' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_needs_ross', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_needs_skip', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'skip_rallied' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'skip_rallied', notFlag: 'janitor_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
       // Act 6 rally phase: he sweeps and waits — no Rolex until the BOARD HAS
       // MET. `rolex_available` derives in _refreshStoryProgress as
@@ -1507,7 +1507,7 @@ export const ROOMS = {
   },
 
   // ----------------------------------------------------------
-  // 13. THE BOARD ROOM — 16x12, Rachel's domain (Act 5+)
+  // 13. THE BOARD ROOM — 16x12, Meredith's domain (Act 5+)
   // ----------------------------------------------------------
   board_room: {
     id: 'board_room',
@@ -1587,7 +1587,7 @@ export const ROOMS = {
       { type: 'whiskeyWall', x: 10, z: 0.1, condition: { flag: 'renovation_trophy_wall' } },
     ],
     npcs: [
-      { id: 'rachel', x: 8, z: 2, facing: Math.PI, movement: { type: 'pace', distance: 3, axis: 'x', speed: 1.2 }, condition: { flag: 'act4_complete', notFlag: 'act5_complete' } },
+      { id: 'meredith', x: 8, z: 2, facing: Math.PI, movement: { type: 'pace', distance: 3, axis: 'x', speed: 1.2 }, condition: { flag: 'act4_complete', notFlag: 'act5_complete' } },
 
       // ── THE BOARD MEETING (Act 6, optional set-piece) ──────────────────────
       // Skip is the entry point: talking to him convenes the meeting
@@ -1603,7 +1603,7 @@ export const ROOMS = {
       // face. theta -> (sin, cos), so north is Math.PI. (CLAUDE.md's rotation
       // bullet said the opposite until this commit; that is where these came
       // from.)
-      { id: 'ross',    x: 7,  z: 9, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, dialogId: 'board_meeting',         condition: { flag: 'ross_speech_ready',   notFlag: 'board_meeting_closed' } },
+      { id: 'skip',    x: 7,  z: 9, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, dialogId: 'board_meeting',         condition: { flag: 'skip_speech_ready',   notFlag: 'board_meeting_closed' } },
       { id: 'diane',   x: 4,  z: 8, facing: Math.PI,                                                      dialogId: 'board_meeting_diane',   condition: { flag: 'diane_act6_rallied',  notFlag: 'board_meeting_closed' } },
       { id: 'intern',  x: 5,  z: 9, facing: Math.PI, movement: { type: 'wander', radius: 1 },             dialogId: 'board_meeting_intern',  condition: { flag: 'intern_act6_rallied', notFlag: 'board_meeting_closed' } },
       { id: 'isaiah',  x: 10, z: 8, facing: Math.PI,                                                      dialogId: 'board_meeting_isaiah',  condition: { flag: 'isaiah_evidence',     notFlag: 'board_meeting_closed' } },
@@ -1629,18 +1629,18 @@ export const ROOMS = {
       // the chair's own rotation 0 (facing the table); south-side take Math.PI.
       // `interactable: false` — a body with no dialog that offers an E prompt
       // is a false affordance (see the poster law).
-      { id: 'board_member_1',      x: 5,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_2',      x: 6,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_3',      x: 7,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_chair',         x: 8,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_4',      x: 9,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_5',      x: 10, z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_twelve', x: 11, z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_6',      x: 5,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_7',      x: 6,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_8',      x: 7,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_9',      x: 10, z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
-      { id: 'board_member_10',     x: 11, z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_1',      x: 5,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_2',      x: 6,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_3',      x: 7,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_chair',         x: 8,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_4',      x: 9,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_5',      x: 10, z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_twelve', x: 11, z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_6',      x: 5,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_7',      x: 6,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_8',      x: 7,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_9',      x: 10, z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_10',     x: 11, z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'skip_speech_ready', notFlag: 'board_meeting_closed' } },
     ],
     exits: [
       // SOUTH exit -> Executive Floor

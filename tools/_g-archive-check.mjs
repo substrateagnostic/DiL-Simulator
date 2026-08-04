@@ -39,10 +39,10 @@ const LEGS = [
       for (const f of clear) ex.player.flags[f] = false;
       for (const f of set) ex.player.flags[f] = true;
       // Everything an act-5 save necessarily already holds. Without these the
-      // EARLIER Janitor entries (act3 / needs_ross / act4) are also live and
+      // EARLIER Janitor entries (act3 / needs_skip / act4) are also live and
       // the harness manufactures its own duplicate.
       for (const f of ['archive_accessible', 'security_guard_info', 'read_janitor_act3',
-        'act3_complete', 'ross_rallied', 'janitor_rallied']) ex.player.flags[f] = true;
+        'act3_complete', 'skip_rallied', 'janitor_rallied']) ex.player.flags[f] = true;
       ex._syncActFromFlags();
       ex._refreshStoryProgress(true);
       ex._loadRoom('archive', 6, 8);

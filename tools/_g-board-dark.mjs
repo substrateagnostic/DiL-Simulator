@@ -27,7 +27,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 fs.mkdirSync(OUT, { recursive: true });
 
 const BASE = ['act5_complete', 'board_room_accessible', 'branch_chosen'];
-const CAST = ['ross_speech_ready', 'janet_act6_rallied', 'diane_act6_rallied',
+const CAST = ['skip_speech_ready', 'janet_act6_rallied', 'diane_act6_rallied',
   'intern_act6_rallied', 'isaiah_evidence', 'grandma_ally'];
 
 (async () => {

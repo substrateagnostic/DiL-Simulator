@@ -32,8 +32,8 @@ export const BUILDING_MAP = {
   cubicle_farm:        { floor: 6,  offsetX: 4,  offsetZ: 2 },
   break_room:          { floor: 6,  offsetX: 0,  offsetZ: 4 },
   server_room:         { floor: 6,  offsetX: 20, offsetZ: 5 },
-  ross_office:         { floor: 6,  offsetX: 10, offsetZ: 0 },
-  ross_office_large:   { floor: 6,  offsetX: 9,  offsetZ: 0 },
+  skip_office:         { floor: 6,  offsetX: 10, offsetZ: 0 },
+  skip_office_large:   { floor: 6,  offsetX: 9,  offsetZ: 0 },
   conference_room:     { floor: 6,  offsetX: 16, offsetZ: 0 },
 
   hr_department:       { floor: 9,  offsetX: 6,  offsetZ: 5 },

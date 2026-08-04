@@ -106,13 +106,18 @@ doesn't govern):
     pass, sixth-floor bathroom, three trust officers before you, poster meta-puzzle,
     …). The epilogue-card **art** pass is queued here (goodbye cards are text-only).
 11. **Alex's playtest-redline list** — see the `NEEDS YOU` section of `alexmemory.md`.
-12. **The naming refactor, now permitted.** Live saves were ruled burnable (Alex,
-    2026-08-01), so internal ids may finally match display names:
-    `ross`/`ross_boss` → Skip Hartley, `rachel`/`rachel_boss` → Meredith Sterling,
-    friendly `rachel_to` → "Rachel". This is a mechanical, grep-verified single sweep
-    across flags, dialogs, encounters, rooms, `MESHY_MODELS`/`MeshyCast`, save
-    (de)serialize, and the dev-panel presets. Ideal codex job. Do it in ONE commit
-    with a verification grep in the message body.
+12. ~~**The naming refactor, now permitted.**~~ **EXECUTED 2026-08-04.** Live saves
+    were ruled burnable (Alex, 2026-08-01), so the internal ids now match the
+    display names: `ross`->`skip`, `ross_boss`->`skip_boss` (Skip Hartley),
+    `rachel`->`meredith`, `rachel_boss`->`meredith_boss` (Meredith Sterling), and
+    the friendly trust officer `rachel_to`->`rachel` (display "Rachel"), which she
+    could only take once the villain was off the name. One sweep across flags,
+    dialogs, encounters, rooms, `MESHY_MODELS`/`MeshyCast` + the GLB filenames,
+    portrait stems, the dev-panel presets and every tool harness. **No migration
+    shim was written** (per the ruling) — a pre-rename save simply fails its flag
+    lookups; `SaveManager.load()` already hard-fails to a new game on a bad parse
+    and every unknown id resolves to "flag not set", so a stale save cannot crash
+    the boot path. See the commit body for the grep counts.
 13. **Framed autumn-photo easter egg** — proposed, awaiting Alex's go.
 
 **Standing infrastructure fact (do not regress):**

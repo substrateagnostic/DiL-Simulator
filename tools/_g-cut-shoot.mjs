@@ -34,8 +34,8 @@ const SCENES = {
     room: 'executive_floor',
     set: ['briefing_complete', 'retry_karen', 'karen_retry_ready', 'karen_defeated',
       'chad_defeated', 'grandma_defeated', 'branch_chosen', 'path_grandma'],
-    clear: ['ross_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started'],
-    expect: { present: ['player', 'ross', 'grandma'], absent: ['karen', 'chad'] },
+    clear: ['skip_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started'],
+    expect: { present: ['player', 'skip', 'grandma'], absent: ['karen', 'chad'] },
     advances: 130, gap: 460,
   },
   // ── ALIAS ────────────────────────────────────────────────────────────────
@@ -52,26 +52,26 @@ const SCENES = {
     alias: 'secret_ending',
     set: ['briefing_complete', 'retry_karen', 'karen_retry_ready', 'karen_defeated',
       'chad_defeated', 'grandma_defeated', 'branch_chosen', 'path_grandma'],
-    clear: ['ross_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started'],
-    expect: { present: ['player', 'ross', 'grandma'], absent: ['karen', 'chad'] },
+    clear: ['skip_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started'],
+    expect: { present: ['player', 'skip', 'grandma'], absent: ['karen', 'chad'] },
     advances: 130, gap: 460,
   },
   legal_eagle_ending: {
     room: 'executive_floor',
     set: ['briefing_complete', 'karen_defeated', 'chad_defeated', 'grandma_defeated', 'branch_chosen', 'path_legal'],
-    clear: ['ross_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started', 'retry_regional'],
+    clear: ['skip_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started', 'retry_regional'],
     advances: 28, gap: 620,
   },
   bro_code_ending: {
     room: 'executive_floor',
     set: ['briefing_complete', 'karen_defeated', 'chad_defeated', 'grandma_defeated', 'branch_chosen', 'path_bro'],
-    clear: ['ross_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started', 'retry_compliance'],
+    clear: ['skip_defeated', 'regional_defeated', 'compliance_defeated', 'act2_complete', 'ending_started', 'retry_compliance'],
     advances: 26, gap: 620,
   },
-  rachel_boss_combat: {
+  meredith_boss_combat: {
     room: 'board_room',
     set: ['act3_complete', 'act4_complete', 'board_room_accessible', 'has_archive_evidence'],
-    clear: ['act5_complete', 'rachel_fight_started'],
+    clear: ['act5_complete', 'meredith_fight_started'],
     advances: 24, gap: 620,
   },
   restructuring_trio_intro: {
@@ -104,21 +104,21 @@ const SCENES = {
     // real save therefore holds `retry_karen`. A fixture that skips the loss
     // leaves entry 1 live, and Karen stands at the head of the table through the
     // whole Grandma scene — which is the extra body the producer read as "the
-    // pre-grandma fight dialog got staged with Ross added". Set both and only
+    // pre-grandma fight dialog got staged with Skip added". Set both and only
     // the Grandma the scene is about is in the room.
     set: ['briefing_complete', 'retry_karen', 'karen_retry_ready', 'karen_defeated',
-      'chad_defeated', 'ross_post_karen', 'ross_post_chad'],
+      'chad_defeated', 'skip_post_karen', 'skip_post_chad'],
     clear: ['grandma_defeated', 'branch_chosen'],
     dialog: 'grandma_meeting',
     // Roster the take must contain, and must NOT contain. Checked against the
     // sampled actors after the shot — see the IDENTITY block at the bottom.
-    expect: { present: ['player', 'grandma'], absent: ['karen', 'chad', 'ross'] },
+    expect: { present: ['player', 'grandma'], absent: ['karen', 'chad', 'skip'] },
     advances: 22, gap: 620,
   },
   karen_defeated: {
     room: 'conference_room',
     set: ['briefing_complete', 'karen_defeated'],
-    clear: ['chad_defeated', 'ross_post_karen'],
+    clear: ['chad_defeated', 'skip_post_karen'],
     dialog: 'karen_defeated',
     advances: 10, gap: 620,
   },
@@ -132,13 +132,13 @@ const SCENES = {
   },
   board_meeting: {
     room: 'board_room',
-    set: ['act5_complete', 'board_room_accessible', 'ross_speech_ready',
+    set: ['act5_complete', 'board_room_accessible', 'skip_speech_ready',
       'janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied', 'isaiah_evidence', 'grandma_ally'],
     clear: ['board_meeting_held', 'board_meeting_closed', 'act6_complete', 'has_rolex'],
     dialog: 'board_meeting',
-    // rachel is deliberately NOT here: her board_room entry is
+    // meredith is deliberately NOT here: her board_room entry is
     // `act4_complete && !act5_complete` and this recipe sets act5_complete.
-    expect: { present: ['player', 'ross', 'janet', 'diane', 'intern', 'isaiah', 'grandma'], absent: ['rachel'] },
+    expect: { present: ['player', 'skip', 'janet', 'diane', 'intern', 'isaiah', 'grandma'], absent: ['meredith'] },
     // 178 nodes and five ally contributions, each of which returns to the
     // node-48 floor choice — a full pass is ~110 advances, so 40 stopped the
     // take before BLOCK E and never reached the staging in BLOCK H.

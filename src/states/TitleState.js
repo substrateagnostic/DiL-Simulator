@@ -6,7 +6,7 @@ const ROOM_DISPLAY_NAMES = {
   cubicle_farm:    'Cubicle Farm',
   reception:       'Reception',
   break_room:      'Break Room',
-  ross_office:     "Skip's Office",
+  skip_office:     "Skip's Office",
   conference_room: 'Conference Room',
   server_room:     'Server Room',
   stairwell:       'Back Corridor',

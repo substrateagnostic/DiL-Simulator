@@ -1,7 +1,7 @@
 // COMBAT DEPTH verification harness — drives the four new mechanics in a REAL
 // fight and captures the HUD/beat frames so each can be judged on a contact sheet.
 //
-//   node tools/c1-depth-shoot.mjs                    default set (karen, rachel_boss)
+//   node tools/c1-depth-shoot.mjs                    default set (karen, meredith_boss)
 //   node tools/c1-depth-shoot.mjs --only=karen
 //
 // Requires the dev server running (npm run dev). Uses the ?dev fixture loader
@@ -26,7 +26,7 @@ const fixture = process.argv.find(a => a.startsWith('--fixture='))?.slice(10) ||
 const only = process.argv.find(a => a.startsWith('--only='))?.slice(7);
 // NOTE: the FIRST Karen fight is a scripted one-shot loss (atk 999), so it is
 // not a usable subject — a driven enemy turn ends the fight mid-harness.
-const SUBJECTS = ['grandma', 'rachel_boss', 'algorithm'];
+const SUBJECTS = ['grandma', 'meredith_boss', 'algorithm'];
 
 const shot = (page, label, name) => page.screenshot({ path: join(OUT, `${label}_${name}.png`) });
 
@@ -251,7 +251,7 @@ const run = async () => {
 
   const shots = readdirSync(OUT).filter(f => f.endsWith('.png'));
   const groups = {};
-  for (const f of shots) { const k = f.split('_')[0] === 'rachel' ? 'rachel_boss' : f.split('_')[0]; (groups[k] ||= []).push(f); }
+  for (const f of shots) { const k = f.split('_')[0] === 'meredith' ? 'meredith_boss' : f.split('_')[0]; (groups[k] ||= []).push(f); }
   writeFileSync(join(OUT, 'index.html'), `<!doctype html>
 <meta charset="utf-8"><title>TRUST ISSUES — combat depth verification</title>
 <style>

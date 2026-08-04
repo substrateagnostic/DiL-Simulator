@@ -363,8 +363,8 @@ export class CombatScene {
   // Restructuring) — a 48% spread — so a constant multiplier put the Chief at
   // 3.40 world-units on a stage whose frame holds about 2.8, and SEVEN of the
   // nine story enemies had their scalp off the top edge of the combat camera
-  // (measured, 1440x810: chief −74 px, regional_director −58, rachel_boss −58,
-  // regional −56, security_guard −36, chad −35, ross_boss −28, karen +7).
+  // (measured, 1440x810: chief −74 px, regional_director −58, meredith_boss −58,
+  // regional −56, security_guard −36, chad −35, skip_boss −28, karen +7).
   //
   // The law: on-stage height is a COMPRESSED remap of true height. Everyone
   // lands between STAGE_LO and STAGE_HI world-units, so the tallest figure the
@@ -419,12 +419,12 @@ export class CombatScene {
     // THE RULER IS BUILT WITHOUT ACCESSORIES. getSize().y is max MINUS min, and
     // a held prop can hang BELOW the floor plane: the golf putter
     // (CharacterBuilder 'golf_putter' — shaft at y −0.35, head at y −0.70)
-    // drives the probe's min.y to −0.084 on ross_boss and −0.065 on regional, so
+    // drives the probe's min.y to −0.084 on skip_boss and −0.065 on regional, so
     // the ruler over-read their height by 5.3% and 3.9% and the Meshy body was
     // scaled up by that margin — a boss rendered materially bigger than the cast
     // for no authored reason. Stripping accessories is the intention-revealing
     // form (a body ruler measures the body) and is immune to the next prop
-    // someone hangs off a hand. Measured effect: ross_boss 1.680 → 1.596,
+    // someone hangs off a hand. Measured effect: skip_boss 1.680 → 1.596,
     // regional 1.724 → 1.660, grandma 1.214 → 1.211 (cane ferrule, 4 mm),
     // chad 1.708 → 1.707 (cap, 1 mm); the other 34 configs do not move.
     const probe = buildCharacter({ ...config, accessories: [] }, { detailed: false });

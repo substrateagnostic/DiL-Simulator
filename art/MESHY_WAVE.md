@@ -28,7 +28,7 @@ karen/andrew (pilot) · exploration-only NPCs.
 1. **Prop-clamped plates poison reconstruction.** 19 of 24 existing turnaround
    sheets predate the hands-clear law and hold a prop against the body
    (clipboard/laptop/binder under the arm). Three were submitted as-is to test
-   the boundary: ross_boss and regional came back with the putter FUSED along
+   the boundary: skip_boss and regional came back with the putter FUSED along
    both forearms/fists; security_guard's flashlight duplicated into fist + belt.
    All three were plate-regenerated (props deleted, wide A-pose) and
    re-generated clean — the free-retry lottery was skipped deliberately: a prop
@@ -57,7 +57,7 @@ karen/andrew (pilot) · exploration-only NPCs.
 | grandma | 1.50 | 249 | **PASS — the wave's cloth win.** Shawl genuinely drapes, lace edge intact, skirt falls as cloth. **Her cane did not survive** — Meshy dropped it entirely (hands empty). Better than fused; procedural exploration grandma keeps hers. |
 | compliance | 1.78 | 252 | PASS — regen (clipboard deleted); sunglasses read |
 | regional | 1.80 | 251 | PASS — regen after putter-fusion attempt1 (archived); light scratch noise on dark suit (cast-wide trait, see caveats) |
-| ross_boss | 1.73 | 252 | PASS — regen after putter fused along BOTH arms in attempt1 (archived); belly reads in profile, startled Skip face intact |
+| skip_boss | 1.73 | 252 | PASS — regen after putter fused along BOTH arms in attempt1 (archived); belly reads in profile, startled Skip face intact |
 | security_guard | 1.88 | 249 | PASS — regen after flashlight duplication (archived); duty belt kept |
 | hr_rep | 1.65 | 251 | PASS — regen (folio deleted) |
 | restructuring_analyst | 1.76 | 252 | PASS — regen (laptop deleted) |
@@ -66,7 +66,7 @@ karen/andrew (pilot) · exploration-only NPCs.
 | data_analytics_lead | 1.77 | 252 | PASS — regen (tablet deleted) |
 | cfos_assistant | 1.75 | 249 | PASS — regen (folio deleted) |
 | chief_of_restructuring | 1.86 | 252 | PASS — regen (clipboard deleted); broad silver chief |
-| rachel_boss (Meredith) | 1.70 | 249 | **PASS — second cloth win.** Pencil skirt drapes clean, tights/heels/silver bob/pearls all read |
+| meredith_boss (Meredith) | 1.70 | 249 | **PASS — second cloth win.** Pencil skirt drapes clean, tights/heels/silver bob/pearls all read |
 | regional_director | 1.85 | 251 | PASS — regen (briefcase deleted) |
 | parking_enforcer (Reyes) | 1.68 | 252 | PASS — regen (ticket device + chalk deleted, duty belt kept). Shoulder patches read over-bright under the toon ramp (minor) |
 | networking_guy | 1.80 | 249 | PASS — regen (phone deleted, arms down from the raised-arm pose that broke A-pose law) |
@@ -106,7 +106,7 @@ block/status stances, per-move reaction clips — noted, not implemented).
 
 - 31 characters × (30 base + 5 rig + 3 anim) = 1178 cr
 - 14 animation-stage redos (wrong-register catalog clips) × 3 = 42 cr
-- 3 archived prop-fusion attempts (ross_boss, regional, security_guard) = 114 cr
+- 3 archived prop-fusion attempts (skip_boss, regional, security_guard) = 114 cr
 - **Wave total: 1334 cr** (pilot's 90 cr not re-counted). Balance 6160 → ~4826.
 
 Plate regens: 22 sheets + 2 recovery re-rolls via codex imagegen — zero credits
@@ -131,8 +131,13 @@ Plate regens: 22 sheets + 2 recovery re-rolls via codex imagegen — zero credit
    condemned actions were judged from 6-frame strips at 0.8 s spacing; a clip
    could hide a gesture between samples. Every strip is on disk under
    `<id>/shots/clip_strip.png` for spot-checking.
-6. **Naming ledger note:** `rachel_boss` internal id stays (save-safety);
-   display name Meredith Sterling everywhere player-facing.
+6. ~~**Naming ledger note:** internal id stays (save-safety); display name
+   Meredith Sterling everywhere player-facing.~~ **SUPERSEDED 2026-08-04** —
+   live saves were ruled burnable, and the ids were renamed to match the
+   display names: `ross`->`skip`, `ross_boss`->`skip_boss`,
+   `rachel`->`meredith`, `rachel_boss`->`meredith_boss`, `rachel_to`->`rachel`.
+   Every id in this document is the post-rename one **except** the frozen
+   review-artefact filenames noted below.
 7. Sheets for janet / parking_enforcer / networking_guy / firm_partner on disk
    may differ cosmetically from the submitted crops (concurrent retry lanes
    overwrote the sheet file after cropping; the crops that fed Meshy are the
@@ -148,7 +153,7 @@ Plate regens: 22 sheets + 2 recovery re-rolls via codex imagegen — zero credit
   corrupted the running bash interpreters' file offsets and killed lanes A/C/D
   at their final items (bash re-reads script files during execution — never
   edit a lane script with lanes live; clone it). All items recovered.
-- Three codex sessions wedged 10-15 min (rachel_boss ×2, networking_guy,
+- Three codex sessions wedged 10-15 min (meredith_boss ×2, networking_guy,
   parking_enforcer); killed + relaunched in fresh lanes, which succeeded
   immediately each time.
 - Meshy base-stage queue slowed from ~3 min to ~8 min mid-wave (02:30-02:45);
@@ -200,7 +205,7 @@ Punching, BodyMovements/Acting.
 The GIF strip is a FILTER, not the verdict. Every survivor was re-judged on the
 real cast with `tools/meshy-clip-strip.mjs`, which binds a clip onto a real
 character GLB and renders a strip across the clip's whole duration. Verified on
-three body types every time: **regional (male suit, 1.80m), rachel_boss (female
+three body types every time: **regional (male suit, 1.80m), meredith_boss (female
 skirt suit, 1.70m), grandma (stooped elder in a shawl, 1.50m)**.
 
 | role | clip | catalog name | dur | verdict |
@@ -381,7 +386,7 @@ fixes firm_paralegal completely (her frame offset is ~180 deg about X and the
 clip pelvis motion is mostly pitch about X, so it commutes) — which is exactly
 why it looks correct until you check a reaction clip. Measured, hips→Spine02
 tilt at t=0.6 with the local form: andrew 6.7 deg on the jab, intern 82.0,
-ross_boss 78.3. With the world form: intern 6.8, ross_boss 6.0.
+skip_boss 78.3. With the world form: intern 6.8, skip_boss 6.0.
 
 **Root translation.** Hips Y is rebased onto the target's own rest hips and
 scaled by the hip-height ratio; X and Z are PINNED to the target's rest. The pin
@@ -421,6 +426,11 @@ rig, `Wt0 == Wd0` and the output is the donor track.
 - `_review_v8/ab_ross_{grounded,hovering}.png` — in-game A/B on the real arena
 - `_clips/fight_v8_{ross,grandma}_*.png` — in-game beat stills, real call path
 
+**These two filenames are pre-rename and deliberately left alone.** The review
+artefacts under `art/char_refs/` and `screenshots/` are gitignored frozen history
+and were NOT renamed on 2026-08-04; a doc that renamed them would point at files
+that never existed. `ross` in a path under those two trees means `skip`.
+
 ---
 
 # V8.1 — FRAMING: THE RULER AND THE CAMERA (2026-08-01)
@@ -428,11 +438,11 @@ rig, `Wt0 == Wd0` and the output is the donor track.
 V8's spine and floor work was signed off. The round FAILED on framing: seven of
 the nine story enemies had their scalp off the top edge of the shipping combat
 view, and the enemy nameplate panel (y = 15..145) covered several more. The V8
-in-game sample was two characters — ross_boss and grandma — and grandma is the
+in-game sample was two characters — skip_boss and grandma — and grandma is the
 SHORTEST model in the cast with 164 px of headroom to spare. A sample that
 included the best case and nothing near the worst read as clean.
 
-## CORRECTION TO THE V8 RECORD — grounding did NOT push ross's head out of frame
+## CORRECTION TO THE V8 RECORD — grounding did NOT push skip's head out of frame
 
 V8 reported that the foot-plant "moved him ~25 px further down, so slightly more
 of the head leaves frame." That is backwards, and it is corrected here so nobody
@@ -456,7 +466,7 @@ y −0.70, club rotated 0.2) hangs BELOW the floor plane. Measured min.y over al
 
 | id | before (max−min) | after (no accessories) | min.y | error |
 |---|---|---|---|---|
-| ross_boss | 1.680 | 1.596 | −0.084 | +5.3% |
+| skip_boss | 1.680 | 1.596 | −0.084 | +5.3% |
 | regional | 1.724 | 1.660 | −0.065 | +3.9% |
 | grandma | 1.214 | 1.211 | −0.004 | +0.3% (cane ferrule) |
 | chad | 1.708 | 1.707 | 0.000 | +0.06% (cap, above the scalp) |
@@ -475,7 +485,7 @@ The solo stage scale was a constant 1.9 with no reference to how tall the figure
 is. The cast runs 1.211 m (grandma) to 1.787 m (the Chief), so 1.9 put the Chief
 at 3.40 world units in a frame that holds about 2.8. Measured crown clearance
 before, live build, 1440x810, negative = off frame: chief −74, regional_director
-−58, rachel_boss −58, regional −56, security_guard −36, chad −35, ross_boss −28,
+−58, meredith_boss −58, regional −56, security_guard −36, chad −35, skip_boss −28,
 karen +7, grandma +164.
 
 **The framing law** (`CombatScene.STAGE` / `_stageScale`): on-stage height is a
@@ -538,7 +548,7 @@ the law puts it at 2.71 and its visible rim at ~170 px.)
 | story enemies with the crown off frame | 7 of 9 | **0 of 28 gated enemies** |
 | enemies behind the nameplate (y < 145) | 9 of 9 | **0** |
 | combatants measured in the real build | 2 (one of them the shortest model) | **54** — 28 gated enemies (20 solo Meshy + 8 in group fights), the Algorithm as info, 25 ally rows |
-| ross_boss ruler | 1.680 (+5.3%) | 1.596 |
+| skip_boss ruler | 1.680 (+5.3%) | 1.596 |
 | regional ruler | 1.724 (+3.9%) | 1.660 |
 | on-stage height spread | 2.30–3.40 units | 2.19–2.68 units |
 | procedural (`?nomeshy`) cast | not measured | 0 failing |

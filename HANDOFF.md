@@ -5,14 +5,14 @@ Four notes, in the order the judge set them. All four landed.
 **1 — `board_meeting` was radio.** 178 nodes addressing fourteen empty chairs. Twelve generic
 suits + a board chair now sit in the room (`board_member_1..10`, `board_member_twelve`,
 `board_chair` in `characters.js`; room entries gated on the same
-`ross_speech_ready` / `!board_meeting_closed` pair as the ally block, so they assemble and clear
+`skip_speech_ready` / `!board_meeting_closed` pair as the ally block, so they assemble and clear
 with the scene). Seventeen `stage` nodes appended at 178-194: Skip crosses to the head of the
 table before node 3 describes him there; Andrew steps to `table_edge_s` when the meeting is called
 to order; **every ally that actually contributes steps out to the table and back** (`wait: false`
 on the step-back so it plays under the next line); Skip takes the head chair on his closing line;
 tier 0 puts him back on his feet before node 154 calls him "still standing"; BLOCK H walks him
 back to Andrew. Measured (`screenshots/g-run/cutscenes/board_meeting/motion.txt`):
-player 1.89, ross 15.13 (135 seated frames), diane 3.87, intern 3.47, isaiah 0.87, janet 3.47,
+player 1.89, skip 15.13 (135 seated frames), diane 3.87, intern 3.47, isaiah 0.87, janet 3.47,
 grandma 5.82 tiles — **non-zero for every speaking actor** — and 0 tiles for all twelve suits.
 Cost of the bodies, measured: **p50 +0.70 ms, p95 +1.90 ms** in that room only (5 → 18 visible NPCs).
 Three seats stay open by design: the head chair (Skip's), and SOUTH x:8/x:9 (node 127's "empty
@@ -122,7 +122,7 @@ first-drafted by **Opus 4.6 via CLI** per the standing order and wired verbatim.
 | A2 | Unmeasured whale EV distortion — `generateDayClient`'s asset-floor rejection sampling re-rolled the 5% whale chance up to 12x per slot, and a whale always clears the floor and breaks the loop. Measured 4.08% walk-in vs **12.35%** on day slot 4. | The whale is rolled **once per slot** before the retry loop; `generateClient` takes a `suppressWhale` flag for the retries. Re-measured flat at ~5% on every slot. New `day-sim.mjs --whale` audit is the regression test. | `data/ClientGenerator.js`, `tools/day-sim.mjs` |
 | A3 | Day-scoped stat boons leaked into story fights — Firm Handshake / Deep Breath are repeatable, and leaving Reception mid-day is allowed, so ~+9/+9 could be carried into a boss. | Boons are now **floor-scoped**: `revokeDayStats` on leaving Reception, `applyDayStats` on return, via `_syncDayStatScope(roomId)` in the room-load path. The day record is untouched — a pause, not a forfeit. Legacy in-flight days (no `statsApplied` key) read as applied. | `data/billableDay.js`, `states/ExplorationState.js` |
 | A4 | CASUAL archetype out of the 40-85% band at documented intended levels; no God Mode analogue, no QTE-widening cosmetic. | **Performance Improvement Plan** (Hades God Mode: 20% + 2%/death, cap 80%, opt-in, **0 RP**, locks nothing out) and **Ergonomic Wrist Support** (accessory, +40% Brace window / -20% Retaliate damage). At the PIP's floor, CASUAL clears 40% on every documented rung. | `data/review.js`, `combat/CombatEngine.js`, `states/CombatState.js`, `data/cosmetics.js`, `entities/CharacterBuilder.js` |
-| A5 | NG+ top rung was a wall, not a ladder — `rachel_boss` 1.0% / `algorithm` 4.0% at CARRY@NG+3, contradicting the code comment beside the constants. | Per-lap Patience scaling 1.35 -> **1.15** plus a new `NG_PLUS_LAP.decay = 0.35` that softens **only** lap 3 (laps 1-2 have exponents 0 and 1 at any decay, so those columns are bit-identical). NG+3 finale now 29.8% / 35.6%. | `combat/CombatEngine.js`, `tools/ng-sim.mjs` |
+| A5 | NG+ top rung was a wall, not a ladder — `meredith_boss` 1.0% / `algorithm` 4.0% at CARRY@NG+3, contradicting the code comment beside the constants. | Per-lap Patience scaling 1.35 -> **1.15** plus a new `NG_PLUS_LAP.decay = 0.35` that softens **only** lap 3 (laps 1-2 have exponents 0 and 1 at any decay, so those columns are bit-identical). NG+3 finale now 29.8% / 35.6%. | `combat/CombatEngine.js`, `tools/ng-sim.mjs` |
 | A6 | Dead gate row — `vault: { flag: 'vault_accessible' }` in `gatedRooms` is unreachable behind the keypad intercept. | Row removed, replaced with the same NOTE the `archive` row already carried. `CLAUDE.md`'s room-gating bullet corrected to match (it still listed both). | `states/ExplorationState.js`, `CLAUDE.md` |
 
 **Save-safety.** New flags only (`pb_review_level` already existed; `rp_pip` / `pip_active` /
@@ -172,7 +172,7 @@ mechanical node-flow change is logged below for countersign.
 ## Placement change, logged (spec deviation from proposal 6)
 
 The proposal placed the Board Meeting *"between `has_rolex` and the penthouse."* The wiring puts it
-**before** the Rolex — entry is Skip in the Board Room on `ross_speech_ready`, and it closes on
+**before** the Rolex — entry is Skip in the Board Room on `skip_speech_ready`, and it closes on
 `board_meeting_closed`. That matches the acceptance criterion and is the better scene order (the
 Rolex is the ascent, not the argument), but it had never been written down anywhere. It is written
 down now. Consequence: taking the Rolex ends the meeting forever, which is note (a) below.
@@ -225,7 +225,11 @@ it is a detour, not a block — but it is an unintended gate on the finale and w
 `cabc1de` Wave-5 final chars → `91206ec` HUD legibility → `c506182`+
 `8864a75` Run A (renames Meredith Sterling/Skip Hartley display-only per
 the SAVE-SAFETY NAMING LEDGER in `.claude/plans/proposals-whats-missing.md`
-— read it before touching those characters; Rachel/`rachel_to` wired;
+— **that ledger is SUPERSEDED as of 2026-08-04**: live saves were ruled
+burnable and the internal ids were renamed to match the display names
+(`ross`->`skip`, `ross_boss`->`skip_boss`, `rachel`->`meredith`,
+`rachel_boss`->`meredith_boss`, `rachel_to`->`rachel`), so read the ledger
+as history only; Rachel/`rachel` wired;
 elevators canonical; blueprint pulse; og.png/error-boundary/save-shim) →
 `cd91112`+`706e9bc` Run B PASSED (perf harness `npm run perf`; shadow
 cadence; Room.dispose leak; N8AO retune; garage tear; tier governor) →
@@ -663,7 +667,7 @@ Replaced `renovation_helipad` (doesn't make sense in a room) with `renovation_pe
 
 ### Penthouse Expansion — Four-Room Layout
 
-On purchase of `renovation_penthouse`, `_resolveRoomId()` in `ExplorationState` routes `penthouse` → `penthouse_expanded` (same canonical room ID, same save/music behavior — mirrors the `ross_office` → `ross_office_large` pattern).
+On purchase of `renovation_penthouse`, `_resolveRoomId()` in `ExplorationState` routes `penthouse` → `penthouse_expanded` (same canonical room ID, same save/music behavior — mirrors the `skip_office` → `skip_office_large` pattern).
 
 **`penthouse_expanded`** (22×16): Hub room. Kitchen NW, desk, server racks, putting green, conference table. NPCs: CFOs (x:11 z:10), regional_director (x:11 z:6). Four exits: SOUTH→board_room, NORTH→penthouse_analytics, EAST→penthouse_aquarium, WEST→penthouse_bar.
 
@@ -697,13 +701,13 @@ Fish sprites must be at `z:0.22` (in front of glass at z:0.2). The opaque water 
 
 ## What Was Done This Session (Session 1)
 
-Ross attack fix, boosterMount visuals, whale client pre-algorithm roll, executive floor Act 5 gate, and cosmetic stats display fix.
+Skip attack fix, boosterMount visuals, whale client pre-algorithm roll, executive floor Act 5 gate, and cosmetic stats display fix.
 
 ---
 
 ### Rachel Retry Softlock Fix
 
-0. **Dying to Rachel left no way to restart the fight** — The board room auto-trigger was gated on `!rachel_fight_started`. `rachel_fight_started` is set (and auto-saved via `_changeRoom`) on first entry, so after a loss the stale save always blocked the retrigger — clearing the flag in `_handleDefeat()` was lost on reload since `_handleDefeat` called `_loadRoom` (no auto-save) not `_changeRoom`. Fixed: removed `!rachel_fight_started` from the trigger condition entirely. `act5_complete` (set only on Rachel victory) is the only reliable completion gate. Added `_autoSave(false)` at the end of `_handleDefeat()` so gauntlet flag resets persist through reloads (fixes same latent bug for all gauntlet fights).
+0. **Dying to Rachel left no way to restart the fight** — The board room auto-trigger was gated on `!meredith_fight_started`. `meredith_fight_started` is set (and auto-saved via `_changeRoom`) on first entry, so after a loss the stale save always blocked the retrigger — clearing the flag in `_handleDefeat()` was lost on reload since `_handleDefeat` called `_loadRoom` (no auto-save) not `_changeRoom`. Fixed: removed `!meredith_fight_started` from the trigger condition entirely. `act5_complete` (set only on Rachel victory) is the only reliable completion gate. Added `_autoSave(false)` at the end of `_handleDefeat()` so gauntlet flag resets persist through reloads (fixes same latent bug for all gauntlet fights).
 
 ---
 
@@ -743,9 +747,9 @@ Ross attack fix, boosterMount visuals, whale client pre-algorithm roll, executiv
 
 ---
 
-### Ross Attack Fix
+### Skip Attack Fix
 
-1. **Ross never attacked the player** — `ross_act2` enemy had no attack ability; fights could drag indefinitely as he only used debuffs. Added `hard_pivot` to `ENEMY_ABILITIES` (Power 20, attack type, four quip lines) and added `'hard_pivot'` to Ross's `abilities` array in `ENEMY_STATS`.
+1. **Skip never attacked the player** — `skip_act2` enemy had no attack ability; fights could drag indefinitely as he only used debuffs. Added `hard_pivot` to `ENEMY_ABILITIES` (Power 20, attack type, four quip lines) and added `'hard_pivot'` to Skip's `abilities` array in `ENEMY_STATS`.
 
 ---
 
@@ -816,7 +820,7 @@ Dialog fixes, quest gating for early-game spoiler prevention, and post-game Tier
 
 2. **Quest required two separate printer interactions to start** — First visit set `printer_visit_2`; second visit started the quest. Merged both beats into a single interaction so the full sequence (HELP ME → HENDERSON FILES → toner runs out → quest starts) plays in one sitting. `printer_visit_2` flag removed.
 
-3. **Printer interaction revealed Henderson plot before Ross briefing** — The printer mentioned the Henderson files even on a fresh game before the player knew about the case. Added `briefing_complete` gate (node 2): if the briefing hasn't happened, the printer shows a single "it's just a printer" line and exits. The full spooky sequence only plays after the briefing is done.
+3. **Printer interaction revealed Henderson plot before Skip briefing** — The printer mentioned the Henderson files even on a fresh game before the player knew about the case. Added `briefing_complete` gate (node 2): if the briefing hasn't happened, the printer shows a single "it's just a printer" line and exits. The full spooky sequence only plays after the briefing is done.
 
 ---
 
@@ -1008,7 +1012,7 @@ Full audit and bug-fix pass on Acts 5–7 and all six Alex IT subquests, plus th
 2. **Roguelite XP too low** — New formula: `Math.round(60 + t * 60)` in `ClientGenerator.js`.
 3. **Act 6 ally counter using Act 4 flags** — Introduced `janet_act6_rallied` and `diane_act6_rallied`.
 4. **Diane's documents missing** — Added `diane_documents` dialog and filing cabinet interactable at `x:14, z:8` in HR.
-5. **Ross not rallying in Act 6** — Added conditional room entry for `ross_act6` routing.
+5. **Skip not rallying in Act 6** — Added conditional room entry for `skip_act6` routing.
 6. **Archive janitor visible during Rolex mission** — Added `notFlag: 'act5_complete'` to final archive janitor entry.
 7. **Break room DEF poster stuck behind arcade cabinet** — Moved to `x:5, z:6.9`.
 

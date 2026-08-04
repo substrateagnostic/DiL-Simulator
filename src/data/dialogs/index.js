@@ -75,7 +75,7 @@ export const DIALOGS = {
     /* 1 */ { type: 'end' },
   ],
 
-  neutral_ross: [
+  neutral_skip: [
     /* 0 */ { type: 'text', speaker: 'Skip Hartley', text: "Circle back with me when the timing is right, buddy." },
     /* 1 */ { type: 'end' },
   ],
@@ -189,7 +189,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   // ROSS -- Your boss. The briefing.
   // --------------------------------------------------------------------------
-  ross_not_ready: [
+  skip_not_ready: [
     /* 0 */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew! My man. Before we get into the big stuff — have you met the team yet? Like, all of them?" },
     /* 1 */ { type: 'text', speaker: 'Skip Hartley', text: "Janet runs the front desk. She knows everything and will tell you exactly half of it. The Intern does whatever we point him at. He's enthusiastic. That's his whole thing." },
     /* 2 */ { type: 'text', speaker: 'Skip Hartley', text: "Then there's Isaiah and Alex from IT. Load-bearing walls, metaphorically. Isaiah knows where everything is filed. Alex knows why nothing works." },
@@ -197,7 +197,7 @@ export const DIALOGS = {
     /* 4 */ { type: 'end' },
   ],
 
-  ross_intro: [
+  skip_intro: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: 'Andrew! My man! Come in, come in. Close the door. Actually, leave it open. Actually, close it halfway. Power move.' },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "So. The Henderson Trust. This is the big one, buddy. This is our Super Bowl. Our moon landing. Our... what's that thing where they do the thing?" },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: 'Could you be more specific?' },
@@ -353,7 +353,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 34, ifFalse: 1 },
     // Gate: toner installation stage
     /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 21, ifFalse: 2 },
-    // Gate: requires Ross briefing — no Henderson spoilers before then
+    // Gate: requires Skip briefing — no Henderson spoilers before then
     /* 2  */ { type: 'condition', flag: 'briefing_complete', ifTrue: 4, ifFalse: 3 },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.' It's just a printer.", next: 20 },
     // Gate: quest already started (waiting on Alex)
@@ -575,7 +575,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   // ROSS ACT 2 -- Terrible mid-game advice
   // --------------------------------------------------------------------------
-  ross_act2: [
+  skip_act2: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew! Buddy! Quick sync. How's the Henderson thing going?" },
     /* 1  */ { type: 'choice', speaker: 'Skip Hartley', text: 'Give me the thirty-thousand-foot view.', choices: [
       { text: "It's a complete disaster, Skip.", next: 2 },
@@ -602,7 +602,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   // ROSS POST-KAREN DEBRIEF -- Required conversation before Chad fight
   // --------------------------------------------------------------------------
-  ross_post_karen: [
+  skip_post_karen: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew! Come in, come in. Shut the door. This is a Level Three conversation. We don't broadcast Level Threes." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "First — HUGE props on Karen. I'm not going to say I had doubts, but I had... significant doubts. A medium-to-large amount of doubts." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "She threw a binder at me, Skip." },
@@ -620,7 +620,7 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: "Fair. But here's the trick: whatever he says, respond with 'interesting pivot' and slowly redirect. Works on everyone under 30 with a SoundCloud account." },
     /* 12 */ { type: 'text', speaker: 'Skip Hartley', text: "He's down in the conference room. Housekeeping is still fishing binder tabs out of the air vents but it should be mostly usable." },
     /* 13 */ { type: 'text', speaker: 'Skip Hartley', text: "You've got this. Confident. Adaptable. And whatever you do — don't mention crypto first. Let HIM bring it up. He always brings it up." },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'ross_post_karen', value: true, next: 15 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'skip_post_karen', value: true, next: 15 },
     /* 15 */ { type: 'end' },
   ],
 
@@ -795,7 +795,7 @@ export const DIALOGS = {
     /* 22 */ { type: 'stage', next: 3, beats: [
       { actor: 'regional', walkTo: 'table_stand_n', face: 'table_approach', speed: 1.7 },
       { actor: 'player',   walkTo: 'table_approach', face: 'regional', speed: 1.6 },
-      { actor: 'ross',     face: 'table_stand_n', wait: false },
+      { actor: 'skip',     face: 'table_stand_n', wait: false },
     ] },
     /* 23 */ { type: 'stage', next: 5, beats: [
       { actor: 'player',   walkTo: 'table_seat_sw', sit: true, speed: 1.5 },
@@ -807,7 +807,7 @@ export const DIALOGS = {
     ] },
     /* 25 */ { type: 'stage', next: 19, beats: [
       { actor: 'regional', pose: 'ready', expression: 'angry', face: 'player', hold: 0.9 },
-      { actor: 'ross',     face: 'regional', wait: false },
+      { actor: 'skip',     face: 'regional', wait: false },
     ] },
   ],
 
@@ -849,7 +849,7 @@ export const DIALOGS = {
   ],
 
   // --------------------------------------------------------------------------
-  // SECRET ENDING -- Grandma is Ross's mom
+  // SECRET ENDING -- Grandma is Skip's mom
   // --------------------------------------------------------------------------
   secret_ending: [
     // STAGED. The stage nodes live at 56+ (CLAUDE.md: never insert into the
@@ -908,7 +908,7 @@ export const DIALOGS = {
     /* 51 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Oh, Skip...' },
     /* 52 */ { type: 'text', speaker: 'Skip Hartley', text: "I DON'T EVEN KNOW WHAT SYNERGY MEANS, MOM!" },
     /* 53 */ { type: 'action', action: 'set_flag', flag: 'secret_path_complete', value: true, next: 54 },
-    /* 54 */ { type: 'action', action: 'start_combat', encounter: 'ross_boss', next: 55 },
+    /* 54 */ { type: 'action', action: 'start_combat', encounter: 'skip_boss', next: 55 },
     /* 55 */ { type: 'end' },
     // ── STAGING (appended; routed to from 0/3/11/12/34/37/48) ──────────────
     // Marks live in `executive_floor.marks`. Skip and Grandma START seated at
@@ -920,23 +920,23 @@ export const DIALOGS = {
     // CONCURRENT — two heads turning is not worth blanking the screen for.
     // The turn plays under the line it is a reaction to.
     /* 57 */ { type: 'stage', concurrent: true, next: 4, beats: [
-      { actor: 'ross',    face: 'player' },
+      { actor: 'skip',    face: 'player' },
       { actor: 'grandma', face: 'player', hold: 0.3 },
     ] },
     // "Mom!" — Skip is out of his chair before he knows he stood up.
     /* 58 */ { type: 'stage', next: 12, beats: [
-      { actor: 'ross', stand: true, walkTo: [6.6, 8.6], face: 'grandma', speed: 1.9, hold: 0.25 },
+      { actor: 'skip', stand: true, walkTo: [6.6, 8.6], face: 'grandma', speed: 1.9, hold: 0.25 },
     ] },
     // "Skip, sit down. Andrew, you too."
     /* 59 */ { type: 'stage', next: 13, beats: [
-      { actor: 'ross',   walkTo: 'table_seat_e', sit: true, speed: 1.3 },
+      { actor: 'skip',   walkTo: 'table_seat_e', sit: true, speed: 1.3 },
       { actor: 'player', walkTo: 'table_seat_s', sit: true, speed: 1.5 },
     ] },
     // "Grandma Henderson stands. She picks up her cane." CONCURRENT — the
     // narration has already said it; she should rise while the NEXT line reads,
     // not in a black gap after it.
     /* 60 */ { type: 'stage', concurrent: true, next: 35, beats: [
-      { actor: 'grandma', stand: true, walkTo: [4, 6.4], face: 'ross', speed: 1.1, hold: 0.45 },
+      { actor: 'grandma', stand: true, walkTo: [4, 6.4], face: 'skip', speed: 1.1, hold: 0.45 },
     ] },
     // "…marches toward the Regional Manager's temporary office. Skip and
     // Andrew follow." On path_grandma the Regional Manager has NO VISIBLE room
@@ -947,7 +947,7 @@ export const DIALOGS = {
     /* 61 */ { type: 'stage', next: 38, beats: [
       { actor: 'regional', show: true, face: 'exec_center' },
       { actor: 'grandma', stand: true, walkTo: 'regional_confront', face: 'regional', speed: 2.3 },
-      { actor: 'ross',    stand: true, walkTo: 'regional_flank_s', face: 'regional', speed: 1.8 },
+      { actor: 'skip',    stand: true, walkTo: 'regional_flank_s', face: 'regional', speed: 1.8 },
       { actor: 'player',  stand: true, walkTo: 'regional_flank_n', face: 'regional', speed: 1.8 },
       { actor: 'regional', face: 'grandma', after: 1 },
     ] },
@@ -956,8 +956,8 @@ export const DIALOGS = {
     // box blanked and he jogged across an empty screen in silence.
     /* 62 */ { type: 'stage', concurrent: true, next: 49, beats: [
       { actor: 'regional', exit: 'elevator', speed: 3.0 },
-      { actor: 'player',  face: 'ross', wait: false },
-      { actor: 'grandma', face: 'ross', wait: false },
+      { actor: 'player',  face: 'skip', wait: false },
+      { actor: 'grandma', face: 'skip', wait: false },
     ] },
   ],
 
@@ -1004,9 +1004,9 @@ export const DIALOGS = {
     { type: 'end' },
   ],
 
-  ross_boss_retry: [
+  skip_boss_retry: [
     { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Let's just skip to the part where I have a breakdown. We both know how this goes." },
-    { type: 'action', action: 'start_combat', encounter: 'ross_boss' },
+    { type: 'action', action: 'start_combat', encounter: 'skip_boss' },
     { type: 'end' },
   ],
 
@@ -1119,7 +1119,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   // ROSS POST-CHAD DEBRIEF -- Required conversation before Grandma fight
   // --------------------------------------------------------------------------
-  ross_post_chad: [
+  skip_post_chad: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Close the door. Both locks. Yes, there are two locks. I had them installed after the Henderson file came across my desk." },
     /* 1  */ { type: 'text', speaker: 'Andrew', text: "Skip, it's just an elderly woman—" },
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "She is NOT 'just' anything, Andrew. Karen was a complaint form with legs. Chad was a protein shake with a LinkedIn. Grandma Henderson is a DIFFERENT CATEGORY." },
@@ -1134,10 +1134,10 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: "She's waiting in the conference room. I'll be monitoring the situation remotely." },
     /* 12 */ { type: 'text', speaker: 'Andrew', text: "Monitoring how?" },
     /* 13 */ { type: 'text', speaker: 'Skip Hartley', text: "From home. With the door locked. Both locks." },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'ross_post_chad', value: true, next: 15 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'skip_post_chad', value: true, next: 15 },
     /* 15 */ { type: 'end' },
     // The late husband is Harold — Andrew has actually read the Henderson
-    // file. Ross has not, and Loman never hears corrections (#29).
+    // file. Skip has not, and Loman never hears corrections (#29).
     /* 16 */ { type: 'text', speaker: 'Andrew', text: "...Harold.", next: 11 },
   ],
 
@@ -1219,7 +1219,7 @@ export const DIALOGS = {
     ] },
   ],
 
-  ross_boss_defeated: [
+  skip_boss_defeated: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "I... *panting* ...I don't even know what just happened." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: 'Was I... did I just fight you? With corporate buzzwords?' },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "You tried to 'circle back' on me three times, Skip." },
@@ -1228,7 +1228,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Skip Hartley', text: "You're right, Mom. You're always right. Can I have a cookie?" },
     /* 6  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Of course, dear.' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'Skip eats a cookie. He starts to cry. It is somehow the most normal thing that has happened all week.' },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'ross_defeated', value: true },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'skip_defeated', value: true },
     /* 9  */ { type: 'text', speaker: 'Grandma Henderson', text: "Well. Now that Skip has gotten that out of his system..." },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: 'The overhead lights surge. Every screen in the office flickers to the same image: a trust document, dated 1947, scrolling endlessly.' },
     /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: "Mom... what's happening to the building?" },
@@ -1408,7 +1408,7 @@ export const DIALOGS = {
     { type: 'end' },
   ],
 
-  ross_desk: [
+  skip_desk: [
     { type: 'text', speaker: 'Narrator', text: 'Skip\'s desk. Dual monitors, both displaying LinkedIn motivational posts.' },
     { type: 'text', speaker: 'Narrator', text: 'A "#1 Boss" mug sits front and center. The receipt is still in the mug. Skip bought it for himself.' },
     { type: 'text', speaker: 'Narrator', text: 'There\'s a framed photo of Skip shaking hands with someone important-looking. On closer inspection, the "important person" is just Skip in a different suit, from a different angle.' },
@@ -1617,17 +1617,17 @@ export const DIALOGS = {
   ],
 
   // ==========================================================================
-  // RACHEL — trust officer, cubicle farm (NPC id `rachel_to`).
+  // RACHEL — trust officer, cubicle farm (NPC id `rachel`).
   // First one in every morning. Practical kindness that never announces itself
   // (Haruf register). No relation to Meredith Sterling below, whose internal
-  // ids are `rachel` / `rachel_boss`.
+  // ids are `meredith` / `meredith_boss`.
   // ==========================================================================
-  rachel_to_intro: [
+  rachel_intro: [
     /* 0  */ { type: 'text', speaker: 'Rachel', text: "Oh. Hi." },
     /* 1  */ { type: 'text', speaker: 'Andrew', text: "I didn't think anyone was here yet." },
     /* 2  */ { type: 'text', speaker: 'Rachel', text: "I'm always here first." },
     /* 3  */ { type: 'text', speaker: 'Rachel', text: "I'm Rachel. Trust officer." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'met_rachel_to', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'met_rachel', value: true, next: 5 },
     /* 5  */ { type: 'text', speaker: 'Rachel', text: "Coffee maker's around the corner — sounds like it's dying, but it works." },
     /* 6  */ { type: 'end' },
   ],
@@ -1671,9 +1671,9 @@ export const DIALOGS = {
     /* 2  */ { type: 'end' },
   ],
 
-  // MEREDITH STERLING (internal ids `rachel` / `rachel_boss`) — SVP of
+  // MEREDITH STERLING (internal ids `meredith` / `meredith_boss`) — SVP of
   // Strategic Operations, ice queen. Not the Rachel above.
-  rachel_intro: [
+  meredith_intro: [
     /* 0  */ { type: 'text', speaker: 'Meredith Sterling', text: '...' },
     /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "You're the new trust officer." },
     /* 2  */ { type: 'text', speaker: 'Meredith Sterling', text: "I'm Meredith Sterling. SVP of Strategic Operations. I oversee... everything." },
@@ -1686,12 +1686,12 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Meredith Sterling', text: "I'll be watching your performance closely. This department has been... underperforming. That will change." },
     /* 7  */ { type: 'text', speaker: 'Meredith Sterling', text: "Of course he did. Skip treats management theory like a religion. Unfortunately, he's a bad practitioner." },
     /* 8  */ { type: 'text', speaker: 'Meredith Sterling', text: "Results, Andrew. That's what matters to me. Not synergy. Not paradigm shifts. Results." },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'met_rachel', value: true, next: 10 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'met_meredith', value: true, next: 10 },
     /* 10 */ { type: 'text', speaker: 'Meredith Sterling', text: "We'll speak again. Soon." },
     /* 11 */ { type: 'end' },
   ],
 
-  rachel_return: [
+  meredith_return: [
     /* 0 */ { type: 'text', speaker: 'Meredith Sterling', text: "I don't have time for small talk. Do you have results?" },
     /* 1 */ { type: 'end' },
   ],
@@ -1757,7 +1757,7 @@ export const DIALOGS = {
     /* 9  */ { type: 'end' },
   ],
 
-  ross_act3: [
+  skip_act3: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Hey. Come in. Sit down. Actually, don't sit down. Actually... I don't know. Everything is weird today." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "So. There's a woman from corporate here. Meredith Sterling. She's... she's doing a review." },
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "A 'comprehensive operational assessment.' That's corporate for 'finding reasons to fire people.'" },
@@ -1772,7 +1772,7 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Skip Hartley', text: "She wants to 'optimize' the trust department. Which I think means cutting half of us and making the other half do twice the work." },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "She mentioned something about 'legacy systems' and 'archival redundancies.' I think she's talking about the old records in the basement." },
     /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "Also she asked about the Janitor. By name. Which is weird because nobody knows the Janitor's actual name. I just call him 'sir' because he scares me a little." },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'read_ross_act3', value: true, next: 12 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'read_skip_act3', value: true, next: 12 },
     /* 12 */ { type: 'end' },
   ],
 
@@ -1844,7 +1844,7 @@ export const DIALOGS = {
     /* 10 */ { type: 'end' },
   ],
 
-  rachel_act3: [
+  meredith_act3: [
     /* 0  */ { type: 'text', speaker: 'Meredith Sterling', text: "Andrew. I've been reviewing your work on the Henderson Trust." },
     /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "Interesting approach. Some would say reckless. I say it produced a measurable outcome, which in this department qualifies as exotic." },
     /* 2  */ { type: 'text', speaker: 'Meredith Sterling', text: "I'm here to ensure this department meets corporate standards. Standards that, frankly, it has not been meeting." },
@@ -1858,7 +1858,7 @@ export const DIALOGS = {
     /* 7  */ { type: 'text', speaker: 'Meredith Sterling', text: "Think about it. And don't waste time on 'investigations.' I know what Alex from IT has been doing in that server room. It stops now." },
     /* 8  */ { type: 'text', speaker: 'Meredith Sterling', text: "'Happy.' That's a luxury, Andrew. Not a strategy." },
     /* 9  */ { type: 'text', speaker: 'Meredith Sterling', text: "This department will change. The question is whether you're driving the change or being driven over by it." },
-    /* 10 */ { type: 'action', action: 'set_flag', flag: 'read_rachel_act3', value: true, next: 11 },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'read_meredith_act3', value: true, next: 11 },
     /* 11 */ { type: 'end' },
   ],
 
@@ -1962,7 +1962,7 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Diane', text: "She knows. I don't know how, but she knows you've been in the Archive." },
     /* 10 */ { type: 'text', speaker: 'Diane', text: "She's calling an emergency board meeting. She wants to dissolve the trust department entirely." },
     /* 11 */ { type: 'action', action: 'set_flag', flag: 'act3_complete', value: true, next: 12 },
-    /* 12 */ { type: 'action', action: 'set_flag', flag: 'rachel_lockdown', value: true, next: 13 },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'meredith_lockdown', value: true, next: 13 },
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Dissolve the— she can't DO that. Can she?" },
     /* 14 */ { type: 'text', speaker: 'Andrew', text: "Not if we can prove what the Regional Manager has been doing. We need to rally the team — find Janet at her desk, Diane in reception, and the Mysterious Janitor in the Archive." },
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The Janitor's been waiting for this moment for twenty years. And once you have Janet and Diane on board, work on convincing Skip — he won't budge without the right words." },
@@ -1993,58 +1993,58 @@ export const DIALOGS = {
     /* 7  */ { type: 'end' },
   ],
 
-  // Convince Ross puzzle — need to use his buzzwords correctly (4 choice
+  // Convince Skip puzzle — need to use his buzzwords correctly (4 choice
   // points, need 3/4, checked by the condition tree at nodes 23+).
-  // Failing ends without ross_rallied; ExplorationState re-offers the
-  // dialog at act 4 until he's rallied, and ross_convince_* flags persist
+  // Failing ends without skip_rallied; ExplorationState re-offers the
+  // dialog at act 4 until he's rallied, and skip_convince_* flags persist
   // across attempts so a retry only needs the missed buzzwords.
-  ross_act4: [
+  skip_act4: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. I... I've been thinking. Which is new for me, but I'm trying it." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "Meredith wants to dissolve the department. MY department. The one I built from... okay, I didn't build it. The Janitor built it. But I've been MANAGING it." },
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "The thing is... she's not wrong about everything. I haven't been a great leader. I've been a great TALKER. Those are different things." },
     /* 3  */ { type: 'choice', speaker: 'Skip Hartley', text: "So tell me, Andrew. Why should I fight for this department?", choices: [
-      { text: "Because this department leverages core competencies that can't be outsourced.", next: 4, flag: 'ross_convince_1', flagValue: true },
+      { text: "Because this department leverages core competencies that can't be outsourced.", next: 4, flag: 'skip_convince_1', flagValue: true },
       { text: "Because you care about your team, Skip.", next: 6 },
     ]},
     /* 4  */ { type: 'text', speaker: 'Skip Hartley', text: "'Leverages core competencies'... that's... that's MY phrase. You're speaking my language." },
     /* 5  */ { type: 'text', speaker: 'Skip Hartley', text: "Okay, I'm listening. But I need more." },
     /* 6  */ { type: 'text', speaker: 'Skip Hartley', text: "I DO care about the team. Janet. The Intern. Even Alex, who definitely runs Minecraft on company servers." },
     /* 7  */ { type: 'choice', speaker: 'Skip Hartley', text: "But caring isn't a strategy. What's the strategy?", choices: [
-      { text: "We disrupt Meredith's narrative by pivoting to a transparency-first paradigm.", next: 8, flag: 'ross_convince_2', flagValue: true },
+      { text: "We disrupt Meredith's narrative by pivoting to a transparency-first paradigm.", next: 8, flag: 'skip_convince_2', flagValue: true },
       { text: "We tell the truth about what's been happening.", next: 10 },
     ]},
     /* 8  */ { type: 'text', speaker: 'Skip Hartley', text: "'Disrupt.' 'Pivot.' 'Paradigm.' Andrew, you magnificent bastard. You're speaking fluent Skip." },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "I'm getting FIRED UP. What else?" },
     /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "The truth? The TRUTH? Andrew, the truth is terrifying. The truth is that someone has been stealing from our clients and I didn't notice because I was too busy reading leadership books." },
     /* 11 */ { type: 'choice', speaker: 'Skip Hartley', text: "How do we actually win this?", choices: [
-      { text: "We need to synergize our stakeholder alignment across all trust verticals.", next: 12, flag: 'ross_convince_3', flagValue: true },
+      { text: "We need to synergize our stakeholder alignment across all trust verticals.", next: 12, flag: 'skip_convince_3', flagValue: true },
       { text: "We show the board that Meredith is part of the cover-up.", next: 14 },
     ]},
     /* 12 */ { type: 'text', speaker: 'Skip Hartley', text: "'SYNERGIZE.' 'STAKEHOLDER ALIGNMENT.' 'TRUST VERTICALS.'" },
     /* 13 */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. That sentence means absolutely nothing. And yet... it means EVERYTHING to me." },
     /* 14 */ { type: 'text', speaker: 'Skip Hartley', text: "Meredith is part of it? She's not just reviewing us, she's PROTECTING the person who—" },
     /* 15 */ { type: 'choice', speaker: 'Skip Hartley', text: "If that's true, we need to move fast. What's the endgame?", choices: [
-      { text: "We circle back to the original charter and leverage our fiduciary moat.", next: 16, flag: 'ross_convince_4', flagValue: true },
+      { text: "We circle back to the original charter and leverage our fiduciary moat.", next: 16, flag: 'skip_convince_4', flagValue: true },
       { text: "We go to the board with the evidence. All of it.", next: 18 },
     ]},
     /* 16 */ { type: 'text', speaker: 'Skip Hartley', text: "'Circle back.' 'Fiduciary moat.' That's... that's beautiful. I don't know what it means but I feel it in my SOUL." },
     /* 17 */ { type: 'text', speaker: 'Skip Hartley', text: "I'm in. Whatever it takes. For the department. For the team. For the synergy." },
     /* 18 */ { type: 'text', speaker: 'Skip Hartley', text: "The board. You're right. We take the evidence to the board meeting. All of it." },
     /* 19 */ { type: 'text', speaker: 'Skip Hartley', text: "I'm done hiding behind buzzwords. Well... I'm done hiding behind MOST buzzwords. Some of them are load-bearing.", next: 23 },
-    /* 20 */ { type: 'action', action: 'set_flag', flag: 'ross_rallied', value: true, next: 21 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'skip_rallied', value: true, next: 21 },
     /* 21 */ { type: 'text', speaker: 'Skip Hartley', text: "Let's do this. *finger guns* ...Sorry. Force of habit." },
     /* 22 */ { type: 'end' },
-    // Buzzword tally: pass (→20) needs at least 3 of ross_convince_1..4.
+    // Buzzword tally: pass (→20) needs at least 3 of skip_convince_1..4.
     // Every fail route lands on 32.
-    /* 23 */ { type: 'condition', flag: 'ross_convince_1', ifTrue: 24, ifFalse: 27 },
-    /* 24 */ { type: 'condition', flag: 'ross_convince_2', ifTrue: 25, ifFalse: 30 },
-    /* 25 */ { type: 'condition', flag: 'ross_convince_3', ifTrue: 20, ifFalse: 26 },
-    /* 26 */ { type: 'condition', flag: 'ross_convince_4', ifTrue: 20, ifFalse: 32 },
-    /* 27 */ { type: 'condition', flag: 'ross_convince_2', ifTrue: 28, ifFalse: 32 },
-    /* 28 */ { type: 'condition', flag: 'ross_convince_3', ifTrue: 29, ifFalse: 32 },
-    /* 29 */ { type: 'condition', flag: 'ross_convince_4', ifTrue: 20, ifFalse: 32 },
-    /* 30 */ { type: 'condition', flag: 'ross_convince_3', ifTrue: 31, ifFalse: 32 },
-    /* 31 */ { type: 'condition', flag: 'ross_convince_4', ifTrue: 20, ifFalse: 32 },
+    /* 23 */ { type: 'condition', flag: 'skip_convince_1', ifTrue: 24, ifFalse: 27 },
+    /* 24 */ { type: 'condition', flag: 'skip_convince_2', ifTrue: 25, ifFalse: 30 },
+    /* 25 */ { type: 'condition', flag: 'skip_convince_3', ifTrue: 20, ifFalse: 26 },
+    /* 26 */ { type: 'condition', flag: 'skip_convince_4', ifTrue: 20, ifFalse: 32 },
+    /* 27 */ { type: 'condition', flag: 'skip_convince_2', ifTrue: 28, ifFalse: 32 },
+    /* 28 */ { type: 'condition', flag: 'skip_convince_3', ifTrue: 29, ifFalse: 32 },
+    /* 29 */ { type: 'condition', flag: 'skip_convince_4', ifTrue: 20, ifFalse: 32 },
+    /* 30 */ { type: 'condition', flag: 'skip_convince_3', ifTrue: 31, ifFalse: 32 },
+    /* 31 */ { type: 'condition', flag: 'skip_convince_4', ifTrue: 20, ifFalse: 32 },
     /* 32 */ { type: 'text', speaker: 'Skip Hartley', text: "I want to believe you, Andrew. I do. But half of that pitch was just... words. REGULAR words. Anyone can say regular words." },
     /* 33 */ { type: 'text', speaker: 'Skip Hartley', text: "Come back when you can say it in fluent Skip. I'll be here. Leveraging my feelings. Circling back to my doubts." },
     /* 34 */ { type: 'end' },
@@ -2062,7 +2062,7 @@ export const DIALOGS = {
     /* 8  */ { type: 'end' },
   ],
 
-  janitor_needs_ross: [
+  janitor_needs_skip: [
     /* 0 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Not yet, Andrew. There's one more person who needs to decide where they stand." },
     /* 1 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Talk to Skip. He needs to choose: the buzzwords or the truth. Until he chooses, I have nothing more to give." },
     /* 2 */ { type: 'end' },
@@ -2471,12 +2471,12 @@ export const DIALOGS = {
     // ── JANET dispatcher (47–61) ──────────────────────────────────────────
     /* 47 */ { type: 'condition', flag: 'act6_complete', ifTrue: 48, ifFalse: 1 },
     /* 48 */ { type: 'condition', flag: 'act7_complete', ifTrue: 57, ifFalse: 52 },
-    // Act 6: Karen's just gone, Rachel is still upstairs
+    // Act 6: Karen's just gone, Meredith is still upstairs
     /* 49 */ { type: 'text', speaker: 'Janet', text: "I keep thinking about Karen's face when she finally backed down. Three meetings in. She was exhausted before I was." },
     /* 50 */ { type: 'text', speaker: 'Janet', text: "I spent ten years scared of people like Karen. Turns out they're just afraid too. They've just had longer to practice hiding it." },
     /* 51 */ { type: 'text', speaker: 'Andrew', text: "And now we go upstairs.", next: 56 },
     /* 52 */ { type: 'condition', flag: 'chat_janet_act6_seen', ifTrue: 1, ifFalse: 49 },
-    // Act 7: Rachel's gone, the department is saved
+    // Act 7: Meredith's gone, the department is saved
     /* 53 */ { type: 'text', speaker: 'Janet', text: "I called my mom last night. First time in six months. I said: 'I work somewhere worth keeping.' That's all I said. She cried." },
     /* 54 */ { type: 'text', speaker: 'Janet', text: "*very long sip*" },
     /* 55 */ { type: 'text', speaker: 'Janet', text: "I've been here twelve years, Andrew. This is the first time I've actually meant it.", next: 58 },
@@ -2495,7 +2495,7 @@ export const DIALOGS = {
     /* 65 */ { type: 'text', speaker: 'Alex from IT', text: "They called it 'over-involved.' I called it thorough. Turns out they're the same thing." },
     /* 66 */ { type: 'text', speaker: 'Andrew', text: "That quality has saved this building twice.", next: 71 },
     /* 67 */ { type: 'condition', flag: 'chat_alex_act6_seen', ifTrue: 5, ifFalse: 64 },
-    // Act 7: audit trail preserved, records survive Rachel
+    // Act 7: audit trail preserved, records survive Meredith
     /* 68 */ { type: 'text', speaker: 'Alex from IT', text: "I forwarded the audit trail. To everyone. Yes, including the board." },
     /* 69 */ { type: 'text', speaker: 'Alex from IT', text: "Every badge, every cable, every 3 AM packet. Meredith can claim ignorance. The logs cannot." },
     /* 70 */ { type: 'text', speaker: 'Alex from IT', text: "That's the thing about records. They don't care who wins.", next: 73 },
@@ -2715,7 +2715,7 @@ export const DIALOGS = {
   // RACHEL BOSS FIGHT — Board Room confrontation
   // --------------------------------------------------------------------------
 
-  rachel_boss_combat: [
+  meredith_boss_combat: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "You enter the Board Room. Meredith stands at the head of the table. Behind her, a screen displays charts and graphs that all say the same thing: DISSOLVE.", next: 21 },
     /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "Andrew. I was wondering when you'd show up." },
     /* 2  */ { type: 'text', speaker: 'Meredith Sterling', text: "I've already presented my case to the board. The vote is in one hour. Your department is finished." },
@@ -2729,7 +2729,7 @@ export const DIALOGS = {
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "The building hums. The charter on the table begins to glow with that impossible warm light." },
     /* 11 */ { type: 'text', speaker: 'Meredith Sterling', text: "What is— this is some kind of trick. Fine. If you want a fight, I'll give you one." },
     /* 12 */ { type: 'text', speaker: 'Meredith Sterling', text: "I am Meredith, SVP of Strategic Operations. I have a Harvard MBA, a corner office, and ZERO patience for corporate fairy tales.", next: 15 },
-    /* 13 */ { type: 'action', action: 'start_combat', encounter: 'rachel_boss', next: 14 },
+    /* 13 */ { type: 'action', action: 'start_combat', encounter: 'meredith_boss', next: 14 },
     /* 14 */ { type: 'end' },
     // Quarterly-review leverage (logic-sweep MAJOR #11): the flags are
     // consumed mechanically in _startCombat (enemy stat overrides) —
@@ -2747,19 +2747,19 @@ export const DIALOGS = {
     // along the north side first (the walker is a straight line with an axis
     // slide, not a pathfinder).
     /* 21 */ { type: 'stage', next: 1, beats: [
-      { actor: 'rachel', walkTo: [3, 2.4], speed: 1.5 },
-      { actor: 'rachel', walkTo: 'head_stand', face: 'table_edge_s', speed: 1.4, after: 0 },
+      { actor: 'meredith', walkTo: [3, 2.4], speed: 1.5 },
+      { actor: 'meredith', walkTo: 'head_stand', face: 'table_edge_s', speed: 1.4, after: 0 },
       { actor: 'player', walkTo: 'table_edge_s', face: 'head_stand', speed: 1.5 },
     ] },
     /* 22 */ { type: 'stage', next: 5, beats: [
       { actor: 'player', face: 'head_stand', gesture: 'cast', hold: 0.8 },
     ] },
     /* 23 */ { type: 'stage', next: 13, beats: [
-      { actor: 'rachel', face: 'player', gesture: 'attack_ally', hold: 0.7 },
+      { actor: 'meredith', face: 'player', gesture: 'attack_ally', hold: 0.7 },
     ] },
   ],
 
-  rachel_boss_defeated: [
+  meredith_boss_defeated: [
     // ── Voice-profile branching: how this victory FELT depends on Andrew's profile.
     // Charter Read → rhetorical-kill epilogue (path 30+). Steadied → humble (path 50+).
     // Hardened → cold (path 60+). Default → existing universal celebration. All paths
@@ -2797,7 +2797,7 @@ export const DIALOGS = {
     /* 28 */ { type: 'end' },
     /* 29 */ { type: 'end' },
 
-    // ── Charter Read epilogue (30-49) — Andrew rhetorical-killed Rachel by reading the founding clause.
+    // ── Charter Read epilogue (30-49) — Andrew rhetorical-killed Meredith by reading the founding clause.
     /* 30 */ { type: 'text', speaker: 'Meredith Sterling', text: "...what... was that..." },
     /* 31 */ { type: 'text', speaker: 'Narrator', text: "She'd been ready for everything. The legal threat. The compliance audit. The HR complaint. The PowerPoint counter-deck. She had answers prepared for all of it." },
     /* 32 */ { type: 'text', speaker: 'Narrator', text: "She wasn't ready for someone to read the document aloud." },
@@ -2854,8 +2854,8 @@ export const DIALOGS = {
     // than the last" — she walks the length of the room and out the south
     // door, slowly (1.15 tiles/s), instead of vanishing where she stood.
     /* 72 */ { type: 'stage', next: 7, beats: [
-      { actor: 'rachel', walkTo: [3, 8.4], speed: 1.15 },
-      { actor: 'rachel', exit: 'door_south', speed: 1.15, after: 0 },
+      { actor: 'meredith', walkTo: [3, 8.4], speed: 1.15 },
+      { actor: 'meredith', exit: 'door_south', speed: 1.15, after: 0 },
       { actor: 'player', face: 'door_south', wait: false },
     ] },
   ],
@@ -3355,7 +3355,7 @@ export const DIALOGS = {
   // ACT 6: FIDUCIARY UPRISING — NPC Dialogs
   // ==========================================================================
 
-  ross_act6: [
+  skip_act6: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Close the door." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "I've been thinking about what you said. About fiduciary duty. About what this place is supposed to mean." },
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "I spent twenty years climbing the ladder. Optimizing. Quick-syncing. Circling back. But I never asked... back to WHAT?" },
@@ -3365,10 +3365,10 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "Skip... that might be the most human thing you've ever said." },
     // Skip does not name the Rolex here. He has never seen it, it is not his
     // mission, and this is the scene that CREATES the board meeting
-    // (`ross_speech_ready`) — pointing at a wristwatch told the player to skip
+    // (`skip_speech_ready`) — pointing at a wristwatch told the player to skip
     // the set-piece the same line had just opened.
     /* 7  */ { type: 'text', speaker: 'Skip Hartley', text: "Don't get used to it. Go find whoever still picks up their phone in this building. Board room, four o'clock sharp — I'll be the one at the podium with a speech that doesn't have a single bullet point in it." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'ross_speech_ready', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'skip_speech_ready', value: true, next: 9 },
     /* 9  */ { type: 'end' },
   ],
 
@@ -3499,7 +3499,7 @@ export const DIALOGS = {
   // ==========================================================================
   // ACT 6: THE BOARD MEETING — the convergence set-piece.
   // Optional, but the scene five arcs have been building toward. Entry is
-  // Skip Hartley in the Board Room (`ross_speech_ready` → `board_meeting_closed`).
+  // Skip Hartley in the Board Room (`skip_speech_ready` → `board_meeting_closed`).
   // The player feeds Skip his lines at three choice points; the count of
   // "true thing" picks (bm_true_open/push/close) scores four outcome tiers
   // via the condition ladder at 116-121. Ally/evidence contributions in the
@@ -3807,15 +3807,15 @@ export const DIALOGS = {
       // table" and in concurrent mode that line lands while he walks. Prose is
       // canon, so the number moves, not the sentence — at 2.6 he is planted
       // before the narration describes him planted.
-      { actor: 'ross',   walkTo: 'head_approach', speed: 2.6, wait: false },
-      { actor: 'ross',   walkTo: 'head_stand', face: 'player', speed: 2.6, after: 0, hold: 0.3, wait: false },
-      { actor: 'player', face: 'ross', hold: 0.25 },
+      { actor: 'skip',   walkTo: 'head_approach', speed: 2.6, wait: false },
+      { actor: 'skip',   walkTo: 'head_stand', face: 'player', speed: 2.6, after: 0, hold: 0.3, wait: false },
+      { actor: 'player', face: 'skip', hold: 0.25 },
     ] },
     // Node 9 -> 12, "I'm here. Let's do this." — the meeting is called to
     // order and Andrew steps out of the line to the table.
     /* 179 */ { type: 'stage', concurrent: true, next: 12, beats: [
-      { actor: 'player',      walkTo: 'table_edge_s', face: 'ross', speed: 1.6 },
-      { actor: 'board_chair', face: 'ross', hold: 0.3, wait: false },
+      { actor: 'player',      walkTo: 'table_edge_s', face: 'skip', speed: 1.6 },
+      { actor: 'board_chair', face: 'skip', hold: 0.3, wait: false },
     ] },
 
     // BLOCK D — one step-out + one step-back per contribution. The step-back
@@ -3863,19 +3863,19 @@ export const DIALOGS = {
     // (3,5) is the only seat one step from where he speaks, which is why room
     // data leaves it empty and seats the board chair on the north side.
     /* 192 */ { type: 'stage', concurrent: true, next: 116, beats: [
-      { actor: 'ross', walkTo: 'head_chair', sit: true, speed: 1.2, hold: 0.3 },
+      { actor: 'skip', walkTo: 'head_chair', sit: true, speed: 1.2, hold: 0.3 },
     ] },
     // TIER 0 only — node 154 says Skip is "still standing at the end of the
     // table", so he is back on his feet before that line lands.
     /* 193 */ { type: 'stage', concurrent: true, next: 154, beats: [
-      { actor: 'ross', stand: true, walkTo: 'head_stand', face: 'player', speed: 1.2, hold: 0.25 },
+      { actor: 'skip', stand: true, walkTo: 'head_stand', face: 'player', speed: 1.2, hold: 0.25 },
     ] },
     // BLOCK H — the room empties and Skip crosses back to Andrew for the
     // handoff to the Archive. Non-blocking, so the walk plays under his lines.
     /* 194 */ { type: 'stage', concurrent: true, next: 167, beats: [
-      { actor: 'ross',   stand: true, walkTo: 'aisle_w', speed: 1.5, wait: false },
-      { actor: 'ross',   walkTo: 'skip_after', face: 'player', speed: 1.5, after: 0, hold: 0.3, wait: false },
-      { actor: 'player', face: 'ross', hold: 0.2 },
+      { actor: 'skip',   stand: true, walkTo: 'aisle_w', speed: 1.5, wait: false },
+      { actor: 'skip',   walkTo: 'skip_after', face: 'player', speed: 1.5, after: 0, hold: 0.3, wait: false },
+      { actor: 'player', face: 'skip', hold: 0.2 },
     ] },
   ],
 
@@ -4017,8 +4017,8 @@ export const DIALOGS = {
     ] },
   ],
 
-  // Ross — returned to office after Regional Director defeated
-  ross_returned: [
+  // Skip — returned to office after Regional Director defeated
+  skip_returned: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. You actually did it. I had to come back when I heard the Regional Director was gone." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "I'll be honest with you — when he showed up I thought it was over. But here you are." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Where does this leave us?" },
@@ -4027,7 +4027,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Then we optimize faster." },
     /* 6  */ { type: 'text', speaker: 'Skip Hartley', text: "..." },
     /* 7  */ { type: 'text', speaker: 'Skip Hartley', text: "That was actually kind of inspiring. Don't tell HR." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'ross_returned_seen', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'skip_returned_seen', value: true, next: 9 },
     /* 9  */ { type: 'end' },
   ],
 
@@ -4190,7 +4190,7 @@ export const DIALOGS = {
   // ACT 7 NPC DIALOGS
   // ==========================================================================
 
-  ross_act7: [
+  skip_act7: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "The penthouse. That's where The Algorithm lives. The thing that's been pulling Meredith's strings." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "I'll hold the board room. You go up there and show that glorified spreadsheet what fiduciary duty means." },
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "And Andrew? Come back. That's an order. A sincere one." },
@@ -5016,7 +5016,7 @@ export const DIALOGS = {
   // The charter is real. The seal is not on it. One afternoon, one city.
   // ==========================================================================
 
-  // The penthouse elevator rejects the charter; Ross calls; the Janitor
+  // The penthouse elevator rejects the charter; Skip calls; the Janitor
   // is suddenly there, the way he always is. Sets city_unlocked.
   charter_challenge: [
     /* 0  */ { type: 'action', action: 'set_flag', flag: 'read_charter_challenge', value: true, next: 1 },

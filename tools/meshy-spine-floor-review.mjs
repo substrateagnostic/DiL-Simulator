@@ -54,7 +54,7 @@ const ids = args.ids ? String(args.ids).split(',').filter(Boolean)
 // The 18 the producer flagged on the stance contact sheet.
 const FLAGGED = new Set(['alex_it', 'cfos_assistant', 'chad', 'chief_of_restructuring', 'client_m_athletic',
   'client_m_heavy', 'compliance', 'corporate_lawyer', 'data_analytics_lead', 'diane', 'firm_paralegal',
-  'intern', 'isaiah', 'networking_guy', 'regional', 'regional_director', 'restructuring_analyst', 'ross_boss']);
+  'intern', 'isaiah', 'networking_guy', 'regional', 'regional_director', 'restructuring_analyst', 'skip_boss']);
 
 // role -> clip file. Not the shipping assignment (see the header): the union of
 // the shared reaction files in both builds, plus the two calm stances that are
@@ -250,7 +250,7 @@ const data = [];
 const sheetRows = { side: [], front: [], back: [], tq: [] };
 // A representative slice for the reaction strips: 4 worst-affected, 2 clean
 // controls, the clip donor, and the cane character.
-const STRIP_IDS = ['firm_paralegal', 'intern', 'ross_boss', 'diane', 'karen', 'grandma', 'andrew', 'rachel_boss']
+const STRIP_IDS = ['firm_paralegal', 'intern', 'skip_boss', 'diane', 'karen', 'grandma', 'andrew', 'meredith_boss']
   .filter(i => ids.includes(i));
 
 for (const id of ids) {

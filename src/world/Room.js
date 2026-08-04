@@ -405,7 +405,7 @@ const DOOR_STYLES = {
 // A single exit can override with `doorStyle: 'exec'` etc. in room data
 // ('none' still means "this opening brings its own door furniture").
 const ROOM_DOOR_STYLE = {
-  ross_office: 'exec', ross_office_large: 'exec', conference_room: 'exec',
+  skip_office: 'exec', skip_office_large: 'exec', conference_room: 'exec',
   executive_floor: 'exec', board_room: 'exec',
   penthouse: 'exec', penthouse_expanded: 'exec', penthouse_aquarium: 'exec',
   penthouse_analytics: 'exec', penthouse_bar: 'exec',

@@ -252,7 +252,7 @@ const ARENA_BY_ID = {
   // Henderson bosses — each its own venue so the fights aren't the same room
   karen: 'karen', chad: 'chad', grandma: 'grandma',
   // conference room family
-  compliance: 'conference', regional: 'conference', ross_boss: 'conference',
+  compliance: 'conference', regional: 'conference', skip_boss: 'conference',
   hr_rep: 'conference',
   // parking garage / street toughs
   parking_enforcer: 'garage', networking_guy: 'garage', security_guard: 'garage',
@@ -263,7 +263,7 @@ const ARENA_BY_ID = {
   corporate_lawyer: 'board', restructuring_analyst: 'board', brand_consultant: 'board',
   chief_of_restructuring: 'board', restructuring_trio: 'board', restructuring: 'board',
   // penthouse / final bosses
-  rachel_boss: 'penthouse', regional_director: 'penthouse', the_firm: 'penthouse',
+  meredith_boss: 'penthouse', regional_director: 'penthouse', the_firm: 'penthouse',
   // reception roguelite / early
   reception_client: 'reception', intern: 'reception',
 };

@@ -6,7 +6,7 @@
 //
 // The cumulative count across all combats is persisted on Player.voiceCounts and
 // shapes late-game dialogue: Janet calls out Andrew getting cold; the Charter-
-// reading at Rachel only unlocks if the Witness has been heard enough; etc.
+// reading at Meredith only unlocks if the Witness has been heard enough; etc.
 //
 // Triggers fire each player turn; once a voice has fired in a fight it can't fire
 // again that fight. The "Thoughts" combat menu only appears when at least one
@@ -45,22 +45,22 @@ export const VOICES = {
     name: 'The Witness',
     description: 'The version of you who has seen the actual faces in the actual files.',
     color: '#ddccaa',
-    // Trigger: HP below 25% AND fighting one of Rachel's named lieutenants
+    // Trigger: HP below 25% AND fighting one of Meredith's named lieutenants
     trigger: (engine) => {
       const ratio = engine.player.hp / engine.player.maxHP;
       if (ratio >= 0.25) return false;
       const id = engine.enemy?.enemyId;
       const RACHEL_ALIGNED = new Set([
-        'rachel_boss', 'chief_of_restructuring', 'regional_director',
+        'meredith_boss', 'chief_of_restructuring', 'regional_director',
         'algorithm', 'data_analytics_lead', 'corporate_lawyer',
       ]);
-      // Also fire if any enemy in a multi-fight is Rachel-aligned
+      // Also fire if any enemy in a multi-fight is Meredith-aligned
       if (engine.enemies?.some(e => RACHEL_ALIGNED.has(e.enemyId))) return true;
       return RACHEL_ALIGNED.has(id);
     },
     actionId: 'witness_invoke',
   },
-  // The apotheosis voice. Available ONLY in the Rachel boss fight, ONLY if the
+  // The apotheosis voice. Available ONLY in the Meredith boss fight, ONLY if the
   // player has actually read the charter via the team_chat_hub Witness branch.
   // This is the payoff for the entire Reasonable Doubt arc — a rhetorical kill
   // built from accumulated narrative choices, not a stat purchase.
@@ -155,9 +155,9 @@ export const VOICE_ACTIONS = {
       const baseDmg = (pStats.atk + 50) * 1.5;
       const defense = eStats.def * 0.4;
       let damage = Math.max(10, Math.floor(baseDmg - defense));
-      // Witness deals +30% to Rachel-aligned enemies
+      // Witness deals +30% to Meredith-aligned enemies
       const RACHEL_ALIGNED = new Set([
-        'rachel_boss', 'chief_of_restructuring', 'regional_director',
+        'meredith_boss', 'chief_of_restructuring', 'regional_director',
         'algorithm', 'data_analytics_lead', 'corporate_lawyer',
       ]);
       if (RACHEL_ALIGNED.has(target.enemyId)) damage = Math.floor(damage * 1.3);
@@ -169,8 +169,8 @@ export const VOICE_ACTIONS = {
       return { type: 'voice_attack', damage, targetIndex: engine.targetEnemyIndex, momentumGain: 25, skepticLocked: true };
     },
   },
-  // Charter Read — the rhetorical kill. Damage is min(third of Rachel's max HP, 200 power computed normally).
-  // Sets `andrew_invoked_charter` so the post-Rachel dialog can branch on it.
+  // Charter Read — the rhetorical kill. Damage is min(third of Meredith's max HP, 200 power computed normally).
+  // Sets `andrew_invoked_charter` so the post-Meredith dialog can branch on it.
   charter_read: {
     voice: 'the_charter',
     name: 'Read the 1947 Charter Aloud',

@@ -223,21 +223,21 @@ const ACT6_BASE = {
   read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
   defeated_intern: true, briefing_complete: true, branch_chosen: true,
   karen_defeated: true, defeated_karen: true, chad_defeated: true, grandma_defeated: true,
-  ross_post_karen: true, ross_post_chad: true, ross_post_grandma: true,
+  skip_post_karen: true, skip_post_chad: true, skip_post_grandma: true,
   // A real Act-6 save always has this: the Archive's security_guard NPC hangs
   // off `notFlag: security_guard_info`, and janitor_act3 (which sets
   // read_janitor_act3) requires it. Without it the guard is still standing on
   // the Janitor's tile and a stray interact starts his fight.
   security_guard_info: true,
   act2_complete: true, act3_complete: true,
-  met_janitor: true, read_janitor_act3: true, janitor_rallied: true, ross_rallied: true,
+  met_janitor: true, read_janitor_act3: true, janitor_rallied: true, skip_rallied: true,
   janitor_riddle_1_done: true, janitor_riddle_2_done: true, janitor_riddle_3_done: true,
   has_charter: true, act4_complete: true,
   corporate_lawyer_defeated: true, board_room_accessible: true, act5_complete: true,
 };
 
 try {
-  await page.goto(`http://localhost:${PORT}/?dev&fixture=act6&shot=ross_office`);
+  await page.goto(`http://localhost:${PORT}/?dev&fixture=act6&shot=skip_office`);
   await page.waitForFunction(() => window.__shotReady === true, { timeout: 60000 });
   await page.waitForTimeout(1200);
 
@@ -245,7 +245,7 @@ try {
   console.log('\n=== 1. HAPPY PATH (objective ladder) ===');
 
   // STAGE 1 — act5_complete, Skip has not written the speech yet.
-  await setup({ ...ACT6_BASE }, 'ross_office');
+  await setup({ ...ACT6_BASE }, 'skip_office');
   await page.waitForTimeout(1400);
   const s1 = await objText();
   check('stage 1 names the 4 PM vote', /board votes on dissolution at 4 PM/i.test(s1), s1.slice(0, 90));
@@ -254,23 +254,23 @@ try {
   await page.waitForTimeout(3800);
   await shotQuest('01-stage1-prepare');
 
-  // Talk to Skip → ross_act6 → ross_speech_ready.
+  // Talk to Skip → skip_act6 → skip_speech_ready.
   await page.evaluate(() => {
     const ex = window.__explore;
-    const npc = ex.roomManager.entityManager.npcs.find(n => n.id === 'ross' && n.visible);
+    const npc = ex.roomManager.entityManager.npcs.find(n => n.id === 'skip' && n.visible);
     return ex._getNpcDialogId(npc);
   });
   const skipDialog = await page.evaluate(() => {
     const ex = window.__explore;
-    const npc = ex.roomManager.entityManager.npcs.find(n => n.id === 'ross' && n.visible);
+    const npc = ex.roomManager.entityManager.npcs.find(n => n.id === 'skip' && n.visible);
     return npc ? ex._getNpcDialogId(npc) : null;
   });
-  check('Skip serves ross_act6 in his office', skipDialog === 'ross_act6', String(skipDialog));
+  check('Skip serves skip_act6 in his office', skipDialog === 'skip_act6', String(skipDialog));
   await page.evaluate(async () => {
     const ex = window.__explore;
     const { DIALOGS } = await import('/src/data/dialogs/index.js');
     const { DialogState } = await import('/src/states/DialogState.js');
-    ex.stateManager.push(new DialogState(DIALOGS.ross_act6, ex.player, ex.stateManager, 'ross_act6'));
+    ex.stateManager.push(new DialogState(DIALOGS.skip_act6, ex.player, ex.stateManager, 'skip_act6'));
   });
   await page.waitForTimeout(500);
   await startLineRecorder();
@@ -314,11 +314,11 @@ try {
   // ── 3. BAIL-OUT (run before the real meeting so nothing is written) ──────
   console.log('\n=== 3. BAIL-OUT ===');
   await goRoom('board_room');
-  check('Skip is staged in the Board Room on ross_speech_ready',
-    (await visibleNpcs('ross')).length === 1, JSON.stringify(await visibleNpcs('ross')));
+  check('Skip is staged in the Board Room on skip_speech_ready',
+    (await visibleNpcs('skip')).length === 1, JSON.stringify(await visibleNpcs('skip')));
   const bailEntry = await page.evaluate(() => {
     const ex = window.__explore;
-    const npc = ex.roomManager.entityManager.npcs.find(n => n.id === 'ross' && n.visible);
+    const npc = ex.roomManager.entityManager.npcs.find(n => n.id === 'skip' && n.visible);
     return npc ? ex._getNpcDialogId(npc) : null;
   });
   check('Board-Room Skip serves board_meeting', bailEntry === 'board_meeting', String(bailEntry));
@@ -337,7 +337,7 @@ try {
   check('bail-out writes nothing', Object.values(bail).every(v => !v), JSON.stringify(bail));
   console.log('   board room after bailing:', JSON.stringify(await roomDump()));
   check('Skip is still staged in the Board Room after bailing',
-    (await visibleNpcs('ross')).length === 1, JSON.stringify(await visibleNpcs('ross')));
+    (await visibleNpcs('skip')).length === 1, JSON.stringify(await visibleNpcs('skip')));
 
   // ── 2. UNDER-PREPARED MEETING ───────────────────────────────────────────
   console.log('\n=== 2. UNDER-PREPARED MEETING (0/5 allies) ===');
@@ -412,7 +412,7 @@ try {
   // ── 9. MOBILE ───────────────────────────────────────────────────────────
   console.log('\n=== 9. MOBILE 390 px ===');
   await page.setViewportSize({ width: 390, height: 844 });
-  await setup({ ...ACT6_BASE, ross_speech_ready: true, board_meeting_held: true }, 'archive');
+  await setup({ ...ACT6_BASE, skip_speech_ready: true, board_meeting_held: true }, 'archive');
   await page.waitForTimeout(1600);
   const mobileVisible = await page.evaluate(() => {
     const el = document.querySelector('.hud-quest-objective');
@@ -444,7 +444,7 @@ try {
     checked_desk: true, briefing_complete: true, branch_chosen: true,
     karen_defeated: true, chad_defeated: true, grandma_defeated: true,
     act2_complete: true, act3_complete: true,
-    met_janitor: true, read_janitor_act3: true, ross_rallied: true,
+    met_janitor: true, read_janitor_act3: true, skip_rallied: true,
     security_guard_info: true,
     // riddle 1 UNANSWERED and already attempted (the old dead end)
     riddle_1_attempted: true,
@@ -488,7 +488,7 @@ try {
     ...ACT6_BASE,
     janitor_riddle_3_done: false,
     riddle_3_attempted: true,
-    ross_speech_ready: true, board_meeting_held: true,
+    skip_speech_ready: true, board_meeting_held: true,
   }, 'archive');
   await page.waitForTimeout(1700);
   const act6Route = await janitorDialog();
@@ -526,7 +526,7 @@ try {
   console.log('\n=== 6. RIDDLES AFTER THE ROLEX ===');
   await setup({
     ...ACT6_BASE, janitor_riddle_3_done: false,
-    board_meeting_held: true, ross_speech_ready: true,
+    board_meeting_held: true, skip_speech_ready: true,
     has_rolex: true, act6_complete: true,
   }, 'archive');
   await page.waitForTimeout(1700);
@@ -540,7 +540,7 @@ try {
   await setup({
     ...ACT6_BASE,
     janet_act6_rallied: true, diane_act6_rallied: true, intern_act6_rallied: true,
-    ross_speech_ready: true, grandma_ally: true,
+    skip_speech_ready: true, grandma_ally: true,
     diane_evidence: true, isaiah_evidence: true,
     act6_ready: true,
   }, 'archive');
@@ -557,12 +557,12 @@ try {
   await shotQuest('09-legacy-A-redirect');
   await goRoom('board_room');
   check('legacy A: Skip is staged in the Board Room',
-    (await visibleNpcs('ross')).length === 1, JSON.stringify(await visibleNpcs('ross')));
+    (await visibleNpcs('skip')).length === 1, JSON.stringify(await visibleNpcs('skip')));
 
   // ── 8. LEGACY SAVE B ────────────────────────────────────────────────────
   console.log('\n=== 8. LEGACY SAVE B (has_rolex + act6_complete, no meeting) ===');
   await setup({
-    ...ACT6_BASE, ross_speech_ready: true, act6_ready: true,
+    ...ACT6_BASE, skip_speech_ready: true, act6_ready: true,
     has_rolex: true, act6_complete: true,
   }, 'archive');
   await page.waitForTimeout(1700);
@@ -575,9 +575,9 @@ try {
   await goRoom('board_room');
   check('legacy B: Board Room staging is cleared',
     (await visibleNpcs()).length === 0, JSON.stringify(await visibleNpcs()));
-  await goRoom('ross_office');
+  await goRoom('skip_office');
   check('legacy B: Skip is back in his office',
-    (await visibleNpcs('ross')).length === 1, JSON.stringify(await visibleNpcs('ross')));
+    (await visibleNpcs('skip')).length === 1, JSON.stringify(await visibleNpcs('skip')));
 
   console.log(`\n${fails === 0 ? 'A3 PASS' : `A3 FAIL (${fails})`}`);
   process.exitCode = fails === 0 ? 0 : 1;

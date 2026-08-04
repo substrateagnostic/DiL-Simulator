@@ -40,7 +40,7 @@ try {
     const ex = window.__explore;
     Object.assign(ex.player.flags, {
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
-      ross_post_karen: true, chad_defeated: true, defeated_chad: true, ross_post_chad: true,
+      skip_post_karen: true, chad_defeated: true, defeated_chad: true, skip_post_chad: true,
     });
     ex._syncActFromFlags();
     ex._refreshStoryProgress(true);

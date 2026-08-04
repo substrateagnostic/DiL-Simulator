@@ -444,7 +444,7 @@ const LADDER = [
   { id: 'chad', levels: [5, 6] },
   { id: 'grandma', levels: [7, 8] },
   { id: 'restructuring_trio', levels: [7, 8] },
-  { id: 'rachel_boss', levels: [8, 9] },
+  { id: 'meredith_boss', levels: [8, 9] },
   { id: 'regional_director', levels: [10], party: ['janet', 'isaiah'] },
   { id: 'algorithm', levels: [10], party: ['janet', 'isaiah'] },
 ];
@@ -507,7 +507,7 @@ const PIP_LADDER = [
   { id: 'grandma', level: 7 },
   { id: 'grandma', level: 8 },
   { id: 'restructuring_trio', level: 8 },
-  { id: 'rachel_boss', level: 9 },
+  { id: 'meredith_boss', level: 9 },
   { id: 'regional_director', level: 10, party: ['janet', 'isaiah'] },
   { id: 'algorithm', level: 10, party: ['janet', 'isaiah'] },
 ];
@@ -625,7 +625,7 @@ function runDenialAB(runs, sealSweep) {
   const save = COMBAT_DEPTH.DENIAL_LIMIT;
   const saveSeal = COMBAT_DEPTH.SEALED_DAMAGE_BONUS;
   const rows = [
-    { id: 'rachel_boss', level: 9, party: [] },
+    { id: 'meredith_boss', level: 9, party: [] },
     { id: 'algorithm', level: 10, party: ['janet', 'isaiah'] },
     { id: 'grandma', level: 8, party: [] },
   ];
@@ -696,7 +696,7 @@ function runTradeAB(runs) {
   const rows = [
     { id: 'karen', level: 4, party: [] },
     { id: 'grandma', level: 8, party: [] },
-    { id: 'rachel_boss', level: 9, party: [] },
+    { id: 'meredith_boss', level: 9, party: [] },
     { id: 'algorithm', level: 10, party: ['janet', 'isaiah'] },
   ];
   console.log(`\n=== OBJECTIONS vs COMPOSURE — ${runs} runs/cell ===`);

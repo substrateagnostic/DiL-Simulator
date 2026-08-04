@@ -34,7 +34,7 @@ export const ENEMY_AI_PATTERNS = {
     phase1: ['corporate_restructure'],
     phase2: ['synergy_blast', 'synergy_blast', 'golden_parachute'],
   },
-  ross_boss: {
+  skip_boss: {
     // Unpredictable - quick_sync to stun, circle_back to repeat, great_catch to counter
     pattern: 'chaotic',
   },
@@ -66,7 +66,7 @@ export const ENEMY_AI_PATTERNS = {
     phase1: ['cease_desist'],
     phase2: ['billable_assault', 'billable_assault', 'legal_jargon'],
   },
-  rachel_boss: {
+  meredith_boss: {
     // 3-phase boss - handled by phase system in CombatEngine
     pattern: 'strategic',
     phase1: ['performance_review'],

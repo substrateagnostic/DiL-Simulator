@@ -113,7 +113,7 @@ for (const fight of FIGHTS) {
     // best-pair number means anything. A second, independent strip from the SAME
     // build gets the identical best-of-all-pairs treatment. If that also lands
     // above zero, the residual is animation PHASE that no pair on the capture grid
-    // happens to align — not a look delta. Round 1 reported rachel_boss at 0.62%
+    // happens to align — not a look delta. Round 1 reported meredith_boss at 0.62%
     // with karen/chad/grandma at 0 and could not say which it was.
     const a2 = await strip(AFTER, fight, 'after2');
     let bestCtl = null;

@@ -99,7 +99,7 @@ export const COSMETICS = {
     slot: 'badge',
     stats: { atk: 2, def: 2 },
     visual: { type: 'key_lanyard', color: 0xdaa520 },
-    unlock: { flag: 'ross_defeated' },
+    unlock: { flag: 'skip_defeated' },
   },
 
   // --- Accessories ---

@@ -20,7 +20,7 @@ export const CHARACTER_CONFIGS = {
     browColor: 0x3a2a1e,
     beard: 'stubble', beardColor: 0x2a2016,
   },
-  ross: {
+  skip: {
     tone: 'silly',
     name: 'Skip Hartley',
     bodyColor: COLORS.POLO_GREEN,
@@ -363,7 +363,7 @@ export const CHARACTER_CONFIGS = {
     // v7 FIX round-1 face shape — seasoned exec, broad and heavy-browed.
     faceWidth: 1.06, cheek: 1.02, browRidge: 1.10,
   },
-  ross_boss: {
+  skip_boss: {
     name: 'Skip Hartley (Unhinged)',
     bodyColor: 0x2a4a2a, // Dark power polo
     pantsColor: COLORS.KHAKI,
@@ -373,12 +373,12 @@ export const CHARACTER_CONFIGS = {
     hairColor: COLORS.HAIR_BROWN,
     hairStyle: 'short',
     accessories: ['bluetooth_earpiece', 'golf_putter'],
-    // v5 face — same man as Ross (identical face fields)
+    // v5 face — same man as Skip (identical face fields)
     gender: 'm', eyeColor: 0x4a3527, jaw: 1.05, chin: 0.98,
-    // v7 FIX round-1 — same man as Ross, so the same face dials.
+    // v7 FIX round-1 — same man as Skip, so the same face dials.
     faceWidth: 1.07, cheek: 0.90, browRidge: 0.86,
   },
-  rachel: {
+  meredith: {
     tone: 'scary',
     name: 'Meredith Sterling',
     bodyColor: 0x1a1a3a, // Navy power suit
@@ -399,12 +399,12 @@ export const CHARACTER_CONFIGS = {
     faceWidth: 0.89, cheek: 1.18, browRidge: 1.04, eyeSize: 0.94, mouthWidth: 0.94,
   },
   // Rachel — trust officer in the cubicle farm. NOT Meredith Sterling above
-  // (whose internal ids are `rachel` / `rachel_boss`). Quiet, warm, first one in.
+  // (whose internal ids are `meredith` / `meredith_boss`). Quiet, warm, first one in.
   // Draft field mapping: the draft labelled 0xf0d6b0 "fair skin" and 0x7a9ab5
   // "soft blue blouse". In this builder `bodyColor` IS the torso garment and
   // `skinColor` is skin, so the two values are assigned by intent, not by the
   // field names in the draft.
-  rachel_to: {
+  rachel: {
     tone: 'warm',
     name: 'Rachel',
     bodyColor: 0x7a9ab5,   // soft blue blouse — not corporate-severe, not casual
@@ -575,7 +575,7 @@ export const CHARACTER_CONFIGS = {
     // v5 face — imposing, icy pale eyes to match the white hair, strong jaw
     gender: 'm', eyeColor: 0x60636c, jaw: 1.08, chin: 1.05,
   },
-  rachel_boss: {
+  meredith_boss: {
     tone: 'scary',
     name: 'Meredith Sterling, SVP',
     bodyColor: 0x1a1a3a, // navy power suit
@@ -587,7 +587,7 @@ export const CHARACTER_CONFIGS = {
     hairStyle: 'bob',
     accessories: ['tablet', 'pearl_earrings'],
     heightScale: 1.08, widthScale: 0.86, hunch: -0.05,
-    // v6 face — identical to Rachel (same woman, boss form); jaw in the band
+    // v6 face — identical to Meredith (same woman, boss form); jaw in the band
     gender: 'f', eyeColor: 0x6a7078, lipColor: 0x9a5560, jaw: 0.98, chin: 1.02,
   },
 

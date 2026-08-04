@@ -52,7 +52,7 @@ fs.mkdirSync(OUT, { recursive: true });
 // they are here because `_changeRoom` blocks `executive_floor` without the
 // first and diverts `archive` into the keypad without the second, and legs
 // (b)/(c) have to actually WALK through the shipping path.
-const SET = ['act5_complete', 'board_room_accessible', 'ross_speech_ready', 'branch_chosen', 'archive_accessible',
+const SET = ['act5_complete', 'board_room_accessible', 'skip_speech_ready', 'branch_chosen', 'archive_accessible',
   'janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied', 'isaiah_evidence', 'grandma_ally'];
 const CLEAR = ['board_meeting_held', 'board_meeting_closed', 'act6_complete', 'has_rolex', 'rolex_available'];
 
@@ -212,20 +212,20 @@ const say = (s) => { console.log(s); report.push(s); };
     // his 7,9 authored position is not where he is standing.
     const placed = await page.evaluate(() => {
       const ex = window.__explore;
-      const ross = ex.roomManager.entityManager.npcs.find(n => n.id === 'ross' && n.visible);
-      if (!ross) return { ok: false, why: 'no visible ross NPC' };
-      const mx = ross.mesh.position.x, mz = ross.mesh.position.z;
+      const skip = ex.roomManager.entityManager.npcs.find(n => n.id === 'skip' && n.visible);
+      if (!skip) return { ok: false, why: 'no visible skip NPC' };
+      const mx = skip.mesh.position.x, mz = skip.mesh.position.z;
       for (const [dx, dz] of [[0, 0.8], [0, -0.8], [0.8, 0], [-0.8, 0], [0.6, 0.6], [-0.6, 0.6]]) {
         ex.player.setPosition(mx + dx, mz + dz, ex.tileMap);
         const near = ex.roomManager.entityManager.getNearestInteractable(
           ex.player.position.x, ex.player.position.z);
-        if (near && near.id === 'ross') {
+        if (near && near.id === 'skip') {
           return { ok: true, mesh: [+mx.toFixed(2), +mz.toFixed(2)],
             player: [+ex.player.position.x.toFixed(2), +ex.player.position.z.toFixed(2)],
             armed: ex._transitionArmed() };
         }
       }
-      return { ok: false, why: 'could not stand within interact range of ross', mesh: [mx, mz] };
+      return { ok: false, why: 'could not stand within interact range of skip', mesh: [mx, mz] };
     });
     if (!placed.ok) { say(`(e) ${label}: FAILED TO REACH SKIP — ${placed.why}`); return { ok: false }; }
     say(`(e) ${label}: skip mesh at [${placed.mesh}] player at [${placed.player}] transitionArmed=${placed.armed}`);
@@ -332,13 +332,13 @@ const say = (s) => { console.log(s); report.push(s); };
   await page.screenshot({ path: path.join(OUT, 'C-reentered-board-room.png') });
   say(`(b) re-entered board_room: ${back.visible} visible NPCs [${back.names.join(' ')}]`);
 
-  await goTo('ross_office', 4, 4);
+  await goTo('skip_office', 4, 4);
   const office = await page.evaluate(() => {
     const ex = window.__explore;
     return ex.roomManager.entityManager.npcs.filter(n => n.visible).map(n => n.id);
   });
   await page.screenshot({ path: path.join(OUT, 'D-skip-back-in-office.png') });
-  say(`(b) ross_office visible NPCs: [${office.join(' ')}]  skip_present=${office.includes('ross')}`);
+  say(`(b) skip_office visible NPCs: [${office.join(' ')}]  skip_present=${office.includes('skip')}`);
 
   // (c) save + load INSIDE the window — go back to board_room first and redo the
   //     deferral state, then round-trip the save.
@@ -410,7 +410,7 @@ const say = (s) => { console.log(s); report.push(s); };
       // EARLIER Janitor entries are also live and the harness manufactures its
       // own duplicate.
       for (const f of ['archive_accessible', 'security_guard_info', 'read_janitor_act3',
-        'act3_complete', 'ross_rallied', 'janitor_rallied']) ex.player.flags[f] = true;
+        'act3_complete', 'skip_rallied', 'janitor_rallied']) ex.player.flags[f] = true;
       ex._syncActFromFlags();
       ex._refreshStoryProgress(true);
     }, leg);
@@ -490,7 +490,7 @@ const say = (s) => { console.log(s); report.push(s); };
 
   const pass = worst === 0 && a0.visible === preCount && a1.visible === preCount
     && a0.topState === 'ExplorationState' && !a0.paused
-    && back.visible === 0 && office.includes('ross') && arch.dupes.length === 0
+    && back.visible === 0 && office.includes('skip') && arch.dupes.length === 0
     && ePass;
   console.log(pass ? 'BOARD-CLOSE PASS' : 'BOARD-CLOSE FAIL');
   if (!pass) process.exit(1);

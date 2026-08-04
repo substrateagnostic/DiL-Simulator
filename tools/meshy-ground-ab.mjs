@@ -6,7 +6,7 @@
 // by the fix, so a framing question ("is his head cropped because of this
 // change?") is answered by looking, not by arguing.
 //
-//   node tools/meshy-ground-ab.mjs --fight=ross_boss --tag=ross
+//   node tools/meshy-ground-ab.mjs --fight=skip_boss --tag=skip
 import { chromium } from 'playwright';
 import { spawn } from 'child_process';
 import { writeFileSync, mkdirSync } from 'fs';
@@ -15,7 +15,7 @@ import { join } from 'path';
 const args = Object.fromEntries(process.argv.slice(2).map(a => {
   const m = a.match(/^--([^=]+)(?:=(.*))?$/); return m ? [m[1], m[2] ?? true] : [a, true];
 }));
-const FIGHT = args.fight || 'ross_boss';
+const FIGHT = args.fight || 'skip_boss';
 const TAG = args.tag || FIGHT;
 const REPO = process.cwd();
 const OUT = join(REPO, 'art/char_refs/meshy_pilot/_review_v8');

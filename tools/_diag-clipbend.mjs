@@ -213,7 +213,7 @@ function pose(rig, { applyClip = false, t = 0, retarget = false } = {}) {
 const ids = String(args.ids || '').split(',').filter(Boolean);
 const AFFECTED = new Set(['alex_it', 'cfos_assistant', 'chad', 'chief_of_restructuring', 'client_m_athletic',
   'client_m_heavy', 'compliance', 'corporate_lawyer', 'data_analytics_lead', 'diane', 'firm_paralegal',
-  'intern', 'isaiah', 'networking_guy', 'regional', 'regional_director', 'restructuring_analyst', 'ross_boss']);
+  'intern', 'isaiah', 'networking_guy', 'regional', 'regional_director', 'restructuring_analyst', 'skip_boss']);
 
 const rows = [];
 for (const id of ids) {

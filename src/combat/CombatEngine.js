@@ -105,7 +105,7 @@ export const COMBAT_DEPTH = {
   //
   // Measured (`node tools/combat-sim.mjs --denial-ab`, 300 runs, competent
   // policy — DENIAL_LIMIT off vs 2, Andrew's HP at victory):
-  //   rachel_boss L9   78.8% -> 77.0%    win 99.3% -> 98.7%
+  //   meredith_boss L9   78.8% -> 77.0%    win 99.3% -> 98.7%
   //   algorithm  L10   65.0% -> 66.8%    win 99.3% -> 100.0%
   //   grandma     L8   91.3% -> 88.8%    win 100%  -> 100%
   // i.e. against a *competent* policy it is nearly free — it is priced against
@@ -120,7 +120,7 @@ export const COMBAT_DEPTH = {
   // Honest measurement, because the number invites a bigger claim than it can
   // support (`node tools/combat-sim.mjs --denial-ab 1.0,1.35,1.6`, 400 runs,
   // competent policy, Andrew's HP at victory):
-  //   rachel_boss L9   denial off 78.3% | 1.00x 76.7% | 1.35x 76.5% | 1.60x 76.4%
+  //   meredith_boss L9   denial off 78.3% | 1.00x 76.7% | 1.35x 76.5% | 1.60x 76.4%
   //   algorithm   L10  denial off 65.3% | 1.00x 66.0% | 1.35x 65.7% | 1.60x 65.4%
   //   grandma     L8   denial off 90.5% | 1.00x 90.6% | 1.35x 90.9% | 1.60x 90.8%
   // A seal fires at most once or twice a fight, so the premium is worth a few
@@ -161,13 +161,13 @@ export const COMBAT_DEPTH = {
 //   karen         4       96.0%     100.0%        95.8%       82.8%       75.4%
 //   chad          6      100.0%     100.0%       100.0%       99.8%       98.6%
 //   grandma       8       99.8%     100.0%        99.4%       97.2%       97.0%
-//   rachel_boss   9       98.4%     100.0%        82.6%       48.2%       29.8%
+//   meredith_boss   9       98.4%     100.0%        82.6%       48.2%       29.8%
 //   algorithm    10       99.6%     100.0%        80.8%       51.4%       35.6%
 //
 // Read the table honestly: karen/chad/grandma sit at the ceiling in BOTH the
 // FRESH@NG and CARRY@NG+1 columns, so those rows cannot demonstrate the ladder
 // either way — a couple of points of wobble there is sampling noise. The two
-// rows with headroom are the ones that carry the claim: rachel_boss
+// rows with headroom are the ones that carry the claim: meredith_boss
 // 98.4% -> 82.6% -> 48.2% -> 29.8% and algorithm 99.6% -> 80.8% -> 51.4% ->
 // 35.6%. That is a staircase; the previous constants (maxHP per-lap 1.35, no
 // decay) produced 27.3% -> 1.0% and 27.7% -> 4.0%, i.e. a wall, which
@@ -186,7 +186,7 @@ export const NG_PLUS_CAP = 3;   // laps beyond this stop compounding
 // 1 + d + d^2 + ... (laps-1 terms), so lap 1 and lap 2 are IDENTICAL at any d
 // (exponents 0 and 1) and only lap 3 is affected. It exists because the first
 // version compounded flat and the top rung stopped being a ladder: at d = 1.0
-// with the old 1.35 HP scaling the finale rows measured rachel_boss 1.0% and
+// with the old 1.35 HP scaling the finale rows measured meredith_boss 1.0% and
 // algorithm 4.0% at CARRY@NG+3 — functionally unwinnable, which contradicts the
 // "ends somewhere a human can stand" claim above. NG+3 now lands at 29.8% /
 // 35.6%: below the 40-85% story band on purpose, because the top rung of a
@@ -552,7 +552,7 @@ export class CombatEngine {
     if (count <= 0) return [];
     // A SINGLE-lock move never asks for the tag the enemy is already weak to.
     // Otherwise spamming the one weakness ability voids the enemy's whole kit
-    // for free (sim: Rachel finished at 95% HP against an unaware policy).
+    // for free (sim: Meredith finished at 95% HP against an unaware policy).
     // Making the lone lock a second tag is the forcing function that actually
     // pays off carrying one ability per damage type.
     const pool = (count === 1 && fullPool.length > 1)

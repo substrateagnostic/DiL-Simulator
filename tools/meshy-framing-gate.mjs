@@ -12,7 +12,7 @@
 // the CROWN — the highest SKINNED vertex, CPU-skinned through
 // SkinnedMesh.applyBoneTransform off matrixWorld, never a geometry bounding box
 // (SkinnedMesh.geometry.boundingBox is BIND space and reports garbage: a probe
-// that trusted it returned worldH 0.173 m for ross_boss).
+// that trusted it returned worldH 0.173 m for skip_boss).
 //
 // PASS = every enemy crown lands at screen y >= CROWN_MIN (default 160), which
 // is 15 px of air under the bottom of the nameplate panel, and the feet stay on
@@ -45,10 +45,10 @@ const NAMEPLATE_BOTTOM = 145;
 // stage (the monolith stays procedural by producer order) and it is gated all
 // the same — the frame does not care which cast built the mesh.
 const SOLO = [
-  'intern', 'karen', 'chad', 'grandma', 'compliance', 'regional', 'ross_boss',
+  'intern', 'karen', 'chad', 'grandma', 'compliance', 'regional', 'skip_boss',
   'security_guard', 'hr_rep', 'restructuring_analyst', 'brand_consultant',
   'data_analytics_lead', 'chief_of_restructuring', 'corporate_lawyer',
-  'rachel_boss', 'parking_enforcer', 'networking_guy', 'cfos_assistant',
+  'meredith_boss', 'parking_enforcer', 'networking_guy', 'cfos_assistant',
   'regional_director', 'reception_client', 'algorithm',
 ];
 const GROUP = ['restructuring_trio', 'data_analytics_duo', 'the_firm'];

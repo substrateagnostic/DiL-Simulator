@@ -246,7 +246,7 @@
       "dims": "2048->1024"
     },
     {
-      "f": "rachel_boss_idle.glb",
+      "f": "meredith_boss_idle.glb",
       "before": 9067428,
       "mid": 1932212,
       "after": 608028,
@@ -282,7 +282,7 @@
       "dims": "2048->1024"
     },
     {
-      "f": "ross_boss_idle.glb",
+      "f": "skip_boss_idle.glb",
       "before": 9185656,
       "mid": 2091060,
       "after": 670168,

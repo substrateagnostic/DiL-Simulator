@@ -17,7 +17,7 @@ const only = process.argv.find(a => a.startsWith('--only='))?.slice(7);
 const fixture = process.argv.find(a => a.startsWith('--fixture='))?.slice(10) || 'act7';
 
 const ROOMS = [
-  'parking_garage', 'reception', 'cubicle_farm', 'break_room', 'ross_office',
+  'parking_garage', 'reception', 'cubicle_farm', 'break_room', 'skip_office',
   'conference_room', 'server_room', 'executive_floor', 'stairwell', 'archive',
   'hr_department', 'vault', 'board_room', 'penthouse', 'penthouse_expanded',
   'penthouse_aquarium', 'penthouse_analytics', 'penthouse_bar',
@@ -25,7 +25,7 @@ const ROOMS = [
   'city_street', 'transit_bus', 'records_hall', 'luckys_diner', 'old_branch', 'old_vault',
   'floor_13',
 ];
-const FIGHTS = ['intern', 'karen', 'chad', 'grandma', 'compliance', 'rachel_boss', 'algorithm', 'the_firm', 'parking_enforcer'];
+const FIGHTS = ['intern', 'karen', 'chad', 'grandma', 'compliance', 'meredith_boss', 'algorithm', 'the_firm', 'parking_enforcer'];
 // Combat-framed close-ups of characters that never appear as enemies — the
 // player (Andrew) chief among them, so the jaw-patch-seam "kill by construction"
 // is verifiable on the contact sheet (addendum: no character pass without it).

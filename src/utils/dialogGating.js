@@ -7,7 +7,7 @@ const MAIN_INTRO_DIALOGS = new Set([
   'intern_intro',
   'isaiah_intro',
   'diane_intro',
-  'ross_intro',
+  'skip_intro',
   // janitor_intro deliberately NOT listed: the Janitor is optional and
   // timeless — met_janitor gates the riddle chain and the Architect
   // ending, so the intro must stay reachable at any quest stage
@@ -24,7 +24,7 @@ const ACT_STAGE_RANGES = {
 };
 
 const QUEST_CRITICAL_DIALOGS = new Set([
-  'ross_intro',
+  'skip_intro',
   'karen_meeting',
   'chad_meeting',
   'grandma_meeting',
@@ -35,10 +35,10 @@ const QUEST_CRITICAL_DIALOGS = new Set([
   'act4_trigger',
   'janet_act4',
   'diane_act4',
-  'ross_act4',
+  'skip_act4',
   'janitor_act4',
   'act5_trigger',
-  'ross_act6',
+  'skip_act6',
   'janet_act6',
   'diane_act6',
   'intern_act6',
@@ -63,7 +63,7 @@ export function getQuestStage(player) {
   if (f('act2_complete')) return 300;
   if (f('branch_chosen')) return 200;
   if (f('briefing_complete')) return 100;
-  if (f('ready_for_ross')) return 2;
+  if (f('ready_for_skip')) return 2;
   if (f('checked_desk')) return 1;
   return 0;
 }

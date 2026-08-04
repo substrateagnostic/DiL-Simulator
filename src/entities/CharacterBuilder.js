@@ -235,7 +235,7 @@ export function buildCharacter(config, options = {}) {
   // upper BACK plus the head carried forward of the shoulders. This adds a low
   // rounded mass over the occipital yoke for any build that actually asks for a
   // hunch (grandma 0.12, janitor 0.16, intern 0.15) and never touches an erect one
-  // (Rachel's negative hunch, everyone at 0).
+  // (Meredith's negative hunch, everyone at 0).
   if (hunch > 0.08) {
     const humpR = dims.chestR * 0.92;
     const hump = new THREE.Mesh(new THREE.SphereGeometry(humpR, 24, 18), mSuit);
@@ -406,7 +406,7 @@ export function buildCharacter(config, options = {}) {
     // Narrower, taller, flatter, and tucked HIGHER against the collar (item 11:
     // Karen's cream blouse read as a "dinner plate glued to the sternum"). Now a
     // slim neckline slit seated between the lapels, not a bulging oval.
-    // v6 round-3 — this pair is now GATED on an actual shirt. Chad, Ross and
+    // v6 round-3 — this pair is now GATED on an actual shirt. Chad, Skip and
     // Grandma all carry shirtColor: null yet still got the default off-white
     // wedge + collar, which rendered on Chad as "a proud rectangular pec-slab
     // plate with corner creases" in the middle of his polo (and on Grandma as a
@@ -1557,7 +1557,7 @@ function sculptSkull(d, dial, out) {
   // made a HIGHER dial produce a NARROWER gonion — the opposite of what every
   // authored value and comment in characters.js means ("narrow jaw (0.81)" on
   // Janet rendered as the WIDEST jaw in the cast; LAW 4 clamps "Meredith/id-
-  // rachel jaw:0.78→0.85" as a narrow outlier). And at 1.6 the whole authored
+  // meredith jaw:0.78→0.85" as a narrow outlier). And at 1.6 the whole authored
   // range moved the ratio by 1%: measured jawOverCranialGeo across the four
   // heroes was 0.839–0.848, which is the arithmetic behind "the cast is one
   // skull in different wigs". Sign flipped to match the bible, gain 1.6 → 4.5,
@@ -3063,7 +3063,7 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null, probe
     quiff.position.set(0, r * 0.26, r * 0.58);
     add(quiff);
   } else if (style === 'long') {
-    // RACHEL (the friendly one — internal id `rachel_to`, display "Rachel"): long
+    // RACHEL (the friendly one — internal id `rachel`, display "Rachel"): long
     // blonde hair past the shoulders. Built to the same bible law as every other
     // style: a scalp-CONFORMING cap (no floating visor, no cap-step at the
     // hairline), a soft centre-ish part, and a single long back mass that hangs

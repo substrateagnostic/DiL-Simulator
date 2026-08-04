@@ -50,7 +50,7 @@
       "spd": 10,
       "xpReward": 200
     },
-    "ross_boss": {
+    "skip_boss": {
       "maxHP": 440,
       "atk": 12,
       "def": 12,
@@ -113,7 +113,7 @@
       "spd": 10,
       "xpReward": 250
     },
-    "rachel_boss": {
+    "meredith_boss": {
       "maxHP": 900,
       "atk": 21,
       "def": 18,

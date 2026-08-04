@@ -39,10 +39,10 @@ export const ENCOUNTERS = {
     postDialogId: 'regional_defeated',
     canFlee: false,
   },
-  ross_boss: {
-    enemyId: 'ross_boss',
+  skip_boss: {
+    enemyId: 'skip_boss',
     preDialogId: 'secret_ending',
-    postDialogId: 'ross_boss_defeated',
+    postDialogId: 'skip_boss_defeated',
     canFlee: false,
   },
   reception_client: {
@@ -111,10 +111,10 @@ export const ENCOUNTERS = {
     postDialogId: 'corporate_lawyer_defeated',
     canFlee: false,
   },
-  rachel_boss: {
-    enemyId: 'rachel_boss',
-    preDialogId: 'rachel_boss_combat',
-    postDialogId: 'rachel_boss_defeated',
+  meredith_boss: {
+    enemyId: 'meredith_boss',
+    preDialogId: 'meredith_boss_combat',
+    postDialogId: 'meredith_boss_defeated',
     canFlee: false,
     arena: 'penthouse',
   },

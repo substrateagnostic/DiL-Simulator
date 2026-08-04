@@ -10,7 +10,7 @@
 // different body types (male suit / female skirt / grandma) before anything
 // rolls out cast-wide.
 //
-//   node tools/meshy-clip-strip.mjs --chars=regional,rachel_boss,grandma --clips=336,338,415
+//   node tools/meshy-clip-strip.mjs --chars=regional,meredith_boss,grandma --clips=336,338,415
 //   node tools/meshy-clip-strip.mjs --chars=andrew --clips=178 --frames=8 --tag=hurt
 //
 // Sheets -> art/char_refs/meshy_pilot/_clips/strip_<tag>_<clip>.png
@@ -23,7 +23,7 @@ const REPO = 'C:/Users/agall/projects/DiL_Simulator';
 const args = Object.fromEntries(process.argv.slice(2).map(a => {
   const m = a.match(/^--([^=]+)(?:=(.*))?$/); return m ? [m[1], m[2] ?? true] : [a, true];
 }));
-const CHARS = String(args.chars || 'regional,rachel_boss,grandma').split(',').filter(Boolean);
+const CHARS = String(args.chars || 'regional,meredith_boss,grandma').split(',').filter(Boolean);
 const CLIPS = String(args.clips || '').split(',').filter(Boolean);
 const FRAMES = Number(args.frames || 7);
 const TAG = args.tag || 'clip';

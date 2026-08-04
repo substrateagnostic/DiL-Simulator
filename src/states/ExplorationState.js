@@ -52,6 +52,10 @@ const INTERACTION_OFFSETS = [
 
 const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
 
+// Where `_loadRoom` lands when the requested room does not exist in this build.
+// Matches `Player.deserialize`'s own default for a save with no `currentRoom`.
+const FALLBACK_ROOM = 'parking_garage';
+
 const QUEST_OBJECTIVES = {
   main_act1: {
     0: 'Find your cubicle and settle in',
@@ -376,7 +380,7 @@ export class ExplorationState {
         // an "Objective Updated" toast carrying the new ✓ line, and
         // `_showToast` stacks rather than replaces, so a bespoke one here
         // double-toasted the same beat.
-        if (key === 'ross_speech_ready') {
+        if (key === 'skip_speech_ready') {
           this._showToast('Skip is waiting in the Board Room. The board sits at 4.', 'objective');
         }
         if (key === 'act6_complete') {
@@ -585,7 +589,7 @@ export class ExplorationState {
         }
 
         // Ending dialog re-triggers on every executive floor visit until the boss is defeated
-        const endingBossDefeated = this.player.getFlag('regional_defeated') || this.player.getFlag('compliance_defeated') || this.player.getFlag('ross_defeated');
+        const endingBossDefeated = this.player.getFlag('regional_defeated') || this.player.getFlag('compliance_defeated') || this.player.getFlag('skip_defeated');
         if (roomId === 'executive_floor' && this.player.getFlag('branch_chosen') && !endingBossDefeated) {
           this.player.setFlag('ending_started');
 
@@ -597,8 +601,8 @@ export class ExplorationState {
             const isRetry = this.player.getFlag('retry_compliance');
             endingDialogId = isRetry && DIALOGS.compliance_retry ? 'compliance_retry' : 'bro_code_ending';
           } else if (this.player.getFlag('path_grandma')) {
-            const isRetry = this.player.getFlag('retry_ross_boss');
-            endingDialogId = isRetry && DIALOGS.ross_boss_retry ? 'ross_boss_retry' : 'secret_ending';
+            const isRetry = this.player.getFlag('retry_skip_boss');
+            endingDialogId = isRetry && DIALOGS.skip_boss_retry ? 'skip_boss_retry' : 'secret_ending';
           }
 
           if (endingDialogId && DIALOGS[endingDialogId]) {
@@ -668,15 +672,15 @@ export class ExplorationState {
           }, 800);
         }
 
-        // Board Room: trigger Rachel fight on every entry until act5 is complete
-        // (act5_complete is the only reliable "fight won" gate — rachel_fight_started
+        // Board Room: trigger Meredith fight on every entry until act5 is complete
+        // (act5_complete is the only reliable "fight won" gate — meredith_fight_started
         //  cannot be used here because it gets saved on first entry and permanently
         //  blocks re-entry after a loss)
         if (roomId === 'board_room' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete')) {
-          this.player.setFlag('rachel_fight_started');
-          if (DIALOGS.rachel_boss_combat) {
+          this.player.setFlag('meredith_fight_started');
+          if (DIALOGS.meredith_boss_combat) {
             setTimeout(() => {
-              const dialogState = new DialogState(DIALOGS['rachel_boss_combat'], this.player, this.stateManager, 'rachel_boss_combat');
+              const dialogState = new DialogState(DIALOGS['meredith_boss_combat'], this.player, this.stateManager, 'meredith_boss_combat');
               this.stateManager.push(dialogState);
             }, 800);
           }
@@ -807,8 +811,8 @@ export class ExplorationState {
   }
 
   _resolveRoomId(roomId) {
-    if (roomId === 'ross_office' && this.player.getFlag('renovation_corner_office')) {
-      return 'ross_office_large';
+    if (roomId === 'skip_office' && this.player.getFlag('renovation_corner_office')) {
+      return 'skip_office_large';
     }
     if (roomId === 'penthouse' && this.player.getFlag('renovation_penthouse')) {
       return 'penthouse_expanded';
@@ -884,8 +888,21 @@ export class ExplorationState {
     // Rule 6: a room change mid-scene would otherwise be a permanent dialog
     // freeze — the actors the director is holding are about to be disposed.
     this.stage.abort();
-    const actualId = this._resolveRoomId(roomId);
-    const result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
+    let actualId = this._resolveRoomId(roomId);
+    let result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
+    // A save can name a room this build no longer has — a hand-edited slot, or
+    // any save written before a room id was renamed (`ross_office` ->
+    // `skip_office`, 2026-08-04; no migration shim, live saves were ruled
+    // burnable). `RoomManager.loadRoom` tears the OLD room down before it
+    // discovers the new one is missing, so returning null here left the boot
+    // path on an empty scene with `this.tileMap` undefined and the first
+    // `update()` threw. Fall back to the entry room instead of crashing.
+    if (!result) {
+      console.warn(`[ExplorationState] unknown room "${roomId}" — falling back to ${FALLBACK_ROOM}`);
+      roomId = FALLBACK_ROOM;
+      actualId = this._resolveRoomId(roomId);
+      result = this.roomManager.loadRoom(actualId, undefined, undefined, this.player.flags);
+    }
     this._applyTimeOfDay(roomId);
     if (result) {
       this.tileMap = result.tileMap;
@@ -1047,7 +1064,7 @@ export class ExplorationState {
     }
 
     // Act 6½ — the penthouse elevator rejects the uncertified charter.
-    // First rejection fires the charter_challenge dialog (Ross's call,
+    // First rejection fires the charter_challenge dialog (Skip's call,
     // the Janitor's tip about Delia) which sets city_unlocked.
     if (targetRoom === 'penthouse'
       && this.player.getFlag('act6_complete')
@@ -1236,10 +1253,10 @@ export class ExplorationState {
     const enemyOverrides = isFirstKaren ? { atk: 999 } : {};
 
     // Quarterly-review leverage (logic-sweep MAJOR #11): the review
-    // promised your book of business would matter against Rachel.
+    // promised your book of business would matter against Meredith.
     // Strong portfolio blunts her case; a weak one is her exhibit A.
-    if (encounterId === 'rachel_boss' && ENEMY_STATS.rachel_boss) {
-      const base = ENEMY_STATS.rachel_boss;
+    if (encounterId === 'meredith_boss' && ENEMY_STATS.meredith_boss) {
+      const base = ENEMY_STATS.meredith_boss;
       if (this.player.getFlag('portfolio_strong')) {
         enemyOverrides.atk = Math.max(1, Math.round(base.atk * 0.85));
         enemyOverrides.def = Math.max(1, Math.round(base.def * 0.85));
@@ -1420,7 +1437,7 @@ export class ExplorationState {
       { started: 'restructuring_fight_started',     defeated: 'restructuring_defeated' },
       { started: 'data_lead_fight_started',         defeated: 'data_lead_defeated' },
       { started: 'chief_fight_started',             defeated: 'chief_restructuring_defeated' },
-      { started: 'rachel_fight_started',            defeated: 'act5_complete' },
+      { started: 'meredith_fight_started',            defeated: 'act5_complete' },
     ];
     for (const { started, defeated } of gauntletFlags) {
       if (this.player.getFlag(started) && !this.player.getFlag(defeated)) {
@@ -2096,9 +2113,9 @@ export class ExplorationState {
     // Determine grade color
     const gradeColor = health.score >= 80 ? '#4ade80' : health.score >= 55 ? '#facc15' : '#f87171';
 
-    // Portfolio health affects story: good portfolio = ammo against Rachel
-    // in Act 5+. Consumed by the rachel_boss fight (_startCombat applies
-    // enemy stat overrides + rachel_boss_combat branches on the flags) —
+    // Portfolio health affects story: good portfolio = ammo against Meredith
+    // in Act 5+. Consumed by the meredith_boss fight (_startCombat applies
+    // enemy stat overrides + meredith_boss_combat branches on the flags) —
     // logic-sweep MAJOR #11. Latest review wins.
     const act = this.player.actIndex || 1;
     let storyNote = '';
@@ -2227,8 +2244,8 @@ export class ExplorationState {
       this.player.stats.def = Math.max(1, defBefore - 3);
       const actualAtkLoss = atkBefore - this.player.stats.atk;
       const actualDefLoss = defBefore - this.player.stats.def;
-      const prev = this.player.getFlag('rossAngerDebuffTotal') || { atk: 0, def: 0 };
-      this.player.setFlag('rossAngerDebuffTotal', { atk: prev.atk + actualAtkLoss, def: prev.def + actualDefLoss });
+      const prev = this.player.getFlag('skipAngerDebuffTotal') || { atk: 0, def: 0 };
+      this.player.setFlag('skipAngerDebuffTotal', { atk: prev.atk + actualAtkLoss, def: prev.def + actualDefLoss });
       this._updateMiniStats();
       this._showToast('Skip: "Your client choices are an embarrassment." (ATK -3, Composure -3)', 'objective');
     }
@@ -2244,20 +2261,20 @@ export class ExplorationState {
         }
       }
     }
-    // Reverse Ross anger debuffs
-    const rossDebuff = this.player.getFlag('rossAngerDebuffTotal') || { atk: 0, def: 0 };
-    if (typeof rossDebuff === 'object') {
-      this.player.stats.atk += rossDebuff.atk || 0;
-      this.player.stats.def += rossDebuff.def || 0;
-    } else if (rossDebuff > 0) {
+    // Reverse Skip anger debuffs
+    const skipDebuff = this.player.getFlag('skipAngerDebuffTotal') || { atk: 0, def: 0 };
+    if (typeof skipDebuff === 'object') {
+      this.player.stats.atk += skipDebuff.atk || 0;
+      this.player.stats.def += skipDebuff.def || 0;
+    } else if (skipDebuff > 0) {
       // Legacy: old format was a single number
-      this.player.stats.atk += rossDebuff;
-      this.player.stats.def += rossDebuff;
+      this.player.stats.atk += skipDebuff;
+      this.player.stats.def += skipDebuff;
     }
     this.player.setFlag('currentClient', null);
     this.player.setFlag('bossAnger', 0);
     this.player.setFlag('clientBuffTotal', null);
-    this.player.setFlag('rossAngerDebuffTotal', 0);
+    this.player.setFlag('skipAngerDebuffTotal', 0);
   }
 
   // ── End reception system ────────────────────────────────────────────────────
@@ -2520,7 +2537,7 @@ export class ExplorationState {
     const act = this.player.actIndex;
 
     // Combat retry check runs first — overrides hardcoded dialogId on NPC
-    const retryEncId = id === 'ross' ? 'ross_boss' : id;
+    const retryEncId = id === 'skip' ? 'skip_boss' : id;
     if (DIALOGS[`${retryEncId}_retry`] && this.player.getFlag(`retry_${retryEncId}`) && !this.player.getFlag(`defeated_${retryEncId}`)) {
       // Block Karen retry until 3 tutorial clients are handled
       if (id === 'karen' && !this.player.getFlag('karen_retry_ready')) {
@@ -2545,11 +2562,11 @@ export class ExplorationState {
     // `janitor_act4`, the sole source of `vault_accessible`, `hr_accessible`,
     // `vault_code_1` and `janitor_rallied`: a player who guessed riddle 1 wrong
     // had no done-flag, no exit (the `riddle_*_attempted` gate re-serves the
-    // same riddle forever) and no signpost (`janitor_needs_ross` was shadowed
+    // same riddle forever) and no signpost (`janitor_needs_skip` was shadowed
     // too). It also blocked `janitor_act6`. Now the beat wins, and when a beat
     // and a riddle are both on offer `janitor_router` asks which door.
     const JANITOR_STORY_BEATS = new Set([
-      'janitor_act3', 'janitor_needs_ross', 'janitor_act4', 'janitor_act6',
+      'janitor_act3', 'janitor_needs_skip', 'janitor_act4', 'janitor_act6',
     ]);
     const janitorBeat = (id === 'janitor' && npc.dialogId
       && JANITOR_STORY_BEATS.has(npc.dialogId) && DIALOGS[npc.dialogId])
@@ -2586,21 +2603,21 @@ export class ExplorationState {
       return 'janet_act4';
     }
 
-    // Ross act-4 rally can FAIL (3-of-4 buzzword check) — keep offering
-    // it until he's rallied. Progression requires ross_rallied (the
+    // Skip act-4 rally can FAIL (3-of-4 buzzword check) — keep offering
+    // it until he's rallied. Progression requires skip_rallied (the
     // Janitor won't move without him), so act stays 4 until this lands.
     // Bounded to act 4 exactly to match the _act4 stage band.
-    if (id === 'ross' && act === 4 && !this.player.getFlag('ross_rallied') && DIALOGS.ross_act4) {
-      return 'ross_act4';
+    if (id === 'skip' && act === 4 && !this.player.getFlag('skip_rallied') && DIALOGS.skip_act4) {
+      return 'skip_act4';
     }
 
-    // Rachel the trust officer (`rachel_to`, cubicle farm): the first
+    // Rachel the trust officer (`rachel`, cubicle farm): the first
     // conversation is always her introduction, whatever act the player finds
     // her in. Her room entries carry the act-band return dialogs; routing the
     // intro here keeps those three entries mutually exclusive, so she can
     // never appear twice on the same chair.
-    if (id === 'rachel_to' && !this.player.getFlag('met_rachel_to') && DIALOGS.rachel_to_intro) {
-      return 'rachel_to_intro';
+    if (id === 'rachel' && !this.player.getFlag('met_rachel') && DIALOGS.rachel_intro) {
+      return 'rachel_intro';
     }
 
     // A SPENT SET-PIECE IS NOT A REPEATABLE PROMPT. Skip's Board Room entry
@@ -2612,7 +2629,7 @@ export class ExplorationState {
     // code-side and touches no entity: while he is standing in the room he has
     // already spoken in, he gets a short scene with no rewards and no flags
     // instead. Scoped to `board_room` so his office entries are untouched.
-    if (id === 'ross'
+    if (id === 'skip'
         && this.player.currentRoom === 'board_room'
         && this.player.getFlag('board_meeting_held')
         && DIALOGS.board_meeting_after) {
@@ -2634,16 +2651,16 @@ export class ExplorationState {
       return npc.dialogId;
     }
 
-    // Rachel paces the executive floor during Acts 3-4 (#20). First meeting
-    // plays her intro; generic act routing then serves rachel_act3 (which
-    // sets its own read flag) and rachel_return. Placed AFTER the hardcoded
+    // Meredith paces the executive floor during Acts 3-4 (#20). First meeting
+    // plays her intro; generic act routing then serves meredith_act3 (which
+    // sets its own read flag) and meredith_return. Placed AFTER the hardcoded
     // dialogId check, and ceilinged at act4_complete so the board-room boss
     // era can never serve the stale intro.
-    if (id === 'rachel'
+    if (id === 'meredith'
         && !this.player.getFlag('act4_complete')
-        && !this.player.getFlag('met_rachel')
-        && DIALOGS.rachel_intro) {
-      return 'rachel_intro';
+        && !this.player.getFlag('met_meredith')
+        && DIALOGS.meredith_intro) {
+      return 'meredith_intro';
     }
 
     // Printer from Hell side quest: route Alex to explanation dialog while active
@@ -2739,14 +2756,14 @@ export class ExplorationState {
       return 'compliance_crossword';
     }
 
-    // Ross post-Karen debrief: required before Chad fight
-    if (id === 'ross' && this.player.getFlag('karen_defeated') && !this.player.getFlag('ross_post_karen')) {
-      return 'ross_post_karen';
+    // Skip post-Karen debrief: required before Chad fight
+    if (id === 'skip' && this.player.getFlag('karen_defeated') && !this.player.getFlag('skip_post_karen')) {
+      return 'skip_post_karen';
     }
 
-    // Ross post-Chad debrief: required before Grandma fight
-    if (id === 'ross' && this.player.getFlag('chad_defeated') && !this.player.getFlag('ross_post_chad')) {
-      return 'ross_post_chad';
+    // Skip post-Chad debrief: required before Grandma fight
+    if (id === 'skip' && this.player.getFlag('chad_defeated') && !this.player.getFlag('skip_post_chad')) {
+      return 'skip_post_chad';
     }
 
     // Social engineering chain (act 4–5 only): Isaiah → Diane → Intern
@@ -2857,7 +2874,7 @@ export class ExplorationState {
 
     // The Janitor never falls through to generic act routing — his act3/
     // act4/act6 story beats are served ONLY by the gated Archive entries
-    // (explicit dialogIds, security_guard → act3 → needs_ross → act4
+    // (explicit dialogIds, security_guard → act3 → needs_skip → act4
     // ordering). The garage janitor gives the intro at any act (he's
     // timeless — met_janitor gates the riddles and the Architect ending),
     // then small talk (logic-sweep MAJORs #5/#6).
@@ -2870,8 +2887,8 @@ export class ExplorationState {
     if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
     if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
     if (act >= 3 && DIALOGS[`${id}_act3`] && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
-    // ross_act2 and janet_act2 both reference the Karen binder incident — hold them until Karen is defeated
-    if (act >= 1 && (id === 'ross' || id === 'janet') && !this.player.getFlag('karen_defeated') && !this.player.getFlag(`read_${id}_act2`)) {
+    // skip_act2 and janet_act2 both reference the Karen binder incident — hold them until Karen is defeated
+    if (act >= 1 && (id === 'skip' || id === 'janet') && !this.player.getFlag('karen_defeated') && !this.player.getFlag(`read_${id}_act2`)) {
       if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
       if (DIALOGS[`${id}_return`]) return `${id}_return`;
     }
@@ -3033,8 +3050,8 @@ export class ExplorationState {
     const names = {
       cubicle_farm: 'Cubicle Farm',
       break_room: 'Break Room',
-      ross_office: "Skip's Office",
-      ross_office_large: "Skip's Office",   // renovated variant (_resolveRoomId)
+      skip_office: "Skip's Office",
+      skip_office_large: "Skip's Office",   // renovated variant (_resolveRoomId)
       conference_room: 'Conference Room',
       server_room: 'IT Server Room',
       reception: 'Reception',
@@ -3180,7 +3197,7 @@ export class ExplorationState {
         { flag: 'janet_act6_rallied',  label: 'Janet' },
         { flag: 'diane_act6_rallied',  label: 'Diane' },
         { flag: 'intern_act6_rallied', label: 'Intern' },
-        { flag: 'ross_speech_ready',   label: 'Skip' },
+        { flag: 'skip_speech_ready',   label: 'Skip' },
         { flag: 'grandma_ally',        label: 'Grandma Henderson' },
       ];
       const evidenceFlags = [
@@ -3212,7 +3229,7 @@ export class ExplorationState {
       }
 
       // STAGE 2 — Skip has his speech. The meeting is the PRIMARY objective.
-      if (this.player.getFlag('ross_speech_ready')) {
+      if (this.player.getFlag('skip_speech_ready')) {
         return 'Convene the board — Skip is waiting in the Board Room' + prep;
       }
 
@@ -3221,7 +3238,7 @@ export class ExplorationState {
     }
 
     // Act 5
-    if (this.player.getFlag('rachel_fight_started')) {
+    if (this.player.getFlag('meredith_fight_started')) {
       return 'Defeat Meredith in the Board Room';
     }
     if (this.player.getFlag('chief_restructuring_defeated')) {
@@ -3245,7 +3262,7 @@ export class ExplorationState {
     // Act 4
     // Both branches now require act3_complete. In the normal path that flag
     // is always already set (vault_accessible comes from janitor_act4, which
-    // needs ross_rallied, which needs act3_complete), so nothing changes —
+    // needs skip_rallied, which needs act3_complete), so nothing changes —
     // but a player who cracked the keypad in Act 1 must not have the Act 4
     // objective overwrite whatever they are actually supposed to be doing.
     if (this.player.getFlag('has_charter') && this.player.getFlag('act3_complete')) {
@@ -3263,7 +3280,7 @@ export class ExplorationState {
       return 'Open the Vault and retrieve the 1947 charter';
     }
     if (this.player.getFlag('act3_complete')) {
-      const rallied = ['janet_rallied', 'diane_rallied', 'ross_rallied', 'janitor_rallied'].filter(f => this.player.getFlag(f)).length;
+      const rallied = ['janet_rallied', 'diane_rallied', 'skip_rallied', 'janitor_rallied'].filter(f => this.player.getFlag(f)).length;
       return `Rally the team: Talk to Janet, Diane, Skip & the Janitor (${rallied}/4)`;
     }
 
@@ -3301,7 +3318,7 @@ export class ExplorationState {
     if (
       this.player.getFlag('regional_defeated') ||
       this.player.getFlag('compliance_defeated') ||
-      this.player.getFlag('ross_defeated')
+      this.player.getFlag('skip_defeated')
     ) {
       return 'Something strange is happening...';
     }
@@ -3323,13 +3340,13 @@ export class ExplorationState {
     if (this.player.getFlag('grandma_defeated')) {
       return this._withAlexAct2Hint('Review the Henderson file at your desk');
     }
-    if (this.player.getFlag('chad_defeated') && this.player.getFlag('ross_post_chad')) {
+    if (this.player.getFlag('chad_defeated') && this.player.getFlag('skip_post_chad')) {
       return this._withAlexAct2Hint('Meet Grandma Henderson in the Conference Room');
     }
     if (this.player.getFlag('chad_defeated')) {
       return this._withAlexAct2Hint("Talk to Skip in his office");
     }
-    if (this.player.getFlag('karen_defeated') && this.player.getFlag('ross_post_karen')) {
+    if (this.player.getFlag('karen_defeated') && this.player.getFlag('skip_post_karen')) {
       return this._withAlexAct2Hint('Meet Chad Henderson in the Conference Room');
     }
     if (this.player.getFlag('karen_defeated')) {
@@ -3347,10 +3364,10 @@ export class ExplorationState {
       return 'Meet Karen Henderson in the Conference Room';
     }
 
-    if (!this.player.getFlag('checked_desk') && !this.player.getFlag('ready_for_ross')) {
+    if (!this.player.getFlag('checked_desk') && !this.player.getFlag('ready_for_skip')) {
       return 'Find your cubicle and settle in';
     }
-    if (!this.player.getFlag('ready_for_ross')) {
+    if (!this.player.getFlag('ready_for_skip')) {
       const missing = [];
       if (!this.player.getFlag('met_janet'))   missing.push('Janet');
       if (!this.player.getFlag('met_intern'))  missing.push('the Intern');
@@ -3362,15 +3379,15 @@ export class ExplorationState {
   }
 
   _refreshStoryProgress(silent = false) {
-    // Auto-gate Ross until all four coworkers have been met
+    // Auto-gate Skip until all four coworkers have been met
     if (
       this.player.getFlag('met_janet') &&
       this.player.getFlag('met_intern') &&
       this.player.getFlag('met_isaiah') &&
       this.player.getFlag('met_alex_it') &&
-      !this.player.getFlag('ready_for_ross')
+      !this.player.getFlag('ready_for_skip')
     ) {
-      this.player.setFlag('ready_for_ross', true);
+      this.player.setFlag('ready_for_skip', true);
     }
 
     // Act 6 "fully prepared" signal — 5 allies + 2 pieces of evidence. This
@@ -3384,7 +3401,7 @@ export class ExplorationState {
       this.player.getFlag('janet_act6_rallied') &&
       this.player.getFlag('diane_act6_rallied') &&
       this.player.getFlag('intern_act6_rallied') &&
-      this.player.getFlag('ross_speech_ready') &&
+      this.player.getFlag('skip_speech_ready') &&
       this.player.getFlag('grandma_ally') &&
       this.player.getFlag('diane_evidence') &&
       this.player.getFlag('isaiah_evidence') &&
@@ -3397,7 +3414,7 @@ export class ExplorationState {
     // Taking the Rolex derives `act6_complete`, which derives
     // `board_meeting_closed`, which clears every Board Room staging NPC — so
     // under the old order the watch silently deleted a 177-node set-piece the
-    // player had been told (by Skip, in `ross_act6`) to go and skip. It also
+    // player had been told (by Skip, in `skip_act6`) to go and skip. It also
     // deleted the Act 6 → 7 bridge: BLOCK H of `board_meeting` is where the
     // board chair says the order came from "Above" and Skip names the
     // penthouse. Derived flag because room NPC conditions support a single

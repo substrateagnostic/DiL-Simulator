@@ -44,7 +44,7 @@ const LADDER = [
   { id: 'karen',   level: 4 },
   { id: 'chad',    level: 6 },
   { id: 'grandma', level: 8 },
-  { id: 'rachel_boss', level: 9 },
+  { id: 'meredith_boss', level: 9 },
   { id: 'algorithm', level: 10, party: ['janet', 'isaiah'] },
 ];
 

@@ -223,7 +223,7 @@
       "bytes": 530372
     },
     {
-      "f": "rachel_boss_idle.glb",
+      "f": "meredith_boss_idle.glb",
       "w": 2048,
       "h": 2048,
       "maskFrac": 0.6094133853912354,
@@ -367,7 +367,7 @@
       "bytes": 684192
     },
     {
-      "f": "ross_boss_idle.glb",
+      "f": "skip_boss_idle.glb",
       "w": 2048,
       "h": 2048,
       "maskFrac": 0.08382773399353027,
