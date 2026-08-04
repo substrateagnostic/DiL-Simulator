@@ -1,3 +1,32 @@
+## [WAVE G CLOSED - ALL THREE RUNS JUDGED (08-04 morning)]
+
+28 agents, 4.57M tokens, 0 errors, ran through a laptop crash on cache
+resume. Final commit 03409b4; display-case pushed; main untouched.
+
+- ARCADE: PASSED ROUND 1. SPRINT REVIEW (fd202c1) cleared both judges
+  on first submission. Video: screenshots/g-run/arcade/video/.
+- CUTSCENES: PASSED (round 3). The game has a StageDirector; 21 scenes
+  staged (2723554). Your seeds fixed: face-the-consequences staged
+  (grandma_meeting video), the board meeting stops being radio, exec
+  posters re-faced, the Firm ambush staged. 16 scene videos under
+  screenshots/g-run/cutscenes/.
+- UX: judges failed round 3 on ONE remaining defect, wrote the fix
+  themselves; closer executed it verbatim (03409b4): after the board
+  meeting, E on Skip now routes to a new no-reward farewell
+  (board_meeting_after, Opus 4.6 lines) instead of REOPENING the full
+  set-piece (+300 XP farmable per re-run). Gate leg (e) added with
+  PROVEN teeth (routing disabled -> exit 1, measured +600 farm).
+  Your five seeds all fixed earlier rounds: posters, NW staircase,
+  grandma re-trigger, alex_it dialog machine, Press Advantage.
+- Board gating inversion (40c3635) verified vs legacy saves.
+- Honesty: _ux-dev exit-code behavior changed (now fails properly);
+  the original D1/D2 before-baseline was overwritten by a tool default
+  and is unrecoverable (renamed, root cause fixed); leg (e) asserts
+  XP only (the tree's whole reward surface today).
+- YOUR MORNING GATE: watch grandma_meeting + board_meeting + arcade
+  videos. On your nod: MERGE, then naming sweep -> I arbiter ->
+  combat build (H schedule + 9 cards + cosigned J package) -> F
+  remainder. Nothing merges before your eyes on the taste items.
 ## [RUN G / FIX ROUND 3 (08-04) — UX lane + CUT lane, judge panels answered]
 
 One commit on `display-case`, pushed. `npm run check` exit 0 verified before it.
