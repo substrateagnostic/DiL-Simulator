@@ -6,16 +6,36 @@
 // derived act, the HUD objective, and every room's VISIBLE NPC set for
 // duplicate ids on the same tile.
 //
-// Usage: node tools/_ux-dev.mjs --tag=before|after [--port=5173]
+// Usage: node tools/_ux-dev.mjs [--tag=after|round4|…] [--port=5173]
 // HEADED per HANDOFF_PACKAGE §4.7.
+//
+// BASELINE PROTECTION. `--tag` used to default to `before`, so every bare
+// `node tools/_ux-dev.mjs` — which is how the gate is invoked — rewrote
+// `dev-before.json`, the file NAMED as the D1/D2 pre-fix baseline. Measured:
+// dev-before.json was two days NEWER than dev-after.json, i.e. the "before"
+// artifact was a post-fix run and the real baseline was gone. The baseline now
+// has its own write-once name (`dev-D1D2-BASELINE.json`) and the default tag is
+// a neutral `run`. Re-capturing the baseline on purpose takes --force-baseline.
 
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync, existsSync } from 'fs';
 
-const tag = process.argv.find(a => a.startsWith('--tag='))?.slice(6) || 'before';
+const tag = process.argv.find(a => a.startsWith('--tag='))?.slice(6) || 'run';
 const PORT = process.argv.find(a => a.startsWith('--port='))?.slice(7) || '5173';
 const OUT = 'screenshots/g-run/ux';
 mkdirSync(OUT, { recursive: true });
+
+const BASELINE = `${OUT}/dev-D1D2-BASELINE.json`;
+let outFile = `${OUT}/dev-${tag}.json`;
+let baselineNote = null;
+if (tag === 'before' || tag === 'baseline') {
+  if (existsSync(BASELINE) && !process.argv.includes('--force-baseline')) {
+    outFile = `${OUT}/dev-baseline-rerun-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+    baselineNote = `${BASELINE} already exists and was NOT overwritten (pass --force-baseline to replace it)`;
+  } else {
+    outFile = BASELINE;
+  }
+}
 
 const browser = await chromium.launch({ headless: false });
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
@@ -57,6 +77,7 @@ try {
       }
       out.push({
         key: p.key, label: p.label,
+        rooms: Object.keys(ROOMS).length,
         act: ex.player.actIndex,
         objective: String(ex._getStoryObjective() || '').replace(/<br>/g, ' | ').replace(/<[^>]+>/g, ''),
         dupes,
@@ -75,9 +96,12 @@ try {
   const act1 = rows.find(r => r.key === 'act1');
   say(`\nD1: preset labelled "${act1.label}" derives act=${act1.act}  ${act1.act === 1 ? 'PASS' : 'FAIL (label says Act 1)'}`);
   say(`D2: total duplicate-NPC spawns across all presets = ${totalDupes}  ${totalDupes === 0 ? 'PASS' : 'FAIL'}`);
+  say(`     coverage: ${rows.length} presets x ${rows[0]?.rooms ?? 0} rooms`);
 
-  writeFileSync(`${OUT}/dev-${tag}.json`, JSON.stringify({ tag, rows, totalDupes, log }, null, 2));
-  say(`\nwrote ${OUT}/dev-${tag}.json`);
+  if (baselineNote) say(`\nNOTE: ${baselineNote}`);
+  writeFileSync(outFile, JSON.stringify({ tag, rows, totalDupes, log }, null, 2));
+  say(`\nwrote ${outFile}`);
+  if (act1.act !== 1 || totalDupes !== 0) process.exitCode = 1;
 } finally {
   await browser.close();
 }

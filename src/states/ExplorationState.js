@@ -2603,6 +2603,22 @@ export class ExplorationState {
       return 'rachel_to_intro';
     }
 
+    // A SPENT SET-PIECE IS NOT A REPEATABLE PROMPT. Skip's Board Room entry
+    // carries `dialogId: 'board_meeting'`, and he deliberately STAYS in the room
+    // after the meeting — `board_meeting_closed` is deferred until the player
+    // walks out so eighteen bodies never delete themselves on camera. That left
+    // the E prompt on him wired straight back into the 177-node set-piece, with
+    // its `give_xp 300` on node 176, farmable once per press. The fix is
+    // code-side and touches no entity: while he is standing in the room he has
+    // already spoken in, he gets a short scene with no rewards and no flags
+    // instead. Scoped to `board_room` so his office entries are untouched.
+    if (id === 'ross'
+        && this.player.currentRoom === 'board_room'
+        && this.player.getFlag('board_meeting_held')
+        && DIALOGS.board_meeting_after) {
+      return 'board_meeting_after';
+    }
+
     // A STORY BEAT OUTRANKS FLAVOUR. `npc.dialogId` normally wins here (CLAUDE.md
     // "NPC `dialogId` overrides act routing"), and that return is ABOVE every
     // Alex-from-IT route below it — printer quest, act4 trigger, Phantom

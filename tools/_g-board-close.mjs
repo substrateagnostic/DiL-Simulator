@@ -7,7 +7,7 @@
 // deleted itself in ONE VISIBLE FRAME with the player standing there.
 // Measured baseline: 18 bodies gone across 60 ms, screen uncovered.
 //
-// Four checks, all from the shipping path:
+// Five checks, all from the shipping path:
 //   (a) at dialog-end +0 ms and +1 s the cast is still present AND control is live
 //   (b) leave the room and come back — room empty, Skip back in his office
 //   (c) save + load inside the window — no stranded cast; re-check the
@@ -16,6 +16,13 @@
 //       here would show)
 //   (d) reload the page while still standing in board_room — acceptable outcome
 //       is cast present until you walk out
+//   (e) THE SPENT PROMPT. Skip staying in the room is correct; his E prompt
+//       feeding back into the 177-node set-piece (and its `give_xp 300`) is not.
+//       Walk to the LIVE mesh — he PACES, so 7,9 is not where he is — send a
+//       real `e`, and fail if the meeting reopens or if one point of XP moves
+//       across two full attempts. Choice screens are forced to the TOP option:
+//       the `_chose_` cursor otherwise parks on "I need a minute", which exits
+//       in ~20 advances and pays nothing, i.e. a false pass.
 //
 // Plus the acceptance number the panel asked for: the largest single-tick DROP
 // in visible NPC count while the screen is uncovered. Must be 0.
@@ -184,6 +191,126 @@ const say = (s) => { console.log(s); report.push(s); };
     await sleep(900);
     return page.evaluate(() => window.__explore.player.currentRoom);
   };
+
+  // ── (e) THE SPENT PROMPT ────────────────────────────────────────────────
+  // Skip stays bodily in the Board Room after the meeting (that is deliberate —
+  // nobody may vanish on camera), and his room entry carries
+  // `dialogId: 'board_meeting'`. So the E prompt on him fed straight back into
+  // the 177-node set-piece, whose node 176 is `give_xp 300`: a re-runnable
+  // reward on a re-runnable prompt. This leg walks to the LIVE mesh, sends a
+  // REAL keypress through `_interact()`, and fails if the meeting reopens or if
+  // one point of XP moves across two full attempts.
+  //
+  // FORCING THE TOP OPTION IS THE WHOLE TEST. DialogBox parks the cursor on the
+  // first UNSEEN choice, and by now every choice at node 9 has a `_chose_` flag
+  // except "I need a minute" — which routes 10 → 11 → end in ~20 advances and
+  // pays nothing. Mashing Enter therefore passes an XP assertion against a
+  // scene it never entered. Every choice screen here is driven to index 0 with
+  // real ArrowUp presses first.
+  const pressSkipAndDrain = async (label) => {
+    // Adjacent to the LIVE mesh: Skip PACES (`{type:'pace', distance:1.5}`), so
+    // his 7,9 authored position is not where he is standing.
+    const placed = await page.evaluate(() => {
+      const ex = window.__explore;
+      const ross = ex.roomManager.entityManager.npcs.find(n => n.id === 'ross' && n.visible);
+      if (!ross) return { ok: false, why: 'no visible ross NPC' };
+      const mx = ross.mesh.position.x, mz = ross.mesh.position.z;
+      for (const [dx, dz] of [[0, 0.8], [0, -0.8], [0.8, 0], [-0.8, 0], [0.6, 0.6], [-0.6, 0.6]]) {
+        ex.player.setPosition(mx + dx, mz + dz, ex.tileMap);
+        const near = ex.roomManager.entityManager.getNearestInteractable(
+          ex.player.position.x, ex.player.position.z);
+        if (near && near.id === 'ross') {
+          return { ok: true, mesh: [+mx.toFixed(2), +mz.toFixed(2)],
+            player: [+ex.player.position.x.toFixed(2), +ex.player.position.z.toFixed(2)],
+            armed: ex._transitionArmed() };
+        }
+      }
+      return { ok: false, why: 'could not stand within interact range of ross', mesh: [mx, mz] };
+    });
+    if (!placed.ok) { say(`(e) ${label}: FAILED TO REACH SKIP — ${placed.why}`); return { ok: false }; }
+    say(`(e) ${label}: skip mesh at [${placed.mesh}] player at [${placed.player}] transitionArmed=${placed.armed}`);
+
+    // REAL key event, held across frames. InputManager diffs key state BETWEEN
+    // frames — a zero-delay down+up never reads as pressed.
+    await page.keyboard.down('e'); await sleep(180); await page.keyboard.up('e');
+    await sleep(500);
+
+    const opened = await page.evaluate(() => {
+      const ex = window.__explore;
+      const top = ex.stateManager.stack[ex.stateManager.stack.length - 1];
+      return { state: top?.constructor?.name || null, dialogId: top?.dialogId ?? null };
+    });
+    say(`(e) ${label}: E opened state=${opened.state} dialogId=${opened.dialogId}`);
+    if (opened.state !== 'DialogState') return { ok: true, dialogId: null, advances: 0, lines: [] };
+
+    // Drain it, forcing choice index 0 every time.
+    const lines = [];
+    let n = 0, choices = 0;
+    for (; n < MAX_ADV; n++) {
+      const st = await page.evaluate(() => {
+        const ex = window.__explore;
+        const top = ex.stateManager.stack[ex.stateManager.stack.length - 1];
+        if (top?.constructor?.name !== 'DialogState') return null;
+        const box = top.dialogBox;
+        return {
+          choicesVisible: !!box?.choicesVisible,
+          selectedIndex: box?.selectedIndex ?? 0,
+          speaker: box?.speakerEl?.textContent || null,
+          text: (box?.textEl?.textContent || '').slice(0, 90),
+        };
+      });
+      if (!st) break;
+      if (st.speaker && !lines.some(l => l.startsWith(st.speaker + ' |'))) {
+        lines.push(`${st.speaker} | ${st.text}`);
+      }
+      if (st.choicesVisible) {
+        choices++;
+        for (let up = 0; up < st.selectedIndex; up++) {
+          await page.keyboard.down('ArrowUp'); await sleep(70); await page.keyboard.up('ArrowUp');
+          await sleep(40);
+        }
+        const idx = await page.evaluate(() => {
+          const ex = window.__explore;
+          const top = ex.stateManager.stack[ex.stateManager.stack.length - 1];
+          return top?.dialogBox?.selectedIndex ?? -1;
+        });
+        if (idx !== 0) say(`(e) ${label}: WARNING choice cursor is at ${idx}, not the top option`);
+      }
+      await page.keyboard.down('Enter'); await sleep(TAP); await page.keyboard.up('Enter');
+      await sleep(60);
+    }
+    return { ok: true, dialogId: opened.dialogId, advances: n, choices, lines };
+  };
+
+  const xpBefore = await page.evaluate(() => window.__explore.player.stats.xp);
+  say(`(e) xp before the re-press: ${xpBefore}`);
+  const e1 = await pressSkipAndDrain('press 1');
+  const xpMid = await page.evaluate(() => window.__explore.player.stats.xp);
+  await page.screenshot({ path: path.join(OUT, 'G-skip-repress.png') });
+  const e2 = await pressSkipAndDrain('press 2 (the full second attempt)');
+  const xpAfter = await page.evaluate(() => window.__explore.player.stats.xp);
+  const eAfter = await page.evaluate(() => {
+    const ex = window.__explore;
+    const top = ex.stateManager.stack[ex.stateManager.stack.length - 1];
+    return { top: top?.constructor?.name, paused: !!ex.paused, room: ex.player.currentRoom,
+      visible: ex.roomManager.entityManager.npcs.filter(n => n.visible).length };
+  });
+  for (const [lbl, r] of [['press 1', e1], ['press 2', e2]]) {
+    if (r.ok && r.dialogId) {
+      say(`(e) ${lbl}: dialogId=${r.dialogId} advances=${r.advances} choiceScreens=${r.choices}`);
+      for (const l of r.lines) say(`(e)     ${l}`);
+    }
+  }
+  say(`(e) xp: before=${xpBefore} afterPress1=${xpMid} afterPress2=${xpAfter}  delta=${xpAfter - xpBefore}`);
+  say(`(e) control after: top=${eAfter.top} paused=${eAfter.paused} room=${eAfter.room} visible=${eAfter.visible}`);
+
+  const ePass = e1.ok && e2.ok
+    && e1.dialogId !== 'board_meeting' && e2.dialogId !== 'board_meeting'
+    && e1.dialogId === 'board_meeting_after' && e2.dialogId === 'board_meeting_after'
+    && xpAfter === xpBefore && xpMid === xpBefore
+    && eAfter.top === 'ExplorationState' && !eAfter.paused
+    && eAfter.visible === preCount;
+  say(`(e) SPENT-PROMPT ${ePass ? 'PASS' : 'FAIL'} — E on the post-meeting Skip must not reopen board_meeting and must pay nothing`);
 
   // (b) leave and re-enter
   const landedExec = await goTo('executive_floor', 8, 5);
@@ -363,7 +490,8 @@ const say = (s) => { console.log(s); report.push(s); };
 
   const pass = worst === 0 && a0.visible === preCount && a1.visible === preCount
     && a0.topState === 'ExplorationState' && !a0.paused
-    && back.visible === 0 && office.includes('ross') && arch.dupes.length === 0;
+    && back.visible === 0 && office.includes('ross') && arch.dupes.length === 0
+    && ePass;
   console.log(pass ? 'BOARD-CLOSE PASS' : 'BOARD-CLOSE FAIL');
   if (!pass) process.exit(1);
 })().catch(e => { console.error(e); process.exit(1); });

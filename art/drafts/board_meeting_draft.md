@@ -310,3 +310,18 @@ The Intern: Please don't compliment me, I'll start crying and I wore my only goo
 Grandma Henderson: I made two batches of snickerdoodle. One for the board. One for afterward, in case the first batch doesn't work.
 Andrew: Doesn't work?
 Grandma Henderson: Sugar is a negotiation tool, Andrew. My late husband Walter knew that. You give them the first cookie for free. The second one, they owe you.
+
+---
+
+## AFTER THE MEETING — `board_meeting_after` (wave G closing fix)
+
+Skip stays in the Board Room after `board_meeting_held` (nobody vanishes on camera), so
+pressing E on him used to reopen the whole 177-node set-piece and re-pay its `give_xp 300`.
+This 3-node scene replaces that prompt: a dead prompt becoming a beat, the P5R behaviour.
+Zero rewards, zero flags — it is re-enterable forever.
+
+First-draft: Opus 4.6 (`claude -p --model claude-opus-4-6`), wired verbatim.
+
+Skip Hartley: I've got a 5:15 with myself in my office. Blocked it off on the calendar and everything.
+Narrator: He has loosened his tie by exactly one inch, which is as close to disheveled as Skip Hartley has been on company property since 2019.
+Skip Hartley: The Archive's downstairs. I'll be in my office when you get back.

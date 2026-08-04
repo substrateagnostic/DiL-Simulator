@@ -129,9 +129,13 @@ Three of these were actively producing false evidence:
   `CROP-mid-PREFIX.png` vs `CROP-mid-FIXED.png` — matched to his own tie-break
   windows. Four rail runs, near flight railed.
 - `screenshots/g-run/cutscenes/board_meeting_PREFIX/100-settled.png` vs
-  `screenshots/g-run/cutscenes/board_meeting/100-settled.png` — empty room vs
-  full board, same beat.
-- `screenshots/g-run/board/close-after/report.txt` — the four probe legs.
+  `screenshots/g-run/cutscenes/board_meeting/102-settled.png` — empty room vs
+  full board, same beat. The two takes have DIFFERENT frame numbers because the
+  fixed take actually reaches the end node and so runs two frames longer:
+  PREFIX ends `098-end164` / `099-final` / `100-settled`, FIXED ends
+  `100-end164` / `101-final` / `102-settled`. Compare by SUFFIX, not by number.
+- `screenshots/g-run/board/close-after/report.txt` — the probe legs. Now five:
+  (e) is the spent-prompt gate (E on the post-meeting Skip).
 - `screenshots/g-run/board/dark/` — the lighting handoff.
 
 ### Things that would mislead you if I did not say them

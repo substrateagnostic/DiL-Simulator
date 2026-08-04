@@ -3897,6 +3897,24 @@ export const DIALOGS = {
     /* 3  */ { type: 'end' },
   ],
 
+  // Skip, AFTER the meeting — the dead prompt that became a beat.
+  // Skip stays bodily in the Board Room after `board_meeting_held` (nobody may
+  // vanish on camera; `board_meeting_closed` is deliberately deferred until the
+  // player walks out — see ExplorationState._refreshStoryProgress). His room
+  // entry still carries `dialogId: 'board_meeting'`, so pressing E on him
+  // re-opened the entire 177-node set-piece, rewards and all. `_getDialogId`
+  // now routes him here instead while he is standing in that room.
+  // ZERO reward actions and ZERO flags by design: this is re-enterable forever,
+  // so anything it granted would be a farm. Nothing in it reacts to being heard
+  // twice, for the same reason.
+  // Prose first-draft: Opus 4.6 (claude -p --model claude-opus-4-6), wired verbatim.
+  board_meeting_after: [
+    /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "I've got a 5:15 with myself in my office. Blocked it off on the calendar and everything." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "He has loosened his tie by exactly one inch, which is as close to disheveled as Skip Hartley has been on company property since 2019." },
+    /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "The Archive's downstairs. I'll be in my office when you get back." },
+    /* 3  */ { type: 'end' },
+  ],
+
   // ==========================================================================
   // ACT 7: TRUST ISSUES (FINALE)
   // ==========================================================================
