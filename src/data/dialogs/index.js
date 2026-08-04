@@ -3829,9 +3829,9 @@ export const DIALOGS = {
   // ==========================================================================
 
   arcade_intro: [
-    /* 0 */ { type: 'text', speaker: 'Narrator', text: 'An old arcade cabinet sits in the corner. The screen flickers with pixel art of a stagecoach. "STAGECOACH STAMPEDE" blinks in gold letters.' },
+    /* 0 */ { type: 'text', speaker: 'Narrator', text: 'An old arcade cabinet sits in the corner. The screen flickers with a pixel man in a pixel suit, running flat out down a pixel hallway. "SPRINT REVIEW" blinks in gold letters.' },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: '"Insert Quarter" it says. Someone has taped a note over the coin slot: "FREE PLAY \u2014 Management"' },
-    /* 2 */ { type: 'choice', prompt: 'Play Stagecoach Stampede?', choices: [
+    /* 2 */ { type: 'choice', prompt: 'Play Sprint Review?', choices: [
       { text: 'Yes! (This is definitely a productive use of company time)', next: 3 },
       { text: 'No (You have actual work to do)', next: 4 },
     ]},

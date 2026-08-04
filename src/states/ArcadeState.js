@@ -1,1551 +1,903 @@
 import * as THREE from 'three';
 import { Engine } from '../core/Engine.js';
 import { InputManager } from '../core/InputManager.js';
+import { DEV_MODE } from '../utils/constants.js';
+import * as K from '../arcade/constants.js';
+import { Terrain, TerrainRibbon, KILL_Y } from '../arcade/Terrain.js';
+import { Runner } from '../arcade/Runner.js';
+import { PropFactory, PROP_KIND, PROP_DEF } from '../arcade/Props.js';
+import { Backdrop } from '../arcade/Backdrop.js';
+import { Hud } from '../arcade/Hud.js';
+import { ArcadeSfx } from '../arcade/Sfx.js';
 
 // ============================================================
-// STAGECOACH STAMPEDE — A retro side-scrolling minigame
+// SPRINT REVIEW — the break-room cabinet
 // ============================================================
-// Ride the Trust Officer stagecoach through the Old West.
-// Jump over regulations, dodge auditors, collect trust documents.
-// Stomp enemies Mario-style for bonus points!
-// Score is measured in Fiduciary Points.
+// A Genesis-Sonic momentum platformer wearing an office. The physics
+// live in src/arcade/Runner.js and the level in src/arcade/Terrain.js;
+// this file is the state shell: scene, camera, prop lifetime, collision,
+// the Deadline, scoring, and the two cards.
+//
+// Contract with the rest of the game (do not break silently):
+//   * own Three.js scene, rendered via Engine.renderScene +
+//     skipDefaultRender, per the ArcadeState pattern.
+//   * player flags `arcade_highscore` / `arcade_best_distance` and the
+//     four `arcade_*` cosmetic flags are read and written here. They are
+//     carried across New Game+ by MenuState's `arcade_` CARRY_PREFIX.
+//   * `arcade_best_distance` now stores FLOORS (units / 25), not raw
+//     world units, and the ATK/DEF ladder is floors/40 capped at 5.
 // ============================================================
 
-const GROUND_Y = -2.5;
-const COACH_X = -5;
-const GRAVITY = -28;
-const JUMP_VELOCITY = 14;
-const DOUBLE_JUMP_VELOCITY = 12;
-const DUCK_HEIGHT = 0.5;
-const NORMAL_HEIGHT = 1.2;
-const SPAWN_X = 14;
-const DESPAWN_X = -16;
-
-const OBSTACLE_TYPES = [
-  { id: 'regulation_scroll', height: 1.6, width: 0.4, action: 'jump', color: 0xcc2222 },
-  { id: 'compliance_auditor', height: 1.5, width: 0.6, action: 'jump', color: 0x333366, stompable: true },
-  { id: 'falling_memo', height: 0.3, width: 0.8, action: 'duck', color: 0xffeecc, falling: true },
-  { id: 'filing_cabinet', height: 0.8, width: 0.9, action: 'jump', color: 0x888888 },
-  { id: 'tumbleweed', height: 0.5, width: 0.5, action: 'jump', color: 0xaa8844, stompable: true, rolling: true },
-  { id: 'lawsuit_hawk', height: 0.5, width: 0.7, action: 'duck', color: 0x553322, flying: true },
-];
-
-const COLLECTIBLE_TYPES = [
-  { id: 'trust_document', points: 10, color: 0xffd700, size: 0.4 },
-  { id: 'coffee_cup', points: 5, color: 0x8b4513, size: 0.3, speedBoost: true },
-  { id: 'charter_fragment', points: 50, color: 0xffaa00, size: 0.5, rare: true, glow: true },
-  { id: 'gold_watch', points: 25, color: 0xffd700, size: 0.35, glow: true },
-];
-
-// Sky/light keyframes — the run cycles through a full day every ~400 distance
-const DAY_CYCLE = [
-  { top: 0x4488cc, bot: 0xffcc88, light: 1.0 },  // morning
-  { top: 0x3a78c8, bot: 0xaaddff, light: 1.05 }, // noon
-  { top: 0x7733aa, bot: 0xff8866, light: 0.8 },  // dusk
-  { top: 0x0a1033, bot: 0x223355, light: 0.45 }, // night
-];
-
-// Platform types that spawn floating platforms to jump to
-const PLATFORM_TYPES = [
-  { id: 'wooden_platform', width: 2.0, height: 0.15, color: 0x8b5a2b, y: 1.5 },
-  { id: 'cloud_platform', width: 1.5, height: 0.2, color: 0xddddff, y: 2.5 },
-];
-
-// Cosmetic milestone unlocks (persist via player flags)
-const COSMETIC_MILESTONES = [
-  { distance: 100, flag: 'arcade_gold_wheels', label: 'GOLD WHEELS UNLOCKED!', desc: 'Shiny gold wheels' },
-  { distance: 250, flag: 'arcade_fancy_roof', label: 'FANCY ROOF UNLOCKED!', desc: 'Red velvet roof' },
-  { distance: 500, flag: 'arcade_armored', label: 'ARMORED COACH UNLOCKED!', desc: 'Steel-plated body' },
-  { distance: 1000, flag: 'arcade_fire_horses', label: 'FIRE HORSES UNLOCKED!', desc: 'Blazing steeds' },
-];
+const RESTART_KEYS = ['enter', ' '];
 
 export class ArcadeState {
   constructor(stateManager, player) {
     this.stateManager = stateManager;
     this.player = player;
 
-    // Three.js scene
     this.scene = null;
     this.camera = null;
+    this.terrain = null;
+    this.ribbon = null;
+    this.runner = null;
+    this.backdrop = null;
+    this.hud = null;
+    this.sfx = null;
+    this.props = null;
 
-    // Game objects
-    this.coach = null;
-    this.coachVelocityY = 0;
-    this.coachY = 0;
-    this.isDucking = false;
-    this.isJumping = false;
-    this.hasDoubleJumped = false;
-
-    // Scrolling
-    this.scrollSpeed = 5;
-    this.maxSpeed = 15;
-    this.speedBoostTimer = 0;
-    this.distance = 0;
-
-    // Spawning
-    this.obstacles = [];
-    this.collectibles = [];
-    this.platforms = [];
-    this.spawnTimer = 0;
-    this.spawnInterval = 1.8;
-    this.collectibleTimer = 0;
-    this.platformTimer = 3.0;
-
-    // Background
-    this.groundTiles = [];
-    this.mountains = [];
-    this.cacti = [];
-    this.clouds = [];
-    this.groundDetail = [];
-    this.sun = null;
-
-    // Juice
+    this.active = [];        // live props
     this.particles = [];
-    this._dustTimer = 0;
-    this._wasGrounded = true;
-    this._coyote = 0;
-    this._jumpBuffer = 0;
+    this.pool = [];
+    this.speedLines = [];
 
-    // Wheels for rotation
-    this.wheels = [];
-
-    // Score
-    this.score = 0;
-    this.highScore = this.player.getFlag('arcade_highscore') || 0;
-    this.stompCombo = 0;
-
-    // Milestone tracking
-    this.shownMilestones = new Set();
-    this.milestonePopup = null;
-    this.milestoneTimer = 0;
-
-    // State
-    this.gameOver = false;
-    this.started = false;
-
-    // DOM
-    this.hudEl = null;
-    this.gameOverEl = null;
-
-    // Cleanup tracking
-    this._geometries = [];
-    this._materials = [];
-    this._resizeHandler = null;
-
-    // Horse legs for gallop animation
-    this.horseLegs = [];
+    this._accum = 0;
+    this._inputLock = 0.25;
+    this._prevTilt = true;
+    this._prevRetro = false;
+    this._resize = null;
   }
 
-  enter() {
-    this._buildScene();
-    this._buildHUD();
-    this._buildCoach();
-    this._buildBackground();
-    this._buildGround();
+  // =========================================================
+  // LIFECYCLE
+  // =========================================================
 
-    this._resizeHandler = () => this._onResize();
-    window.addEventListener('resize', this._resizeHandler);
+  enter() {
+    this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x050b10);
+
+    this.camera = new THREE.OrthographicCamera(-10, 10, 6, -6, 0.1, 200);
+    this.camera.position.set(0, 0, 40);
+    this.camera.lookAt(0, 0, 0);
+
+    this.terrain = new Terrain();
+    this.ribbon = new TerrainRibbon(this.terrain);
+    this.scene.add(this.ribbon.mesh);
+
+    this.backdrop = new Backdrop(this.scene);
+    this.props = new PropFactory();
+
+    this.runner = new Runner(this.terrain);
+    this.runner.applyCosmetics({
+      gold: !!this.player.getFlag('arcade_gold_wheels'),
+      tie: !!this.player.getFlag('arcade_fancy_roof'),
+      pinstripe: !!this.player.getFlag('arcade_armored'),
+      flames: !!this.player.getFlag('arcade_fire_horses'),
+    });
+    this.scene.add(this.runner.group);
+
+    this._buildDeadline();
+    this._buildParticlePool();
+
+    this.hud = new Hud();
+    this.sfx = new ArcadeSfx();
+
+    this.highScore = this.player.getFlag('arcade_highscore') || 0;
+    this.bestFloors = this.player.getFlag('arcade_best_distance') || 0;
+
+    // The display case's tilt-shift blurs the top and bottom thirds of an
+    // orthographic frame — correct for a diorama, fatal for a runner
+    // whose obstacles arrive at the frame edge. The 1998 CRT pass goes ON
+    // instead: this IS a cabinet in the break room. Both are restored in
+    // exit() so nothing leaks back into exploration.
+    this._prevTilt = Engine._tiltShiftOn !== false;
+    this._prevRetro = Engine._retroOn === true;
+    Engine.setTiltShift(false);
+    Engine.setRetroPass(true);
+
+    this._resize = () => this._onResize();
+    window.addEventListener('resize', this._resize);
     this._onResize();
 
-    this.started = true;
+    this._reset(true);
+
+    // Dev-only handle for tools/arcade-play.mjs — the harness reads real
+    // physics state (gsp, angle, grounded) instead of guessing from the HUD.
+    if (DEV_MODE) window.__arcade = this;
   }
 
   exit() {
-    // Remove DOM
-    if (this.hudEl) { this.hudEl.remove(); this.hudEl = null; }
-    if (this.gameOverEl) { this.gameOverEl.remove(); this.gameOverEl = null; }
-    if (this.milestonePopup) { this.milestonePopup.remove(); this.milestonePopup = null; }
+    Engine.setTiltShift(this._prevTilt);
+    Engine.setRetroPass(this._prevRetro);
+    window.removeEventListener('resize', this._resize);
 
-    // Particles
-    for (const p of this.particles) {
-      this.scene.remove(p.mesh);
-      p.geo.dispose();
-      p.mat.dispose();
-    }
-    this.particles = [];
+    if (this.sfx) this.sfx.stop();
+    if (this.hud) this.hud.destroy();
+    if (this.ribbon) this.ribbon.dispose();
+    if (this.runner) this.runner.dispose();
+    if (this.backdrop) this.backdrop.dispose();
+    if (this.props) this.props.dispose();
+    for (const p of this.pool) { p.mesh.geometry.dispose(); p.mesh.material.dispose(); }
+    for (const s of this.speedLines) { s.geometry.dispose(); s.material.dispose(); }
+    if (this._dlGeos) for (const g of this._dlGeos) g.dispose();
+    if (this._dlMats) for (const m of this._dlMats) m.dispose();
 
-    // Dispose Three.js
-    this._geometries.forEach(g => g.dispose());
-    this._materials.forEach(m => m.dispose());
-    if (this.scene) {
-      this.scene.traverse(child => {
-        if (child.geometry) child.geometry.dispose();
-        if (child.material) {
-          if (Array.isArray(child.material)) child.material.forEach(m => m.dispose());
-          else child.material.dispose();
-        }
-      });
-    }
-
-    window.removeEventListener('resize', this._resizeHandler);
+    this.pool.length = 0;
+    this.speedLines.length = 0;
+    this.active.length = 0;
+    this.scene = null;
   }
 
   pause() {}
   resume() {}
 
-  // ---- SCENE SETUP ----
-
-  _buildScene() {
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x87ceeb); // sky blue
-
-    // Gradient sky — add a big plane behind everything
-    const skyGeo = new THREE.PlaneGeometry(60, 30);
-    const skyMat = new THREE.ShaderMaterial({
-      uniforms: {
-        topColor: { value: new THREE.Color(0x4488cc) },
-        bottomColor: { value: new THREE.Color(0xffcc88) },
-      },
-      vertexShader: `
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-      `,
-      fragmentShader: `
-        uniform vec3 topColor;
-        uniform vec3 bottomColor;
-        varying vec2 vUv;
-        void main() {
-          gl_FragColor = vec4(mix(bottomColor, topColor, vUv.y), 1.0);
-        }
-      `,
-      side: THREE.DoubleSide,
-      depthWrite: false,
-    });
-    this._materials.push(skyMat);
-    this._geometries.push(skyGeo);
-    const skyPlane = new THREE.Mesh(skyGeo, skyMat);
-    skyPlane.position.set(0, 2, -15);
-    this.scene.add(skyPlane);
-
-    // Orthographic camera — side view
-    const aspect = window.innerWidth / window.innerHeight;
-    const zoom = 7;
-    this.camera = new THREE.OrthographicCamera(
-      -zoom * aspect, zoom * aspect,
-      zoom, -zoom,
-      0.1, 100
-    );
-    this.camera.position.set(0, 0, 10);
-    this.camera.lookAt(0, 0, 0);
-
-    // Lighting
-    const ambient = new THREE.AmbientLight(0xffffff, 0.7);
-    this.scene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(0xffeedd, 0.8);
-    dirLight.position.set(5, 8, 5);
-    this.scene.add(dirLight);
-    this.ambientLight = ambient;
-    this.dirLight = dirLight;
-    this.skyMat = skyMat;
-  }
-
   _onResize() {
-    const aspect = window.innerWidth / window.innerHeight;
-    const zoom = 7;
-    this.camera.left = -zoom * aspect;
-    this.camera.right = zoom * aspect;
-    this.camera.top = zoom;
-    this.camera.bottom = -zoom;
+    this._aspect = window.innerWidth / Math.max(1, window.innerHeight);
+    this._applyZoom(this._zoom || K.CAM_HALF_H);
+  }
+
+  _applyZoom(halfH) {
+    this._zoom = halfH;
+    const a = this._aspect || 1.777;
+    this.camera.top = halfH;
+    this.camera.bottom = -halfH;
+    this.camera.left = -halfH * a;
+    this.camera.right = halfH * a;
     this.camera.updateProjectionMatrix();
+    this._halfW = halfH * a;
   }
 
-  // ---- STAGECOACH ----
+  // =========================================================
+  // SETUP HELPERS
+  // =========================================================
 
-  _buildCoach() {
-    this.coach = new THREE.Group();
+  _buildDeadline() {
+    this._dlGeos = [];
+    this._dlMats = [];
+    const g = new THREE.Group();
 
-    // Check cosmetic unlocks
-    const hasGoldWheels = this.player.getFlag('arcade_gold_wheels');
-    const hasFancyRoof = this.player.getFlag('arcade_fancy_roof');
-    const hasArmored = this.player.getFlag('arcade_armored');
-    const hasFireHorses = this.player.getFlag('arcade_fire_horses');
+    const push = (geo, mat) => { this._dlGeos.push(geo); this._dlMats.push(mat); return new THREE.Mesh(geo, mat); };
 
-    // Body
-    const bodyColor = hasArmored ? 0x556677 : 0x8b5a2b;
-    const bodyGeo = new THREE.BoxGeometry(1.8, 1.0, 0.8);
-    const bodyMat = new THREE.MeshToonMaterial({ color: bodyColor });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.8;
-    this.coach.add(body);
-    this._geometries.push(bodyGeo);
-    this._materials.push(bodyMat);
+    // A dark falloff so the wall reads as a mass, not a card.
+    const fade = push(new THREE.PlaneGeometry(26, 60),
+      new THREE.MeshBasicMaterial({ color: 0x02060a, transparent: true, opacity: 0.9 }));
+    fade.position.set(-13, 0, 3);
+    g.add(fade);
 
-    // Armored rivets
-    if (hasArmored) {
-      const rivetGeo = new THREE.SphereGeometry(0.04, 6, 6);
-      const rivetMat = new THREE.MeshToonMaterial({ color: 0x999999 });
-      this._geometries.push(rivetGeo);
-      this._materials.push(rivetMat);
-      [[-0.7, 1.1], [-0.7, 0.5], [0.7, 1.1], [0.7, 0.5], [0, 1.2]].forEach(([x, y]) => {
-        const rivet = new THREE.Mesh(rivetGeo, rivetMat);
-        rivet.position.set(x, y, 0.42);
-        this.coach.add(rivet);
-      });
-    }
-
-    // Roof
-    const roofColor = hasFancyRoof ? 0xaa2222 : (hasArmored ? 0x445566 : 0x6b3a1b);
-    const roofGeo = new THREE.BoxGeometry(2.0, 0.15, 0.9);
-    const roofMat = new THREE.MeshToonMaterial({ color: roofColor });
-    const roof = new THREE.Mesh(roofGeo, roofMat);
-    roof.position.y = 1.38;
-    this.coach.add(roof);
-    this._geometries.push(roofGeo);
-    this._materials.push(roofMat);
-
-    // Fancy roof trim
-    if (hasFancyRoof) {
-      const trimGeo = new THREE.BoxGeometry(2.1, 0.04, 0.95);
-      const trimMat = new THREE.MeshToonMaterial({ color: 0xffd700 });
-      const trim = new THREE.Mesh(trimGeo, trimMat);
-      trim.position.y = 1.30;
-      this.coach.add(trim);
-      this._geometries.push(trimGeo);
-      this._materials.push(trimMat);
-    }
-
-    // Windows
-    const windowGeo = new THREE.BoxGeometry(0.35, 0.3, 0.02);
-    const windowMat = new THREE.MeshToonMaterial({ color: 0xaaddff });
-    [-0.4, 0.4].forEach(xOff => {
-      const win = new THREE.Mesh(windowGeo, windowMat);
-      win.position.set(xOff, 0.9, 0.42);
-      this.coach.add(win);
-    });
-    this._geometries.push(windowGeo);
-    this._materials.push(windowMat);
-
-    // Wheels (2)
-    const wheelColor = hasGoldWheels ? 0xdaa520 : 0x3b1a0b;
-    const wheelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.15, 12);
-    const wheelMat = new THREE.MeshToonMaterial({ color: wheelColor });
-    this._geometries.push(wheelGeo);
-    this._materials.push(wheelMat);
-    this.wheels = [];
-    [-0.55, 0.55].forEach(xOff => {
-      const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-      wheel.rotation.x = Math.PI / 2;
-      wheel.position.set(xOff, 0.15, 0.5);
-      this.coach.add(wheel);
-      this.wheels.push(wheel);
-    });
-
-    // Spoke details on wheels
-    const spokeColor = hasGoldWheels ? 0xc89b18 : 0x5a3010;
-    const spokeGeo = new THREE.BoxGeometry(0.05, 0.55, 0.03);
-    const spokeMat = new THREE.MeshToonMaterial({ color: spokeColor });
-    this._geometries.push(spokeGeo);
-    this._materials.push(spokeMat);
-    this.spokes = [];
-    this.wheels.forEach(wheel => {
-      const spokeGroup = [];
-      for (let i = 0; i < 4; i++) {
-        const spoke = new THREE.Mesh(spokeGeo, spokeMat);
-        spoke.rotation.z = (i / 4) * Math.PI;
-        wheel.add(spoke);
-        spokeGroup.push(spoke);
+    // Filing cabinets stacked to the ceiling: the backlog, arriving.
+    const cabGeo = new THREE.BoxGeometry(2.6, 1.5, 1);
+    const cabMat = new THREE.MeshBasicMaterial({ color: 0x3a4550 });
+    const cabMat2 = new THREE.MeshBasicMaterial({ color: 0x2c353e });
+    this._dlGeos.push(cabGeo); this._dlMats.push(cabMat, cabMat2);
+    for (let r = 0; r < 24; r++) {
+      for (let c = 0; c < 4; c++) {
+        const m = new THREE.Mesh(cabGeo, (r + c) % 2 ? cabMat : cabMat2);
+        m.position.set(-1.4 - c * 2.62, -18 + r * 1.55 + (c % 2) * 0.4, 4);
+        g.add(m);
       }
-      this.spokes.push(spokeGroup);
-    });
+    }
+    // The leading edge: red overdue band.
+    const edge = push(new THREE.PlaneGeometry(0.5, 60),
+      new THREE.MeshBasicMaterial({ color: 0xff3b3b }));
+    edge.position.set(0.1, 0, 5);
+    g.add(edge);
+    const glow = push(new THREE.PlaneGeometry(3.0, 60),
+      new THREE.MeshBasicMaterial({ color: 0xff3b3b, transparent: true, opacity: 0.22 }));
+    glow.position.set(-1.4, 0, 4.9);
+    g.add(glow);
 
-    // Horses (simple box creatures) — positioned in FRONT of coach (positive x = direction of travel)
-    const horseGroup = new THREE.Group();
-    const horseColor = hasFireHorses ? 0xcc3300 : 0x8b6914;
-    const horseBodyGeo = new THREE.BoxGeometry(0.7, 0.4, 0.35);
-    const horseMat = new THREE.MeshToonMaterial({ color: horseColor });
-    this._geometries.push(horseBodyGeo);
-    this._materials.push(horseMat);
-
-    this.horseLegs = [];
-
-    // Two horses side by side, in FRONT of coach
-    [-0.2, 0.2].forEach(zOff => {
-      const horseBody = new THREE.Mesh(horseBodyGeo, horseMat);
-      horseBody.position.set(1.7, 0.55, zOff);
-      horseGroup.add(horseBody);
-
-      // Head (facing right = direction of travel)
-      const headGeo = new THREE.BoxGeometry(0.2, 0.25, 0.2);
-      const head = new THREE.Mesh(headGeo, horseMat);
-      head.position.set(2.15, 0.7, zOff);
-      horseGroup.add(head);
-      this._geometries.push(headGeo);
-
-      // Fire mane
-      if (hasFireHorses) {
-        const maneGeo = new THREE.BoxGeometry(0.15, 0.3, 0.25);
-        const maneMat = new THREE.MeshToonMaterial({ color: 0xff6600, emissive: 0xff3300, emissiveIntensity: 0.4 });
-        const mane = new THREE.Mesh(maneGeo, maneMat);
-        mane.position.set(1.95, 0.85, zOff);
-        horseGroup.add(mane);
-        this._geometries.push(maneGeo);
-        this._materials.push(maneMat);
-      }
-
-      // Legs (4 per horse) — stored for gallop animation
-      const legGeo = new THREE.BoxGeometry(0.08, 0.35, 0.08);
-      const legColor = hasFireHorses ? 0x993300 : 0x6b4914;
-      const legMat = new THREE.MeshToonMaterial({ color: legColor });
-      this._geometries.push(legGeo);
-      this._materials.push(legMat);
-
-      const legPositions = [
-        [1.5, zOff - 0.1], [1.5, zOff + 0.1],  // back legs
-        [1.9, zOff - 0.1], [1.9, zOff + 0.1],  // front legs
-      ];
-      legPositions.forEach(([lx, lz], idx) => {
-        const leg = new THREE.Mesh(legGeo, legMat);
-        leg.position.set(lx, 0.17, lz);
-        horseGroup.add(leg);
-        this.horseLegs.push({ mesh: leg, baseY: 0.17, phase: idx * 0.7 });
-      });
-    });
-
-    // Hitch bar connecting horses to coach (now on the right side)
-    const hitchGeo = new THREE.BoxGeometry(0.8, 0.05, 0.05);
-    const hitchMat = new THREE.MeshToonMaterial({ color: 0x5a3010 });
-    const hitch = new THREE.Mesh(hitchGeo, hitchMat);
-    hitch.position.set(1.25, 0.45, 0);
-    horseGroup.add(hitch);
-    this._geometries.push(hitchGeo);
-    this._materials.push(hitchMat);
-
-    // Driver — Andrew, white-knuckling the reins on the front bench
-    const driver = new THREE.Group();
-    const dBodyGeo = new THREE.BoxGeometry(0.26, 0.32, 0.2);
-    const dBodyMat = new THREE.MeshToonMaterial({ color: 0x2c3e6b });
-    const dBody = new THREE.Mesh(dBodyGeo, dBodyMat);
-    dBody.position.y = 0.16;
-    driver.add(dBody);
-    const dHeadGeo = new THREE.SphereGeometry(0.12, 10, 8);
-    const dHeadMat = new THREE.MeshToonMaterial({ color: 0xf5c6a0 });
-    const dHead = new THREE.Mesh(dHeadGeo, dHeadMat);
-    dHead.position.y = 0.42;
-    driver.add(dHead);
-    const dHairGeo = new THREE.SphereGeometry(0.13, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55);
-    const dHairMat = new THREE.MeshToonMaterial({ color: 0x4a3728 });
-    const dHair = new THREE.Mesh(dHairGeo, dHairMat);
-    dHair.position.y = 0.44;
-    driver.add(dHair);
-    const dArmGeo = new THREE.BoxGeometry(0.3, 0.06, 0.06);
-    const dArm = new THREE.Mesh(dArmGeo, dBodyMat);
-    dArm.position.set(0.18, 0.22, 0);
-    dArm.rotation.z = -0.25;
-    driver.add(dArm);
-    this._geometries.push(dBodyGeo, dHeadGeo, dHairGeo, dArmGeo);
-    this._materials.push(dBodyMat, dHeadMat, dHairMat);
-    driver.position.set(0.75, 1.45, 0);
-    this.coach.add(driver);
-    this.driver = driver;
-
-    this.coach.add(horseGroup);
-    this.horses = horseGroup;
-
-    this.coach.position.set(COACH_X, GROUND_Y + 0.15, 0);
-    this.scene.add(this.coach);
+    this.deadlineMesh = g;
+    this.scene.add(g);
   }
 
-  // ---- BACKGROUND ----
-
-  _buildBackground() {
-    // Sun
-    const sunGeo = new THREE.SphereGeometry(1.2, 16, 16);
-    const sunMat = new THREE.MeshBasicMaterial({ color: 0xffdd44 });
-    this.sun = new THREE.Mesh(sunGeo, sunMat);
-    this.sun.position.set(8, 5, -12);
-    this.scene.add(this.sun);
-    this._geometries.push(sunGeo);
-    this._materials.push(sunMat);
-
-    // Sun glow
-    const glowGeo = new THREE.SphereGeometry(1.8, 16, 16);
-    const glowMat = new THREE.MeshBasicMaterial({ color: 0xffeeaa, transparent: true, opacity: 0.3 });
-    const glow = new THREE.Mesh(glowGeo, glowMat);
-    glow.position.copy(this.sun.position);
-    this.scene.add(glow);
-    this._geometries.push(glowGeo);
-    this._materials.push(glowMat);
-
-    // Mountains (distant parallax layer)
-    const mtGeo = new THREE.ConeGeometry(3, 4, 4);
-    const mtMat = new THREE.MeshToonMaterial({ color: 0x6b5b4b });
-    const mtMat2 = new THREE.MeshToonMaterial({ color: 0x7b6b5b });
-    this._geometries.push(mtGeo);
-    this._materials.push(mtMat, mtMat2);
-
-    for (let i = 0; i < 8; i++) {
-      const mt = new THREE.Mesh(mtGeo, i % 2 === 0 ? mtMat : mtMat2);
-      const scale = 0.6 + Math.random() * 0.8;
-      mt.scale.set(scale, scale * (0.7 + Math.random() * 0.6), scale);
-      mt.position.set(-20 + i * 6 + Math.random() * 3, GROUND_Y + scale * 1.5, -10);
-      this.mountains.push(mt);
-      this.scene.add(mt);
+  _buildParticlePool() {
+    const geo = () => new THREE.PlaneGeometry(1, 1);
+    for (let i = 0; i < 140; i++) {
+      const m = new THREE.Mesh(geo(), new THREE.MeshBasicMaterial({
+        color: 0xffffff, transparent: true, opacity: 0, depthWrite: false,
+      }));
+      m.visible = false;
+      m.renderOrder = 6;
+      this.scene.add(m);
+      this.pool.push({ mesh: m, life: 0, max: 1, vx: 0, vy: 0, grav: 0, spin: 0 });
     }
-
-    // Cacti (mid-ground parallax layer)
-    const cactusBodyGeo = new THREE.CylinderGeometry(0.12, 0.15, 1.0, 8);
-    const cactusArmGeo = new THREE.CylinderGeometry(0.07, 0.08, 0.4, 6);
-    const cactusMat = new THREE.MeshToonMaterial({ color: 0x2d7a2d });
-    this._geometries.push(cactusBodyGeo, cactusArmGeo);
-    this._materials.push(cactusMat);
-
-    for (let i = 0; i < 6; i++) {
-      const cactus = new THREE.Group();
-      const cBody = new THREE.Mesh(cactusBodyGeo, cactusMat);
-      cBody.position.y = 0.5;
-      cactus.add(cBody);
-
-      // Arms
-      if (Math.random() > 0.3) {
-        const arm = new THREE.Mesh(cactusArmGeo, cactusMat);
-        arm.rotation.z = Math.PI / 3;
-        arm.position.set(0.15, 0.6 + Math.random() * 0.2, 0);
-        cactus.add(arm);
-      }
-      if (Math.random() > 0.5) {
-        const arm2 = new THREE.Mesh(cactusArmGeo, cactusMat);
-        arm2.rotation.z = -Math.PI / 3;
-        arm2.position.set(-0.15, 0.5 + Math.random() * 0.2, 0);
-        cactus.add(arm2);
-      }
-
-      cactus.position.set(-15 + i * 7 + Math.random() * 4, GROUND_Y, -5);
-      this.cacti.push(cactus);
-      this.scene.add(cactus);
-    }
-
-    // Clouds (slow parallax layer) — toon-lit, kept under the bloom threshold
-    const cloudGeo = new THREE.SphereGeometry(0.6, 8, 6);
-    const cloudMat = new THREE.MeshToonMaterial({ color: 0xdde4ee, transparent: true, opacity: 0.85 });
-    this._geometries.push(cloudGeo);
-    this._materials.push(cloudMat);
-    for (let i = 0; i < 5; i++) {
-      const cloud = new THREE.Group();
-      const puffs = 2 + Math.floor(Math.random() * 2);
-      for (let p = 0; p <= puffs; p++) {
-        const puff = new THREE.Mesh(cloudGeo, cloudMat);
-        puff.position.set(p * 0.7 - puffs * 0.35, (p % 2) * 0.2, 0);
-        puff.scale.set(1 + Math.random() * 0.5, 0.55, 0.8);
-        cloud.add(puff);
-      }
-      cloud.position.set(-18 + i * 9 + Math.random() * 4, 2.5 + Math.random() * 2.5, -11);
-      this.clouds.push(cloud);
-      this.scene.add(cloud);
+    // Speed lines — flat streaks that only appear above 0.7 top speed.
+    for (let i = 0; i < 18; i++) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 0.05), new THREE.MeshBasicMaterial({
+        color: 0xbdf6e6, transparent: true, opacity: 0, depthWrite: false,
+      }));
+      m.visible = false;
+      m.renderOrder = 7;
+      this.scene.add(m);
+      this.speedLines.push(m);
+      m.userData = { life: 0, vx: 0 };
     }
   }
 
-  _buildGround() {
-    // Wide scrolling ground plane
-    const groundGeo = new THREE.PlaneGeometry(60, 4);
-    const groundMat = new THREE.MeshToonMaterial({ color: 0xd2b48c }); // sandy tan
-    this._geometries.push(groundGeo);
-    this._materials.push(groundMat);
+  // =========================================================
+  // RUN STATE
+  // =========================================================
 
-    for (let i = 0; i < 2; i++) {
-      const ground = new THREE.Mesh(groundGeo, groundMat);
-      ground.rotation.x = -Math.PI / 2;
-      ground.position.set(i * 60, GROUND_Y, 0);
-      this.scene.add(ground);
-      this.groundTiles.push(ground);
+  _reset(firstTime) {
+    for (const p of this.active) this.scene.remove(p.mesh);
+    this.active.length = 0;
+    for (const p of this.pool) { p.life = 0; p.mesh.visible = false; }
+    for (const s of this.speedLines) { s.userData.life = 0; s.visible = false; }
+
+    this.terrain.reset();
+    this.runner.reset();
+
+    this.score = 0;
+    this.clips = 0;
+    this.floors = 0;
+    this.startX = this.runner.x;
+    this.maxX = this.runner.x;
+    this.topSpeedSeen = 0;
+    this.runTime = 0;
+    this.deadlineX = this.runner.x - K.DEADLINE_HEADSTART;
+    this.combo = 0;
+    this.comboTimer = 0;
+    this.shake = 0;
+    this.hitstop = 0;
+    this.over = false;
+    this.overCause = '';
+    this.started = false;
+    this.shownMilestones = new Set();
+    this._spawnedTo = 0;
+    this._inputLock = firstTime ? 0.25 : 0.12;
+
+    this.camX = this.runner.x;
+    this.camY = this.runner.y + 1.4;
+    this._applyZoom(K.CAM_HALF_H);
+
+    this.hud.hideCard();
+    this.hud.showTitleCard();
+    this.hud.update(this._hudState());
+  }
+
+  _hudState() {
+    return {
+      score: this.score,
+      clips: this.clips,
+      floors: this.floors,
+      best: Math.max(this.highScore, this.score),
+      speed: this.runner.speed,
+      topSpeed: this.runner.topSpeed,
+      dread: this._dread(),
+      over: this.over,
+    };
+  }
+
+  _dread() {
+    const gap = this.runner.x - this.deadlineX;
+    return Math.max(0, Math.min(1, 1 - gap / K.DEADLINE_MAX_GAP));
+  }
+
+  // =========================================================
+  // MAIN LOOP
+  // =========================================================
+
+  update(dt) {
+    // Sim first, present last — a runner at 18 u/s cannot afford a frame
+    // of presentation latency, and skipDefaultRender must be asserted on
+    // every path or the exploration scene draws over us.
+    Engine.skipDefaultRender();
+
+    if (this._inputLock > 0) this._inputLock -= dt;
+    const canInput = this._inputLock <= 0;
+
+    if (InputManager.isJustPressed('escape') && canInput) {
+      this._present();
+      this.stateManager.pop();
+      return;
     }
 
-    // Ground line (darker strip at the top of the ground)
-    const lineGeo = new THREE.PlaneGeometry(60, 0.08);
-    const lineMat = new THREE.MeshToonMaterial({ color: 0xaa8855 });
-    this._geometries.push(lineGeo);
-    this._materials.push(lineMat);
-    for (let i = 0; i < 2; i++) {
-      const line = new THREE.Mesh(lineGeo, lineMat);
-      line.rotation.x = -Math.PI / 2;
-      line.position.set(i * 60, GROUND_Y + 0.01, -1.95);
-      this.scene.add(line);
-      this.groundTiles.push(line);
+    if (!this.started) {
+      if (canInput && RESTART_KEYS.some(k => InputManager.isJustPressed(k))) {
+        this.started = true;
+        this.hud.hideCard();
+        this.sfx.start();
+      }
+      this._renderOnly(dt);
+      this._present();
+      return;
     }
 
-    // Scattered rocks/cracks scrolling at full speed — sells the motion
-    const rockGeo = new THREE.BoxGeometry(0.18, 0.07, 0.3);
-    const rockMat = new THREE.MeshToonMaterial({ color: 0xa8895f });
-    const crackGeo = new THREE.PlaneGeometry(0.5, 0.06);
-    const crackMat = new THREE.MeshToonMaterial({ color: 0xb59a6c });
-    this._geometries.push(rockGeo, crackGeo);
-    this._materials.push(rockMat, crackMat);
-    for (let i = 0; i < 14; i++) {
-      let detail;
-      if (i % 2 === 0) {
-        detail = new THREE.Mesh(rockGeo, rockMat);
-        detail.position.set(-14 + i * 4 + Math.random() * 3, GROUND_Y + 0.04, -1.4 + Math.random() * 2.6);
+    if (this.over) {
+      if (canInput && InputManager.isJustPressed('enter')) {
+        this._reset(false);
+        this.started = true;
+        this.hud.hideCard();
+        this.sfx.start();
+      }
+      this._renderOnly(dt);
+      this._present();
+      return;
+    }
+
+    const step = Math.min(dt, 0.05);
+    this.runTime += step;
+
+    // Hit-stop: freeze the sim for a couple of frames on a smash so the
+    // impact reads. Genesis did it with a palette flash; we do both.
+    if (this.hitstop > 0) {
+      this.hitstop -= step;
+      this._renderOnly(step);
+      this._present();
+      return;
+    }
+
+    // ---- fixed-step physics ---------------------------------------------
+    const input = this._readInput();
+    this._accum += step;
+    const FIXED = 1 / 120;
+    let guard = 12;
+    while (this._accum >= FIXED && guard-- > 0) {
+      this.runner.step(FIXED, input);
+      // jumpPressed / spindash rev are edge events: consume after one step
+      input.jumpPressed = false;
+      this._accum -= FIXED;
+    }
+    if (guard <= 0) this._accum = 0;
+
+    this._handleRunnerEvents();
+
+    // ---- world -------------------------------------------------------------
+    this.terrain.ensureAhead(this.runner.x + this._halfW + 90);
+    this._drainSpawns();
+    this._updateProps(step);
+    this._collide();
+    this._updateDeadline(step);
+    this._updateCamera(step);
+    this._updateParticles(step);
+    this._updateSpeedLines(step);
+
+    // ---- scoring ----------------------------------------------------------
+    if (this.runner.x > this.maxX) this.maxX = this.runner.x;
+    this.floors = Math.max(0, Math.floor((this.maxX - this.startX) / K.UNITS_PER_FLOOR));
+    this.topSpeedSeen = Math.max(this.topSpeedSeen, this.runner.speed);
+    if (this.comboTimer > 0) { this.comboTimer -= step; if (this.comboTimer <= 0) this.combo = 0; }
+
+    this._checkMilestones();
+
+    // ---- fail states --------------------------------------------------------
+    if (this.runner.y < KILL_Y) this._gameOver('DOWN THE STAIRWELL', 'Facilities will hear about this.');
+    else if (this.deadlineX >= this.runner.x) this._gameOver('THE QUARTER CLOSED', 'The backlog caught up. It always does.');
+
+    this.sfx.setDread(this._dread());
+    this.hud.update(this._hudState());
+    this._present();
+  }
+
+  _present() {
+    Engine.renderScene(this.scene, this.camera);
+  }
+
+  /** Visuals only — used on the title card, game-over card, and hit-stop. */
+  _renderOnly(dt) {
+    this.runner.render(dt);
+    this._updateCamera(dt, true);
+    this._updateParticles(dt);
+    this._updateSpeedLines(dt);
+    this.ribbon.update(this.camX, this._halfW);
+    this.backdrop.update(this.camX, this.camY);
+    for (const p of this.active) this._animateProp(p, dt);
+  }
+
+  _readInput() {
+    const right = InputManager.isDown('arrowright') || InputManager.isDown('d');
+    const left = InputManager.isDown('arrowleft') || InputManager.isDown('a');
+    const jumpHeld = InputManager.isDown(' ') || InputManager.isDown('arrowup') || InputManager.isDown('w');
+    const jumpPressed = InputManager.isJustPressed(' ') || InputManager.isJustPressed('arrowup')
+      || InputManager.isJustPressed('w');
+    const downHeld = InputManager.isDown('arrowdown') || InputManager.isDown('s');
+    return { dir: (right ? 1 : 0) + (left ? -1 : 0), jumpHeld, jumpPressed, downHeld };
+  }
+
+  // =========================================================
+  // EVENTS FROM THE BODY
+  // =========================================================
+
+  _handleRunnerEvents() {
+    for (const e of this.runner.drainEvents()) {
+      switch (e.type) {
+        case 'jump': this.sfx.jump(); break;
+        case 'roll': this.sfx.roll(); this._dust(6, 0x9fb4c2); break;
+        case 'skid': this._dust(2, 0xc9d6de); if (Math.random() < 0.25) this.sfx.skid(); break;
+        case 'land':
+          this.sfx.land(e.impact);
+          if (e.impact > 12) { this.shake = Math.min(0.5, e.impact * 0.018); this._dust(10, 0xb8c9d4); }
+          else this._dust(4, 0xb8c9d4);
+          break;
+        case 'launch': this.sfx.launch(); this._dust(5, 0xd6f2e8); break;
+        case 'spring': this.sfx.spring(); this.shake = 0.22; break;
+        case 'boost': this.sfx.boost(); this.shake = 0.16; break;
+        case 'hurt': this.sfx.hurt(); this.shake = 0.42; break;
+        case 'smash': this.sfx.smash(); break;
+        case 'spindash_rev': this.sfx.spindashRev(e.charge); this._dust(3, 0xc9d6de); break;
+        case 'spindash_go':
+          this.sfx.spindashGo(); this.shake = 0.3;
+          this._burst(this.runner.x, this.runner.y + 0.4, 0xffd76a, 14, 5);
+          break;
+      }
+    }
+  }
+
+  // =========================================================
+  // PROPS
+  // =========================================================
+
+  _drainSpawns() {
+    for (const req of this.terrain.drainPending()) {
+      const kind = this._kindFor(req);
+      if (!kind) continue;
+      const mesh = this.props.create(kind);
+      let y;
+      if (req.absY !== undefined) {
+        y = req.absY;
       } else {
-        detail = new THREE.Mesh(crackGeo, crackMat);
-        detail.rotation.x = -Math.PI / 2;
-        detail.rotation.z = Math.random() * Math.PI;
-        detail.position.set(-14 + i * 4 + Math.random() * 3, GROUND_Y + 0.015, -1.2 + Math.random() * 2.4);
+        const g = this.terrain.heightAt(req.x);
+        if (g === null) continue;               // decoration landed over a gap
+        y = g + (req.yOff || 0);
       }
-      this.groundDetail.push(detail);
-      this.scene.add(detail);
-    }
-  }
-
-  // ---- HUD ----
-
-  _buildHUD() {
-    this.hudEl = document.createElement('div');
-    this.hudEl.id = 'arcade-hud';
-
-    // Count unlocked cosmetics
-    const unlockedCount = COSMETIC_MILESTONES.filter(m => this.player.getFlag(m.flag)).length;
-    const cosmeticText = unlockedCount > 0 ? `COSMETICS: ${unlockedCount}/${COSMETIC_MILESTONES.length}` : '';
-
-    this.hudEl.innerHTML = `
-      <div class="arcade-scanlines"></div>
-      <div class="arcade-header">STAGECOACH STAMPEDE</div>
-      <div class="arcade-stats">
-        <div class="arcade-stat">
-          <span class="arcade-label">FIDUCIARY PTS</span>
-          <span class="arcade-value" id="arcade-score">0</span>
-        </div>
-        <div class="arcade-stat">
-          <span class="arcade-label">DISTANCE</span>
-          <span class="arcade-value" id="arcade-distance">0</span>
-        </div>
-        <div class="arcade-stat">
-          <span class="arcade-label">HIGH SCORE</span>
-          <span class="arcade-value" id="arcade-highscore">${this.highScore}</span>
-        </div>
-      </div>
-      <div class="arcade-controls">SPACE/UP: Jump (x2!) &nbsp; DOWN: Duck &nbsp; STOMP: Land on enemies &nbsp; ESC: Quit${cosmeticText ? ' &nbsp; ' + cosmeticText : ''}</div>
-    `;
-    document.body.appendChild(this.hudEl);
-  }
-
-  _showGameOver() {
-    const isNewRecord = this.score > this.highScore;
-    if (isNewRecord) {
-      this.highScore = this.score;
-      this.player.setFlag('arcade_highscore', this.score);
-    }
-
-    // Check for newly earned milestones
-    const newUnlocks = [];
-    for (const milestone of COSMETIC_MILESTONES) {
-      if (Math.floor(this.distance) >= milestone.distance && !this.player.getFlag(milestone.flag)) {
-        this.player.setFlag(milestone.flag, true);
-        newUnlocks.push(milestone);
-      }
-    }
-
-    // Stat bonuses: +1 ATK and +1 DEF per 100 distance, max +5/+5 at 500
-    const prevBest   = this.player.getFlag('arcade_best_distance') || 0;
-    const thisDist   = Math.floor(this.distance);
-    const newBest    = Math.max(prevBest, thisDist);
-    const prevTiers  = Math.min(5, Math.floor(prevBest / 100));
-    const newTiers   = Math.min(5, Math.floor(newBest / 100));
-    const tiersEarned = newTiers - prevTiers;
-
-    if (newBest > prevBest) {
-      this.player.setFlag('arcade_best_distance', newBest);
-    }
-    if (tiersEarned > 0) {
-      this.player.stats.atk = (this.player.stats.atk || 0) + tiersEarned;
-      this.player.stats.def = (this.player.stats.def || 0) + tiersEarned;
-    }
-
-    const unlockHTML = newUnlocks.length > 0
-      ? `<div class="arcade-unlocks">${newUnlocks.map(m => `<div class="arcade-unlock-item">★ ${m.label}</div>`).join('')}</div>`
-      : '';
-
-    const statBonusHTML = tiersEarned > 0
-      ? `<div class="arcade-unlocks"><div class="arcade-unlock-item">⚡ NEW BEST DISTANCE! +${tiersEarned} Assertiveness, +${tiersEarned} Composure</div></div>`
-      : (newTiers >= 5 ? `<div class="arcade-unlocks"><div class="arcade-unlock-item">MAX STATS REACHED (500+ distance)</div></div>` : '');
-
-    this.gameOverEl = document.createElement('div');
-    this.gameOverEl.id = 'arcade-gameover';
-    this.gameOverEl.innerHTML = `
-      <div class="arcade-scanlines"></div>
-      <div class="arcade-gameover-title">GAME OVER</div>
-      <div class="arcade-gameover-subtitle">${isNewRecord ? '*** NEW HIGH SCORE! ***' : 'Better luck next time, partner.'}</div>
-      ${unlockHTML}
-      ${statBonusHTML}
-      <div class="arcade-gameover-stats">
-        <div>FIDUCIARY POINTS: <span class="arcade-gold">${this.score}</span></div>
-        <div>DISTANCE: <span class="arcade-gold">${Math.floor(this.distance)}</span></div>
-        <div>HIGH SCORE: <span class="arcade-gold">${this.highScore}</span></div>
-        <div>BEST DISTANCE: <span class="arcade-gold">${newBest}</span></div>
-      </div>
-      <div class="arcade-gameover-prompt">
-        <div>ENTER — Ride Again</div>
-        <div>ESCAPE — Return to Office</div>
-      </div>
-    `;
-    document.body.appendChild(this.gameOverEl);
-  }
-
-  _updateHUD() {
-    const scoreEl = document.getElementById('arcade-score');
-    const distEl = document.getElementById('arcade-distance');
-    const hiEl = document.getElementById('arcade-highscore');
-    if (scoreEl) scoreEl.textContent = this.score;
-    if (distEl) distEl.textContent = Math.floor(this.distance);
-    if (hiEl) hiEl.textContent = Math.max(this.highScore, this.score);
-  }
-
-  _showMilestonePopup(milestone) {
-    if (this.milestonePopup) this.milestonePopup.remove();
-    this.milestonePopup = document.createElement('div');
-    this.milestonePopup.className = 'arcade-milestone-popup';
-    this.milestonePopup.innerHTML = `<div class="arcade-milestone-star">★</div><div>${milestone.label}</div>`;
-    document.body.appendChild(this.milestonePopup);
-    this.milestoneTimer = 2.5;
-  }
-
-  // ---- OBSTACLE / COLLECTIBLE / PLATFORM BUILDING ----
-
-  _createObstacle(typeDef) {
-    const group = new THREE.Group();
-
-    if (typeDef.id === 'regulation_scroll') {
-      // Tall red scroll/cylinder
-      const geo = new THREE.CylinderGeometry(0.2, 0.2, typeDef.height, 8);
-      const mat = new THREE.MeshToonMaterial({ color: typeDef.color });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.y = typeDef.height / 2;
-      group.add(mesh);
-      // Seal on top
-      const sealGeo = new THREE.SphereGeometry(0.15, 8, 8);
-      const sealMat = new THREE.MeshToonMaterial({ color: 0xffd700 });
-      const seal = new THREE.Mesh(sealGeo, sealMat);
-      seal.position.y = typeDef.height + 0.1;
-      group.add(seal);
-
-    } else if (typeDef.id === 'compliance_auditor') {
-      // Little suited figure
-      const bodyGeo = new THREE.BoxGeometry(0.4, 0.7, 0.3);
-      const bodyMat = new THREE.MeshToonMaterial({ color: 0x222244 });
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.position.y = 0.7;
-      group.add(body);
-      // Head
-      const headGeo = new THREE.BoxGeometry(0.25, 0.25, 0.25);
-      const headMat = new THREE.MeshToonMaterial({ color: 0xffcc99 });
-      const head = new THREE.Mesh(headGeo, headMat);
-      head.position.y = 1.2;
-      group.add(head);
-      // Clipboard
-      const clipGeo = new THREE.BoxGeometry(0.15, 0.25, 0.03);
-      const clipMat = new THREE.MeshToonMaterial({ color: 0xdddddd });
-      const clip = new THREE.Mesh(clipGeo, clipMat);
-      clip.position.set(0.3, 0.8, 0);
-      group.add(clip);
-      // Legs
-      const legGeo = new THREE.BoxGeometry(0.12, 0.35, 0.12);
-      const legMat = new THREE.MeshToonMaterial({ color: 0x222244 });
-      [-0.1, 0.1].forEach(x => {
-        const leg = new THREE.Mesh(legGeo, legMat);
-        leg.position.set(x, 0.17, 0);
-        group.add(leg);
+      mesh.position.set(req.x, y, 0.2);
+      this.scene.add(mesh);
+      this.active.push({
+        kind, mesh, x: req.x, y,
+        def: PROP_DEF[kind],
+        dead: false, phase: Math.random() * Math.PI * 2, used: false,
       });
+    }
+  }
 
-    } else if (typeDef.id === 'falling_memo') {
-      // Flat paper
-      const geo = new THREE.BoxGeometry(typeDef.width, 0.05, 0.5);
-      const mat = new THREE.MeshToonMaterial({ color: typeDef.color });
-      const mesh = new THREE.Mesh(geo, mat);
-      group.add(mesh);
-      // Red "URGENT" stamp visual
-      const stampGeo = new THREE.BoxGeometry(0.3, 0.02, 0.15);
-      const stampMat = new THREE.MeshToonMaterial({ color: 0xcc0000 });
-      const stamp = new THREE.Mesh(stampGeo, stampMat);
-      stamp.position.y = 0.035;
-      group.add(stamp);
+  _kindFor(req) {
+    const r = Math.random();
+    switch (req.type) {
+      case 'clip': return PROP_KIND.CLIP;
+      case 'coffee': return PROP_KIND.COFFEE;
+      case 'stapler': return PROP_KIND.STAPLER;
+      case 'spring': return PROP_KIND.SPRING;
+      case 'boostpad': return PROP_KIND.BOOSTPAD;
+      case 'puddle': return PROP_KIND.PUDDLE;
+      case 'pipe': return PROP_KIND.PIPE;
+      case 'checkpoint': return PROP_KIND.CHECKPOINT;
+      case 'obstacle':
+        if (req.tier === 'hard') return r < 0.55 ? PROP_KIND.BINDERS : PROP_KIND.COOLER;
+        return r < 0.55 ? PROP_KIND.BOX : PROP_KIND.CHAIR;
+      default: return null;
+    }
+  }
 
-    } else if (typeDef.id === 'filing_cabinet') {
-      // Wide, short cabinet
-      const geo = new THREE.BoxGeometry(typeDef.width, typeDef.height, 0.5);
-      const mat = new THREE.MeshToonMaterial({ color: typeDef.color });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.y = typeDef.height / 2;
-      group.add(mesh);
-      // Drawer handles
-      const handleGeo = new THREE.BoxGeometry(0.2, 0.03, 0.06);
-      const handleMat = new THREE.MeshToonMaterial({ color: 0xaaaaaa });
-      [0.15, 0.45].forEach(y => {
-        const handle = new THREE.Mesh(handleGeo, handleMat);
-        handle.position.set(0, y, 0.28);
-        group.add(handle);
+  _updateProps(dt) {
+    const cull = this.camX - this._halfW - 30;
+    for (let i = this.active.length - 1; i >= 0; i--) {
+      const p = this.active[i];
+      if (p.x < cull || p.dead) {
+        this.scene.remove(p.mesh);
+        this.active.splice(i, 1);
+        continue;
+      }
+      this._animateProp(p, dt);
+    }
+  }
+
+  _animateProp(p, dt) {
+    p.phase += dt;
+    switch (p.kind) {
+      case PROP_KIND.CLIP:
+        p.mesh.rotation.y = p.phase * 4.2;
+        p.mesh.position.y = p.y + Math.sin(p.phase * 2.4) * 0.07;
+        break;
+      case PROP_KIND.COFFEE:
+      case PROP_KIND.STAPLER:
+        p.mesh.rotation.y = p.phase * 2.2;
+        p.mesh.position.y = p.y + Math.sin(p.phase * 2.0) * 0.13;
+        break;
+      case PROP_KIND.SPRING: {
+        const b = p.mesh.userData.ball;
+        if (b) {
+          const k = p.compress > 0 ? (p.compress -= dt * 4) : 0;
+          b.scale.set(1 + k * 0.5, Math.max(0.35, 1 - k), 1 + k * 0.5);
+        }
+        break;
+      }
+      case PROP_KIND.BOOSTPAD: {
+        const ch = p.mesh.userData.chevrons;
+        if (ch) for (let i = 0; i < ch.length; i++) {
+          const t = (p.phase * 3 + i * 0.25) % 1;
+          ch[i].position.y = 0.10 + (t < 0.4 ? 0.04 : 0);
+        }
+        break;
+      }
+      case PROP_KIND.CHAIR: {
+        const w = p.mesh.userData.wheels;
+        if (w) for (const x of w) x.rotation.y = p.phase * 2;
+        p.mesh.position.x = p.x + Math.sin(p.phase * 1.6) * 0.22;
+        break;
+      }
+      case PROP_KIND.CHECKPOINT: {
+        const s = p.mesh.userData.screen;
+        if (s) s.material = p.used ? this.props.M.lamp : this.props.M.lampOff;
+        if (p.used) p.mesh.rotation.y = Math.min(Math.PI * 2, (p.mesh.rotation.y || 0) + dt * 9);
+        break;
+      }
+      default: break;
+    }
+  }
+
+  // =========================================================
+  // COLLISION
+  // =========================================================
+
+  _collide() {
+    const r = this.runner;
+    const halfW = r.ballMode ? K.BALL_R : K.RUNNER_W * 0.5;
+    const rL = r.x - halfW, rR = r.x + halfW;
+    const rB = r.y, rT = r.y + (r.ballMode ? K.BALL_R * 2 : K.RUNNER_H);
+
+    for (const p of this.active) {
+      if (p.dead) continue;
+      const d = p.def;
+      if (rR < p.x - d.hw || rL > p.x + d.hw) continue;
+      const pB = p.y + d.y0, pT = p.y + d.y1;
+      if (rT < pB || rB > pT) continue;
+
+      // ---- pickups -------------------------------------------------------
+      if (d.pickup) {
+        p.dead = true;
+        if (d.clips) {
+          this.clips += d.clips;
+          this.score += d.clips * K.CLIP_POINTS;
+          this.sfx.stapler();
+          this.hud.pop(`+${d.clips} CLIPS`);
+          this._burst(p.x, p.y, 0xffd76a, 16, 4);
+        } else if (d.shoes) {
+          r.shoes = d.shoes;
+          this.sfx.shoes();
+          this.hud.pop('CAFFEINATED');
+          this._burst(p.x, p.y, 0xffe27a, 12, 3.5);
+        } else {
+          this.clips += 1;
+          this.combo += 1;
+          this.comboTimer = 1.1;
+          this.score += K.CLIP_POINTS + Math.min(40, this.combo * 2);
+          this.sfx.clip();
+          this._burst(p.x, p.y, 0xdfe8f0, 4, 2.4);
+        }
+        continue;
+      }
+
+      // ---- spring ---------------------------------------------------------
+      if (d.spring) {
+        r.springLaunch(d.spring);
+        p.compress = 1;
+        this.score += 10;
+        continue;
+      }
+
+      // ---- boost pad -------------------------------------------------------
+      if (d.boost) {
+        if (r.grounded && r.gsp < d.boost) { r.boost(d.boost); this.score += 15; }
+        continue;
+      }
+
+      // ---- checkpoint -------------------------------------------------------
+      if (d.checkpoint) {
+        if (!p.used) {
+          p.used = true;
+          this.deadlineX -= 46;
+          this.score += 250;
+          this.sfx.checkpoint();
+          this.hud.pop('MILESTONE MET  +250');
+          this._burst(p.x, p.y + 1.6, 0x5fd8c0, 20, 5);
+        }
+        continue;
+      }
+
+      // ---- slick (coffee puddle) — a ONE-SHOT momentum tax -------------------
+      // Deliberately not a continuous drag. Continuous drag that exceeds
+      // ground ACC is not a tax, it is a wall you can never walk out of;
+      // a single multiplicative hit costs you the same speed at pace and
+      // is mathematically incapable of trapping a stopped player.
+      if (d.slick) {
+        if (!p.used) {
+          p.used = true;
+          if (r.grounded) r.gsp *= 0.45; else r.vx *= 0.45;
+          this._burst(p.x, p.y + 0.15, 0x8a6a44, 10, 3);
+          this.hud.pop('SPILL');
+        }
+        continue;
+      }
+
+      // ---- obstacles ----------------------------------------------------------
+      if (d.smashable && r.ballMode) {
+        p.dead = true;
+        this.score += K.SMASH_POINTS;
+        this.hitstop = 0.055;
+        this.shake = 0.3;
+        r.smashBounce();
+        this._burst(p.x, p.y + 0.5, 0xc79a5e, 18, 5);
+        this.hud.pop(`+${K.SMASH_POINTS}`);
+        continue;
+      }
+      if (r.invuln > 0) continue;
+
+      // Wipeout: scatter the clips, kill the speed. Losing the momentum IS
+      // the punishment — the Deadline does the rest.
+      const lost = Math.min(this.clips, 22);
+      this.clips -= lost;
+      this._scatterClips(lost);
+      r.hurt();
+      this.combo = 0;
+      this.hitstop = 0.07;
+      this.hud.pop('WRITTEN UP');
+      break;
+    }
+  }
+
+  // =========================================================
+  // THE DEADLINE
+  // =========================================================
+
+  _updateDeadline(dt) {
+    const t = this.runTime;
+    let v = K.DEADLINE_START_SPEED +
+      (K.DEADLINE_END_SPEED - K.DEADLINE_START_SPEED) * Math.min(1, t / K.DEADLINE_RAMP_TIME);
+    if (t > K.DEADLINE_RAMP_TIME) v += ((t - K.DEADLINE_RAMP_TIME) / 30) * K.DEADLINE_LATE_RAMP;
+    this.deadlineX += v * dt;
+    // It never lags further behind than MAX_GAP — outrunning it buys you
+    // breathing room, not immunity.
+    this.deadlineX = Math.max(this.deadlineX, this.runner.x - K.DEADLINE_MAX_GAP);
+
+    this.deadlineMesh.position.set(this.deadlineX, this.camY, 0);
+
+    // Paper storm off the leading edge, denser the closer it is.
+    const dread = this._dread();
+    if (dread > 0.25 && Math.random() < dread * 0.9) {
+      this._spawn(this.deadlineX + Math.random() * 1.5,
+        this.camY - this._zoom + Math.random() * this._zoom * 2,
+        0xe8dcc0, {
+          vx: 5 + Math.random() * 7, vy: 1 + Math.random() * 4,
+          grav: -6, life: 1.2, size: 0.22 + Math.random() * 0.18, spin: 6,
+        });
+    }
+  }
+
+  // =========================================================
+  // CAMERA
+  // =========================================================
+
+  _updateCamera(dt, idle) {
+    const r = this.runner;
+    // Horizontal: lead the runner by a fraction of a second of travel, so
+    // at speed you see what you are about to hit. Genesis extended camera.
+    const lead = Math.max(-3, Math.min(K.CAM_LOOKAHEAD_MAX, r.gsp * K.CAM_LOOKAHEAD));
+    const targetX = r.x + (idle ? 0 : lead);
+    this.camX += (targetX - this.camX) * Math.min(1, dt * 6.5);
+
+    // Vertical: dead zone, then a capped chase — slow on the ground so
+    // rolling terrain does not seasick you, fast in the air so a spring
+    // launch stays framed.
+    const targetY = r.y + 1.5;
+    const dy = targetY - this.camY;
+    if (Math.abs(dy) > K.CAM_DEADZONE_Y) {
+      const want = dy - Math.sign(dy) * K.CAM_DEADZONE_Y;
+      const cap = (r.grounded ? K.CAM_FOLLOW_Y_GROUND : K.CAM_FOLLOW_Y_AIR) * dt;
+      this.camY += Math.sign(want) * Math.min(Math.abs(want), cap);
+    }
+
+    // Speed widens the frame — you earn more reaction time by going fast.
+    const over = Math.max(0, r.speed - K.TOP * 0.5) / (K.TOP * 1.4);
+    const wantZoom = K.CAM_HALF_H * (1 + Math.min(0.16, over * 0.16));
+    this._applyZoom(this._zoom + (wantZoom - this._zoom) * Math.min(1, dt * 2.2));
+
+    // Shake.
+    let sx = 0, sy = 0;
+    if (this.shake > 0) {
+      this.shake = Math.max(0, this.shake - dt * 2.6);
+      sx = (Math.random() - 0.5) * this.shake;
+      sy = (Math.random() - 0.5) * this.shake;
+    }
+    this.camera.position.set(this.camX + sx, this.camY + sy, 40);
+
+    if (!idle) {
+      this.runner.render(dt);
+      this.ribbon.update(this.camX, this._halfW);
+      this.backdrop.update(this.camX, this.camY);
+    }
+  }
+
+  // =========================================================
+  // PARTICLES
+  // =========================================================
+
+  _spawn(x, y, color, o = {}) {
+    for (const p of this.pool) {
+      if (p.life > 0) continue;
+      p.life = p.max = o.life ?? 0.5;
+      p.vx = o.vx ?? 0;
+      p.vy = o.vy ?? 0;
+      p.grav = o.grav ?? -14;
+      p.spin = o.spin ?? 0;
+      p.mesh.material.color.setHex(color);
+      p.mesh.material.opacity = o.opacity ?? 0.95;
+      const s = o.size ?? 0.16;
+      p.mesh.scale.set(s, s, 1);
+      p.mesh.position.set(x, y, 1.2);
+      p.mesh.rotation.z = Math.random() * Math.PI;
+      p.mesh.visible = true;
+      return p;
+    }
+    return null;
+  }
+
+  _burst(x, y, color, n, speed) {
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + Math.random() * 0.4;
+      this._spawn(x, y, color, {
+        vx: Math.cos(a) * speed * (0.6 + Math.random() * 0.6),
+        vy: Math.sin(a) * speed * (0.6 + Math.random() * 0.6) + 1.5,
+        life: 0.45 + Math.random() * 0.3,
+        size: 0.13 + Math.random() * 0.12,
+        spin: (Math.random() - 0.5) * 12,
       });
-
-    } else if (typeDef.id === 'tumbleweed') {
-      // Rolling tumbleweed
-      const geo = new THREE.SphereGeometry(0.25, 8, 6);
-      const mat = new THREE.MeshToonMaterial({ color: typeDef.color, wireframe: true });
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.y = 0.25;
-      group.add(mesh);
-      // Inner sphere for density
-      const innerGeo = new THREE.SphereGeometry(0.15, 6, 4);
-      const innerMat = new THREE.MeshToonMaterial({ color: 0x997744 });
-      const inner = new THREE.Mesh(innerGeo, innerMat);
-      inner.position.y = 0.25;
-      group.add(inner);
-
-    } else if (typeDef.id === 'lawsuit_hawk') {
-      // Process server with wings — swoops at neck height; duck under it
-      const bodyGeo = new THREE.BoxGeometry(0.45, 0.25, 0.25);
-      const bodyMat = new THREE.MeshToonMaterial({ color: typeDef.color });
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      group.add(body);
-      const beakGeo = new THREE.ConeGeometry(0.07, 0.2, 6);
-      const beakMat = new THREE.MeshToonMaterial({ color: 0xddaa22 });
-      const beak = new THREE.Mesh(beakGeo, beakMat);
-      beak.rotation.z = Math.PI / 2;
-      beak.position.set(-0.3, 0, 0);
-      group.add(beak);
-      // Envelope clutched in talons (the lawsuit)
-      const envGeo = new THREE.BoxGeometry(0.3, 0.18, 0.02);
-      const envMat = new THREE.MeshToonMaterial({ color: 0xf5f0e0 });
-      const env = new THREE.Mesh(envGeo, envMat);
-      env.position.set(0, -0.22, 0);
-      group.add(env);
-      // Wings (animated in update)
-      const wingGeo = new THREE.BoxGeometry(0.5, 0.04, 0.3);
-      const wingMat = new THREE.MeshToonMaterial({ color: 0x442a1a });
-      const leftWing = new THREE.Mesh(wingGeo, wingMat);
-      leftWing.position.set(0.1, 0.12, -0.2);
-      group.add(leftWing);
-      const rightWing = new THREE.Mesh(wingGeo, wingMat);
-      rightWing.position.set(0.1, 0.12, 0.2);
-      group.add(rightWing);
-      group.userData.wings = [leftWing, rightWing];
-    }
-
-    return group;
-  }
-
-  _createCollectible(typeDef) {
-    const group = new THREE.Group();
-
-    if (typeDef.id === 'trust_document') {
-      const geo = new THREE.BoxGeometry(typeDef.size, typeDef.size * 1.3, 0.04);
-      const mat = new THREE.MeshToonMaterial({ color: typeDef.color, emissive: 0x443300, emissiveIntensity: 0.3 });
-      const mesh = new THREE.Mesh(geo, mat);
-      group.add(mesh);
-      // Seal
-      const sealGeo = new THREE.SphereGeometry(0.08, 8, 8);
-      const sealMat = new THREE.MeshToonMaterial({ color: 0xff4444 });
-      const seal = new THREE.Mesh(sealGeo, sealMat);
-      seal.position.set(0, -0.15, 0.03);
-      group.add(seal);
-
-    } else if (typeDef.id === 'coffee_cup') {
-      const geo = new THREE.CylinderGeometry(0.1, 0.13, typeDef.size, 8);
-      const mat = new THREE.MeshToonMaterial({ color: typeDef.color });
-      const mesh = new THREE.Mesh(geo, mat);
-      group.add(mesh);
-      // Steam (small white sphere)
-      const steamGeo = new THREE.SphereGeometry(0.06, 6, 6);
-      const steamMat = new THREE.MeshToonMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 });
-      const steam = new THREE.Mesh(steamGeo, steamMat);
-      steam.position.y = 0.2;
-      group.add(steam);
-
-    } else if (typeDef.id === 'gold_watch') {
-      // The Janitor would approve
-      const ringGeo = new THREE.TorusGeometry(0.14, 0.045, 8, 16);
-      const ringMat = new THREE.MeshToonMaterial({ color: typeDef.color, emissive: 0x664400, emissiveIntensity: 0.4 });
-      const ring = new THREE.Mesh(ringGeo, ringMat);
-      group.add(ring);
-      const faceGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.03, 12);
-      const faceMat = new THREE.MeshToonMaterial({ color: 0xfff8e0 });
-      const face = new THREE.Mesh(faceGeo, faceMat);
-      face.rotation.x = Math.PI / 2;
-      group.add(face);
-
-    } else if (typeDef.id === 'charter_fragment') {
-      const geo = new THREE.BoxGeometry(typeDef.size, typeDef.size, typeDef.size * 0.3);
-      const mat = new THREE.MeshToonMaterial({ color: typeDef.color, emissive: 0xffaa00, emissiveIntensity: 0.5 });
-      const mesh = new THREE.Mesh(geo, mat);
-      group.add(mesh);
-      // Outer glow
-      const glowGeo = new THREE.BoxGeometry(typeDef.size * 1.4, typeDef.size * 1.4, typeDef.size * 0.1);
-      const glowMat = new THREE.MeshBasicMaterial({ color: 0xffdd44, transparent: true, opacity: 0.25 });
-      const glowMesh = new THREE.Mesh(glowGeo, glowMat);
-      group.add(glowMesh);
-    }
-
-    return group;
-  }
-
-  _createPlatform(typeDef) {
-    const group = new THREE.Group();
-    const geo = new THREE.BoxGeometry(typeDef.width, typeDef.height, 0.6);
-    const mat = new THREE.MeshToonMaterial({ color: typeDef.color });
-    const mesh = new THREE.Mesh(geo, mat);
-    group.add(mesh);
-    this._geometries.push(geo);
-    this._materials.push(mat);
-
-    // Collectible on top of platform
-    if (Math.random() > 0.4) {
-      const colType = Math.random() < 0.15 ? COLLECTIBLE_TYPES[2] : COLLECTIBLE_TYPES[0];
-      const col = this._createCollectible(colType);
-      col.position.y = typeDef.height / 2 + 0.3;
-      group.add(col);
-      group.userData.platformCollectible = { mesh: col, typeDef: colType, collected: false };
-    }
-
-    return group;
-  }
-
-  // ---- SPAWNING ----
-
-  _spawnObstacle() {
-    // Hawks only appear once the run is going (distance 80+)
-    const pool = OBSTACLE_TYPES.filter(t => t.id !== 'lawsuit_hawk' || this.distance > 80);
-    if (this.scrollSpeed > 8) pool.push(OBSTACLE_TYPES[2]); // more memos at speed
-    if (this.scrollSpeed > 12) pool.push(OBSTACLE_TYPES[2]);
-    if (this.distance > 50) pool.push(OBSTACLE_TYPES[4]); // tumbleweeds after 50
-    if (this.distance > 150) pool.push(OBSTACLE_TYPES[5]); // extra hawks late
-
-    const typeDef = pool[Math.floor(Math.random() * pool.length)];
-    const mesh = this._createObstacle(typeDef);
-
-    let y = GROUND_Y;
-    if (typeDef.falling) {
-      y = GROUND_Y + 2.0 + Math.random() * 0.5;
-    } else if (typeDef.flying) {
-      y = GROUND_Y + 1.0 + Math.random() * 0.3; // neck height — duck or be high
-    }
-
-    mesh.position.set(SPAWN_X, y, 0);
-    this.scene.add(mesh);
-
-    this.obstacles.push({
-      mesh,
-      typeDef,
-      x: SPAWN_X,
-      y,
-      width: typeDef.width,
-      height: typeDef.height,
-      falling: typeDef.falling || false,
-      flying: typeDef.flying || false,
-      stompable: typeDef.stompable || false,
-      stomped: false,
-      passed: false,
-    });
-  }
-
-  _spawnCollectible() {
-    let typeDef;
-    const roll = Math.random();
-    if (roll < 0.05) {
-      typeDef = COLLECTIBLE_TYPES[2]; // charter fragment (rare)
-    } else if (roll < 0.17) {
-      typeDef = COLLECTIBLE_TYPES[3]; // gold watch
-    } else if (roll < 0.42) {
-      typeDef = COLLECTIBLE_TYPES[1]; // coffee cup
-    } else {
-      typeDef = COLLECTIBLE_TYPES[0]; // trust document
-    }
-
-    const mesh = this._createCollectible(typeDef);
-    const y = GROUND_Y + 0.5 + Math.random() * 2.0;
-    mesh.position.set(SPAWN_X + 2, y, 0);
-    this.scene.add(mesh);
-
-    this.collectibles.push({
-      mesh,
-      typeDef,
-      x: SPAWN_X + 2,
-      y,
-      size: typeDef.size,
-      collected: false,
-    });
-  }
-
-  _spawnPlatform() {
-    const typeDef = PLATFORM_TYPES[Math.floor(Math.random() * PLATFORM_TYPES.length)];
-    const mesh = this._createPlatform(typeDef);
-    const y = GROUND_Y + typeDef.y;
-    mesh.position.set(SPAWN_X + 4, y, 0);
-    this.scene.add(mesh);
-
-    this.platforms.push({
-      mesh,
-      typeDef,
-      x: SPAWN_X + 4,
-      y,
-      width: typeDef.width,
-      height: typeDef.height,
-    });
-  }
-
-  // ---- COLLISION ----
-
-  _checkCollisions() {
-    // Coach bounding box
-    const coachLeft = COACH_X - 1.2;
-    const coachRight = COACH_X + 0.9;
-    const coachBottom = this.coachY + GROUND_Y;
-    const coachTop = coachBottom + (this.isDucking ? DUCK_HEIGHT : NORMAL_HEIGHT);
-
-    // Obstacles
-    for (const obs of this.obstacles) {
-      if (obs.stomped) continue;
-
-      const obsLeft = obs.x - obs.width / 2;
-      const obsRight = obs.x + obs.width / 2;
-      let obsBottom, obsTop;
-
-      if (obs.falling) {
-        obsBottom = obs.y - 0.15;
-        obsTop = obs.y + 0.15;
-      } else if (obs.flying) {
-        obsBottom = obs.y - 0.25;
-        obsTop = obs.y + 0.25;
-      } else {
-        obsBottom = GROUND_Y;
-        obsTop = GROUND_Y + obs.height;
-      }
-
-      // AABB check
-      if (coachRight > obsLeft && coachLeft < obsRight &&
-          coachTop > obsBottom && coachBottom < obsTop) {
-
-        // Check for stomp — player must be falling and above the obstacle
-        if (obs.stompable && this.isJumping && this.coachVelocityY < 0 &&
-            coachBottom < obsTop && coachBottom > obsTop - 0.5) {
-          // STOMP!
-          obs.stomped = true;
-          obs.mesh.scale.set(1.3, 0.2, 1.3); // squash
-          obs.mesh.position.y = GROUND_Y;
-
-          // Bounce up
-          this.coachVelocityY = JUMP_VELOCITY * 0.7;
-          this.hasDoubleJumped = false; // reset double jump on stomp
-
-          // Score bonus with combo
-          this.stompCombo++;
-          const comboPoints = 15 * this.stompCombo;
-          this.score += comboPoints;
-          this._burst(obs.x, GROUND_Y + 0.5, 0xffaa44, 10);
-          this._flashStomp(comboPoints);
-
-          // Remove stomped enemy after a moment
-          setTimeout(() => {
-            if (obs.mesh.parent) this.scene.remove(obs.mesh);
-          }, 300);
-          continue;
-        }
-
-        this.gameOver = true;
-        this._showGameOver();
-        return;
-      }
-    }
-
-    // Platform landing
-    for (const plat of this.platforms) {
-      const platLeft = plat.x - plat.width / 2;
-      const platRight = plat.x + plat.width / 2;
-      const platTop = plat.y + plat.height / 2;
-      const platBottom = plat.y - plat.height / 2;
-
-      // Check if coach can land on platform
-      if (this.isJumping && this.coachVelocityY < 0 &&
-          coachRight > platLeft && coachLeft < platRight &&
-          coachBottom <= platTop && coachBottom > platBottom) {
-        // Land on platform
-        this.coachY = platTop - GROUND_Y;
-        this.coachVelocityY = 0;
-        this.isJumping = false;
-        this.hasDoubleJumped = false;
-
-        // Collect platform collectible if present
-        const pc = plat.mesh.userData.platformCollectible;
-        if (pc && !pc.collected) {
-          pc.collected = true;
-          pc.mesh.visible = false;
-          this.score += pc.typeDef.points;
-          this._flashCollect();
-        }
-      }
-    }
-
-    // Collectibles
-    for (const col of this.collectibles) {
-      if (col.collected) continue;
-
-      const colLeft = col.x - col.size / 2;
-      const colRight = col.x + col.size / 2;
-      const colBottom = col.y - col.size / 2;
-      const colTop = col.y + col.size / 2;
-
-      if (coachRight > colLeft && coachLeft < colRight &&
-          coachTop > colBottom && coachBottom < colTop) {
-        col.collected = true;
-        col.mesh.visible = false;
-        this.score += col.typeDef.points;
-
-        if (col.typeDef.speedBoost) {
-          this.speedBoostTimer = 2.0;
-        }
-
-        this._burst(col.x, col.y, col.typeDef.color, 8);
-        this._flashCollect();
-      }
     }
   }
 
-  _flashCollect() {
-    const origColor = this.scene.background.clone();
-    this.scene.background = new THREE.Color(0x88ffaa);
-    setTimeout(() => {
-      if (this.scene) this.scene.background = origColor;
-    }, 80);
+  _dust(n, color) {
+    const r = this.runner;
+    for (let i = 0; i < n; i++) {
+      this._spawn(r.x - 0.3 - Math.random() * 0.4, r.y + 0.08 + Math.random() * 0.2, color, {
+        vx: -1.5 - Math.random() * 2.5 - r.speed * 0.08,
+        vy: 0.6 + Math.random() * 1.8,
+        grav: -5, life: 0.32 + Math.random() * 0.2,
+        size: 0.13 + Math.random() * 0.14, opacity: 0.55,
+      });
+    }
   }
 
-  // ---- PARTICLES ----
-
-  _spawnParticle(x, y, color, opts = {}) {
-    const size = opts.size || 0.07 + Math.random() * 0.07;
-    const geo = new THREE.PlaneGeometry(size, size);
-    const mat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: opts.opacity ?? 0.7, depthWrite: false });
-    const m = new THREE.Mesh(geo, mat);
-    m.position.set(x, y, 0.4);
-    m.rotation.z = Math.random() * Math.PI;
-    this.scene.add(m);
-    const life = opts.life ?? 0.45;
-    this.particles.push({
-      mesh: m, mat, geo,
-      vx: opts.vx ?? (-1.2 - Math.random() * 0.8),
-      vy: opts.vy ?? (0.4 + Math.random() * 1.2),
-      life, maxLife: life,
-    });
-  }
-
-  _burst(x, y, color, count = 8) {
-    for (let i = 0; i < count; i++) {
-      const a = (i / count) * Math.PI * 2;
-      this._spawnParticle(x, y, color, {
-        vx: Math.cos(a) * (1.5 + Math.random()),
-        vy: Math.sin(a) * (1.5 + Math.random()) + 0.5,
-        life: 0.5, opacity: 0.9,
+  // Genesis ring scatter, in paperclips: a ring of them thrown up and out,
+  // bouncing once. Losing them is meant to hurt to watch.
+  _scatterClips(n) {
+    const r = this.runner;
+    for (let i = 0; i < Math.min(n, 20); i++) {
+      const a = (i / Math.max(1, Math.min(n, 20))) * Math.PI * 2;
+      this._spawn(r.x, r.y + 0.7, 0xd8dee6, {
+        vx: Math.cos(a) * 5.5, vy: Math.abs(Math.sin(a)) * 8 + 3,
+        grav: -22, life: 1.15, size: 0.2, spin: 9, opacity: 1,
       });
     }
   }
 
   _updateParticles(dt) {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      const p = this.particles[i];
+    for (const p of this.pool) {
+      if (p.life <= 0) continue;
       p.life -= dt;
+      if (p.life <= 0) { p.mesh.visible = false; continue; }
+      p.vy += p.grav * dt;
       p.mesh.position.x += p.vx * dt;
       p.mesh.position.y += p.vy * dt;
-      p.vy -= 2.8 * dt;
-      p.mat.opacity = Math.max(0, (p.life / p.maxLife) * 0.8);
-      if (p.life <= 0) {
-        this.scene.remove(p.mesh);
-        p.geo.dispose();
-        p.mat.dispose();
-        this.particles.splice(i, 1);
+      p.mesh.rotation.z += p.spin * dt;
+      p.mesh.material.opacity = Math.min(1, (p.life / p.max) * 1.4);
+    }
+  }
+
+  _updateSpeedLines(dt) {
+    const r = this.runner;
+    const fast = r.speed > r.topSpeed * 0.78;
+
+    // BLAZING WINGTIPS (the 200-floor cosmetic) earns a real flame trail.
+    if (r.flameTrail && r.speed > r.topSpeed * 0.55 && Math.random() < 0.75) {
+      this._spawn(r.x - 0.35, r.y + 0.18 + Math.random() * 0.3,
+        Math.random() < 0.5 ? 0xff8a2b : 0xffd76a, {
+          vx: -3 - Math.random() * 3, vy: 1.2 + Math.random() * 1.6,
+          grav: -2, life: 0.28, size: 0.18 + Math.random() * 0.16, opacity: 0.85,
+        });
+    }
+
+    if (fast) {
+      for (const s of this.speedLines) {
+        if (s.userData.life > 0) continue;
+        if (Math.random() > 0.35) continue;
+        // Short, dim, and kept in the band the runner occupies. The first
+        // pass drew 4-unit streaks across the full frame height and they
+        // read as rendering artefacts hanging in mid-air, not as motion.
+        s.userData.life = 0.18;
+        s.userData.vx = -r.speed * 1.6;
+        const len = 0.9 + Math.random() * 1.4;
+        s.scale.set(len, 1, 1);
+        s.position.set(
+          this.camX + this._halfW * (0.15 + Math.random() * 0.85),
+          r.y + 0.2 + (Math.random() - 0.35) * 2.6, 1.5);
+        s.material.opacity = 0.16 + Math.random() * 0.16;
+        s.visible = true;
+        break;
+      }
+    }
+    for (const s of this.speedLines) {
+      if (s.userData.life <= 0) continue;
+      s.userData.life -= dt;
+      s.position.x += s.userData.vx * dt;
+      s.material.opacity = Math.max(0, s.material.opacity - dt * 2.2);
+      if (s.userData.life <= 0) s.visible = false;
+    }
+  }
+
+  // =========================================================
+  // PROGRESSION / END OF RUN
+  // =========================================================
+
+  _checkMilestones() {
+    for (const m of K.COSMETIC_MILESTONES) {
+      if (this.floors >= m.floors && !this.shownMilestones.has(m.flag) && !this.player.getFlag(m.flag)) {
+        this.shownMilestones.add(m.flag);
+        this.hud.pop(`★ ${m.label}`);
+        this.sfx.stapler();
       }
     }
   }
 
-  _showBonusText(text) {
-    const el = document.createElement('div');
-    el.className = 'arcade-stomp-text';
-    el.textContent = text;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 700);
-  }
+  _gameOver(cause, flavour) {
+    if (this.over) return;
+    this.over = true;
+    this.overCause = cause;
+    this.sfx.setDread(0);
+    this.sfx.die();
+    this.shake = 0.6;
+    this._burst(this.runner.x, this.runner.y + 0.8, 0xff5b5b, 24, 7);
+    this.runner.dead = true;
 
-  _flashStomp(points) {
-    const origColor = this.scene.background.clone();
-    this.scene.background = new THREE.Color(0xffaa44);
-    setTimeout(() => {
-      if (this.scene) this.scene.background = origColor;
-    }, 120);
-
-    // Show stomp text in HUD area
-    const stompText = document.createElement('div');
-    stompText.className = 'arcade-stomp-text';
-    stompText.textContent = this.stompCombo > 1
-      ? `STOMP x${this.stompCombo}! +${points}`
-      : `STOMP! +${points}`;
-    document.body.appendChild(stompText);
-    setTimeout(() => stompText.remove(), 800);
-  }
-
-  // ---- RESTART ----
-
-  _restart() {
-    // Remove old objects from scene
-    for (const obs of this.obstacles) this.scene.remove(obs.mesh);
-    for (const col of this.collectibles) this.scene.remove(col.mesh);
-    for (const plat of this.platforms) this.scene.remove(plat.mesh);
-    this.obstacles = [];
-    this.collectibles = [];
-    this.platforms = [];
-
-    // Reset state
-    this.score = 0;
-    this.distance = 0;
-    this.scrollSpeed = 5;
-    this.speedBoostTimer = 0;
-    this.spawnTimer = 0;
-    this.spawnInterval = 1.8;
-    this.collectibleTimer = 0;
-    this.platformTimer = 3.0;
-    this.coachY = 0;
-    this.coachVelocityY = 0;
-    this.isDucking = false;
-    this.isJumping = false;
-    this.hasDoubleJumped = false;
-    this.gameOver = false;
-    this.stompCombo = 0;
-    this.shownMilestones.clear();
-
-    // Rebuild coach (applies any new cosmetics)
-    this.scene.remove(this.coach);
-    this.wheels = [];
-    this.horseLegs = [];
-    this._buildCoach();
-
-    // Remove game over screen
-    if (this.gameOverEl) {
-      this.gameOverEl.remove();
-      this.gameOverEl = null;
+    const record = this.score > this.highScore;
+    if (record) {
+      this.highScore = this.score;
+      this.player.setFlag('arcade_highscore', this.score);
     }
 
-    // Reset background color
-    this.scene.background = new THREE.Color(0x87ceeb);
-
-    this._updateHUD();
-  }
-
-  // ---- UPDATE ----
-
-  update(dt) {
-    Engine.renderScene(this.scene, this.camera);
-    Engine.skipDefaultRender();
-
-    if (this.gameOver) {
-      if (InputManager.isJustPressed('enter')) {
-        this._restart();
-      }
-      if (InputManager.isJustPressed('escape')) {
-        this.stateManager.pop();
-      }
-      return;
-    }
-
-    if (!this.started) return;
-
-    // ---- INPUT ----
-    const wantsJump = InputManager.isJustPressed(' ') || InputManager.isJustPressed('arrowup')
-      || InputManager.isJustPressed('w');
-    const wantsDuck = InputManager.isDown('arrowdown') || InputManager.isDown('s');
-
-    // Jump buffering + coyote time — the run should feel fair at speed
-    if (wantsJump) this._jumpBuffer = 0.12;
-    else this._jumpBuffer = Math.max(0, this._jumpBuffer - dt);
-    if (!this.isJumping) this._coyote = 0.08;
-    else this._coyote = Math.max(0, this._coyote - dt);
-
-    if (this._jumpBuffer > 0) {
-      if (!this.isJumping || this._coyote > 0) {
-        // First jump (grounded or just walked off a platform)
-        this.isJumping = true;
-        this.coachVelocityY = JUMP_VELOCITY;
-        this.isDucking = false;
-        this.hasDoubleJumped = false;
-        this._jumpBuffer = 0;
-        this._coyote = 0;
-      } else if (!this.hasDoubleJumped) {
-        // Double jump!
-        this.hasDoubleJumped = true;
-        this.coachVelocityY = DOUBLE_JUMP_VELOCITY;
-        this._jumpBuffer = 0;
-        // Air puff
-        this._burst(COACH_X, this.coachY + GROUND_Y + 0.1, 0xffffff, 5);
+    // Cosmetic unlocks are granted on the run that earned them.
+    const unlocks = [];
+    for (const m of K.COSMETIC_MILESTONES) {
+      if (this.floors >= m.floors && !this.player.getFlag(m.flag)) {
+        this.player.setFlag(m.flag, true);
+        unlocks.push(m.label);
       }
     }
 
-    if (!this.isJumping) {
-      this.isDucking = wantsDuck;
+    // Permanent stat ladder: +1 ATK/+1 DEF per 40 floors of personal best,
+    // capped at +5. Only the NEW tiers pay out, so this cannot be farmed.
+    const prevBest = this.bestFloors || 0;
+    const newBest = Math.max(prevBest, this.floors);
+    const prevTiers = Math.min(5, Math.floor(prevBest / 40));
+    const newTiers = Math.min(5, Math.floor(newBest / 40));
+    const tiers = newTiers - prevTiers;
+    if (newBest > prevBest) {
+      this.bestFloors = newBest;
+      this.player.setFlag('arcade_best_distance', newBest);
+    }
+    if (tiers > 0) {
+      this.player.stats.atk = (this.player.stats.atk || 0) + tiers;
+      this.player.stats.def = (this.player.stats.def || 0) + tiers;
     }
 
-    // Exit
-    if (InputManager.isJustPressed('escape')) {
-      this.stateManager.pop();
-      return;
-    }
-
-    // ---- PHYSICS ----
-    if (this.isJumping) {
-      this.coachVelocityY += GRAVITY * dt;
-      this.coachY += this.coachVelocityY * dt;
-
-      if (this.coachY <= 0) {
-        this.coachY = 0;
-        this.coachVelocityY = 0;
-        this.isJumping = false;
-        this.hasDoubleJumped = false;
-        this.stompCombo = 0; // Reset stomp combo on landing
-      }
-    }
-
-    // Check if coach walked off a platform
-    if (!this.isJumping && this.coachY > 0) {
-      let onPlatform = false;
-      for (const plat of this.platforms) {
-        const platLeft = plat.x - plat.width / 2;
-        const platRight = plat.x + plat.width / 2;
-        const platTop = plat.y + plat.height / 2;
-        if (COACH_X + 0.9 > platLeft && COACH_X - 1.2 < platRight &&
-            Math.abs(this.coachY + GROUND_Y - platTop) < 0.1) {
-          onPlatform = true;
-          break;
-        }
-      }
-      if (!onPlatform) {
-        this.isJumping = true; // Fall off platform
-        this.coachVelocityY = 0;
-      }
-    }
-
-    // Coach position
-    this.coach.position.y = GROUND_Y + 0.15 + this.coachY;
-
-    // Duck visual — squash the coach
-    if (this.isDucking) {
-      this.coach.scale.y = 0.5;
-      this.coach.position.y = GROUND_Y + 0.05;
-    } else if (!this.isJumping) {
-      this.coach.scale.y = 1.0;
-    }
-
-    // ---- SCROLLING ----
-    const effectiveSpeed = this.speedBoostTimer > 0 ? this.scrollSpeed * 1.5 : this.scrollSpeed;
-
-    // Speed ramp
-    this.scrollSpeed = Math.min(this.maxSpeed, 5 + this.distance * 0.008);
-
-    // Speed boost timer
-    if (this.speedBoostTimer > 0) {
-      this.speedBoostTimer -= dt;
-    }
-
-    this.distance += effectiveSpeed * dt;
-
-    // Scroll ground tiles
-    for (const tile of this.groundTiles) {
-      tile.position.x -= effectiveSpeed * dt;
-      if (tile.position.x < -60) {
-        tile.position.x += 120;
-      }
-    }
-
-    // Parallax mountains (slow)
-    for (const mt of this.mountains) {
-      mt.position.x -= effectiveSpeed * dt * 0.15;
-      if (mt.position.x < -25) {
-        mt.position.x += 50;
-      }
-    }
-
-    // Parallax cacti (medium)
-    for (const cactus of this.cacti) {
-      cactus.position.x -= effectiveSpeed * dt * 0.4;
-      if (cactus.position.x < -20) {
-        cactus.position.x += 40;
-      }
-    }
-
-    // Clouds (slowest layer)
-    for (const cloud of this.clouds) {
-      cloud.position.x -= effectiveSpeed * dt * 0.08;
-      if (cloud.position.x < -24) cloud.position.x += 48;
-    }
-
-    // Ground detail scrolls at full speed
-    for (const detail of this.groundDetail) {
-      detail.position.x -= effectiveSpeed * dt;
-      if (detail.position.x < -18) detail.position.x += 36 + Math.random() * 6;
-    }
-
-    // Day-night cycle — full day every ~400 distance
-    const phase = (this.distance / 400) % 1;
-    const seg = phase * DAY_CYCLE.length;
-    const i0 = Math.floor(seg) % DAY_CYCLE.length;
-    const i1 = (i0 + 1) % DAY_CYCLE.length;
-    const f = seg - Math.floor(seg);
-    const k0 = DAY_CYCLE[i0], k1 = DAY_CYCLE[i1];
-    if (this.skyMat) {
-      this.skyMat.uniforms.topColor.value.set(k0.top).lerp(new THREE.Color(k1.top), f);
-      this.skyMat.uniforms.bottomColor.value.set(k0.bot).lerp(new THREE.Color(k1.bot), f);
-    }
-    const lightLevel = k0.light + (k1.light - k0.light) * f;
-    if (this.dirLight) this.dirLight.intensity = 0.8 * lightLevel;
-    if (this.ambientLight) this.ambientLight.intensity = 0.45 + 0.25 * lightLevel;
-
-    // Dust trail while grounded
-    if (!this.isJumping && !this.isDucking) {
-      this._dustTimer -= dt;
-      if (this._dustTimer <= 0) {
-        this._spawnParticle(COACH_X - 1.0, GROUND_Y + 0.12, 0xc8a878);
-        this._dustTimer = 0.07;
-      }
-    }
-    // Landing puff
-    if (this._wasGrounded === false && !this.isJumping) {
-      this._burst(COACH_X, GROUND_Y + 0.12, 0xd8b888, 7);
-    }
-    this._wasGrounded = !this.isJumping;
-    this._updateParticles(dt);
-
-    // ---- WHEEL ROTATION ----
-    const wheelRotSpeed = effectiveSpeed * 3;
-    for (const wheel of this.wheels) {
-      wheel.rotation.z -= wheelRotSpeed * dt;
-    }
-
-    // ---- HORSE GALLOP ANIMATION ----
-    if (this.horses) {
-      this.horses.position.y = Math.sin(Date.now() * 0.012) * 0.06;
-    }
-    // Leg gallop
-    const gallopSpeed = effectiveSpeed * 0.8;
-    for (const leg of this.horseLegs) {
-      const swing = Math.sin(Date.now() * 0.015 + leg.phase) * 0.12 * gallopSpeed;
-      leg.mesh.rotation.z = swing;
-      leg.mesh.position.y = leg.baseY + Math.abs(Math.sin(Date.now() * 0.015 + leg.phase)) * 0.05;
-    }
-
-    // ---- OBSTACLE SPAWNING ----
-    this.spawnTimer -= dt;
-    if (this.spawnTimer <= 0) {
-      this._spawnObstacle();
-      this.spawnInterval = Math.max(0.6, 1.8 - (this.scrollSpeed - 5) * 0.1);
-      this.spawnTimer = this.spawnInterval * (0.7 + Math.random() * 0.6);
-    }
-
-    // Collectible spawning
-    this.collectibleTimer -= dt;
-    if (this.collectibleTimer <= 0) {
-      this._spawnCollectible();
-      this.collectibleTimer = 1.5 + Math.random() * 2.0;
-    }
-
-    // Platform spawning (after distance 30)
-    if (this.distance > 30) {
-      this.platformTimer -= dt;
-      if (this.platformTimer <= 0) {
-        this._spawnPlatform();
-        this.platformTimer = 4.0 + Math.random() * 3.0;
-      }
-    }
-
-    // ---- MOVE OBSTACLES ----
-    for (let i = this.obstacles.length - 1; i >= 0; i--) {
-      const obs = this.obstacles[i];
-      obs.x -= effectiveSpeed * dt;
-      obs.mesh.position.x = obs.x;
-
-      // Auditor walk animation
-      if (obs.typeDef.id === 'compliance_auditor' && !obs.stomped) {
-        obs.mesh.position.y = GROUND_Y + Math.abs(Math.sin(Date.now() * 0.01)) * 0.08;
-      }
-
-      // Tumbleweed roll
-      if (obs.typeDef.rolling && !obs.stomped) {
-        obs.mesh.rotation.z -= effectiveSpeed * dt * 2;
-      }
-
-      // Hawk: flies faster than the world scrolls, wings flap, slight bob
-      if (obs.flying) {
-        obs.x -= effectiveSpeed * dt * 0.5;
-        obs.mesh.position.x = obs.x;
-        obs.mesh.position.y = obs.y + Math.sin(Date.now() * 0.008 + obs.x) * 0.08;
-        const wings = obs.mesh.userData.wings;
-        if (wings) {
-          const flap = Math.sin(Date.now() * 0.02) * 0.55;
-          wings[0].rotation.x = -flap;
-          wings[1].rotation.x = flap;
-        }
-      }
-
-      // Near-miss bonus: cleared it airborne with little room to spare
-      if (!obs.passed && !obs.stomped && obs.x + obs.width / 2 < COACH_X - 1.2) {
-        obs.passed = true;
-        const coachBottom = this.coachY + GROUND_Y;
-        const obsTop = (obs.flying || obs.falling) ? obs.y + 0.25 : GROUND_Y + obs.height;
-        if (this.isJumping && coachBottom - obsTop < 0.45 && coachBottom - obsTop > -0.05) {
-          this.score += 5;
-          this._showBonusText('CLOSE! +5');
-        }
-      }
-
-      if (obs.x < DESPAWN_X) {
-        this.scene.remove(obs.mesh);
-        this.obstacles.splice(i, 1);
-      }
-    }
-
-    // ---- MOVE COLLECTIBLES ----
-    for (let i = this.collectibles.length - 1; i >= 0; i--) {
-      const col = this.collectibles[i];
-      col.x -= effectiveSpeed * dt;
-      col.mesh.position.x = col.x;
-
-      if (!col.collected) {
-        col.mesh.rotation.y += dt * 3;
-        col.mesh.position.y = col.y + Math.sin(Date.now() * 0.005 + col.x) * 0.15;
-      }
-
-      if (col.x < DESPAWN_X) {
-        this.scene.remove(col.mesh);
-        this.collectibles.splice(i, 1);
-      }
-    }
-
-    // ---- MOVE PLATFORMS ----
-    for (let i = this.platforms.length - 1; i >= 0; i--) {
-      const plat = this.platforms[i];
-      plat.x -= effectiveSpeed * dt;
-      plat.mesh.position.x = plat.x;
-
-      if (plat.x < DESPAWN_X) {
-        this.scene.remove(plat.mesh);
-        this.platforms.splice(i, 1);
-      }
-    }
-
-    // ---- COLLISION ----
-    this._checkCollisions();
-
-    // ---- MILESTONE CHECKS ----
-    for (const milestone of COSMETIC_MILESTONES) {
-      if (Math.floor(this.distance) >= milestone.distance &&
-          !this.shownMilestones.has(milestone.flag) &&
-          !this.player.getFlag(milestone.flag)) {
-        this.shownMilestones.add(milestone.flag);
-        this._showMilestonePopup(milestone);
-      }
-    }
-
-    // Milestone popup timer
-    if (this.milestoneTimer > 0) {
-      this.milestoneTimer -= dt;
-      if (this.milestoneTimer <= 0 && this.milestonePopup) {
-        this.milestonePopup.remove();
-        this.milestonePopup = null;
-      }
-    }
-
-    // ---- HUD ----
-    this._updateHUD();
+    this.hud.showGameOver({
+      cause,
+      flavour,
+      record,
+      score: this.score,
+      clips: this.clips,
+      floors: this.floors,
+      topSpeed: this.topSpeedSeen.toFixed(1),
+      best: this.highScore,
+      unlocks,
+      tiers,
+    });
   }
 }

@@ -349,8 +349,14 @@ export class ExplorationState {
             this.stateManager.push(dialogState);
           }, 2000);
         }
-        // Arcade minigame launch — hide the exploration HUD while playing
-        if (key === 'launch_arcade') {
+        // Arcade minigame launch — hide the exploration HUD while playing.
+        // The `&& value` guard is load-bearing: the next line clears the
+        // flag, which re-emits `flag-set` with the SAME key, and without
+        // the guard that second emit pushed a SECOND ArcadeState on top of
+        // the first — two scenes fighting over Engine.renderScene, two HUDs
+        // in the DOM, and a title card that could never be dismissed
+        // because the instance holding the keyboard was the other one.
+        if (key === 'launch_arcade' && value) {
           this.player.setFlag('launch_arcade', false);
           import('./ArcadeState.js').then(({ ArcadeState }) => {
             if (this.hudElement) this.hudElement.style.display = 'none';

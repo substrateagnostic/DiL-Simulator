@@ -37,7 +37,8 @@ class Game {
     // Screenshot-pipeline fixtures (?dev&fixture=act5&shot=server_room&hud=0
     // or &fight=karen) boot straight into a deterministic game state.
     const params = new URLSearchParams(window.location.search);
-    if (DEV_MODE && (params.has('fixture') || params.has('shot') || params.has('fight') || params.has('portrait'))) {
+    if (DEV_MODE && (params.has('fixture') || params.has('shot') || params.has('fight')
+      || params.has('portrait') || params.has('arcade'))) {
       this._startFixture(params);
     } else {
       // Start with title screen
@@ -125,6 +126,14 @@ class Game {
     const fight = params.get('fight');
     if (fight) {
       setTimeout(() => ex._startCombat(fight), 700);
+    }
+
+    // ?dev&arcade=1 — boot straight into SPRINT REVIEW through the REAL
+    // launch path (the `launch_arcade` flag-set listener in
+    // ExplorationState), so the playtest harness exercises the shipping
+    // call chain rather than a convenience constructor.
+    if (params.get('arcade')) {
+      setTimeout(() => ex.player.setFlag('launch_arcade', true), 500);
     }
 
     // Portrait mode (?dev&portrait=andrew) — a combat-framed close-up of a
