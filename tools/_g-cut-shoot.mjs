@@ -113,6 +113,7 @@ const OUT = path.resolve(arg('out', `screenshots/g-run/cutscenes/${SCENE}`));
 const PORT = arg('port', '5173');
 const VIDEO = arg('video', '1') !== '0';
 const ZOOM = Number(arg('zoom', 0));   // 0 = shipping camera; ~5 = detail take
+const SKIP = arg('skip', '0') === '1'; // mash Enter through the staging
 const W = 1280, H = 720;
 const TAP = Number(arg('tap', VIDEO ? 210 : 110));
 
@@ -248,7 +249,11 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     const top = window.__explore?.stateManager?.current;
     return !!(top && top._stageRunning);
   });
+  // --skip=1 exercises the OTHER path on purpose: a player mashing Enter
+  // through the staging. Every beat must snap to its end state and the dialog
+  // must keep advancing — a stalled beat would be a permanent dialog freeze.
   const waitOutStage = async (capMs = 12000) => {
+    if (SKIP) return true;
     const t0 = Date.now();
     while (await stageBusy()) {
       if (Date.now() - t0 > capMs) return false;
