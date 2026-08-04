@@ -1229,6 +1229,17 @@ export class MenuState {
     const entries = NotificationArbiter.getLog();
     NotificationArbiter.markLogRead();
 
+    // Player-facing names for the arbiter's classes. The internal names are
+    // the narrative ruling's vocabulary, not the player's, and they do not fit
+    // the column: COMMENDATION rendered as "COMMENDA".
+    const CLS_LABEL = {
+      VOICE: 'VOICE',
+      DECISION: 'ACTION',
+      CONSEQUENCE: 'COMBAT',
+      PROGRESS: 'PROGRESS',
+      COMMENDATION: 'REWARD',
+      BOOKKEEPING: 'SYSTEM',
+    };
     const CLS_COLOR = {
       VOICE: '#e2d4c2',
       DECISION: '#ffcc33',
@@ -1261,7 +1272,7 @@ export class MenuState {
         const color = CLS_COLOR[e.cls] || '#aaa';
         const status = STATUS_LABEL[e.status] ?? e.status;
         return `<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
-          <span style="flex:0 0 96px;color:${color};font-size:11px;font-family:'Press Start 2P',cursive;letter-spacing:0.03em;padding-top:3px">${e.cls.slice(0, 8)}</span>
+          <span style="flex:0 0 92px;color:${color};font-size:10px;font-family:'Press Start 2P',cursive;letter-spacing:0.03em;padding-top:4px">${CLS_LABEL[e.cls] || e.cls}</span>
           <span style="flex:1;color:#ddd;font-size:17px;line-height:1.25">${esc(e.text)}${e.count > 1 ? ` <span style="color:#ffd700">x${e.count}</span>` : ''}
             ${status ? `<div style="color:#777;font-size:14px">${status}</div>` : ''}</span>
           <span style="flex:0 0 62px;color:#555;font-size:14px;text-align:right;padding-top:3px">${ago(e.at)}</span>
@@ -1270,7 +1281,7 @@ export class MenuState {
 
     this.logOverlay = document.createElement('div');
     this.logOverlay.style.cssText = `
-      position: absolute; inset: 0; background: rgba(0,0,0,0.88);
+      position: absolute; inset: 0; background: rgba(0,0,0,0.95);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 200; font-family: 'VT323', monospace; color: #fff;
     `;

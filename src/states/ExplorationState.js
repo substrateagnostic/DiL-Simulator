@@ -724,6 +724,12 @@ export class ExplorationState {
     // A stale "Go through"/"Talk to" prompt shouldn't float over combat
     // or dialogs pushed on top of us
     this._hideInteractPrompt();
+    // Same reasoning, same ruling as the arbiter's: the pulsing yellow
+    // "Upgrade available!" panel sits bottom-centre, right beside the dialog
+    // box, and it is not a notification the arbiter can defer — it is a
+    // persistent affordance. So it yields the same way the prompt does, and
+    // `resume()` re-evaluates it through `_checkUpgradeTooltip()`.
+    if (this.upgradeTooltip) this.upgradeTooltip.style.display = 'none';
   }
 
   resume() {
