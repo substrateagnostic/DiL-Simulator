@@ -827,8 +827,16 @@ export class ExplorationState {
     const px = this.player.position.x;
     const pz = this.player.position.z;
     const blend = Math.min(1, dt * 7);
-    this._fadeWallMeshes(room.getSouthWallMeshes(), pz > room.data.height - 3.5 ? 0.16 : 1.0, blend);
-    this._fadeWallMeshes(room.getEastWallMeshes(), px > room.data.width - 3.5 ? 0.16 : 1.0, blend);
+    const southTarget = pz > room.data.height - 3.5 ? 0.16 : 1.0;
+    const eastTarget = px > room.data.width - 3.5 ? 0.16 : 1.0;
+    this._fadeWallMeshes(room.getSouthWallMeshes(), southTarget, blend);
+    this._fadeWallMeshes(room.getEastWallMeshes(), eastTarget, blend);
+    // Props BOLTED TO those walls fade with them. Without this the wall goes
+    // glassy and the thing screwed to it does not — `executive_floor`'s
+    // elevatorDoors at (8,11) stood at opacity 1.0 over Andrew for the whole
+    // seated act of `secret_ending`. See Room._registerWallProp.
+    this._fadeWallMeshes(room.getSouthWallProps(), southTarget, blend);
+    this._fadeWallMeshes(room.getEastWallProps(), eastTarget, blend);
   }
 
   _fadeWallMeshes(meshes, target, blend) {

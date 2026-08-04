@@ -613,6 +613,20 @@ export class Room {
     return this._eastWallMeshes || [];
   }
 
+  // Props MOUNTED ON the camera-side walls. The wall itself fades to 0.16 when
+  // the player walks behind it; a prop bolted to that wall did not, so it kept
+  // occluding at full opacity through a transparent wall. `executive_floor`'s
+  // `elevatorDoors` at (8,11) hid Andrew for the entire seated act of
+  // `secret_ending`. These materials are cloned per room (`roomOwned`) and
+  // ExplorationState._updateWallFade drives them with the wall they are on.
+  getSouthWallProps() {
+    return this._southWallProps || [];
+  }
+
+  getEastWallProps() {
+    return this._eastWallProps || [];
+  }
+
   // ----------------------------------------------------------
   // Internals
   // ----------------------------------------------------------
@@ -1371,6 +1385,7 @@ export class Room {
         }
       }
       this.scene.add(obj);
+      this._registerWallProp(obj, x, z);
 
       // Block tiles based on footprint
       const tileX = Math.floor(x);
@@ -1413,6 +1428,70 @@ export class Room {
       }
       this.tileMap.blockRect(tileX, tileZ, fw, fh);
     }
+  }
+
+  /**
+   * WALK-BEHIND PARITY FOR WALL-MOUNTED PROPS.
+   *
+   * `_updateWallFade` drops the south and east walls to 0.16 when the player
+   * walks behind them, because those are the two interior faces the isometric
+   * camera looks through. Anything BOLTED TO one of those walls occludes
+   * exactly as much as the wall does and was not in the system: the
+   * `elevatorDoors` on `executive_floor`'s south wall (8,11) sat at opacity 1.0
+   * over Andrew for the whole seated act of `secret_ending`, visible through a
+   * wall that had already gone glassy around it.
+   *
+   * The test is geometric, not a hardcoded type list, so a future prop on those
+   * walls is covered for free: centre within 0.75 tiles of the wall line AND
+   * tall enough to hide a head (> 1.2 m). Materials are cloned so the shared
+   * MaterialLibrary cache is never mutated, and marked `roomOwned` so
+   * `dispose()` frees them. Cloning also drops the prop out of `_mergeStatics`
+   * (batchStatics skips transparent materials), which is required — a batched
+   * prop cannot have its own opacity.
+   */
+  _registerWallProp(obj, x, z) {
+    const w = this.data.width, h = this.data.height;
+    if (!this.data.walls) return;
+    // h-1 is the last walkable row; a wall-mounted prop sits on it or just
+    // beyond it (posters live at h-1.1). 1.4 catches both and stops short of
+    // free-standing furniture one tile off the wall.
+    const onSouth = z >= h - 1.4;
+    const onEast  = x >= w - 1.4;
+    if (!onSouth && !onEast) return;
+
+    const box = new THREE.Box3().setFromObject(obj);
+    if (!isFinite(box.min.y) || box.max.y - box.min.y <= 1.2) return;
+
+    // ONE clone per distinct source material, reused across every mesh in the
+    // prop. Without the dedupe the vault's eight lockbox banks alone produced
+    // 544 material clones (68 per bank, almost all of them the same three
+    // instances repeated over a wall of little boxes) — 544 extra uniform
+    // uploads a frame for a fade that needs three.
+    const seen = new Map();
+    const mats = [];
+    const cloneOf = (m) => {
+      let cm = seen.get(m);
+      if (!cm) {
+        cm = m.clone();
+        cm.transparent = true;
+        cm.opacity = 1.0;
+        cm.depthWrite = true;
+        cm.userData.roomOwned = true;
+        seen.set(m, cm);
+        mats.push(cm);
+      }
+      return cm;
+    };
+    obj.traverse((c) => {
+      if (!c.isMesh || !c.material) return;
+      c.material = Array.isArray(c.material) ? c.material.map(cloneOf) : cloneOf(c.material);
+    });
+    if (!mats.length) return;
+    // Diagnostic only — `tools/_g-wall-shoot.mjs` reads it to census which props
+    // the geometric test actually claims per room.
+    (this._wallPropTypes ||= []).push(`${obj.userData.furnitureType}@${x},${z}`);
+    if (onSouth) (this._southWallProps ||= []).push(...mats.map(m => ({ material: m })));
+    if (onEast)  (this._eastWallProps  ||= []).push(...mats.map(m => ({ material: m })));
   }
 
   // ----------------------------------------------------------

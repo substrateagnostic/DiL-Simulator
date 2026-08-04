@@ -41,6 +41,14 @@ import { DEV_MODE } from '../utils/constants.js';
  *   expression  a face key ('angry', 'smug', 'worried', 'hurt', …)
  *   spawn       true — create the actor if the room has no NPC entry for it
  *   spawnAt     [x, z] | 'markName' — where a spawned actor appears
+ *   teleportTo  [x, z] | 'markName' — snap an ALREADY-PLACED actor here before
+ *               the rest of the beat runs. `spawnAt` only applies to bodies
+ *               this director created; when the room already carries an NPC
+ *               entry for that id, `_resolveActor` returns it and `spawnAt` is
+ *               silently dead. `old_vault` has a retry-only `firm_partner`, so
+ *               the ambush's leader walked TOWARD the stairs his two colleagues
+ *               were walking away from. Use this when a scene needs a
+ *               pre-placed body to enter from somewhere.
  *   show        true — un-hide an actor whose room condition is false
  *   speed       tiles/s (default 1.8; 1.1 shuffles, 2.6 storms)
  *   hold        seconds to stand still after the other verbs land
@@ -280,6 +288,13 @@ export class StageDirector {
     r.hold = Math.max(0, s.hold || 0);
 
     if (s.stand) this._stand(actor);
+    // Snap BEFORE the walk destination is measured, so `walkTo` reads from the
+    // new position. Degrades to a no-op if the point cannot be resolved.
+    if (s.teleportTo !== undefined) {
+      const p = this._resolvePoint(s.teleportTo);
+      const t = p ? (this._walkableNear(p) || p) : null;
+      if (t) this._place(actor, t.x, t.z);
+    }
     if (s.expression) actor.animator?.setExpression(s.expression, s.expressionHold ?? 8);
     if (s.pose) actor.animator?.setSignaturePose(s.pose);
     if (s.gesture) actor.animator?.playGesture(s.gesture);

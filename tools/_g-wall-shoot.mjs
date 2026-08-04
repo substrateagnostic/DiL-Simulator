@@ -44,10 +44,13 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     const { Engine } = await import('/src/core/Engine.js');
     window.__zoomLoop = (z) => {
       const apply = () => {
+        // Engine.camera is briefly null across a room build.
         const cam = Engine.camera;
-        const a = Engine.width / Engine.height;
-        cam.left = -z * a; cam.right = z * a; cam.top = z; cam.bottom = -z;
-        cam.updateProjectionMatrix();
+        if (cam) {
+          const a = Engine.width / Engine.height;
+          cam.left = -z * a; cam.right = z * a; cam.top = z; cam.bottom = -z;
+          cam.updateProjectionMatrix();
+        }
         window.__zr = requestAnimationFrame(apply);
       };
       cancelAnimationFrame(window.__zr);

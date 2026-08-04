@@ -1176,8 +1176,13 @@ export const DIALOGS = {
     /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 12 },
     /* 12 */ { type: 'end' },
     // ── STAGING (appended; routed to from 3) ─────────────────────────────
+    // NOT an `exit`. The Auditor has a SECOND executive_floor entry gated on
+    // `compliance_defeated && !compliance_crossword_done` — they are the only
+    // source of the Archive password — so walking them out of the building here
+    // put them back at (13,6) on the next room entry. "Walks away" is now a
+    // walk to the north end of the floor, still in the room, still findable.
     /* 13 */ { type: 'stage', next: 4, beats: [
-      { actor: 'compliance', exit: 'elevator', speed: 1.7 },
+      { actor: 'compliance', walkTo: 'board_door', face: 'player', speed: 1.7, hold: 0.3 },
       { actor: 'player', face: 'compliance', wait: false },
     ] },
   ],
@@ -3488,7 +3493,7 @@ export const DIALOGS = {
 
   board_meeting: [
     // ── BLOCK A — ARRIVAL ───────────────────────────────────────────────
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The Board Room at 3:58 PM. Fourteen executive chairs, eleven of them occupied by people whose names appear on the building's tax filings. The twelfth belongs to a man who has not spoken in a board meeting since 1988. The other two are empty." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The Board Room at 3:58 PM. Fourteen executive chairs, eleven of them occupied by people whose names appear on the building's tax filings. The twelfth belongs to a man who has not spoken in a board meeting since 1988. The other two are empty.", next: 178 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Dusk is arriving early through the west windows. The globe in the corner has never been spun. There is a carafe of water on the table that no one has poured from, and it is the most honest thing in the room." },
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Good. You're here." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Skip Hartley is standing at the far end of the table, holding a single sheet of paper the way a man holds a grenade he found in his garden." },
@@ -3504,7 +3509,7 @@ export const DIALOGS = {
     // commits. The "I need a minute" branch (10 → 11) writes nothing and the
     // scene is freely re-enterable, so backing out is free.
     /* 9  */ { type: 'choice', speaker: 'Skip Hartley', prompt: "Skip is asking you to stay. Everyone who showed up is already in the room.", choices: [
-      { text: "\"I'm here. Let's do this.\"", next: 12 },
+      { text: "\"I'm here. Let's do this.\"", next: 179 },
       { text: '"I need a minute."', next: 10 },
     ] },
     /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "A minute. Sure. Take a minute. I'll just stand here, holding my entire career in one hand, with eleven board members watching me sweat through a shirt I ironed this morning for the first time in four years. Take your time.", next: 11 },
@@ -3582,19 +3587,19 @@ export const DIALOGS = {
       { text: "That's everything. Let Skip finish.",    next: 98 },
     ] },
     // D-JANET
-    /* 49 */ { type: 'action', action: 'set_flag', flag: 'bm_janet_done', value: true, next: 50 },
+    /* 49 */ { type: 'action', action: 'set_flag', flag: 'bm_janet_done', value: true, next: 180 },
     /* 50 */ { type: 'text', speaker: 'Janet', text: "I'm not going to quote fiduciary law at you. You have lawyers for that." },
     // "Neither does trust." cut in the F1 pre-gate — Parker never annotates
     // (WRITING.md rules 3/6). The thirty-one-pound drawer at node 53 carries it.
     /* 51 */ { type: 'text', speaker: 'Janet', text: "Our clients have names. I've been writing them on file folders since 1994. In pen. Pen doesn't have an undo button." },
     /* 52 */ { type: 'text', speaker: 'Janet', text: "Mrs. Calloway. Mr. and Mrs. Park. David Osei. The Lakeview Hospice endowment. I could keep going. I brought the drawer." },
-    /* 53 */ { type: 'text', speaker: 'Narrator', text: "She did, in fact, bring a file drawer. It is sitting next to her chair. Several board members stare at it as though it might contain a bomb, which, in a way, it does.", next: 48 },
+    /* 53 */ { type: 'text', speaker: 'Narrator', text: "She did, in fact, bring a file drawer. It is sitting next to her chair. Several board members stare at it as though it might contain a bomb, which, in a way, it does.", next: 181 },
     // D-DIANE
-    /* 54 */ { type: 'action', action: 'set_flag', flag: 'bm_diane_done', value: true, next: 55 },
+    /* 54 */ { type: 'action', action: 'set_flag', flag: 'bm_diane_done', value: true, next: 182 },
     /* 55 */ { type: 'text', speaker: 'Diane', text: "I process every person who enters this building. I have done that for nineteen years. I know their children's names, and which ones bring donuts on Fridays." },
     /* 56 */ { type: 'text', speaker: 'Diane', text: "Last month, they took our coffee machine. And the straws. I am being precise because precision is what I have instead of a corner office." },
     /* 57 */ { type: 'text', speaker: 'Diane', text: "You are voting on whether those people — the ones I buzz in every morning — still have someone in this building who is required by law to put them first. That's what a trust officer is. That's the whole job." },
-    /* 58 */ { type: 'text', speaker: 'Narrator', text: "She sits down. She does not look at the board. She looks at the clock, because Diane has never been late for anything and she isn't starting now.", next: 48 },
+    /* 58 */ { type: 'text', speaker: 'Narrator', text: "She sits down. She does not look at the board. She looks at the clock, because Diane has never been late for anything and she isn't starting now.", next: 183 },
     // D-PROPOSAL
     /* 59 */ { type: 'action', action: 'set_flag', flag: 'bm_proposal_done', value: true, next: 60 },
     /* 60 */ { type: 'text', speaker: 'Andrew', text: "I'd like to submit Exhibit — I don't know, whatever letter we're on. Meredith Sterling's restructuring proposal. Diane copied it before it was shredded." },
@@ -3609,32 +3614,32 @@ export const DIALOGS = {
     /* 68 */ { type: 'text', speaker: 'Andrew', text: "Six words changed. Edition stamp: 2019. The year Meredith Sterling arrived at this branch." },
     /* 69 */ { type: 'text', speaker: 'Narrator', text: "The room is very quiet. The kind of quiet that happens when eleven people realize they've been reading from the wrong book.", next: 48 },
     // D-ISAIAH
-    /* 70 */ { type: 'action', action: 'set_flag', flag: 'bm_isaiah_done', value: true, next: 71 },
+    /* 70 */ { type: 'action', action: 'set_flag', flag: 'bm_isaiah_done', value: true, next: 184 },
     /* 71 */ { type: 'text', speaker: 'Isaiah', text: "I've reviewed the original trust agreements for every active account. All 23 of them contain the same fiduciary clause." },
     /* 72 */ { type: 'text', speaker: 'Isaiah', text: "\"The fiduciary shall act in the sole interest of the beneficiary, without regard to the interests of the institution.\"" },
     /* 73 */ { type: 'text', speaker: 'Isaiah', text: "The dissolution recommendation violates that clause in every single agreement. If you vote yes, you are voting to breach twenty-three separate fiduciary obligations. Simultaneously." },
-    /* 74 */ { type: 'text', speaker: 'Narrator', text: "Isaiah places a stack of highlighted documents on the table. It lands with the kind of weight that makes a board member move his water glass.", next: 48 },
+    /* 74 */ { type: 'text', speaker: 'Narrator', text: "Isaiah places a stack of highlighted documents on the table. It lands with the kind of weight that makes a board member move his water glass.", next: 185 },
     // D-PATTERN
-    /* 75 */ { type: 'action', action: 'set_flag', flag: 'bm_pattern_done', value: true, next: 76 },
+    /* 75 */ { type: 'action', action: 'set_flag', flag: 'bm_pattern_done', value: true, next: 186 },
     /* 76 */ { type: 'text', speaker: 'Isaiah', text: "I have one more thing. Nine years of records. Seven branches, not including ours. Every one acquired by strategic operations. Every one \"restructured.\" Every one dissolved within eighteen months." },
     /* 77 */ { type: 'text', speaker: 'Isaiah', text: "Meredith Sterling was the SVP of record for all seven. This branch is number eight." },
     /* 78 */ { type: 'text', speaker: 'Isaiah', text: "She has a method. Paperwork first. Then people. She's never made it past the board vote. There has always been someone who walked away." },
     /* 79 */ { type: 'text', speaker: 'Narrator', text: "He does not raise his voice. He doesn't need to. The pattern is its own volume." },
-    /* 80 */ { type: 'text', speaker: 'Isaiah', text: "We're not walking.", next: 48 },
+    /* 80 */ { type: 'text', speaker: 'Isaiah', text: "We're not walking.", next: 187 },
     // D-INTERN
-    /* 81 */ { type: 'action', action: 'set_flag', flag: 'bm_intern_done', value: true, next: 82 },
+    /* 81 */ { type: 'action', action: 'set_flag', flag: 'bm_intern_done', value: true, next: 188 },
     /* 82 */ { type: 'text', speaker: 'The Intern', text: "Hi! Hello. I made a PowerPoint. It has 47 slides. Each one has a different transition effect. I'm very sorry about that in advance." },
     /* 83 */ { type: 'text', speaker: 'Narrator', text: "Slide 1 dissolves into Slide 2, which wipes left into Slide 3, which spirals into Slide 4. The content is, against all odds, meticulously sourced." },
     /* 84 */ { type: 'text', speaker: 'The Intern', text: "Slide 12 is the one about Meredith's travel expenses. Slide 23 is the client satisfaction survey I conducted. I surveyed 141 clients. By phone. It took me two weeks and I forgot to eat several lunches." },
     /* 85 */ { type: 'text', speaker: 'Narrator', text: "The board watches a slide checkerboard-fade into another slide. The data on it is devastating. The transition effect is \"Newsflash.\" A board member covers her mouth. It is unclear whether she is horrified or laughing." },
-    /* 86 */ { type: 'text', speaker: 'The Intern', text: "Sorry about the sound effects. I don't know how to turn them off.", next: 48 },
+    /* 86 */ { type: 'text', speaker: 'The Intern', text: "Sorry about the sound effects. I don't know how to turn them off.", next: 189 },
     // D-GRANDMA
-    /* 87 */ { type: 'action', action: 'set_flag', flag: 'bm_grandma_done', value: true, next: 88 },
+    /* 87 */ { type: 'action', action: 'set_flag', flag: 'bm_grandma_done', value: true, next: 190 },
     /* 88 */ { type: 'text', speaker: 'Grandma Henderson', text: "Good afternoon. My name is Eleanor Henderson. I've been a client of this trust department for forty-seven years. Since before some of you were born, and I say that with the kindness it deserves." },
     /* 89 */ { type: 'text', speaker: 'Grandma Henderson', text: "I wrote a letter. It's four pages. I'll read the short version." },
     /* 90 */ { type: 'text', speaker: 'Grandma Henderson', text: "\"My late husband Walter and I entrusted this institution with our family's future in 1979. We chose it because a man named Harold Okafor looked us in the eye and said, 'I will put your interests above my own.' He did. Every person in that department since has done the same.\"" },
     /* 91 */ { type: 'text', speaker: 'Grandma Henderson', text: "I also brought cookies. Snickerdoodle. Nobody votes to dissolve anything on a full stomach." },
-    /* 92 */ { type: 'text', speaker: 'Narrator', text: "She passes the tin down the table. Every board member takes a cookie. This is not optional. Grandma Henderson has made it structurally impossible to refuse.", next: 48 },
+    /* 92 */ { type: 'text', speaker: 'Narrator', text: "She passes the tin down the table. Every board member takes a cookie. This is not optional. Grandma Henderson has made it structurally impossible to refuse.", next: 191 },
     // D-CHARTER
     /* 93 */ { type: 'action', action: 'set_flag', flag: 'bm_charter_done', value: true, next: 94 },
     /* 94 */ { type: 'text', speaker: 'Andrew', text: "I have the original 1947 trust charter. Section 1, Paragraph B." },
@@ -3658,17 +3663,17 @@ export const DIALOGS = {
     /* 104 */ { type: 'text', speaker: 'Skip Hartley', text: "I've been at this company for twenty years. I could have left. God knows I thought about it. But I stayed because —" },
     /* 105 */ { type: 'text', speaker: 'Narrator', text: "He stops. He folds the paper again. He puts it back in his pocket." },
     /* 106 */ { type: 'text', speaker: 'Skip Hartley', text: "I stayed because there are 23 families in this building's filing cabinets who trust us to be the last honest room in the building. I don't know if we are. But I know we're supposed to try." },
-    /* 107 */ { type: 'text', speaker: 'Narrator', text: "Skip Hartley sits down. It is the first sincere sentence he has delivered in a conference room since 2003, and he looks like a man who has just set down something very heavy.", next: 116 },
+    /* 107 */ { type: 'text', speaker: 'Narrator', text: "Skip Hartley sits down. It is the first sincere sentence he has delivered in a conference room since 2003, and he looks like a man who has just set down something very heavy.", next: 192 },
     // E-BUZZ
     /* 108 */ { type: 'text', speaker: 'Skip Hartley', text: "In summary, the evidence demonstrates a clear pattern of fiduciary breach, systematic misrepresentation of departmental metrics, and a restructuring methodology inconsistent with — with —" },
     /* 109 */ { type: 'text', speaker: 'Narrator', text: "He is reading from the paper now. Word for word. The paper is shaking slightly." },
     /* 110 */ { type: 'text', speaker: 'Skip Hartley', text: "— with our core institutional values and stakeholder commitments going forward in perpetuity." },
-    /* 111 */ { type: 'text', speaker: 'Narrator', text: "He sits down. The statement is airtight. It is also the loneliest sentence anyone has said in this room today.", next: 116 },
+    /* 111 */ { type: 'text', speaker: 'Narrator', text: "He sits down. The statement is airtight. It is also the loneliest sentence anyone has said in this room today.", next: 192 },
     // E-THIRD
     /* 112 */ { type: 'text', speaker: 'Skip Hartley', text: "I'd like to close with a quote from Gerald Fink's \"The Audacity of Adequate Management\": \"The measure of an institution is not what it produces, but what it refuses to destroy.\"" },
     /* 113 */ { type: 'text', speaker: 'Narrator', text: "That book does not exist. Gerald Fink does not exist. But the sentence is true anyway, which is the most Skip Hartley thing that has ever happened." },
     /* 114 */ { type: 'text', speaker: 'Skip Hartley', text: "I think Gerald would have liked this department. He also would have liked the cookies." },
-    /* 115 */ { type: 'text', speaker: 'Narrator', text: "He sits. The board chair writes something down. It is unclear whether she is noting the quote or noting that the book is fictional.", next: 116 },
+    /* 115 */ { type: 'text', speaker: 'Narrator', text: "He sits. The board chair writes something down. It is unclear whether she is noting the quote or noting that the book is fictional.", next: 192 },
 
     // ── SCORING LADDER — counts bm_true_open / _push / _close → 4 tiers ──
     /* 116 */ { type: 'condition', flag: 'bm_true_open',  ifTrue: 117, ifFalse: 118 },
@@ -3716,7 +3721,7 @@ export const DIALOGS = {
     /* 152 */ { type: 'text', speaker: 'Narrator', text: "The chair looks at the ceiling. She does not answer. She doesn't need to.", next: 162 },
 
     // ── F-TIER-0 — no true things ───────────────────────────────────────
-    /* 153 */ { type: 'text', speaker: 'Narrator', text: "The room empties the way rooms do when no one wants to be the last to leave. Board members collect their phones, their pens, their untouched water glasses." },
+    /* 153 */ { type: 'text', speaker: 'Narrator', text: "The room empties the way rooms do when no one wants to be the last to leave. Board members collect their phones, their pens, their untouched water glasses.", next: 193 },
     /* 154 */ { type: 'text', speaker: 'Narrator', text: "Skip is still standing at the end of the table. His sheet of paper is on the table in front of him, still folded into quarters, still unread. The sincere version. The one he couldn't get to." },
     /* 155 */ { type: 'text', speaker: 'Narrator', text: "The board chair pauses at the door." },
     /* 156 */ { type: 'text', speaker: 'Narrator', text: "\"Skip. For what it's worth — this wasn't our recommendation. It was sent to us. The decision was made before the meeting was called.\"" },
@@ -3733,7 +3738,7 @@ export const DIALOGS = {
     /* 165 */ { type: 'text', speaker: 'Narrator', text: "Andrew handed Skip every tool he needed with the efficiency of a man who has stopped asking whether the tools are kind. They worked. That was the criterion.", next: 166 },
 
     // ── BLOCK H — AFTER ─────────────────────────────────────────────────
-    /* 166 */ { type: 'text', speaker: 'Narrator', text: "The Board Room empties. The cookies are gone. The charter is still on the table. The carafe is still full." },
+    /* 166 */ { type: 'text', speaker: 'Narrator', text: "The Board Room empties. The cookies are gone. The charter is still on the table. The carafe is still full.", next: 194 },
     /* 167 */ { type: 'text', speaker: 'Skip Hartley', text: "\"Above.\" She said \"above.\" What's above the board, Andrew?" },
     /* 168 */ { type: 'text', speaker: 'Andrew', text: "The executive floor. And above that —" },
     /* 169 */ { type: 'text', speaker: 'Skip Hartley', text: "The penthouse. The one floor nobody goes to. The one with the elevator that dings on its own." },
@@ -3750,6 +3755,99 @@ export const DIALOGS = {
     /* 175 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_held', value: true, next: 176 },
     /* 176 */ { type: 'action', action: 'give_xp', xp: 300, next: 177 },
     /* 177 */ { type: 'end' },
+
+    // ══ STAGING (appended; routed to from 0/9/49/53/54/58/70/74/75/80/81/86/
+    //    87/92/107/111/115/153/166) ═══════════════════════════════════════════
+    // CLAUDE.md law: never insert into the middle — every jump above is an
+    // absolute index. Stage nodes are APPENDED and routed into, and
+    // `tools/_g-stage-verify.mjs` reads through them, so the tree is
+    // structurally identical to the one before this block existed.
+    //
+    // GEOMETRY. The boardroom table blocks x 4-12 / z 4-6 and StageDirector
+    // walks a STRAIGHT LINE with an axis slide, not a path. Every leg below was
+    // simulated against the room's real built TileMap before it was written;
+    // the two-leg crossings exist because the one-leg version scrapes the table
+    // for five seconds and then times out into a teleport.
+    //
+    // NOT STAGED, deliberately: the Board Member's crossing at 124-127
+    // (`board_member_spoke`, tier 3 only). That beat needs a cast body with a
+    // face and a name, which is a producer call, not a builder's.
+
+    // Node 0 — Skip is the NPC you talk to, so he starts at (7,9) in the ally
+    // line. He has to be at the head of the table before node 3 describes him
+    // there. Non-blocking: the crossing plays under the two narration
+    // paragraphs that open the scene instead of freezing them for five seconds.
+    /* 178 */ { type: 'stage', next: 1, beats: [
+      { actor: 'ross',   walkTo: 'head_approach', speed: 1.7, wait: false },
+      { actor: 'ross',   walkTo: 'head_stand', face: 'player', speed: 1.7, after: 0, hold: 0.3, wait: false },
+      { actor: 'player', face: 'ross', hold: 0.25 },
+    ] },
+    // Node 9 -> 12, "I'm here. Let's do this." — the meeting is called to
+    // order and Andrew steps out of the line to the table.
+    /* 179 */ { type: 'stage', next: 12, beats: [
+      { actor: 'player',      walkTo: 'table_edge_s', face: 'ross', speed: 1.6 },
+      { actor: 'board_chair', face: 'ross', hold: 0.3, wait: false },
+    ] },
+
+    // BLOCK D — one step-out + one step-back per contribution. The step-back
+    // is `wait: false` so it plays under the next line rather than holding the
+    // conversation. Every ally returns to the exact tile room data put them on.
+    /* 180 */ { type: 'stage', next: 50, beats: [
+      { actor: 'janet', walkTo: 'speak_east', face: 'board_chair', speed: 1.7, hold: 0.25 },
+    ] },
+    /* 181 */ { type: 'stage', next: 48, beats: [
+      { actor: 'janet', walkTo: [11, 9], face: 'player', speed: 1.6, wait: false },
+    ] },
+    /* 182 */ { type: 'stage', next: 55, beats: [
+      { actor: 'diane', walkTo: 'speak_west', face: 'board_chair', speed: 1.7, hold: 0.25 },
+    ] },
+    /* 183 */ { type: 'stage', next: 48, beats: [
+      { actor: 'diane', walkTo: [4, 8], face: 'player', speed: 1.6, wait: false },
+    ] },
+    /* 184 */ { type: 'stage', next: 71, beats: [
+      { actor: 'isaiah', walkTo: 'speak_east', face: 'board_chair', speed: 1.6, hold: 0.3 },
+    ] },
+    /* 185 */ { type: 'stage', next: 48, beats: [
+      { actor: 'isaiah', walkTo: [10, 8], face: 'player', speed: 1.6, wait: false },
+    ] },
+    // Isaiah speaks twice — the agreements, then the seven-branch pattern.
+    /* 186 */ { type: 'stage', next: 76, beats: [
+      { actor: 'isaiah', walkTo: 'speak_east', face: 'board_chair', speed: 1.6, hold: 0.3 },
+    ] },
+    /* 187 */ { type: 'stage', next: 48, beats: [
+      { actor: 'isaiah', walkTo: [10, 8], face: 'player', speed: 1.6, wait: false },
+    ] },
+    /* 188 */ { type: 'stage', next: 82, beats: [
+      { actor: 'intern', walkTo: 'speak_west', face: 'board_chair', speed: 2.1, hold: 0.2 },
+    ] },
+    /* 189 */ { type: 'stage', next: 48, beats: [
+      { actor: 'intern', walkTo: [5, 9], face: 'player', speed: 2.0, wait: false },
+    ] },
+    /* 190 */ { type: 'stage', next: 88, beats: [
+      { actor: 'grandma', walkTo: 'speak_east', face: 'board_chair', speed: 1.1, hold: 0.4 },
+    ] },
+    /* 191 */ { type: 'stage', next: 48, beats: [
+      { actor: 'grandma', walkTo: [13, 8], face: 'player', speed: 1.1, wait: false },
+    ] },
+
+    // BLOCK E close — all three endings say Skip sits down. The head chair at
+    // (3,5) is the only seat one step from where he speaks, which is why room
+    // data leaves it empty and seats the board chair on the north side.
+    /* 192 */ { type: 'stage', next: 116, beats: [
+      { actor: 'ross', walkTo: 'head_chair', sit: true, speed: 1.2, hold: 0.3 },
+    ] },
+    // TIER 0 only — node 154 says Skip is "still standing at the end of the
+    // table", so he is back on his feet before that line lands.
+    /* 193 */ { type: 'stage', next: 154, beats: [
+      { actor: 'ross', stand: true, walkTo: 'head_stand', face: 'player', speed: 1.2, hold: 0.25 },
+    ] },
+    // BLOCK H — the room empties and Skip crosses back to Andrew for the
+    // handoff to the Archive. Non-blocking, so the walk plays under his lines.
+    /* 194 */ { type: 'stage', next: 167, beats: [
+      { actor: 'ross',   stand: true, walkTo: 'aisle_w', speed: 1.5, wait: false },
+      { actor: 'ross',   walkTo: 'skip_after', face: 'player', speed: 1.5, after: 0, hold: 0.3, wait: false },
+      { actor: 'player', face: 'ross', hold: 0.2 },
+    ] },
   ],
 
   // ── BLOCK W — waiting-room lines. Allies staged in the Board Room before
@@ -4881,7 +4979,7 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Your phone rings. It is Skip. You can hear him sweating." },
     /* 5  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew! Great. Fantastic. Small thing. Tiny thing. Meredith's old lawyers filed a challenge this morning — the charter's missing its Recorder's seal. Article 9. I'm looking at it right now. There's a... circle where a seal should be.", mood: 'worried' },
     /* 6  */ { type: 'text', speaker: 'Skip Hartley', text: "Legal says we need the Recorder or a living deputy to certify by five o'clock or the whole thing's decorative. Like a diploma. Or my title.", mood: 'worried' },
-    /* 7  */ { type: 'text', speaker: 'Andrew', text: "Skip, the Recorder's office stopped sealing charters by hand decades ago. Where am I supposed to find a living deputy?" },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "Skip, the Recorder's office stopped sealing charters by hand decades ago. Where am I supposed to find a living deputy?", next: 18 },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "A mop, somewhere behind you, stops mopping." },
     /* 9  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 10, ifFalse: 12 },
     /* 10 */ { type: 'text', speaker: 'Andrew', text: "...Okafor. D. Okafor. Page in your ledger — 'eleven years, moved her desk fourteen times.' She was the Deputy Recorder, wasn't she." },
@@ -4890,8 +4988,29 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Don't have her address. The Hall of Records would — they keep records of their own people same as everyone's. Ask the Clerk. Bring patience. Not the stat. The real kind." },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "He produces a key you have never seen before and unlocks the garage's south door, which you have also never seen before. Daylight comes in like it's been waiting." },
     /* 15 */ { type: 'action', action: 'set_flag', flag: 'city_unlocked', value: true, next: 16 },
-    /* 16 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Fennimore Avenue. Hall of Records is north side. Watch out for parking enforcement — Reyes is having a good month." },
+    /* 16 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Fennimore Avenue. Hall of Records is north side. Watch out for parking enforcement — Reyes is having a good month.", next: 19 },
     /* 17 */ { type: 'end' },
+    // ── STAGING (appended; routed to from 7 and 16) ─────────────────────────
+    // The Janitor speaks five lines here and had no body in the room. The
+    // scene fires in `board_room` — the only room with a penthouse exit — from
+    // `_changeRoom`'s uncertified-charter branch, and by then `act6_complete`
+    // has derived `board_meeting_closed`, so every staging NPC is gone and the
+    // room is empty. Same spawn pattern as the security guard and the Firm.
+    // Not one word of prose is touched.
+    /* 18 */ { type: 'stage', next: 8, beats: [
+      // "A mop, somewhere behind you, stops mopping." — he is already there.
+      { actor: 'janitor', spawn: true, spawnAt: 'aisle_n', face: 'player', hold: 0.35 },
+      { actor: 'player',  face: 'janitor', wait: false },
+    ] },
+    // He leaves the way he does everything: without explaining. West along the
+    // clear z=2 aisle (the table blocks x 4-12 / z 4-6 and the director walks
+    // straight lines, not paths) and gone — ~3 s at 1.6, non-blocking so it
+    // plays under the last line. A route all the way to the south door would be
+    // three legs and twelve seconds of strolling after the scene has ended.
+    /* 19 */ { type: 'stage', next: 17, beats: [
+      { actor: 'janitor', exit: [1.5, 2], speed: 1.6, wait: false },
+      { actor: 'player',  face: 'janitor', hold: 0.2 },
+    ] },
   ],
 
   // ── Hall of Records: the Form 11-C chain (Borges with a queue rope) ──
@@ -5022,7 +5141,12 @@ export const DIALOGS = {
       // `show: true` as well as `spawn` — old_vault carries a RETRY-only
       // firm_partner entry (gated on has_recorder_seal), so on the first
       // ambush a hidden body already exists and rule 4 would no-op the beat.
-      { actor: 'firm_partner',   spawn: true, show: true, spawnAt: 'stairs', walkTo: 'firm_a', face: 'player', speed: 1.9 },
+      // And because that body EXISTS, `spawnAt` never applied to it —
+      // `_resolveActor` returns the room's NPC and `_spawn` is never called —
+      // so the leader started at his retry post (2,4) and walked TOWARD the
+      // stairs while his two colleagues walked away from them. `teleportTo`
+      // is the verb that makes an entrance work for a pre-placed actor.
+      { actor: 'firm_partner',   spawn: true, show: true, spawnAt: 'stairs', teleportTo: 'stairs', walkTo: 'firm_a', face: 'player', speed: 1.9 },
       { actor: 'firm_associate', spawn: true, spawnAt: 'stairs', walkTo: 'firm_b', face: 'player', speed: 1.75 },
       { actor: 'firm_paralegal', spawn: true, spawnAt: 'stairs', walkTo: 'firm_c', face: 'player', speed: 1.6 },
       { actor: 'player', face: 'stairs', wait: false },

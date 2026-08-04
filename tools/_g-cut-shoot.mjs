@@ -101,7 +101,28 @@ const SCENES = {
       'janet_act6_rallied', 'diane_act6_rallied', 'intern_act6_rallied', 'isaiah_evidence', 'grandma_ally'],
     clear: ['board_meeting_held', 'board_meeting_closed', 'act6_complete', 'has_rolex'],
     dialog: 'board_meeting',
-    advances: 40, gap: 520,
+    // 178 nodes and five ally contributions, each of which returns to the
+    // node-48 floor choice — a full pass is ~110 advances, so 40 stopped the
+    // take before BLOCK E and never reached the staging in BLOCK H.
+    advances: 140, gap: 480,
+  },
+  // Fires in `board_room` — the only room with a penthouse exit — from
+  // `_changeRoom`'s uncertified-charter branch. By then `act6_complete` has
+  // derived `board_meeting_closed`, so the room is empty and the Janitor is
+  // spawned in for his five lines.
+  charter_challenge: {
+    room: 'board_room',
+    set: ['act5_complete', 'act6_complete', 'has_rolex', 'board_meeting_held', 'janitor_names_complete'],
+    clear: ['charter_certified', 'read_charter_challenge', 'city_unlocked'],
+    dialog: 'charter_challenge',
+    advances: 26, gap: 620,
+  },
+  compliance_defeated: {
+    room: 'executive_floor',
+    set: ['branch_chosen', 'path_bro', 'karen_defeated', 'chad_defeated', 'grandma_defeated'],
+    clear: ['compliance_defeated', 'act2_complete', 'ending_started', 'compliance_crossword_done'],
+    dialog: 'compliance_defeated',
+    advances: 16, gap: 620,
   },
 };
 
@@ -172,11 +193,15 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     await page.evaluate(async (z) => {
       const { Engine } = await import('/src/core/Engine.js');
       const apply = () => {
+        // Engine.camera is briefly null across a room build — without this
+        // guard the whole take dies with "Cannot set properties of null".
         const cam = Engine.camera;
-        const aspect = Engine.width / Engine.height;
-        cam.left = -z * aspect; cam.right = z * aspect;
-        cam.top = z; cam.bottom = -z;
-        cam.updateProjectionMatrix();
+        if (cam) {
+          const aspect = Engine.width / Engine.height;
+          cam.left = -z * aspect; cam.right = z * aspect;
+          cam.top = z; cam.bottom = -z;
+          cam.updateProjectionMatrix();
+        }
         requestAnimationFrame(apply);
       };
       apply();

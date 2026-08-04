@@ -241,18 +241,28 @@ export const ROOMS = {
       // 0.62 x 0.52 dark-wood frame at y 1.5.
       { type: 'abstractPainting', x: 3.5,  z: 0.1, rotation: 0 },
       { type: 'abstractPainting', x: 14.5, z: 0.1, rotation: 0 },
-      // South wall (face inward)
-      { type: 'motivationalPoster', x: 6,  z: 14.9, rotation: Math.PI },
-      { type: 'motivationalPoster', x: 11, z: 14.9, rotation: Math.PI },
+      // NORTH AND WEST ONLY. The isometric camera looks at the north and west
+      // interior faces; a poster on the SOUTH wall (rotation Math.PI) or the
+      // EAST wall (rotation -Math.PI/2) faces AWAY from the camera and the
+      // player reads a 0.62 x 0.52 rectangle of frame edge. Five of this room's
+      // posters were mounted that way — including `quest_atk_1`, a stat reward.
+      // `npm run validate:data` now fails the build on either rotation, so this
+      // cannot come back. Every relocation keeps the `motivationalPoster` and
+      // its `{type:'poster'}` interactable on the same tile, per the law.
+      // (was south x:6  z:14.9)
+      { type: 'motivationalPoster', x: 5,  z: 0.1, rotation: 0 },
+      // (was south x:11 z:14.9)
+      { type: 'motivationalPoster', x: 11, z: 0.1, rotation: 0 },
       // West wall (face inward)
       { type: 'motivationalPoster', x: 0.1, z: 5,  rotation: Math.PI / 2 },
       { type: 'motivationalPoster', x: 0.1, z: 10, rotation: Math.PI / 2 },
-      // East wall (face inward)
-      { type: 'motivationalPoster', x: 18.9, z: 5,  rotation: -Math.PI / 2 },
-      { type: 'motivationalPoster', x: 18.9, z: 10, rotation: -Math.PI / 2 },
-      // Side quest posters
-      { type: 'motivationalPoster', x: 18.9, z: 12, rotation: -Math.PI / 2 },
-      { type: 'motivationalPoster', x: 0.1,  z: 3,  rotation: Math.PI / 2 },
+      // (was east x:18.9 z:5)
+      { type: 'motivationalPoster', x: 0.1, z: 6,  rotation: Math.PI / 2 },
+      // (was east x:18.9 z:10)
+      { type: 'motivationalPoster', x: 17,  z: 0.1, rotation: 0 },
+      // Side quest posters — (was east x:18.9 z:12)
+      { type: 'motivationalPoster', x: 0.1, z: 11, rotation: Math.PI / 2 },
+      { type: 'motivationalPoster', x: 0.1, z: 3,  rotation: Math.PI / 2 },
 
 
     ],
@@ -314,15 +324,16 @@ export const ROOMS = {
       // (staging marks for this room live in `marks` at the end of the entry)
       { x: 16, z: 3, type: 'gary_desk', dialogId: 'janet_vacancy_search', condition: { flag: 'janet_vacancy_started' } },
       // Motivational posters
+      // Each moved with its prop — north/west only (see the furniture note).
       { x: 7,  z: 0,  type: 'poster', dialogId: 'poster_cf_1' },
-      { x: 6,  z: 15, type: 'poster', dialogId: 'poster_cf_2' },
-      { x: 11, z: 15, type: 'poster', dialogId: 'poster_cf_3' },
+      { x: 5,  z: 0,  type: 'poster', dialogId: 'poster_cf_2' },
+      { x: 11, z: 0,  type: 'poster', dialogId: 'poster_cf_3' },
       { x: 0,  z: 5,  type: 'poster', dialogId: 'poster_cf_4' },
       { x: 0,  z: 10, type: 'poster', dialogId: 'poster_cf_5' },
-      { x: 19, z: 5,  type: 'poster', dialogId: 'poster_cf_6' },
-      { x: 19, z: 10, type: 'poster', dialogId: 'poster_cf_7' },
+      { x: 0,  z: 6,  type: 'poster', dialogId: 'poster_cf_6' },
+      { x: 17, z: 0,  type: 'poster', dialogId: 'poster_cf_7' },
       // Side quest interactables
-      { x: 19, z: 12, type: 'poster', dialogId: 'quest_atk_1', condition: { flag: 'retry_karen' } },
+      { x: 0,  z: 11, type: 'poster', dialogId: 'quest_atk_1', condition: { flag: 'retry_karen' } },
       { x: 0,  z: 3,  type: 'poster', dialogId: 'quest_def_1', condition: { flag: 'retry_karen' } },
       // Phantom Approver: source workstation — on the desk tile, same pattern as andrews_desk
       { x: 17, z: 5,  type: 'monitor', dialogId: 'phantom_workstation_cf' },
@@ -404,9 +415,10 @@ export const ROOMS = {
       // === Arcade cabinet (southeast) ===
       { type: 'arcadeCabinet', x: 13, z: 10, rotation: Math.PI },
 
-      // Side quest posters
+      // Side quest posters — north/west walls only; the south wall faces away
+      // from the isometric camera (was x:2 z:10.9 rotation Math.PI).
       { type: 'motivationalPoster', x: 0.1, z: 7,   rotation: Math.PI / 2 },
-      { type: 'motivationalPoster', x: 2,   z: 10.9, rotation: Math.PI },
+      { type: 'motivationalPoster', x: 12,  z: 0.1, rotation: 0 },
 
       // Network Ghost signal booster mount (east wall)
       { type: 'boosterMount', x: 14.9, z: 8, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
@@ -440,7 +452,7 @@ export const ROOMS = {
       { x: 13, z: 10, type: 'arcade_cabinet',   dialogId: 'arcade_intro' },
       // Side quest interactables
       { x: 0,  z: 7,  type: 'poster', dialogId: 'quest_atk_3', condition: { flag: 'retry_karen' } },
-      { x: 2,  z: 11, type: 'poster', dialogId: 'quest_def_3', condition: { flag: 'retry_karen' } },
+      { x: 12, z: 0,  type: 'poster', dialogId: 'quest_def_3', condition: { flag: 'retry_karen' } },
       // Network Ghost signal booster (east wall)
       { x: 14, z: 8,  type: 'poster', dialogId: 'network_booster_br', condition: { notFlag: 'quest_network_ghost_complete' } },
       // Tuesday 2PM: old floppy disk on westmost table
@@ -647,9 +659,11 @@ export const ROOMS = {
 
       // === Projector screen area — just a motivational poster placeholder ===
       { type: 'motivationalPoster', x: 3, z: 0.1, rotation: 0, condition: { notFlag: 'renovation_projection_wall' } },
-      // Side quest posters
-      { type: 'motivationalPoster', x: 10.9, z: 6, rotation: -Math.PI / 2 },
-      { type: 'motivationalPoster', x: 5,    z: 6.9, rotation: Math.PI },
+      // Side quest posters — north/west walls only; the east and south walls
+      // face away from the isometric camera (were x:10.9 z:6 rotation
+      // -Math.PI/2, and x:5 z:6.9 rotation Math.PI).
+      { type: 'motivationalPoster', x: 9,   z: 0.1, rotation: 0 },
+      { type: 'motivationalPoster', x: 0.1, z: 6,   rotation: Math.PI / 2 },
 
       // Network Ghost signal booster mount (east wall)
       { type: 'boosterMount', x: 10.9, z: 2, rotation: -Math.PI / 2, condition: { notFlag: 'quest_network_ghost_complete' } },
@@ -681,8 +695,8 @@ export const ROOMS = {
       { x: 6, z: 0, type: 'whiteboard', dialogId: 'conference_whiteboard', condition: { notFlag: 'renovation_projection_wall' } },
       { x: 3, z: 0, type: 'poster', dialogId: 'poster_conf_1', condition: { notFlag: 'renovation_projection_wall' } },
       // Side quest interactables
-      { x: 11, z: 6, type: 'poster', dialogId: 'quest_atk_2', condition: { flag: 'retry_karen' } },
-      { x: 5,  z: 7, type: 'poster', dialogId: 'quest_def_2', condition: { flag: 'retry_karen' } },
+      { x: 9, z: 0, type: 'poster', dialogId: 'quest_atk_2', condition: { flag: 'retry_karen' } },
+      { x: 0, z: 6, type: 'poster', dialogId: 'quest_def_2', condition: { flag: 'retry_karen' } },
       // Network Ghost signal booster (east wall)
       { x: 10, z: 2, type: 'poster', dialogId: 'network_booster_conf', condition: { notFlag: 'quest_network_ghost_complete' } },
     ],
@@ -1595,6 +1609,38 @@ export const ROOMS = {
       { id: 'isaiah',  x: 10, z: 8, facing: Math.PI,                                                      dialogId: 'board_meeting_isaiah',  condition: { flag: 'isaiah_evidence',     notFlag: 'board_meeting_closed' } },
       { id: 'janet',   x: 11, z: 9, facing: Math.PI,                                                      dialogId: 'board_meeting_janet',   condition: { flag: 'janet_act6_rallied',  notFlag: 'board_meeting_closed' } },
       { id: 'grandma', x: 13, z: 8, facing: Math.PI,                                                      dialogId: 'board_meeting_grandma', condition: { flag: 'grandma_ally',        notFlag: 'board_meeting_closed' } },
+
+      // ── THE BOARD ITSELF ─────────────────────────────────────────────────
+      // `board_meeting` addresses eleven people for 178 nodes. Until this
+      // block existed it addressed fourteen empty chairs, which is the single
+      // biggest reason the flagship set-piece read as radio. Twelve bodies fill
+      // twelve of the fourteen side chairs. Three seats are deliberately open:
+      //   • the HEAD chair (3,5) — Skip walks into it on his closing line
+      //     ("Skip Hartley sits down", nodes 107/111/115). It is one step from
+      //     `head_stand`, which is the only seat he can reach without a walk
+      //     around the table, so the board chair sits on the north side instead.
+      //   • SOUTH x:8 and x:9 — node 127's "empty chair on Andrew's side".
+      //     Andrew stands at `table_edge_s` (8,8), directly behind them.
+      // Every entry carries the SAME condition pair as the ally block, so the
+      // board assembles when Skip is ready to speak and clears the instant
+      // `board_meeting_closed` derives — nobody is left sitting in here during
+      // the penthouse ascent.
+      // FACING: theta -> (sin, cos), so 0 is SOUTH. North-side occupants take
+      // the chair's own rotation 0 (facing the table); south-side take Math.PI.
+      // `interactable: false` — a body with no dialog that offers an E prompt
+      // is a false affordance (see the poster law).
+      { id: 'board_member_1',      x: 5,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_2',      x: 6,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_3',      x: 7,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_chair',         x: 8,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_4',      x: 9,  z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_5',      x: 10, z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_twelve', x: 11, z: 3, facing: 0,       sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_6',      x: 5,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_7',      x: 6,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_8',      x: 7,  z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_9',      x: 10, z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
+      { id: 'board_member_10',     x: 11, z: 7, facing: Math.PI, sitting: true, interactable: false, condition: { flag: 'ross_speech_ready', notFlag: 'board_meeting_closed' } },
     ],
     exits: [
       // SOUTH exit -> Executive Floor
@@ -1622,6 +1668,22 @@ export const ROOMS = {
       aisle_n:       [8, 2],
       door_south:    [7.5, 10.4],
       door_north:    [7.5, 1],
+      // Where a contributing ally steps out of the line to address the board
+      // and back again. Two of them so the west half (Diane, the Intern) and
+      // the east half (Isaiah, Janet, Grandma) each have a spot that is not a
+      // walk across the whole room, and neither collides with Andrew at
+      // `table_edge_s` (8,8). z 7.4 rather than 7.0: the walk radius is 0.28
+      // and the table blocks z 4-6, so a body standing ON the chair row cannot
+      // be WALKED to — it arrives at 7.28 and the beat times out into a
+      // teleport. Simulated against the real TileMap before it was authored.
+      speak_west:    [6, 7.4],
+      speak_east:    [10, 7.4],
+      // Skip's route. The table blocks x 4-12 / z 4-6 and StageDirector walks a
+      // straight line with an axis slide, not a path — every leg here was
+      // simulated against the built grid.
+      head_approach: [2.6, 8.4],  // west aisle, on the way to the head
+      aisle_w:       [3, 8.2],    // west aisle, on the way back
+      skip_after:    [6.9, 8.2],  // beside Andrew for BLOCK H
     },
     playerSpawn: { x: 8, z: 10 },
   },

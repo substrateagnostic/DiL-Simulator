@@ -755,6 +755,42 @@ export const CHARACTER_CONFIGS = {
     // v5 face — neutral default (visual fields spread over by ClientGenerator)
     gender: 'm', eyeColor: 0x4a3020, jaw: 0.96, chin: 1.0,
   },
+
+  // ── THE BOARD ────────────────────────────────────────────────────────────
+  // Generic suits for the Board Room's fourteen executive chairs. `board_meeting`
+  // addresses eleven people for 178 nodes; before these existed it addressed
+  // fourteen empty chairs. They are anonymous by design — same principle as
+  // `reception_client` — but each needs its OWN id, because
+  // `tools/_ux-dev.mjs` counts duplicate NPC ids per room and room data is
+  // where these bodies live (a stage `spawn` cannot address twelve actors that
+  // share one id either: `_resolveActor` returns the first match every time).
+  // `board_chair` is the chairperson; she sits at the middle of the NORTH side,
+  // directly across the table from Andrew — the HEAD chair at (3,5) has to stay
+  // empty, because three separate closing lines say Skip sits down and that is
+  // the only seat within one step of where he gives the speech.
+  // The Board Member in seat twelve (north side, x:11) is deliberately NOT
+  // cast here — his crossing on `board_member_spoke` is a producer casting
+  // call, so he is a suit like the rest until that call is made.
+  board_chair: {
+    name: 'Board Chair',
+    bodyColor: 0x2a2a38, pantsColor: 0x22222c, shirtColor: COLORS.SHIRT_WHITE, tieColor: null,
+    skinColor: COLORS.SKIN, hairColor: COLORS.HAIR_GRAY, hairStyle: 'bob',
+    accessories: ['glasses'],
+    gender: 'f', eyeColor: 0x3a2c1e, lipColor: 0xa85f58, jaw: 0.93, chin: 0.98,
+  },
+  board_member_1:  { name: 'Board Member', bodyColor: 0x232838, pantsColor: 0x1e2130, shirtColor: COLORS.SHIRT_WHITE, tieColor: 0x7a2230, skinColor: COLORS.SKIN,      hairColor: COLORS.HAIR_GRAY,  hairStyle: 'short', accessories: [],          gender: 'm', eyeColor: 0x3d2c1c, jaw: 1.02, chin: 1.02 },
+  board_member_2:  { name: 'Board Member', bodyColor: 0x30303a, pantsColor: 0x282830, shirtColor: COLORS.SHIRT_WHITE, tieColor: null,     skinColor: COLORS.SKIN_DARK, hairColor: COLORS.HAIR_DARK,  hairStyle: 'bun',   accessories: ['glasses'], gender: 'f', eyeColor: 0x2c1d12, lipColor: 0x9d5b52, jaw: 0.92 },
+  board_member_3:  { name: 'Board Member', bodyColor: 0x1d2a3c, pantsColor: 0x1a2230, shirtColor: 0xdfe4ea,           tieColor: 0x2b4b7a, skinColor: COLORS.SKIN,      hairColor: COLORS.HAIR_WHITE, hairStyle: 'short', accessories: [],          gender: 'm', eyeColor: 0x4a3828, jaw: 0.97, chin: 1.04, heightScale: 0.97 },
+  board_member_4:  { name: 'Board Member', bodyColor: 0x3a2f2a, pantsColor: 0x2e2622, shirtColor: COLORS.SHIRT_WHITE, tieColor: 0x5a6a3a, skinColor: COLORS.SKIN_DARK, hairColor: COLORS.HAIR_DARK,  hairStyle: 'slick', accessories: [],          gender: 'm', eyeColor: 0x33241a, jaw: 1.05, chin: 1.0,  widthScale: 1.08 },
+  board_member_5:  { name: 'Board Member', bodyColor: 0x262632, pantsColor: 0x20202a, shirtColor: 0xe8e2d8,           tieColor: null,     skinColor: COLORS.SKIN,      hairColor: COLORS.HAIR_BLONDE, hairStyle: 'bob',  accessories: [],          gender: 'f', eyeColor: 0x4a5a6a, lipColor: 0xb0655c, jaw: 0.95 },
+  board_member_6:  { name: 'Board Member', bodyColor: 0x2c3448, pantsColor: 0x252b3a, shirtColor: COLORS.SHIRT_WHITE, tieColor: 0x8a7420, skinColor: COLORS.SKIN,      hairColor: COLORS.HAIR_GRAY,  hairStyle: 'short', accessories: ['glasses'], gender: 'm', eyeColor: 0x3a2c1e, jaw: 0.99, chin: 0.98, heightScale: 1.03 },
+  board_member_7:  { name: 'Board Member', bodyColor: 0x1f1f26, pantsColor: 0x1b1b21, shirtColor: 0xd9d4cc,           tieColor: 0x30507a, skinColor: COLORS.SKIN_DARK, hairColor: COLORS.HAIR_GRAY,  hairStyle: 'short', accessories: [],          gender: 'm', eyeColor: 0x2e1d12, jaw: 1.0,  chin: 1.06 },
+  board_member_8:  { name: 'Board Member', bodyColor: 0x35303c, pantsColor: 0x2b2732, shirtColor: COLORS.SHIRT_WHITE, tieColor: null,     skinColor: COLORS.SKIN,      hairColor: COLORS.HAIR_BROWN, hairStyle: 'long',  accessories: [],          gender: 'f', eyeColor: 0x4a3325, lipColor: 0xa8564f, jaw: 0.94, heightScale: 0.98 },
+  board_member_9:  { name: 'Board Member', bodyColor: 0x22303a, pantsColor: 0x1e2830, shirtColor: 0xe4e8ec,           tieColor: 0x6a2230, skinColor: COLORS.SKIN,      hairColor: COLORS.HAIR_DARK,  hairStyle: 'slick', accessories: [],          gender: 'm', eyeColor: 0x33241a, jaw: 1.03, chin: 1.0 },
+  board_member_10: { name: 'Board Member', bodyColor: 0x2e2a24, pantsColor: 0x272420, shirtColor: COLORS.SHIRT_WHITE, tieColor: 0x3a5a4a, skinColor: COLORS.SKIN_DARK, hairColor: COLORS.HAIR_WHITE, hairStyle: 'bun',   accessories: ['glasses'], gender: 'f', eyeColor: 0x2c1d12, lipColor: 0x94564e, jaw: 0.91 },
+  // Seat twelve — north side, x:11. The man who has not spoken since 1988.
+  // Oldest read in the room; still a generic suit until casting says otherwise.
+  board_member_twelve: { name: 'Board Member', bodyColor: 0x1c1c22, pantsColor: 0x18181e, shirtColor: 0xd0cbc2,       tieColor: 0x3a3a44, skinColor: COLORS.SKIN,      hairColor: COLORS.HAIR_WHITE, hairStyle: 'short', accessories: [],          gender: 'm', eyeColor: 0x53483c, jaw: 0.94, chin: 1.03, heightScale: 0.95, widthScale: 0.94 },
 };
 
 // Apply character-overrides.json (set via npm run editor)

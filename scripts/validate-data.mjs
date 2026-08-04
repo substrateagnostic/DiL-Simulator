@@ -333,6 +333,18 @@ function validateDataReferences() {
       const readable = roomInteractables.some(i =>
         Math.abs(i.x - f.x) <= 1.0 && Math.abs(i.z - f.z) <= 1.2);
       assert(readable, `room ${roomId} furniture ${index} is a ${f.type} at (${f.x}, ${f.z}) with no interactable within a tile — use a decoration prop or add the poster interactable`);
+
+      // POSTER FACING. `rotation` sets mesh.rotation.y and theta -> (sin, cos),
+      // so 0 faces SOUTH (north wall) and Math.PI/2 faces EAST (west wall) —
+      // the two interior faces the isometric camera actually looks at. A poster
+      // on the SOUTH wall (Math.PI) or the EAST wall (-Math.PI/2) presents its
+      // back: the player walks to a readable prop and sees a 0.62 x 0.52
+      // rectangle of frame edge. Eight shipped that way, one of them a stat
+      // reward (`quest_atk_1`). Decoration on those walls is fine — use
+      // `abstractPainting`/`oilPainting`; a POSTER is a thing to be read.
+      const rot = ((f.rotation || 0) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+      const blind = Math.abs(rot - Math.PI) < 0.05 || Math.abs(rot - Math.PI * 1.5) < 0.05;
+      assert(!blind, `room ${roomId} furniture ${index} is a ${f.type} at (${f.x}, ${f.z}) rotated to face away from the camera (${(rot * 180 / Math.PI).toFixed(0)}deg) — mount posters on the NORTH wall (z~0.1, rotation 0) or the WEST wall (x~0.1, rotation Math.PI/2)`);
     });
 
     // STAGING MARKS. A `stage` beat that names a mark this room does not have

@@ -1,3 +1,67 @@
+# Run G / CUT lane — FIX ROUND 2 — August 4, 2026 (branch `display-case`)
+
+Four notes, in the order the judge set them. All four landed.
+
+**1 — `board_meeting` was radio.** 178 nodes addressing fourteen empty chairs. Twelve generic
+suits + a board chair now sit in the room (`board_member_1..10`, `board_member_twelve`,
+`board_chair` in `characters.js`; room entries gated on the same
+`ross_speech_ready` / `!board_meeting_closed` pair as the ally block, so they assemble and clear
+with the scene). Seventeen `stage` nodes appended at 178-194: Skip crosses to the head of the
+table before node 3 describes him there; Andrew steps to `table_edge_s` when the meeting is called
+to order; **every ally that actually contributes steps out to the table and back** (`wait: false`
+on the step-back so it plays under the next line); Skip takes the head chair on his closing line;
+tier 0 puts him back on his feet before node 154 calls him "still standing"; BLOCK H walks him
+back to Andrew. Measured (`screenshots/g-run/cutscenes/board_meeting/motion.txt`):
+player 1.89, ross 15.13 (135 seated frames), diane 3.87, intern 3.47, isaiah 0.87, janet 3.47,
+grandma 5.82 tiles — **non-zero for every speaking actor** — and 0 tiles for all twelve suits.
+Cost of the bodies, measured: **p50 +0.70 ms, p95 +1.90 ms** in that room only (5 → 18 visible NPCs).
+Three seats stay open by design: the head chair (Skip's), and SOUTH x:8/x:9 (node 127's "empty
+chair on Andrew's side"). **The Board Member's tier-3 crossing is still deferred** — that one is a
+casting call, not a builder's.
+
+**2 — eight blind posters.** `rotation` sets `mesh.rotation.y` and theta → (sin, cos), so
+`Math.PI` (south wall) and `-Math.PI/2` (east wall) point a poster's *back* at the camera. Eight
+were mounted that way, `quest_atk_1` among them — a stat reward the player could reach and not
+read. All eight moved to a north (z 0.1, rotation 0) or west (x 0.1, rotation Math.PI/2) wall with
+their interactables. **`npm run validate:data` now fails the build** on either rotation for
+`motivationalPoster`/`executivePoster`, so the law is enforceable rather than advisory.
+Plates: `screenshots/g-run/cutscenes/posters_after/`.
+
+**3 — the executive-floor occluder** was `elevatorDoors` at (8,11), not a `building_shell` column
+(ledger concern #5 corrected). The south wall already fades to 0.16 when the player walks behind
+it; the thing bolted to that wall did not, so it stood at opacity 1.0 over Andrew for the whole
+seated act of `secret_ending`. `Room._registerWallProp` folds wall-mounted props into the same
+fade — geometric test (within 1.4 tiles of the wall line, bounding height > 1.2 m), not a type
+list, so 18 props across 8 rooms are covered for free. Materials are cloned once per distinct
+source material (without the dedupe the vault's lockbox banks alone made 544 clones).
+Measured wall/prop opacity 0.16/**1.0 → 0.16/0.16** near the wall, back to 1.0/1.0 away from it.
+A/B plates: `screenshots/g-run/cutscenes/occluder/`. `secret_ending` re-shot, video replaced.
+
+**4 — `the_firm_ambush` leader.** `spawnAt` only applies to bodies the director CREATED;
+`old_vault` carries a retry-only `firm_partner`, so `_resolveActor` returned it and the leader
+started at his retry post (2,4) and walked *toward* the stairs the other two were walking away
+from. New **`teleportTo`** verb snaps a pre-placed actor before the walk destination is measured.
+Re-shot: all three now start at ~(0.9, 1.5) — the `stairs` mark — and walk out to firm_a/b/c.
+
+**Also taken (both listed as cheap extras):** `charter_challenge` spawns the Janitor for his five
+lines and walks him out (no prose touched — the structural-equivalence gate still reads 0 changes);
+`compliance_defeated` no longer walks the Auditor out of the building, because they have a second
+`executive_floor` entry as the crossword post and were back at (13,6) on the next room entry. They
+now cross to `board_door` and stay.
+
+**Not done, on the judge's instruction:** ledger concern #4 (Karen — retracted, `isFirstKaren`
+sets `retry_karen` on every outcome of the first fight); the prop/handoff verbs (Rolex, cane,
+binder, cookies, putter); re-proving the primitive, the seat census, the rotation correction or
+the poster east/west call.
+
+Gates: `_g-stage-verify` PASS (275 trees, 23 with stage nodes, **0 structurally changed**, 103
+beats resolved). `_g-seat-census` **25 seated / 0 faults** (was 13/0). `_ux-dev` **0 duplicate
+visible NPCs** across all 7 presets and 26 rooms — the number that matters most, since this lane
+added twelve NPCs to one room. `_ux-world` B2 = 0 NPCs on blocked tiles, S1 = 0 dead posters.
+`_ux-smoke` 11/11. `npm run check` exit 0.
+
+---
+
 # Run G / UX lane — FIX ROUND 2 — August 4, 2026 (branch `display-case`)
 
 Three notes from the judge panel (D1–D4). All three answered.

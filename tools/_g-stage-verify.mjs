@@ -157,7 +157,7 @@ for (const r of Object.values(ROOMS)) {
   for (const n of r.npcs || []) roomNpcIds.add(n.id);
 }
 let beatFails = 0, beats = 0;
-const pointFields = ['walkTo', 'face', 'sit', 'exit', 'spawnAt'];
+const pointFields = ['walkTo', 'face', 'sit', 'exit', 'spawnAt', 'teleportTo'];
 for (const [id, tree] of Object.entries(NEW)) {
   for (let i = 0; i < tree.length; i++) {
     if (tree[i].type !== 'stage') continue;
@@ -178,7 +178,7 @@ for (const [id, tree] of Object.entries(NEW)) {
       if (typeof b.after === 'number' && (b.after < 0 || b.after >= tree[i].beats.length)) {
         say(`FAIL  ${id}[${i}] beat after:${b.after} out of range`); beatFails++; fails++;
       }
-      const verbs = ['walkTo', 'face', 'sit', 'stand', 'exit', 'gesture', 'pose', 'expression', 'hold', 'show'];
+      const verbs = ['walkTo', 'face', 'sit', 'stand', 'exit', 'gesture', 'pose', 'expression', 'hold', 'show', 'teleportTo'];
       if (!verbs.some(v => b[v] !== undefined)) { say(`FAIL  ${id}[${i}] beat for "${a}" has no verb`); beatFails++; fails++; }
     }
   }
