@@ -141,6 +141,63 @@ const setup = async (obj, room) => {
   await page.waitForTimeout(400);
 };
 
+// Tap until the choice row is actually rendered. A single tap during the
+// typewriter is consumed as skipToEnd, so index-based picking races the text.
+//
+// The trailing wait is NOT slop. DialogBox arms a freshly-rendered choice row
+// against the mouse for CHOICE_ARM_MS (260 ms, DialogBox.js:8) — the UX lane's
+// deliberate guard against the second half of a double-click aimed at the
+// typewriter skip. A click inside that window is silently DROPPED, which cost
+// a full debug cycle here: the row stayed up, the following keyboard walk
+// confirmed the cursor's default row instead, and on a riddle that default is
+// index 0 — the CORRECT answer. The test answered right while asserting it had
+// answered wrong. Wait the guard out; never race it.
+const CHOICE_ARM_MS = 260;
+const waitForChoices = async (max = 8) => {
+  for (let i = 0; i < max; i++) {
+    const cs = await page.evaluate(() =>
+      [...document.querySelectorAll('.dialog-choice')].map(c => c.textContent.trim()));
+    if (cs.length) { await page.waitForTimeout(CHOICE_ARM_MS + 120); return cs; }
+    await tap();
+    await page.waitForTimeout(320);
+  }
+  return [];
+};
+
+// Click the choice whose label matches a regex. Index picking is fine when the
+// menu is stable; this is for the cases where WHICH option matters (a riddle's
+// wrong answer) and an off-by-one would silently invert the assertion.
+// Retries because a swallowed click is indistinguishable from a landed one at
+// the call site — the only proof a pick took is the row clearing.
+const pickChoiceMatching = async (re, attempts = 3) => {
+  let label = null;
+  for (let i = 0; i < attempts; i++) {
+    const cs = await page.$$('.dialog-choice');
+    if (!cs.length) return label;           // already committed
+    let clicked = false;
+    for (const c of cs) {
+      const t = (await c.textContent()).trim();
+      if (re.test(t)) { await c.click(); label = t; clicked = true; break; }
+    }
+    if (!clicked) return null;              // no such option — caller must fail
+    if (await waitForNoChoices(10)) return label;
+    await page.waitForTimeout(CHOICE_ARM_MS + 120);
+  }
+  return label;
+};
+
+// Wait until the choice row has actually cleared. Handing control back to
+// runDialog while the old row is still in the DOM lets it re-pick index 0 —
+// which, on a riddle, is the CORRECT answer, silently inverting the test.
+const waitForNoChoices = async (max = 20) => {
+  for (let i = 0; i < max; i++) {
+    const n = await page.evaluate(() => document.querySelectorAll('.dialog-choice').length);
+    if (n === 0) return true;
+    await page.waitForTimeout(150);
+  }
+  return false;
+};
+
 // Walk a dialog forward, optionally answering choices by index.
 const runDialog = async (picks = [], max = 90) => {
   const lines = [];
@@ -396,7 +453,6 @@ try {
   const act4Route = await janitorDialog();
   check('Act-4 Janitor offers the ROUTER, not the riddle',
     act4Route === 'janitor_router', String(act4Route));
-  await shotFull('08-act4-router-offered');
   // Drive the router through the REAL interact path so the _pendingDialog
   // chain is exercised, not bypassed.
   await page.evaluate(async () => {
@@ -406,6 +462,10 @@ try {
     ex.stateManager.push(new DialogState(DIALOGS.janitor_router, ex.player, ex.stateManager, 'janitor_router'));
   });
   await page.waitForTimeout(450);
+  const choiceTexts = await waitForChoices();
+  check('the router shows BOTH doors as explicit choices', choiceTexts.length === 2,
+    JSON.stringify(choiceTexts));
+  await shotFull('08-act4-router-offered');
   await runDialog([0], 8);           // pick "The reason I came down here."
   await page.waitForTimeout(1400);   // _pendingDialog fires at +500 ms
   check('story choice chains straight into a dialog (no second interaction)',
@@ -441,10 +501,18 @@ try {
     ex.stateManager.push(new DialogState(DIALOGS.janitor_router, ex.player, ex.stateManager, 'janitor_router'));
   });
   await page.waitForTimeout(450);
-  await runDialog([1], 8);           // pick the RIDDLE door
+  await waitForChoices();
+  await pickChoiceMatching(/riddle/i);   // pick the RIDDLE door
+  await waitForNoChoices();
   await page.waitForTimeout(1400);
   check('riddle door chains into the riddle', await top() === 'DialogState', `top=${await top()}`);
-  await runDialog([1], 20);          // answer WRONG on purpose
+  const riddleChoices = await waitForChoices();
+  check('riddle 3 offers its three answers', riddleChoices.length === 3, JSON.stringify(riddleChoices));
+  // "Duty." is the correct answer; pick anything else on purpose.
+  const picked = await pickChoiceMatching(/building|Memory/i);
+  check('picked a WRONG riddle answer deliberately', !!picked, String(picked));
+  check('the choice row cleared before the walk resumes', await waitForNoChoices());
+  await runDialog([], 20);
   await toExploration();
   await page.waitForTimeout(900);
   check('a wrong answer sets no done-flag',
