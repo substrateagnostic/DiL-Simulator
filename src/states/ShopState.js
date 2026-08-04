@@ -9,6 +9,7 @@ import {
   recordedReviewLevel, pipResistance,
 } from '../data/review.js';
 import { AchievementManager } from '../core/AchievementManager.js';
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { EventBus } from '../core/EventBus.js';
 import { SaveManager } from '../core/SaveManager.js';
 
@@ -27,11 +28,16 @@ export class ShopState {
   }
 
   enter() {
+    // A modal owns the whole screen. Suspend the world scope so a queued
+    // objective / achievement / autosave card cannot float over it; it comes
+    // back the moment we pop (DEFER, DON'T DESTROY).
+    NotificationArbiter.suspendScope('world');
     this._buildUI();
     this._render();
   }
 
   exit() {
+    NotificationArbiter.resumeScope('world');
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);
     this.root = null;
     if (window.__shopCat) delete window.__shopCat;
@@ -441,8 +447,15 @@ export class ShopState {
     this._render();
   }
 
+  // Single occupancy inside the shop's own root. It used to append a new node
+  // per call at a fixed `top:40%; left:50%`, so two purchases in quick
+  // succession printed through each other. Recorded in the arbiter's Log ring
+  // so a missed flash is still recoverable from the Log tab.
   _flash(text, color) {
     if (!this.root) return;
+    NotificationArbiter.note(NC.PROGRESS, text);
+    if (this._flashEl && this._flashEl.parentNode) this._flashEl.remove();
+    if (this._flashTimer) clearTimeout(this._flashTimer);
     const el = document.createElement('div');
     el.style.cssText = `
       position:absolute; top:40%; left:50%; transform:translateX(-50%);
@@ -452,6 +465,11 @@ export class ShopState {
     `;
     el.textContent = text;
     this.root.appendChild(el);
-    setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 1200);
+    this._flashEl = el;
+    this._flashTimer = setTimeout(() => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+      if (this._flashEl === el) this._flashEl = null;
+      this._flashTimer = null;
+    }, 1200);
   }
 }

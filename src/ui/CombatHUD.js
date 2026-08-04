@@ -1,3 +1,5 @@
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
+
 // Combat HUD — supports 1+ enemies and 1+ party members.
 // Top-center: row of enemy bars with name/HP/telegraph; selected target gets a highlight.
 // Bottom-left: stats wrapper. Active actor's full bars on top; remaining party shows compact bars below.
@@ -116,6 +118,7 @@ export class CombatHUD {
 
   // enemies: [{ name, hp, maxHP }, ...]; party: [{ name, hp, maxHP, mp, maxMP, momentum, isPlayer }, ...]
   show(enemies, party, options = {}) {
+    this._closed = false;
     this.remove();
     this.canFlee = options.canFlee !== false;
 
@@ -816,6 +819,7 @@ export class CombatHUD {
   // Kinetic enemy-intro banner — big name slide-in + settle, one taunt line,
   // red/navy. Choreographed by CombatState with the CombatScene orbit-settle.
   showEnemyIntro(name, subtitle = '', opts = {}) {
+    if (this._closed) return null;
     const el = document.createElement('div');
     el.className = 'combat-enemy-intro';
     el.innerHTML = `
@@ -836,6 +840,7 @@ export class CombatHUD {
   // Full-screen FX overlay pulse used by the cinematic sequencer.
   // kind: 'vignette' (edge pulse) | 'grid' (audit) | 'scanline' (technical).
   pulseOverlay(kind = 'vignette', color = '#e94560', ms = 500) {
+    if (this._closed) return null;
     const el = document.createElement('div');
     el.className = `combat-fx-overlay combat-fx-${kind}`;
     el.style.setProperty('--fx-color', color);
@@ -854,6 +859,7 @@ export class CombatHUD {
     const options = [...candidates, { index: -1, name: 'Keep it on my desk', decline: true }];
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay loop-in-overlay';
+    NotificationArbiter.hold(NC.DECISION, 'combat-decision', overlay);   // auto-expires when the overlay leaves the DOM
     overlay.innerHTML = `
       <div class="minigame-title">Loop In a Colleague?</div>
       <div class="gamble-options">
@@ -894,21 +900,31 @@ export class CombatHUD {
     if (this._loopInCleanup) { this._loopInCleanup(); this._loopInCleanup = null; }
   }
 
+  /**
+   * A character bark. VOICE class, single occupancy PER SIDE.
+   *
+   * The old body appended a new node per call at a fixed anchor, and both
+   * taunt sides use an 85 %-opaque background — so two same-side taunts did not
+   * cleanly replace each other, they printed THROUGH each other. The audit
+   * measured 100 % overlap for 2246 ms on a crit + weakness hit, both lines
+   * illegible. Single occupancy per side makes that impossible; the two sides
+   * stay independent because they are geometrically disjoint and serialising
+   * them would make the fight feel laggy.
+   */
   showTaunt(text, side = 'player') {
-    const el = document.createElement('div');
-    el.className = `combat-taunt combat-taunt-${side}`;
-    el.textContent = text;
-    this.container.appendChild(el);
-    setTimeout(() => {
-      el.style.opacity = '0';
-      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
-    }, 2500);
+    if (this._closed) return;
+    NotificationArbiter.post({
+      cls: NC.VOICE,
+      zone: side === 'enemy' ? 'taunt-right' : 'taunt-left',
+      text,
+    });
   }
 
   // Big centered-upper announcement for signature moves (ASSERT DOMINANCE),
   // rendered in its own slot above the combat-message band so it never gets
   // buried behind an enemy phase-taunt firing on the same beat.
   showBanner(text, hold = 1400) {
+    if (this._closed) return null;
     if (this._powerBanner && this._powerBanner.parentNode) this._powerBanner.remove();
     const el = document.createElement('div');
     el.className = 'combat-power-banner';
@@ -922,15 +938,22 @@ export class CombatHUD {
     return el;
   }
 
+  /**
+   * The combat beat line — ONE address for ~60 senders. It used to append a new
+   * node per call at `bottom:14%, left:50%` with an opaque background, so the
+   * previous line was not replaced, it was ERASED mid-read: 100 % overlap in
+   * 5 of 6 audit runs. The hand-tuned 1500 ms stagger in CombatState was an
+   * acknowledgement that hand-staggering does not generalise.
+   *
+   * Now: CONSEQUENCE, single occupancy, queued. CONSEQUENCE is never deferred
+   * (it is feedback for the button just pressed) and its ttl band is short —
+   * 1000-2800 ms, draining at x0.62 while a backlog exists — so a run of beats
+   * still reads as a fast exchange and not as input lag.
+   */
   showMessage(text) {
-    const msg = document.createElement('div');
-    msg.className = 'combat-message';
-    msg.textContent = text;
-    this.container.appendChild(msg);
-    setTimeout(() => {
-      if (msg.parentNode) msg.parentNode.removeChild(msg);
-    }, 2000);
-    return msg;
+    if (this._closed) return null;
+    NotificationArbiter.post({ cls: NC.CONSEQUENCE, zone: 'plate-centre', text });
+    return null;
   }
 
   disableInput() {
@@ -945,7 +968,15 @@ export class CombatHUD {
     this.menuEl.style.opacity = '1';
   }
 
+  /**
+   * Latch the HUD closed. `this.container` is the PAGE-LEVEL `#ui-overlay`,
+   * which survives every state transition, so before this latch existed any
+   * append-y method called by an orphaned `setTimeout` after combat ended would
+   * happily paint onto whatever screen was showing. Belt to the arbiter's
+   * braces (`closeScope('combat')` in CombatState.exit).
+   */
   remove() {
+    this._closed = true;
     this._closeTargetPicker();
     this._closeLoopIn();
     if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }

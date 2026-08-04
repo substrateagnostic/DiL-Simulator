@@ -12,6 +12,7 @@ import { VOICE_ACTIONS, VOICES } from '../data/voices.js';
 // manual-mode ally ability threw a ReferenceError.
 import { ALLY_ABILITIES } from '../data/allies.js';
 import { AchievementManager } from '../core/AchievementManager.js';
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { ENCOUNTERS } from '../data/encounters/index.js';
 import { ParticleSystem } from '../effects/ParticleSystem.js';
 import { CombatCinematics, ARENA_PALETTES, resolveArena } from '../combat/CombatCinematics.js';
@@ -141,6 +142,16 @@ export class CombatState {
       this._explorationHudDisplay = this._explorationHud.style.display;
       this._explorationHud.style.display = 'none';
     }
+    // DEFER, DON'T DESTROY. Hiding `.exploration-hud` used to kill any live
+    // toast INSTANTLY while its own setTimeout kept running and removed the
+    // node, so the message never came back: measured at 234 ms of an intended
+    // 2600 ms, 91 % of the message lost, in 4 separate runs (always the
+    // "Objective Updated" toast at combat entry). Suspending the world scope
+    // puts the visible item back in the queue with its REMAINING ttl; it
+    // re-surfaces when combat ends. The combat scope opens for this fight.
+    NotificationArbiter.mount();
+    NotificationArbiter.suspendScope('world');
+    NotificationArbiter.openScope('combat');
 
     // Build scene with all enemies + the party
     this.scene.setCombatants(this.enemyIdsList, this.partyCharIds, this.player);
@@ -248,6 +259,22 @@ export class CombatState {
 
   exit() {
     if (DEV_MODE && typeof window !== 'undefined' && window.__combat === this) window.__combat = null;
+
+    // THE TIMER LEAK. This function cancelled no pending setTimeout, and
+    // ~60 sites in this file schedule `this.hud.showMessage(...)` on a delay.
+    // `CombatHUD.container` is the page-level `#ui-overlay`, which survives the
+    // state transition — so a message scheduled before the fight ended used to
+    // appendChild onto whatever screen was showing when it fired. The probe
+    // caught "You wake up at your desk... Was it all a dream?" at 100 % overlap
+    // with the exploration dialog speaker for 1574 ms, in 3 separate runs.
+    //
+    // Fixed at the SINK, not at 60 sources: closing the combat scope drops the
+    // pending plate/taunt items to the Log, and every LATER post into a closed
+    // scope is logged and dropped instead of painted. `hud.remove()` below
+    // latches the HUD closed for the same reason (belt and braces).
+    NotificationArbiter.closeScope('combat');
+    NotificationArbiter.resumeScope('world');
+
     // Restore the exploration HUD hidden on enter().
     if (this._explorationHud) {
       this._explorationHud.style.display = this._explorationHudDisplay || '';
@@ -1235,17 +1262,16 @@ export class CombatState {
     return 0xffffff;
   }
 
+  // Reasonable Doubt voices. VOICE class, own zone, single occupancy — it used
+  // to append a fresh node per call straight onto #ui-overlay on a flat 2200 ms.
   _showVoiceBubble(voiceName, quote, color) {
-    const el = document.createElement('div');
-    el.className = 'combat-voice-bubble';
-    el.style.borderColor = color || '#fff';
-    el.style.color = color || '#fff';
-    el.innerHTML = `<div class="combat-voice-name">${voiceName}</div><div class="combat-voice-quote">"${quote}"</div>`;
-    document.getElementById('ui-overlay').appendChild(el);
-    setTimeout(() => {
-      el.style.opacity = '0';
-      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 600);
-    }, 2200);
+    NotificationArbiter.post({
+      cls: NC.VOICE,
+      zone: 'bubble-top',
+      text: `${voiceName}: "${quote}"`,
+      html: `<div class="combat-voice-name" style="color:${color || '#fff'}">${voiceName}</div>` +
+        `<div class="combat-voice-quote" style="color:${color || '#fff'}">"${quote}"</div>`,
+    });
   }
 
   // For single-target actions: pick target then execute
@@ -2079,6 +2105,7 @@ export class CombatState {
     const TRACK_W = 300;
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay';
+    NotificationArbiter.hold(NC.DECISION, 'combat-decision', overlay);   // auto-expires when the overlay leaves the DOM
     overlay.innerHTML = `
       <div class="minigame-title">Time your stance!</div>
       <div class="minigame-bar-track">
@@ -2284,6 +2311,7 @@ export class CombatState {
 
     const selOverlay = document.createElement('div');
     selOverlay.className = 'minigame-overlay';
+    NotificationArbiter.hold(NC.DECISION, 'combat-decision', selOverlay);   // auto-expires when the overlay leaves the DOM
     selOverlay.innerHTML = `
       <div class="minigame-title">Counter Sequence</div>
       <div class="gamble-options">
@@ -2332,6 +2360,7 @@ export class CombatState {
 
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay';
+    NotificationArbiter.hold(NC.DECISION, 'combat-decision', overlay);   // auto-expires when the overlay leaves the DOM
     overlay.innerHTML = `
       <div class="minigame-title">Counter sequence!</div>
       <div class="minigame-sequence">
@@ -2393,6 +2422,7 @@ export class CombatState {
     ];
     const overlay = document.createElement('div');
     overlay.className = 'minigame-overlay';
+    NotificationArbiter.hold(NC.DECISION, 'combat-decision', overlay);   // auto-expires when the overlay leaves the DOM
     overlay.innerHTML = `
       <div class="minigame-title">Desperate Gamble</div>
       <div class="gamble-options">

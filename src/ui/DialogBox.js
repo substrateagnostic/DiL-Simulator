@@ -1,6 +1,14 @@
 import { AudioManager } from '../core/AudioManager.js';
 import { TEXT_SPEED, DEV_MODE } from '../utils/constants.js';
 import { SETTINGS } from '../core/Settings.js';
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
+
+// Every DialogBox instance claims the same VOICE hold. The box does not go
+// through the arbiter — it owns its own DOM, its typewriter, the CHOICE_ARM_MS
+// guard and the KNOWLEDGE_GATE_DIALOGS presentation law, all untouched. It
+// only DECLARES that a character is speaking, which is what lets the arbiter
+// hold every commendation, autosave and objective toast until the scene ends.
+const VOICE_TAG = 'dialog-box';
 
 // How long a freshly-rendered choice row ignores mouse clicks. Long enough to
 // swallow the second half of a double-click that was aimed at the typewriter
@@ -301,6 +309,7 @@ export class DialogBox {
     // Show container
     this.container.style.display = '';
     this.active = true;
+    NotificationArbiter.hold(NC.VOICE, VOICE_TAG);
   }
 
   /**
@@ -310,6 +319,7 @@ export class DialogBox {
     if (this.container) {
       this.container.style.display = 'none';
     }
+    NotificationArbiter.release(VOICE_TAG);
     this.active = false;
     this.complete = false;
     this.choices = null;
@@ -522,6 +532,7 @@ export class DialogBox {
    * Remove all DOM elements and clean up.
    */
   destroy() {
+    NotificationArbiter.release(VOICE_TAG);
     if (this.container && this.container.parentNode) {
       this.container.parentNode.removeChild(this.container);
     }

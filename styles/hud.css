@@ -34,9 +34,15 @@
   max-width: 280px;
 }
 
+/* Legacy toast column. The arbiter's `rail-right` zone replaced it as the
+   shipping surface; the container is still built by ExplorationState._createHUD
+   so anything that queries it keeps working. `top` moved 120 -> 220 with the
+   zone: .hud-quest-tracker occupies y 16->201, and the old 120 put every single
+   toast on top of the objective panel it was describing (measured 75-93 %
+   overlap on all six audit runs). */
 .hud-toast-container {
   position: absolute;
-  top: 120px;
+  top: 220px;
   right: 16px;
   display: flex;
   flex-direction: column;
@@ -471,3 +477,151 @@
 .hud-day-chip .day-chip-hours { color: #ffd700; }
 .hud-day-chip .day-chip-escrow { color: #9fd39f; }
 .hud-day-chip .day-chip-closing { color: #f87171; }
+
+/* ══ NotificationArbiter zones ═══════════════════════════════════════════
+   src/core/NotificationArbiter.js owns every transient text surface. A ZONE is
+   a single-occupancy layout slot: exactly one card lives in it at a time and a
+   second post queues behind the first instead of appending on top of it. The
+   zone owns POSITION; the card keeps the game's existing surface class
+   (.hud-toast / .combat-message / .combat-taunt / .inner-monologue) so the
+   visual language — and every external selector — is unchanged.
+
+   Geometry is the fix for two measured collisions:
+     rail-right at top:220 clears the quest tracker (which ends at y=201).
+     rail-bottom-right replaces AchievementManager's hard-coded bottom:80/right:20
+     anchor, where nine toasts once shared one pixel rect.                    */
+
+.na-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 26;
+}
+
+.na-zone {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.na-zone-rail-right        { top: 220px; right: 16px; align-items: flex-end; }
+.na-zone-rail-bottom-right { bottom: 80px; right: 20px; align-items: flex-end; }
+.na-zone-strip-bottom-left { bottom: 16px; left: 220px; align-items: flex-start; }
+.na-zone-plate-centre      { bottom: 14%; left: 50%; transform: translateX(-50%); align-items: center; }
+.na-zone-voice-centre      { top: 40%; left: 50%; transform: translate(-50%, -50%); align-items: center; width: min(560px, 78vw); }
+.na-zone-taunt-left        { bottom: 220px; left: 60px; align-items: flex-start; }
+.na-zone-taunt-right       { top: 120px; right: 60px; align-items: flex-end; }
+
+/* The card inherits the old surface's look but not its anchor — the zone is
+   the anchor now. Without this reset a .combat-message inside a zone would
+   still be position:absolute at bottom:14% of the OVERLAY. */
+.na-card {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+  opacity: 0;
+  transition: opacity 0.26s ease, transform 0.26s ease;
+}
+
+.na-card.na-in { opacity: 1; }
+
+/* .hud-toast's own entry animation is a translateX slide; keep it, scoped. */
+.na-zone-rail-right .na-card,
+.na-zone-rail-bottom-right .na-card { transform: translateX(16px) !important; }
+.na-zone-rail-right .na-card.na-in,
+.na-zone-rail-bottom-right .na-card.na-in { transform: translateX(0) !important; }
+
+/* COMMENDATION — the achievement card. Gold, bottom-right, one at a time. */
+.na-commendation {
+  border-left-color: #ffd700;
+  border: 2px solid #ffd700;
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+  max-width: 280px;
+}
+
+/* BOOKKEEPING — "Game saved." is the machine talking about itself. It gets the
+   smallest, dimmest surface in the game and it is never co-visible with VOICE. */
+.na-bookkeeping {
+  font-size: 16px;
+  padding: 5px 10px;
+  opacity: 0;
+  color: #9aa4b2;
+  background: rgba(8, 12, 20, 0.6);
+  border-left-color: #4a5568;
+  border-width: 1px;
+  max-width: 220px;
+}
+.na-bookkeeping.na-in { opacity: 0.62; }
+
+/* Coalesced burst card: "Achievement x3" plus up to three lines. */
+.na-count {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 11px;
+  color: #ffd700;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+.na-line { line-height: 1.25; }
+.na-line + .na-line { margin-top: 3px; }
+.na-more {
+  font-size: 15px;
+  color: #8a94a2;
+  margin-top: 5px;
+}
+
+/* VOICE — the inner monologue and the speech card share the prose zone, so
+   only one of them is ever on screen. Contrast raised over the old
+   text-shadow-only treatment: `.inner-monologue` was rgba(200,180,160,0.85)
+   italic drawn straight over the brightest part of the office floor and the
+   audit called the best line in the frame the hardest one to read. */
+.na-zone-voice-centre .na-card {
+  background: rgba(6, 9, 16, 0.72);
+  border-radius: 10px;
+  padding: 14px 26px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+  color: rgba(226, 212, 194, 0.97);
+  transition: opacity 0.5s ease-in-out;
+  max-width: 100%;
+}
+
+/* A named character speaking outside a scene is not an inner thought: it gets
+   a name tag and upright text, so the monologue stays Andrew's alone. */
+.na-speech {
+  font-style: normal !important;
+  color: #f0ece4 !important;
+  border-left: 4px solid #e94560;
+  text-align: left !important;
+}
+.na-speech::before, .na-speech::after { content: none !important; }
+.na-speaker {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  color: #e94560;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 700px) {
+  .na-zone-rail-right        { top: 150px; right: 8px; }
+  .na-zone-rail-bottom-right { bottom: 150px; right: 8px; }
+  .na-zone-strip-bottom-left { left: 8px; bottom: 8px; }
+  .na-zone-voice-centre      { width: 84vw; }
+  .na-zone-taunt-left        { bottom: 190px; left: 12px; }
+  .na-zone-taunt-right       { top: 96px; right: 12px; }
+}
+
+@media (max-height: 540px) and (pointer: coarse) {
+  .na-zone-rail-right        { top: 104px; right: 8px; }
+  .na-zone-rail-bottom-right { bottom: 96px; right: 8px; }
+  .na-zone-voice-centre      { width: 70vw; }
+}
+
+/* Combat voice bubble ("Reasonable Doubt") — arbiter zone, VOICE class.
+   Position is the zone's; the card keeps .combat-voice-bubble's own look. */
+.na-zone-bubble-top { top: 130px; left: 50%; transform: translateX(-50%); align-items: center; }

@@ -1,3 +1,4 @@
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 // THE BILLABLE DAY — reception board, between-client boon shop, and 5:15 summary.
 //
 // One DOM state with three modes so the day reads as one continuous screen
@@ -57,9 +58,16 @@ export class DayState {
     this._toastTimer = null;
   }
 
-  enter() { this._render(); }
+  enter() {
+    // A modal owns the whole screen. Suspend the world scope so a queued
+    // objective / achievement / autosave card cannot float over it; it comes
+    // back the moment we pop (DEFER, DON'T DESTROY).
+    NotificationArbiter.suspendScope('world');
+    this._render();
+  }
 
   exit() {
+    NotificationArbiter.resumeScope('world');
     if (this._toastTimer) clearTimeout(this._toastTimer);
     if (this._el && this._el.parentNode) this._el.parentNode.removeChild(this._el);
     if (this._keyHandler) window.removeEventListener('keydown', this._keyHandler);
@@ -407,7 +415,11 @@ export class DayState {
     if (panel) panel.scrollTop = scrollTop;
   }
 
+  // Already single-occupancy (one reused element, timer restarted). It stays
+  // that way; the only change is that a message overwritten mid-read is now
+  // recoverable from the Log tab.
   _flash(text) {
+    NotificationArbiter.note(NC.PROGRESS, text);
     let toast = this._el.querySelector('.day-toast');
     if (!toast) {
       toast = document.createElement('div');

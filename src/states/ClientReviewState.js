@@ -1,3 +1,4 @@
+import { NotificationArbiter } from '../core/NotificationArbiter.js';
 // DOM UI state shown after defeating a reception client — accept or decline
 
 import { readDay } from '../data/billableDay.js';
@@ -14,10 +15,15 @@ export class ClientReviewState {
   }
 
   enter() {
+    // A modal owns the whole screen. Suspend the world scope so a queued
+    // objective / achievement / autosave card cannot float over it; it comes
+    // back the moment we pop (DEFER, DON'T DESTROY).
+    NotificationArbiter.suspendScope('world');
     this._render();
   }
 
   exit() {
+    NotificationArbiter.resumeScope('world');
     if (this._el && this._el.parentNode) {
       this._el.parentNode.removeChild(this._el);
     }

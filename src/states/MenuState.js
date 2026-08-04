@@ -7,6 +7,7 @@ import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE } from '../data/stats.js';
 import { ALLY_STATS, ALLY_ABILITIES } from '../data/allies.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { AchievementManager } from '../core/AchievementManager.js';
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { Player } from '../entities/Player.js';
 
 export class MenuState {
@@ -15,7 +16,7 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Achievements', 'Stats', 'Save Game', 'Controls', 'Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Log', 'Achievements', 'Stats', 'Save Game', 'Controls', 'Settings', 'Quit to Title'];
     // New Game+ unlocks after the Algorithm falls
     if (player.getFlag('algorithm_defeated')) {
       this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
@@ -26,6 +27,7 @@ export class MenuState {
     this.controlsOverlay = null;
     this.audioOverlay = null;
     this.bestiaryOverlay = null;
+    this.logOverlay = null;
     this.abilitiesOverlay = null;
     this.cosmeticsOverlay = null;
     this.statsOverlay = null;
@@ -36,6 +38,10 @@ export class MenuState {
   }
 
   enter() {
+    // A modal owns the whole screen. Suspend the world scope so a queued
+    // objective / achievement / autosave card cannot float over it; it comes
+    // back the moment we pop (DEFER, DON'T DESTROY).
+    NotificationArbiter.suspendScope('world');
     const overlay = document.getElementById('ui-overlay');
 
     // Tag definitions per menu item
@@ -44,6 +50,7 @@ export class MenuState {
       'Abilities':      { tag: '[PROFILE]',  tagColor: '#ffcc33', section: 'CHARACTER' },
       'Cosmetics':      { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
       'Journal':        { tag: '[DATABASE]', tagColor: '#53a8b6', section: null },
+      'Log':            { tag: '[INBOX]',    tagColor: '#53a8b6', section: null },
       'Achievements':   { tag: '[RECORDS]',  tagColor: '#53a8b6', section: null },
       'Stats':          { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
       'Save Game':      { tag: '[SYS]',      tagColor: '#44cc88', section: 'SETTINGS' },
@@ -115,10 +122,14 @@ export class MenuState {
         lastSection = meta.section;
       }
 
+      // Unread badge on Log. Deferral is only honest if the player can SEE
+      // that something was held — otherwise "we saved it for you" is
+      // indistinguishable from "we lost it".
+      const unread = label === 'Log' ? NotificationArbiter.getUnreadCount() : 0;
       const item = document.createElement('div');
       item.className = `menu-item${i === this.selectedIndex ? ' selected' : ''}`;
       item.innerHTML = `
-        <span class="menu-item-label">${label}</span>
+        <span class="menu-item-label">${label}${unread > 0 ? ` <span style="color:#ffd700;font-size:0.85em">(${unread})</span>` : ''}</span>
         <span class="menu-item-arrow">▶</span>
       `;
       item.addEventListener('click', () => {
@@ -149,6 +160,8 @@ export class MenuState {
   resume() { if (this.element) this.element.style.display = ''; }
 
   exit() {
+    NotificationArbiter.resumeScope('world');
+    this._closeLog();
     this._closeBestiary();
     this._closeControls();
     this._closeAudioSettings();
@@ -184,6 +197,9 @@ export class MenuState {
         break;
       case 'Journal':
         this._showBestiary();
+        break;
+      case 'Log':
+        this._showLog();
         break;
       case 'Achievements':
         this._showAchievements();
@@ -264,6 +280,8 @@ export class MenuState {
     const data = this.player.serialize();
     const success = SaveManager.save(data);
     const msg = success ? 'Game Saved!' : 'Save Failed!';
+    NotificationArbiter.note(success ? NC.BOOKKEEPING : NC.PROGRESS, msg);
+    if (this._saveFlash && this._saveFlash.parentNode) this._saveFlash.remove();
     const flash = document.createElement('div');
     flash.style.cssText = `
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -273,8 +291,10 @@ export class MenuState {
     `;
     flash.textContent = msg;
     document.getElementById('ui-overlay').appendChild(flash);
+    this._saveFlash = flash;
     setTimeout(() => {
       if (flash.parentNode) flash.parentNode.removeChild(flash);
+      if (this._saveFlash === flash) this._saveFlash = null;
     }, 1500);
   }
 
@@ -1105,6 +1125,13 @@ export class MenuState {
       return;
     }
 
+    if (this.logOverlay) {
+      if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
+        this._closeLog();
+      }
+      return;
+    }
+
     if (this.bestiaryOverlay) {
       if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
         this._closeBestiary();
@@ -1187,6 +1214,86 @@ export class MenuState {
     if (InputManager.isCancelPressed()) {
       this.stateManager.pop();
     }
+  }
+
+  // ── Message Log ────────────────────────────────────────────────────────
+  // The safety net that licenses the arbiter's aggressive deferral. Before
+  // this, a notification the game overwrote, buried or destroyed was gone
+  // PERMANENTLY — no transient surface in the game could even be dismissed
+  // early, let alone re-read. Now every post is in a 40-entry ring with the
+  // arbiter's own verdict on it, so "we held your achievement until the boss
+  // finished talking" and "we merged nine of these into one card" are both
+  // recoverable rather than lossy.
+  _showLog() {
+    if (this.logOverlay) return;
+    const entries = NotificationArbiter.getLog();
+    NotificationArbiter.markLogRead();
+
+    const CLS_COLOR = {
+      VOICE: '#e2d4c2',
+      DECISION: '#ffcc33',
+      CONSEQUENCE: '#ff8844',
+      PROGRESS: '#53a8b6',
+      COMMENDATION: '#ffd700',
+      BOOKKEEPING: '#7a8494',
+    };
+    // What the arbiter did with it, in the player's language.
+    const STATUS_LABEL = {
+      'shown': '',
+      'shown (deferred)': 'held until it was safe',
+      'deferred': 'waiting',
+      'coalesced': 'merged',
+      'dropped': 'missed',
+    };
+
+    const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const now = Date.now();
+    const ago = (t) => {
+      const s = Math.max(0, Math.round((now - t) / 1000));
+      if (s < 60) return `${s}s ago`;
+      const m = Math.round(s / 60);
+      return m < 60 ? `${m}m ago` : `${Math.round(m / 60)}h ago`;
+    };
+
+    const rows = entries.length === 0
+      ? `<div style="color:#666;font-size:17px;padding:18px 0;text-align:center">Nothing has happened yet today.</div>`
+      : entries.map(e => {
+        const color = CLS_COLOR[e.cls] || '#aaa';
+        const status = STATUS_LABEL[e.status] ?? e.status;
+        return `<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+          <span style="flex:0 0 96px;color:${color};font-size:11px;font-family:'Press Start 2P',cursive;letter-spacing:0.03em;padding-top:3px">${e.cls.slice(0, 8)}</span>
+          <span style="flex:1;color:#ddd;font-size:17px;line-height:1.25">${esc(e.text)}${e.count > 1 ? ` <span style="color:#ffd700">x${e.count}</span>` : ''}
+            ${status ? `<div style="color:#777;font-size:14px">${status}</div>` : ''}</span>
+          <span style="flex:0 0 62px;color:#555;font-size:14px;text-align:right;padding-top:3px">${ago(e.at)}</span>
+        </div>`;
+      }).join('');
+
+    this.logOverlay = document.createElement('div');
+    this.logOverlay.style.cssText = `
+      position: absolute; inset: 0; background: rgba(0,0,0,0.88);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; font-family: 'VT323', monospace; color: #fff;
+    `;
+    this.logOverlay.innerHTML = `
+      <div style="font-family:'Press Start 2P',cursive;font-size:14px;color:#e94560;margin-bottom:12px">MESSAGE LOG</div>
+      <div style="color:#aaa;font-size:16px;margin-bottom:16px">the last ${entries.length} notice${entries.length === 1 ? '' : 's'}, newest first</div>
+      <div style="min-width:520px;max-width:680px;max-height:400px;overflow-y:auto;padding:0 16px">
+        ${rows}
+      </div>
+      <div style="margin-top:16px;color:#888;font-size:15px">Enter / Esc to close</div>
+    `;
+
+    this.logOverlay.addEventListener('click', () => this._closeLog());
+    document.getElementById('ui-overlay').appendChild(this.logOverlay);
+    if (this.element) this.element.style.display = 'none';
+  }
+
+  _closeLog() {
+    if (this.logOverlay && this.logOverlay.parentNode) {
+      this.logOverlay.parentNode.removeChild(this.logOverlay);
+    }
+    this.logOverlay = null;
+    if (this.element) this.element.style.display = '';
   }
 
   _showAchievements() {

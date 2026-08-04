@@ -35,6 +35,7 @@ import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
 import { SaveManager } from '../core/SaveManager.js';
 import { AchievementManager } from '../core/AchievementManager.js';
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { DEV_MODE, MESHY_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
 import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
@@ -182,6 +183,11 @@ export class ExplorationState {
     applyReviewPurchases(this.player);
     Engine.scene.add(this.player.mesh);
     this._createHUD();
+    // The arbiter's root is page-level, NOT inside `.exploration-hud` — combat
+    // hides that element wholesale and the combat zones have to stay alive.
+    // Scope gating is what keeps world notifications off the fight screen.
+    NotificationArbiter.mount();
+    NotificationArbiter.openScope('world');
     this._loadRoom(this.player.currentRoom);
     this._updateLocationDisplay(this.player.currentRoom);
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
@@ -1414,9 +1420,15 @@ export class ExplorationState {
     });
   }
 
+  // BOOKKEEPING, explicitly. "Game saved." is the single most-fired
+  // notification in the game (every room transition, every story victory) and
+  // the audit caught it sitting on top of the post-fight dialog for 6151 ms —
+  // the game interrupting its own writing to report on its filesystem. As
+  // BOOKKEEPING it gets the smallest, dimmest surface and it is structurally
+  // incapable of being co-visible with a character's line.
   _autoSave(showToast = true) {
     SaveManager.save(this.player.serialize());
-    if (showToast) this._showToast('Game saved.', 'info');
+    if (showToast) this._showToast('Game saved.', 'info', undefined, { cls: NC.BOOKKEEPING, key: 'Saved' });
   }
 
   _handleDefeat(encounterId = null) {
@@ -3641,26 +3653,59 @@ export class ExplorationState {
     }
   }
 
-  _showToast(text, tone = 'info', duration = 2600) {
-    if (!this.toastContainer || !text) return;
-
-    const toast = document.createElement('div');
-    toast.className = `hud-toast ${tone}`;
-    toast.textContent = text;
-    this.toastContainer.appendChild(toast);
-
-    requestAnimationFrame(() => {
-      toast.classList.add('visible');
+  /**
+   * The REAL toast of the game — 61 call sites, and NONE of them changed when
+   * the arbiter landed. The body is now a post; everything the old body did by
+   * hand (a new DOM node per call at a fixed anchor, a fixed 2600 ms life, no
+   * awareness of any other surface) is the arbiter's job.
+   *
+   * `duration` is still honoured when a caller passes one explicitly, because
+   * exactly one site does (the PIP notice at 6000 ms — someone hit the
+   * too-fast-to-read problem, hand-patched the instance in front of them, and
+   * moved on). Every other site now gets a reading-time-scaled ttl instead of
+   * the 61st constant.
+   *
+   * @param {string} text
+   * @param {'info'|'objective'|'item'} tone  visual tone, unchanged
+   * @param {number} [duration]  explicit ms override
+   * @param {{cls?:string}} [opts]  force a priority class (see _classifyToast)
+   */
+  _showToast(text, tone = 'info', duration = undefined, opts = {}) {
+    if (!text) return;
+    const { cls, speaker, body } = opts.cls
+      ? { cls: opts.cls, speaker: opts.speaker || null, body: text }
+      : this._classifyToast(text, tone);
+    NotificationArbiter.post({
+      cls,
+      text: body,
+      speaker,
+      tone: cls === NC.VOICE ? undefined : tone,
+      ttl: duration,
+      key: opts.key,
     });
+  }
 
-    setTimeout(() => {
-      toast.classList.remove('visible');
-      setTimeout(() => {
-        if (toast.parentNode) {
-          toast.parentNode.removeChild(toast);
-        }
-      }, 250);
-    }, duration);
+  /**
+   * Route a toast to a priority class from its CONTENT, not from a per-site
+   * constant. Two patterns earn a promotion out of the glanceable rail:
+   *
+   *  - `Name: "..."` — a named character speaking. That is written dialogue
+   *    delivered by a character, and the audit's headline pacing failure was
+   *    exactly this: a 27-word Diane line rendered in a 2600 ms corner box at
+   *    96 ms/word, roughly three times faster than a person reads, unpausable
+   *    and unreplayable. It is a scene, not a notification.
+   *  - >= 18 words — prose by length. `_showToast`'s median call is 8 words;
+   *    everything above 18 measured as under-timed against 200 ms/word.
+   *
+   * Both become VOICE, which gets the prose surface, a reading-scaled ttl up to
+   * 9 s, and an absolute claim over bookkeeping and commendations.
+   */
+  _classifyToast(text, tone) {
+    const m = /^([A-Z][\w.'-]*(?: [A-Z][\w.'-]*)?): ["“](.+)["”]\s*$/s.exec(text.trim());
+    if (m) return { cls: NC.VOICE, speaker: m[1], body: m[2] };
+    const words = text.trim().split(/\s+/).length;
+    if (words >= 18) return { cls: NC.VOICE, speaker: null, body: text };
+    return { cls: NC.PROGRESS, speaker: null, body: text };
   }
 
   _checkUpgradeTooltip() {
@@ -3705,18 +3750,22 @@ export class ExplorationState {
     }
   }
 
+  /**
+   * Andrew's inner monologue. This used to be first-writer-LOSES: it assigned
+   * `textContent` on one reused element and restarted a flat 5 s timer, so a
+   * room thought (+1500 ms after room entry) and a STORY_THOUGHTS flag thought
+   * (+2000 ms after any flag write) routinely landed inside each other's window
+   * and the first was cut off mid-read with no transition. It also ran happily
+   * on top of the dialog box, which is how `prose-w5.png` ends up with three
+   * separate pieces of prose on screen at once.
+   *
+   * Now it is a VOICE post in the prose zone: it queues behind any live prose
+   * (including a dialog scene, which holds VOICE), it is single-occupancy, and
+   * its duration scales with how much there is to read.
+   */
   _showMonologue(text) {
-    if (!this.monologueElement || !text) return;
-    // Cancel any existing monologue timer
-    if (this._monologueTimer) clearTimeout(this._monologueTimer);
-
-    this.monologueElement.textContent = text;
-    this.monologueElement.classList.add('visible');
-
-    this._monologueTimer = setTimeout(() => {
-      this.monologueElement.classList.remove('visible');
-      this._monologueTimer = null;
-    }, 5000);
+    if (!text) return;
+    NotificationArbiter.monologue(text);
   }
 
   update(dt) {

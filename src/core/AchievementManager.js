@@ -1,3 +1,5 @@
+import { NotificationArbiter, NC } from './NotificationArbiter.js';
+
 const ACHIEVEMENT_KEY = 'trust_issues_achievements';
 
 // Achievement definitions
@@ -149,34 +151,32 @@ class AchievementManagerClass {
     return newlyUnlocked;
   }
 
+  /**
+   * COMMENDATION — the lowest-stakes, most-deferrable class in the game, and
+   * the one that used to shout loudest.
+   *
+   * THE BUG THIS REPLACES: this function hard-coded `bottom: 80px; right: 20px`
+   * with no index and no stagger, and `check()` above loops `newlyUnlocked`
+   * calling it once per item. The audit measured NINE toasts sharing one pixel
+   * rect — bottom edge y+h=820, right edge x+w=1580 for all nine, 36 mutual
+   * 100 %-overlap pairs, eight messages the player never saw. Two overlapping
+   * is already unreadable and two happens constantly in normal play.
+   *
+   * Posting through the arbiter fixes it three ways at once: single occupancy
+   * per zone (no stacking), coalescing on the shared key (a burst becomes one
+   * "Achievement x9" card that names the first three), and deferral against
+   * VOICE and DECISION so a commendation never lands on a boss's closing line.
+   * Everything merged or deferred is in the Log tab.
+   */
   _notify(achievement) {
-    const ui = document.getElementById('ui-overlay');
-    if (!ui) return;
-    const el = document.createElement('div');
-    el.style.cssText = `
-      position: absolute; bottom: 80px; right: 20px;
-      background: linear-gradient(135deg, #1a1a2e, #16213e);
-      border: 2px solid #ffd700;
-      border-radius: 8px;
-      padding: 10px 16px;
-      color: #fff;
-      font-family: 'VT323', monospace;
-      font-size: 18px;
-      z-index: 200;
-      pointer-events: none;
-      box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
-      animation: achievementSlide 0.4s ease-out;
-      max-width: 260px;
-    `;
-    el.innerHTML = `<div style="color:#ffd700;font-size:13px;font-family:'Press Start 2P',cursive;margin-bottom:4px">Achievement!</div>
-      <div>${achievement.icon} ${achievement.name}</div>
-      <div style="font-size:14px;color:#aaa">${achievement.desc}</div>`;
-    ui.appendChild(el);
-    setTimeout(() => {
-      el.style.transition = 'opacity 0.5s';
-      el.style.opacity = '0';
-      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 500);
-    }, 3000);
+    NotificationArbiter.post({
+      cls: NC.COMMENDATION,
+      key: 'Achievement',
+      text: `${achievement.icon} ${achievement.name} — ${achievement.desc}`,
+      html: `<div class="na-count">Achievement!</div>` +
+        `<div class="na-line">${achievement.icon} ${achievement.name}</div>` +
+        `<div class="na-more">${achievement.desc}</div>`,
+    });
   }
 
   reset() {
