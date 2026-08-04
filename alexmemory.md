@@ -1,3 +1,55 @@
+## [RUN G / UX + LEVEL FIX LANE (08-03) — the five seeds, measured]
+
+Two commits on `display-case`, pushed: **27aa4a5** (the five seeds + B1/B2/B3/C1)
+and **f8ac59c** (quiz leakage, misread clicks, dev presets, the handrail rake).
+`npm run check` green, exit 0, verified before each. Nothing merged to `main`.
+
+Every number below is a matched pair: the BEFORE side was served from a
+**detached git worktree at a11de92 on its own port**, so it is pristine
+shipping code, not "my code with the fix commented out". Instruments live in
+`tools/_ux-*.mjs`; artifacts in `screenshots/g-run/ux/` (8 full frames + 4
+3x crops per side, all at the shipping isometric camera).
+
+**The five producer seeds, all fixed:**
+
+| seed | before | after |
+|---|---|---|
+| Press Advantage lost on a submenu round-trip | 9 combat buttons collapse to 4; Silence stops applying | 0 lost; Silence holds |
+| Grandma's fight instant re-trigger | orphan dialog under the fight, `start_combat` fires **twice**, `stress_ball` **x2** | no orphan, one fire, one stress ball |
+| NW staircase walk-through-floor | player 1.800 m above the floor, frozen there for the whole 4.6 s arrival scene | 0.000 m |
+| the alex_it Act-2 machine | reveal has no objective anywhere; post-Act-2 objective is unsatisfiable; a read server rack shadows the story beat | 3/3 pass |
+| posters that do nothing | 3 dead poster props | 0 — decoration is now a steel-framed abstract, and `npm run check` fails if a poster has no interactable |
+
+**Also fixed, all confirmed-severe in the A1 audit:** 29 props across 12 rooms
+were walk-through because `setInteractable` overwrote furniture collision
+(Andrew's desk, five server racks, five HR cabinets, the exec grandDesk, your
+own car); `team_chat_hub` was one slot out of step with its own comments, so 48
+of 119 nodes were unreachable and the Skeptic's-chair **+5 max Coffee could
+never be collected**; the stairwell went from a 12.7 deg ramp delivering 36 % of
+its own "two storeys" claim to a real 22.8 deg / 5.04 m flight with handrails;
+Grandma stopped being a head embedded in the break-room tabletop; the F2 presets
+stopped landing in the wrong act and stopped double-spawning NPCs.
+
+**Two new build gates** so none of this can come back silently:
+`validate-data` now fails on a `motivationalPoster` with no interactable, and on
+any dialog node that pays a reward but has no path from node 0.
+
+**NEEDS YOU — nothing blocking, but you should know:**
+- The F2 **"Act 1" preset now really is Act 1** (Karen waiting in the conference
+  room). The old behaviour moved to a new **"Act 2 — Branch Chosen"** preset.
+  If you had muscle memory for the old one, it is one row down.
+- The stairwell is **2.8x longer to walk down** than it was. It is a real
+  staircase now and it costs real seconds. Worth a look in playtest: if it
+  drags, the fix is fewer, deeper terraces, not a shallower pitch.
+- The two cubicle-farm north-wall posters and one in the Hall of Records are
+  now **abstract paintings**. That is a taste call I made to stop them lying
+  about being readable — the alternative was writing three new poster gags,
+  which is your prose, not mine.
+- `board_room` `charter_plaque` (8,1) still has no prop to aim at. Left alone
+  on purpose: a dedicated lane redesigns the board-meeting gating next.
+
+---
+
 ## [MERGED TO MAIN + LIVE (08-01) — and a handoff package for codex]
 
 **Alex ruled MERGE. `main` fast-forwarded 2f239f5 -> 1bad620 and pushed** (build
