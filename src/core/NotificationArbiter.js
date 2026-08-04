@@ -97,15 +97,25 @@ const TTL = {
 //     to by 75–93 % on every single run.
 //   rail-bottom-right is a flex column with a gap, so a burst stacks instead of
 //     landing on one hard-coded `bottom:80px; right:20px` anchor.
+//
+// `fade` is how long the card takes to become invisible after it retires, and
+// it MUST match the zone's CSS transition. The arbiter waits it out before
+// promoting the next item anywhere, so a fading card and its successor are
+// never both above the visibility threshold — a fade tail is still
+// co-visibility, and the prose surface fades slowly on purpose.
 const ZONES = {
-  'rail-right':        { scope: 'world' },
-  'rail-bottom-right': { scope: 'world' },
-  'strip-bottom-left': { scope: 'world' },
-  'voice-centre':      { scope: 'world' },
-  'plate-centre':      { scope: 'combat' },
-  'bubble-top':        { scope: 'combat' },
-  'taunt-left':        { scope: 'combat' },
-  'taunt-right':       { scope: 'combat' },
+  'rail-right':        { scope: 'world',  fade: 260 },
+  'rail-bottom-right': { scope: 'world',  fade: 260 },
+  'strip-bottom-left': { scope: 'world',  fade: 260 },
+  'voice-centre':      { scope: 'world',  fade: 500 },
+  'plate-centre':      { scope: 'combat', fade: 260 },
+  // A bark is not a paragraph. The VOICE band (2400-9000) is sized for prose;
+  // left unbounded it turned a 2500 ms combat taunt into a 7300 ms one, which
+  // is clutter in a turn that lasts three seconds. These three zones keep VOICE
+  // priority and get a bark-length ttl instead.
+  'bubble-top':        { scope: 'combat', fade: 260, ttl: { min: 2000, max: 4200 } },
+  'taunt-left':        { scope: 'combat', fade: 260, ttl: { min: 1800, max: 4000 } },
+  'taunt-right':       { scope: 'combat', fade: 260, ttl: { min: 1800, max: 4000 } },
 };
 
 // Default zone per class for world-scope posts. Callers may override.
@@ -160,7 +170,7 @@ class NotificationArbiterClass {
       if (existing) {
         existing.el = el;
       } else {
-        this._zones.set(name, { el, scope: def.scope, current: null, queue: [], timer: null, shownAt: 0 });
+        this._zones.set(name, { el, scope: def.scope, fade: def.fade || FADE_MS, current: null, queue: [], timer: null, shownAt: 0 });
       }
     }
     overlay.appendChild(this.root);
@@ -186,7 +196,32 @@ class NotificationArbiterClass {
    */
   hold(cls, tag, el = null) {
     this._holds.set(tag, { cls, el });
+    // The ruling is a CO-VISIBILITY prohibition, not merely an ordering rule:
+    // "BOOKKEEPING must never be co-visible with VOICE". A commendation that
+    // was already on screen when a scene opens is the same violation as one
+    // that arrives during it — `postfight-auto6-x8.png` in the audit is
+    // exactly that frame. So a new claim EVICTS anything it outranks, back
+    // into the queue with its remaining ttl. Nothing is destroyed; it returns
+    // when the scene ends.
+    this._evictBlocked();
     return () => this.release(tag);
+  }
+
+  /**
+   * Re-queue every visible item that is now blocked. Cannot thrash: `_pump`
+   * refuses to show a blocked item, so an evicted card stays queued until its
+   * blocker actually clears.
+   */
+  _evictBlocked() {
+    for (const [, z] of this._zones) {
+      const item = z.current;
+      if (!item || !this._isBlocked(item)) continue;
+      const elapsed = Date.now() - z.shownAt;
+      item.ttl = Math.max(this._minTtl(item), item.ttl - elapsed);
+      item.deferred = true;
+      this._retire(z, 'deferred', true);
+      z.queue.unshift(item);
+    }
   }
 
   release(tag) {
@@ -256,11 +291,21 @@ class NotificationArbiterClass {
       if (z.scope !== scope || !z.current) continue;
       const item = z.current;
       const elapsed = Date.now() - z.shownAt;
-      item.ttl = Math.max(TTL[item.cls].min, item.ttl - elapsed);
+      item.ttl = Math.max(this._minTtl(item), item.ttl - elapsed);
       item.deferred = true;
-      this._retire(z, 'deferred');
+      this._retire(z, 'deferred', true);
       z.queue.unshift(item);
     }
+  }
+
+  _minTtl(item) {
+    const b = (ZONES[item.zone] && ZONES[item.zone].ttl) || TTL[item.cls] || TTL[NC.PROGRESS];
+    return b.min;
+  }
+
+  _maxTtl(item) {
+    const b = (ZONES[item.zone] && ZONES[item.zone].ttl) || TTL[item.cls] || TTL[NC.PROGRESS];
+    return b.max;
   }
 
   resumeScope(scope) {
@@ -324,7 +369,10 @@ class NotificationArbiterClass {
       zone: zoneName,
       text: o.text || '',
       html: o.html || null,
-      tone: o.tone || '',
+      // A post that names a speaker IS a speech card, whatever tone the caller
+      // thought it was passing. Keeps `speak()` and the auto-classified
+      // `_showToast` prose promotions rendering identically.
+      tone: o.speaker ? 'speech' : (o.tone || ''),
       speaker: o.speaker || null,
       key: o.key || null,
       ttl: this._ttlFor(cls, o),
@@ -402,7 +450,8 @@ class NotificationArbiterClass {
   }
 
   _ttlFor(cls, o) {
-    const bounds = TTL[cls] || TTL[NC.PROGRESS];
+    const zone = o.zone || DEFAULT_ZONE[cls];
+    const bounds = (ZONES[zone] && ZONES[zone].ttl) || TTL[cls] || TTL[NC.PROGRESS];
     if (Number.isFinite(o.ttl)) return Math.max(600, o.ttl);
     const words = wordCount(o.speaker ? `${o.speaker} ${o.text}` : o.text) || wordCount(String(o.html || '').replace(/<[^>]+>/g, ' '));
     return Math.min(bounds.max, Math.max(bounds.min, 400 + words * 200));
@@ -414,7 +463,7 @@ class NotificationArbiterClass {
       target.parts.push(incoming.speaker ? `${incoming.speaker}: ${incoming.text}` : incoming.text);
     }
     // A merged card carries more to read, so it gets more time — capped.
-    target.ttl = Math.min(TTL[target.cls].max, target.ttl + 500);
+    target.ttl = Math.min(this._maxTtl(target), target.ttl + 500);
   }
 
   // ── Pump ───────────────────────────────────────────────────────────────
@@ -452,8 +501,9 @@ class NotificationArbiterClass {
     this._arm(z, item, Math.round(item.ttl * hurry));
 
     // Showing a VOICE item can newly block other zones; showing anything can
-    // newly unblock them when it retires. Re-pump so ordering stays global.
-    if (item.cls === NC.VOICE) this._pumpAll();
+    // newly unblock them when it retires. Evict first, then re-pump, so
+    // ordering stays global.
+    if (item.cls === NC.VOICE) { this._evictBlocked(); this._pumpAll(); }
   }
 
   _arm(z, item, ms) {
@@ -462,12 +512,20 @@ class NotificationArbiterClass {
       z.timer = null;
       if (z.current === item) {
         this._retire(z, null);
-        this._pumpAll();
+        // Wait the fade out before promoting anything, anywhere. Also gives the
+        // player a beat between messages instead of a hard cut.
+        setTimeout(() => this._pumpAll(), z.fade || FADE_MS);
       }
     }, Math.max(400, ms));
   }
 
-  _retire(z, logAs) {
+  /**
+   * @param {boolean} [instant] skip the fade. Used when the card is YIELDING to
+   *   a higher claim: a 260 ms fade tail is still co-visibility, and the whole
+   *   point of the ruling is that a commendation is not on screen at all while
+   *   a character is talking. A card that simply timed out keeps its fade.
+   */
+  _retire(z, logAs, instant = false) {
     if (z.timer) { clearTimeout(z.timer); z.timer = null; }
     const item = z.current;
     z.current = null;
@@ -475,16 +533,42 @@ class NotificationArbiterClass {
     if (logAs) this._logStatus(item, logAs);
     const el = item.el;
     if (el) {
-      el.classList.remove('na-in');
-      setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, FADE_MS);
+      if (instant) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      } else {
+        el.classList.remove('na-in');
+        setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, z.fade || FADE_MS);
+      }
       item.el = null;
     }
   }
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  /**
+   * `rail-right` must clear the quest tracker, and the tracker is not a fixed
+   * height: it grows with side-quest lines and with the objective's own word
+   * count. The audit measured the OLD column (`top:120`) covering the tracker
+   * 75-93 % on every run; a static `top:220` fixes Act 1 and still clipped the
+   * Act 7 tracker by 33 %, because by then the panel reaches past y=220.
+   *
+   * So the zone is placed off the tracker's MEASURED bottom edge. This is the
+   * one place the arbiter knows a game selector, and it is deliberate: a magic
+   * constant here is a bug that comes back every time the tracker grows a line.
+   */
+  _placeRailRight(z) {
+    const tracker = document.querySelector('.hud-quest-tracker');
+    let top = 220;
+    if (tracker && tracker.offsetParent !== null) {
+      const r = tracker.getBoundingClientRect();
+      if (r.height > 2) top = Math.round(r.bottom) + 14;
+    }
+    z.el.style.top = `${top}px`;
+  }
+
   _render(z, item) {
     if (!z.el) return;
+    if (item.zone === 'rail-right') this._placeRailRight(z);
     let el = item.el;
     if (!el) {
       el = document.createElement('div');

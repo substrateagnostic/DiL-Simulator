@@ -118,8 +118,11 @@ export class CombatHUD {
 
   // enemies: [{ name, hp, maxHP }, ...]; party: [{ name, hp, maxHP, mp, maxMP, momentum, isPlayer }, ...]
   show(enemies, party, options = {}) {
-    this._closed = false;
     this.remove();
+    // AFTER remove(), never before: remove() sets the _closed latch, so
+    // clearing it first left every taunt, message, banner and FX overlay a
+    // silent no-op for the whole fight.
+    this._closed = false;
     this.canFlee = options.canFlee !== false;
 
     this.root = document.createElement('div');

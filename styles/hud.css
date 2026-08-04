@@ -586,6 +586,8 @@
   padding: 14px 26px;
   box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
   color: rgba(226, 212, 194, 0.97);
+  /* 0.5s MUST match ZONES['voice-centre'].fade in NotificationArbiter.js —
+     the arbiter waits this out before promoting the next card. */
   transition: opacity 0.5s ease-in-out;
   max-width: 100%;
 }

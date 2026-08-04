@@ -51,8 +51,12 @@ export class FloatingText {
     const screenX = (vec.x * w) + w;
     const screenY = -(vec.y * h) + h;
 
-    // Add some random offset
-    const offsetX = (Math.random() - 0.5) * 40;
-    this.spawn(text, screenX + offsetX, screenY - 20, type);
+    // Spread concurrent numbers so two hits on the same body do not print on
+    // each other. The old +/-20 px random X alone measured 88 % overlap between
+    // two same-value hits; a deterministic vertical rung per live number is
+    // what actually separates them, and it reads as a stack rather than noise.
+    const rung = this._live.length % 4;
+    const offsetX = (Math.random() - 0.5) * 40 + (rung % 2 ? 26 : -26);
+    this.spawn(text, screenX + offsetX, screenY - 20 - rung * 22, type);
   }
 }

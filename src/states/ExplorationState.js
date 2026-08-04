@@ -1472,14 +1472,21 @@ export class ExplorationState {
       'You wake up at your cubicle. Someone has printed a motivational poster and taped it to your monitor. It says HANG IN THERE.',
       'You open your eyes. The building hums. It sounds almost sympathetic.',
     ];
-    const msg = document.createElement('div');
-    msg.className = 'combat-message';
-    msg.style.zIndex = '200';
-    msg.textContent = DEATH_MESSAGES[Math.floor(Math.random() * DEATH_MESSAGES.length)];
-    document.getElementById('ui-overlay').appendChild(msg);
-    setTimeout(() => {
-      if (msg.parentNode) msg.parentNode.removeChild(msg);
-    }, 3000);
+    // THE FIFTEENTH EMITTER — the one the audit did not inventory, and the one
+    // it MISDIAGNOSED. Its §5 blames "combat-message 'You wake up at your
+    // desk...' at 100 % overlap with the exploration dialog-speaker 'Rachel'
+    // for 1574 ms, in 3 separate runs" on an orphaned CombatState setTimeout.
+    // It is not that. It is this: an EXPLORATION-side emitter that hand-built a
+    // `.combat-message` at z-index 200 straight onto #ui-overlay on a flat
+    // 3000 ms. The combat timer leak was real and is fixed; this was a second,
+    // independent cause of the same frame.
+    //
+    // It is also prose — a written wake-up line — so it goes where prose goes.
+    // If the player has already started a conversation, the conversation wins
+    // and this waits its turn instead of printing through the speaker tag.
+    NotificationArbiter.monologue(
+      DEATH_MESSAGES[Math.floor(Math.random() * DEATH_MESSAGES.length)]
+    );
 
     this._offerPIP(encounterId);
   }
