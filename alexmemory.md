@@ -1,3 +1,109 @@
+## [RUN G / FIX ROUND 2 (08-04) — UX lane + CUT lane, both judge panels answered]
+
+Two commits on `display-case`, both pushed. `npm run check` green and exit-code
+verified before each. Nothing merged to `main`.
+
+### UX lane — `d03f0cb`
+
+**One predicate closes both doors into the transition window.** `dialog-end`
+commits a fight (300 ms), a queued dialog (500 ms) or the epilogue (900 ms) and
+only *then* pushes. Exploration stays top-of-stack and `paused` stays false for
+that whole window, so the interact guard was only half the hole — one Escape
+inside it pushed `MenuState` and the fight landed **underneath** it. The judge
+measured it: `ESCAPE at +216 ms -> stack [ExplorationState, MenuState,
+CombatState]`.
+
+- Fixed with `ExplorationState._transitionArmed()`, gating both `_interact()`
+  and the pause key, and carrying the two epilogue terms the old inline guard
+  never had. The epilogue got the arming latch it was missing.
+- Defence in depth: the combat and epilogue timers defer on `menuOpen` the way
+  the dialog timer already did, and **`resume()` flushes both** — a deferral
+  with no flush would lock the interact key for the session, which is worse than
+  the bug.
+- **Measured after, judge's probe unchanged, three latencies:** +122 / +193 /
+  +303 ms all give `WEDGED=false`, stack exactly `[ExplorationState,
+  CombatState]`, no menu in the DOM.
+- **The risk this fix introduces was measured, not asserted:** one Escape still
+  opens the pause menu in plain exploration and again after the Grandma
+  post-fight dialog. Epilogue: Escape inside the 900 ms leaves
+  `[ExplorationState, EpilogueState]`, no `MenuState`.
+- Deleted the bare `showMainMenu()` inside `CombatHUD.show()`, so CLAUDE.md's
+  "exactly one caller, never bare" law is finally true (grep-verified). The
+  empty action panel that exposed during the 1.7 s enemy intro is handled in
+  CSS, not by restoring the call.
+
+### CUT lane — `7ee34e0`
+
+**The board meeting stops being radio.** 178 nodes were addressing fourteen
+empty chairs. Twelve generic suits plus a board chair now sit in the room, and
+seventeen appended `stage` nodes give the scene its blocking: Skip crosses to
+the head of the table before the prose says he is there, Andrew steps out of the
+line when the meeting is called to order, **every ally who actually contributes
+steps out to the table and back**, Skip takes the head chair on his closing
+line, and BLOCK H walks him back to Andrew. Measured: non-zero movement for
+every speaking actor, zero for all twelve suits. Cost of the bodies: **p50
++0.70 ms, p95 +1.90 ms**, in that one room.
+
+- **Eight blind posters** were mounted on south and east walls — their backs to
+  the camera — one of them a stat reward (`quest_atk_1`). All eight moved to
+  north/west walls with their interactables, and `npm run validate:data` now
+  **fails the build** on either rotation, so the law is enforceable.
+- **The executive-floor occluder** was `elevatorDoors` at (8,11), not a
+  `building_shell` column. Wall-mounted props now fade with the wall they are
+  bolted to (geometric test, 18 props across 8 rooms). `secret_ending` re-shot,
+  video replaced — Andrew is no longer behind a black box for the seated act.
+- **`the_firm_ambush` leader** walked toward the stairs the other two walked
+  away from, because `spawnAt` does nothing for a pre-placed actor. New
+  `teleportTo` verb; re-shot, all three now enter together.
+- Extras taken: `charter_challenge` finally has a Janitor body for his five
+  lines; `compliance_defeated` stops walking the Auditor out of a building he
+  is still needed in.
+
+### NEEDS YOU
+
+1. **The Board Member in seat twelve.** His tier-3 crossing (nodes 124-127, on
+   `board_member_spoke`) is still not staged, and that is deliberate — he needs
+   a cast body with a face and a name, which is your call, not a builder's. He
+   is currently a generic suit at north x:11. Say the word and it is a small
+   scene.
+2. **The board bodies are anonymous by design.** Twelve suits, varied build /
+   suit / hair, no names, `interactable: false`. If you want any of them
+   *characterised* (the grey suit with the phone at node 25 is the obvious
+   candidate), that is a casting pass.
+3. **Merge is still yours.** Nothing has gone to `main`.
+
+### THINGS THAT WOULD MISLEAD YOU IF I DIDN'T SAY THEM
+
+- **The board meeting's prose says "eleven of them occupied" plus seat twelve
+  plus two empty.** The room seats twelve of fourteen side chairs and leaves the
+  head chair for Skip, so the literal count is off by one against the narration.
+  No player will count; I chose the staging that works over the arithmetic.
+- **`round2-B-fight-intro-no-portal.png` was shot BEFORE the CSS line** that
+  hides the empty action panel, so it still shows the empty strip. It is kept
+  because it is the replacement plate for the judge's wedge screenshot — the
+  Grandma intro card with no pause panel over it. The after-CSS frame is
+  `round2-FIX2-intro-empty-hidden.png`.
+- **The epilogue Escape test is only partly through the real path.**
+  `_pendingEpilogue` was armed by `player.setFlag('algorithm_defeated', true)`
+  through the real flag-set listener, and the window was opened by the real
+  `dialog-end` event, but I did not play the two-hour ending chain to get there.
+  The stack assertion is real; the route to it was short-circuited.
+- **The occluder A/B first measured its own interference.** With the full
+  `secret_ending` flag set, entering the room pushes a DialogState and pauses
+  exploration mid-fade (wall stuck at 0.515). The published numbers are from a
+  quiet exec-floor state. Mentioning it because the first two runs looked like
+  the fix had failed and did not.
+- **The board detail take ends with Skip seated at the head**, the shipping-
+  camera take ends with him beside Andrew. Different points in the same tree,
+  not a contradiction — the two takes ran different lengths.
+- **`screenshots/` is gitignored.** Every plate, video and evidence file is on
+  disk and none of it is in the commits. If you want any of it tracked, say so.
+- **12 extra NPCs is a real cost**, even at +0.7 ms p50. It is confined to
+  `board_room` during Act 6 and clears the moment the meeting closes, but it is
+  the largest single body count in any room in the game.
+
+---
+
 ## [RUN G / CUTSCENE STAGING LANE (08-04) — the game gets a staging system, 21 scenes get bodies]
 
 One commit on `display-case`, pushed. `npm run check` green, exit 0, verified
