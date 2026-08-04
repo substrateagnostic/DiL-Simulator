@@ -9,14 +9,37 @@ import { ITEMS } from '../data/items.js';
 // Tabs: SAVES (save scum) | SKIP (act presets) | TELEPORT | FIGHT | FLAGS | CHEATS.
 // All actions operate on the live ExplorationState instance passed in.
 
+// PRESET LAW, learned the hard way:
+//   1. The LABEL must match the act `_syncActFromFlags()` actually derives.
+//      `branch_chosen` alone lifts you to act 2, so the old "Act 1" preset
+//      landed in Act 2 and there was no way to reach the real Act 1 at all.
+//   2. Every preset must leave the NPC conditions MUTUALLY EXCLUSIVE. Room
+//      entries share an id and gate on one flag/notFlag pair, so a half-set
+//      state spawns two of the same character standing inside each other.
+//      Verify with `node tools/_ux-dev.mjs` — it counts duplicate visible NPCs
+//      across all 26 rooms for every preset, and must report 0.
 export const DEV_PRESETS = [
   {
     key: 'act1',
-    label: 'Act 1 — Briefing Complete',
+    label: 'Act 1 — Briefing Complete (Karen is waiting)',
+    flags: {
+      // No `branch_chosen`: this is the REAL Act 1 — Karen live in the
+      // conference room, the roguelite tutorial ahead of you.
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
+      defeated_intern: true, briefing_complete: true,
+    },
+  },
+  {
+    key: 'act2',
+    label: 'Act 2 — Branch Chosen (finale)',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
+      retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
+      ross_post_karen: true, chad_defeated: true, defeated_chad: true,
+      grandma_defeated: true, defeated_grandma: true,
     },
   },
   {
@@ -65,7 +88,7 @@ export const DEV_PRESETS = [
       knows_server_secret: true, alex_it_act3_done: true,
       has_archive_password: true, has_archive_evidence: true,
       act3_complete: true,
-      met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
+      met_janitor: true, janitor_rallied: true, ross_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
       has_charter: true, act4_complete: true,
     },
   },
@@ -84,7 +107,7 @@ export const DEV_PRESETS = [
       knows_server_secret: true, alex_it_act3_done: true,
       has_archive_password: true, has_archive_evidence: true,
       act3_complete: true,
-      met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
+      met_janitor: true, janitor_rallied: true, ross_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
       has_charter: true, act4_complete: true,
       act5_triggered: true, janet_recruited: true,
       restructuring_trio_started: true, restructuring_trio_defeated: true,
@@ -111,7 +134,7 @@ export const DEV_PRESETS = [
       knows_server_secret: true, alex_it_act3_done: true,
       has_archive_password: true, has_archive_evidence: true,
       act3_complete: true,
-      met_janitor: true, janitor_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
+      met_janitor: true, janitor_rallied: true, ross_rallied: true, vault_accessible: true, hr_accessible: true, vault_code_1: true,
       has_charter: true, act4_complete: true,
       act5_triggered: true, janet_recruited: true,
       restructuring_trio_started: true, restructuring_trio_defeated: true,
@@ -124,6 +147,13 @@ export const DEV_PRESETS = [
       janet_rallied: true, diane_rallied: true, ross_rallied: true,
       janet_act6_rallied: true, diane_act6_rallied: true, diane_evidence: true,
       read_janitor_act3: true,
+      // `act6_ready` and `ross_speech_ready` are DERIVED in normal play and the
+      // preset skips the beats that derive them, so without them two Act-6 NPC
+      // entries stay live alongside their Act-7 replacements: the archive
+      // Janitor (`act5_complete && !act6_ready` vs `has_rolex`) and Skip in his
+      // office (`act2_complete && !ross_speech_ready` vs `board_meeting_closed
+      // && !regional_director_defeated`) each spawned twice on the same tile.
+      ross_speech_ready: true, act6_ready: true,
       has_rolex: true, act6_complete: true,
     },
   },

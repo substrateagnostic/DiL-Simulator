@@ -2,6 +2,11 @@ import { AudioManager } from '../core/AudioManager.js';
 import { TEXT_SPEED, DEV_MODE } from '../utils/constants.js';
 import { SETTINGS } from '../core/Settings.js';
 
+// How long a freshly-rendered choice row ignores mouse clicks. Long enough to
+// swallow the second half of a double-click that was aimed at the typewriter
+// skip, short enough that a deliberate click never feels dropped.
+const CHOICE_ARM_MS = 260;
+
 // Speaker name colors for visual distinction
 const SPEAKER_COLORS = {
   'Andrew':             '#5588cc',
@@ -357,6 +362,7 @@ export class DialogBox {
     this.choiceElements = [];
     this.selectedIndex = 0;
     this.choicesVisible = true;
+    this._choicesShownAt = performance.now();
 
     this.choices.forEach((choice, i) => {
       const el = document.createElement('div');
@@ -368,6 +374,13 @@ export class DialogBox {
       });
 
       el.addEventListener('click', () => {
+        // ARM DELAY. The box's own click handler skips the typewriter, which
+        // renders these buttons UNDER a stationary pointer; `mouseenter` then
+        // moves the cursor onto whichever one landed there, and a second click
+        // ~100 ms later committed a choice the player had not read. The
+        // keyboard path is already guarded (skip first, confirm second); this
+        // gives the mouse path the same beat.
+        if (performance.now() - this._choicesShownAt < CHOICE_ARM_MS) return;
         this._confirmChoice();
       });
 

@@ -2833,7 +2833,13 @@ export const Furniture = {
     const railLen = Math.sqrt(run * run + drop * drop);
     const rail = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.07, railLen), railMat);
     rail.position.set(0, RAIL_H - drop / 2, -run / 2);
-    rail.rotation.x = Math.atan2(drop, run);
+    // NEGATIVE. Rotating +theta about X sends the local -z end UP, which rakes
+    // the rail against the flight; the terraces descend toward -z, so the rail
+    // must too. (`stairFlight` further up has the same negative sign — it was
+    // the working reference.) With this sign the top end lands exactly at
+    // RAIL_H above the landing and the bottom end at RAIL_H - drop, i.e. on
+    // the nosing of the last tread.
+    rail.rotation.x = -Math.atan2(drop, run);
     rail.castShadow = true;
     group.add(rail);
 

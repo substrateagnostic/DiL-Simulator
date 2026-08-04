@@ -19,6 +19,21 @@ import { getDialogQuestGate, getQuestStage, isStageInRange } from '../utils/dial
  *   action    - Execute side effect, continue immediately
  *   end       - Close dialog
  */
+// KNOWLEDGE GATES. Persisted choice-greying plus a cursor that auto-parks on
+// the first untried option is an answer key: wrong answers dim permanently, so
+// mashing Enter brute-forces the Archive password and the Janitor's riddles in
+// a handful of visits. These dialogs opt out of BOTH behaviours — their choices
+// never render as seen and the cursor always starts at the top. Only the puzzle
+// trees are listed; the 59 hub choice nodes keep their memory, which is what
+// makes a hub read as explored. This is presentation only: no gate, flag or
+// retry path is touched.
+const KNOWLEDGE_GATE_DIALOGS = new Set([
+  'compliance_crossword',
+  'janitor_riddle_1',
+  'janitor_riddle_2',
+  'janitor_riddle_3',
+]);
+
 export class DialogState {
   /**
    * @param {Array} dialogTree - Array of dialog node objects
@@ -183,10 +198,11 @@ export class DialogState {
     // already taken (persisted per save) render greyed and the cursor
     // starts on the first unread one — EXCEPT exit-style choices (those
     // whose target node is an `end`), which stay fresh forever.
+    const isQuiz = KNOWLEDGE_GATE_DIALOGS.has(this.dialogId);
     const boxChoices = filteredChoices.map(({ choice, originalIndex }, displayIdx) => {
       const targetIdx = choice.next !== undefined ? choice.next : this.currentIndex + 1;
       const isExit = this.dialogTree[targetIdx]?.type === 'end';
-      const seen = !isExit && this.dialogId
+      const seen = !isQuiz && !isExit && this.dialogId
         && !!this.player.getFlag(`_chose_${this.dialogId}_${this.currentIndex}_${originalIndex}`);
       return { text: choice.text, id: displayIdx, seen };
     });
@@ -202,8 +218,10 @@ export class DialogState {
         return;
       }
 
-      // Remember the pick so revisits grey it out
-      if (this.dialogId) {
+      // Remember the pick so revisits grey it out — never for a knowledge gate,
+      // where the record IS the answer key (and where it also bloats the save
+      // with a `_chose_` flag per wrong guess).
+      if (this.dialogId && !isQuiz) {
         const origIdx = filteredChoices[choiceIndex].originalIndex;
         this.player.setFlag(`_chose_${this.dialogId}_${this.currentIndex}_${origIdx}`, true);
       }

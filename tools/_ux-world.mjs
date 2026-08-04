@@ -1,7 +1,6 @@
 // THROWAWAY repro/verify instrument for the UX fix lane (g-run, lane UX).
 //
 // Measures, off the LIVE shipping code path, the world-side findings:
-//   S2c  player spawn height on entering the stairwell (Player.setPosition)
 //   S2d  camera elevation tracking as the player descends
 //   S2a  stairwell slope in degrees, from the real floorZones
 //   B1   interactables that punch a walkable hole through their own furniture
@@ -33,31 +32,11 @@ try {
   await page.waitForFunction(() => window.__shotReady === true, { timeout: 45000 });
   await page.waitForTimeout(800);
 
-  // ── S2c — spawn height entering the stairwell from the Archive ──────────
-  R.s2c = await page.evaluate(async () => {
-    const ex = window.__explore;
-    const samples = [];
-    ex._changeRoom('stairwell', 1, 2);
-    const t0 = performance.now();
-    for (let i = 0; i < 34; i++) {
-      await new Promise(r => setTimeout(r, 60));
-      const tm = ex.roomManager?.currentRoom?.tileMap;
-      const p = ex.player;
-      const floorY = tm?.heightAt ? tm.heightAt(p.position.x, p.position.z) : 0;
-      samples.push({
-        t: Math.round(performance.now() - t0),
-        meshY: +p.mesh.position.y.toFixed(3),
-        floorY: +floorY.toFixed(3),
-        delta: +(p.mesh.position.y - floorY).toFixed(3),
-        paused: !!ex.paused,
-      });
-    }
-    return { samples, worst: Math.max(...samples.map(s => Math.abs(s.delta))) };
-  });
-  say(`S2c spawn-height samples: ${R.s2c.samples.map(s => `t=${s.t} d=${s.delta}`).join(' | ')}`);
-  say(`S2c WORST |meshY - floorY| on entry = ${R.s2c.worst} m`);
-  await page.waitForTimeout(1200);
-  await page.screenshot({ path: `${OUT}/s2c-stairwell-entry-${tag}.png` });
+  // S2c (spawn height on room entry) lives in tools/_ux-spawn.mjs, NOT here.
+  // It has to be sampled from the node side: an in-page setTimeout/rAF loop
+  // starves the game's own loop and reads a world that never ticked, which is
+  // the convenience-harness trap HANDOFF_PACKAGE §4.3 warns about. This file
+  // only measures things that are true of a settled frame.
 
   // ── S2a / S2d — stairwell geometry + camera elevation tracking ──────────
   // Enter the stairwell from the TOP (its own playerSpawn) and WALK DOWN with

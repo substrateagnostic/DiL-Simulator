@@ -2990,7 +2990,10 @@ export class ExplorationState {
 
     // Act 6
     if (this.player.getFlag('act5_complete')) {
-      if (this.player.getFlag('has_rolex')) return 'Enter the Penthouse — you have the Janitor\'s Rolex';
+      // (There used to be a `has_rolex` line here. It was unreachable:
+      // `has_rolex` derives `act6_complete`, and the Act-6½ block above tests
+      // `act6_complete` first, so control never arrived with the Rolex in hand.
+      // Removed rather than left as a lie about what the HUD can say.)
       const allyFlags = [
         { flag: 'janet_act6_rallied',  label: 'Janet' },
         { flag: 'diane_act6_rallied',  label: 'Diane' },
