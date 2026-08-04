@@ -109,6 +109,19 @@
   animation: none;
 }
 
+/* A completed STEP inside a still-live objective (the rules above style a whole
+   finished objective div). Deliberately reuses their exact colours so the two
+   read as one system. Emitted as an inline <span> by `_getStoryObjective()` so
+   the objective stays a plain string — change-detection and serialization in
+   `_setQuest` are untouched, and the toast's HTML strip already handles it. */
+.hud-quest-done { color: #666; text-decoration: line-through; }
+.hud-quest-done::before {
+  content: '✓ ';
+  color: #44ff44;
+  text-decoration: none;
+  display: inline-block;
+}
+
 .hud-quest-divider {
   border-top: 1px solid rgba(233, 69, 96, 0.2);
   margin: 8px 0 6px;

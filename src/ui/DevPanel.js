@@ -117,6 +117,11 @@ export const DEV_PRESETS = [
       chief_fight_started: true, chief_restructuring_defeated: true,
       corporate_lawyer_defeated: true, board_room_accessible: true,
       rachel_fight_started: true, act5_complete: true,
+      // `ross_speech_ready` is DERIVED from the ross_act6 scene, which this
+      // preset skips. Without it Skip is not staged in the Board Room, so the
+      // preset drops the player into Act 6 with no way to reach the meeting —
+      // which is now the gate on the Rolex.
+      ross_speech_ready: true,
     },
   },
   {
@@ -146,14 +151,20 @@ export const DEV_PRESETS = [
       rachel_fight_started: true, act5_complete: true,
       janet_rallied: true, diane_rallied: true, ross_rallied: true,
       janet_act6_rallied: true, diane_act6_rallied: true, diane_evidence: true,
+      intern_act6_rallied: true, grandma_ally: true, isaiah_evidence: true,
       read_janitor_act3: true,
-      // `act6_ready` and `ross_speech_ready` are DERIVED in normal play and the
-      // preset skips the beats that derive them, so without them two Act-6 NPC
-      // entries stay live alongside their Act-7 replacements: the archive
-      // Janitor (`act5_complete && !act6_ready` vs `has_rolex`) and Skip in his
+      // These are all DERIVED in normal play and the preset skips the beats
+      // that derive them, so without them two Act-6 NPC entries stay live
+      // alongside their Act-7 replacements: the archive Janitor
+      // (`act5_complete && !rolex_available` vs `has_rolex`) and Skip in his
       // office (`act2_complete && !ross_speech_ready` vs `board_meeting_closed
       // && !regional_director_defeated`) each spawned twice on the same tile.
+      // `board_meeting_held` + `board_meeting_won` are here because the Rolex
+      // is now gated on the meeting — without them this preset lands a state no
+      // real playthrough can produce (Act 7 reached, board never convened) and
+      // Skip's epilogue card would read as though he stayed in buzzwords.
       ross_speech_ready: true, act6_ready: true,
+      board_meeting_held: true, board_meeting_won: true, rolex_available: true,
       has_rolex: true, act6_complete: true,
     },
   },

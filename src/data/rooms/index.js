@@ -1246,11 +1246,15 @@ export const ROOMS = {
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_needs_ross', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act3_complete', notFlag: 'ross_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act4', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'ross_rallied', notFlag: 'janitor_rallied' } },
       { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'janitor_rallied', notFlag: 'act5_complete' } },
-      // Act 6 rally phase: he sweeps and waits — no Rolex until the team
-      // is assembled (act6_ready derives from 5 allies + 2 evidence in
-      // _refreshStoryProgress; logic-sweep MAJOR #7)
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_return', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete', notFlag: 'act6_ready' } },
-      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act6',  movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act6_ready', notFlag: 'has_rolex' } },
+      // Act 6 rally phase: he sweeps and waits — no Rolex until the BOARD HAS
+      // MET. `rolex_available` derives in _refreshStoryProgress as
+      // `act5_complete && (board_meeting_held || has_rolex)`. It replaced
+      // `act6_ready` (5 allies + 2 evidence) as the gate here because the old
+      // order let the watch delete the board-meeting set-piece unplayed, and
+      // with it the Act 6 → 7 narrative bridge. `janitor_waits_for_board` is
+      // the signpost from his side; it is repeatable and writes nothing.
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_waits_for_board', movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'act5_complete', notFlag: 'rolex_available' } },
+      { id: 'janitor', x: 5, z: 7, facing: 0, dialogId: 'janitor_act6',  movement: { type: 'pace', distance: 2, axis: 'x' }, condition: { flag: 'rolex_available', notFlag: 'has_rolex' } },
       // He does not leave when the watch does. Handing over the Rolex used to
       // delete him from the Archive — the room's occupant vanishing exactly as
       // the story peaks, and his ledger mission stranded on the garage NPC

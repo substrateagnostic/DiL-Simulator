@@ -3135,7 +3135,11 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Skip Hartley', text: "But I've been working on something. A speech. For the board." },
     /* 5  */ { type: 'text', speaker: 'Skip Hartley', text: "It's... sincere. Which is terrifying. I haven't been sincere since 2003." },
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "Skip... that might be the most human thing you've ever said." },
-    /* 7  */ { type: 'text', speaker: 'Skip Hartley', text: "Don't get used to it. Now go prepare. Rally the team. Get the Janitor's Rolex — he said it has something we need." },
+    // Skip does not name the Rolex here. He has never seen it, it is not his
+    // mission, and this is the scene that CREATES the board meeting
+    // (`ross_speech_ready`) — pointing at a wristwatch told the player to skip
+    // the set-piece the same line had just opened.
+    /* 7  */ { type: 'text', speaker: 'Skip Hartley', text: "Don't get used to it. Go find whoever still picks up their phone in this building. Board room, four o'clock sharp — I'll be the one at the podium with a speech that doesn't have a single bullet point in it." },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'ross_speech_ready', value: true, next: 9 },
     /* 9  */ { type: 'end' },
   ],
@@ -3195,17 +3199,18 @@ export const DIALOGS = {
     /* 4  */ { type: 'end' },
   ],
 
-  // `has_rolex` is a silent point of no return: it derives act6_complete, which
-  // derives board_meeting_closed, which clears every Board Room staging entry.
-  // Skip's own act-6 line points the player straight at this trigger, so the
-  // Janitor now says so first and the player can leave the watch on his wrist.
-  // The room entry (rooms/index.js, `act6_ready` && !`has_rolex`) is unchanged,
-  // so the WAIT branch simply lets the scene be re-entered — no flag is written.
+  // `has_rolex` still derives act6_complete → board_meeting_closed, but it is no
+  // longer a silent point of no return for the SET-PIECE: this scene is now
+  // gated behind `rolex_available` (= board_meeting_held), so the board meeting
+  // is already behind the player when he gets here. The warning at node 3 was
+  // re-pointed to match — it is about the elevator and unfinished side content,
+  // not about a scene the player never knew existed. The WAIT branch still
+  // writes nothing and the scene is still re-enterable.
   janitor_act6: [
-    /* 0  */ { type: 'text', speaker: 'The Janitor', text: "You came for the Rolex." },
-    /* 1  */ { type: 'text', speaker: 'The Janitor', text: "I've worn this watch since 1947. The year the charter was signed. The year this building made a promise." },
-    /* 2  */ { type: 'text', speaker: 'The Janitor', text: "The watch doesn't tell time, Andrew. It tells TRUST. And right now, it says the building is ready." },
-    /* 3  */ { type: 'text', speaker: 'The Janitor', text: "When this watch leaves my wrist, the day's done. Whatever you haven't finished downstairs stays that way." },
+    /* 0  */ { type: 'text', speaker: 'The Janitor', text: "The pipes got quiet about twenty minutes ago. That's how I know a room full of people just stopped arguing." },
+    /* 1  */ { type: 'text', speaker: 'The Janitor', text: "I've worn this watch since 1947. Year the charter was signed. Year this building looked a man in the eye and made a promise it meant to keep." },
+    /* 2  */ { type: 'text', speaker: 'The Janitor', text: "This watch doesn't tell time, Andrew. Tells trust. And right now it says the building remembers what it promised." },
+    /* 3  */ { type: 'text', speaker: 'The Janitor', text: "When this watch leaves my wrist, that elevator goes up one time. Anyone you meant to talk to down here — anything you left half-done — stays that way. You don't have to take it now." },
     /* 4  */ { type: 'choice', speaker: 'The Janitor', prompt: "The Janitor is holding out the Rolex.", choices: [
       { text: '"I\'ve done what I can down there."', next: 6 },
       { text: '"I think there\'s still something I need to do first."', next: 5 },
@@ -3217,6 +3222,40 @@ export const DIALOGS = {
     /* 9  */ { type: 'action', action: 'set_flag', flag: 'has_rolex', value: true, next: 10 },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "Received: The Janitor's Rolex. It hums faintly against your palm." },
     /* 11 */ { type: 'end' },
+  ],
+
+  // The Archive in Act 6 BEFORE the board has met (rooms/index.js:
+  // `act5_complete && !rolex_available`). This is the signpost that makes the
+  // new gate legible from the Janitor's side — he knows what is happening
+  // upstairs at four, he is not going, and nothing changes hands until it is
+  // over. Repeatable; writes no flags.
+  janitor_waits_for_board: [
+    /* 0 */ { type: 'text', speaker: 'The Janitor', text: "The fluorescents on six have been buzzing different since noon. Building knows there's a meeting at four." },
+    /* 1 */ { type: 'text', speaker: 'Andrew', text: "Shouldn't you be up there?" },
+    /* 2 */ { type: 'text', speaker: 'The Janitor', text: "Been in this building since Truman. I know which floor I'm useful on." },
+    /* 3 */ { type: 'text', speaker: 'The Janitor', text: "Come find me after. When the chairs are pushed in and the room's quiet. Then we talk about what comes next." },
+    /* 4 */ { type: 'end' },
+  ],
+
+  // Router: fires only when a hardcoded Janitor story beat AND an unanswered
+  // riddle are both live (ExplorationState._getDialogId). Mirrors
+  // `alex_it_router` node-for-node: the set_flag is picked up by the flag-set
+  // listener, which queues `_pendingDialog` so the chosen scene plays
+  // immediately on dialog-end — no second interaction.
+  //
+  // Why a router and not a choice node inside the story dialog: story beats are
+  // one-shot, riddles retry forever. Merging them would let a wrong riddle
+  // answer burn the story beat.
+  janitor_router: [
+    /* 0 */ { type: 'text', speaker: 'The Janitor', text: "Two kinds of business in a building this old. The kind with a clock on it, and the kind that was here before clocks." },
+    /* 1 */ { type: 'choice', speaker: 'The Janitor', prompt: "Which one first?", choices: [
+      { text: 'The reason I came down here.', next: 2 },
+      { text: 'Actually — tell me the riddle.', next: 4 },
+    ] },
+    /* 2 */ { type: 'action', action: 'set_flag', flag: 'janitor_story_chosen', value: true, next: 3 },
+    /* 3 */ { type: 'end' },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_chosen', value: true, next: 5 },
+    /* 5 */ { type: 'end' },
   ],
 
   grandma_act6: [
@@ -3254,7 +3293,11 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Skip Hartley', text: "Will you stay?" },
 
     // ── BLOCK A2 — THE DOOR ─────────────────────────────────────────────
-    /* 9  */ { type: 'choice', speaker: 'Skip Hartley', prompt: "Skip is asking you to stay.", choices: [
+    // The informed-consent beat. The ally/evidence prep is optional now, so an
+    // under-prepared player must be told the roster is locked before the scene
+    // commits. The "I need a minute" branch (10 → 11) writes nothing and the
+    // scene is freely re-enterable, so backing out is free.
+    /* 9  */ { type: 'choice', speaker: 'Skip Hartley', prompt: "Skip is asking you to stay. Everyone who showed up is already in the room.", choices: [
       { text: "\"I'm here. Let's do this.\"", next: 12 },
       { text: '"I need a minute."', next: 10 },
     ] },
@@ -3492,9 +3535,15 @@ export const DIALOGS = {
     /* 171 */ { type: 'text', speaker: 'Skip Hartley', text: "Whatever's deciding this, it isn't in this room. It was never in this room." },
     /* 172 */ { type: 'text', speaker: 'Andrew', text: "Then I'll go find the room it's in." },
     /* 173 */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Whatever's up there — it's not a person. Meredith was a person. This is the thing that sent Meredith.", next: 174 },
-    /* 174 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_held', value: true, next: 175 },
-    /* 175 */ { type: 'action', action: 'give_xp', xp: 300, next: 176 },
-    /* 176 */ { type: 'end' },
+    // The handoff to the Archive. `board_meeting_held` derives `rolex_available`
+    // (ExplorationState._refreshStoryProgress), so this line is the in-fiction
+    // reason the Janitor's door opens — the gate reads as authored rather than
+    // mechanical. Skip does not know what the old man has; he half-remembers a
+    // rumour and repeats it slightly wrong, which is exactly his register.
+    /* 174 */ { type: 'text', speaker: 'Skip Hartley', text: "Someone told me once — or I dreamed it, who knows — the old man down in the Archive has been in this building since before the elevators. Go see him. I think he's been waiting for someone and I think it might be you.", next: 175 },
+    /* 175 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_held', value: true, next: 176 },
+    /* 176 */ { type: 'action', action: 'give_xp', xp: 300, next: 177 },
+    /* 177 */ { type: 'end' },
   ],
 
   // ── BLOCK W — waiting-room lines. Allies staged in the Board Room before

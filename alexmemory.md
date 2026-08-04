@@ -1,3 +1,100 @@
+## [RUN G / A3 BOARD-GATING LANE (08-03) — the Rolex stops eating the board meeting]
+
+One commit on `display-case`, pushed. `npm run check` green, exit 0, verified
+separately before the commit. Nothing merged to `main`.
+
+**Your note was "jarring when the mission to meet the board disappears and is
+replaced by the rolex mission." Three separate things were causing that, and a
+fourth thing I found on the way was a progression stopper nobody had reported.**
+
+**1. The order is inverted.** New derived flag `rolex_available =
+act5_complete && (board_meeting_held || has_rolex)`. The Archive Janitor's Rolex
+scene hangs off that instead of `act6_ready` (5 allies + 2 evidence). So: Skip
+writes his speech → you convene the board → the Janitor gives you the watch →
+penthouse. Before, the watch was available first and taking it silently deleted
+a 177-node set-piece, unplayed — including BLOCK H, which is where the board
+chair says the dissolution order came from *"Above,"* Skip names the penthouse,
+and says *"this is the thing that sent Meredith."* That is the entire Act 6 →
+Act 7 bridge, and it was optional.
+
+**2. Skip was telling you to skip it.** `ross_act6` node 7 used to close with
+*"Get the Janitor's Rolex."* The scene that CREATES the board meeting was the
+scene that pointed you away from it. He now says *"Board room, four o'clock
+sharp — I'll be the one at the podium with a speech that doesn't have a single
+bullet point in it."* Nobody mentions the Rolex before the meeting. The meeting
+now ends with Skip handing you to the Archive, so the new gate reads as
+authored rather than mechanical.
+
+**3. The objective now COMPLETES instead of vanishing.** Three-stage ladder:
+prepare → **Convene the board** (primary, prep counter demoted underneath) →
+the board line CONVERTS to a struck-through green-checked completed step that
+sits above *"Get the Janitor's Rolex"* for the whole last leg. It never
+disappears. The `Optional:` footnote is deleted. `styles/hud.css` already had a
+`.completed` visual vocabulary that had never been applied anywhere in `src/`;
+this reuses its exact colours in a 6-line span rule.
+Panel stills: `screenshots/g-run/board/01`, `02`, `04`.
+
+**4. UNREPORTED, and worse than the board bug — the Janitor's riddles blocked
+the ACT 4 CRITICAL PATH.** The riddle block in `_getDialogId()` returned above
+the hardcoded-`dialogId` check, so any unanswered riddle shadowed every Janitor
+story beat — including `janitor_act4`, the only source of `vault_accessible`,
+`hr_accessible`, `vault_code_1` and `janitor_rallied`. A wrong riddle answer
+sets no done-flag and the `riddle_*_attempted` gate re-serves the same riddle
+forever, so a player who guessed riddle 1 wrong had no exit and no signpost
+(`janitor_needs_ross` was shadowed too). A live story beat now outranks the
+riddles, and when both are live a new `janitor_router` scene offers the choice —
+same pattern as Alex from IT's router, and the chosen scene plays immediately
+with no second interaction. Riddles stay reachable forever, so
+`janitor_riddle_3_done` (one of the two Architect-ending gates) is safe.
+
+**Verified by playing it**, not by reading it: `tools/_a3-board.mjs` drives the
+Act 5 → Act 7 span through the shipping call paths. 44/44 checks pass, including
+the under-prepared 0/5-ally meeting, the "I need a minute" bail-out (writes
+nothing, re-enterable), both riddle collisions, riddles after the Rolex, mobile
+at 390 px, and two legacy saves (one mid-Act-6, one already holding the Rolex —
+that one is the reason the `|| has_rolex` clause exists: without it two Janitors
+stand in the Archive). Evidence in `screenshots/g-run/board/`.
+
+**Prose** first-drafted by Opus 4.6 and wired verbatim, per the standing law.
+
+**HONEST list — things that would mislead you if I did not say them:**
+
+- **I made the board meeting MANDATORY and the ally/evidence prep OPTIONAL.**
+  That reverses the old difficulty contract (prep was the wall, the meeting was
+  skippable). A hurried player can now walk into the biggest scene in the game
+  at 0/5 allies and get the thinnest version of it. The design lane recommended
+  this and I built it; node 9's prompt now warns *"Everyone who showed up is
+  already in the room"* and the panel keeps the counter visible. **One condition
+  flips it back** if you disagree (design doc §2, Option 2). Upside: the nine
+  `requires`-gated ally contributions inside the meeting were ~78% dead weight
+  under the old wall, because the wall guaranteed seven of the nine. They are
+  real consequences of preparation now.
+- Four more producer questions were flagged and NOT guessed: should the Janitor
+  react to HOW the meeting went (I gave him a line that only knows it happened);
+  where the 500 XP belongs now that prep is optional (unchanged — still all at
+  the Rolex, plus 300 at the meeting); should Skip ever foreshadow the Rolex
+  (currently nobody does before the meeting); and whether replayers should get a
+  confirm-gate bail-out past the meeting (they do not — NG+ replays it anyway).
+- The `has_rolex` reward toast used to say *"Team assembled, evidence secured"*.
+  Under the new order that can be a lie, so it now reads *"The board has spoken.
+  The watch is yours."*
+- I deleted ONE duplicate toast (`board_meeting_held`). **The double-toast is
+  general and pre-existing** — every flagged objective change fires two stacked
+  toasts today. That fix touches every act and belongs in its own lane.
+- A player at Act 6 with an open riddle who visits the Archive *before* the
+  meeting gets the riddle, not the new "come back after the board" signpost —
+  `janitor_waits_for_board` is repeatable flavour, not a one-shot story beat, so
+  it deliberately does not trigger the router. The HUD still says convene the
+  board, so nobody is stranded. Say the word if you want the router there too.
+- `act6_ready` still derives but now gates nothing. I kept the name honest
+  rather than repurposing it to mean "meeting held".
+- The F2 Act-7 preset gained the board flags; without them it produced a state
+  no real playthrough can reach (Act 7 with the board never convened), and
+  Skip's epilogue card would have read as though he stayed in buzzwords.
+- One line is mine rather than a straight lift from the design doc's intent
+  paragraphs: the board-meeting node 9 prompt. It was drafted by Opus 4.6 like
+  the rest, but the *decision* to make it the informed-consent beat was mine.
+
 ## [RUN G / UX + LEVEL FIX LANE (08-03) — the five seeds, measured]
 
 Two commits on `display-case`, pushed: **27aa4a5** (the five seeds + B1/B2/B3/C1)

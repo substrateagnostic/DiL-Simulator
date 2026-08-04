@@ -93,11 +93,14 @@ const QUEST_OBJECTIVES = {
     3: 'Access the Board Room',
     4: 'Confront Meredith in the Board Room',
   },
+  // DEAD DATA in Act 6: no Act-6 dialog emits `quest_update`, and `_updateQuest`
+  // is the only reader. The live Act-6 HUD text is `_getStoryObjective()`.
+  // Kept in the new order for consistency, not because anything displays it.
   main_act6: {
-    0: 'Rally the team for the board meeting',
-    1: 'Gather evidence against Meredith',
-    2: 'Get Skip to prepare his speech',
-    3: 'Recruit Grandma Henderson as ally',
+    0: 'Get Skip to prepare his speech',
+    1: 'Rally the team for the board meeting',
+    2: 'Gather evidence against Meredith',
+    3: 'Convene the board',
     4: "Get the Janitor's Rolex",
   },
   main_act7: {
@@ -128,6 +131,10 @@ export class ExplorationState {
     this.nearestInteractable = null;
     this._pendingCombat = null;
     this._pendingDialog = null;
+    // Archive-Janitor router destinations. Recomputed every frame by
+    // `_getDialogId` and consumed by the `janitor_*_chosen` flag-set handlers.
+    this._janitorBeatDialog = null;
+    this._janitorRiddleDialog = null;
     this._lastPromptHTML = null;
     this._nearbyExitTarget = { x: 0, z: 0, data: null };
     this._nearbyInteractableTarget = { x: 0, z: 0, data: null };
@@ -259,6 +266,18 @@ export class ExplorationState {
           // Reset immediately so the flag can fire again next time the side router is used
           this.player.setFlag('alex_side_chosen', false);
         }
+        // Archive-Janitor router: same chain as Alex's. `_getDialogId` stashed
+        // both destinations when it decided to serve `janitor_router`; the
+        // choice node sets one of these flags, and we queue the chosen scene so
+        // it plays on `dialog-end` without a second interaction.
+        if (key === 'janitor_story_chosen' && value) {
+          if (this._janitorBeatDialog) this._pendingDialog = this._janitorBeatDialog;
+          this.player.setFlag('janitor_story_chosen', false);
+        }
+        if (key === 'janitor_riddle_chosen' && value) {
+          if (this._janitorRiddleDialog) this._pendingDialog = this._janitorRiddleDialog;
+          this.player.setFlag('janitor_riddle_chosen', false);
+        }
         if (key === 'alex_main_chosen' && value) {
           // Find the appropriate act-based dialog for Alex
           const act = this.player.actIndex || 0;
@@ -320,13 +339,14 @@ export class ExplorationState {
         if (key === 'diane_act6_rallied') {
           this._showToast("Diane rallied! Her documents are in the HR filing cabinet.", 'objective');
         }
-        // Board Meeting set-piece — optional, and easy to walk past, so it
-        // gets a toast on open and on close.
+        // Board Meeting set-piece — now the Act-6 spine (it gates the Rolex),
+        // so it gets a toast the moment Skip has a speech.
+        // NO `board_meeting_held` toast: `_refreshStoryProgress` already fires
+        // an "Objective Updated" toast carrying the new ✓ line, and
+        // `_showToast` stacks rather than replaces, so a bespoke one here
+        // double-toasted the same beat.
         if (key === 'ross_speech_ready') {
           this._showToast('Skip is waiting in the Board Room. The board sits at 4.', 'objective');
-        }
-        if (key === 'board_meeting_held') {
-          this._showToast('The board has been heard from. The decision was made upstairs.', 'objective');
         }
         if (key === 'act6_complete') {
           this._showToast('The Penthouse awaits. Face The Algorithm.', 'objective');
@@ -404,13 +424,15 @@ export class ExplorationState {
         if (key === 'regional_director_defeated') {
           this._pendingDialog = 'algorithm_combat';
         }
-        // Act 6 → 7 transition: all allies rallied + rolex = penthouse unlocks
+        // Act 6 → 7 transition: board heard + rolex = penthouse unlocks.
+        // The toast no longer claims the team is assembled — since the board
+        // meeting became the gate, the ally/evidence prep is optional and a
+        // player can reach this line at 1/5 allies.
         if (key === 'has_rolex') {
           this.player.setFlag('act6_complete', true);
-          // Reward for completing all Act 6 prep (allies + evidence + rolex)
           const levels = this.player.gainXP(500);
           this._updateMiniStats();
-          this._showToast('Team assembled, evidence secured. +500 XP', 'objective');
+          this._showToast('The board has spoken. The watch is yours. +500 XP', 'objective');
           if (levels.length > 0) AudioManager.playSfx('levelup');
         }
         if (key === 'has_charter') {
@@ -2400,12 +2422,41 @@ export class ExplorationState {
       return 'karen_intern_first';
     }
 
-    // Janitor riddles take priority over hardcoded dialogId (available act 3+, after meeting janitor AND after act3 confrontation)
-    if (id === 'janitor' && this.player.actIndex >= 3 && this.player.getFlag('met_janitor') && this.player.getFlag('read_janitor_act3')) {
-      if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) return 'janitor_riddle_1';
-      if (this.player.getFlag('janitor_riddle_1_done') && !this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) return 'janitor_riddle_2';
-      if (this.player.getFlag('janitor_riddle_2_done') && !this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) return 'janitor_riddle_3';
+    // A JANITOR STORY BEAT OUTRANKS HIS RIDDLES, AND WHEN BOTH ARE LIVE THE
+    // PLAYER PICKS. Every Archive-Janitor story beat is delivered as a
+    // hardcoded `dialogId` on a room entry (rooms/index.js), and this riddle
+    // block used to `return` above the hardcoded-dialogId check below — so any
+    // unanswered riddle shadowed every one of them. That included
+    // `janitor_act4`, the sole source of `vault_accessible`, `hr_accessible`,
+    // `vault_code_1` and `janitor_rallied`: a player who guessed riddle 1 wrong
+    // had no done-flag, no exit (the `riddle_*_attempted` gate re-serves the
+    // same riddle forever) and no signpost (`janitor_needs_ross` was shadowed
+    // too). It also blocked `janitor_act6`. Now the beat wins, and when a beat
+    // and a riddle are both on offer `janitor_router` asks which door.
+    const JANITOR_STORY_BEATS = new Set([
+      'janitor_act3', 'janitor_needs_ross', 'janitor_act4', 'janitor_act6',
+    ]);
+    const janitorBeat = (id === 'janitor' && npc.dialogId
+      && JANITOR_STORY_BEATS.has(npc.dialogId) && DIALOGS[npc.dialogId])
+      ? npc.dialogId : null;
+
+    let janitorRiddle = null;
+    if (id === 'janitor' && act >= 3
+        && this.player.getFlag('met_janitor') && this.player.getFlag('read_janitor_act3')) {
+      if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) janitorRiddle = 'janitor_riddle_1';
+      else if (!this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) janitorRiddle = 'janitor_riddle_2';
+      else if (!this.player.getFlag('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) janitorRiddle = 'janitor_riddle_3';
     }
+
+    if (janitorBeat && janitorRiddle && DIALOGS.janitor_router) {
+      // Stash both destinations for the `janitor_*_chosen` → `_pendingDialog`
+      // chain in the flag-set listener (exact `alex_it_router` precedent).
+      this._janitorBeatDialog   = janitorBeat;
+      this._janitorRiddleDialog = janitorRiddle;
+      return 'janitor_router';
+    }
+    if (janitorBeat)   return janitorBeat;    // beat wins if the router is missing
+    if (janitorRiddle) return janitorRiddle;
 
     // Janitor: skip re-running the intro after first meeting — use short return dialog instead
     if (id === 'janitor' && this.player.getFlag('met_janitor') && npc.dialogId === 'janitor_intro' && DIALOGS.janitor_return) {
@@ -3009,19 +3060,33 @@ export class ExplorationState {
       const missingEvidence = evidenceFlags.filter(e => !this.player.getFlag(e.flag));
       const rallied = allyFlags.length - missingAllies.length;
       const evidence = evidenceFlags.length - missingEvidence.length;
-      // Optional-but-unmissable nudge toward the Board Meeting set-piece.
-      // Appears the moment Skip has a speech and disappears once the meeting
-      // is held (or the player ascends). Never gates anything.
-      const boardNudge = (this.player.getFlag('ross_speech_ready') && !this.player.getFlag('board_meeting_closed'))
-        ? '<br>Optional: the board sits at 4 — Skip is waiting in the Board Room'
-        : '';
+
+      // The prep counter. It is a SUB-LINE from stage 2 onward — preparation
+      // shapes how the board meeting goes, it no longer gates anything.
+      const prepLines = [];
       if (rallied < 5 || evidence < 2) {
-        const lines = [`Prepare for the finale (${rallied}/5 allies, ${evidence}/2 evidence)`];
-        if (missingAllies.length)   lines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
-        if (missingEvidence.length) lines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
-        return lines.join('<br>') + boardNudge;
+        prepLines.push(`Prep: ${rallied}/5 allies, ${evidence}/2 evidence`);
+        if (missingAllies.length)   prepLines.push(`Rally:<br>${missingAllies.map(a => `• ${a.label}`).join('<br>')}`);
+        if (missingEvidence.length) prepLines.push(`Evidence:<br>${missingEvidence.map(e => `• ${e.label}`).join('<br>')}`);
       }
-      return 'Get the Janitor\'s Rolex' + boardNudge;
+      const prep = prepLines.length ? '<br>' + prepLines.join('<br>') : '';
+
+      // STAGE 3 — the board has been heard. The board line does NOT vanish and
+      // get replaced (the producer's "jarring swap"); it CONVERTS to a
+      // struck-through green-✓ completed step that sits above the Rolex line
+      // for the whole last leg of Act 6.
+      if (this.player.getFlag('board_meeting_held')) {
+        return '<span class="hud-quest-done">The board has been heard</span>'
+          + "<br>Get the Janitor's Rolex — he's in the Archive";
+      }
+
+      // STAGE 2 — Skip has his speech. The meeting is the PRIMARY objective.
+      if (this.player.getFlag('ross_speech_ready')) {
+        return 'Convene the board — Skip is waiting in the Board Room' + prep;
+      }
+
+      // STAGE 1 — before Skip writes the speech.
+      return 'The board votes on dissolution at 4 PM. Prepare the department.' + prep;
     }
 
     // Act 5
@@ -3177,10 +3242,12 @@ export class ExplorationState {
       this.player.setFlag('ready_for_ross', true);
     }
 
-    // Act 6: the Janitor only hands over the Rolex once the team is
-    // actually assembled — 5 allies + 2 pieces of evidence (the counter
-    // the objective panel demands). Derived flag because room NPC
-    // conditions support a single flag/notFlag pair (logic-sweep MAJOR #7).
+    // Act 6 "fully prepared" signal — 5 allies + 2 pieces of evidence. This
+    // used to be the gate on the Janitor's Rolex; it no longer gates anything.
+    // Preparation now changes the TEXTURE of the board meeting (the nine
+    // `requires`-gated ally contributions in BLOCK D of `board_meeting`), its
+    // outcome tier reach, and the epilogue cards. Kept derived and kept named
+    // honestly: `act6_ready` means "prepared", not "meeting held".
     if (
       this.player.getFlag('act5_complete') &&
       this.player.getFlag('janet_act6_rallied') &&
@@ -3193,6 +3260,28 @@ export class ExplorationState {
       !this.player.getFlag('act6_ready')
     ) {
       this.player.setFlag('act6_ready', true);
+    }
+
+    // THE ROLEX IS GATED ON THE BOARD MEETING, NOT THE OTHER WAY ROUND.
+    // Taking the Rolex derives `act6_complete`, which derives
+    // `board_meeting_closed`, which clears every Board Room staging NPC — so
+    // under the old order the watch silently deleted a 177-node set-piece the
+    // player had been told (by Skip, in `ross_act6`) to go and skip. It also
+    // deleted the Act 6 → 7 bridge: BLOCK H of `board_meeting` is where the
+    // board chair says the order came from "Above" and Skip names the
+    // penthouse. Derived flag because room NPC conditions support a single
+    // flag/notFlag pair.
+    //
+    // The `|| has_rolex` clause is LOAD-BEARING, not belt-and-braces: without
+    // it a legacy save that already holds the Rolex satisfies BOTH the
+    // `act5_complete && !rolex_available` Archive entry and the `has_rolex`
+    // one, and two Janitors stand in the Archive.
+    if (
+      this.player.getFlag('act5_complete') &&
+      (this.player.getFlag('board_meeting_held') || this.player.getFlag('has_rolex')) &&
+      !this.player.getFlag('rolex_available')
+    ) {
+      this.player.setFlag('rolex_available', true);
     }
 
     // The Board Meeting (Act 6 set-piece) closes when it has been held, or
