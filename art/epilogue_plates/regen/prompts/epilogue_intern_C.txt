@@ -1,0 +1,86 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - Image 1 is a STYLE AND RENDERING reference ONLY. Match its palette
+discipline, contrast, line quality, painterly cel-shading language, light behaviour, edge
+hardness, grain and overall illustration feel exactly, so this card reads as a member of
+the same fourteen-card set. The room, the objects, the people, the framing and everything
+in frame come from THIS description and NOT from the reference image. Do not copy the
+reference's subject, its furniture layout, its camera, or any character, face or figure
+from it.
+
+STYLE (house prefix, verbatim, non-negotiable):
+Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+composition, no text, no watermark, no logos, no captions
+
+SCENE: a dim 1990s corporate conference room at dusk, a pull-down projection screen in a metal roller casing hanging on the far wall with a small pull-ring at its bottom edge, a bare abstract bar chart of plain rectangles of differing heights lit on the screen, a boxy beige-grey 1990s projector standing on a wheeled steel AV cart with a coiled power cable running down to the floor, rows of upholstered swivel chairs, one cheap narrow tie draped over a chair back, a tall fern a dark mass in the corner, venetian blinds along the side wall throwing hard amber bars, nobody in the room
+
+COMPOSITION: THE ONE CANDIDATE WITH A BEAM, AND IT MUST BE EXACTLY CORRECT. Camera at the back of the
+room, low, behind the last row of chairs. The projector cart stands in the near LEFT
+foreground, three-quarter from behind, its lens barrel pointed forward and slightly RIGHT,
+up the room at the screen on the far wall. A faint dusty cone of light leaves that lens and
+widens away from us. THE CONE'S SILHOUETTE AND THE LIT RECTANGLE ARE THE SAME SHAPE: the
+four edges of the cone land exactly on the four edges of the bar-chart rectangle on the
+screen and nowhere else - the cone does not overshoot the screen, does not fall short of it,
+does not point past it, and does not cross the frame toward some other wall. Because the
+throw comes from the left and below, the chart on the screen is slightly keystoned, wider at
+the top. Two chair backs interrupt the bottom of the cone and cut two hard dark notches into
+the bottom edge of the projected rectangle - those notches must be present and must line up
+exactly with those two chairs. The cheap tie hangs over the nearest chair back at lower
+right, catching a little cool spill on its upper surface only. The fern is a dark mass in
+the corner. The cone is the only cool light in the picture; everything it does not touch sits
+in warm brown shadow with amber blind-bars.
+
+LIGHT-SOURCE GEOMETRY - ABSOLUTE. This is the gate this plate is judged on, before
+style, before mood, before anything else. Every light source visible in frame must be
+physically consistent with the light it is shown producing.
+ - The source FACES what it lights. Its emitting face - lens, bulb, shade opening, screen
+   surface, window aperture, open doorway - points AT the lit surface and at nothing else.
+   A source pointed away from the thing it is lighting is the single failure that must not
+   happen here.
+ - If a beam or shaft is drawn at all, its axis runs in a straight line from the emitter to
+   the CENTRE of the lit patch, and the lit patch sits exactly where that line lands. No
+   beam that misses its own image. No lit patch without a source in frame, or clearly just
+   out of frame, on the correct axis to have thrown it.
+ - The projected or thrown shape agrees with the throw angle. A source off to one side
+   throws a keystoned, trapezoidal, off-axis shape, never a perfectly square frontal one. A
+   perfectly rectangular, perfectly frontal image means the source is dead-on and centred
+   and is therefore between the camera and the surface, or behind the camera.
+ - Every cast shadow runs directly away from its own source, along that source's axis, with
+   a softness that matches the source's size. Every shadow in frame agrees with every other
+   shadow about where the light is. Blind-bar shadows agree with the window that made them.
+ - No second unexplained light. Nothing glows for compositional convenience.
+Do not draw a light source as decoration. Draw it as a cause.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, digits, dates, years, signage,
+labels, legends, axis text, name plates, titled book spines, headlines, destination
+displays, license plates or document text of any kind anywhere in the image. Any paper,
+screen, chart, newspaper, ledger, tab, plaque, label, meter face or sign in frame carries
+abstract ruled tick-marks, blank ruled lines and abstract grey column blocks only. All
+readable content is added later in-engine.
+
+ABSOLUTELY NOT A MODERN PRESENTATION OR A STOCK BUSINESS SLIDE: no slide title, no legend,
+no axis numbers, no percentages, no data labels, no logo on the slide, no gridlines with
+values, no flat-screen TV, no LED video wall, no laptop, no smartphone, no tablet, no laser
+pointer, no clicker, no cable-management styling. The chart is BARE ABSTRACT BARS ONLY - a
+row of plain rectangles of differing heights with nothing written on, above, below or
+beside them.
+ABSOLUTELY NOT A SLEEK MODERN DIGITAL PROJECTOR: the projector is a heavy boxy beige-grey
+1990s machine with a single large round glass lens barrel proud of its front face, a vented
+cooling grille, a chunky rocker switch and a thick coiled cable - not a small white plastic
+wedge, not a matte-black cinema unit, not a ceiling mount, not a pico projector.
+NO PEOPLE: no audience, no presenter, no silhouette, no face, no hands, no reflection of a
+person.
+
+BEAM GEOMETRY, the thing this candidate lives or dies on: the beam is a straight-sided
+truncated pyramid of faintly dusty light joining the lens to the lit rectangle, and nothing
+else. Do not draw a beam that sprays into open air, a beam aimed at a wall other than the
+screen, a beam whose cone is narrower or wider than the image it makes, a second beam, or a
+glow around the lens that is not on the throw axis. If the beam and the image disagree by
+any amount, the plate is wrong.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card, no lens flare, no
+added graphic vignette. Full-bleed SQUARE 1:1 composition filling the frame edge to edge.

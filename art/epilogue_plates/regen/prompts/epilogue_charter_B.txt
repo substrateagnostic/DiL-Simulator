@@ -1,0 +1,70 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - Image 1 is a STYLE AND RENDERING reference ONLY. Match its palette
+discipline, contrast, line quality, painterly cel-shading language, light behaviour, edge
+hardness, grain and overall illustration feel exactly, so this card reads as a member of
+the same fourteen-card set. The room, the objects, the people, the framing and everything
+in frame come from THIS description and NOT from the reference image. Do not copy the
+reference's subject, its furniture layout, its camera, or any character, face or figure
+from it.
+
+STYLE (house prefix, verbatim, non-negotiable):
+Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+composition, no text, no watermark, no logos, no captions
+
+SCENE: a framed 1947 trust charter hanging on the panelled wall of a bank office at dusk, yellowed document behind glass with a brass seal medallion set into the mount below it, an empty oxblood leather executive chair in the near foreground turned to face the frame, a desk edge with a cold cup of coffee, venetian blinds along the window wall with a city skyline going blue beyond them, nobody in frame
+
+COMPOSITION: Camera stands where a person would stand, at the room's centre, looking past the empty chair
+at the framed document. The chair is large and dark in the lower near foreground, back to us,
+turned squarely toward the frame - a person is not here, but the chair says one was, and says
+who was persuaded. The framed charter sits upper-right on the panelled wall, catching two hard
+amber blind-bars across its glass, with one narrow band of clean reflection where the glass
+picks up the window. The brass medallion under the document is the warmest small point in the
+picture. Beyond, the blinds are half open on a city skyline gone cold blue, and the warm/cool
+opposition between that window and the amber bars is the whole colour structure.
+
+LIGHT-SOURCE GEOMETRY - ABSOLUTE. This is the gate this plate is judged on, before
+style, before mood, before anything else. Every light source visible in frame must be
+physically consistent with the light it is shown producing.
+ - The source FACES what it lights. Its emitting face - lens, bulb, shade opening, screen
+   surface, window aperture, open doorway - points AT the lit surface and at nothing else.
+   A source pointed away from the thing it is lighting is the single failure that must not
+   happen here.
+ - If a beam or shaft is drawn at all, its axis runs in a straight line from the emitter to
+   the CENTRE of the lit patch, and the lit patch sits exactly where that line lands. No
+   beam that misses its own image. No lit patch without a source in frame, or clearly just
+   out of frame, on the correct axis to have thrown it.
+ - The projected or thrown shape agrees with the throw angle. A source off to one side
+   throws a keystoned, trapezoidal, off-axis shape, never a perfectly square frontal one. A
+   perfectly rectangular, perfectly frontal image means the source is dead-on and centred
+   and is therefore between the camera and the surface, or behind the camera.
+ - Every cast shadow runs directly away from its own source, along that source's axis, with
+   a softness that matches the source's size. Every shadow in frame agrees with every other
+   shadow about where the light is. Blind-bar shadows agree with the window that made them.
+ - No second unexplained light. Nothing glows for compositional convenience.
+Do not draw a light source as decoration. Draw it as a cause.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, digits, dates, years, signage,
+labels, legends, axis text, name plates, titled book spines, headlines, destination
+displays, license plates or document text of any kind anywhere in the image. Any paper,
+screen, chart, newspaper, ledger, tab, plaque, label, meter face or sign in frame carries
+abstract ruled tick-marks, blank ruled lines and abstract grey column blocks only. All
+readable content is added later in-engine.
+
+ABSOLUTELY NOT A CERTIFICATE-TEMPLATE OR A STOCK LEGAL STOCK PHOTO: no ornate scrollwork
+border, no calligraphic banner, no gold foil starburst sticker, no ribbon rosette in red, no
+gavel, no scales of justice, no diploma, no graduation register, no fanned stack of crisp
+white contracts, no fountain-pen-signing-a-contract hero shot, no glossy modern law-office
+sheen. This is one old working document in an old working office.
+
+THE FRAMED DOCUMENT CARRIES NO WRITING. Abstract ruled lines and grey paragraph blocks only.
+No numerals anywhere - NO year, NO date, no engraved plate under the frame, no signature line
+with a name. The seal medallion is an abstract embossed rosette. NOTHING in this picture is
+readable.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card, no lens flare, no
+added graphic vignette. Full-bleed SQUARE 1:1 composition filling the frame edge to edge.

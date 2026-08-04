@@ -1,0 +1,37 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - the attached image is a STYLE AND RENDERING reference ONLY. Match its
+palette, contrast, line quality, cel-shading language, light behaviour, grain and overall
+illustration feel exactly, so this card reads as a member of the same fourteen-card set.
+The room, the objects, the framing and everything in frame come from THIS description and
+NOT from the reference image. Do not copy the reference's subject, its furniture layout, or
+any character, face or figure from it.
+
+STYLE (verbatim, non-negotiable):
+Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+composition, no text, no watermark, no logos, no captions, a dim conference room with a projector still running, a slide of a bar chart thrown across an empty screen and across the empty chairs, one abandoned cheap tie draped over a chair back, a fern in the corner
+
+COMPOSITION: camera low and to the side near the screen, three-quarters on; the beam comes toward the camera at an angle and stripes the empty chairs with the chart's bars; the abandoned tie is draped over a chair back in the middle distance, catching the beam; the fern is silhouetted against the corner blinds.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, dates, signage, labels,
+legends, axis text, name plates, titled book spines, or document text of any kind anywhere
+in the image. Any paper, screen, chart, tab, plaque or sign in frame carries abstract ruled
+tick-marks and blank ruled lines only. All readable content is added later in-engine.
+
+ABSOLUTELY NOT A MODERN PRESENTATION OR A STOCK BUSINESS SLIDE: no slide title, no
+legend, no axis numbers, no percentages, no data labels, no logo on the slide, no
+flat-screen TV, no LED video wall, no laptop, no smartphone, no laser pointer, no
+clicker. The chart is BARE ABSTRACT BARS ONLY - a row of plain rectangles of differing
+heights with nothing written on or beside them.
+The projector is a 1990s cart-mounted or ceiling lamp projector throwing a visible dusty
+light cone through the dark air. NO PEOPLE: no audience, no presenter, no silhouette in
+the beam, no face, no hands.
+The projector beam is the only cool light in the picture; everything it does not touch
+sits in warm brown shadow.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card. Full-bleed SQUARE
+1:1 composition filling the frame edge to edge.

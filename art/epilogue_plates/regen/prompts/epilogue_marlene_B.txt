@@ -1,0 +1,78 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - Image 1 is a STYLE AND RENDERING reference ONLY. Match its palette
+discipline, contrast, line quality, painterly cel-shading language, light behaviour, edge
+hardness, grain and overall illustration feel exactly, so this card reads as a member of
+the same fourteen-card set. The room, the objects, the people, the framing and everything
+in frame come from THIS description and NOT from the reference image. Do not copy the
+reference's subject, its furniture layout, its camera, or any character, face or figure
+from it.
+
+STYLE (house register with COLOUR LATITUDE applied - this card is set OUTSIDE the bank):
+Painterly cel-shaded illustration in exactly the rendering language of the attached style
+reference: the same brush economy, the same hard-edged cel shadow shapes, the same soft
+grain, the same cinematic quiet, the same square composition, no text, no watermark, no
+logos, no captions.
+The PALETTE, and only the palette, opens up. This plate is allowed fuller, more saturated
+local colour than the bank interiors because it is not in the bank. Keep the set's value
+discipline exactly: a deep shadow floor, one narrow band of true highlight, and most of the
+picture living in the middle values; keep the warm-versus-cool opposition doing the work.
+The colour is RICHER, not brighter, not flatter, and never poster-flat or candy. Nothing
+here should read as a different illustrator.
+
+SCENE: an ordinary American city street at ten past five in the evening, a boxy white-and-blue late-1980s transit bus pulled in at a kerbside stop with its nose stopped exactly level with the stop pole, a plain metal stop pole and blank flag sign, the sky a warm band low down going deep blue-teal above, sodium street lamps just coming on, wet-ish asphalt holding reflections, low buildings behind, the bus's big flat side mirror dominating the frame, nobody visible
+
+COMPOSITION: THE MIRROR. The bus's side mirror on its bracket owns the near right two thirds of the picture,
+seen almost square-on, and what it reflects is the long empty street behind the bus - empty kerb,
+empty sidewalk, a receding row of sodium lamps, nobody. The reflection's perspective must be
+geometrically correct for the mirror's angle and must NOT contain the driver, a face, or the
+camera. Past the mirror at frame left, the flank of the bus runs away in cool shade with the stop
+pole beside its nose, and the warm sky band sits low on the horizon between them. Light comes from
+that horizon band at frame left: it rims the mirror housing, the bracket and the top edge of the
+bus flank on their left-facing surfaces only, and every shadow in frame - pole, bracket, kerb -
+runs to the right on that same axis. Colour latitude in use: sodium orange, teal dusk, deep
+blue-violet asphalt shadow with warm reflections in it.
+
+LIGHT-SOURCE GEOMETRY - ABSOLUTE. This is the gate this plate is judged on, before
+style, before mood, before anything else. Every light source visible in frame must be
+physically consistent with the light it is shown producing.
+ - The source FACES what it lights. Its emitting face - lens, bulb, shade opening, screen
+   surface, window aperture, open doorway - points AT the lit surface and at nothing else.
+   A source pointed away from the thing it is lighting is the single failure that must not
+   happen here.
+ - If a beam or shaft is drawn at all, its axis runs in a straight line from the emitter to
+   the CENTRE of the lit patch, and the lit patch sits exactly where that line lands. No
+   beam that misses its own image. No lit patch without a source in frame, or clearly just
+   out of frame, on the correct axis to have thrown it.
+ - The projected or thrown shape agrees with the throw angle. A source off to one side
+   throws a keystoned, trapezoidal, off-axis shape, never a perfectly square frontal one. A
+   perfectly rectangular, perfectly frontal image means the source is dead-on and centred
+   and is therefore between the camera and the surface, or behind the camera.
+ - Every cast shadow runs directly away from its own source, along that source's axis, with
+   a softness that matches the source's size. Every shadow in frame agrees with every other
+   shadow about where the light is. Blind-bar shadows agree with the window that made them.
+ - No second unexplained light. Nothing glows for compositional convenience.
+Do not draw a light source as decoration. Draw it as a cause.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, digits, dates, years, signage,
+labels, legends, axis text, name plates, titled book spines, headlines, destination
+displays, license plates or document text of any kind anywhere in the image. Any paper,
+screen, chart, newspaper, ledger, tab, plaque, label, meter face or sign in frame carries
+abstract ruled tick-marks, blank ruled lines and abstract grey column blocks only. All
+readable content is added later in-engine.
+
+ABSOLUTELY NOT A MODERN TRANSIT BRAND SHOT AND NOT A NOSTALGIA POSTCARD: no bus livery
+graphics, no route branding, no advertising wrap, no readable destination roll, no
+motion-blur speed streaks, no rain-slick neon noir, no vintage 1950s bus, no yellow school
+bus, no double-decker. This is an ordinary boxy late-1980s American city transit bus in
+plain white and blue, at an ordinary stop, exactly on time.
+
+NO PEOPLE AT ALL in this candidate - no driver, no passenger, no pedestrian, no silhouette, no
+face in the mirror, no reflection of a camera or photographer. NO READABLE ANYTHING: destination
+display blank amber, route panel blank, stop flag blank, no license plate characters, no shop
+signs.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card, no lens flare, no
+added graphic vignette. Full-bleed SQUARE 1:1 composition filling the frame edge to edge.

@@ -1,0 +1,92 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - two images are attached, with different jobs.
+Image 1 is the STYLE AND RENDERING reference ONLY. Match its palette discipline, contrast,
+line quality, painterly cel-shading language, light behaviour, edge hardness, grain and
+overall illustration feel exactly, so this card reads as a member of the same fourteen-card
+set. Take NOTHING else from it - not its subject, not its furniture layout, not its camera,
+not any figure in it.
+Image 2 is the IDENTITY reference ONLY, for Delia Okafor - a Black woman in her seventies, silver-grey locs gathered back, warm deep brown skin, reading glasses on a beaded chain, a plum cardigan over a cream blouse, a face that has outlasted every deadline that ever mattered. Take face, build, hair, skin tone and
+signature wardrobe from it so the same person is recognisable. Take NOTHING else from it -
+not its framing, not its background, not its lighting, not its palette, not its pose.
+The scene, the camera, the objects and the light all come from THIS description.
+
+STYLE (house register with COLOUR LATITUDE applied - this card is set OUTSIDE the bank):
+Painterly cel-shaded illustration in exactly the rendering language of the attached style
+reference: the same brush economy, the same hard-edged cel shadow shapes, the same soft
+grain, the same cinematic quiet, the same square composition, no text, no watermark, no
+logos, no captions.
+The PALETTE, and only the palette, opens up. This plate is allowed fuller, more saturated
+local colour than the bank interiors because it is not in the bank. Keep the set's value
+discipline exactly: a deep shadow floor, one narrow band of true highlight, and most of the
+picture living in the middle values; keep the warm-versus-cool opposition doing the work.
+The colour is RICHER, not brighter, not flatter, and never poster-flat or candy. Nothing
+here should read as a different illustrator.
+
+SCENE: a small old American diner on a city corner late in the afternoon, red vinyl banquette booths with chrome edging, buttercream tile wall, a framed newspaper page hung on that wall inside a plain black frame, an unfaded pale rectangle around it on the tile and four old screw holes where a long interest-rate display board used to be bolted, a patty melt and fries on a chipped white plate, a heavy diner coffee mug, daylight coming in through a big plate-glass storefront window with green street trees outside, Delia Okafor settled in the booth beneath the framed page
+
+COMPOSITION: Camera across the table from her at seated height, slightly low. She sits three-quarters to
+us in booth four, one hand around the coffee mug, the plate in front of her, entirely at home -
+unhurried and privately amused, the face of someone letting a kindness happen to her. The framed
+newspaper hangs on the tile directly behind and above her shoulder, with its unfaded ghost
+rectangle and old screw holes clearly visible around it. THE LOW LATE SUN THROUGH THE STOREFRONT
+AT FRAME LEFT IS THE ONLY SOURCE and it comes in almost level: it cuts one hard bright wedge
+across the table, the plate rim, the mug and the left side of her face and hair, and everything
+outside that wedge - the right of her face, the banquette back, the tile above the frame, the
+ceiling and the far end of the room - falls away into deep warm brown shade. Her silver locs take
+the brightest rim in the picture.
+
+LIGHT-SOURCE GEOMETRY - ABSOLUTE. This is the gate this plate is judged on, before
+style, before mood, before anything else. Every light source visible in frame must be
+physically consistent with the light it is shown producing.
+ - The source FACES what it lights. Its emitting face - lens, bulb, shade opening, screen
+   surface, window aperture, open doorway - points AT the lit surface and at nothing else.
+   A source pointed away from the thing it is lighting is the single failure that must not
+   happen here.
+ - If a beam or shaft is drawn at all, its axis runs in a straight line from the emitter to
+   the CENTRE of the lit patch, and the lit patch sits exactly where that line lands. No
+   beam that misses its own image. No lit patch without a source in frame, or clearly just
+   out of frame, on the correct axis to have thrown it.
+ - The projected or thrown shape agrees with the throw angle. A source off to one side
+   throws a keystoned, trapezoidal, off-axis shape, never a perfectly square frontal one. A
+   perfectly rectangular, perfectly frontal image means the source is dead-on and centred
+   and is therefore between the camera and the surface, or behind the camera.
+ - Every cast shadow runs directly away from its own source, along that source's axis, with
+   a softness that matches the source's size. Every shadow in frame agrees with every other
+   shadow about where the light is. Blind-bar shadows agree with the window that made them.
+ - No second unexplained light. Nothing glows for compositional convenience.
+Do not draw a light source as decoration. Draw it as a cause.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, digits, dates, years, signage,
+labels, legends, axis text, name plates, titled book spines, headlines, destination
+displays, license plates or document text of any kind anywhere in the image. Any paper,
+screen, chart, newspaper, ledger, tab, plaque, label, meter face or sign in frame carries
+abstract ruled tick-marks, blank ruled lines and abstract grey column blocks only. All
+readable content is added later in-engine.
+
+ABSOLUTELY NOT A GLOSSY MODERN CAFE OR A FOOD-PHOTOGRAPHY SHOT: no marble counter, no
+exposed Edison bulbs, no reclaimed wood, no chalkboard menu, no latte art, no top-down
+flat-lay camera, no styled prop napkin, no shallow-depth macro of the food, no barista, no
+laptop on the table. This is an old American diner that has been the same since the eighties,
+and the food is a plain patty melt with fries on a chipped white plate.
+
+VALUE DISCIPLINE, this candidate's whole reason to exist: this plate must sit at the SAME
+overall key as the rest of the fourteen-card set - a deep shadow floor, most of the picture
+living in the middle values, and only a narrow band of true highlight where the sun actually
+lands. It is late afternoon, not noon: the sun is LOW and comes in almost horizontally
+through the storefront glass, so it rakes across surfaces in hard-edged shapes and leaves
+large areas of the diner in warm brown shade. The ceiling, the upper wall and the far end of
+the room are genuinely dark. Do NOT light this scene flatly, do NOT fill the shadows, do NOT
+render an evenly bright daytime interior, and do NOT let the walls or the tile go pale.
+Colour is still rich - red vinyl, buttercream tile, chrome, green leaves outside - but it is
+rich IN SHADOW, lit by one low warm source, the way the rest of the set is lit.
+
+THE FRAMED NEWSPAPER CARRIES NO READABLE ANYTHING. Abstract grey column blocks, a darker abstract
+mass where a photograph would be, and a half-completed crossword grid with loose blue-black pen
+strokes in some squares - strokes, not letters. NO YEAR, NO DATE, NO HEADLINE, NO NUMERALS
+anywhere in frame.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card, no lens flare, no
+added graphic vignette. Full-bleed SQUARE 1:1 composition filling the frame edge to edge.

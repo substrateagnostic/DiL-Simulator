@@ -1,0 +1,80 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - Image 1 is a STYLE AND RENDERING reference ONLY. Match its palette
+discipline, contrast, line quality, painterly cel-shading language, light behaviour, edge
+hardness, grain and overall illustration feel exactly, so this card reads as a member of
+the same fourteen-card set. The room, the objects, the people, the framing and everything
+in frame come from THIS description and NOT from the reference image. Do not copy the
+reference's subject, its furniture layout, its camera, or any character, face or figure
+from it.
+
+STYLE (house prefix, verbatim, non-negotiable):
+Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+composition, no text, no watermark, no logos, no captions
+
+SCENE: a dim 1990s corporate conference room at dusk, a pull-down projection screen in a metal roller casing hanging on the far wall with a small pull-ring at its bottom edge, a bare abstract bar chart of plain rectangles of differing heights lit on the screen, a boxy beige-grey 1990s projector standing on a wheeled steel AV cart with a coiled power cable running down to the floor, rows of upholstered swivel chairs, one cheap narrow tie draped over a chair back, a tall fern a dark mass in the corner, venetian blinds along the side wall throwing hard amber bars, nobody in the room
+
+COMPOSITION: THE THROW IS ON-AXIS AND THERE IS NO VISIBLE BEAM. Camera stands directly behind the
+projector cart at chest height, looking straight down the throw line at the screen on the
+far wall. The projector is in the near foreground, dead centre-left, seen from BEHIND - we
+see its back panel, its vents and its cable, and its lens is pointed directly away from us
+at the screen, so no lens is visible to us at all. Because we are standing on the throw
+axis, the bar chart on the screen reads as a clean square-on rectangle. THE AIR IS
+COMPLETELY CLEAR: no dust, no haze, no smoke, no visible cone, no light shaft, no god-rays
+anywhere in this picture. The only evidence of the projector is the correctly-placed
+rectangle of pale light on the screen and the pale wash it throws on the chair backs
+directly between it and the wall. The cheap tie hangs over the nearest chair back in the
+lower right foreground. The fern is a dark mass in the far corner. Amber blind-bars cross
+the side wall and the carpet and stop where the pale projected wash begins.
+
+LIGHT-SOURCE GEOMETRY - ABSOLUTE. This is the gate this plate is judged on, before
+style, before mood, before anything else. Every light source visible in frame must be
+physically consistent with the light it is shown producing.
+ - The source FACES what it lights. Its emitting face - lens, bulb, shade opening, screen
+   surface, window aperture, open doorway - points AT the lit surface and at nothing else.
+   A source pointed away from the thing it is lighting is the single failure that must not
+   happen here.
+ - If a beam or shaft is drawn at all, its axis runs in a straight line from the emitter to
+   the CENTRE of the lit patch, and the lit patch sits exactly where that line lands. No
+   beam that misses its own image. No lit patch without a source in frame, or clearly just
+   out of frame, on the correct axis to have thrown it.
+ - The projected or thrown shape agrees with the throw angle. A source off to one side
+   throws a keystoned, trapezoidal, off-axis shape, never a perfectly square frontal one. A
+   perfectly rectangular, perfectly frontal image means the source is dead-on and centred
+   and is therefore between the camera and the surface, or behind the camera.
+ - Every cast shadow runs directly away from its own source, along that source's axis, with
+   a softness that matches the source's size. Every shadow in frame agrees with every other
+   shadow about where the light is. Blind-bar shadows agree with the window that made them.
+ - No second unexplained light. Nothing glows for compositional convenience.
+Do not draw a light source as decoration. Draw it as a cause.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, digits, dates, years, signage,
+labels, legends, axis text, name plates, titled book spines, headlines, destination
+displays, license plates or document text of any kind anywhere in the image. Any paper,
+screen, chart, newspaper, ledger, tab, plaque, label, meter face or sign in frame carries
+abstract ruled tick-marks, blank ruled lines and abstract grey column blocks only. All
+readable content is added later in-engine.
+
+ABSOLUTELY NOT A MODERN PRESENTATION OR A STOCK BUSINESS SLIDE: no slide title, no legend,
+no axis numbers, no percentages, no data labels, no logo on the slide, no gridlines with
+values, no flat-screen TV, no LED video wall, no laptop, no smartphone, no tablet, no laser
+pointer, no clicker, no cable-management styling. The chart is BARE ABSTRACT BARS ONLY - a
+row of plain rectangles of differing heights with nothing written on, above, below or
+beside them.
+ABSOLUTELY NOT A SLEEK MODERN DIGITAL PROJECTOR: the projector is a heavy boxy beige-grey
+1990s machine with a single large round glass lens barrel proud of its front face, a vented
+cooling grille, a chunky rocker switch and a thick coiled cable - not a small white plastic
+wedge, not a matte-black cinema unit, not a ceiling mount, not a pico projector.
+NO PEOPLE: no audience, no presenter, no silhouette, no face, no hands, no reflection of a
+person.
+
+BEAM PROHIBITION, for this candidate specifically: there is NO visible beam, NO cone of
+light in the air, NO dusty shaft, NO volumetric haze. A correctly-lit screen with clear air
+is the whole point of this version. If you are tempted to add atmosphere, do not.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card, no lens flare, no
+added graphic vignette. Full-bleed SQUARE 1:1 composition filling the frame edge to edge.

@@ -1,0 +1,86 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - two images are attached, with different jobs.
+Image 1 is the STYLE AND RENDERING reference ONLY. Match its palette discipline, contrast,
+line quality, painterly cel-shading language, light behaviour, edge hardness, grain and
+overall illustration feel exactly, so this card reads as a member of the same fourteen-card
+set. Take NOTHING else from it - not its subject, not its furniture layout, not its camera,
+not any figure in it.
+Image 2 is the IDENTITY reference ONLY, for the five members of the trust department, whose faces, builds, hair and wardrobe you should carry over. Take face, build, hair, skin tone and
+signature wardrobe from it so the same person is recognisable. Take NOTHING else from it -
+not its framing, not its background, not its lighting, not its palette, not its pose.
+The scene, the camera, the objects and the light all come from THIS description.
+
+STYLE (house prefix, verbatim, non-negotiable):
+Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+composition, no text, no watermark, no logos, no captions
+
+SCENE: a small worn 1990s bank break room at ten to five, a round laminate table with mismatched chairs, a glass coffee pot half full on a warmer, a stack of paper cups, a corkboard, a battered fridge, venetian blinds along one wall with the low amber sun coming through them, five colleagues standing loosely around the table with mugs
+
+COMPOSITION: Camera at standing height at the room's doorway, a little back, so we are arriving rather than
+posing them. The five stand in a loose irregular ring around the table - not a line, not facing
+us. Two are mid-sentence to each other, one is laughing at something already finished, one is
+pouring, one is just listening with both hands round a mug. Nobody looks at the camera. The low
+sun through the venetian blinds at frame right is the only source: it lays hard amber bars across
+the far wall, across two of the five, and across the tabletop, and it leaves the two nearest the
+camera in warm shadow with only a rim on their shoulders. Every bar on every surface stays
+parallel and stays on the same axis as the blind that made it, bending correctly over a shoulder
+or a mug where it crosses one. The coffee pot on its warmer takes the brightest small highlight in
+the frame.
+
+THE FIVE, described so they are individually recognisable at a glance:
+ - JANET, a white woman about forty-five, slim with a slight tired slump, narrow jaw, dark hair in
+   a loose bun, a mauve cardigan, a deadpan level brow and the driest face in the room.
+ - DIANE, a composed Black woman about fifty, upright and unhurried, deep warm brown skin, dark
+   hair in a neat bun, a navy blazer, warm deep-brown eyes.
+ - ALEX FROM IT, a rumpled man in his late thirties, an orange Hawaiian shirt worn open over a
+   brown plaid shirt, ash-blond hair with grey flecks, a full trimmed taupe grey-brown beard,
+   friendly.
+ - ISAIAH, a Hispanic man about forty, warm medium-tan skin, near-black short hair, glasses, a
+   blue button-down, calm and level and unhurried.
+ - THE JANITOR, a Black elder about seventy, tall with a dignified slight lean, deep warm brown
+   skin, white hair and a white beard, a slate-blue work jumpsuit, a griot's calm.
+
+LIGHT-SOURCE GEOMETRY - ABSOLUTE. This is the gate this plate is judged on, before
+style, before mood, before anything else. Every light source visible in frame must be
+physically consistent with the light it is shown producing.
+ - The source FACES what it lights. Its emitting face - lens, bulb, shade opening, screen
+   surface, window aperture, open doorway - points AT the lit surface and at nothing else.
+   A source pointed away from the thing it is lighting is the single failure that must not
+   happen here.
+ - If a beam or shaft is drawn at all, its axis runs in a straight line from the emitter to
+   the CENTRE of the lit patch, and the lit patch sits exactly where that line lands. No
+   beam that misses its own image. No lit patch without a source in frame, or clearly just
+   out of frame, on the correct axis to have thrown it.
+ - The projected or thrown shape agrees with the throw angle. A source off to one side
+   throws a keystoned, trapezoidal, off-axis shape, never a perfectly square frontal one. A
+   perfectly rectangular, perfectly frontal image means the source is dead-on and centred
+   and is therefore between the camera and the surface, or behind the camera.
+ - Every cast shadow runs directly away from its own source, along that source's axis, with
+   a softness that matches the source's size. Every shadow in frame agrees with every other
+   shadow about where the light is. Blind-bar shadows agree with the window that made them.
+ - No second unexplained light. Nothing glows for compositional convenience.
+Do not draw a light source as decoration. Draw it as a cause.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, digits, dates, years, signage,
+labels, legends, axis text, name plates, titled book spines, headlines, destination
+displays, license plates or document text of any kind anywhere in the image. Any paper,
+screen, chart, newspaper, ledger, tab, plaque, label, meter face or sign in frame carries
+abstract ruled tick-marks, blank ruled lines and abstract grey column blocks only. All
+readable content is added later in-engine.
+
+ABSOLUTELY NOT A CORPORATE STOCK TEAM PHOTO: no group facing camera, no thumbs up, no
+high-five, no champagne, no confetti, no clapping, no arms round shoulders in a row, no
+posed smiling lineup, no modern open-plan startup kitchen, no glass wall, no branded mugs,
+no motivational poster, no plant styling. This is five tired people who like each other,
+standing round a bad table at the end of a Wednesday.
+
+NO READABLE ANYTHING: the corkboard carries blank and abstractly ruled paper only, no notices, no
+memo text, no calendar numerals, no mug slogans, no fridge magnets with letters.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card, no lens flare, no
+added graphic vignette. Full-bleed SQUARE 1:1 composition filling the frame edge to edge.

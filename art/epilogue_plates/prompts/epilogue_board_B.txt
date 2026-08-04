@@ -1,0 +1,39 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - the attached image is a STYLE AND RENDERING reference ONLY. Match its
+palette, contrast, line quality, cel-shading language, light behaviour, grain and overall
+illustration feel exactly, so this card reads as a member of the same fourteen-card set.
+The room, the objects, the framing and everything in frame come from THIS description and
+NOT from the reference image. Do not copy the reference's subject, its furniture layout, or
+any character, face or figure from it.
+
+STYLE (verbatim, non-negotiable):
+Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+composition, no text, no watermark, no logos, no captions, a long mahogany board table seen close and low from one place setting, a squared stack of ring binders with plain colour index tabs and one folded sheet of notes set precisely against the table edge, a water carafe and a single filled glass beside them, an empty chair drawn in at that same side, and further down the table two pairs of resting hands with everything above the cuffs cut off by the top edge of the frame
+
+COMPOSITION: the same table and the same place setting with NOBODY present at all - no hands anywhere in frame; camera low and close on the squared binder stack, the folded sheet and the carafe against the table edge, the empty drawn-in chair beside them, the far end of the table and the ring of unoccupied chairs falling into deep shadow; a single blade of amber blind-light lies across the binder spines.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, dates, signage, labels,
+legends, axis text, name plates, titled book spines, or document text of any kind anywhere
+in the image. Any paper, screen, chart, tab, plaque or sign in frame carries abstract ruled
+tick-marks and blank ruled lines only. All readable content is added later in-engine.
+
+ABSOLUTELY NOT A MODERN GLASS BOARDROOM AND NOT A STOCK-PHOTO BUSINESS MEETING:
+no glass partitions, no laptops, no smartphones, no tablets, no flat-screen display,
+no projector screen, no whiteboard, no handshake, no applause, no pointing, no
+celebration, no confetti, no daylight, no white walls, no modern mesh chairs.
+NO FACES AND NO FULL FIGURES: the frame's top edge must cut across the far side of the
+table at forearm height so that no head, face, shoulder or torso enters the picture -
+this must be literally true of the composition, not implied. The two pairs of hands are
+still and resting flat or loosely folded on the mahogany, one pair further away than
+the other, shirt cuffs and one plain watch visible, no gesture and no drama.
+The binder tabs are plain blank colour tabs with nothing written on them, and the
+folded sheet of notes shows abstract ruled marks only.
+The stack is squared, edges aligned to the table edge - the preparation is the subject.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card. Full-bleed SQUARE
+1:1 composition filling the frame edge to edge.

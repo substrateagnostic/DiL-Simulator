@@ -1,0 +1,70 @@
+Generate ONE image using the image generation tool, from the description below.
+Do not attempt to save, copy or move the resulting file.
+
+REFERENCE USE - Image 1 is a STYLE AND RENDERING reference ONLY. Match its palette
+discipline, contrast, line quality, painterly cel-shading language, light behaviour, edge
+hardness, grain and overall illustration feel exactly, so this card reads as a member of
+the same fourteen-card set. The room, the objects, the people, the framing and everything
+in frame come from THIS description and NOT from the reference image. Do not copy the
+reference's subject, its furniture layout, its camera, or any character, face or figure
+from it.
+
+STYLE (house prefix, verbatim, non-negotiable):
+Painterly cel-shaded illustration of a 1990s American bank office interior at dusk, warm
+amber light through venetian blinds cutting hard diagonal bars across the scene, muted
+desaturated palette of brown, olive and deep shadow, soft grain, cinematic quiet, square
+composition, no text, no watermark, no logos, no captions
+
+SCENE: a small worn 1990s bank break room at ten to five, a round laminate table with mismatched chairs, a glass coffee pot half full on a warmer, a stack of paper cups, a corkboard, a battered fridge, venetian blinds along one wall with the low amber sun coming through them, five mismatched mugs set down mid-conversation on the table, five chairs pushed out at five different angles, nobody in frame
+
+COMPOSITION: NOBODY CALLS IT A MEETING. Camera close and low over the table, at mug height, nobody in the
+picture. Five mismatched mugs sit where they were put down - not arranged, genuinely scattered,
+one with a spoon still in it, one on a paper towel, one nearly empty with a ring beneath it. The
+five chairs around the table are pushed out at five different careless angles, and one still has a
+mauve cardigan hooked over its back. The half-full coffee pot sits on its warmer at the frame's
+edge. The low sun through the venetian blinds at frame right lays hard amber bars across the
+laminate tabletop and up the far chair backs; the bars break correctly over each mug, each chair
+rail and the cardigan, and each mug throws its own long shadow away from the window on the same
+axis. Deep warm shadow under the table edge in the near foreground.
+
+LIGHT-SOURCE GEOMETRY - ABSOLUTE. This is the gate this plate is judged on, before
+style, before mood, before anything else. Every light source visible in frame must be
+physically consistent with the light it is shown producing.
+ - The source FACES what it lights. Its emitting face - lens, bulb, shade opening, screen
+   surface, window aperture, open doorway - points AT the lit surface and at nothing else.
+   A source pointed away from the thing it is lighting is the single failure that must not
+   happen here.
+ - If a beam or shaft is drawn at all, its axis runs in a straight line from the emitter to
+   the CENTRE of the lit patch, and the lit patch sits exactly where that line lands. No
+   beam that misses its own image. No lit patch without a source in frame, or clearly just
+   out of frame, on the correct axis to have thrown it.
+ - The projected or thrown shape agrees with the throw angle. A source off to one side
+   throws a keystoned, trapezoidal, off-axis shape, never a perfectly square frontal one. A
+   perfectly rectangular, perfectly frontal image means the source is dead-on and centred
+   and is therefore between the camera and the surface, or behind the camera.
+ - Every cast shadow runs directly away from its own source, along that source's axis, with
+   a softness that matches the source's size. Every shadow in frame agrees with every other
+   shadow about where the light is. Blind-bar shadows agree with the window that made them.
+ - No second unexplained light. Nothing glows for compositional convenience.
+Do not draw a light source as decoration. Draw it as a cause.
+
+NO READABLE TEXT - absolute. No lettering, words, numerals, digits, dates, years, signage,
+labels, legends, axis text, name plates, titled book spines, headlines, destination
+displays, license plates or document text of any kind anywhere in the image. Any paper,
+screen, chart, newspaper, ledger, tab, plaque, label, meter face or sign in frame carries
+abstract ruled tick-marks, blank ruled lines and abstract grey column blocks only. All
+readable content is added later in-engine.
+
+ABSOLUTELY NOT A CORPORATE STOCK TEAM PHOTO: no group facing camera, no thumbs up, no
+high-five, no champagne, no confetti, no clapping, no arms round shoulders in a row, no
+posed smiling lineup, no modern open-plan startup kitchen, no glass wall, no branded mugs,
+no motivational poster, no plant styling. This is five tired people who like each other,
+standing round a bad table at the end of a Wednesday.
+
+NO PEOPLE AT ALL - no figure, no hand, no arm, no silhouette, no reflection of a person in the
+coffee pot glass or the window. NO READABLE ANYTHING: no mug slogans, no notices on the corkboard,
+no calendar numerals, no letters anywhere.
+
+HYGIENE: no watermark, no logos, no captions, no signature, no measurement lines, no drawn
+border or decorative frame around the illustration, no UI, no title card, no lens flare, no
+added graphic vignette. Full-bleed SQUARE 1:1 composition filling the frame edge to edge.

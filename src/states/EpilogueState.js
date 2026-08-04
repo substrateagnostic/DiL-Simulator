@@ -17,7 +17,11 @@ function buildCards(player) {
   cards.push({
     img: 'epilogue_charter',
     title: 'THE CHARTER',
-    lines: ["Article 9, witnessed and sealed. The elevator never questioned it again. Machines respect paperwork; it's people who needed convincing."],
+    // "1947" used to live in the plate's pixels. The regenerated plate is
+    // correctly text-free (PROMPTS_ADDENDUM §9 / L7), so the game's most-repeated
+    // date — charter, Archive terminal, vault code "47", D. Henderson founding
+    // trustee — moves into the card's own words. Do not drop the year again.
+    lines: ["Article 9 of the 1947 charter, witnessed and sealed. The elevator never questioned it again. Machines respect paperwork; it's people who needed convincing."],
   });
 
   // ── The people (proposal 2). The epilogue used to hand dedicated cards to a
@@ -219,10 +223,11 @@ export class EpilogueState {
       <div style="max-width: 560px; text-align: center; animation: epilogueFade 0.9s ease-out;">
         ${url
           ? `<img src="${url}" style="width: min(420px, 78vw); border: 3px solid #2a2a3e; border-radius: 6px; box-shadow: 0 0 40px rgba(0,0,0,0.6);">`
-          // Plate-pending frame. Five of the newer cards (janitor, skip, intern,
-          // grandma, voice) have no PNG yet — see art/PROMPTS.md "Epilogue
-          // cards". Without this the card collapses to bare text in the middle
-          // of an illustrated sequence; the empty frame keeps the rhythm.
+          // Plate-pending frame. All fourteen cards now ship a plate
+          // (art/epilogue_plates/PICKS.md), so this branch is dead in practice —
+          // it stays as the guard for any card added ahead of its art. Without
+          // it a plateless card collapses to bare text in the middle of an
+          // illustrated sequence; the empty frame keeps the rhythm.
           : `<div style="width: min(420px, 78vw); aspect-ratio: 1 / 1; margin: 0 auto; border: 3px solid #2a2a3e; border-radius: 6px; box-shadow: 0 0 40px rgba(0,0,0,0.6); background: linear-gradient(160deg, #16161f 0%, #0e0e16 60%, #101019 100%);"></div>`}
         <div style="font-family: 'Press Start 2P', monospace; font-size: 13px; color: #e94560; margin: 22px 0 12px; letter-spacing: 2px;">${c.title}</div>
         ${c.lines.map(l => `<div style="font-family: 'VT323', monospace; font-size: 21px; color: #d8d4cc; line-height: 1.45; margin-bottom: 10px;">${l}</div>`).join('')}
