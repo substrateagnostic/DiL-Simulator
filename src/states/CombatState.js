@@ -890,10 +890,16 @@ export class CombatState {
     if (!hasLocks || !e.maxComposure || !e.weakness) return;
     if (this._hasMutator?.('under_nda') || this.engine.hasStretch?.('summary_briefing')) return;
     this.player.setFlag('taught_lock_composure', true);
-    setTimeout(() => this.hud.showTaunt(
-      'The moves they want me to stop are never the ones that would actually hurt them. Which means stopping them and hurting them are two different budgets. That seems like something I should remember.',
-      'player',
-    ), 900);
+    // 34 words. It went through showTaunt, which lands in the bark band
+    // (1800-4000 ms) — 118 ms/word, a 3200 ms deficit, numerically the same
+    // failure as the audit's headline 27-word Diane toast, on the ONE beat that
+    // teaches the game's central combat trade-off and never fires again.
+    // It is a scene, so it gets the prose surface and a prose ttl.
+    setTimeout(() => NotificationArbiter.post({
+      cls: NC.VOICE,
+      zone: 'voice-centre',
+      text: 'The moves they want me to stop are never the ones that would actually hurt them. Which means stopping them and hurting them are two different budgets. That seems like something I should remember.',
+    }), 900);
   }
 
   // ── COMBAT DEPTH HUD ─────────────────────────────────────────────────
@@ -1913,7 +1919,7 @@ export class CombatState {
 
       const xp = this.engine.getXPReward();
       setTimeout(() => {
-        this.hud.showMessage(`Victory! +${xp} XP`);
+        this.hud.showMessage(`Victory! +${xp} XP`, { jump: true });
         if (healPct >= 1) {
           this.player.stats.hp = this.player.stats.maxHP;
           this.player.stats.mp = this.player.stats.maxMP;
@@ -1967,7 +1973,10 @@ export class CombatState {
       AudioManager.playSfx('defeat');
       const scriptedKarenLoss = this.enemyId === 'karen' && !this.player.getFlag('retry_karen');
       if (!scriptedKarenLoss) this.player.deaths = (this.player.deaths || 0) + 1;
-      this.hud.showMessage('Your patience has run out...');
+      // JUMPS the plate queue. This is the line that tells the player why the
+      // fight ended, and it fires 2500 ms before closeScope('combat') discards
+      // whatever is still pending — which is exactly what happened to it once.
+      this.hud.showMessage('Your patience has run out...', { jump: true });
       setTimeout(() => this._endCombat('defeat'), 2500);
     }
   }

@@ -16,7 +16,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-const OUT = 'screenshots/i-run';
+const OUT = 'screenshots/i-run-after';
 const URL = 'http://localhost:5173/?dev&fixture=act3&shot=cubicle_farm';
 
 // [label, text, tone, audit's measured before-duration in ms]

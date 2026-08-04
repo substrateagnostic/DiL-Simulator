@@ -1,3 +1,4 @@
+import { NotificationArbiter } from '../core/NotificationArbiter.js';
 import { AudioManager } from '../core/AudioManager.js';
 import { BUILDING_MAP, floorLabel } from '../data/buildingMap.js';
 
@@ -147,6 +148,9 @@ export const ElevatorRide = {
   // 13, and `{ chose13: true }` comes back so the caller can change the
   // destination room. Everything else about the ride is unchanged.
   async close(labels, goingUp, opts = {}) {
+    // The car covers the screen while the floor ticker runs. Paired with the
+    // resume in open(), which every ride reaches.
+    NotificationArbiter.suspendScope('world');
     if (!el) _build();
     el.style.display = 'block';
     el.querySelector('.elev-arrow').textContent = goingUp ? '▲' : '▼';
@@ -215,6 +219,7 @@ export const ElevatorRide = {
 
   // Part the doors onto the (already swapped) room.
   async open() {
+    NotificationArbiter.resumeScope('world');
     if (!el) return;
     el.classList.remove('closed');
     await new Promise(r => setTimeout(r, 420));

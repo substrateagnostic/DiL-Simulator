@@ -1,3 +1,4 @@
+import { NotificationArbiter } from '../core/NotificationArbiter.js';
 import { AudioManager } from '../core/AudioManager.js';
 import { EventBus } from '../core/EventBus.js';
 import { InputManager } from '../core/InputManager.js';
@@ -204,6 +205,13 @@ export class EpilogueState {
   }
 
   enter() {
+    // A full-screen surface owns the whole screen. Without this the arbiter's
+    // page-level root keeps painting into it — and for the epilogue it is not
+    // even a race: `algorithm_defeated` is set inside the ending dialog, so the
+    // COMMENDATION defers behind that VOICE hold, the hold releases on
+    // dialog-end, the card shows, and EpilogueState is pushed 900ms later. An
+    // achievement toast over the game's final cards, every time.
+    NotificationArbiter.suspendScope('world');
     this.element = document.createElement('div');
     this.element.id = 'epilogue';
     this.element.style.cssText = `
@@ -250,6 +258,7 @@ export class EpilogueState {
   }
 
   exit() {
+    NotificationArbiter.resumeScope('world');
     if (this.element?.parentNode) this.element.parentNode.removeChild(this.element);
   }
 

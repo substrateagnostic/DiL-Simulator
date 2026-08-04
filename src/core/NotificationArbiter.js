@@ -35,10 +35,17 @@
  * DialogBox and the combat QTE overlays only tell it "a VOICE / DECISION surface
  * is up" via hold(); they keep owning their own DOM.
  *
- * FloatingText is deliberately EXEMPT from the queue. The audit measured it at
- * 0 % overlap against everything and ruled it acceptable: it is short, spatial,
- * and anchored to a body on screen, so serialising it would break the read it
- * exists to give. It is capped for count only (FloatingText.js).
+ * THE THREE DELIBERATE EXEMPTIONS. Everything else posts.
+ *   - `FloatingText` — measured at 0 % overlap against everything and ruled
+ *     acceptable: short, spatial, anchored to a body on screen, so serialising
+ *     it would break the read it exists to give. Capped for count only.
+ *   - `CombatHUD.showBanner` — audit surface 7, and its own cited "one correct
+ *     implementation": it already removes the previous banner before appending
+ *     (the pattern this file generalises). Single-occupancy by construction.
+ *   - `CombatHUD.showEnemyIntro` — audit surface 8, one per fight by
+ *     definition, choreographed against the CombatScene orbit-settle.
+ * All three are `_closed`-latched with the rest of the combat HUD, so none of
+ * them can paint after the fight ends.
  */
 
 // ── Priority classes ────────────────────────────────────────────────────
@@ -174,6 +181,16 @@ class NotificationArbiterClass {
       }
     }
     overlay.appendChild(this.root);
+    if (!this._resizeHooked && typeof window !== 'undefined') {
+      this._resizeHooked = true;
+      // The rail is placed off the quest tracker's measured bottom, and that
+      // measurement is taken when a card renders. A resize moves the tracker
+      // under a card that is already up, so re-measure.
+      window.addEventListener('resize', () => {
+        const z = this._zones.get('rail-right');
+        if (z && z.el) this._placeRailRight(z);
+      });
+    }
   }
 
   _zone(name) {
@@ -354,6 +371,13 @@ class NotificationArbiterClass {
    * @param {string} [o.key]  coalescing key
    * @param {string} [o.tone] extra card class ('info' | 'objective' | 'item' | ...)
    * @param {string} [o.speaker] renders a speech card with a name tag
+   * @param {boolean} [o.jump] take the slot NOW: evict the occupant and go to
+   *   the head of the queue. For the ONE line that ends a scene — the fight's
+   *   own victory/defeat announcement, which must not wait behind the chatter
+   *   it is closing. Measured before this existed: "Your patience has run
+   *   out..." queued behind a backed-up plate zone and was dropped 2500 ms
+   *   later by closeScope('combat'). The player lost the line that says why
+   *   they lost.
    * @returns {number|null} post id
    */
   post(o) {
@@ -409,6 +433,18 @@ class NotificationArbiterClass {
         this._logStatus(item, 'coalesced');
         return item.id;
       }
+    }
+
+    if (o.jump) {
+      if (z.current) {
+        const cur = z.current;
+        cur.ttl = this._minTtl(cur);
+        this._retire(z, 'dropped', true);
+      }
+      z.queue.length = 0;
+      z.queue.push(item);
+      this._pump(z);
+      return item.id;
     }
 
     z.queue.push(item);

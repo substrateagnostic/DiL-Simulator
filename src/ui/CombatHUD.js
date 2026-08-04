@@ -953,9 +953,9 @@ export class CombatHUD {
    * 1000-2800 ms, draining at x0.62 while a backlog exists — so a run of beats
    * still reads as a fast exchange and not as input lag.
    */
-  showMessage(text) {
+  showMessage(text, opts = {}) {
     if (this._closed) return null;
-    NotificationArbiter.post({ cls: NC.CONSEQUENCE, zone: 'plate-centre', text });
+    NotificationArbiter.post({ cls: NC.CONSEQUENCE, zone: 'plate-centre', text, jump: opts.jump });
     return null;
   }
 

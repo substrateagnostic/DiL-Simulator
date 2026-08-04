@@ -13,14 +13,34 @@
 // is a DOM node with an animation. MAX_LIVE caps it: the oldest is evicted, so
 // the numbers you see are always the newest ones.
 const MAX_LIVE = 14;
+// How long after the last number a new one is treated as a fresh hit and drops
+// back to rung 0, rather than stacking above its predecessor.
+const RUNG_RESET_MS = 900;
+const RUNGS = 4;
 
 export class FloatingText {
   constructor() {
     this.container = document.getElementById('ui-overlay');
     this._live = [];
+    this._rung = 0;
+    this._lastSpawn = 0;
   }
 
+  /**
+   * `x`/`y` are the caller's aim point. The RUNG offset is applied here, not in
+   * `spawnAt3DPosition` — every combat call site goes through `spawn()`
+   * directly (`CombatState._spawnDamageNumberAtEnemy` / `...ForAlly`), so a
+   * spread applied one level up did nothing. Two consecutive hits of the same
+   * value on the same body measured 88-92 % overlap on random X alone; the
+   * rung is what actually separates them, and it reads as a stack.
+   */
   spawn(text, x, y, type = 'damage') {
+    const now = Date.now();
+    this._rung = (now - this._lastSpawn > RUNG_RESET_MS) ? 0 : (this._rung + 1) % RUNGS;
+    this._lastSpawn = now;
+    x += this._rung % 2 ? 30 : -30;
+    y -= this._rung * 26;
+
     const el = document.createElement('div');
     el.className = `floating-damage ${type}`;
     el.textContent = text;
@@ -51,12 +71,8 @@ export class FloatingText {
     const screenX = (vec.x * w) + w;
     const screenY = -(vec.y * h) + h;
 
-    // Spread concurrent numbers so two hits on the same body do not print on
-    // each other. The old +/-20 px random X alone measured 88 % overlap between
-    // two same-value hits; a deterministic vertical rung per live number is
-    // what actually separates them, and it reads as a stack rather than noise.
-    const rung = this._live.length % 4;
-    const offsetX = (Math.random() - 0.5) * 40 + (rung % 2 ? 26 : -26);
-    this.spawn(text, screenX + offsetX, screenY - 20 - rung * 22, type);
+    // Rung/spread is applied by spawn(); this only does the projection.
+    const offsetX = (Math.random() - 0.5) * 40;
+    this.spawn(text, screenX + offsetX, screenY - 20, type);
   }
 }

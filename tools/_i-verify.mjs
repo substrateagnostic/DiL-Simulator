@@ -160,12 +160,26 @@ const run = async () => {
   await tap('Enter');
   await page.waitForTimeout(700);
   const logView = await page.evaluate(() => {
-    const el = [...document.querySelectorAll('div')].find(d => (d.innerText || '').includes('MESSAGE LOG'));
-    return { open: !!el, rows: el ? (el.innerText.match(/COMMENDA/g) || []).length : 0,
+    const el = document.querySelector('.menu-log-overlay');
+    const r = el && el.querySelector('.menu-log-rows');
+    return { open: !!el, rows: el ? (el.innerText.match(/REWARD/g) || []).length : 0,
+             scrollTop: r ? r.scrollTop : -1,
+             scrollable: r ? r.scrollHeight > r.clientHeight + 4 : false,
              text: el ? el.innerText.slice(0, 200).replace(/\n/g, ' | ') : '' };
   });
   check('F  the Log tab opens', logView.open === true);
   check('F  ...and lists the merged commendations', logView.rows >= 9, `${logView.rows} rows`);
+  // Scrolling is the point: the ring holds 40 and the panel shows about seven.
+  // Without it the Log is a safety net for the last seven notices only, on the
+  // keyboard path that is the game's primary input.
+  if (logView.scrollable) {
+    for (let i = 0; i < 4; i++) { await tap('ArrowDown', 70); await page.waitForTimeout(150); }
+    const after = await page.evaluate(() => document.querySelector('.menu-log-rows')?.scrollTop ?? -1);
+    check('F  ...and the rows SCROLL by keyboard', after > logView.scrollTop,
+      `scrollTop ${logView.scrollTop} -> ${after}`);
+  } else {
+    console.log('SKIP  F  scroll check — the log fit without scrolling this run');
+  }
   await shot('f-log-tab');
   console.log('\n  LOG HEAD: ' + logView.text);
 

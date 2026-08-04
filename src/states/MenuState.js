@@ -1126,6 +1126,15 @@ export class MenuState {
     }
 
     if (this.logOverlay) {
+      // SCROLLING IS THE POINT. The ring holds 40 entries and the panel shows
+      // about seven; without this the Log is only a safety net for the last
+      // seven notices, on the keyboard/gamepad path that is the game's primary
+      // input. Arrows/WS scroll; confirm/cancel still close.
+      const rows = this._logRowsEl;
+      if (rows) {
+        if (InputManager.isJustPressed('arrowdown') || InputManager.isJustPressed('s')) rows.scrollTop += 72;
+        if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) rows.scrollTop -= 72;
+      }
       if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
         this._closeLog();
       }
@@ -1280,6 +1289,7 @@ export class MenuState {
       }).join('');
 
     this.logOverlay = document.createElement('div');
+    this.logOverlay.className = 'menu-log-overlay';
     this.logOverlay.style.cssText = `
       position: absolute; inset: 0; background: rgba(0,0,0,0.95);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1288,14 +1298,18 @@ export class MenuState {
     this.logOverlay.innerHTML = `
       <div style="font-family:'Press Start 2P',cursive;font-size:14px;color:#e94560;margin-bottom:12px">MESSAGE LOG</div>
       <div style="color:#aaa;font-size:16px;margin-bottom:16px">the last ${entries.length} notice${entries.length === 1 ? '' : 's'}, newest first</div>
-      <div style="min-width:520px;max-width:680px;max-height:400px;overflow-y:auto;padding:0 16px">
+      <div class="menu-log-rows" style="min-width:520px;max-width:680px;max-height:400px;overflow-y:auto;padding:0 16px">
         ${rows}
       </div>
-      <div style="margin-top:16px;color:#888;font-size:15px">Enter / Esc to close</div>
+      <div style="margin-top:16px;color:#888;font-size:15px">${entries.length > 6 ? '&#8593;&#8595; scroll &nbsp;·&nbsp; ' : ''}Enter / Esc to close</div>
     `;
 
     this.logOverlay.addEventListener('click', () => this._closeLog());
     document.getElementById('ui-overlay').appendChild(this.logOverlay);
+    this._logRowsEl = this.logOverlay.querySelector('.menu-log-rows');
+    // Without this a click aimed at the SCROLLBAR bubbles to the overlay's own
+    // close handler, so the mouse path cannot scroll either.
+    this._logRowsEl?.addEventListener('click', (e) => e.stopPropagation());
     if (this.element) this.element.style.display = 'none';
   }
 
@@ -1304,6 +1318,7 @@ export class MenuState {
       this.logOverlay.parentNode.removeChild(this.logOverlay);
     }
     this.logOverlay = null;
+    this._logRowsEl = null;
     if (this.element) this.element.style.display = '';
   }
 

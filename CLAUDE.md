@@ -208,7 +208,7 @@ All game data is plain JS objects/exports:
 |---|---|---|---|---|
 | `VOICE` | inner monologue, speech cards, combat taunts; the dialog box **holds** it | `voice-centre`, `taunt-left/right` | another **prose** surface is up | no |
 | `DECISION` | telegraph, Loop-In, QTE overlays (these **hold**, they do not post) | — | never | no |
-| `CONSEQUENCE` | combat messages, floating damage | `plate-centre` | never | no |
+| `CONSEQUENCE` | combat messages (floating damage is EXEMPT — see below) | `plate-centre` | never | no |
 | `PROGRESS` | objective updates, items, AUM, XP, level-up | `rail-right` | `VOICE` | by key |
 | `COMMENDATION` | achievements | `rail-bottom-right` | `VOICE`, `DECISION` | **yes** — "Achievement ×3" |
 | `BOOKKEEPING` | "Game saved.", `[DEV]` | `strip-bottom-left` | `VOICE` | yes |
@@ -225,7 +225,9 @@ All game data is plain JS objects/exports:
 - **`_showToast` classifies by CONTENT** (`ExplorationState._classifyToast`). `Name: "…"` or ≥18 words ⇒ `VOICE`, because those are *scenes* wearing a notification. This is why the 61 call sites did not have to change and why a 27-word Diane line no longer runs at 96 ms/word in a corner box. Pass `{ cls: NC.X }` as the 4th arg to force a class (`_autoSave` does).
 - **Cards keep the game's existing surface classes** (`.hud-toast`, `.combat-message`, `.combat-taunt`, `.inner-monologue`) and the **zone owns position**. `.na-card` resets the old absolute anchors with `!important`. Keeping the class names is deliberate: every external selector, including `tools/_i-notify-probe.mjs`, still sees the surfaces it was written to measure.
 - **Combat taunts are `VOICE` but exempt from prose exclusivity** (`PROSE_ZONES` holds only `voice-centre`). They are character barks tied to a body on opposite sides of the frame; the audit measured `taunt-left × taunt-right` at 0 % overlap. Serialising them would make the fight feel laggy for no gain. Single-occupancy **per side** is what fixes the measured 100 % same-side double-exposure.
-- **`FloatingText` is EXEMPT from the queue by ruling**, not by oversight — see its entry below.
+- **Three surfaces are EXEMPT by ruling, not by oversight.** `FloatingText` (see its entry below), `CombatHUD.showBanner` (the audit's own cited "one correct implementation" — it already removes the previous banner before appending) and `CombatHUD.showEnemyIntro` (one per fight by definition). All three are `_closed`-latched with the rest of the combat HUD so none can paint after the fight ends.
+- **A full-screen surface must `suspendScope('world')`.** The arbiter root is page-level, so hiding `.exploration-hud` no longer hides notifications. `CombatState`, `MenuState`, `ShopState`, `DayState`, `ClientReviewState`, `EpilogueState`, `ArcadeState` and `ElevatorRide` all do. Missing one is not a race — deferral *aims* the card at it: `algorithm_defeated` is set inside the ending dialog, so the achievement defers behind that VOICE hold, releases on `dialog-end`, and lands 900 ms before `EpilogueState` is pushed. Suspension is reference-counted, so nesting is safe.
+- **`post({ jump: true })` takes the slot NOW** — evicts the occupant and clears the pending queue. Reserved for the one line that ENDS a scene (the fight's victory/defeat announcement). Without it, "Your patience has run out..." queued behind a backed-up plate zone and was discarded 2500 ms later by `closeScope('combat')` — the player lost the line that says why they lost.
 
 ### UI (`src/ui/`)
 

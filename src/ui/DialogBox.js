@@ -309,7 +309,10 @@ export class DialogBox {
     // Show container
     this.container.style.display = '';
     this.active = true;
-    NotificationArbiter.hold(NC.VOICE, VOICE_TAG);
+    // Owner element passed so the hold auto-expires if the box is ever torn
+    // down by a path that skips hide()/destroy(). The most important holder in
+    // the game should be the best defended one.
+    NotificationArbiter.hold(NC.VOICE, VOICE_TAG, this.container);
   }
 
   /**

@@ -1,3 +1,4 @@
+import { NotificationArbiter } from '../core/NotificationArbiter.js';
 import * as THREE from 'three';
 import { Engine } from '../core/Engine.js';
 import { InputManager } from '../core/InputManager.js';
@@ -62,6 +63,10 @@ export class ArcadeState {
   // =========================================================
 
   enter() {
+    // Same reasoning as the epilogue: SPRINT REVIEW owns the screen, and the
+    // exploration HUD is hidden for the duration but the arbiter root is
+    // page-level and would keep painting into the minigame.
+    NotificationArbiter.suspendScope('world');
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x050b10);
 
@@ -116,6 +121,7 @@ export class ArcadeState {
   }
 
   exit() {
+    NotificationArbiter.resumeScope('world');
     Engine.setTiltShift(this._prevTilt);
     Engine.setRetroPass(this._prevRetro);
     window.removeEventListener('resize', this._resize);

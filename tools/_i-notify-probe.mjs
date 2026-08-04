@@ -19,7 +19,11 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 const BASE = 'http://localhost:5173';
-const OUT = 'screenshots/i-run';
+// DEFAULT CHANGED. `screenshots/i-run/` is the AUDIT's raw evidence directory,
+// cited throughout .claude/plans/i-run/notification-audit.md — re-running this
+// tool with the old default overwrote it in place, so the doc's own citations
+// started pointing at post-fix images. It now writes to a run-specific dir.
+const OUT = process.argv.find(a => a.startsWith('--out='))?.slice(6) || 'screenshots/i-run-after';
 const scenario = process.argv.find(a => a.startsWith('--scenario='))?.slice(11) || 'smoke';
 const url = process.argv.find(a => a.startsWith('--url='))?.slice(6)
   || `${BASE}/?dev&fixture=act3&shot=cubicle_farm`;
