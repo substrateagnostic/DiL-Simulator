@@ -267,16 +267,38 @@
   overflow: hidden;
   border: 2px solid #333;
   margin: 0 auto;
+  position: relative;
 }
 
 .combat-enemy-row.single .combat-enemy-hp-bar { width: 300px; }
 .combat-enemy-row.crowded .combat-enemy-hp-bar { width: 180px; }
 
+/* GHOST BAR. Sits BEHIND the fill, snaps to where the bar was at the moment of
+   the hit, then chases the fill down after a beat. It is what makes the SIZE OF
+   THE BITE legible — without it the bar is a width you had to already be
+   watching. Delay is deliberate: the ghost must still be showing the old value
+   on the contact frame. */
+.combat-enemy-hp-ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: #ffcf8a;
+  border-radius: 4px;
+  transition: width 0.45s cubic-bezier(0.32, 0, 0.2, 1) 0.12s;
+  pointer-events: none;
+}
+
 .combat-enemy-hp-fill {
+  position: relative;
   height: 100%;
   background: linear-gradient(90deg, #e94560, #ff6b6b);
   border-radius: 4px;
-  transition: width 0.5s ease;
+  /* Was 0.5s ease — the bar finished draining 264ms BEFORE the fist landed.
+     The fill is now a quick, hard drop that STARTS ~60ms after the contact
+     frame (the gate's band is contact +60..+160) and the ghost carries the
+     readable part. */
+  transition: width 0.18s linear 0.06s;
 }
 
 /* Per-enemy telegraph (smaller text in multi-enemy rows) */
@@ -395,8 +417,12 @@
     2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000,
     0 0 10px rgba(0,0,0,0.95);
   pointer-events: none;
-  z-index: 30;
-  animation: floatUp 1.2s ease-out forwards;
+  z-index: 48;
+  /* Off-axis. Level type reads as a caption; skewed type reads as a graphic
+     object. The skew is carried IN the keyframes (a second `transform` on the
+     element would simply be overridden by the animation). */
+  letter-spacing: 0.02em;
+  animation: floatUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .floating-damage.heal {
@@ -427,14 +453,22 @@
     3px 3px 0 #000, -3px 3px 0 #000, 3px -3px 0 #000, -3px -3px 0 #000,
     3px 0 0 #000, -3px 0 0 #000, 0 3px 0 #000, 0 -3px 0 #000,
     0 0 16px rgba(255, 40, 60, 0.85);
-  animation: floatUpBig 1.2s ease-out forwards;
+  animation: floatUpBig 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* THE NUMBER IS A GRAPHIC OBJECT, NOT TEXT. It punches in past its final size,
+   overshoots, settles, HOLDS DEAD STILL, then leaves — instead of drifting up
+   80px and dissolving over 1.2s, which is a number with no confidence. The
+   hold from 20% to 76% (160-620ms) is the whole point: it is the beat the
+   player reads the damage in. Skew is applied on the element (see
+   .floating-damage) so these keyframes stay pure scale/translate. */
 @keyframes floatUpBig {
-  0%   { transform: translateY(8px) scale(0.7); opacity: 1; }
-  16%  { transform: translateY(-14px) scale(1.4); opacity: 1; }
-  30%  { transform: translateY(-22px) scale(1.12); opacity: 1; }
-  100% { transform: translateY(-70px) scale(0.9); opacity: 0; }
+  0%    { transform: translateY(6px) scale(0.60) skewX(-5deg); opacity: 0; }
+  4%    { transform: translateY(4px) scale(0.60) skewX(-5deg); opacity: 1; }
+  11%   { transform: translateY(-8px) scale(1.35) skewX(-5deg); opacity: 1; }
+  20%   { transform: translateY(-12px) scale(1.00) skewX(-5deg); opacity: 1; }
+  76%   { transform: translateY(-12px) scale(1.00) skewX(-5deg); opacity: 1; }
+  100%  { transform: translateY(-44px) scale(1.06) skewX(-5deg); opacity: 0; }
 }
 
 .floating-damage.status {
@@ -443,9 +477,12 @@
 }
 
 @keyframes floatUp {
-  0% { transform: translateY(0) scale(1); opacity: 1; }
-  20% { transform: translateY(-20px) scale(1.3); opacity: 1; }
-  100% { transform: translateY(-80px) scale(0.8); opacity: 0; }
+  0%    { transform: translateY(4px) scale(0.60) skewX(-4deg); opacity: 0; }
+  4%    { transform: translateY(3px) scale(0.60) skewX(-4deg); opacity: 1; }
+  11%   { transform: translateY(-6px) scale(1.35) skewX(-4deg); opacity: 1; }
+  20%   { transform: translateY(-10px) scale(1.00) skewX(-4deg); opacity: 1; }
+  76%   { transform: translateY(-10px) scale(1.00) skewX(-4deg); opacity: 1; }
+  100%  { transform: translateY(-38px) scale(1.06) skewX(-4deg); opacity: 0; }
 }
 
 /* Combat message — a bottom-center SUBTITLE, not a plate parked dead-center

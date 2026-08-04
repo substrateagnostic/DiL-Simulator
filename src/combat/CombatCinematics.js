@@ -60,8 +60,12 @@ const POSES = {
   // world position and world target they shipped at — the victim cut is
   // unchanged. Every other pose is a small delta on the rest aim and simply
   // translates with the stage, which is what the lift is for.
-  victim:     { pos: { x: -0.55, y: -0.11, z: -2.72 }, look: { x: 2.05, y: 0.35,  z: 3.40  } },
-  victimHard: { pos: { x: -0.45, y: -0.17, z: -2.88 }, look: { x: 2.08, y: 0.33,  z: 3.42  } },
+  // H-run G15: at −2.72/−2.88 the ride-out clipped the lens into Andrew's
+  // shoulder — a pink blur occupying the right third of the frame at +1737ms of
+  // the enemy beat. Pulled back to −2.30/−2.45; re-verify with
+  // `node tools/meshy-framing-gate.mjs --all` after any further change here.
+  victim:     { pos: { x: -0.55, y: -0.11, z: -2.30 }, look: { x: 2.05, y: 0.35,  z: 3.40  } },
+  victimHard: { pos: { x: -0.45, y: -0.17, z: -2.45 }, look: { x: 2.08, y: 0.33,  z: 3.42  } },
   // Enemy coil: lean gently toward them as they wind up.
   lean:       { pos: { x: 0,     y: 0.05,  z: -0.30 }, look: { x: 0,    y: 0.05,  z: -0.18 } },
   leanHeavy:  { pos: { x: 0,     y: 0.11,  z: -0.46 }, look: { x: 0,    y: 0.05,  z: -0.26 } },
@@ -78,19 +82,27 @@ const POSES = {
 // Standard moves 0.6–1.1s; power moves ~1.6s. Impact beats are tuned to land on
 // the same frame the existing CombatState choreography spawns damage numbers.
 
+// CONTACT ANCHORING. The step carrying `impact: true` is the frame the blow
+// lands. When play() is handed a measured `contactMs` the WHOLE timeline slides
+// so that step sits on it — so a camera beat can never again go home 155ms
+// before the fist arrives. Timelines with no impact step are unaffected.
+//
+// CUTS, NOT LERPS (Persona §2.1.1): the impact move eases at 26-30, which at
+// this rig's exponential smoothing is a cut in one to two frames. Easing reads
+// as hesitation; cutting reads as confidence, and it is free.
 const DEFAULT_ATTACK = [
   { t: 0.00, cam: 'windup', ease: 3.4 },                 // anticipation coil
-  { t: 0.12, cam: 'actor',  ease: 9 },                   // dolly onto the actor
-  { t: 0.26, cam: 'target', ease: 13, hitstop: 0.05 },   // snap to target — impact
-  { t: 0.52, cam: 'rest',   ease: 3.2 },
+  { t: 0.10, cam: 'actor',  ease: 12 },                  // dolly onto the actor
+  { t: 0.26, cam: 'target', ease: 26, impact: true },    // CUT to target — impact
+  { t: 0.66, cam: 'rest',   ease: 3.2 },                 // impact + 0.40 — the camera stays for the hold
 ];
 
 // Crit / weakness — punch-in + a rim spike are reserved for these.
 const CRIT = [
   { t: 0.00, cam: 'windup',     ease: 3.6 },
-  { t: 0.12, cam: 'actor',      ease: 9 },
-  { t: 0.26, cam: 'targetHard', ease: 14, hitstop: 0.10, punch: 0.65, rim: 0.85 },
-  { t: 0.58, cam: 'rest',       ease: 3.0 },
+  { t: 0.10, cam: 'actor',      ease: 12 },
+  { t: 0.26, cam: 'targetHard', ease: 30, impact: true },
+  { t: 0.72, cam: 'rest',       ease: 3.0 },
 ];
 
 // Ability flavor by tag. legal = paper-flurry + overhead slam; social = lateral
@@ -101,26 +113,26 @@ const ABILITY_BY_TAG = {
   legal: [
     { t: 0.00, cam: 'overhead',   ease: 6 },
     { t: 0.30, burst: { at: 'enemy', y: 2.3, count: 24, color: 0xfff2cc, speed: 1.5, lifetime: 1.0 } }, // paper flurry (low speed + gravity = fluttering fall)
-    { t: 0.32, cam: 'targetHard', ease: 13, hitstop: 0.09, punch: 0.4 },
-    { t: 0.62, cam: 'rest',       ease: 3.0 },
+    { t: 0.32, cam: 'targetHard', ease: 24, hitstop: 0.09, punch: 0.4, impact: true },
+    { t: 0.72, cam: 'rest',       ease: 3.0 },
   ],
   social: [
     { t: 0.00, cam: 'actorLat', ease: 5 },
-    { t: 0.28, cam: 'target',   ease: 11, hitstop: 0.06 },
+    { t: 0.28, cam: 'target',   ease: 22, hitstop: 0.06, impact: true },
     { t: 0.28, ring: { at: 'enemy', y: 1.4, count: 26, color: 0x66bbff, speed: 4.6, lifetime: 0.7 } }, // speech-bubble shockwave
-    { t: 0.56, cam: 'rest',     ease: 3.2 },
+    { t: 0.68, cam: 'rest',     ease: 3.2 },
   ],
   audit: [
     { t: 0.00, cam: { pos: { x: 0, y: 0.14, z: -0.34 }, look: { x: 0, y: 0.05, z: -0.20 } }, ease: 4 }, // slow cold zoom
-    { t: 0.30, cam: 'targetHard', ease: 10, hitstop: 0.07, flash: { color: 0x66ff99, dur: 0.10 } },
+    { t: 0.30, cam: 'targetHard', ease: 22, hitstop: 0.07, flash: { color: 0x66ff99, dur: 0.10 }, impact: true },
     { t: 0.30, overlay: { kind: 'grid', color: '#66ff99', ms: 340 } },
-    { t: 0.58, cam: 'rest',       ease: 3.2 },
+    { t: 0.70, cam: 'rest',       ease: 3.2 },
   ],
   technical: [
     { t: 0.00, cam: 'actor',  ease: 7, glitch: { amount: 0.05, seconds: 0.5 } },
     { t: 0.08, overlay: { kind: 'scanline', color: '#cc88ff', ms: 520 } },
-    { t: 0.26, cam: 'target', ease: 12, hitstop: 0.06, glitch: { amount: 0.08, seconds: 0.3 } },
-    { t: 0.55, cam: 'rest',   ease: 3.2 },
+    { t: 0.26, cam: 'target', ease: 24, hitstop: 0.06, glitch: { amount: 0.08, seconds: 0.3 }, impact: true },
+    { t: 0.66, cam: 'rest',   ease: 3.2 },
   ],
 };
 
@@ -134,9 +146,14 @@ const POWER_MOVE = [
   { t: 0.00, cam: 'low',        ease: 2.2, darken: { amount: 0.30, hold: 1200 } }, // slow low push-in, world darkens
   { t: 0.34, rim: 0.4 },
   { t: 0.42, cam: 'low',        ease: 2.0 },                                        // re-assert the push
-  { t: 0.68, cam: 'targetHard', ease: 9, hitstop: 0.16, punch: 0.9, rim: 1.3, flash: { color: 0xffffff, dur: 0.12 } },
+  { t: 0.68, cam: 'targetHard', ease: 26, impact: true },
   { t: 0.68, burst: { at: 'enemy', y: 1.2, count: 40, color: 0xffd700, speed: 5, lifetime: 1.2 } },
-  { t: 1.15, cam: 'rest',       ease: 2.4 },
+  // THE CARD. Slams on the contact beat, in the same frame as the flash, the
+  // hit-stop and the damage number — never before it. It replaces the old
+  // showBanner('ASSERT DOMINANCE') title; showBanner itself still serves
+  // COMPOSURE BROKEN / MOTION VOID / the Loop-In line.
+  { t: 0.68, splash: { card: 'assert_dominance', ms: 1300 } },
+  { t: 1.60, cam: 'rest',       ease: 2.4 },
 ];
 
 const SECOND_WIND = [
@@ -146,27 +163,31 @@ const SECOND_WIND = [
 
 const RETALIATE = [
   { t: 0.00, cam: 'actorLat',   ease: 8 },
-  { t: 0.18, cam: 'targetHard', ease: 14, hitstop: 0.08, punch: 0.4, rim: 0.6 },
-  { t: 0.45, cam: 'rest',       ease: 3.2 },
+  { t: 0.18, cam: 'targetHard', ease: 24, hitstop: 0.08, punch: 0.4, rim: 0.6, impact: true },
+  { t: 0.58, cam: 'rest',       ease: 3.2 },
 ];
 
 // Desperate Gamble — risk-tiered drama.
 const DESPERATE_GAMBLE = {
   safe: [
     { t: 0.00, cam: 'actor',  ease: 6 },
-    { t: 0.20, cam: 'target', ease: 11, hitstop: 0.05 },
-    { t: 0.50, cam: 'rest',   ease: 3.2 },
+    { t: 0.20, cam: 'target', ease: 22, hitstop: 0.05, impact: true },
+    { t: 0.60, cam: 'rest',   ease: 3.2 },
   ],
   risky: [
     { t: 0.00, cam: 'actorLat',   ease: 3.6 }, // a beat of hesitation…
-    { t: 0.22, cam: 'targetHard', ease: 12, hitstop: 0.08, punch: 0.4, rim: 0.5 }, // …then commit
-    { t: 0.55, cam: 'rest',       ease: 3.0 },
+    { t: 0.22, cam: 'targetHard', ease: 24, hitstop: 0.08, punch: 0.4, rim: 0.5, impact: true }, // …then commit
+    { t: 0.62, cam: 'rest',       ease: 3.0 },
   ],
   all_in: [
     { t: 0.00, cam: 'low',        ease: 2.6, darken: { amount: 0.4, hold: 800 } },
     { t: 0.08, overlay: { kind: 'vignette', color: '#ff4466', ms: 620 } },
-    { t: 0.22, cam: 'targetHard', ease: 12, hitstop: 0.14, punch: 0.95, rim: 1.0, flash: { color: 0xff4466, dur: 0.10 } },
-    { t: 0.62, cam: 'rest',       ease: 2.6 },
+    { t: 0.22, cam: 'targetHard', ease: 26, hitstop: 0.14, punch: 0.95, rim: 1.0, flash: { color: 0xff4466, dur: 0.10 }, impact: true },
+    // The All-In card fires only when the 40% lands — CombatState passes
+    // `splash: false` on a miss, because a splash card on a whiffed gamble
+    // reads as a reward for losing.
+    { t: 0.22, splash: { card: 'all_in', ms: 1300, gated: true } },
+    { t: 0.90, cam: 'rest',       ease: 2.6 },
   ],
 };
 
@@ -175,7 +196,12 @@ const DESPERATE_GAMBLE = {
 // a corner HP number; framing him lets the stagger + hurt-anim read.
 const ENEMY_ATTACK = [
   { t: 0.00, cam: 'lean',   ease: 4 },                               // coil toward the winding-up enemy
-  { t: 0.30, cam: 'victim', ease: 18, hitstop: 0.06, shake: 0.5 },   // hard CUT/reverse to Andrew as the blow lands + shake
+  // THE PLAYER MUST SEE THE BLOW. The shipped timeline cut to the victim AT
+  // t 0.30 — measured 786ms before the attacker's committed shove — so at the
+  // real contact frame the attacker was entirely off camera. `lean` now HOLDS
+  // through contact and the reverse cut lands 60ms after it.
+  { t: 0.30, impact: true, shake: 0.5 },
+  { t: 0.36, cam: 'victim', ease: 18, hitstop: 0.06 },               // hard CUT/reverse to Andrew, 60ms after the blow
   // Impact ACCENT — a hit-spark burst ON the victim's chest + a punch-in, timed so
   // it is still FRESH on the post-cut impact frame (~0.46) instead of firing at the
   // cut and being gone by the time the frame is grabbed (critic #2: "f2 carries no
@@ -183,10 +209,10 @@ const ENEMY_ATTACK = [
   // colour flash here — it fought the stage geometry into an ugly asymmetric wash;
   // the bright spark burst reads as the flash-pop and the real game still flashes
   // via CombatState's own enemy-hit beat.
-  { t: 0.40, punch: 0.5,
+  { t: 0.46, punch: 0.5,
     burst: { at: 'player', y: 1.6, count: 22, color: 0xff5566, speed: 3.4, lifetime: 0.6 } },
-  { t: 0.46, cam: 'victim', ease: 6 },                               // ride the victim through the follow-through
-  { t: 0.84, cam: 'rest',   ease: 2.8 },
+  { t: 0.52, cam: 'victim', ease: 6 },                               // ride the victim through the follow-through
+  { t: 0.90, cam: 'rest',   ease: 2.8 },
 ];
 
 // Enemy HEAVY (telegraphed) — leaning anticipation + screen-edge vignette pulse
@@ -195,13 +221,14 @@ const ENEMY_HEAVY = [
   { t: 0.00, cam: 'leanHeavy',  ease: 2.8 },
   { t: 0.02, overlay: { kind: 'vignette', color: '#e94560', ms: 700 } },
   { t: 0.12, rim: 0.4 },
-  { t: 0.30, cam: 'victimHard', ease: 18, hitstop: 0.13, shake: 0.75 },
+  { t: 0.30, impact: true, shake: 0.75 },                        // the blow lands, still on the attacker
+  { t: 0.34, cam: 'victimHard', ease: 18, hitstop: 0.13 },       // reverse cut 40ms after contact
   // Impact ACCENT — a bigger hit-spark burst ON the victim + a hard punch-in,
   // timed to land fresh on the post-cut impact frame (critic #2).
-  { t: 0.44, punch: 0.7,
+  { t: 0.48, punch: 0.7,
     burst: { at: 'player', y: 1.6, count: 32, color: 0xff4455, speed: 4.4, lifetime: 0.7 } },
-  { t: 0.50, cam: 'victimHard', ease: 6 },
-  { t: 0.90, cam: 'rest',       ease: 2.6 },
+  { t: 0.54, cam: 'victimHard', ease: 6 },
+  { t: 0.94, cam: 'rest',       ease: 2.6 },
 ];
 
 // Enemy intro — a camera orbit-settle onto the enemy, choreographed with the
@@ -283,6 +310,13 @@ export class CombatCinematics {
     this.scene = scene;
     this.hud = hud;
     this.particles = particles;
+    // THE CONTACT CLOCK. Set by CombatState. Fired on the step marked
+    // `impact: true`, i.e. on the frame the fist lands. This is a GAME-clock
+    // callback (update(dt)), which is why the impact chain hangs off it rather
+    // than off setTimeout: measured under capture load, a wall-clock timer
+    // scheduled for the contact frame fired 51ms late, while the timeline step
+    // landed within 5ms of its authored time.
+    this.onImpact = null;
     // The active timeline is advanced on the GAME CLOCK via update(dt) — NOT
     // wall-clock setTimeout. Camera moves therefore stay locked to the
     // character gestures + hit-stop (which are also game-clock), so the impact
@@ -315,8 +349,22 @@ export class CombatCinematics {
     const tl = this._resolve(name, opts);
     if (!tl || !this.scene) return 0;
     this.cancel();
+    // ── CONTACT ANCHOR ──────────────────────────────────────────────────
+    // Slide the timeline so the step marked `impact: true` lands on the
+    // measured contact frame of the body clip that is actually playing. The
+    // wind-up section [0, anchor] is STRETCHED (so the coil still starts on
+    // frame 0 and reads as anticipation) and everything after the impact is
+    // shifted RIGIDLY (so the hold and the ride-out keep their authored
+    // spacing). With no contactMs the map is the identity and every timeline
+    // plays exactly as authored.
+    const anchor = tl.find(s => s.impact);
+    const contact = Number.isFinite(opts.contactMs) ? opts.contactMs / 1000 : null;
+    const at = anchor ? (anchor.t || 0) : 0;
+    const remap = (contact != null && anchor && at > 0)
+      ? (t) => (t <= at ? t * (contact / at) : t + (contact - at))
+      : (t) => t;
     let maxT = 0;
-    const steps = tl.map(s => { const t = s.t || 0; maxT = Math.max(maxT, t); return { ...s, t }; })
+    const steps = tl.map(s => { const t = remap(s.t || 0); maxT = Math.max(maxT, t); return { ...s, t }; })
                     .sort((a, b) => a.t - b.t);
     this._active = { steps, opts, t: 0, i: 0 };
     return maxT;
@@ -351,6 +399,10 @@ export class CombatCinematics {
   _exec(step, opts) {
     const s = this.scene;
     if (!s) return;
+
+    // CONTACT. Fires before anything else on this step so the impact chain owns
+    // the frame the camera cuts on.
+    if (step.impact && this.onImpact) this.onImpact();
 
     // Camera move
     if (step.cam !== undefined) {
@@ -394,6 +446,16 @@ export class CombatCinematics {
       this.hud.pulseOverlay(step.overlay.kind, step.overlay.color, step.overlay.ms);
     }
 
+    // SPLASH CARD — its own channel, not a widened `pulseOverlay` colour slot:
+    // a full-frame illustration has nothing in common with a colour pulse.
+    // `gated: true` means the caller decides per-result (the All-In card must
+    // not fire on the 60% miss), via opts.splash === false.
+    if (step.splash && this.hud && this.hud.showSplashCard) {
+      if (!(step.splash.gated && opts.splash === false)) {
+        this.hud.showSplashCard(step.splash.card, step.splash.ms);
+      }
+    }
+
     // Named callback hook (lets the caller sync a HUD/damage beat to a step)
     if (step.call && opts.on && typeof opts.on[step.call] === 'function') {
       opts.on[step.call]();
@@ -411,5 +473,6 @@ export class CombatCinematics {
     this.scene = null;
     this.hud = null;
     this.particles = null;
+    this.onImpact = null;
   }
 }

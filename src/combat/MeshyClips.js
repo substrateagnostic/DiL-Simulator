@@ -24,6 +24,7 @@
 //
 // That is why this is ~2.8MB of clips for the whole cast instead of 31 fresh
 // 9MB character exports per reaction.
+import * as THREE from 'three';
 import { CLIP_LOADER, registerClipProvider } from './MeshyCast.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { captureRest, retargetClip } from './MeshyRetarget.js';
@@ -37,14 +38,50 @@ export const CLIP_IDS = {
   stagger: { m: 176, f: 391 },  // "Face Punch Reaction 2" / "Head Hold in Pain" (Composure Break)
   victory: { m: 49,  f: 59  },  // "Motivational Cheer" / "Victory Cheer"
   attack:  { m: 191, f: 214 },  // "Left Jab from Guard" / "Punch Forward with Both Fists"
+  // THE CAST SPLIT. `cast` used to be an ALIAS of `attack`, so every heal /
+  // buff / debuff / confuse turn in the game was the same punch. Both halves
+  // are stripped from raws that were already on disk (0 Meshy credits). The
+  // pair law from the slate holds: a distinct male cast with an aliased female
+  // one would re-introduce the exact asymmetry the slate exists to remove.
+  cast:    { m: 17,  f: 318 },  // "Skill 1" / "Scheming Hand Rub"
 };
 const REACTION_ROLES = Object.keys(CLIP_IDS);
+
+// ── CLIP BEATS — trim windows and contact frames, in SOURCE clip seconds ────
+//
+// TRIM, DON'T COMPRESS. The shipped build fitted an over-long clip to the beat
+// window by scaling playback (the female attack ran at 1.691x), which speeds up
+// the strike AND keeps the dead pre-motion in front of it. Trimming does the
+// opposite: the dead frames leave and the strike plays at 1.000x.
+//
+// `contact` is where the committed strike peaks inside the SOURCE clip,
+// measured on Andrew's real rig through the shipping retargeter
+// (tools/_h-clip-keyframe.mjs). What the engine consumes is the DERIVED offset
+// inside the trimmed clip — never a hardcoded delay.
+//
+// LAW: a trim changes groundOffsets(), which is the clip MINIMUM — removing the
+// lowest frame lifts a character off the floor. `node tools/meshy-spine-gate.mjs`
+// is the mandatory guard after any change to this table. It is not optional and
+// it is not skippable because "it's only a trim".
+//
+// PAIR LAW: trim both halves of a role or neither. A trimmed female hurt against
+// an untrimmed male one puts the two builds' reactions 1.7x apart, which is the
+// artefact the gender slate exists to remove.
+export const CLIP_BEATS = {
+  191: { trim: [0.150, 0.950], contact: 0.533 },  // m attack — coil, 200ms rise, clean recovery
+  214: { trim: [1.250, 2.150], contact: 1.500 },  // f attack — opens on the retract, 0.65s held shove
+  174: { trim: [0.000, 1.100] },                  // m hurt  — curve is flat from 1.0s; the rest is settle
+  178: { trim: [0.000, 1.100] },                  // f hurt  — drops 0.57s of settle tail
+  138: { trim: [1.983, 3.483] },                  // m guard — loop the hands-up section, not the approach
+  420: { trim: [1.550, 2.000] },                  // f guard — a420 holds a guard for only 17% of its loop
+  318: { trim: [2.100, 3.200], contact: 2.580 },  // f cast  — the rub itself, not the 2.1s walk-up to it
+};
 
 // THE BEAT REFERENCE. For each role, the clip the fight pacing was already
 // tuned around before the slate split the cast — i.e. what shipped. Its
 // duration is read off the loaded GLB, never hardcoded, so swapping a clip
 // re-derives the whole window. See beatTimeScales().
-const BEAT_REFERENCE = { guard: 138, hurt: 178, stagger: 391, victory: 59, attack: 191 };
+const BEAT_REFERENCE = { guard: 138, hurt: 178, stagger: 391, victory: 59, attack: 191, cast: 17 };
 
 // How far a performance may sit off the reference beat before it is corrected.
 // A ±15% band is wide enough that a clip whose length is merely *different*
@@ -91,6 +128,34 @@ const cache = new Map();      // actionId -> { clip, donorRest } | null
 const inflight = new Map();   // actionId -> Promise
 const retargeted = new Map(); // modelId|aID|clamped -> AnimationClip
 let warnedMissingRest = false;
+
+// subclip() compares `time * fps` against integer frame bounds. At fps = 1000
+// that comparison is millisecond-exact in seconds, so the trim window can be
+// authored in seconds without inventing a frame rate the clip does not have.
+const TRIM_FPS = 1000;
+
+// Trim a clip to [t0, t1) source-seconds and carry the derived contact offset.
+// Returns null if the window holds no keyframes, so a bad row degrades to the
+// untrimmed clip instead of a frozen character.
+function trimClip(clip, t0, t1, contact) {
+  // The first key subclip will actually keep. subclip shifts the result to
+  // t = 0 by that value, so this is what the contact offset must be measured
+  // against — assuming it is anything else puts the contact frame off by up to
+  // a full keyframe, which is the whole thing this table exists to get right.
+  let start = Infinity;
+  for (const tr of clip.tracks) {
+    for (let i = 0; i < tr.times.length; i++) {
+      const t = tr.times[i];
+      if (t >= t0 && t < t1) { if (t < start) start = t; break; }
+    }
+  }
+  if (!Number.isFinite(start)) return null;
+  const out = THREE.AnimationUtils.subclip(clip, clip.name, t0 * TRIM_FPS, t1 * TRIM_FPS, TRIM_FPS);
+  if (!out.tracks.length || !(out.duration > 0)) return null;
+  out.userData = { ...(out.userData || {}), trimmed: true };
+  if (contact != null) out.userData.contact = Math.max(0, contact - start);
+  return out;
+}
 
 function hash(str) {
   let h = 2166136261;
@@ -164,7 +229,8 @@ function loadClip(actionId) {
 // Warm the clips an encounter needs, behind the same combat fade that fetches
 // the character GLBs.
 //
-// BOTH genders of every reaction are always warmed (10 files, ~633KB). Loop-In
+// BOTH genders of every reaction are always warmed (12 files, ~730KB — the
+// cast pair joined the set). Loop-In
 // can put a bench ally of either build on stage mid-fight, and the beat
 // reference durations have to be readable whatever the encounter's cast looks
 // like; warming one side would silently degrade the other to its stance.
@@ -198,11 +264,18 @@ export function clipsFor(id, modelId = id, targetRest) {
       }
       return entry.clip;
     }
-    const key = `${modelId}|a${actionId}|${stance ? 'c' : 'r'}`;
+    const beat = CLIP_BEATS[actionId];
+    const key = `${modelId}|a${actionId}|${stance ? 'c' : 'r'}${beat?.trim ? '|t' : ''}`;
     if (retargeted.has(key)) return retargeted.get(key);
     try {
       let clip = retargetClip(entry.clip, entry.donorRest, targetRest);
       if (stance) clip = clampPosture(clip, targetRest);
+      // Trim LAST, so the retarget (and the stance clamp) see the whole authored
+      // curve and only the shipped window is shortened.
+      if (beat?.trim) {
+        const t = trimClip(clip, beat.trim[0], Math.min(beat.trim[1], clip.duration), beat.contact);
+        if (t) clip = t;
+      }
       retargeted.set(key, clip);
       return clip;
     } catch (err) {
@@ -219,12 +292,10 @@ export function clipsFor(id, modelId = id, targetRest) {
     const c = clipFor(CLIP_IDS[role][gender], false);
     if (c) out[role] = c;
   }
-  // The scheming beat reuses the attack accent rather than holding a dead
-  // stance. Splitting `cast` off needs a PAIR: giving the men a distinct cast
-  // and the women an aliased one would re-introduce exactly the asymmetry this
-  // slate exists to remove, and the study found no female counterpart worth
-  // casting. Alias both, or do neither.
-  if (out.attack) out.cast = out.attack;
+  // `cast` is a real role now (CLIP_IDS.cast). The alias that used to live here
+  // is kept only as the DEGRADE path: if a cast clip failed to load, the
+  // scheming beat still moves a body rather than holding a dead stance.
+  if (!out.cast && out.attack) out.cast = out.attack;
   return out;
 }
 
@@ -243,14 +314,20 @@ function referenceDuration(role) {
 export function beatTimeScales(clips) {
   const out = {};
   for (const role of REACTION_ROLES) {
-    const duration = clips?.[role]?.duration;
+    const clip = clips?.[role];
+    const duration = clip?.duration;
+    if (!duration) continue;
+    // A TRIMMED clip's length IS the authored beat — the window was chosen so
+    // the strike plays at 1.000x. Normalising it against a reference would put
+    // back exactly the time distortion the trim exists to remove (this is what
+    // retires the a214 @ 1.691x watch item: trimmed to 0.90s, played at 1.000).
+    if (clip.userData?.trimmed) { out[role] = 1; continue; }
     const reference = referenceDuration(role);
-    if (!duration || !reference) continue;
+    if (!reference) continue;
     const high = reference * (1 + BEAT_TOLERANCE);
     const low = reference * (1 - BEAT_TOLERANCE);
     out[role] = duration > high ? duration / high : (duration < low ? duration / low : 1);
   }
-  if (out.attack != null) out.cast = out.attack;
   return out;
 }
 

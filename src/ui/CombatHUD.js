@@ -185,6 +185,7 @@ export class CombatHUD {
       wrap.innerHTML = `
         <div class="combat-enemy-name">${e.name}</div>
         <div class="combat-enemy-hp-bar">
+          <div class="combat-enemy-hp-ghost" style="width: ${e.maxHP > 0 ? (e.hp / e.maxHP) * 100 : 0}%"></div>
           <div class="combat-enemy-hp-fill" style="width: ${e.maxHP > 0 ? (e.hp / e.maxHP) * 100 : 0}%"></div>
         </div>
         <div class="combat-composure" style="display:none;">
@@ -195,12 +196,16 @@ export class CombatHUD {
         <div class="combat-telegraph" style="display:none;"></div>
       `;
       const hpFill = wrap.querySelector('.combat-enemy-hp-fill');
+      const hpGhost = wrap.querySelector('.combat-enemy-hp-ghost');
       const telegraphEl = wrap.querySelector('.combat-telegraph');
       const locksEl = wrap.querySelector('.combat-locks');
       const composureEl = wrap.querySelector('.combat-composure');
       const composureFill = wrap.querySelector('.combat-composure-fill');
       this.enemyRowEl.appendChild(wrap);
-      this.enemyEntries.push({ index: i, infoEl: wrap, hpFill, telegraphEl, locksEl, composureEl, composureFill });
+      this.enemyEntries.push({
+        index: i, infoEl: wrap, hpFill, hpGhost, telegraphEl, locksEl, composureEl, composureFill,
+        _hpPct: e.maxHP > 0 ? (e.hp / e.maxHP) * 100 : 0,
+      });
     });
   }
 
@@ -298,7 +303,20 @@ export class CombatHUD {
     }
     const entry = this.enemyEntries[idx];
     if (!entry) return;
-    entry.hpFill.style.width = `${Math.max(0, (hp / maxHP) * 100)}%`;
+    const pct = Math.max(0, (hp / maxHP) * 100);
+    const prev = entry._hpPct ?? pct;
+    entry._hpPct = pct;
+    entry.hpFill.style.width = `${pct}%`;
+    // GHOST BAR. On a hit it snaps (transition off) to where the bar WAS, then
+    // is released to chase the fill down — so the size of the bite is on screen
+    // for ~450ms after contact. On a heal or a re-render it just tracks.
+    if (entry.hpGhost) {
+      entry.hpGhost.style.transition = 'none';
+      entry.hpGhost.style.width = `${pct < prev ? prev : pct}%`;
+      void entry.hpGhost.offsetWidth;              // force the snap to commit
+      entry.hpGhost.style.transition = '';
+      entry.hpGhost.style.width = `${pct}%`;
+    }
     if (hp <= 0) entry.infoEl.classList.add('dead');
   }
 

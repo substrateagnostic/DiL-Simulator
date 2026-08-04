@@ -491,6 +491,18 @@
      rail-bottom-right replaces AchievementManager's hard-coded bottom:80/right:20
      anchor, where nine toasts once shared one pixel rect.                    */
 
+/* THE ARBITER MUST NOT EAT THE MOUSE.
+   `.na-root` is a full-viewport inset:0 div appended as a DIRECT CHILD of
+   #ui-overlay, and `#ui-overlay > *` in main.css sets `pointer-events: auto`
+   at specificity 1-0-1 — which beats a bare `.na-root` at 0-1-0. The
+   pointer-events:none below therefore LOST, silently, and the arbiter's root
+   became a transparent 1440x810 click shield at z-index 26 over the whole
+   game. Measured (`tools/_h-hittest.mjs`): elementFromPoint at the centre of
+   the combat Attack button returned `na-root`, not the button — every mouse
+   click on the combat menu was landing on the notification layer.
+   The selector is ID-scoped so it wins on specificity rather than on
+   !important; do not lower it back to a bare class. */
+#ui-overlay > .na-root,
 .na-root {
   position: absolute;
   inset: 0;

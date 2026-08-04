@@ -7,6 +7,7 @@ import * as MeshyCast from './MeshyCast.js';
 import { MeshyAnimator } from './MeshyAnimator.js';
 import * as MeshyProps from './MeshyProps.js';
 import { groundOffsets } from './MeshyRetarget.js';
+import { Tween } from '../utils/tween.js';
 
 // FOOT PLANT, measured once per (model, clip set) per session. The shared clips
 // are authored on andrew's hips, so without this every character stands on
@@ -692,8 +693,11 @@ export class CombatScene {
     // has to be released or every fight leaks one mixer's worth of tracks.
     // Geometry/materials/textures are SHARED with the MeshyCast session cache
     // and must never be disposed here.
-    for (const e of this.enemyGroups) e.animator?.dispose?.();
-    for (const a of this.allyGroups) a.animator?.dispose?.();
+    // Travel tweens outlive the group they drive — a fight that ends mid-lunge
+    // would otherwise keep a Tween in the global list writing into a detached
+    // Object3D for the rest of the session.
+    for (const e of this.enemyGroups) { e._travel?.stop(); e.animator?.dispose?.(); }
+    for (const a of this.allyGroups)  { a._travel?.stop(); a.animator?.dispose?.(); }
     for (const e of this.enemyGroups) this.scene.remove(e.group);
     for (const a of this.allyGroups) this.scene.remove(a.group);
     this.enemyGroups = [];
@@ -713,13 +717,19 @@ export class CombatScene {
 
   // Shake doubles as the central "hit feel" dispatcher: big hits also get
   // hit-stop and a camera punch-in, so every existing call site gains juice.
-  shake(intensity = 0.5) {
+  //
+  // `opts.raw` suppresses that inference. It exists for impactBeat(), which is
+  // the one caller that has already decided all four channels from the beat
+  // class — without it a 'power' beat would fire its own 180ms stop and then
+  // shake()'s inferred 110ms on top of it.
+  shake(intensity = 0.5, opts = {}) {
     if (this._settings === undefined) {
       import('../core/Settings.js').then(({ SETTINGS }) => { this._settings = SETTINGS; });
       this._settings = null;
     }
     if (this._settings && !this._settings.shake) intensity = 0;
     this.shakeAmount = intensity;
+    if (opts.raw) return;
     if (intensity >= 1.0) {
       this.hitStop(0.11);
       this.punchIn(0.7);
@@ -727,6 +737,54 @@ export class CombatScene {
       this.hitStop(0.07);
       this.punchIn(0.4);
     }
+  }
+
+  // ── BEAT CLASSES ─────────────────────────────────────────────────────
+  // ONE source of truth for the four impact channels, replacing the ad-hoc
+  // thresholds shake() used to infer them from. The class drives hit-stop,
+  // punch-in, shake and flash together, so "what a crit feels like" is a row in
+  // a table instead of an intensity number guessed at 24 call sites.
+  //
+  // Hit-stop values are the Persona read: 3-5 frames on a normal hit, long
+  // enough to register as weight, short enough that the fight does not stutter.
+  static BEAT_CLASSES = {
+    normal: { stop: 0.060, punch: 0.25, shake: 0.32, flash: 0.04 },
+    crit:   { stop: 0.105, punch: 0.55, shake: 0.55, flash: 0.07 },
+    weak:   { stop: 0.130, punch: 0.65, shake: 0.60, flash: 0.05, rim: 0.85 },
+    power:  { stop: 0.180, punch: 0.90, shake: 1.10, flash: 0.12, rim: 1.30 },
+    light:  { stop: 0.040, punch: 0.15, shake: 0.22, flash: 0.03 },
+  };
+
+  impactBeat(cls = 'normal', color = 0xffffff) {
+    const b = CombatScene.BEAT_CLASSES[cls] || CombatScene.BEAT_CLASSES.normal;
+    this.hitStop(b.stop);
+    this.punchIn(b.punch);
+    this.shake(b.shake, { raw: true });
+    if (b.flash) this.flash(color, b.flash);
+    if (b.rim) this.rimBeat(b.rim);
+  }
+
+  // ── CONTACT FRAME QUERIES ────────────────────────────────────────────
+  // "When does this body's fist actually land?" in ms from the gesture call.
+  // Falls back to the caller's own shipped constant when the clip carries no
+  // measured contact (procedural cast, un-tabled clip, failed load), so no
+  // call site can be broken by an absent row.
+  allyContactMs(allyIndex = 0, role = 'attack', fallback = 220) {
+    const v = this.allyGroups[allyIndex]?.animator?.contactMs?.(role);
+    return (v == null || !Number.isFinite(v)) ? fallback : Math.round(v);
+  }
+
+  enemyContactMs(enemyIndex = 0, role = 'attack', fallback = 200) {
+    const v = this.enemyGroups[enemyIndex]?.animator?.contactMs?.(role);
+    return (v == null || !Number.isFinite(v)) ? fallback : Math.round(v);
+  }
+
+  holdAllyPose(allyIndex = 0, ms = 140) {
+    this.allyGroups[allyIndex]?.animator?.holdPose?.(ms);
+  }
+
+  holdEnemyPose(enemyIndex = 0, ms = 140) {
+    this.enemyGroups[enemyIndex]?.animator?.holdPose?.(ms);
   }
 
   // Freeze all combat animation for `seconds` — reads as impact weight
@@ -841,28 +899,31 @@ export class CombatScene {
     const startX = entry.baseX;
     const startRotY = entry.baseRotY;
     const s = entry.baseScale;
-    // Anticipation: rear back and coil (synced to the gesture wind-up ~0.16s)…
-    // the coil is a touch deeper now so the whole-body recoil-back reads as a
-    // clear preparation before the strike (critic: note 1, wind-up must read).
+    const contact = this.enemyContactMs(idx, 'attack', 200);
+    // Anticipation: rear back and coil on frame 0 so the wind-up reads.
     entry.group.position.z = startZ - 0.6;
     entry.group.scale.set(s * 1.04, s * 0.93, s * 1.05);
-    setTimeout(() => {
+    // …then drive into the player's space, ARRIVING on the contact frame rather
+    // than teleporting there at a flat +160ms. Measured on the shipped build,
+    // the committed two-fist shove peaked 1072-1898ms after this call while the
+    // travel was over at 350ms and the camera had already cut away.
+    const tw = { z: startZ - 0.6, x: startX, r: startRotY, sx: s * 1.04, sy: s * 0.93, sz: s * 1.05 };
+    const apply = () => {
       if (!entry.group.parent) return;
-      // …then drive into the player's space as the striking arm lands (synced to
-      // the gesture strike at ~0.23s). Kept to ~1.1 so the enemy lunges toward the
-      // victim without swallowing the reaction-cut framing that now frames Andrew.
-      entry.group.position.z = startZ + 1.1;
-      entry.group.position.x = startX + 0.12;
-      entry.group.rotation.y = startRotY + 0.06;
-      entry.group.scale.set(s * 0.98, s * 1.05, s * 0.97);
-      setTimeout(() => {
-        if (!entry.group.parent) return;
-        entry.group.position.z = startZ;
-        entry.group.position.x = startX;
-        entry.group.rotation.y = startRotY;
-        entry.group.scale.setScalar(s);
-      }, 190);
-    }, 160);
+      entry.group.position.z = tw.z;
+      entry.group.position.x = tw.x;
+      entry.group.rotation.y = tw.r;
+      entry.group.scale.set(tw.sx, tw.sy, tw.sz);
+    };
+    entry._travel?.stop();
+    entry._travel = new Tween(tw)
+      .to({ z: startZ + 1.1, x: startX + 0.12, r: startRotY + 0.06, sx: s * 0.98, sy: s * 1.05, sz: s * 0.97 },
+          Math.max(0.12, contact / 1000), 'inQuad')
+      .delay(0.14)
+      .to({ z: startZ, x: startX, r: startRotY, sx: s, sy: s, sz: s }, 0.22, 'outQuad')
+      .onUpdate(apply)
+      .onComplete(apply)
+      .start();
   }
 
   // Scheming beat (heal / buff / debuff / confuse) — a gathering cast pose so the
@@ -945,30 +1006,48 @@ export class CombatScene {
     const startX = entry.baseX;
     const startZ = entry.baseZ;
     const startRotY = entry.baseRotY;
+    // The frame this body's fist actually lands. Everything below is scheduled
+    // against it rather than against a hand-tuned constant.
+    const contact = this.allyContactMs(allyIndex, 'attack', 220);
 
+    // Anticipation: settle back and coil on frame 0.
     entry.group.position.x = startX + 0.3;
     entry.group.position.z = startZ + 0.2;
     entry.group.rotation.y = startRotY + 0.15;
 
-    setTimeout(() => {
+    // TRAVEL AND WIND-UP ARE ONE MOTION. The shipped version *set* the group to
+    // the strike mark at +80ms and set it back at +240ms — a teleport whose
+    // whole window closed 500ms before the arm moved (measured: travel
+    // 80-240ms, contact 741-812ms; the two never overlapped at all). It now
+    // crosses on the clip's own rise, ARRIVES on the contact frame, holds
+    // through the follow-through, and eases back.
+    const tw = { x: startX + 0.3, z: startZ + 0.2, r: startRotY + 0.15 };
+    const apply = () => {
       if (!entry.group.parent) return;
-      entry.group.position.x = startX - 1.4;
-      entry.group.position.z = startZ - 1.8;
-      entry.group.rotation.y = startRotY - 0.1;
-      const origZ = this._basePos.z;
-      this._basePos.z = origZ - 0.6;
+      entry.group.position.x = tw.x;
+      entry.group.position.z = tw.z;
+      entry.group.rotation.y = tw.r;
+    };
+    entry._travel?.stop();
+    entry._travel = new Tween(tw)
+      .to({ x: startX - 1.4, z: startZ - 1.8, r: startRotY - 0.1 }, Math.max(0.12, contact / 1000), 'inQuad')
+      .delay(0.14)
+      .to({ x: startX, z: startZ, r: startRotY }, 0.20, 'outQuad')
+      .onUpdate(apply)
+      .onComplete(apply)
+      .start();
 
-      setTimeout(() => {
-        if (entry.group.parent) {
-          entry.group.position.x = startX;
-          entry.group.position.z = startZ;
-          entry.group.rotation.y = startRotY;
-        }
-        this._basePos.z = origZ;
-      }, 160);
-    }, 80);
+    // Camera dolly stays on a deterministic timer pair (never a tween): if the
+    // fight tears down mid-move a leaked tween would strand _basePos.z off its
+    // rest value for the whole next encounter.
+    const origZ = this._basePos.z;
+    setTimeout(() => { this._basePos.z = origZ - 0.6; }, Math.max(40, contact - 120));
+    setTimeout(() => { this._basePos.z = origZ; }, contact + 340);
 
-    setTimeout(() => this.flash(0xffffff, 0.05), 80);
+    // The slash accent + its flash used to be scheduled here on a wall-clock
+    // timer, which measured 107ms late against the clip's own contact frame.
+    // They are now `strikeAccent()`, fired by CombatState's contact scheduler
+    // on the same frame as the hit-stop and the number.
 
     // Slash accent — a DIRECTIONAL streak that reads as a cut crossing the
     // target, not a textureless white quad. The prior version was square white
@@ -1005,7 +1084,7 @@ export class CombatScene {
       return { sprite, mat, x, y };
     };
 
-    setTimeout(() => {
+    this._slashFn = () => {
       // Two crossing streaks (the cut) + a tight impact spark. The streaks are
       // long+thin and drawn near the enemy's centre of mass so they read as a
       // blade crossing the body toward stage-left (the direction Andrew lunges).
@@ -1043,22 +1122,78 @@ export class CombatScene {
         }
       };
       requestAnimationFrame(tick);
-    }, 80);
+    };
   }
 
-  playerAbilityLunge(distance = 0.6, allyIndex = 0) {
+  // THE CONTACT ACCENT — the white pop and the directional slash streaks.
+  // Split out of playerAttackAnim so it fires on the scheduler's contact frame
+  // rather than on its own timer.
+  strikeAccent(allyIndex = 0) {
+    this.flash(0xffffff, 0.05);
+    if (this._slashFn) { const f = this._slashFn; this._slashFn = null; f(); }
+  }
+
+  // ── ABILITY / CAST BODIES ────────────────────────────────────────────
+  // Until now the ONLY actions that played a body clip were the basic attack,
+  // the ally attack, the break-counter, Retaliate and Desperate Gamble. Every
+  // ability, Press Advantage and the signature Power Move called
+  // playerAbilityLunge() — a group translate — so Andrew slid across the stage
+  // in his calm stance while the screen did all the work. Returns the contact
+  // frame so the caller can schedule its impact against the same clock.
+  playerAbilityAnim(allyIndex = 0, { distance = 0.6 } = {}) {
+    const entry = this.allyGroups[allyIndex];
+    if (!entry) return 220;
+    entry.animator?.setExpression('angry', 0.8);
+    entry.animator?.playGesture('attack_ally');
+    const contact = this.allyContactMs(allyIndex, 'attack', 220);
+    if (distance > 0) this.playerAbilityLunge(distance, allyIndex, contact);
+    return contact;
+  }
+
+  // The scheming beat for a non-damaging ability (heal / buff / debuff). Its own
+  // clip since the cast split — it used to be an alias of the punch, so filing a
+  // motion and drinking a coffee were the same swing.
+  playerCastAnim(allyIndex = 0) {
+    const entry = this.allyGroups[allyIndex];
+    if (!entry) return 300;
+    entry.animator?.setExpression('smug', 1.0);
+    entry.animator?.playGesture('cast');
+    return this.allyContactMs(allyIndex, 'cast', 300);
+  }
+
+  // Ability travel. `contactMs` lets an ability that plays a body clip arrive on
+  // ITS contact frame instead of teleporting on a flat 200ms window; callers
+  // that pass nothing keep the shipped timing exactly.
+  playerAbilityLunge(distance = 0.6, allyIndex = 0, contactMs = null) {
     const entry = this.allyGroups[allyIndex];
     if (!entry) return;
     const startX = entry.baseX;
     const startZ = entry.baseZ;
-    entry.group.position.x = startX - distance;
-    entry.group.position.z = startZ - distance * 1.2;
-    setTimeout(() => {
-      if (entry.group.parent) {
-        entry.group.position.x = startX;
-        entry.group.position.z = startZ;
-      }
-    }, 200);
+    if (contactMs == null) {
+      entry.group.position.x = startX - distance;
+      entry.group.position.z = startZ - distance * 1.2;
+      setTimeout(() => {
+        if (entry.group.parent) {
+          entry.group.position.x = startX;
+          entry.group.position.z = startZ;
+        }
+      }, 200);
+      return;
+    }
+    const tw = { x: startX, z: startZ };
+    const apply = () => {
+      if (!entry.group.parent) return;
+      entry.group.position.x = tw.x;
+      entry.group.position.z = tw.z;
+    };
+    entry._travel?.stop();
+    entry._travel = new Tween(tw)
+      .to({ x: startX - distance, z: startZ - distance * 1.2 }, Math.max(0.10, contactMs / 1000), 'inQuad')
+      .delay(0.14)
+      .to({ x: startX, z: startZ }, 0.20, 'outQuad')
+      .onUpdate(apply)
+      .onComplete(apply)
+      .start();
   }
 
   // Ally-side hurt animation (when an enemy hits an ally specifically — falls back to ally 0)

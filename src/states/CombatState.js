@@ -78,6 +78,11 @@ export class CombatState {
     this.particles = new ParticleSystem(this.scene.scene);
     // Cinematic sequencer — authored camera + flourishes layered on the scene.
     this.cine = new CombatCinematics(this.scene, this.hud, this.particles);
+    // THE CONTACT CLOCK. Every impact chain in this file registers itself in
+    // `_impactHook` via _scheduleImpact() and is fired from here — on the game
+    // clock, on the frame the timeline's `impact` step lands.
+    this.cine.onImpact = () => { if (this._impactHook) this._impactHook(); };
+    this._impactHook = null;
     this._enemyTelegraphInfo = {}; // per-enemy { attack, heavy } stashed from telegraph
 
     this.phase = 'intro';                 // intro, ally_turn, targeting, animating, enemy_phase, result
@@ -716,14 +721,21 @@ export class CombatState {
       }
 
       if (result.damage) {
-        // Cinematic: lean on the coil, recoil on impact. HEAVY telegraphed
-        // hits get the vignette-warned, punchier ENEMY_HEAVY beat.
-        this.cine.play('enemy_attack', { heavy: !!this._enemyTelegraphInfo[enemyIndex]?.heavy });
+        // Cinematic: lean on the coil, hold through contact, THEN cut to the
+        // victim. Anchored to the attacker's own contact frame — the shipped
+        // build cut away 786ms before the committed shove, so at the frame the
+        // blow actually landed the attacker was entirely off camera.
+        const eContact = this.scene.enemyContactMs(enemyIndex, 'attack', 200);
+        this.cine.play('enemy_attack', {
+          heavy: !!this._enemyTelegraphInfo[enemyIndex]?.heavy,
+          contactMs: eContact,
+        });
         this.scene.enemyAttackAnim(enemyIndex);
         const targetAllyIndex = result.targetAllyIndex ?? 0;
         // Voice triggers: damage to Andrew arms the Skeptic
         if (targetAllyIndex === 0 && this.engine.noteDamageTakenByPlayer) this.engine.noteDamageTakenByPlayer();
-        setTimeout(() => {
+        this._scheduleImpact(() => {
+          this.scene.holdEnemyPose(enemyIndex, 140);
           this.scene.shake(result.critical ? 0.8 : 0.4);
           if (result.braced) {
             this.scene.flash(0x4488ff, 0.15);
@@ -751,7 +763,7 @@ export class CombatState {
               this.hud.showMessage('HANG IN THERE! Survived at 1 HP!');
             }, 300);
           }
-        }, 200);
+        }, eContact);
       } else if (result.healAmount) {
         AudioManager.playSfx('heal');
         this.scene.enemyCastAnim(enemyIndex);   // gathering cast pose, not a dead idle
@@ -769,8 +781,10 @@ export class CombatState {
       setTimeout(() => {
         if (this.engine.isOver) this._handleResult();
         else this._processNextTurn();
-      }, 1700);
-    }, 400);
+      }, 1200);
+      // 400ms of dead air opened every single enemy turn. 150 is still a beat
+      // of "they are about to do something" without being a pause.
+    }, 150);
   }
 
   // SINGLE source of truth for the eight-argument `showMainMenu` law
@@ -1014,28 +1028,33 @@ export class CombatState {
 
     if (result.aoe && Array.isArray(result.hits)) {
       this.scene.playerAttackAnim(allyIndex);
-      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      const aoeContact = this.scene.allyContactMs(allyIndex, 'attack', 200);
       this.particles.ring({ x: 0, y: 1.0, z: 0 }, 24, 0x88ccff, 4.0, 0.9);
       result.hits.forEach((h, i) => {
         setTimeout(() => {
+          if (i === 0) { this.scene.strikeAccent(allyIndex); AudioManager.playSfx(result.critical ? 'critical' : 'hit'); this.scene.shake(0.4); }
           this.scene.enemyHurtAnim(h.targetIndex);
           this._spawnDamageNumberAtEnemy(h.damage, h.critical ? 'critical' : 'damage', h.targetIndex);
-        }, 200 + i * 150);
+          this._refreshHPBars();
+        }, aoeContact + i * 150);
       });
-      this.scene.shake(0.4);
-      return 700 + result.hits.length * 150;
+      return aoeContact + 500 + result.hits.length * 150;
     }
 
     if (result.type === 'ally_attack' || result.type === 'ally_attack_aoe') {
       this.scene.playerAttackAnim(allyIndex);
-      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
       const ti = result.targetIndex ?? 0;
+      const allyContact = this.scene.allyContactMs(allyIndex, 'attack', 220);
       setTimeout(() => {
+        AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+        this.scene.strikeAccent(allyIndex);
         this.scene.enemyHurtAnim(ti);
-        this.scene.shake(result.critical ? 0.6 : 0.3);
+        this.scene.holdAllyPose(allyIndex, 140);
+        this._refreshHPBars();
+        this.scene.impactBeat(result.critical ? 'crit' : 'normal', 0xffffff);
         this._spawnDamageNumberAtEnemy(result.damage || 0, result.critical ? 'critical' : 'damage', ti);
-      }, 220);
-      return 1100;
+      }, allyContact);
+      return allyContact + 620;
     }
 
     if (result.type === 'ally_buff_party') {
@@ -1362,7 +1381,12 @@ export class CombatState {
     const ability = PLAYER_ABILITIES[abilityId];
     const offensive = result.type === 'attack' || result.type === 'attack_aoe' || result.type === 'debuff' || !!result.damage;
     if (offensive) {
-      this.cine.play('ability', { tag: ability?.tag, crit: !!(result.critical || result.effective === 'super'), targetIndex });
+      this.cine.play('ability', {
+        tag: ability?.tag,
+        crit: !!(result.critical || result.effective === 'super'),
+        targetIndex,
+        contactMs: this.scene.allyContactMs(this._activeAllyIndex, 'attack', 350),
+      });
     } else {
       this.cine.play('self_ability', {});
     }
@@ -1375,7 +1399,7 @@ export class CombatState {
     this._playBreakFeedback(result);
     this._noteConfusion(result);
     this._checkPhaseChange();
-    this._refreshHUD();
+    this._refreshHUD({ deferBars: !!result.damage });
     setTimeout(() => {
       if (this.engine.isOver) {
         this._handleResult();
@@ -1430,9 +1454,14 @@ export class CombatState {
     this.phase = 'animating';
     this.hud.disableInput();
     const result = this.engine.playerAttack(targetIndex);
-    // Cinematic: dolly to Andrew on wind-up, snap to the target on impact.
-    // Crit/weakness gets the punch-in CRIT beat.
-    this.cine.play('attack', { crit: !!(result && (result.critical || result.effective === 'super')), targetIndex });
+    // Cinematic: dolly to Andrew on wind-up, CUT to the target on impact —
+    // anchored to the measured contact frame, so the camera can no longer be
+    // home 155ms before the fist arrives.
+    this.cine.play('attack', {
+      crit: !!(result && (result.critical || result.effective === 'super')),
+      targetIndex,
+      contactMs: this.scene.allyContactMs(this._activeAllyIndex, 'attack', 220),
+    });
     const delay = this._playPlayerActionResult(result);
 
     if (result && result.critical) { this._fireTaunt('crit'); this.engine.noteCrit && this.engine.noteCrit(); }
@@ -1441,7 +1470,7 @@ export class CombatState {
     this._playBreakFeedback(result);
     this._noteConfusion(result);
     this._checkPhaseChange();
-    this._refreshHUD();
+    this._refreshHUD({ deferBars: true });
     setTimeout(() => {
       if (this.engine.isOver) this._handleResult();
       else if (this._maybeOfferLoopIn(() => this._processNextAllyTurn())) { /* prompt owns it */ }
@@ -1537,6 +1566,7 @@ export class CombatState {
       this.scene.shake(0.2);
       const ti = result.targetIndex ?? 0;
       setTimeout(() => {
+        this.scene.strikeAccent(this._activeAllyIndex);
         this.scene.enemyHurtAnim(ti);
         this._spawnDamageNumberAtEnemy(result.damage, 'damage', ti);
       }, 100);
@@ -1559,17 +1589,28 @@ export class CombatState {
 
     if (abilityId) return this._playAbilityAnim(abilityId, result);
 
-    // Generic single-target attack
+    // Generic single-target attack — the beat every other beat is measured
+    // against. EVERYTHING that says "a blow landed" now fires on the contact
+    // frame of the clip this body is actually playing: the hit SFX (was 735ms
+    // early), the damage number (505ms early), the hit-stop (395ms early) and
+    // the HP bar (finished 264ms early).
     if (result.type === 'attack' || result.type === 'attack_aoe') {
       const ti = result.targetIndex ?? 0;
-      this.scene.playerAttackAnim(this._activeAllyIndex);
-      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      const ai = this._activeAllyIndex;
+      this.scene.playerAttackAnim(ai);
+      const contact = this.scene.allyContactMs(ai, 'attack', 220);
+      // Approach streaks stay in ANTICIPATION — they are the travel, not the hit.
       this.particles.stream({ x:  0.2, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 14, 0xffffff, 0.20);
       this.particles.stream({ x: -0.1, y: 1.1, z: 3.8 }, { x: 0, y: 1.0, z: 0.2 },  8, 0xffee88, 0.22);
-      setTimeout(() => {
+      this._scheduleImpact(() => {
+        const cls = result.effective === 'super' ? 'weak' : (result.critical ? 'crit' : 'normal');
+        this.scene.impactBeat(cls, result.critical ? 0xffee88 : 0xffffff);
+        this.scene.strikeAccent(ai);
         this.scene.enemyHurtAnim(ti);
-        this.scene.shake(result.critical ? 0.8 : 0.3);
+        this.scene.holdAllyPose(ai, 140);      // the follow-through — "committed"
+        AudioManager.playSfx(result.critical ? 'critical' : 'hit');
         this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', ti);
+        this._refreshHPBars();
         if (result.critical) this.particles.burst({ x: 0, y: 1.2, z: 0 }, 25, 0xff4444, 4, 1.0);
         else this.particles.burst({ x: 0, y: 1.2, z: 0 }, 15, 0xffcc00, 3, 0.8);
         if (result.effective === 'super') {
@@ -1580,8 +1621,11 @@ export class CombatState {
         if (result.combo) {
           setTimeout(() => this.hud.showMessage('FOLLOW THROUGH! +25% damage!'), result.effective ? 600 : 300);
         }
-      }, 220);
-      return 1200;
+      }, contact);
+      // Control returns ~620ms after contact: freeze release, HP drain, the
+      // held pose, then the camera home. Persona's normal-attack total is
+      // 0.90-1.15s input-to-input and this lands inside it.
+      return contact + 620;
     }
 
     if (result.type === 'heal') {
@@ -1640,13 +1684,13 @@ export class CombatState {
 
     switch (abilityId) {
       case 'file_motion': {
-        this.scene.playerAbilityLunge(0.5, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.5 });
         this.particles.stream(
           { x: 0.1, y: 1.0, z: 3.5 },
           { x: 0.0, y: 1.2, z: 0.3 },
           20, 0xfffde8, 0.35
         );
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.enemyHurtAnim(ti);
           this.scene.shake(crit ? 0.7 : 0.35);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
@@ -1654,15 +1698,17 @@ export class CombatState {
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 30 : 18, 0xfffde8, 2.5, 0.7);
           this.particles.burst({ x: 0, y: 1.0, z: 0 }, 8, 0xccccaa, 1.5, 0.5);
           if (crit) this.scene.flash(0xffffee, 0.1);
-        }, 350);
-        return 1400;
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
+        return contact + 900;
       }
       case 'cite_precedent': {
-        this.scene.playerAbilityLunge(0.4, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.4 });
         this.scene.flash(0xddaa00, 0.08);
         this.particles.burst({ x: 0,    y: 2.8, z: 0 }, 15, 0xffdd44, 0.8, 0.55);
         this.particles.burst({ x: 0.3,  y: 2.5, z: 0 }, 10, 0xddaa00, 0.6, 0.45);
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.flash(0xffdd00, 0.2);
           this.scene.shake(crit ? 1.0 : 0.7);
           this.scene.enemyHurtAnim(ti);
@@ -1670,11 +1716,13 @@ export class CombatState {
           this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.5, z: 0 }, crit ? 35 : 25, 0xffd700, 3.5, 1.0);
           this.particles.burst({ x: 0, y: 0.3, z: 0 }, 12, 0xaa8800, 2.0, 0.6);
-        }, 500);
-        return 1600;
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
+        return contact + 950;
       }
       case 'per_my_last_email': {
-        this.scene.playerAbilityLunge(0.8, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.8 });
         this.hud.showMessage('Per My Last Email...');
         this.scene.flash(0x660000, 0.15);
         this.particles.burst({ x: 0, y: 1.8, z: 1.5 }, 20, 0xff2200, 3, 0.55);
@@ -1683,7 +1731,7 @@ export class CombatState {
           this.scene.shake(0.6);
           this.particles.burst({ x: 0, y: 1.5, z: 0.8 }, 30, 0xff4400, 4, 0.75);
         }, 250);
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.flash(0xff0000, 0.3);
           this.scene.shake(crit ? 1.5 : 1.2);
           this.scene.enemyHurtAnim(ti);
@@ -1692,29 +1740,34 @@ export class CombatState {
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 50 : 40, 0xff0000, 5,   1.2);
           this.particles.burst({ x: 0, y: 1.4, z: 0 }, 20,             0xff8800, 4,   0.9);
           this.particles.burst({ x: 0, y: 1.0, z: 0 }, 15,             0xffff00, 3,   0.7);
-        }, 500);
-        return 1800;
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
+        return contact + 1000;
       }
       case 'cc_all': {
-        this.scene.playerAbilityLunge(0.5, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.5 });
         this.hud.showMessage('CC All! Everyone is now involved.');
         this.scene.flash(0x2244aa, 0.10);
         this.particles.ring({ x: 0, y: 1.0, z: 0 }, 28, 0x4488ff, 3.5, 1.0);
         // Note: AoE — caller (skipImpact=true) handles per-target hurt anims
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.shake(crit ? 0.7 : 0.4);
           this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
           this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.ring({ x: 0, y: 1.3, z: 0 }, 24, 0x2266dd, 4.5, 0.85);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 25 : 15, 0x88aaff, 3, 0.8);
-        }, 300);
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
         setTimeout(() => {
           this.particles.ring({ x: 0, y: 0.7, z: 0 }, 20, 0x66aaff, 5.5, 0.70);
         }, 500);
         return 1600;
       }
       case 'coffee_break': {
+        this.scene.playerCastAnim(allyIndex);
         AudioManager.playSfx('heal');
         this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', allyIndex);
         this.hud.showMessage(`${result.abilityName}!`);
@@ -1728,6 +1781,7 @@ export class CombatState {
         return 1200;
       }
       case 'billable_hours': {
+        this.scene.playerCastAnim(allyIndex);
         AudioManager.playSfx('confirm');
         this.hud.showMessage(`${result.abilityName}! Stats buffed for ${result.duration} turns!`);
         this.scene.flash(0xddaa00, 0.12);
@@ -1741,6 +1795,7 @@ export class CombatState {
         return 1400;
       }
       case 'fiduciary_shield': {
+        this.scene.playerCastAnim(allyIndex);
         AudioManager.playSfx('confirm');
         this.hud.showMessage(`${result.abilityName}! DEF buffed for ${result.duration} turns!`);
         this.scene.flash(0x2266ff, 0.12);
@@ -1752,6 +1807,7 @@ export class CombatState {
         return 1400;
       }
       case 'due_diligence': {
+        this.scene.playerCastAnim(allyIndex);
         AudioManager.playSfx('confirm');
         this.hud.showMessage(`${result.abilityName}! Enemy weakened for ${result.duration} turns!`);
         this.scene.flash(0xddaa00, 0.10);
@@ -1763,7 +1819,7 @@ export class CombatState {
         return 1300;
       }
       case 'whistleblower': {
-        this.scene.playerAbilityLunge(0.7, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.7 });
         this.hud.showMessage('Whistleblower!');
         this.scene.flash(0xcc0000, 0.12);
         this.particles.burst({ x: 0, y: 1.5, z: 2 }, 15, 0xff2200, 3, 0.6);
@@ -1772,17 +1828,20 @@ export class CombatState {
           this.scene.shake(0.5);
           this.particles.burst({ x: 0, y: 1.3, z: 1 }, 20, 0xff4400, 3.5, 0.8);
         }, 250);
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.flash(0xff2200, 0.25);
           this.scene.shake(crit ? 1.2 : 0.9);
           this.scene.enemyHurtAnim(ti);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
           this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 40 : 30, 0xff0000, 4, 1.0);
-        }, 500);
-        return 1600;
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
+        return contact + 950;
       }
       case 'power_of_attorney': {
+        this.scene.playerCastAnim(allyIndex);
         AudioManager.playSfx('heal');
         this.hud.showMessage(`${result.abilityName}!`);
         this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', allyIndex);
@@ -1795,21 +1854,24 @@ export class CombatState {
         return 1400;
       }
       case 'root_access': {
-        this.scene.playerAbilityLunge(0.6, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.6 });
         this.hud.showMessage('Root Access!');
         this.particles.stream({ x: 0.1, y: 1.0, z: 3.5 }, { x: 0, y: 1.2, z: 0.3 }, 25, 0x00ff44, 0.4);
         this.particles.stream({ x: -0.1, y: 1.3, z: 3.5 }, { x: 0, y: 1.0, z: 0.2 }, 15, 0x44ff88, 0.35);
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.enemyHurtAnim(ti);
           this.scene.shake(crit ? 0.9 : 0.5);
           AudioManager.playSfx(crit ? 'critical' : 'hit');
           this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 35 : 22, 0x00ff44, 3.5, 1.0);
           if (result.strippedBuffs) this.hud.showMessage('All enemy buffs stripped!');
-        }, 400);
-        return 1500;
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
+        return contact + 950;
       }
       case 'firewall': {
+        this.scene.playerCastAnim(allyIndex);
         AudioManager.playSfx('confirm');
         this.hud.showMessage('Firewall active! Next enemy action will be blocked.');
         this.scene.flash(0x2244aa, 0.15);
@@ -1818,6 +1880,7 @@ export class CombatState {
         return 1300;
       }
       case 'temporal_audit': {
+        this.scene.playerCastAnim(allyIndex);
         AudioManager.playSfx('confirm');
         this.hud.showMessage('Temporal Audit! You get another action!');
         this.scene.flash(0x8844cc, 0.15);
@@ -1826,11 +1889,11 @@ export class CombatState {
         return 1200;
       }
       case 'notarized_strike': {
-        this.scene.playerAbilityLunge(0.7, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.7 });
         this.hud.showMessage('Notarized Strike!');
         this.scene.flash(0xddaa00, 0.10);
         this.particles.burst({ x: 0, y: 2.5, z: 0 }, 12, 0xffd700, 1.0, 0.5);
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.flash(0xffdd00, 0.25);
           this.scene.shake(crit ? 1.2 : 0.8);
           this.scene.enemyHurtAnim(ti);
@@ -1838,16 +1901,18 @@ export class CombatState {
           this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, crit ? 35 : 25, 0xffd700, 4, 1.0);
           this.particles.burst({ x: 0, y: 0.5, z: 0 }, 10, 0xaa8800, 2, 0.6);
-        }, 400);
-        return 1500;
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
+        return contact + 950;
       }
       case 'invoke_charter': {
-        this.scene.playerAbilityLunge(0.9, allyIndex);
+        const contact = this.scene.playerAbilityAnim(allyIndex, { distance: 0.9 });
         this.hud.showMessage('Invoke Charter!');
         this.scene.flash(0xffffff, 0.15);
         this.particles.burst({ x: 0, y: 3.0, z: 0 }, 20, 0xffffff, 1.5, 0.6);
         this.particles.burst({ x: 0, y: 2.8, z: 0 }, 15, 0xffd700, 1.2, 0.5);
-        if (!skipImpact) setTimeout(() => {
+        if (!skipImpact) this._scheduleImpact(() => {
           this.scene.flash(0xffffcc, 0.30);
           this.scene.shake(crit ? 1.5 : 1.0);
           this.scene.enemyHurtAnim(ti);
@@ -1855,8 +1920,10 @@ export class CombatState {
           this._spawnDamageNumberAtEnemy(result.damage, crit ? 'critical' : 'damage', ti);
           this.particles.burst({ x: 0, y: 1.5, z: 0 }, crit ? 45 : 35, 0xffffff, 5, 1.2);
           this.particles.burst({ x: 0, y: 1.2, z: 0 }, 20, 0xffd700, 4, 1.0);
-        }, 500);
-        return 1700;
+          this.scene.holdAllyPose(allyIndex, 140);
+          this._refreshHPBars();
+        }, contact);
+        return contact + 1050;
       }
       default: {
         if (!skipImpact) {
@@ -1874,6 +1941,7 @@ export class CombatState {
             this._spawnDamageNumberForAlly(`+${result.healAmount}`, 'heal', this._activeAllyIndex);
             this.particles.burst({ x: 0, y: 1, z: 4 }, 10, 0x44ff44, 2, 1.0);
           }
+          this._refreshHPBars();
         }
         return 1200;
       }
@@ -1989,7 +2057,14 @@ export class CombatState {
   }
 
   // ── HUD refresh helpers ──────────────────────────────────────────────
-  _refreshHUD() {
+  // HP BARS ARE NOT PART OF THE COMMAND. _refreshHUD() runs synchronously
+  // inside every execute path, so the enemy's bar was commanded down at +9ms,
+  // started visibly draining at +55ms and had FINISHED at +477ms — 264ms before
+  // the fist landed. `deferBars` holds the enemy bars back so the impact
+  // callback can call _refreshHPBars() on the contact frame instead. Only the
+  // player-action paths pass it; every other caller keeps the shipped
+  // behaviour, which was already contact-adjacent.
+  _refreshHUD({ deferBars = false } = {}) {
     const ally = this.engine.allies[this._activeAllyIndex] || this.engine.allies[0];
     this.hud.updatePlayerStats({
       ...(this._activeAllyIndex === 0 ? this.player.stats : {}),
@@ -2002,10 +2077,38 @@ export class CombatState {
       isPlayer: this._activeAllyIndex === 0,
       _xpTable: this._activeAllyIndex === 0 ? XP_TABLE : null,
     });
-    this.hud.updateAllEnemies(this.engine.enemies);
+    if (!deferBars) this.hud.updateAllEnemies(this.engine.enemies);
     this.hud.updateBuffStatus(this.engine.player.buffs, this.engine.enemy?.buffs || []);
     this.hud.refreshPartyRow(this._buildPartyView());
     this._refreshDepthHUD();
+  }
+
+  // The deferred half of _refreshHUD — call it from an impact callback.
+  _refreshHPBars() {
+    this.hud.updateAllEnemies(this.engine.enemies);
+  }
+
+  // ── _scheduleImpact — the one contact scheduler ──────────────────────
+  // Replaces every hand-tuned `setTimeout(..., 220/300/350/500)` in the attack
+  // paths. `fn` runs on the frame the active cinematic timeline reaches its
+  // `impact` step; the timer is a LATCHED SAFETY NET for any path that has no
+  // timeline (or whose timeline was cancelled), so the chain can never be
+  // silently dropped and can never run twice.
+  //
+  // Why not just the timer: measured through the shipping code path under
+  // capture load, a setTimeout scheduled for the contact frame fired 51ms late
+  // while the game-clock timeline step landed within 5ms.
+  _scheduleImpact(fn, ms) {
+    let fired = false;
+    const once = () => {
+      if (fired) return;
+      fired = true;
+      if (this._impactHook === once) this._impactHook = null;
+      fn();
+    };
+    this._impactHook = once;
+    setTimeout(once, Math.max(0, ms) + 110);
+    return once;
   }
 
   _spawnDamageNumberAtEnemy(text, type, enemyIndex) {
@@ -2181,36 +2284,47 @@ export class CombatState {
     this.phase = 'animating';
     this.hud.disableInput();
 
+    const ai = this._activeAllyIndex;
+    const ti = result.targetIndex ?? 0;
+    // THE SWING, WHICH DID NOT EXIST. _executePowerMove called
+    // playerAbilityLunge() — a group translate — and never playerAttackAnim, so
+    // on the game's signature move Andrew stood in his calm stance and slid 1.0
+    // units while the screen did all the work. The charge stays authored at
+    // 680ms; the body clip is started early enough that ITS contact frame lands
+    // on that beat instead of arriving after it.
+    const SLAM = 680;
+    const contact = this.scene.allyContactMs(ai, 'attack', 220);
+    setTimeout(() => this.scene.playerAttackAnim(ai), Math.max(0, SLAM - contact));
+
     // Cinematic: slow low-angle push-in, backdrop darkens, one hard rim beat,
-    // burst on impact (POWER_MOVE timeline). Damage lands on the 680ms slam.
-    this.cine.play('power', { targetIndex });
-    // Dedicated upper-third banner (not a centered combat-message that a phase
-    // taunt firing on the same beat would bury). Andrew's own quip is delayed so
-    // the banner + damage number own the money frame, then the phase message.
-    this.hud.showBanner('ASSERT DOMINANCE');
-    setTimeout(() => this._fireTaunt('power_move'), 900);
-    setTimeout(() => this._checkPhaseChange(), 1100);
+    // burst on impact (POWER_MOVE timeline), and the splash card on the same
+    // frame. The card carries the title now — showBanner('ASSERT DOMINANCE')
+    // would put two titles on screen.
+    this.cine.play('power', { targetIndex, contactMs: SLAM });
+    setTimeout(() => this._fireTaunt('power_move'), 1400);
+    setTimeout(() => this._checkPhaseChange(), 1600);
     AchievementManager.check(this.player, { event: 'power_move_used' });
     // Anticipation charge during the low push-in
     this.particles.burst({ x: 0, y: 2.5, z: 2 }, 30, 0xffd700, 4, 0.8);
     this.particles.burst({ x: 0, y: 1.8, z: 2 }, 20, 0xffff00, 3, 0.6);
 
-    setTimeout(() => {
-      this.scene.flash(0xffffff, 0.3);
-      this.scene.shake(1.5);
-      this.scene.enemyHurtAnim(result.targetIndex ?? 0);
-      this.scene.playerAbilityLunge(1.0, this._activeAllyIndex);
+    this._scheduleImpact(() => {
+      this.scene.impactBeat('power', 0xffffff);
+      this.scene.strikeAccent(ai);
+      this.scene.enemyHurtAnim(ti);
+      this.scene.holdAllyPose(ai, 220);        // the finisher pose is HELD
       AudioManager.playSfx('critical');
-      this._spawnDamageNumberAtEnemy(result.damage, 'critical', result.targetIndex ?? 0);
+      this._spawnDamageNumberAtEnemy(result.damage, 'critical', ti);
+      this._refreshHPBars();
       this.particles.burst({ x: 0, y: 1.2, z: 0 }, 50, 0xffd700, 6, 1.5);
       this.particles.burst({ x: 0, y: 1.5, z: 0 }, 25, 0xffffff, 5, 1.2);
-    }, 680);
+    }, SLAM);
 
-    this._refreshHUD();
+    this._refreshHUD({ deferBars: true });
     setTimeout(() => {
       if (this.engine.isOver) this._handleResult();
       else this._processNextAllyTurn();
-    }, 2000);
+    }, 2300);
   }
 
   _executePressAdvantage(targetIndex) {
@@ -2225,28 +2339,34 @@ export class CombatState {
 
     this.phase = 'animating';
     this.hud.disableInput();
-    this.cine.play('attack', { crit: !!result.critical, targetIndex });
+    const ai = this._activeAllyIndex;
+    const ti = result.targetIndex ?? 0;
+    // Press Advantage is a free action, not a mime: it plays a real body clip
+    // now instead of only translating the group 0.6 units.
+    const contact = this.scene.playerAbilityAnim(ai, { distance: 0.6 });
+    this.cine.play('attack', { crit: !!result.critical, targetIndex, contactMs: contact });
     this.hud.showMessage('Advantage filed. Your action remains unspent.');
-    this.scene.playerAbilityLunge(0.6, this._activeAllyIndex);
     this.scene.flash(0x8844ff, 0.10);
     this.particles.stream({ x: 0.1, y: 1.0, z: 3.5 }, { x: 0, y: 1.2, z: 0.3 }, 18, 0xaa66ff, 0.30);
-    setTimeout(() => {
-      this.scene.enemyHurtAnim(result.targetIndex ?? 0);
-      this.scene.shake(result.critical ? 0.7 : 0.4);
+    this._scheduleImpact(() => {
+      this.scene.impactBeat(result.critical ? 'crit' : 'light', 0xaa66ff);
+      this.scene.enemyHurtAnim(ti);
+      this.scene.holdAllyPose(ai, 120);
       AudioManager.playSfx(result.critical ? 'critical' : 'hit');
-      this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', result.targetIndex ?? 0);
+      this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', ti);
+      this._refreshHPBars();
       this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 25 : 15, 0xaa66ff, 3, 0.9);
-    }, 300);
+    }, contact);
 
     if (result.critical) this._fireTaunt('crit');
     this._checkPhaseChange();
-    this._refreshHUD();
+    this._refreshHUD({ deferBars: true });
     this._refreshDepthHUD();
     setTimeout(() => {
       if (this.engine.isOver) { this._handleResult(); return; }
       // E33 Gradient model: this does NOT end the turn. Andrew still acts.
       this._enablePlayerInput();
-    }, 1400);
+    }, contact + 700);
   }
 
   _executeSecondWind() {
@@ -2284,28 +2404,32 @@ export class CombatState {
 
       this.phase = 'animating';
       this.hud.disableInput();
-      this.cine.play('retaliate', { crit: !!result.critical, targetIndex });
+      const ai = this._activeAllyIndex;
+      const rContact = this.scene.allyContactMs(ai, 'attack', 200);
+      this.cine.play('retaliate', { crit: !!result.critical, targetIndex, contactMs: rContact });
       const msg = multiplier >= 1.4 ? 'DEVASTATING COUNTER!' : multiplier >= 1.0 ? 'Direct Counter!' : multiplier >= 0.66 ? 'Counter-Attack!' : 'Glancing Counter...';
       this.hud.showMessage(msg);
       this._fireTaunt('retaliate');
       AchievementManager.check(this.player, { event: 'retaliate_used' });
-      this.scene.playerAttackAnim(this._activeAllyIndex);
-      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
+      this.scene.playerAttackAnim(ai);
       this.particles.stream({ x: 0.1, y: 1.0, z: 3.8 }, { x: 0, y: 1.2, z: 0.3 }, 16, 0x44ffaa, 0.25);
-      setTimeout(() => {
+      this._scheduleImpact(() => {
+        this.scene.impactBeat(result.critical ? 'crit' : 'normal', 0x44ffaa);
+        this.scene.strikeAccent(ai);
         this.scene.enemyHurtAnim(result.targetIndex ?? 0);
-        this.scene.shake(result.critical ? 0.8 : 0.4);
-        this.scene.flash(0x44ffaa, 0.12);
+        this.scene.holdAllyPose(ai, 140);
+        AudioManager.playSfx(result.critical ? 'critical' : 'hit');
         this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', result.targetIndex ?? 0);
+        this._refreshHPBars();
         this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 28 : 18, 0x44ffaa, 3, 0.9);
-      }, 200);
+      }, rContact);
 
       this._checkPhaseChange();
-      this._refreshHUD();
+      this._refreshHUD({ deferBars: true });
       setTimeout(() => {
         if (this.engine.isOver) this._handleResult();
         else this._processNextAllyTurn();
-      }, 1300);
+      }, rContact + 700);
     });
   }
 
@@ -2486,17 +2610,27 @@ export class CombatState {
     } else {
       const label = risk === 'all_in' ? 'ALL IN pays off!' : risk === 'risky' ? (result.success ? 'Risky move pays off!' : 'Risky move backfires!') : 'Safe bet lands!';
       this.hud.showMessage(label);
-      // Cinematic: risk-tiered drama (safe steady / risky commit / all-in low-angle).
-      this.cine.play('gamble', { risk, targetIndex });
-      this.scene.playerAttackAnim(this._activeAllyIndex);
-      AudioManager.playSfx(result.critical ? 'critical' : 'hit');
-      setTimeout(() => {
+      // Cinematic: risk-tiered drama (safe steady / risky commit / all-in
+      // low-angle). `splash` gates the All-In card on the gamble actually
+      // LANDING — a splash card on a whiffed 40% would read as a reward for
+      // losing, and the miss already banks 40 Confidence of its own.
+      const ai = this._activeAllyIndex;
+      const gContact = this.scene.allyContactMs(ai, 'attack', 200);
+      this.cine.play('gamble', {
+        risk, targetIndex, contactMs: gContact,
+        splash: risk === 'all_in' && !!result.success,
+      });
+      this.scene.playerAttackAnim(ai);
+      this._scheduleImpact(() => {
+        this.scene.impactBeat(result.critical ? 'crit' : 'normal', result.critical ? 0xffd700 : 0xff4466);
+        this.scene.strikeAccent(ai);
         this.scene.enemyHurtAnim(result.targetIndex ?? 0);
-        this.scene.shake(result.critical ? 1.0 : 0.4);
-        this.scene.flash(result.critical ? 0xffd700 : 0xff4466, 0.15);
+        this.scene.holdAllyPose(ai, 160);
+        AudioManager.playSfx(result.critical ? 'critical' : 'hit');
         this._spawnDamageNumberAtEnemy(result.damage, result.critical ? 'critical' : 'damage', result.targetIndex ?? 0);
+        this._refreshHPBars();
         this.particles.burst({ x: 0, y: 1.2, z: 0 }, result.critical ? 35 : 18, 0xff4466, 3, 0.9);
-      }, 200);
+      }, gContact);
     }
 
     if (!result.success && result.consolationMomentum > 0) {
@@ -2584,8 +2718,15 @@ export class CombatState {
 
   update(dt) {
     this.scene.update(dt);
-    this.cine.update(dt);   // advance camera timelines on the game clock (locked to gestures/hit-stop)
-    this.particles.update(dt);
+    // FREEZE MEANS FREEZE. CombatScene.update() early-returns during hit-stop,
+    // but the camera timeline and the particles were advanced UNCONDITIONALLY
+    // here — so a "freeze" moved the camera and kept the sparks flying while
+    // the bodies stood still. That is the opposite of what a hit-stop is for,
+    // and the comment in this file already claimed the correct behaviour.
+    if (this.scene.freezeTimer <= 0) {
+      this.cine.update(dt);   // advance camera timelines on the game clock (locked to gestures/hit-stop)
+      this.particles.update(dt);
+    }
 
     Engine.renderScene(this.scene.scene, this.scene.camera);
     Engine.skipDefaultRender();

@@ -2,7 +2,7 @@
 //
 // DELIBERATELY EXEMPT from the NotificationArbiter queue. The audit measured
 // `floating damage x everything` at 0 % pixel overlap across every scenario and
-// ruled it acceptable: these are short (1200 ms), SPATIAL, and anchored to a
+// ruled it acceptable: these are short (820 ms), SPATIAL, and anchored to a
 // body on screen, so they are a different act of reading from a notification.
 // Serialising them through a single-occupancy zone would destroy the exact read
 // they exist to give — you would no longer see the three hits of a combo land
@@ -19,6 +19,9 @@ const RUNG_RESET_MS = 900;
 const RUNGS = 4;
 
 export class FloatingText {
+  // Kept in lockstep with the CSS animation length (styles/combat.css).
+  static LIFETIME_MS = 820;
+
   constructor() {
     this.container = document.getElementById('ui-overlay');
     this._live = [];
@@ -54,12 +57,14 @@ export class FloatingText {
       if (old && old.parentNode) old.parentNode.removeChild(old);
     }
 
-    // Remove after animation
+    // Remove after animation. LIFETIME must track styles/combat.css's
+    // floatUp/floatUpBig duration — the numbers punch in, HOLD, and leave in
+    // 800ms now instead of drifting up and dissolving over 1200.
     setTimeout(() => {
       const i = this._live.indexOf(el);
       if (i >= 0) this._live.splice(i, 1);
       if (el.parentNode) el.parentNode.removeChild(el);
-    }, 1200);
+    }, FloatingText.LIFETIME_MS);
   }
 
   spawnAt3DPosition(text, worldPos, camera, renderer, type = 'damage') {
