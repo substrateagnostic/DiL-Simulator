@@ -249,6 +249,117 @@ if (want('transfer')) {
   check('Escape closes the panel', closed);
 }
 
+// ── 6. SCENES: the rooms and people who stopped existing (F-2/4/5/6/12) ────
+if (want('scenes')) {
+  // Get back to ExplorationState first. EntityManager evaluates every NPC's
+  // conditionFn from ExplorationState.update, which returns early while
+  // `paused` — so with a MenuState still on the stack from the transfer block
+  // EVERY conditional NPC reads hidden and this whole section measures an
+  // empty room for the wrong reason. (It did, on the first full run.)
+  for (let i = 0; i < 4; i++) {
+    const top = await page.evaluate(() => {
+      const st = window.__explore.stateManager.stack;
+      return st[st.length - 1]?.constructor.name;
+    });
+    if (top === 'ExplorationState') break;
+    await tap('Escape'); await page.waitForTimeout(500);
+  }
+  await page.waitForTimeout(400);
+  const top = await page.evaluate(() => {
+    const st = window.__explore.stateManager.stack;
+    return `${st[st.length - 1]?.constructor.name}/paused=${!!window.__explore.paused}`;
+  });
+  check('scene block starts in an unpaused ExplorationState', top === 'ExplorationState/paused=false', top);
+
+  // One flag state that satisfies every new placement at once, applied through
+  // the same path the F2 dev panel uses.
+  await page.evaluate(async () => {
+    const ex = window.__explore;
+    Object.assign(ex.player.flags, {
+      briefing_complete: true, branch_chosen: true,
+      karen_defeated: true, chad_defeated: true, grandma_defeated: true,
+      act2_complete: true, act3_complete: true, act4_complete: true,
+      act5_complete: true, act6_complete: true, algorithm_defeated: true,
+      has_rolex: true, janitor_names_started: true, janitor_has_ledger: true,
+      janitor_names_complete: true, read_janitor_pattern: true,
+      renovation_penthouse: true, hr_accessible: true, vault_accessible: true,
+      met_janitor: true, defeated_intern: true, karen_first_meeting_over: true,
+    });
+    ex._syncActFromFlags?.();
+    ex._refreshStoryProgress(true);
+  });
+
+  const SCENES = [
+    ['break_room', 'chad', 'chad_return'],
+    ['executive_floor', 'meredith', 'meredith_footnote'],
+    ['conference_room', 'intern', 'intern_rehearsal'],
+    ['penthouse_bar', null, 'penthouse_pool_table'],
+    ['penthouse_aquarium', null, 'penthouse_reel'],
+    ['penthouse_analytics', null, 'penthouse_analytics_console'],
+    ['vault', null, 'vault_ledger_niche'],
+    ['parking_garage', null, 'janitor_closet_after'],
+  ];
+  for (const [room, npcId, dialogId] of SCENES) {
+    const r = await page.evaluate(async ({ room, npcId, dialogId }) => {
+      const ex = window.__explore;
+      const { DIALOGS } = await import('/src/data/dialogs/index.js');
+      await ex._changeRoom(room, 1, 1);
+      await new Promise(res => setTimeout(res, 500));
+      // Visible NPCs the room actually built, with their tiles — two bodies on
+      // one tile is a head inside a head whatever the conditions say.
+      const vis = (ex.roomManager?.entityManager?.npcs || []).filter(n => n.mesh?.visible);
+      const npcs = vis.map(n => `${n.id}@${n.position.x.toFixed(1)},${n.position.z.toFixed(1)}`);
+      const tiles = vis.map(n => `${Math.round(n.position.x)},${Math.round(n.position.z)}`);
+      const stacked = tiles.filter((t, i) => tiles.indexOf(t) !== i);
+      // The interactable/NPC must ROUTE to the dialog we appended, through
+      // the shipping resolver — not merely exist in DIALOGS.
+      let routed = null;
+      if (npcId) {
+        // The VISIBLE one. A room can hold several entries under one id and
+        // `.find` without this returns whichever was declared first, which is
+        // usually the hidden Act-1 body.
+        const npc = (ex.roomManager?.entityManager?.npcs || []).find(n => n.id === npcId && n.mesh?.visible);
+        // Through _getNpcDialogId, not _getDialogId: the quest-stage validator
+        // sits between them and can substitute `neutral_<id>`.
+        routed = npc ? ex._getNpcDialogId(npc) : null;
+      } else {
+        // Room keeps its definition on `.data`; there is no `.interactables`.
+        const it = (ex.roomManager?.currentRoom?.data?.interactables || [])
+          .find(i => i.dialogId === dialogId);
+        // And it must actually be LIVE under the current flags, not merely
+        // declared — every one of these is condition-gated.
+        const live = it && (!it.condition
+          || ((!it.condition.flag || ex.player.getFlag(it.condition.flag))
+            && (!it.condition.notFlag || !ex.player.getFlag(it.condition.notFlag))));
+        routed = live ? it.dialogId : null;
+      }
+      return { npcs, stacked, routed, nodes: DIALOGS[dialogId]?.length ?? 0, room: ex.player.currentRoom };
+    }, { room, npcId, dialogId });
+    check(`${room} -> ${dialogId}`, r.routed === dialogId && r.nodes > 0,
+      `routed=${r.routed} nodes=${r.nodes} visible=[${r.npcs.join(' ')}]`);
+    check(`${room}: no two bodies on one tile`, r.stacked.length === 0, r.stacked.join(' '));
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${OUT}/scene-${room}.png` });
+  }
+
+  // F-12 — the Janitor's name routes only after the pattern scene, and once.
+  const jan = await page.evaluate(() => {
+    const ex = window.__explore;
+    const fake = { id: 'janitor' };
+    const before = ex._getDialogId(fake);
+    ex.player.setFlag('read_janitor_the_name', true);
+    const after = ex._getDialogId(fake);
+    ex.player.setFlag('read_janitor_pattern', false);
+    ex.player.setFlag('read_janitor_the_name', false);
+    const withoutPattern = ex._getDialogId(fake);
+    ex.player.setFlag('read_janitor_pattern', true);
+    return { before, after, withoutPattern };
+  });
+  check('F-12 the name routes once the pattern has landed', jan.before === 'janitor_the_name', jan.before);
+  check('F-12 the name does not repeat', jan.after !== 'janitor_the_name', jan.after);
+  check('F-12 the pattern scene still comes first', jan.withoutPattern === 'janitor_pattern', jan.withoutPattern);
+}
+
 const fails = results.filter(r => !r.ok).length;
 writeFileSync(`${OUT}/evidence.json`, JSON.stringify({ results, logs: logs.slice(-40) }, null, 2));
 console.log(`\n${fails === 0 ? 'F-EVIDENCE PASS' : `F-EVIDENCE FAIL (${fails})`} — ${results.length} checks`);

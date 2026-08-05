@@ -436,6 +436,14 @@ export const ROOMS = {
       // = Math.PI; the chair at (9,7) is r=PI and an occupant carries its
       // chair's rotation). The old `facing: 0` pointed her at the south wall.
       { id: 'grandma', x: 9, z: 7, facing: Math.PI, sitting: true, condition: { flag: 'act5_complete' } },
+      // F-4. Chad's ONLY placement in the game was the entry above at
+      // `notFlag: karen_defeated` - after Act 2 he did not exist. Seated at
+      // table 1's south chair (4,7), which is r=PI, i.e. facing NORTH at the
+      // desk (a chair and its occupant carry the same rotation value). NOT
+      // (4,6): that tile is the desk itself and carries the tuesday_floppy
+      // interactable. Mutually exclusive with the idle entry above, because
+      // karen_defeated is necessarily set long before act5_complete.
+      { id: 'chad', x: 4, z: 7, facing: Math.PI, sitting: true, dialogId: 'chad_return', condition: { flag: 'act5_complete' } },
     ],
     exits: [
       // EAST exit -> Cubicle Farm
@@ -677,7 +685,21 @@ export const ROOMS = {
     ],
     npcs: [
       // Henderson beneficiaries appear based on quest progress
-      { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'retry_karen' } },
+      // THIS ENTRY HAD NO DEFEAT GATE. Its old condition was
+      // `{ briefing_complete, notFlag: retry_karen }`, and `retry_karen` is set
+      // only when the player LOSES to Karen — so a player who beat her first
+      // try left this entry live for the rest of the game. Karen stood in the
+      // conference room forever, her hardcoded `karen_meeting` still won
+      // _getDialogId, and that tree ends on `start_combat: karen`: a defeated
+      // boss re-fightable on demand, the same class of defect as Grandma's
+      // documented re-launch. Measured live at act 7 with every Henderson flag
+      // set. It also collided with the new Act-5 Intern on tile (8,4).
+      //
+      // The gate needs TWO notFlags (retry_karen keeps entries 2 and 3 mutually
+      // exclusive; karen_defeated closes the leak) and a condition object holds
+      // exactly one. So it reads a DERIVED flag instead — the documented
+      // pattern for compound conditions — set in _refreshStoryProgress().
+      { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'karen_first_meeting_over' } },
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_not_ready', condition: { flag: 'retry_karen', notFlag: 'karen_retry_ready' } },
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'karen_retry_ready', notFlag: 'karen_defeated' } },
       { id: 'chad', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'chad_meeting', condition: { flag: 'skip_post_karen', notFlag: 'chad_defeated' } },
@@ -685,6 +707,21 @@ export const ROOMS = {
       // the chair opposite — so she is SEATED. Chair (6,5) is r=PI (seats north
       // at the table), which is the facing she already carried.
       { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, sitting: true, dialogId: 'grandma_meeting', condition: { flag: 'skip_post_chad', notFlag: 'grandma_defeated' } },
+      // F-2. THE ROOM ALL OF ACT 1 BUILDS TOWARD HELD ZERO PEOPLE FROM ACT 3
+      // ON. All five entries above are gated `notFlag: *_defeated`, and all
+      // three Hendersons are necessarily beaten before branch_chosen. Two
+      // occupants close the gap, back to back, with no overlap:
+      //
+      // Acts 3-5 - Grandma stays in the chair she was beaten in, knitting and
+      // counting the exits. `grandma_return` already existed and already says
+      // exactly that; it had no placement anywhere to say it from.
+      { id: 'grandma', x: 6, z: 5.0, facing: Math.PI, sitting: true, dialogId: 'grandma_return', condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
+      // Act 5 on - the Intern at the head of the table, rehearsing a client
+      // walkthrough nobody assigned him. The WEST end chair (4,4) is r=PI/2,
+      // facing EAST down the table; an occupant carries its chair's rotation.
+      // Not the east end (8,4) - that is Karen's tile, and two bodies on one
+      // tile is the head-inside-a-head failure whatever the conditions say.
+      { id: 'intern', x: 4.0, z: 4, facing: Math.PI / 2, sitting: true, dialogId: 'intern_rehearsal', condition: { flag: 'act5_complete' } },
     ],
     exits: [
       // WEST exit -> Alex's Office
@@ -1014,7 +1051,12 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 4, z: 6, type: 'andrews_car', dialogId: 'andrews_car' },
-      { x: 12, z: 8, type: 'janitor_closet', dialogId: 'janitor_closet' },
+      { x: 12, z: 8, type: 'janitor_closet', dialogId: 'janitor_closet', condition: { notFlag: 'janitor_names_complete' } },
+      // F-2. The second reading of the locker. Gated AFTER the ledger changes
+      // hands, which is only reachable from inside the vault - so the first
+      // reading's 47-19-82 breaker clue is necessarily already spent by the
+      // time this entry takes over, and nothing load-bearing goes dark.
+      { x: 12, z: 8, type: 'janitor_closet', dialogId: 'janitor_closet_after', condition: { flag: 'janitor_names_complete' } },
     ],
     playerSpawn: { x: 7, z: 1 },
   },
@@ -1143,6 +1185,13 @@ export const ROOMS = {
       // anywhere until the board room (#20). Routing in _getDialogId serves
       // meredith_intro first, then meredith_act3, then meredith_return.
       { id: 'meredith', x: 12, z: 8, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'act4_complete' } },
+      // F-5. She is beaten in the Board Room at act5_complete and then does
+      // not exist anywhere in the world. One last scene: at the SECONDARY desk
+      // (3,3), standing on the open tile south of it, packing one box. Her
+      // dialog's stage node walks her to the elevator and sets `meredith_left`,
+      // which is this entry's notFlag - so the despawn lands after the walk,
+      // off-screen, instead of popping her out where she stood.
+      { id: 'meredith', x: 3, z: 4, facing: Math.PI, dialogId: 'meredith_footnote', condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -1501,7 +1550,12 @@ export const ROOMS = {
     interactables: [
       { x: 4, z: 1, type: 'safe_deposit_boxes', dialogId: 'vault_boxes' },
       // Janitor — The Names: ledger hidden behind the low-left deposit box frame
-      { x: 1, z: 6, type: 'ledger_hiding_spot', dialogId: 'janitor_names_search', condition: { flag: 'janitor_names_started' } },
+      { x: 1, z: 6, type: 'ledger_hiding_spot', dialogId: 'janitor_names_search', condition: { flag: 'janitor_names_started', notFlag: 'janitor_names_complete' } },
+      // F-2. After the ledger goes back, the hollow gets a real object instead
+      // of janitor_names_search's one-line close. Same tile, same lockbox at
+      // (0.64, 6.125) to walk up to - a second condition-gated ENTRY rather
+      // than an edit to janitor_names_search, so a mid-quest save is untouched.
+      { x: 1, z: 6, type: 'ledger_hiding_spot', dialogId: 'vault_ledger_niche', condition: { flag: 'janitor_names_complete' } },
     ],
     playerSpawn: { x: 1, z: 4 },
   },
@@ -1923,12 +1977,19 @@ export const ROOMS = {
       { type: 'popcornPopper', x: 14.5, z: 6.5 },
     ],
     npcs: [],
+    // F-6. This wing shipped with npcs: [] AND interactables: [] - and so did
+    // the other two. 10,000,000 AUM, roughly ten post-game whales, bought
+    // three rooms with nothing to touch in any of them.
     exits: [
       // WEST → back to Penthouse
       { x: 0, z: 3, targetRoom: 'penthouse_expanded', spawnX: 20, spawnZ: 7 },
       { x: 0, z: 4, targetRoom: 'penthouse_expanded', spawnX: 20, spawnZ: 8 },
     ],
-    interactables: [],
+    interactables: [
+      // The cinema screen at (7, 0.1) - co-placed with its own furniture, per
+      // the invisible-interactable law (A1 B3).
+      { x: 7, z: 0, type: 'movie_screen', dialogId: 'penthouse_reel' },
+    ],
     playerSpawn: { x: 8, z: 6 },
   },
 
@@ -1975,7 +2036,10 @@ export const ROOMS = {
       { x: 6, z: 7, targetRoom: 'penthouse_expanded', spawnX: 8,  spawnZ: 1 },
       { x: 7, z: 7, targetRoom: 'penthouse_expanded', spawnX: 9,  spawnZ: 1 },
     ],
-    interactables: [],
+    interactables: [
+      // The wall-sized dashboard at (7, 0.1); the centre station is (7, 3.8).
+      { x: 7, z: 0, type: 'analytics_console', dialogId: 'penthouse_analytics_console' },
+    ],
     playerSpawn: { x: 7, z: 6 },
   },
 
@@ -2113,13 +2177,34 @@ export const ROOMS = {
       { type: 'couch', x: 13,  z: 11                            }, // south wall, faces north
       { type: 'coffeeTable', x: 13,   z: 9.2  },
     ],
-    npcs: [],
+    // F-6. The lounge is the post-game team hub the writing already assumes:
+    // penthouse_pool_table names all six of them by voice, and until now the
+    // room was empty when it said so. Gated on `algorithm_defeated` - the wing
+    // only exists after renovation_penthouse anyway, but the flag is what makes
+    // them read as OFF SHIFT rather than mid-crisis.
+    // Every tile below is open floor: the bar owns x 7-11 at z 0-1, the pool
+    // table x 8-10 at z 5-7, the poker table x 14-16 at z 1-3, and the two VIP
+    // booths the corners.
+    npcs: [
+      { id: 'diane',   x: 11.6, z: 6.0, facing: -Math.PI / 2, condition: { flag: 'algorithm_defeated' } },
+      { id: 'janet',   x: 6.6,  z: 4.6, facing:  Math.PI / 2, condition: { flag: 'algorithm_defeated' } },
+      { id: 'alex_it', x: 11.6, z: 4.2, facing:  Math.PI / 2, condition: { flag: 'algorithm_defeated' } },
+      { id: 'isaiah',  x: 6.0,  z: 8.6, facing:  Math.PI,     condition: { flag: 'algorithm_defeated' } },
+      { id: 'intern',  x: 12.0, z: 8.6, facing:  Math.PI,     condition: { flag: 'algorithm_defeated' } },
+      { id: 'skip',    x: 12.4, z: 1.8, facing: -Math.PI / 2, condition: { flag: 'algorithm_defeated' } },
+    ],
     exits: [
       // EAST → back to Penthouse
       { x: 17, z: 5, targetRoom: 'penthouse_expanded', spawnX: 1, spawnZ: 10 },
       { x: 17, z: 6, targetRoom: 'penthouse_expanded', spawnX: 1, spawnZ: 11 },
     ],
-    interactables: [],
+    interactables: [
+      // The pool table at (9, 6) - the wing's payoff scene. The table blocks
+      // its own tile, which is correct and harmless: nothing reads grid 2 to
+      // FIND an interactable, _getNearbyTargets goes straight to
+      // getInteractable() (CLAUDE.md, TileMap.setInteractable).
+      { x: 9, z: 6, type: 'pool_table', dialogId: 'penthouse_pool_table' },
+    ],
     playerSpawn: { x: 15, z: 6 },
   },
 

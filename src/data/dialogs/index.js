@@ -5321,4 +5321,201 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "\"You want advice? The patty melt. And whatever Delia tells you, do it in that order.\"" },
     /* 2  */ { type: 'end' },
   ],
+
+  // ==========================================================================
+  // F-REMAINDER — the rooms and the people who stopped existing
+  // ==========================================================================
+  // Every tree below is NEW and APPENDED. Nothing above this block was
+  // renumbered, re-routed or edited — CLAUDE.md's law is that every
+  // next / ifTrue / ifFalse / choice.next in this file is an ABSOLUTE index,
+  // and the last drift cost 48 of 119 nodes their only path from node 0.
+  // What reaches these trees is `condition`-gated NPC and interactable entries
+  // in src/data/rooms/index.js, per A2's ruling that anything an actor must
+  // HOLD after a scene lives in room data and never in persisted staging.
+  //
+  // All prose first-drafted by Claude Opus 4.6 against WRITING.md's voice
+  // anchors and wired byte-identical (HANDOFF_PACKAGE §4.5).
+
+
+  // ── F-4 · Chad's one sincere thing ────────────────────────────────────────
+  // Chad had exactly ONE placement in the game (break room, notFlag
+  // karen_defeated) and four dialogs, none of them after Act 2. Karen has
+  // karen_return; Grandma has grandma_return; Chad had nothing. Anchor: Bret
+  // Easton Ellis lite — "sincere about exactly one thing (eventually), which
+  // should land like a brick." He gets 80 % of the way there in Chad-language,
+  // says it plain once in eight words, then covers with a brand name.
+  chad_return: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Chad Henderson is in the break room. Not at the Nespresso machine. Not looking at his phone. He appears to have been sitting here for some time. The protein shaker in front of him is full of water." },
+    /* 1  */ { type: 'text', speaker: 'Chad Henderson', text: "Oh. Hey. Trust guy. *He does not do the handshake.* I'm not here to fight about anything. Karen's handling all the fighting. She brought a binder to Grandpa's funeral. Tab-indexed. Color-coded tabs for who gets what percent of a man who used to make pancakes shaped like Wyoming." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "I didn't know he'd died." },
+    /* 3  */ { type: 'text', speaker: 'Chad Henderson', text: "Four months ago. Everybody lawyered up the same week. Her estate attorney bills in six-minute increments and sends emails at 2 AM that open with *per our last correspondence*. And I keep thinking about the lake house." },
+    /* 4  */ { type: 'text', speaker: 'Andrew', text: "The one you wanted to put on the blockchain." },
+    /* 5  */ { type: 'text', speaker: 'Chad Henderson', text: "Yeah. No. I — *He picks up the shaker, puts it down.* I did a backflip off the dock when I was fourteen." },
+    /* 6  */ { type: 'text', speaker: 'Andrew', text: "How bad was the backflip?" },
+    /* 7  */ { type: 'text', speaker: 'Chad Henderson', text: "Dude. Full scorpion. My knees hit the back of my head. Grandpa — the OG Chad, the actual Chad — he laughed at me for twenty minutes. Not polite laughing. Had to sit down on the dock because his legs stopped working." },
+    /* 8  */ { type: 'text', speaker: 'Chad Henderson', mood: 'defeated', text: "I didn't want the money. I just wanted the dock." },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: "Yeah." },
+    /* 10 */ { type: 'text', speaker: 'Chad Henderson', text: "*He picks up the protein shaker and actually drinks from it.* Anyway. You tried the new Erewhon smoothie? Forty-two dollars and it kind of changed my week." },
+    /* 11 */ { type: 'end' },
+  ],
+
+
+  // ── F-5 · Meredith's footnote ─────────────────────────────────────────────
+  // After act5_complete the villain did not exist anywhere in the world: her
+  // last placement is gated `act4_complete -> act5_complete` and her dialogs
+  // stop at meredith_boss_defeated. One scene on the executive floor, one box,
+  // and she is right about something Andrew will not enjoy. She does not
+  // become a good person, does not raise her voice, and never says she will be
+  // back. IDS NEVER CHANGE and the display name is always Meredith Sterling.
+  //
+  // The STAGE node walks her to the elevator instead of popping her out of
+  // existence where she stood (A2-cutscene-audit: "an NPC leaves by having its
+  // condition flip … the character pops out of existence standing exactly
+  // where it was"). `meredith_left` is what her room entry's notFlag reads, so
+  // the despawn happens after the walk and off-screen.
+  meredith_footnote: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Meredith Sterling is at the secondary desk on the executive floor. She is packing a single cardboard box. It has already been labeled, in her handwriting, in block capitals. She is not rushed." },
+    /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "Andrew. *She does not look up.* Close the door, please." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "I wasn't planning on staying." },
+    /* 3  */ { type: 'text', speaker: 'Meredith Sterling', text: "Then close it on your way out. But you should hear this first." },
+    /* 4  */ { type: 'text', speaker: 'Meredith Sterling', text: "What you did with the charter was structurally sound. I reviewed it twice. The filing was clean and the precedent was applicable. The board had no procedural basis for override. I would have done it differently, but I would not have done it better." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Is that a compliment?" },
+    /* 6  */ { type: 'text', speaker: 'Meredith Sterling', text: "It is an assessment. Compliments are retention tools. You need information. *She places a framed photograph into the box, face down.* What you did was not a victory. It was a deferral. The incentives that produced my proposal have not changed. Margin compression and regulatory consolidation are structural forces. I was the instrument. It does not require me." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "How long?" },
+    /* 8  */ { type: 'text', speaker: 'Meredith Sterling', text: "Fourteen years. Eleven if they hire a comptroller from outside the trust division. I have a model. It was right about Lehman within two quarters." },
+    /* 9  */ { type: 'text', speaker: 'Andrew', text: "I don't know what to do with that number." },
+    /* 10 */ { type: 'text', speaker: 'Meredith Sterling', text: "No. *She closes the box.* You wouldn't." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "The label on the box reads STERLING, M. — NON-CORE ASSETS." },
+    /* 12 */ { type: 'stage', beats: [
+      // She carries the box out rather than vanishing at the desk.
+      { actor: 'meredith', walkTo: 'exec_center', speed: 1.4 },
+      { actor: 'meredith', exit: 'elevator', speed: 1.4, after: 0 },
+      { actor: 'player', face: 'elevator', wait: false },
+    ] },
+    /* 13 */ { type: 'action', action: 'set_flag', flag: 'meredith_left', value: true },
+    /* 14 */ { type: 'end' },
+  ],
+
+
+  // ── F-12 · The Janitor's name ─────────────────────────────────────────────
+  // `ending_architect` node 3 has said "My name isn't 'the Janitor.' It never
+  // was." since the game shipped, and he never says what it is. This is where
+  // he does. Routed from `_getDialogId` AFTER janitor_pattern — exactly how
+  // that scene is routed — so no existing tree is edited to carry it.
+  //
+  // DO NOT EXPLAIN THE WATCH. The 1947 / page 47 / twenty-two-years
+  // contradictions are load-bearing; the missing name is not (proposals doc,
+  // verbatim). He gives it as a correction, not a confession; Andrew uses it
+  // once in an ordinary sentence; that is the whole payoff.
+  janitor_the_name: [
+    /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "You been calling me that this whole time. *He wrings the mop.* The Janitor. I can hear the capital letters." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "You never told me your name." },
+    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Curtis Briggs. It's on the boiler inspection card downstairs. Been on it since they put the boiler in." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Floor's looking good, Curtis." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "He dunks the mop and starts on the east corridor. Same as yesterday. Same as 1947." },
+    /* 5  */ { type: 'end' },
+  ],
+
+
+  // ── F-2 · conference_room stops being empty ───────────────────────────────
+  // Five NPC entries, every one gated `notFlag: *_defeated`, so from Act 3
+  // onward the room the whole of Act 1 builds toward held ZERO people.
+  // Grandma holds it through Acts 3-5 on her existing grandma_return; the
+  // Intern holds it from Act 5 on, rehearsing a client walkthrough nobody
+  // assigned him to eight empty chairs.
+  intern_rehearsal: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The conference room lights are on. This is noteworthy. Since the last Henderson left it, the room has held eight chairs around a table and the specific atmospheric weight of a place where people learned they were wrong about money. The Intern is standing at the head of it with index cards. He has been here for some time." },
+    /* 1  */ { type: 'text', speaker: 'The Intern', text: "Oh. Oh no. You weren't supposed to — I'm not — I was just — sorry about the lights. I can put the lights back." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "The lights are fine." },
+    /* 3  */ { type: 'text', speaker: 'The Intern', text: "I've been practicing. Client onboarding. Nobody assigned it. I just thought if someone ever asked and I hadn't prepared, that would be the kind of thing that happens to me specifically." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "He held up his index cards the way a man holds up a parking ticket he knows he deserves. There were fourteen. Card nine had been rewritten so many times the eraser marks went through to the other side." },
+    /* 5  */ { type: 'text', speaker: 'The Intern', text: "So the key distinction — and I think people miss this — is that discretionary distributions aren't discretionary for the trustee. The beneficiary has discretion to request. The trustee has an obligation to evaluate prudently. Doing nothing is still a decision, and it gets reviewed like one." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "He stopped. He looked at his own index card as though it had said that without his permission." },
+    /* 7  */ { type: 'text', speaker: 'The Intern', mood: 'worried', text: "Was that right? That sounded right. I don't want that to be right. That is far too much responsibility for a word I learned on Tuesday." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "That was right." },
+    /* 9  */ { type: 'text', speaker: 'The Intern', text: "Sorry, chair six. You've been very patient about the whole thing." },
+    /* 10 */ { type: 'end' },
+  ],
+
+
+  // ── F-2 · the vault remembers ─────────────────────────────────────────────
+  // `vault` shipped with `npcs: []` and two interactables, one of which
+  // (janitor_names_search) closes on a single line once the ledger is
+  // returned. The hollow gets a real object afterwards, served by a SECOND
+  // condition-gated interactable entry on the same tile — janitor_names_search
+  // is not edited, so a save that is mid-quest still reads its node 8.
+  vault_ledger_niche: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The hollow behind the safe-deposit frame is the same shape it has always been. Seventeen inches deep, nine wide. Without the ledger it looks like what it probably always was — a mason's error from 1947 that someone decided to keep." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "At the back, pressed flat against the mortar where the binding sat for decades, there is a brass coat button. The reverse is stamped DONOVAN & SONS, CHICAGO — a company that closed in 1971, which means the button was here before the ledger was." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Huh." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The air in the hollow still smelled faintly of binding glue. It would for years." },
+    /* 4  */ { type: 'end' },
+  ],
+
+
+  // ── F-2 · the garage keeps working ────────────────────────────────────────
+  // The supply locker's first reading carries the game's earliest vault clue
+  // (the 47-19-82 breaker tag) and must never move. This is the SECOND
+  // reading, served only after the ledger has changed hands — by which point
+  // the override numbers are necessarily already spent, because returning the
+  // ledger requires having been inside the vault.
+  janitor_closet_after: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The Janitor's supply locker looks the same from outside. Mops by handle length, the patrol schedule in block capitals. But below the schedule, on a hook that was not there last week, there is a flashlight." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "A four-cell Maglite, recently oiled. A strip of masking tape on the handle reads FOURTH FLOOR — GRID 6 in the Janitor's handwriting. Below that, in smaller print: 214 HRS." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Grid 6 is Andrew's desk." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "That's thorough." },
+    /* 4  */ { type: 'end' },
+  ],
+
+
+  // ── F-6 · the trophy wing does something ──────────────────────────────────
+  // renovation_penthouse costs 10,000,000 AUM — roughly ten post-game whales —
+  // and bought three rooms that shipped with `npcs: []` AND `interactables: []`
+  // in ALL THREE. The worst value-per-AUM in the game, and the first thing a
+  // post-game playtester finds. One interaction per wing.
+  penthouse_pool_table: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The pool table sits in the center of the west wing like a declaration of intent. The rug beneath it costs more than Andrew's car. Everyone is here, which for the first time in the building's history means the fourth-floor break room is completely empty." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "Andrew racks with the careful geometry of a man who last played pool in a dormitory basement and is entirely reliant on muscle memory." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "Right then." },
+    /* 3  */ { type: 'text', speaker: 'The Intern', text: "I need to disclose that I have two documented cue-sport incidents, both at family events. Details are restricted but I want everyone to have informed consent." },
+    /* 4  */ { type: 'text', speaker: 'Janet', text: "Fourteen years I assumed the top floor was storage and poor decisions. The pool table is a significant improvement." },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Diane takes a cue from the rack, chalks it once, and sinks the three ball into the far corner pocket without appearing to aim." },
+    /* 6  */ { type: 'text', speaker: 'Diane', text: "I learned on a table in the sub-basement. 1961. Mr. Fargo's secretary could clear a full rack in four minutes. She taught me on Tuesday lunches for two years, and I never did thank her the way she deserved." },
+    /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Every ball on this table is already in its pocket. The felt is just being polite about the sequence." },
+    /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I brought a book, but I'm putting it down. This is better." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "Skip Hartley is standing by the bar with something in a glass he has not touched. He is watching the game the way a man watches a departure board when his flight has already landed." },
+    /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "I keep waiting for someone to hand out an agenda." },
+    /* 11 */ { type: 'text', speaker: 'Narrator', text: "Nobody does. The game continues until no one remembers the score." },
+    /* 12 */ { type: 'end' },
+  ],
+
+
+  penthouse_reel: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The screen fills the north wall between the reef tanks. The play button is centered in a font that has never once doubted itself." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "*Welcome to the Vaults Fargo Year in Review. Advancing Trust. Securing Tomorrow.*" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "*In a defining moment for institutional identity, foundational governance documentation was surfaced and presented to key stakeholders, driving alignment with the organization's original charter of values.*" },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "I read a piece of paper out loud because it was the only thing left to do." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "*Fiduciary stewardship was further demonstrated when a portfolio advisory engagement achieved the successful redirection of twelve million dollars from a volatile digital asset class, preserving intergenerational wealth across four beneficiary tiers.*" },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "He wanted to put a trust fund into a coin with a dog on it. The dog was wearing sunglasses." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "*A routine infrastructure audit revealed previously unrecognized data governance capabilities embedded within existing hardware, representing a paradigm shift in institutional archival methodology.*" },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "The printer was plugged into the wrong port. For years. It was just copying everything." },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The reel runs for another forty-one seconds. There is a pie chart with six segments and a legend that labels four. A stock photograph of two people shaking hands appears at the nine-second mark and again at the sixteen-second mark. They are the same hands." },
+    /* 9  */ { type: 'text', speaker: 'Narrator', text: "Andrew watches it to the end. He does not turn it off. It is not worth the argument with the remote." },
+    /* 10 */ { type: 'end' },
+  ],
+
+
+  penthouse_analytics_console: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The north wall is a single screen. Five stations arc below it, each with a keyboard and a chair that remembers who sat in it last. Andrew takes the center seat. The chair adjusts to his height without being asked, which is either good design or proof the building has always known more about him than he is comfortable with." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "The previous user's presets are still loaded. The dashboard opens to a view labeled OVERHEAD OPTIMIZATION. Andrew does not recognize the name on the login." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "He clears the presets. The system offers seventeen categories. Category four is a live discretionary-distribution tracker — every pending trustee review, color-coded by filing deadline, with a rolling ninety-day lookback." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Oh. That's actually useful." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "Category eleven is labeled STAFF MORALE INDEX. It estimates team sentiment from email punctuation and the average duration of voluntary door-holding. It updates every six hours. The current reading is 71, annotated WITHIN ACCEPTABLE PARAMETERS." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Acceptable to whom." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "Category nine is INDIVIDUAL CONTRIBUTOR EFFICIENCY INDEX. A decimal score for every employee on the fourth floor, updated hourly. Janet is a 0.73. The Intern is a 0.44, marked in amber." },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "Andrew holds the delete key on category nine until the screen asks if he is sure. He is sure." },
+    /* 8  */ { type: 'text', speaker: 'Andrew', text: "It has Janet at 0.73. Janet runs this floor." },
+    /* 9  */ { type: 'end' },
+  ],
+
 };

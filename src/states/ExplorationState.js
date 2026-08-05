@@ -2945,6 +2945,20 @@ export class ExplorationState {
       return 'janitor_pattern';
     }
 
+    // F-12 · The Janitor's name. `ending_architect` has said "My name isn't
+    // 'the Janitor.' It never was." since the game shipped, and never said
+    // what it is. It sits AFTER the pattern scene deliberately: the pattern is
+    // about the building, the name is about him, and in that order the second
+    // reads as the smaller, later thing. Same routing shape as janitor_pattern
+    // (own dialog, own read-flag) so no existing tree is edited to hold it.
+    if (id === 'janitor'
+        && this.player.getFlag('janitor_names_complete')
+        && this.player.getFlag('read_janitor_pattern')
+        && !this.player.getFlag('read_janitor_the_name')
+        && DIALOGS.janitor_the_name) {
+      return 'janitor_the_name';
+    }
+
     // The Janitor never falls through to generic act routing — his act3/
     // act4/act6 story beats are served ONLY by the gated Archive entries
     // (explicit dialogIds, security_guard → act3 → needs_skip → act4
@@ -3481,6 +3495,17 @@ export class ExplorationState {
       !this.player.getFlag('act6_ready')
     ) {
       this.player.setFlag('act6_ready', true);
+    }
+
+    // The first Karen meeting is over — either she lost (karen_defeated) or the
+    // player did (retry_karen, which hands off to the two retry entries). The
+    // conference room's first Karen entry gates on this because it needs BOTH
+    // terms and an NPC `condition` holds one notFlag. Without it, a player who
+    // beat her on the first attempt left her standing in that room for the rest
+    // of the game with a live `start_combat: karen` behind her.
+    if (!this.player.getFlag('karen_first_meeting_over')
+      && (this.player.getFlag('karen_defeated') || this.player.getFlag('retry_karen'))) {
+      this.player.setFlag('karen_first_meeting_over', true);
     }
 
     // Every renovation funded (F-7). Derived because the shop writes one flag

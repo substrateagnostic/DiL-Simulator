@@ -34,6 +34,21 @@ const KNOWLEDGE_GATE_DIALOGS = new Set([
   'janitor_riddle_3',
 ]);
 
+// EVERGREEN HUBS (A1-ux-audit C3). Choice memory is what makes a hub read as
+// explored — right up until the last topic is spent, at which point EVERY row
+// is at 42 % opacity and the hub reads as CLOSED. `team_chat_hub` is the named
+// offender: it is a permanent post-recruit fixture the player is meant to come
+// back to, and a fully-greyed panel tells them not to.
+//
+// The fix is one condition, not a second opt-out: memory stays on (so the
+// cursor still walks you to the topic you have not heard) until the player has
+// heard them all, and then the panel resets to fresh. Nothing about gating,
+// flags or reachability changes — this is presentation, same as the
+// KNOWLEDGE_GATE rule above.
+const EVERGREEN_HUB_DIALOGS = new Set([
+  'team_chat_hub',
+]);
+
 export class DialogState {
   /**
    * @param {Array} dialogTree - Array of dialog node objects
@@ -223,6 +238,21 @@ export class DialogState {
         && !!this.player.getFlag(`_chose_${this.dialogId}_${this.currentIndex}_${originalIndex}`);
       return { text: choice.text, id: displayIdx, seen };
     });
+    // Evergreen hub, every non-exit topic spent: drop the greying wholesale so
+    // the panel reads OPEN instead of CLOSED. The flags are untouched — this
+    // is only what the player is shown, and the moment a NEW topic unlocks
+    // (these hubs gate rows on ally flags) the greying comes straight back for
+    // the ones already heard.
+    if (EVERGREEN_HUB_DIALOGS.has(this.dialogId)) {
+      const topics = boxChoices.filter((c, i) => {
+        const t = filteredChoices[i].choice.next;
+        const idx = t !== undefined ? t : this.currentIndex + 1;
+        return this.dialogTree[idx]?.type !== 'end';
+      });
+      if (topics.length && topics.every(c => c.seen)) {
+        for (const c of boxChoices) c.seen = false;
+      }
+    }
 
     this.dialogBox.show(node.speaker || 'Narrator', node.prompt || node.text || '', boxChoices, undefined, node.mood);
 
