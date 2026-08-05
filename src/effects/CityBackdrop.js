@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { DEV_MODE } from '../utils/constants.js';
 
 // The world outside the building — the NIGHT LAYER of the Display Case.
 // Obsidian slab towers with light living in thin seams and edges (not
@@ -147,6 +148,13 @@ export class CityBackdrop {
     this._streakBFactor = 0.16;
     this._build();
     scene.add(this.group);
+    // Harness handle, same idiom as BuildingShell's `window.__shell`. A test
+    // CANNOT reach this through `import('/src/core/Engine.js')`: Vite serves an
+    // HMR-updated module at `…?t=<stamp>`, so a dynamic import after any edit
+    // to Engine.js hands back a SECOND EngineClass whose `cityBackdrop` is
+    // null — and a seam check written against it then passes for the wrong
+    // reason. Measured exactly that way.
+    if (DEV_MODE) window.__city = this;
     this.setTimeOfDay('morning');
   }
 

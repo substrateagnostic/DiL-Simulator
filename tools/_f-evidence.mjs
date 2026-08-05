@@ -115,8 +115,9 @@ if (want('ambience')) {
 // ── 3. SEAM: near-band thin towers drop their seam in the dark palettes ────
 if (want('seam')) {
   const seam = await page.evaluate(async () => {
-    const { Engine } = await import('/src/core/Engine.js');
-    const cb = Engine.cityBackdrop;
+    // `window.__city` (DEV_MODE only), not a fresh import of Engine.js — see
+    // the note at that assignment for why the import path lies after an edit.
+    const cb = window.__city;
     if (!cb) return null;
     const near = cb.buildings.filter(b => b.thin && b.radius <= 33 && b.variant !== 3);
     const row = {};
