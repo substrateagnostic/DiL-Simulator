@@ -1,0 +1,17 @@
+{
+ "tag": "before",
+ "errors": [],
+ "samples": 102,
+ "card": {
+  "fromMs": 868,
+  "toMs": 2102,
+  "durMs": 1285
+ },
+ "number": {
+  "fromMs": 868,
+  "toMs": 1558,
+  "durMs": 740
+ },
+ "startSkewMs": 0,
+ "endGapMs": 544
+}

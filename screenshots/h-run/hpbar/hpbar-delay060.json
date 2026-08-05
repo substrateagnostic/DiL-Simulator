@@ -1,0 +1,62 @@
+{
+ "tag": "delay060",
+ "fight": "karen",
+ "runs": 5,
+ "haveRig": true,
+ "errors": [],
+ "medianDeltaContactMs": 73,
+ "medianDeltaWriteMs": 89,
+ "medianTravelMs": 183,
+ "rows": [
+  {
+   "contactMs": 517,
+   "hpStartMs": 583,
+   "hpEndMs": 767,
+   "styleWriteMs": 439,
+   "deltaContactMs": 66,
+   "deltaWriteMs": 144,
+   "travelMs": 184,
+   "frames": 126
+  },
+  {
+   "contactMs": 411,
+   "hpStartMs": 502,
+   "hpEndMs": 687,
+   "styleWriteMs": 422,
+   "deltaContactMs": 92,
+   "deltaWriteMs": 81,
+   "travelMs": 185,
+   "frames": 138
+  },
+  {
+   "contactMs": 415,
+   "hpStartMs": 481,
+   "hpEndMs": 664,
+   "styleWriteMs": 405,
+   "deltaContactMs": 67,
+   "deltaWriteMs": 76,
+   "travelMs": 183,
+   "frames": 131
+  },
+  {
+   "contactMs": 415,
+   "hpStartMs": 488,
+   "hpEndMs": 665,
+   "styleWriteMs": 397,
+   "deltaContactMs": 73,
+   "deltaWriteMs": 91,
+   "travelMs": 178,
+   "frames": 147
+  },
+  {
+   "contactMs": 423,
+   "hpStartMs": 498,
+   "hpEndMs": 677,
+   "styleWriteMs": 410,
+   "deltaContactMs": 75,
+   "deltaWriteMs": 89,
+   "travelMs": 179,
+   "frames": 154
+  }
+ ]
+}

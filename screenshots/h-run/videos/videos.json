@@ -4,7 +4,8 @@
   "fight": "karen",
   "splash": [],
   "banners": [],
-  "errors": []
+  "errors": [],
+  "round": 2
  },
  {
   "beat": "weakness-turnback",
@@ -13,7 +14,8 @@
   "banners": [
    "OBJECTION SUSTAINED"
   ],
-  "errors": []
+  "errors": [],
+  "round": 2
  },
  {
   "beat": "composure-break",
@@ -22,7 +24,28 @@
   "banners": [
    "COMPOSURE BROKEN"
   ],
-  "errors": []
+  "errors": [],
+  "round": 2
+ },
+ {
+  "beat": "composure-break-grandma",
+  "fight": "grandma",
+  "splash": [],
+  "banners": [
+   "COMPOSURE BROKEN"
+  ],
+  "errors": [],
+  "round": 2
+ },
+ {
+  "beat": "composure-break-chad",
+  "fight": "chad",
+  "splash": [],
+  "banners": [
+   "COMPOSURE BROKEN"
+  ],
+  "errors": [],
+  "round": 2
  },
  {
   "beat": "power-move-card",
@@ -31,7 +54,8 @@
    "assert_dominance.webp"
   ],
   "banners": [],
-  "errors": []
+  "errors": [],
+  "round": 2
  },
  {
   "beat": "ultimate-warning-card",
@@ -40,7 +64,8 @@
    "boss_karen.webp"
   ],
   "banners": [],
-  "errors": []
+  "errors": [],
+  "round": 2
  },
  {
   "beat": "karen-loss-finisher",
@@ -49,6 +74,7 @@
    "karen_finisher.webp"
   ],
   "banners": [],
-  "errors": []
+  "errors": [],
+  "round": 2
  }
 ]

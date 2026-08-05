@@ -870,19 +870,37 @@ export class CombatScene {
 
   // ── Per-target animations ────────────────────────────────────────────
   // Backward-compat: idx default = 0 (the primary enemy).
+  // WHITE-OUT FLASH, RE-ENTRANT. Two flashes that overlap used to restore each
+  // other's WHITE and leave the boss painted for the rest of the fight: flash B
+  // captured `child.material` while flash A's white was still on the mesh, so
+  // B's restore re-applied white, permanently. Measured on a Composure Break
+  // (the Break beat fires enemyHurtAnim on top of the ability's own hit): one
+  // contiguous white run from +1155 ms to +10106 ms, i.e. the enemy's own
+  // materials never came back.
+  //
+  // Two guards, both required:
+  //   1. capture the pre-flash material ONCE per mesh (`_preFlashMat`), so a
+  //      second flash inside the window cannot record white as the original;
+  //   2. a per-entry token, so a stale timeout cannot re-apply anything after a
+  //      newer flash has taken ownership of the swap.
+  // The white material is one shared static instead of an allocation per call.
   flashEnemy(duration = 0.15, idx = 0) {
     const entry = this.enemyGroups[idx];
     if (!entry) return;
-    const originalMaterials = [];
-    const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    entry.group.traverse(child => {
-      if (child.isMesh && !child.userData.noFlash) {
-        originalMaterials.push({ mesh: child, material: child.material });
-        child.material = whiteMat;
-      }
+    const token = (entry._flashToken = (entry._flashToken || 0) + 1);
+    if (!CombatScene._whiteMat) CombatScene._whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    entry.group.traverse(ch => {
+      if (!ch.isMesh || ch.userData.noFlash) return;
+      if (!ch.userData._preFlashMat) ch.userData._preFlashMat = ch.material;   // capture ONCE
+      ch.material = CombatScene._whiteMat;
     });
     setTimeout(() => {
-      for (const { mesh, material } of originalMaterials) mesh.material = material;
+      if (entry._flashToken !== token) return;        // a newer flash owns the swap
+      entry.group.traverse(ch => {
+        if (!ch.userData._preFlashMat) return;
+        ch.material = ch.userData._preFlashMat;
+        ch.userData._preFlashMat = null;
+      });
     }, duration * 1000);
   }
 

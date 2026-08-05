@@ -132,6 +132,28 @@ await clip('composure-break', 'karen', async (page) => {
   },
 });
 
+// ── V3b/V3c  THE BREAK'S GENDER PAIR ────────────────────────────────────
+// The design doc's V6: a Composure Break on a female body (grandma, stagger
+// a391) and a male one (chad, a176), so the pair is judgeable side by side.
+// Composure only falls to WEAKNESS-tagged hits, so the ability differs per
+// boss — grandma is weak `audit` (spot_check), chad `social` (raise_concerns).
+// Driven through `_executeAbility`, which is exactly what the ability submenu
+// click calls; the submenu contents depend on the Practice Group build and are
+// not the thing being judged here.
+for (const [who, ability] of [['grandma', 'spot_check'], ['chad', 'raise_concerns']]) {
+  await clip(`composure-break-${who}`, who, async (page) => {
+    await page.evaluate((a) => window.__combat._executeAbility(a, 0), ability);
+    await page.waitForTimeout(6000);
+  }, {
+    seconds: 8,
+    setup: () => {
+      const c = window.__combat;
+      c.engine.enemies.forEach(e => { e.maxHP = 3000; e.hp = 3000; e.composure = 5; });
+      c.engine.player.maxHP = 4000; c.engine.player.hp = 4000; c.engine.player.mp = 999;
+    },
+  });
+}
+
 // ── V4  POWER MOVE, WITH THE CARD ───────────────────────────────────────
 await clip('power-move-card', 'karen', async (page) => {
   await page.click('.combat-action-btn:has-text("ASSERT DOMINANCE")');

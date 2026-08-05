@@ -185,7 +185,17 @@ export class MeshyAnimator {
     // topple in enemyDefeatAnim is the real beat; a looping flinch under it
     // fights the spin, so the stance simply holds.
     if (name === 'hurt' && duration !== undefined && duration > 10) return false;
-    if (name === 'hurt') return this.play('hurt');
+    // 'hurt' is a NO-OP on this path, deliberately. Every site in CombatScene
+    // that calls setExpression('hurt', 0.9) — enemyHurtAnim:941, allyHurtAnim:
+    // 1203 — calls playGesture('hurt') on the very next line, and playGesture
+    // routes to the same play('hurt'). Playing it here too fired the clip TWICE
+    // per impact 0–1 ms apart (visible as two identical CLIP_play lines in
+    // screenshots/h-run/trace-after/report.txt at +360 ms): the second call
+    // reset() the action that had just started, restarting its 250 ms fade-in
+    // from weight 0 and swallowing the first frames of the flinch. The face is
+    // what setExpression means on the PROCEDURAL rig; on the Meshy cast the
+    // gesture on the next line IS the reaction.
+    void duration;
     return false;
   }
 

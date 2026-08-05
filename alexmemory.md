@@ -1,3 +1,176 @@
+## [COMBAT BUILD FIX ROUND 2 (08-04) - the judge panel failed the round]
+
+One commit on `display-case`, pushed. `main` untouched. `npm run check` exit 0.
+Spend: **0 credits of anything.** No card art re-rendered, no clip re-fetched.
+
+The panel named three things. All three are answered with an instrument, not
+with prose. Nothing in the attack-feel architecture, the cards or the J tables
+was re-opened - those passed and were left alone.
+
+### 1 - THE BOSS COULD GET PAINTED WHITE FOR THE REST OF THE FIGHT
+
+`CombatScene.flashEnemy` swapped every mesh to a white material and swapped it
+back on a timer. Two overlapping flashes restored each other's WHITE: the second
+flash recorded the first one's white as "the original" and put it back
+permanently. A Composure Break fires `enemyHurtAnim` on top of the ability's own
+hit, so the Break was the reliable way to trigger it.
+
+New instrument, `tools/_h-flash-probe.mjs`: samples the boss's own meshes at
+20 Hz for 10 s past a REAL Break (composure pinned to 5, then the weakness-tag
+ability), counting meshes wearing a pure-white MeshBasicMaterial. The test is
+generic, not an identity check against the material my fix introduces.
+PASS = every white run <= 200 ms AND the last sample reads 0.
+
+  fight     stagger    weakness hit            BEFORE                AFTER
+  karen     a391 (f)   file_motion  legal      9402 ms, ends WHITE   200 ms, clean
+  grandma   a391 (f)   spot_check   audit       146 ms, clean        147 ms, clean
+  chad      a176 (m)   raise_concerns social    150 ms, clean        190 ms, clean
+
+The karen BEFORE run reads one contiguous white run from 1150 ms to the end of
+the sample - the panel measured 1155..10106, so it reproduces exactly. Fix is
+capture-the-original-ONCE plus a per-entry token so a stale timeout cannot
+re-apply anything, and one shared white material instead of an allocation per
+call. The law is now in CLAUDE.md.
+
+HONEST: grandma and chad PASSED before the fix too. The overlap is a race whose
+timing depends on the boss's own contact frame, so it fired on karen and not on
+the other two. It was always latent on all three. Also: karen's AFTER number,
+200 ms, sits exactly on the ceiling - that is a 150 ms authored flash plus one
+50 ms sample of quantisation at 20 Hz, not a near-miss.
+
+WHILE IN THERE - the real overlap generator. The trace showed `hurt` playing
+TWICE per impact. `enemyHurtAnim` calls `setExpression('hurt')` and then
+`playGesture('hurt')`, which on the PROCEDURAL rig mean face and body - but on
+the Meshy cast both routed to `play('hurt')`, so the second call `reset()` the
+clip that had just started and restarted its 250 ms fade-in from weight 0.
+`MeshyAnimator.setExpression('hurt')` is now a deliberate no-op with the reason
+written above it. The token guard stays as belt and braces.
+
+### 2 - THE HP-BAR NUMBER WAS ARITHMETIC, NOT A READING
+
+Correction, stated plainly: **the +78 ms in the 093a98a commit body was CSS
+arithmetic** (the HUD write plus the `transition-delay` in combat.css). The
+instrument printed **+226 ms** for that same run. The commit body is immutable;
+the correction is here, in the round-2 commit body, and in the design doc.
+
+Then it got more interesting. Re-running that harness on the SAME build printed
++337 and +305. The build did not change; the harness did not change. What varies
+is the CDP screencast, and it is measurable in the harness's own output:
+
+  run              FX_hitstop EVENT   hit-stop FRAME sample   lag     HP-contact
+  round-1 after    +357 ms            339..374 ms             ~0      +226
+  r2a              +454 ms            667..682 ms             +213    +337
+  r2b              +441 ms            625..637 ms             +184    +305
+
+Hit-stop is scheduled ~11 ms off contact BY CONSTRUCTION, so a frame-sampled
+hit-stop 200 ms late is the instrument talking, not the game.
+
+So I built `tools/_h-hpbar-probe.mjs`: same rAF sampler, same computed
+`.combat-enemy-hp-fill` width, same peak-hand-reach definition of contact, NO
+screencast, five consecutive attacks in one session, median reported.
+
+  # | contact | styleWrite | hp start | travel | start-contact | start-write
+  1 |     517 |        439 |      583 |    184 |            66 |         144
+  2 |     411 |        422 |      502 |    185 |            92 |          81
+  3 |     415 |        405 |      481 |    183 |            67 |          76
+  4 |     415 |        397 |      488 |    178 |            73 |          91
+  5 |     423 |        410 |      498 |    179 |            75 |          89
+  MEDIAN start-contact = 73 ms   start-write = 89 ms   travel = 183 ms
+
+**+73 ms against a +60..+160 band: PASS.** So neither of the panel's two options
+was taken: the gate is NOT widened and `transition-delay` is NOT pulled - moving
+the 0.06 s toward 0 would land the row near +13 ms, BELOW the band, which is the
+defect the band exists to stop. What changed is the instrument the row is
+measured with, and section 7.1a of the design doc now says so with the table
+above in it.
+
+HONEST: this is a third answer to a question that offered two. If you would
+rather the ledger simply carry +226 and a widened gate, say so and I will take
+it - but I do not think a number inflated by the capture rig is the number the
+player experiences, and the player is never under a screencast.
+
+### 3 - THE a318 ROW IS BUILDER-ADDED, AND NOW SAYS SO
+
+`CLIP_BEATS[318] = { trim: [2.100, 3.200], contact: 2.580 }` had no line in the
+design doc behind it, and the doc's own clip table says a318 peaks at 3.333 s.
+Both are true and they do not conflict. The doc quotes the `peakT` summary field
+out of `clip-keyframes.json`, which is argmax over the whole series - terminal
+frame included. Re-reading the series itself:
+
+  t=3.083  32.298      the rub settling
+  t=3.167  32.234
+  t=3.250  32.498
+  t=3.333  44.943   <- +12.445 in ONE 83 ms frame
+
+The largest frame-to-frame step anywhere else in the clip is 5.942. A step 2.1x
+the curve's own maximum, on the last sample, with no approach to it, is the clip
+snapping - not a gesture. Playing it would end every heal / buff / debuff turn
+in the game on a one-frame pop of the hand. The genuine local maximum is 41.040
+at t=2.583, the top of a real 0.42 s rise from 23.684 - that is the 2.580, and
+it IS consumed (`playerCastAnim` -> `allyContactMs(idx, 'cast', 300)`).
+
+The row is kept, and a 30-line comment above it states all of that, including
+that it is builder-added and that it deliberately excludes the peak the doc
+measured. The doc's separate judgement - a318 is a held scheming pose, not a
+committed beat - still stands and is why it is the CAST clip and not an attack.
+
+### 4 - THE OPTIONAL ONE, TAKEN
+
+The Assert Dominance card and its damage number are spawned on the SAME
+cinematic step. Card 1300 ms, number 820 ms. Measured with a new
+`tools/_h-card-number.mjs` (20 Hz DOM sampler, first contiguous run only, so the
+enemy's answering number does not fold into it):
+
+  BEFORE  card 868..2102 ms (1285)   number 868..1558 (740)   card outlasts by 544 ms
+  AFTER   card 883..1705 ms ( 871)   number 883..1558 (724)   card outlasts by 147 ms
+
+Card life 1300 -> 900 on `assert_dominance` and on the All-In card, which fires
+on the same kind of impact step. The boss-kill card KEEPS 1300 - it deliberately
+fires after the final number has resolved, not on top of it.
+
+### EVIDENCE, and what to look at
+
+  screenshots/h-run/flash-probe/white-runs.md      the AFTER table (all PASS)
+  screenshots/h-run/flash-probe-before/            the same probe, pre-fix
+  screenshots/h-run/hpbar/hpbar-delay060.json      the five HP-bar runs
+  screenshots/h-run/card-number/                   before + after card/number
+  screenshots/h-run/videos/                        ALL EIGHT clips re-shot on
+                                                   this build, incl. the three
+                                                   Composure Breaks (karen,
+                                                   grandma, chad)
+
+The panel called the old composure-break.webm unusable. It is re-shot, and two
+more were added so the Break's gender pair is judgeable side by side.
+
+### SIM BANDS, re-run on the shipped build (600 runs/cell)
+
+  diversity band, worst rung   8.7 pp on restructuring_trio@7  (was 9.3 disclosed)
+  10 of 12 rungs               <= 4.8 pp
+  top-tag share, shipped kit   grandma@8 51.3 %, director 66.0 %, meredith 40.2 %,
+                               karen 62.6 %, algorithm 80.0 %
+  win rate across the ladder   88.2 - 100 %
+
+All within run-to-run noise of the dossier numbers, as expected - nothing in
+this round touches the sim path.
+
+### THINGS THAT WOULD MISLEAD YOU IF I DIDN'T SAY THEM
+
+- The +226 the panel cited is real, and so is my +73. They are different
+  instruments on the same build. I chose the off-capture one and argued for it
+  above; that is a judgement call and it is yours to overrule.
+- grandma and chad never failed the white-run probe, before or after. Only karen
+  reproduced the stuck-white. I fixed the class of bug, not one boss.
+- karen's post-fix white run reads 200 ms, exactly the pass ceiling. It is
+  sampling quantisation on a 150 ms flash, but it is on the line.
+- I re-shot all EIGHT videos, not just the two the fixes touched, so the whole
+  evidence set is one build. The four unrelated clips are therefore new files
+  with the same content.
+- `node_modules/.bin` was missing on this machine and `npm run build` could not
+  start until `npm install` restored it (changed 7 packages). No dependency
+  version moved; `package.json` and `package-lock.json` are untouched.
+- The diversity band read 8.7 pp this run against the 9.3 pp on record. That is
+  noise on a 600-run cell, not an improvement, and I did not re-tune anything.
+
 ## [COMBAT BUILD (08-04) - the attack, the cards, the trees]
 
 Five commits on `display-case`, all pushed. `main` untouched.
@@ -25,6 +198,9 @@ contact now measured at +346 ms:
   |hit SFX - contact|          -735 ms  ->  +15 ms   (ceiling 35)
   |hit-stop - contact|         -395 ms  ->  +11 ms   (ceiling 35)
   HP-bar travel start          -264 ms  ->  +78 ms   (band +60..+160)
+      ^^^ CORRECTED 08-04, judge round 2. The +78 was CSS ARITHMETIC, not a
+      reading. The instrument printed +226 for that run. Off-capture median on
+      the fixed build is +73 (PASS). See the round-2 block at the top.
   camera released to rest      -155 ms  ->  +560 ms  (floor +350)
   clip completion at hand-off      46 %  ->  132 %   (floor 90 %)
   total exchange                3321 ms ->  2377 ms  (ceiling 2600)

@@ -1,0 +1,78 @@
+[
+ {
+  "fight": "karen",
+  "ability": "file_motion",
+  "tag": "legal",
+  "stagger": "a391 (f)",
+  "meshes": 3,
+  "samples": 209,
+  "composureBefore": 5,
+  "composureAfter": 0,
+  "broke": true,
+  "runs": [
+   {
+    "fromMs": 953,
+    "toMs": 1103,
+    "durMs": 200
+   }
+  ],
+  "longestRunMs": 200,
+  "lastSampleWhite": 0,
+  "pass": true,
+  "errors": []
+ },
+ {
+  "fight": "grandma",
+  "ability": "spot_check",
+  "tag": "audit",
+  "stagger": "a391 (f)",
+  "meshes": 6,
+  "samples": 209,
+  "composureBefore": 5,
+  "composureAfter": 0,
+  "broke": true,
+  "runs": [
+   {
+    "fromMs": 623,
+    "toMs": 652,
+    "durMs": 78
+   },
+   {
+    "fromMs": 955,
+    "toMs": 1052,
+    "durMs": 147
+   }
+  ],
+  "longestRunMs": 147,
+  "lastSampleWhite": 0,
+  "pass": true,
+  "errors": []
+ },
+ {
+  "fight": "chad",
+  "ability": "raise_concerns",
+  "tag": "social",
+  "stagger": "a176 (m)",
+  "meshes": 3,
+  "samples": 209,
+  "composureBefore": 5,
+  "composureAfter": 0,
+  "broke": true,
+  "runs": [
+   {
+    "fromMs": 625,
+    "toMs": 653,
+    "durMs": 78
+   },
+   {
+    "fromMs": 960,
+    "toMs": 1101,
+    "durMs": 190
+   }
+  ],
+  "longestRunMs": 190,
+  "lastSampleWhite": 0,
+  "pass": true,
+  "errors": []
+ }
+]

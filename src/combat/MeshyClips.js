@@ -74,6 +74,36 @@ export const CLIP_BEATS = {
   178: { trim: [0.000, 1.100] },                  // f hurt  — drops 0.57s of settle tail
   138: { trim: [1.983, 3.483] },                  // m guard — loop the hands-up section, not the approach
   420: { trim: [1.550, 2.000] },                  // f guard — a420 holds a guard for only 17% of its loop
+  // BUILDER-ADDED ROW, and it disagrees with the design doc on purpose. Stated
+  // in full because it is the one row in this table with no line in §4 of
+  // .claude/plans/h-run/attack-feel-design.md behind it.
+  //
+  // The doc's clip table reports a318's peak at **3.333 s, peak% 100 %,
+  // "committed window: last frame only"**. That row quotes the `peakT` summary
+  // field out of screenshots/h-run/clip-keyframes.json, which is argmax over
+  // the WHOLE series — terminal frame included. Re-reading the series itself
+  // (same file, same instrument, tools/_h-clip-keyframe.mjs, 12 Hz sampling of
+  // hips-local LeftHand distance) says the terminal frame is an artefact:
+  //
+  //     t=3.083  32.298      the rub settling
+  //     t=3.167  32.234
+  //     t=3.250  32.498
+  //     t=3.333  44.943   <- +12.445 in ONE 83 ms frame
+  //
+  // The largest frame-to-frame step anywhere else in the clip is 5.942 (at
+  // t=2.333). A step 2.1x the curve's own maximum, on the last sample, with no
+  // approach to it, is the clip snapping — not a gesture. Playing it would end
+  // every heal/buff/debuff turn in the game on a one-frame pop of the hand.
+  //
+  // The genuine local maximum, and what a viewer reads as "the rub", is
+  // **41.040 at t=2.583** — the top of a real 0.42 s rise from 23.684 at
+  // t=2.167. That is the 2.580 contact below, and it is consumed:
+  // CombatScene.playerCastAnim -> allyContactMs(idx, 'cast', 300).
+  //
+  // So the trim keeps 2.100–3.200 (approach, rise, peak, settle) and DELIBERATELY
+  // EXCLUDES the 3.333 terminal frame. The doc's separate judgement — that a318
+  // is a held scheming pose rather than a committed beat — still stands, and is
+  // why this is the CAST clip and not an attack.
   318: { trim: [2.100, 3.200], contact: 2.580 },  // f cast  — the rub itself, not the 2.1s walk-up to it
 };
 

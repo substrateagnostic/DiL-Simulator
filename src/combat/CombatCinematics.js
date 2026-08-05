@@ -152,7 +152,14 @@ const POWER_MOVE = [
   // hit-stop and the damage number — never before it. It replaces the old
   // showBanner('ASSERT DOMINANCE') title; showBanner itself still serves
   // COMPOSURE BROKEN / MOTION VOID / the Loop-In line.
-  { t: 0.68, splash: { card: 'assert_dominance', ms: 1300 } },
+  //
+  // 900 ms, not 1300. The card and the damage number are spawned on the SAME
+  // frame, and FloatingText's life is 820 ms — so a 1300 ms card held ~480 ms
+  // of plate with nothing under it, which reads as the beat having already
+  // ended while the art is still up. 900 lets the card outlive its number by
+  // 80 ms and land last. The boss-kill card keeps 1300 because it deliberately
+  // fires AFTER the final number has resolved, not on top of it.
+  { t: 0.68, splash: { card: 'assert_dominance', ms: 900 } },
   { t: 1.60, cam: 'rest',       ease: 2.4 },
 ];
 
@@ -186,7 +193,9 @@ const DESPERATE_GAMBLE = {
     // The All-In card fires only when the 40% lands — CombatState passes
     // `splash: false` on a miss, because a splash card on a whiffed gamble
     // reads as a reward for losing.
-    { t: 0.22, splash: { card: 'all_in', ms: 1300, gated: true } },
+    // 900 for the same reason as the Assert Dominance card above: it fires on
+    // the impact step, so it shares a frame with an 820 ms damage number.
+    { t: 0.22, splash: { card: 'all_in', ms: 900, gated: true } },
     { t: 0.90, cam: 'rest',       ease: 2.6 },
   ],
 };
