@@ -50,6 +50,64 @@ export const LEVEL_GROWTH = {
 // Player abilities
 // Starter abilities (tier 0) are free at level 1.
 // Others require spending upgrade points AND having the prerequisite unlocked.
+// ── PRACTICE GROUPS ────────────────────────────────────────────────────
+// The Abilities tab used to be STARTER / TIER 1 / TIER 2 / TIER 3 — a
+// PURCHASE-ORDER concept, which is the honest name for what it was: nine
+// buyable nodes costing 13 points against the 14 a player earns in a lifetime.
+// There was no opportunity cost anywhere in the system, so there was no build,
+// only a question of what you bought first.
+//
+// A `track` turns the same list into three career lanes at NINE POINTS EACH.
+// Three lanes plus the shared pool is 35 points, the bench wants 12 more, and a
+// lifetime is 14. You finish one lane around level 10 and are shopping in a
+// second by 12. The scarcity IS the design: if a playtester reports the trees
+// feel impossible to complete, the answer is the free respec, which already
+// ships as `Request Restructuring` under a tab already called
+// `Performance Review`. DO NOT raise the point supply.
+//
+// Every lane keeps all three starter tags (`file_motion` legal,
+// `raise_concerns` social, `spot_check` audit), free, at tier 0. No player is
+// ever hard-locked out of a boss's weakness by a build choice — the lanes
+// change HOW WELL you exploit it, never WHETHER you can.
+export const PRACTICE_GROUPS = {
+  litigation: {
+    name: 'LITIGATION & ENFORCEMENT',
+    blurb: 'You are not here to be liked. You are here to be correct, on the record, in writing, and in a font the court accepts.',
+    rider: 'Burst, Confidence velocity, and the floor when you have earned it.',
+  },
+  compliance: {
+    name: 'RISK & COMPLIANCE',
+    blurb: 'The firm does not lose arguments. The firm loses documentation. You have decided to be the documentation.',
+    // D5, said out loud rather than discovered in playtest: a player who
+    // commits to Compliance at level 2 has a measurably harder Reception loop
+    // (tier-2 client at L4: 78.6 % against the shipped kit's 91.0 %) at exactly
+    // the moment they are grinding for the points that make the lane work.
+    // A build that is bad at something is the definition of a build — but the
+    // player is owed the warning before they spend on it.
+    rider: 'You do not take the turn. You take theirs. Slow. Reliable. Terrible in a hurry.',
+  },
+  audit: {
+    name: 'AUDIT & ADVISORY',
+    blurb: 'Nobody has ever been fired for asking for the supporting documentation. This is the only true thing the firm has ever told you.',
+    rider: 'You do not burst. You accumulate, and then you close.',
+  },
+  general: {
+    name: 'GENERAL PRACTICE',
+    blurb: 'The shared pool. Nobody\'s development plan requires any of it, which is exactly why everybody ends up with some of it.',
+    rider: 'Available to any track. Costs the same points as anything else.',
+  },
+};
+
+// ── THE TIER GATE ──────────────────────────────────────────────────────
+// Minimum character level to buy a node of each tier. It reproduces the
+// shipped pacing almost exactly for a player following a lane in order, and
+// costs the honest trees one measured cell. What it stops is the OPTIMAL
+// SHOPPER: measured on shipped data, spending the same three points on
+// cite_precedent + per_my_last_email instead of a lane order HALVES Chad
+// (6.34 rounds -> 3.72, 5.58 -> 9.79 with the gate on). Without it, the
+// level-by-level identity of every lane is unenforceable.
+export const TIER_LEVEL = { 1: 2, 2: 6, 3: 10 };
+
 export const PLAYER_ABILITIES = {
   file_motion: {
     name: 'File Motion',
@@ -108,6 +166,8 @@ export const PLAYER_ABILITIES = {
     type: 'attack',
     tag: 'legal',
     tier: 1,
+    track: 'litigation',
+    depth: 2,
     requires: 'file_motion',
     upgradePointCost: 1,
   },
@@ -119,6 +179,8 @@ export const PLAYER_ABILITIES = {
     type: 'attack_aoe',
     tag: 'social',
     tier: 1,
+    track: 'litigation',
+    depth: 4,
     requires: 'raise_concerns',
     upgradePointCost: 1,
   },
@@ -131,6 +193,8 @@ export const PLAYER_ABILITIES = {
     debuffAmount: { def: -5 },
     debuffDuration: 3,
     tier: 1,
+    track: 'audit',
+    depth: 3,
     requires: 'spot_check',
     upgradePointCost: 1,
   },
@@ -142,7 +206,11 @@ export const PLAYER_ABILITIES = {
     buffDuration: 3,
     type: 'buff',
     tier: 2,
-    requires: 'cc_all',
+    track: 'general',
+    depth: 2,
+    // Re-parented off cc_all: a General Practice node must not dangle on a
+    // Litigation purchase the player may never make.
+    requires: 'raise_concerns',
     upgradePointCost: 1,
   },
   per_my_last_email: {
@@ -153,6 +221,8 @@ export const PLAYER_ABILITIES = {
     type: 'attack',
     tag: 'social',
     tier: 2,
+    track: 'litigation',
+    depth: 5,
     requires: 'cite_precedent',
     upgradePointCost: 2,
   },
@@ -164,7 +234,9 @@ export const PLAYER_ABILITIES = {
     type: 'attack',
     tag: 'audit',
     tier: 2,
-    requires: 'due_diligence',
+    track: 'general',
+    depth: 3,
+    requires: 'spot_check',
     upgradePointCost: 2,
   },
   fiduciary_shield: {
@@ -175,7 +247,9 @@ export const PLAYER_ABILITIES = {
     buffAmount: { def: 8 },
     buffDuration: 2,
     tier: 2,
-    requires: 'due_diligence',
+    track: 'general',
+    depth: 1,
+    requires: 'spot_check',
     upgradePointCost: 1,
   },
   whistleblower: {
@@ -186,7 +260,9 @@ export const PLAYER_ABILITIES = {
     type: 'attack',
     tag: 'legal',
     tier: 3,
-    requires: 'per_my_last_email',
+    track: 'general',
+    depth: 5,
+    requires: 'file_motion',
     upgradePointCost: 2,
   },
   power_of_attorney: {
@@ -196,10 +272,231 @@ export const PLAYER_ABILITIES = {
     healAmount: 130,
     type: 'heal',
     tier: 3,
+    track: 'general',
+    depth: 4,
     requires: 'fiduciary_shield',
     upgradePointCost: 2,
     skipsTurn: false,
   },
+
+  // ════════════════════════════════════════════════════════════════════
+  // PRACTICE GROUP NODES
+  //
+  // BUILDER TRAP, VERIFIED IN SOURCE: every node here needs an explicit
+  // `tier`. MenuState._spentUpgradePoints skips `(a.tier ?? 0) === 0` and
+  // _restructure resets unlockedAbilities to the five starters — so a node
+  // with no tier field is buyable, wiped by Request Restructuring, and NEVER
+  // REFUNDED. The player permanently loses the point.
+  // ════════════════════════════════════════════════════════════════════
+
+  // ── LITIGATION & ENFORCEMENT ────────────────────────────────────────
+  // Exclusive second issuer: TURN ECONOMY. Burst, Confidence velocity, and
+  // the One More. It has no defensive node whatsoever, and that is the price.
+  aggravating_factors: {
+    name: 'Aggravating Factors',
+    description: 'The court may consider the manner as well as the fact. Weakness hits bank +10 Confidence; Press Advantage costs 10 less.',
+    cost: 0,
+    type: 'passive',
+    tier: 1,
+    track: 'litigation',
+    depth: 1,
+    requires: 'file_motion',
+    upgradePointCost: 1,
+  },
+  escalate: {
+    name: 'Escalate',
+    description: 'Take it upstairs. Choose the practice area on the way. Costs 30 Confidence instead of Coffee.',
+    // THE LOAD-BEARING NODE: a Confidence-priced, TAG-AGNOSTIC weakness hit.
+    // It turns the tag layer from "do I own the right button" into "can I
+    // afford the right button this turn", and it competes directly with
+    // Assert Dominance (100), Second Wind (50) and Press Advantage (15-30)
+    // for the same bar. It is also the lane's only answer to a weakness that
+    // moves — which is why the Pivot costs Litigation the most, and why
+    // Litigation is the lane that can buy its way out.
+    cost: 0,
+    momentumCost: 30,
+    power: 30,
+    type: 'attack',
+    tagChoice: true,
+    tier: 1,
+    track: 'litigation',
+    depth: 3,
+    requires: 'aggravating_factors',
+    upgradePointCost: 1,
+  },
+  motion_summary_judgment: {
+    name: 'Motion for Summary Judgment',
+    description: 'The floor is still yours, counsel. Once per engagement, the turn a weakness hit hands back may actually swing.',
+    cost: 0,
+    type: 'passive',
+    tier: 3,
+    track: 'litigation',
+    depth: 6,
+    capstone: true,
+    requires: 'per_my_last_email',
+    upgradePointCost: 3,
+  },
+
+  // ── RISK & COMPLIANCE ───────────────────────────────────────────────
+  // Exclusive second issuer: COMPOSURE OFF DEFENCE. Measured, this lane lands
+  // 0.96 weakness hits a fight on the Regional Director and takes 64 % of its
+  // Break pressure off Bracing, at a 96.3 % win rate. It is physically not
+  // playing the weakness game and it is not being punished for it.
+  contemporaneous_notes: {
+    name: 'Contemporaneous Notes',
+    description: 'Written at the time, in the ordinary course. Ask anyone. A good Brace strips 15% of their Composure, a perfect one 35% — and either clears one Objection.',
+    cost: 0,
+    type: 'passive',
+    tier: 1,
+    track: 'compliance',
+    depth: 1,
+    requires: 'spot_check',
+    upgradePointCost: 1,
+  },
+  adverse_inference: {
+    name: 'Adverse Inference',
+    description: 'You did not answer. The record will reflect that you did not answer. Retaliate carries the practice area of the move it answers, at power 26.',
+    cost: 0,
+    type: 'passive',
+    tier: 1,
+    track: 'compliance',
+    depth: 2,
+    requires: 'contemporaneous_notes',
+    upgradePointCost: 1,
+  },
+  notice_of_deficiency: {
+    name: 'Notice of Deficiency',
+    description: 'Cited, dated, and copied to two people who did not ask. Deals 60% more if you braced on your previous turn.',
+    cost: 25,
+    power: 40,
+    type: 'attack',
+    tag: 'audit',
+    counterpunch: 0.6,
+    tier: 2,
+    track: 'compliance',
+    depth: 3,
+    requires: 'adverse_inference',
+    upgradePointCost: 2,
+  },
+  reservation_of_rights: {
+    name: 'Reservation of Rights',
+    description: 'Accepted under protest. Every word of this is coming back. A braced hit returns 35% of what it was going to be — 60% on a perfect Brace — computed from THEIR Assertiveness.',
+    // The only damage in the game that scales off the OPPONENT: measured per
+    // proc, Karen (atk 15) 7.3, Chad 9.8, the Director 13.1, the Algorithm
+    // 15.3, Meredith 16.0, Grandma 23.0. A 3.2x spread driven entirely by
+    // whose meeting you are in.
+    cost: 0,
+    type: 'passive',
+    tier: 2,
+    track: 'compliance',
+    depth: 4,
+    requires: 'adverse_inference',
+    upgradePointCost: 1,
+  },
+  standard_of_care: {
+    name: 'Standard of Care',
+    description: 'Reasonable. Prudent. Under the circumstances. Say it three times. Bracing removes a further 25% of the hit; a perfect Brace refunds 15 Confidence.',
+    cost: 0,
+    type: 'passive',
+    tier: 2,
+    track: 'compliance',
+    depth: 5,
+    requires: 'adverse_inference',
+    upgradePointCost: 2,
+  },
+  subrogation: {
+    name: 'Subrogation',
+    description: 'The firm\'s loss is now the firm\'s claim. Damage taken while bracing is banked; your next damaging action adds it and costs them 30 Composure whatever you hit them with.',
+    cost: 0,
+    type: 'passive',
+    tier: 3,
+    track: 'compliance',
+    depth: 6,
+    capstone: true,
+    requires: 'standard_of_care',
+    upgradePointCost: 2,
+  },
+
+  // ── AUDIT & ADVISORY ────────────────────────────────────────────────
+  // Exclusive second issuer: COMPOSURE OFF OBJECTIONS. Findings is the first
+  // mechanic in the game that PAYS YOU FOR HITTING THE TAG THE ENEMY IS NOT
+  // WEAK TO — which the Objections system was already forcing you to do
+  // (`_lockableSet` deliberately makes a single-lock move demand a tag the
+  // enemy is not weak to). Audit is the lane that finally gets paid for the
+  // tax every other lane already pays.
+  findings: {
+    name: 'Findings',
+    description: 'Nobody has ever been fired for asking for the supporting documentation. Off-weakness tagged hits and sustained Objections file a Finding (max 5, +8% damage each). At 5, your next tagged hit CLOSES THE FILE: 1.5x damage and 30 Composure, whatever area you used.',
+    cost: 0,
+    type: 'passive',
+    tier: 1,
+    track: 'audit',
+    depth: 1,
+    requires: 'spot_check',
+    upgradePointCost: 1,
+  },
+  tie_out: {
+    name: 'Tie-Out',
+    description: 'Two numbers that should match do not match. You say so out loud.',
+    cost: 12,
+    power: 28,
+    type: 'attack',
+    tag: 'audit',
+    tier: 1,
+    track: 'audit',
+    depth: 2,
+    requires: 'findings',
+    upgradePointCost: 1,
+  },
+  scope_expansion: {
+    name: 'Scope Expansion',
+    description: 'While we are in here. Debuffs file a Finding too, and last one turn longer.',
+    cost: 0,
+    type: 'passive',
+    tier: 1,
+    track: 'audit',
+    depth: 4,
+    requires: 'findings',
+    upgradePointCost: 1,
+  },
+  management_letter: {
+    name: 'Management Letter',
+    description: 'Restated for the board, in a font they will read. Hits the whole room and files two Findings on each of them.',
+    cost: 40,
+    power: 40,
+    type: 'attack_aoe',
+    tag: 'audit',
+    filesFindings: 2,
+    tier: 2,
+    track: 'audit',
+    depth: 5,
+    requires: 'scope_expansion',
+    upgradePointCost: 2,
+  },
+  adverse_opinion: {
+    name: 'Adverse Opinion',
+    description: 'I am not accusing anyone of anything. I am declining to opine. Closing a file also applies -6 Composure-as-a-stat for 3 turns.',
+    cost: 0,
+    type: 'passive',
+    tier: 2,
+    track: 'audit',
+    depth: 6,
+    requires: 'management_letter',
+    upgradePointCost: 1,
+  },
+  material_weakness: {
+    name: 'Material Weakness',
+    description: 'It always was a weakness. You are the first person here to write it down. A closed file counts as a weakness hit for EVERY purpose, whatever area you used — and a file now closes at four Findings, not five.',
+    cost: 0,
+    type: 'passive',
+    tier: 3,
+    track: 'audit',
+    depth: 7,
+    capstone: true,
+    requires: 'scope_expansion',
+    upgradePointCost: 2,
+  },
+
   // Subquest-unlocked abilities (no upgrade points needed)
   root_access: {
     name: 'Root Access',
@@ -309,13 +606,21 @@ export const ENEMY_STATS = {
     xpReward: 200,
     abilities: ['bro_down', 'my_lawyer_says', 'trust_fund_tantrum'],
     weakness: 'social', resistance: 'legal',
+    // THE PIVOT. Row 0 (the base state) NEVER changes, so every documented
+    // weakness in Gameplay.md and every dialog hint stays true; the guard
+    // moves when the PHASE does. CHAD PIVOTS ONCE AND LATE: he is weak to
+    // `social`, which is the player's SHALLOWEST practice area at L5-6, so an
+    // early pivot off social hands them a bigger button and makes the fight
+    // measurably easier.
     phases: [
-      { hpThreshold: 0.5, abilities: ['bro_down', 'trust_fund_tantrum', 'alpha_mode'] },
-      { hpThreshold: 0.25, abilities: ['trust_fund_tantrum', 'alpha_mode', 'rage_quit_attack'] },
+      { hpThreshold: 0.5, abilities: ['bro_down', 'trust_fund_tantrum', 'alpha_mode'],
+        weakness: 'social', resistance: 'legal' },   // alpha mode is still a social problem
+      { hpThreshold: 0.25, abilities: ['trust_fund_tantrum', 'alpha_mode', 'rage_quit_attack'],
+        weakness: 'audit', resistance: 'legal' },    // the rage-quit is not. show him the balance
     ],
     phaseMessages: [
       'Chad flexes and enters ALPHA MODE. His protein shake overflows.',
-      'Chad is COMPLETELY unhinged. He throws away his CFA study guide.',
+      'Chad is COMPLETELY unhinged. Fine. FINE. Show him the balance then.',
     ],
     taunts: [
       '"BRO you literally cannot do this to me, do you know who I am?!"',
@@ -339,12 +644,17 @@ export const ENEMY_STATS = {
     xpReward: 250,
     abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will', 'passive_aggression'],
     weakness: 'audit', resistance: 'social',
+    // THE PIVOT. The single worst rung for monotony in the game: measured
+    // top-tag share 83.6 % on the shipped kit, for a player who never opens
+    // the Abilities tab. With the pivot: 53.2 %, at zero win-rate cost.
     phases: [
-      { hpThreshold: 0.5, abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will', 'emergency_shortbread', 'passive_aggression', 'the_look'] },
-      { hpThreshold: 0.25, abilities: ['changed_the_will', 'emergency_shortbread', 'final_revision', 'the_look', 'gerald_incident'] },
+      { hpThreshold: 0.5, abilities: ['guilt_trip', 'fresh_cookies', 'changed_the_will', 'emergency_shortbread', 'passive_aggression', 'the_look'],
+        weakness: 'social', resistance: 'audit' },   // The Look
+      { hpThreshold: 0.25, abilities: ['changed_the_will', 'emergency_shortbread', 'final_revision', 'the_look', 'gerald_incident'],
+        weakness: 'legal', resistance: 'audit' },    // the final revision is a document
     ],
     phaseMessages: [
-      'Grandma looks... disappointed. Dangerously, quietly disappointed.',
+      'The Look. You cannot answer The Look with a spreadsheet.',
       'Grandma has changed the will. Again. She brought a notary.',
     ],
     taunts: [
@@ -513,10 +823,40 @@ export const ENEMY_STATS = {
     xpReward: 450,
     abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'],
     weakness: 'audit', resistance: 'social',
+    // THE PIVOT + THE REVIVAL.
+    //
+    // REVIVAL: this block's final row shipped at `hpThreshold: 0`.
+    // getActivePhaseIndex picks the phase with the LOWEST threshold still >=
+    // hpPercent, and hpPercent <= 0 is only true at death — so Meredith's
+    // final phase, and `final_assessment` (35 power) with it, HAS NEVER FIRED
+    // IN A SHIPPED BUILD. 0 -> 0.12. Measured at 1500 runs it is free:
+    // 96.5 -> 96.1 % win, +0.37 rounds, -0.5 pp HP-left, and the NG+ ladder
+    // moves 46.4 -> 46.6 / 10.3 -> 11.1 / 5.3 -> 3.1 %.
+    //
+    // The Regional Director has the SAME dead phase and is NOT revived here:
+    // measured, his costs 13.7 pp on the CARRY@NG+2 lap because his revived
+    // row swaps a DoT for a third straight attack in an already all-attack
+    // kit. It is recoverable by repricing synergy_blast 25 -> 16 at the price
+    // of +1.5 rounds on the first run — a repricing pass, deferred with the
+    // Algorithm's, not a free number.
+    //
+    // PIVOT: hostile takeover is a legal fight; then she goes back to the
+    // file; the Final Assessment is personal. THE SOCIAL PHASE GOES LAST and
+    // is parked in the sub-12 % window, because from L8 `per_my_last_email`
+    // (55 power) is the biggest single-target ability in the game and a social
+    // phase is therefore a DAMAGE UPGRADE.
     phases: [
-      { hpThreshold: 0.6, abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'] },
-      { hpThreshold: 0.3, abilities: ['hostile_takeover', 'board_resolution', 'golden_handcuffs'] },
-      { hpThreshold: 0, abilities: ['hostile_takeover', 'board_resolution', 'final_assessment'] },
+      { hpThreshold: 0.6, abilities: ['strategic_pivot', 'performance_review', 'restructure_threat'],
+        weakness: 'legal', resistance: 'audit' },
+      { hpThreshold: 0.3, abilities: ['hostile_takeover', 'board_resolution', 'golden_handcuffs'],
+        weakness: 'audit', resistance: 'legal' },
+      { hpThreshold: 0.12, abilities: ['hostile_takeover', 'board_resolution', 'final_assessment'],
+        weakness: 'social', resistance: 'legal' },
+    ],
+    phaseMessages: [
+      'Meredith stops negotiating. "Then we do this the other way."',
+      '"...Let\'s go back to the file."',
+      'Meredith closes the folder. "This part is not about the trust."',
     ],
     // New Game+ only — mixed into the pool by CombatState._pickTaunt.
     ngTaunts: [
@@ -545,10 +885,22 @@ export const ENEMY_STATS = {
     xpReward: 350,
     abilities: ['corporate_mandate', 'synergy_blast', 'market_correction', 'quarterly_target'],
     weakness: 'legal', resistance: 'social',
+    // THE PIVOT: numbers, then policy, then the thing he actually wants.
+    // Social goes LAST, in the window where it cannot shorten the fight.
+    // His final row keeps `hpThreshold: 0` — see the Revival note on
+    // meredith_boss for why his is the one that is NOT free.
     phases: [
-      { hpThreshold: 0.6, abilities: ['corporate_mandate', 'synergy_blast', 'quarterly_target'] },
-      { hpThreshold: 0.3, abilities: ['market_correction', 'corporate_mandate', 'quarterly_target'] },
-      { hpThreshold: 0, abilities: ['market_correction', 'synergy_blast', 'corporate_mandate'] },
+      { hpThreshold: 0.6, abilities: ['corporate_mandate', 'synergy_blast', 'quarterly_target'],
+        weakness: 'audit', resistance: 'legal' },
+      { hpThreshold: 0.3, abilities: ['market_correction', 'corporate_mandate', 'quarterly_target'],
+        weakness: 'legal', resistance: 'audit' },
+      { hpThreshold: 0, abilities: ['market_correction', 'synergy_blast', 'corporate_mandate'],
+        weakness: 'social', resistance: 'audit' },
+    ],
+    phaseMessages: [
+      '"Let us look at the numbers." He does not look at the numbers.',
+      '"There is a policy. I am the policy."',
+      '"Fine. Let us talk about what this is actually about."',
     ],
   },
   algorithm: {

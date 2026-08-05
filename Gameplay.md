@@ -492,9 +492,20 @@ Legacy Admin, and Alex from IT carries it). Authors can override any of this per
 ## Composure (enemy) — the Break bar
 
 Under each enemy's HP bar sits a second, smaller bar. It is that enemy's **Composure**, and it moves
-for exactly one reason: **hits that exploit their weakness**.
+for exactly one reason: **hits that exploit their weakness** — plus, if you have bought them,
+the Practice Group nodes that issue Composure some other way (see PRACTICE GROUPS below).
+
+**And the weakness moves.** Chad, Grandma, Meredith Sterling and the Regional Director are open to a
+DIFFERENT practice area in each phase of the fight. The bar's label changes with them, on the frame
+the phase turns, so the information is never hidden — but the button you have been pressing stops
+being the right one. Karen does not do this: she is the tutorial boss and she teaches exactly one
+thing. Neither does the Algorithm: it already modelled you, and it does not care what you say twice.
 
 - Bar size is 60 / 90 / 120 depending on the enemy's HP tier — **2, 3 or 4 weakness hits** to empty.
+  Chad and the Corporate Lawyer are authored down to **60**: Chad is the fight where Breaking is the
+  lesson, and a smaller bar is the only way to teach it. (The bar can be made SMALLER to make Breaking
+  the lesson. It cannot be made BIGGER to make anything else the lesson — raising one enemy to 180 was
+  measured and it deletes the Break economy for every build at once.)
 - Each weakness hit takes 30 off it. A **perfect Brace** takes another 20% of the bar's maximum.
 - **While the bar has anything left in it, your damage is ×0.9.** That standing tax is the point:
   Breaking is not a bonus, it is when your real damage turns on.
@@ -778,6 +789,83 @@ starts a brand-new save in the parking garage at `actIndex 0`, **types** 47-19-8
 the way a player would, and ends standing in the Vault. It deliberately does not teleport with
 `_changeRoom` from a dev fixture, because that bypasses the gate under test — which is exactly how
 the previous version of this claim got published while being false.
+
+---
+
+## Practice Groups — your development plan
+
+The Abilities tab is not a shopping list. It is three career tracks at **nine points each**, plus an
+eight-point shared pool, against **one upgrade point per level-up** — fourteen in a whole lifetime,
+with twelve more points of ally abilities competing for the same fourteen.
+
+> **PRACTICE GROUPS** — Your development plan. Points are allocated at the discretion of your
+> reviewing manager, which is to say yours. Reallocation is available at any time under the
+> department's flexible-staffing policy and does not appear on your permanent record.
+
+**The trunk is free and every track keeps all of it**: File Motion (legal), Raise Concerns (social),
+Spot Check (audit), Coffee Break, Stall. No build choice can ever lock you out of a boss's weakness.
+The tracks change *how well* you exploit it, never *whether* you can.
+
+**LITIGATION & ENFORCEMENT** — *You are not here to be liked. You are here to be correct, on the
+record, in writing, and in a font the court accepts.*
+Burst and turn economy. **Aggravating Factors** (weakness hits bank +10 Confidence, Press Advantage
+costs 10 less) → **Cite Precedent** → **Escalate** (0 Coffee, **30 Confidence**, power 30, and *you
+pick the practice area on the way upstairs*) → **CC All** → **Per My Last Email** → the capstone,
+**Motion for Summary Judgment**. Escalate is the load-bearing node: it turns the tag layer from *do I
+own the right button* into *can I afford the right button this turn*, and it competes directly with
+Assert Dominance, Second Wind and Press Advantage for the same bar. It is also the only answer in the
+game to a weakness that moves. **The lane has no defensive node whatsoever. That is the price.**
+
+**RISK & COMPLIANCE** — *The firm does not lose arguments. The firm loses documentation. You have
+decided to be the documentation.*
+You do not take the turn. You take theirs. **Contemporaneous Notes** (a good Brace strips 15 % of
+their Composure, a perfect one 35 %, and either clears an Objection) → **Adverse Inference**
+(Retaliate carries the practice area of the move it answers, at power 26) → **Notice of Deficiency**
+(+60 % if you braced last turn) → **Reservation of Rights** (a braced hit comes back at them for
+35 %, or 60 % on a perfect Brace, computed from **their** Assertiveness) → **Standard of Care** → the
+capstone, **Subrogation**. Measured on the Regional Director this lane lands **under one weakness hit
+a fight** and takes two thirds of its Break pressure off Bracing, and wins anyway.
+**Slow. Reliable. Terrible in a hurry** — and the Reception loop is a hurry, so the early grind is
+genuinely harder in this lane. That is what Request Restructuring is for.
+
+**AUDIT & ADVISORY** — *Nobody has ever been fired for asking for the supporting documentation. This
+is the only true thing the firm has ever told you.*
+You do not burst. You accumulate, and then you close. **Findings** — every **off-weakness** tagged hit
+and every Objection you sustain files a Finding (max 5, +8 % damage each); at five, your next tagged
+hit **CLOSES THE FILE** for 1.5× damage and 30 Composure *whatever practice area you used*. Then
+**Tie-Out** → **Due Diligence** → **Scope Expansion** (debuffs file a Finding and last a turn longer)
+→ **Management Letter** (hits the room, files two on each) → **Adverse Opinion** → the capstone,
+**Material Weakness**: a closed file *counts as a weakness hit for every purpose*, and the file now
+closes at four. Findings is the first mechanic in the game that pays you for hitting the tag the enemy
+is **not** weak to — which the Objections system was already forcing you to do, and never paid for.
+
+**GENERAL PRACTICE** is the shared pool: Fiduciary Shield, Billable Hours, Forensic Audit, Power of
+Attorney, Whistleblower. Nobody's development plan requires any of it, which is exactly why everybody
+ends up with some of it.
+
+### The tier gate
+
+| tier | available from |
+|---|---|
+| 1 | level 2 |
+| 2 | level 6 |
+| 3 | level 10 |
+
+A capstone is nine points, which is level 10 — the final-boss rung. **A first run that finishes the
+story around level 4–6 will never see one.** They are the reward for the roguelite grind and the
+thing a New Game+ player carries in on lap one.
+
+### Objection Sustained
+
+Land a weakness hit and **the floor is still yours**: control comes back for one more action in the
+same turn. That action **may not deal damage** — Brace, an item, a heal, a self-buff. It is free, it
+is universal, it costs no Confidence, and it fires at most once per turn. It will not fire off the hit
+that Broke their Composure (the Break already bought you a turn) or off a hit on someone already
+Broken.
+
+**Motion for Summary Judgment**, Litigation's capstone, upgrades that same return — **once per
+engagement** — into a basic attack. Not a second return. Not a second prompt. And never against a
+crowd: you cannot move for summary judgment against three parties at once.
 
 ---
 

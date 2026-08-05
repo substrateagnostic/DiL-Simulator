@@ -91,6 +91,9 @@ export class CombatState {
     // hint and the OBJECTIONS chips — the card is emphasis, never the only
     // channel. Per fight, so the Set lives with the state instance.
     this._ultimateCardShown = new Set();
+    // OBJECTION SUSTAINED — non-null while Andrew is inside a returned turn.
+    // 'sustain' = defend/heal only; 'attack' = the Summary Judgment upgrade.
+    this._turnBackGrade = null;
 
     this.phase = 'intro';                 // intro, ally_turn, targeting, animating, enemy_phase, result
     this.animTimer = 0;
@@ -139,9 +142,19 @@ export class CombatState {
 
   // Abilities available to Andrew right now, minus anything a mutator bans.
   _availableAbilities() {
-    const list = this.player.getAbilities();
-    if (!this._hasMutator('retained_counsel')) return list;
-    return list.filter(a => a.tag !== 'legal');
+    // PASSIVES ARE NOT ACTIONS. Practice Group passives live in the same
+    // PLAYER_ABILITIES table (which is what makes them free to persist and
+    // free to refund), so the action menu has to filter them out or Andrew
+    // gets to "cast" Contemporaneous Notes.
+    let list = this.player.getAbilities().filter(a => a.type !== 'passive');
+    // A returned turn is a RESTRICTED turn. 'sustain' allows heals and
+    // self-buffs only; the engine holds the same rule (turnBackAllows) so a
+    // keyboard shortcut cannot slip a damaging ability through.
+    if (this._turnBackGrade === 'sustain') {
+      list = list.filter(a => this.engine.turnBackAllows(a.id));
+    }
+    if (this._hasMutator('retained_counsel')) list = list.filter(a => a.tag !== 'legal');
+    return list;
   }
 
   enter() {
@@ -206,6 +219,10 @@ export class CombatState {
         stretch: activeStretchIds(this.player),
         // Performance Improvement Plan: 0 unless the player filed it.
         pipResist: pipResistance(this.player),
+        // PRACTICE GROUP NODES. The engine READS the passives Andrew owns —
+        // it never executes them. An empty set is exactly the shipped
+        // behaviour, so a save from before the trees is bit-identical.
+        nodes: [...this.player.unlockedAbilities],
       }
     );
 
@@ -343,7 +360,77 @@ export class CombatState {
   }
 
   // Compatibility shim — older flow referenced this as the "next ally" — now it's just the next combatant.
-  _processNextAllyTurn() { return this._processNextTurn(); }
+  _processNextAllyTurn() {
+    // The returned turn is over the moment the real turn moves on.
+    this._turnBackGrade = null;
+    return this._processNextTurn();
+  }
+
+  // ── OBJECTION SUSTAINED ─────────────────────────────────────────────
+  // Every Andrew action routes its continuation through here so the turn-back
+  // is offered from ONE place. Returns true if the return took ownership.
+  //
+  // Loop In is offered FIRST and the two are independent: Loop In spends an
+  // ALLY's action, this returns ANDREW's. A weakness hit can legitimately arm
+  // both, and the player gets both, in that order.
+  _afterPlayerAction() {
+    if (this._maybeOfferTurnBack()) return;
+    this._processNextAllyTurn();
+  }
+
+  _maybeOfferTurnBack() {
+    const grade = this.engine.turnBackReady;
+    if (!grade || this.engine.isOver) return false;
+    this.engine.turnBackReady = null;
+    this._turnBackGrade = grade;
+    this.hud.showBanner(grade === 'attack' ? 'MOTION FOR SUMMARY JUDGMENT' : 'OBJECTION SUSTAINED', 1200);
+    AudioManager.playSfx('confirm');
+    this.scene.flash(0xffd700, 0.10);
+    setTimeout(() => this.hud.showMessage(grade === 'attack'
+      ? 'The floor is still yours, counsel. One motion at a time.'
+      : 'You have the floor.'), 300);
+    setTimeout(() => { if (!this.engine.isOver) this._enablePlayerInput(); }, 520);
+    return true;
+  }
+
+  // ── ESCALATE's practice-area picker ─────────────────────────────────
+  // The one node in the trees whose HUD half is the real work: a tag-agnostic
+  // attack is only interesting if the player picks the tag AT CAST TIME.
+  _showTagPicker(onPick, onCancel) {
+    const TAGS = [
+      { tag: 'legal',     label: 'LEGAL',     desc: 'File it. On the record.',            color: '#ffd166' },
+      { tag: 'social',    label: 'SOCIAL',    desc: 'Say it. In front of people.',        color: '#66bbff' },
+      { tag: 'audit',     label: 'AUDIT',     desc: 'Check it. Line by line.',            color: '#66ff99' },
+      { tag: 'technical', label: 'TECHNICAL', desc: 'Pull the logs. Read the timestamps.', color: '#cc88ff' },
+    ];
+    const overlay = document.createElement('div');
+    overlay.className = 'minigame-overlay';
+    NotificationArbiter.hold(NC.DECISION, 'combat-decision', overlay);
+    overlay.innerHTML = `
+      <div class="minigame-title">Escalate — choose the practice area</div>
+      <div class="gamble-options">
+        ${TAGS.map((t, i) => `
+          <div class="gamble-option${i === 0 ? ' selected' : ''}" data-tag="${t.tag}" data-i="${i}">
+            <div class="gamble-option-name" style="color:${t.color}">${t.label}</div>
+            <div class="gamble-option-desc">${t.desc}</div>
+          </div>`).join('')}
+      </div>
+      <div class="minigame-hint">Arrows to choose, Enter to file. Esc to withdraw.</div>
+    `;
+    document.getElementById('ui-overlay').appendChild(overlay);
+    let idx = 0;
+    const opts = [...overlay.querySelectorAll('.gamble-option')];
+    const paint = () => opts.forEach((o, i) => o.classList.toggle('selected', i === idx));
+    const close = () => { document.removeEventListener('keydown', key); overlay.remove(); };
+    const key = (e) => {
+      if (e.code === 'ArrowLeft' || e.code === 'ArrowUp' || e.code === 'KeyA' || e.code === 'KeyW') { idx = (idx + TAGS.length - 1) % TAGS.length; paint(); e.preventDefault(); }
+      else if (e.code === 'ArrowRight' || e.code === 'ArrowDown' || e.code === 'KeyD' || e.code === 'KeyS') { idx = (idx + 1) % TAGS.length; paint(); e.preventDefault(); }
+      else if (e.code === 'Enter' || e.code === 'Space' || e.code === 'KeyE') { e.preventDefault(); close(); onPick(TAGS[idx].tag); }
+      else if (e.code === 'Escape') { e.preventDefault(); close(); if (onCancel) onCancel(); }
+    };
+    document.addEventListener('keydown', key);
+    opts.forEach((o, i) => o.addEventListener('click', () => { idx = i; close(); onPick(TAGS[i].tag); }));
+  }
 
   _processNextTurn() {
     if (this.engine.isOver) {
@@ -809,8 +896,8 @@ export class CombatState {
       p.retaliateReady,
       p.hp / p.maxHP < 0.25,
       this.engine.getPressAdvantageCost(),
-      this._currentVoices,
-      { pressAdvantageUsed: !!p.pressAdvantageUsedThisTurn },
+      this._turnBackGrade ? [] : this._currentVoices,
+      { pressAdvantageUsed: !!p.pressAdvantageUsedThisTurn, turnBack: this._turnBackGrade },
     );
   }
 
@@ -1361,6 +1448,29 @@ export class CombatState {
     AudioManager.playSfx('confirm');
     const ability = PLAYER_ABILITIES[abilityId];
     if (!ability) return;
+    // A passive is a line in the file, not a move.
+    if (ability.type === 'passive') return;
+    // Belt and braces behind the filtered menu: the returned turn's rule is
+    // held by the engine too, so a keyboard shortcut cannot slip through.
+    if (this._turnBackGrade === 'sustain' && !this.engine.turnBackAllows(abilityId)) {
+      this.hud.showMessage('One motion at a time, counsel.');
+      return;
+    }
+    // ESCALATE and anything else tag-agnostic: pick the practice area first.
+    if (ability.tagChoice && !this._pendingTag) {
+      this.inputEnabled = false;
+      this._showTagPicker((tag) => {
+        this._pendingTag = tag;
+        this.inputEnabled = true;
+        this._handleAbility(abilityId, item);
+        this._pendingTag = null;
+      }, () => {
+        this.inputEnabled = true;
+        this.hud.enableInput();
+        this._showMainMenuLive();
+      });
+      return;
+    }
     // Retained Counsel bans the legal tag outright — belt and braces behind
     // the filtered menu, so a keyboard shortcut can't slip one through.
     if (ability.tag === 'legal' && this._hasMutator('retained_counsel')) {
@@ -1376,9 +1486,10 @@ export class CombatState {
       this._pendingAbilityForTarget = { id: abilityId };
       const enemiesView = this.engine.enemies.map((e, i) => ({ name: e.name, hp: e.hp, maxHP: e.maxHP, idx: i }));
       this.phase = 'targeting';
+      const chosenTag = this._pendingTag;
       this.hud.showTargetPicker(enemiesView, (idx) => {
         this.scene.setTargetMarker(idx, true);
-        this._executeAbility(abilityId, idx);
+        this._executeAbility(abilityId, idx, { tag: chosenTag });
         setTimeout(() => this.scene.hideTargetMarker(), 1200);
       }, () => {
         this.phase = 'ally_turn';
@@ -1387,12 +1498,12 @@ export class CombatState {
       });
     } else {
       this.inputEnabled = false;
-      this._executeAbility(abilityId, undefined);
+      this._executeAbility(abilityId, undefined, { tag: this._pendingTag });
     }
   }
 
-  _executeAbility(abilityId, targetIndex) {
-    const result = this.engine.playerAbility(abilityId, targetIndex);
+  _executeAbility(abilityId, targetIndex, opts = {}) {
+    const result = this.engine.playerAbility(abilityId, targetIndex, opts);
     if (!result) {
       this.inputEnabled = true;
       return;
@@ -1405,7 +1516,7 @@ export class CombatState {
     const offensive = result.type === 'attack' || result.type === 'attack_aoe' || result.type === 'debuff' || !!result.damage;
     if (offensive) {
       this.cine.play('ability', {
-        tag: ability?.tag,
+        tag: opts.tag || ability?.tag,
         crit: !!(result.critical || result.effective === 'super'),
         targetIndex,
         contactMs: this.scene.allyContactMs(this._activeAllyIndex, 'attack', 350),
@@ -1426,7 +1537,7 @@ export class CombatState {
     setTimeout(() => {
       if (this.engine.isOver) {
         this._handleResult();
-      } else if (this._maybeOfferLoopIn(() => this._processNextTurn())) {
+      } else if (this._maybeOfferLoopIn(() => this._afterPlayerAction())) {
         // Loop In prompt owns the continuation
       } else if (result.doubleTurn) {
         const msg = result.debuffAmount ? 'Enemy DEF reduced! Double turn!' : 'Double turn!';
@@ -1436,7 +1547,7 @@ export class CombatState {
         if (ally) this._turnQueue.unshift({ kind: 'ally', index: this._activeAllyIndex, spd: this.engine._getEffective(ally).spd });
         setTimeout(() => this._processNextTurn(), 600);
       } else {
-        this._processNextTurn();
+        this._afterPlayerAction();
       }
     }, result.skipsTurn ? 800 : delay);
   }
@@ -1496,8 +1607,8 @@ export class CombatState {
     this._refreshHUD({ deferBars: true });
     setTimeout(() => {
       if (this.engine.isOver) this._handleResult();
-      else if (this._maybeOfferLoopIn(() => this._processNextAllyTurn())) { /* prompt owns it */ }
-      else this._processNextAllyTurn();
+      else if (this._maybeOfferLoopIn(() => this._afterPlayerAction())) { /* prompt owns it */ }
+      else this._afterPlayerAction();
     }, delay);
   }
 

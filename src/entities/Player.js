@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { buildCharacter } from './CharacterBuilder.js';
 import { CharacterAnimator } from './CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
-import { PLAYER_BASE_STATS, PLAYER_ABILITIES, XP_TABLE, LEVEL_GROWTH } from '../data/stats.js';
+import { PLAYER_BASE_STATS, PLAYER_ABILITIES, XP_TABLE, LEVEL_GROWTH, TIER_LEVEL } from '../data/stats.js';
 import { ALLY_STATS } from '../data/allies.js';
 import { STARTING_INVENTORY } from '../data/items.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
@@ -110,12 +110,27 @@ export class Player {
     return abilities;
   }
 
-  // Check if an ability can be unlocked (has prerequisite + enough points)
+  // Minimum character level for a node of this tier (TIER_LEVEL, stats.js).
+  // Returns 0 for tier 0 / quest abilities, which have no gate.
+  tierGateFor(id) {
+    const ability = PLAYER_ABILITIES[id];
+    if (!ability || ability.unlockQuest) return 0;
+    return TIER_LEVEL[ability.tier] || 0;
+  }
+
+  // Check if an ability can be unlocked (level + prerequisite + enough points)
   canUnlockAbility(id) {
     const ability = PLAYER_ABILITIES[id];
     if (!ability || ability.unlockQuest) return false;
     if (this.unlockedAbilities.has(id)) return false;
     if (ability.tier === 0) return false; // starters are auto-unlocked
+    // THE TIER GATE. Without it the Practice Groups' level-by-level identity is
+    // unenforceable: measured on shipped data, an optimal shopper spending the
+    // same three points on cite_precedent + per_my_last_email instead of a lane
+    // order HALVES Chad (6.34 rounds -> 3.72). It costs a player following a
+    // lane in order almost nothing, because all three lanes were already
+    // shaped that way.
+    if ((this.stats.level || 1) < this.tierGateFor(id)) return false;
     const pointCost = ability.upgradePointCost || 1;
     if (this.upgradePoints < pointCost) return false;
     if (ability.requires && !this.unlockedAbilities.has(ability.requires)) return false;

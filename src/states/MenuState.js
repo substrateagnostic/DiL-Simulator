@@ -3,7 +3,7 @@ import { AudioManager } from '../core/AudioManager.js';
 import { SaveManager } from '../core/SaveManager.js';
 import { EventBus } from '../core/EventBus.js';
 import { BESTIARY_DATA } from '../data/bestiary.js';
-import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE } from '../data/stats.js';
+import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE, PRACTICE_GROUPS, TIER_LEVEL } from '../data/stats.js';
 import { ALLY_STATS, ALLY_ABILITIES } from '../data/allies.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { AchievementManager } from '../core/AchievementManager.js';
@@ -530,7 +530,14 @@ export class MenuState {
 
     const pointsDiv = document.createElement('div');
     pointsDiv.className = 'abilities-points';
-    pointsDiv.innerHTML = `Upgrade Points: <span class="abilities-points-value">${this.player.upgradePoints}</span>`;
+    // THE SCARCITY, SAID OUT LOUD. The total is DERIVED, never typed, so it
+    // cannot drift when a node is added: three Practice Groups at nine points
+    // each, plus the shared pool, against one point per level-up for life.
+    const demand = Object.values(PLAYER_ABILITIES)
+      .filter(a => a.upgradePointCost && !a.unlockQuest)
+      .reduce((n, a) => n + a.upgradePointCost, 0);
+    pointsDiv.innerHTML = `Upgrade Points: <span class="abilities-points-value">${this.player.upgradePoints}</span>`
+      + `<span class="abilities-demand"> &nbsp;/&nbsp; ${demand} points of development plan</span>`;
     panel.appendChild(pointsDiv);
 
     // Character tabs — Andrew + each recruited ally
@@ -562,30 +569,60 @@ export class MenuState {
     const grid = document.createElement('div');
     grid.className = 'abilities-grid';
 
-    // Group abilities by tier
+    // ── PRACTICE GROUPS ─────────────────────────────────────────────
+    // Was `const tiers = [0,1,2,3]` — a PURCHASE-ORDER concept. It is now the
+    // firm's career tracks, in tier order INSIDE each track, so a column reads
+    // as a development plan rather than as a shopping list.
     const allAbilities = Object.entries(PLAYER_ABILITIES).filter(([, a]) => !a.unlockQuest);
     const questAbilities = Object.entries(PLAYER_ABILITIES).filter(([, a]) => a.unlockQuest);
-    const tiers = [0, 1, 2, 3];
+    const groups = [
+      ['__starters', { name: 'THE TRUNK', blurb: 'Free, and every track keeps all of it. No build choice can ever lock you out of a practice area — only out of how well you work in it.', rider: '' }],
+      ...Object.entries(PRACTICE_GROUPS),
+    ];
     let itemIndex = 0;
     this._abilityActions = [];
 
-    for (const tier of tiers) {
-      const tierAbilities = allAbilities.filter(([, a]) => (a.tier ?? 0) === tier);
-      if (tierAbilities.length === 0) continue;
+    for (const [trackId, group] of groups) {
+      const trackAbilities = allAbilities
+        .filter(([, a]) => (trackId === '__starters' ? (a.tier ?? 0) === 0 : a.track === trackId))
+        // `depth` is the AUTHORED spend order inside a track; tier is the level gate.
+        // Sorting by depth first is what makes the column read as a development
+        // plan rather than as a price list.
+        .sort((x, y) => ((x[1].depth ?? 99) - (y[1].depth ?? 99)) || ((x[1].tier ?? 0) - (y[1].tier ?? 0)));
+      if (trackAbilities.length === 0) continue;
+
+      const owned = trackAbilities.filter(([id]) => this.player.unlockedAbilities.has(id))
+        .reduce((n, [, a]) => n + (a.upgradePointCost || 0), 0);
+      const total = trackAbilities.reduce((n, [, a]) => n + (a.upgradePointCost || 0), 0);
 
       const tierLabel = document.createElement('div');
       tierLabel.className = 'abilities-tier-label';
-      tierLabel.textContent = tier === 0 ? 'STARTER' : `TIER ${tier}`;
+      tierLabel.textContent = total > 0 ? `${group.name}  —  ${owned}/${total} PTS` : group.name;
       grid.appendChild(tierLabel);
 
-      for (const [id, ability] of tierAbilities) {
+      const blurb = document.createElement('div');
+      blurb.className = 'abilities-track-blurb';
+      blurb.textContent = group.blurb;
+      grid.appendChild(blurb);
+      if (group.rider) {
+        const rider = document.createElement('div');
+        rider.className = 'abilities-track-rider';
+        rider.textContent = group.rider;
+        grid.appendChild(rider);
+      }
+
+      for (const [id, ability] of trackAbilities) {
         const unlocked = this.player.unlockedAbilities.has(id);
         const canUnlock = this.player.canUnlockAbility(id);
         const hasPrereq = !ability.requires || this.player.unlockedAbilities.has(ability.requires);
+        const gate = this.player.tierGateFor(id);
+        const levelLocked = !unlocked && gate > 0 && (this.player.stats.level || 1) < gate;
         const idx = itemIndex++;
 
         const card = document.createElement('div');
-        card.className = `ability-card${unlocked ? ' unlocked' : canUnlock ? ' available' : ' locked'}${idx === this._abilitySelectedIndex ? ' selected' : ''}`;
+        card.className = `ability-card${unlocked ? ' unlocked' : canUnlock ? ' available' : ' locked'}`
+          + `${ability.type === 'passive' ? ' passive' : ''}${ability.capstone ? ' capstone' : ''}`
+          + `${levelLocked ? ' level-locked' : ''}${idx === this._abilitySelectedIndex ? ' selected' : ''}`;
         card.dataset.index = idx;
 
         const header = document.createElement('div');
@@ -597,6 +634,7 @@ export class MenuState {
         if (unlocked) {
           header.innerHTML += `<span class="ability-unlocked-badge">LEARNED</span>`;
         }
+        if (ability.capstone) header.innerHTML += `<span class="ability-capstone-badge">CAPSTONE</span>`;
         card.appendChild(header);
 
         const desc = document.createElement('div');
@@ -607,11 +645,24 @@ export class MenuState {
         const meta = document.createElement('div');
         meta.className = 'ability-meta';
         const typeLabel = ability.type === 'attack' ? 'ATK' : ability.type === 'heal' ? 'HEAL' : ability.type === 'buff' ? 'BUFF' : ability.type === 'debuff' ? 'DEBUFF' : ability.type.toUpperCase();
-        meta.innerHTML = `<span>${typeLabel}</span><span>${ability.cost} Coffee</span>`;
-        if (ability.power) meta.innerHTML += `<span>Power: ${ability.power}</span>`;
-        if (ability.healAmount) meta.innerHTML += `<span>+${ability.healAmount} HP</span>`;
+        // A PASSIVE has no cast cost and never will; printing "0 Coffee" on it
+        // reads as a bug rather than as a rule.
+        if (ability.type === 'passive') {
+          meta.innerHTML = '<span>PASSIVE</span><span>always on</span>';
+        } else {
+          meta.innerHTML = `<span>${typeLabel}</span>`
+            + (ability.momentumCost ? `<span>${ability.momentumCost} Confidence</span>` : `<span>${ability.cost} Coffee</span>`);
+          if (ability.power) meta.innerHTML += `<span>Power: ${ability.power}</span>`;
+          if (ability.healAmount) meta.innerHTML += `<span>+${ability.healAmount} HP</span>`;
+        }
         card.appendChild(meta);
 
+        if (levelLocked) {
+          const req = document.createElement('div');
+          req.className = 'ability-req';
+          req.textContent = `Available at level ${gate}`;
+          card.appendChild(req);
+        }
         if (!unlocked && ability.requires && !hasPrereq) {
           const req = document.createElement('div');
           req.className = 'ability-req';

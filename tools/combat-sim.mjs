@@ -340,6 +340,12 @@ export function runFight(cfg, level, opts = {}) {
     // Performance Improvement Plan (src/data/review.js). Passed as a resistance
     // fraction so the harness never has to know about flags or localStorage.
     pipResist: cfg.pipResist || 0,
+    // PRACTICE GROUP NODES. CombatState passes the player's whole
+    // `unlockedAbilities` set; the sim's `unlocked` set is the same thing, so
+    // the passives a lane owns reach the engine here exactly the way they do
+    // in a real fight. Without this the trees would be measured with every
+    // passive inert.
+    nodes: [...unlocked],
   });
   if (opts.onEngine) opts.onEngine(engine);
   const policy = opts.policy || competentTurn;

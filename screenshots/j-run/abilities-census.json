@@ -1,0 +1,377 @@
+{
+ "census": [
+  {
+   "level": 2,
+   "headers": [
+    "THE TRUNK",
+    "LITIGATION & ENFORCEMENT  —  0/9 PTS",
+    "RISK & COMPLIANCE  —  0/9 PTS",
+    "AUDIT & ADVISORY  —  0/9 PTS",
+    "GENERAL PRACTICE  —  0/8 PTS",
+    "QUEST REWARDS"
+   ],
+   "blurbs": 5,
+   "riders": 4,
+   "cards": [
+    {
+     "name": "File Motion",
+     "cls": "unlocked selected",
+     "req": ""
+    },
+    {
+     "name": "Coffee Break",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Stall",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Raise Concerns",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Spot Check",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Aggravating Factors",
+     "cls": "available passive",
+     "req": ""
+    },
+    {
+     "name": "Cite Precedent",
+     "cls": "available",
+     "req": ""
+    },
+    {
+     "name": "Escalate",
+     "cls": "locked",
+     "req": "Requires: Aggravating Factors"
+    },
+    {
+     "name": "CC All",
+     "cls": "available",
+     "req": ""
+    },
+    {
+     "name": "Per My Last Email",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Motion for Summary Judgment",
+     "cls": "locked passive capstone level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Contemporaneous Notes",
+     "cls": "available passive",
+     "req": ""
+    },
+    {
+     "name": "Adverse Inference",
+     "cls": "locked passive",
+     "req": "Requires: Contemporaneous Notes"
+    },
+    {
+     "name": "Notice of Deficiency",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Reservation of Rights",
+     "cls": "locked passive level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Standard of Care",
+     "cls": "locked passive level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Subrogation",
+     "cls": "locked passive capstone level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Findings",
+     "cls": "available passive",
+     "req": ""
+    },
+    {
+     "name": "Tie-Out",
+     "cls": "locked",
+     "req": "Requires: Findings"
+    },
+    {
+     "name": "Due Diligence",
+     "cls": "available",
+     "req": ""
+    },
+    {
+     "name": "Scope Expansion",
+     "cls": "locked passive",
+     "req": "Requires: Findings"
+    },
+    {
+     "name": "Management Letter",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Adverse Opinion",
+     "cls": "locked passive level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Material Weakness",
+     "cls": "locked passive capstone level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Fiduciary Shield",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Billable Hours",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Forensic Audit",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Power of Attorney",
+     "cls": "locked level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Whistleblower",
+     "cls": "locked level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    }
+   ],
+   "demand": "/  35 points of development plan"
+  },
+  {
+   "level": 10,
+   "headers": [
+    "THE TRUNK",
+    "LITIGATION & ENFORCEMENT  —  0/9 PTS",
+    "RISK & COMPLIANCE  —  0/9 PTS",
+    "AUDIT & ADVISORY  —  0/9 PTS",
+    "GENERAL PRACTICE  —  0/8 PTS",
+    "QUEST REWARDS"
+   ],
+   "blurbs": 5,
+   "riders": 4,
+   "cards": [
+    {
+     "name": "File Motion",
+     "cls": "unlocked selected",
+     "req": ""
+    },
+    {
+     "name": "Coffee Break",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Stall",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Raise Concerns",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Spot Check",
+     "cls": "unlocked",
+     "req": ""
+    },
+    {
+     "name": "Aggravating Factors",
+     "cls": "available passive",
+     "req": ""
+    },
+    {
+     "name": "Cite Precedent",
+     "cls": "available",
+     "req": ""
+    },
+    {
+     "name": "Escalate",
+     "cls": "locked",
+     "req": "Requires: Aggravating Factors"
+    },
+    {
+     "name": "CC All",
+     "cls": "available",
+     "req": ""
+    },
+    {
+     "name": "Per My Last Email",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Motion for Summary Judgment",
+     "cls": "locked passive capstone level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Contemporaneous Notes",
+     "cls": "available passive",
+     "req": ""
+    },
+    {
+     "name": "Adverse Inference",
+     "cls": "locked passive",
+     "req": "Requires: Contemporaneous Notes"
+    },
+    {
+     "name": "Notice of Deficiency",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Reservation of Rights",
+     "cls": "locked passive level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Standard of Care",
+     "cls": "locked passive level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Subrogation",
+     "cls": "locked passive capstone level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Findings",
+     "cls": "available passive",
+     "req": ""
+    },
+    {
+     "name": "Tie-Out",
+     "cls": "locked",
+     "req": "Requires: Findings"
+    },
+    {
+     "name": "Due Diligence",
+     "cls": "available",
+     "req": ""
+    },
+    {
+     "name": "Scope Expansion",
+     "cls": "locked passive",
+     "req": "Requires: Findings"
+    },
+    {
+     "name": "Management Letter",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Adverse Opinion",
+     "cls": "locked passive level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Material Weakness",
+     "cls": "locked passive capstone level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Fiduciary Shield",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Billable Hours",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Forensic Audit",
+     "cls": "locked level-locked",
+     "req": "Available at level 6"
+    },
+    {
+     "name": "Power of Attorney",
+     "cls": "locked level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "Whistleblower",
+     "cls": "locked level-locked",
+     "req": "Available at level 10"
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    },
+    {
+     "name": "???",
+     "cls": "locked",
+     "req": ""
+    }
+   ],
+   "demand": "/  35 points of development plan"
+  }
+ ],
+ "errors": []
+}

@@ -569,6 +569,32 @@
   border-bottom: 1px solid rgba(83, 168, 182, 0.3);
 }
 
+/* PRACTICE GROUPS. The lane's own sentence sits under its name, because the
+   build decision is made at level 2 by a player who has never fought anything
+   the lane is good against — the fiction is the only information they have. */
+.abilities-track-blurb {
+  font-family: 'VT323', monospace;
+  font-size: 17px;
+  line-height: 1.35;
+  color: #cfc9bf;
+  font-style: italic;
+  padding: 0 10px 2px;
+  margin-bottom: 2px;
+}
+
+.abilities-track-rider {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #8fa2ad;
+  padding: 0 10px 6px;
+}
+
+.abilities-demand {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #8fa2ad;
+}
+
 .ability-card {
   background: rgba(26, 26, 46, 0.8);
   border: 2px solid rgba(100, 100, 100, 0.3);
@@ -576,6 +602,31 @@
   padding: 10px 14px;
   transition: all 0.15s;
   cursor: default;
+}
+
+/* A passive is not a button. It reads as a line in the file, not a move. */
+.ability-card.passive {
+  background: rgba(18, 22, 34, 0.86);
+  border-left: 4px solid rgba(83, 168, 182, 0.55);
+}
+
+.ability-card.capstone {
+  border-color: rgba(255, 215, 0, 0.45);
+}
+
+.ability-capstone-badge {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 8px;
+  color: #ffd700;
+  letter-spacing: 1px;
+  margin-left: 8px;
+}
+
+/* THE TIER GATE, made visible. A node you cannot buy YET is a different thing
+   from one you cannot afford, and the card has to say which. */
+.ability-card.level-locked {
+  opacity: 0.4;
+  border-style: dashed;
 }
 
 .ability-card.unlocked {

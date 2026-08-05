@@ -502,6 +502,28 @@ export class CombatHUD {
   showMainMenu(silenced = false, momentum = 0, bracing = false, retaliateReady = false, lowHP = false, pressAdvantageCost = 25, voicesAvailable = [], opts = {}) {
     this.currentMenu = 'main';
     this.selectedIndex = 0;
+
+    // ── OBJECTION SUSTAINED — the RESTRICTED menu ────────────────────
+    // The returned turn is priced by what you are allowed to spend on it, and
+    // that price is measured: letting it carry the momentum verbs (Assert
+    // Dominance, Retaliate) costs 62-74 % of baseline effective enemy turns —
+    // a returned turn with a 75-power DEF-ignoring hit is worth about a
+    // quarter of a boss. So the two grades are hard-coded lists, not filters
+    // over the normal menu:
+    //   'sustain'  Brace / Special (heals + self-buffs only) / Item.
+    //   'attack'   the same, PLUS a basic Attack. Nothing else, ever.
+    if (opts.turnBack) {
+      this.menuItems = [];
+      if (opts.turnBack === 'attack') this.menuItems.push({ label: 'Attack', action: 'attack' });
+      this.menuItems.push(
+        { label: bracing ? 'Bracing...' : 'Brace', action: 'brace', braceActive: bracing },
+        { label: silenced ? 'Special (Silenced)' : 'Special', action: 'special', disabled: silenced },
+        { label: 'Item', action: 'item' },
+      );
+      this._renderMenu();
+      return;
+    }
+
     this.menuItems = [
       { label: 'Attack', action: 'attack' },
       { label: silenced ? 'Special (Silenced)' : 'Special', action: 'special', disabled: silenced },

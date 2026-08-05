@@ -246,6 +246,21 @@ export class CombatEngine {
     // requisitioned it, which is what keeps old saves bit-identical.
     this.pipResist = Math.max(0, Math.min(0.95, Number(opts.pipResist) || 0));
 
+    // ── PRACTICE GROUPS ──────────────────────────────────────────────
+    // Which tree NODES Andrew owns. Passives are ordinary PLAYER_ABILITIES
+    // rows the engine never EXECUTES — it reads them from here. Empty for any
+    // caller that passes nothing, which is exactly the shipped behaviour, so
+    // an old save or a harness that has not been updated is bit-identical.
+    this.nodes = new Set(opts.nodes || []);
+    // TURN-BACK ("Objection Sustained"). One mechanism, two grades: `sustain`
+    // is universal and may not deal damage; `attack` is the Litigation
+    // capstone's upgrade of that same return and may be a BASIC ATTACK ONLY.
+    // Never a second return, never a second prompt, never a second code path.
+    this.turnBackReady = null;
+    this._inTurnBack = false;
+    this._msjSpent = false;
+    this._activeAbility = null;
+
     this.activeAllyIndex = 0;        // Index of ally currently taking a turn
     this.targetEnemyIndex = this._firstAliveEnemyIndex(); // Default target for single-target attacks
     this.turn = 'player';            // 'player' | 'enemy' (legacy semantics retained)
@@ -397,6 +412,61 @@ export class CombatEngine {
 
   // ── Stretch goals (player-authored difficulty) ────────────────────────
   hasStretch(id) { return this.stretch.has(id); }
+
+  /** Does Andrew own this Practice Group node? */
+  hasNode(id) { return this.nodes.has(id); }
+
+  // ── E0 — THE PIVOT ────────────────────────────────────────────────────
+  // Four bosses author `weakness` / `resistance` PER PHASE. On phase entry the
+  // enemy's live weakness changes and the HUD announces it for free:
+  // CombatHUD already renders `COMPOSURE — <WEAKNESS> ONLY` off live enemy
+  // state every frame, and _checkPhaseChange already fires a phase message, a
+  // screen flash and a taunt.
+  //
+  // THIS CANNOT LIVE IN _calcDamage ALONE. The HUD and _getTelegraphHint read
+  // `enemy.weakness` directly, so the resolved value has to be PERSISTENT
+  // state, not a per-hit lookup. Row 0 (the base state) is never touched, so
+  // every documented weakness in Gameplay.md and every dialog hint stays true.
+  //
+  // AUTHORING LAWS, all three earned by measurement:
+  //   1. The tutorial boss does not pivot. Karen teaches exactly one thing;
+  //      her pivot cost the shipped kit 2.5 pp of win rate to buy 10 points of
+  //      top-tag share on a 4.4-round fight.
+  //   2. The SOCIAL phase goes LAST. From L8 `per_my_last_email` (55 power) is
+  //      the biggest single-target ability in the game, so a social phase is a
+  //      damage UPGRADE; it is parked where it cannot shorten the fight.
+  //   3. Pivot toward the player's SECOND-BEST area, never their worst.
+  //      Setting Meredith's phase-1 weakness to `technical` — the area with
+  //      exactly one ability in the whole game — made monotony WORSE
+  //      (top tag 42.2 % -> 56.2 %): a player with no button in the new area
+  //      just keeps hitting the old button off-weakness.
+  _syncPhaseTraits(enemy) {
+    if (!enemy || !enemy.phases || enemy.hp <= 0) return;
+    const hpPercent = enemy.hp / enemy.maxHP;
+    let active = null;
+    for (const phase of enemy.phases) {
+      if (hpPercent <= phase.hpThreshold && (!active || phase.hpThreshold <= active.hpThreshold)) {
+        active = phase;
+      }
+    }
+    // Falling out of every phase band (a heal above row 0's threshold) must put
+    // the BASE traits back, or a healed boss keeps a weakness it no longer has.
+    const want = active && (active.weakness || active.resistance) ? active : null;
+    const key = want ? want.hpThreshold : 'base';
+    if (enemy._phaseTraitKey === key) return;
+    enemy._phaseTraitKey = key;
+    if (enemy._baseWeakness === undefined) {
+      enemy._baseWeakness = enemy.weakness ?? null;
+      enemy._baseResistance = enemy.resistance ?? null;
+    }
+    enemy.weakness = (want && want.weakness) || enemy._baseWeakness;
+    enemy.resistance = (want && want.resistance) || enemy._baseResistance;
+  }
+
+  /** Resolve phase traits for every living enemy. Cheap; runs on turn beats. */
+  syncAllPhaseTraits() {
+    for (const e of this.enemies) this._syncPhaseTraits(e);
+  }
 
   // Composure bar size. Authorable per enemy via ENEMY_STATS[id].maxComposure
   // (and therefore via balance.json's `enemies` override block); otherwise
@@ -651,6 +721,9 @@ export class CombatEngine {
 
   // ── Damage calc ───────────────────────────────────────────────────────
   _calcDamage(attackerAtk, power, defenderDef, target = null, abilityTag = null) {
+    // The Pivot is persistent state, but a hit that crosses a phase boundary
+    // must be scored against the traits the enemy has ON THAT FRAME.
+    if (target && this.enemies.includes(target)) this._syncPhaseTraits(target);
     const baseDmg = (attackerAtk + power) * COMBAT.BASE_DAMAGE_MULTIPLIER;
     const defense = defenderDef * COMBAT.DEFENSE_FACTOR;
     let damage = Math.max(1, Math.floor(baseDmg - defense + randomRange(-3, 3)));
@@ -696,6 +769,14 @@ export class CombatEngine {
       damage = Math.floor(damage * COMBAT_DEPTH.PLAYER_DAMAGE_COMPENSATION * band);
     }
 
+    // ── AUDIT: FINDINGS (E1) ──────────────────────────────────────────
+    // The FIRST mechanic in the game that pays you for hitting the tag the
+    // enemy is NOT weak to — which the Objections system was already forcing
+    // you to do, and never paid for. The ramp is read BEFORE tag resolution
+    // so the closing hit is not also boosted by the stack it consumes.
+    const findings = (isEnemy && this.hasNode('findings')) ? (target._findings || 0) : 0;
+    if (findings > 0) damage = Math.max(1, Math.floor(damage * (1 + 0.08 * findings)));
+
     if (isEnemy && abilityTag) {
       // Locks clear on a matching tag regardless of weakness.
       lockCleared = this._clearLocks(target, abilityTag);
@@ -705,6 +786,49 @@ export class CombatEngine {
         composureHit = res.amount;
         broke = res.broke;
       }
+      if (this.hasNode('findings')) {
+        // MATERIAL WEAKNESS (E2) lowers the close threshold 5 -> 4.
+        const maxF = this.hasNode('material_weakness') ? 4 : 5;
+        if (findings >= maxF) {
+          // CLOSE THE FILE.
+          target._findings = 0;
+          damage = Math.max(1, Math.floor(damage * 1.5));
+          const res = this._reduceComposure(target, 30);
+          composureHit += res.amount;
+          broke = broke || res.broke;
+          if (this.hasNode('adverse_opinion')) {
+            target.buffs.push({ stats: { def: -6 }, duration: 3, name: 'Adverse Opinion' });
+          }
+          // MATERIAL WEAKNESS (E2) again: the close IS a weakness hit, for
+          // every purpose. Publishing `effective = 'super'` is the point — the
+          // +10 Confidence, the Loop In arm, the taunt and the achievement all
+          // come free off the shipped chain, and no second code path exists.
+          // Verified safe downstream: `weakness_exploit` is a ONE-SHOT
+          // achievement a level-10 player unlocked in Act 1, and
+          // reviewPointsEarned() counts UNIQUE achievements, so the Review
+          // Point supply cannot be inflated by this.
+          if (this.hasNode('material_weakness') && effective !== 'super') effective = 'super';
+        } else {
+          // One Finding per action however many ways it qualified, plus any the
+          // ability files itself (Management Letter, 2).
+          const filed = ((effective !== 'super' || lockCleared > 0) ? 1 : 0)
+            + (this._activeAbility?.filesFindings || 0);
+          if (filed > 0) target._findings = Math.min(maxF, findings + filed);
+        }
+      }
+    }
+
+    // ── COMPLIANCE: SUBROGATION (E8) ──────────────────────────────────
+    // Damage taken while bracing is banked; the next damaging action adds the
+    // bank (capped at 2x Assertiveness) and costs the target 30 Composure
+    // WHATEVER you hit them with — the lane's exclusive second issuer.
+    if (isEnemy && this.hasNode('subrogation') && (this.player._subrogation || 0) > 0 && damage > 0) {
+      const cap = Math.floor(this._getEffective(this.player).atk * 2);
+      damage += Math.min(this.player._subrogation, cap);
+      this.player._subrogation = 0;
+      const res = this._reduceComposure(target, 30);
+      composureHit += res.amount;
+      broke = broke || res.broke;
     }
 
     if (isEnemy && wasVulnerable) {
@@ -793,11 +917,22 @@ export class CombatEngine {
     this.player.momentum = Math.min(100, this.player.momentum + amount);
   }
 
+  // ── E10 — AGGRAVATING FACTORS ─────────────────────────────────────────
+  // The Litigation keystone. A weakness hit banks +10 Confidence on top of the
+  // shipped +10 super bonus (so 20 -> 30 with the base 10), which is what
+  // makes the lane's turn economy an ISSUER rather than a discount.
+  _weaknessMomentumBonus(effective) {
+    return (effective === 'super' && this.hasNode('aggravating_factors')) ? 10 : 0;
+  }
+
   // ── Player (Andrew) actions ───────────────────────────────────────────
   playerAttack(targetIndex) {
     const conf = this._applyConfusion(this.player, targetIndex);
     const target = this._resolveTarget(conf.targetIndex);
     if (!target) return null;
+    // Sampled BEFORE the hit: the turn-back must never arm off a target that
+    // was already Broken when the swing started.
+    const preBroken = !!(target.brokenBonus > 0 || target.broken > 0);
 
     if (this.counterActive) {
       this.counterActive = false;
@@ -821,27 +956,64 @@ export class CombatEngine {
     if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
     target.hp = Math.max(0, target.hp - finalDamage);
 
-    const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
+    const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0)
+      + (combo ? 5 : 0) + this._weaknessMomentumBonus(dmg.effective);
     this._gainMomentum(momentumGain);
 
     this.log.push({ type: 'attack', damage: finalDamage, critical: dmg.critical });
     this._checkVictory();
     this._noteLoopIn(dmg.effective);
-    return {
+    const out = {
       ...dmg, type: 'attack', damage: finalDamage, combo, momentumGain,
       targetIndex: this.targetEnemyIndex,
       confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
       locksCleared: dmg.lockCleared, brokeComposure: dmg.broke,
     };
+    this._armTurnBack(out, preBroken);
+    return out;
   }
 
-  playerAbility(abilityId, targetIndex) {
+  /**
+   * @param {object} opts  `opts.tag` supplies the practice area for a
+   *   `tagChoice` ability (Escalate). The HUD picks it; the engine only has to
+   *   accept it, which is what makes the tag layer a question of what you can
+   *   AFFORD rather than what you happen to own.
+   */
+  playerAbility(abilityId, targetIndex, opts = {}) {
     const ability = PLAYER_ABILITIES[abilityId];
     if (!ability || this.player.mp < ability.cost) return null;
+    // A PASSIVE IS NOT CASTABLE. Practice Group passives are ordinary
+    // PLAYER_ABILITIES rows so they cost zero new persistence — but the engine
+    // READS them (this.nodes), it never executes them, and nothing upstream
+    // should be able to spend a turn on one.
+    if (ability.type === 'passive') return null;
+    // E11 — ESCALATE. Priced in Confidence, not Coffee, so it competes
+    // directly with Assert Dominance (100), Second Wind (50) and Press
+    // Advantage (15-30) for the same bar.
+    if (ability.momentumCost) {
+      if (this.player.momentum < ability.momentumCost) return null;
+      this.player.momentum -= ability.momentumCost;
+    }
     this.player.mp -= ability.cost;
+    // Read back in _calcDamage for `filesFindings`; cleared in the finally.
+    this._activeAbility = ability;
+    try {
+      return this._playerAbilityInner(ability, abilityId, targetIndex, opts);
+    } finally {
+      this._activeAbility = null;
+    }
+  }
+
+  _playerAbilityInner(ability, abilityId, targetIndex, opts = {}) {
+    // E11: a tagChoice ability carries whatever practice area the caller
+    // picked. Falls back to the ability's own tag, so a caller that supplies
+    // nothing is never left untagged by accident.
+    const chosenTag = ability.tagChoice ? (opts.tag || ability.tag || 'legal') : ability.tag;
 
     const conf = this._applyConfusion(this.player, targetIndex);
     targetIndex = conf.targetIndex;
+    const preTarget = this.enemies[targetIndex ?? this.targetEnemyIndex];
+    const preBroken = !!(preTarget && (preTarget.brokenBonus > 0 || preTarget.broken > 0));
 
     const isAoE = ability.type === 'attack_aoe';
 
@@ -861,13 +1033,20 @@ export class CombatEngine {
         const target = this._resolveTarget(targetIndex);
         if (!target) return null;
         const eStats = this._getEffective(target);
-        const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, target, ability.tag);
+        const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, target, chosenTag);
         const combo = this._enemyHasDebuff(target);
         let finalDamage = dmg.damage;
         if (combo) finalDamage = Math.floor(finalDamage * 1.25);
         if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
+        // C3 — NOTICE OF DEFICIENCY: +60% if Andrew braced on his PREVIOUS
+        // turn. `_bracedLastTurn` is stamped in processTurnStart, so this
+        // reads the turn before, not the frame before.
+        if (ability.counterpunch && this.player._bracedLastTurn) {
+          finalDamage = Math.floor(finalDamage * (1 + ability.counterpunch));
+        }
         target.hp = Math.max(0, target.hp - finalDamage);
-        const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0) + (combo ? 5 : 0);
+        const momentumGain = 10 + (dmg.critical ? 10 : 0) + (dmg.effective === 'super' ? 10 : 0)
+          + (combo ? 5 : 0) + this._weaknessMomentumBonus(dmg.effective);
         this._gainMomentum(momentumGain);
         result = {
           ...result, damage: finalDamage, critical: dmg.critical, effective: dmg.effective, combo, momentumGain,
@@ -891,7 +1070,7 @@ export class CombatEngine {
         let brokeAny = false;
         for (const t of targets) {
           const eStats = this._getEffective(t);
-          const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, t, ability.tag);
+          const dmg = this._calcDamage(pStats.atk, ability.power, eStats.def, t, chosenTag);
           const combo = this._enemyHasDebuff(t);
           let finalDamage = dmg.damage;
           if (combo) finalDamage = Math.floor(finalDamage * 1.25);
@@ -905,7 +1084,8 @@ export class CombatEngine {
           locksClearedTotal += dmg.lockCleared;
           brokeAny = brokeAny || dmg.broke;
         }
-        const momentumGain = 10 + (critAny ? 10 : 0) + (superAny ? 10 : 0) + (comboAny ? 5 : 0) + Math.min(10, (targets.length - 1) * 5);
+        const momentumGain = 10 + (critAny ? 10 : 0) + (superAny ? 10 : 0) + (comboAny ? 5 : 0)
+          + Math.min(10, (targets.length - 1) * 5) + this._weaknessMomentumBonus(superAny ? 'super' : null);
         this._gainMomentum(momentumGain);
         result = {
           ...result,
@@ -947,15 +1127,21 @@ export class CombatEngine {
       case 'debuff': {
         const target = this._resolveTarget(targetIndex);
         if (!target) return null;
+        // E4 — SCOPE EXPANSION: while we're in here. One turn longer.
+        const dur = ability.debuffDuration + (this.hasNode('scope_expansion') ? 1 : 0);
         target.buffs.push({
           stats: ability.debuffAmount,
-          duration: ability.debuffDuration,
+          duration: dur,
           name: ability.name,
         });
         // Tagged debuffs are still tagged hits: they clear a Lock. They do not
         // move Composure — that stays weakness-damage-only (HSR rule).
-        const cleared = this._clearLocks(target, ability.tag);
-        result = { ...result, debuffAmount: ability.debuffAmount, duration: ability.debuffDuration, targetIndex: this.targetEnemyIndex, locksCleared: cleared };
+        const cleared = this._clearLocks(target, chosenTag);
+        // E4 — and a tagged debuff files a Finding, or closes the file.
+        if (this.hasNode('scope_expansion') && this.hasNode('findings') && chosenTag) {
+          this._fileFinding(target);
+        }
+        result = { ...result, debuffAmount: ability.debuffAmount, duration: dur, targetIndex: this.targetEnemyIndex, locksCleared: cleared };
         break;
       }
       case 'stall': {
@@ -986,7 +1172,102 @@ export class CombatEngine {
     this._noteLoopIn(result.effective);
     if (conf.scrambled) result.confusedScramble = true;
     if (conf.dampened) result.confusedDampened = true;
+    this._armTurnBack(result, preBroken);
     return result;
+  }
+
+  /** File one Finding on a target, or close the file if it is already full. */
+  _fileFinding(target) {
+    if (!target || target.hp <= 0) return;
+    const maxF = this.hasNode('material_weakness') ? 4 : 5;
+    const stacks = target._findings || 0;
+    if (stacks >= maxF) {
+      target._findings = 0;
+      this._reduceComposure(target, 30);
+      if (this.hasNode('adverse_opinion')) {
+        target.buffs.push({ stats: { def: -6 }, duration: 3, name: 'Adverse Opinion' });
+      }
+    } else {
+      target._findings = Math.min(maxF, stacks + 1);
+    }
+  }
+
+  /** Public read for the HUD: how full the file is on a given enemy. */
+  getFindings(enemyIndex = this.targetEnemyIndex) {
+    if (!this.hasNode('findings')) return null;
+    const t = this.enemies[enemyIndex];
+    if (!t || t.hp <= 0) return null;
+    return { count: t._findings || 0, max: this.hasNode('material_weakness') ? 4 : 5 };
+  }
+
+  // ══════════════════════════════════════════════════════════════════
+  // OBJECTION SUSTAINED — the One More, one mechanism in two grades
+  // ══════════════════════════════════════════════════════════════════
+  // When Andrew's action lands `effective === 'super'`, control returns to him
+  // for one additional action in the same turn slot.
+  //
+  //   'sustain'  UNIVERSAL, free. The returned action MAY NOT DEAL DAMAGE:
+  //              Brace, items, self-buffs and heals only. No basic attack, no
+  //              attack/attack_aoe, no Press Advantage, no Assert Dominance,
+  //              no Retaliate, no Desperate Gamble, no Second Wind, no debuff,
+  //              no stall, no special.
+  //   'attack'   MOTION FOR SUMMARY JUDGMENT, the Litigation capstone. Once
+  //              per engagement, THAT SAME RETURN may be a BASIC ATTACK
+  //              instead. Not a second proc, not a second prompt, not a second
+  //              code path — an UPGRADE of the return that was already coming.
+  //
+  // WHY UPGRADE AND NOT ADDITION, measured: adding them drops Litigation to
+  // 66.8-89.8 % of baseline effective enemy turns, below the documented bar on
+  // four of five cells. Upgrading holds 67.6-93.6 % — the NUMBER of returned
+  // turns is unchanged and only their QUALITY moves.
+  //
+  // AND THE RETURNED-TURN LAW: letting the return spend the MOMENTUM VERBS
+  // (Assert Dominance, Retaliate) instead of a basic attack costs 62-74 % of
+  // baseline effective enemy turns. A returned turn carrying a 75-power
+  // DEF-ignoring hit is worth about a quarter of a boss. The returned turn is
+  // a BASIC ATTACK. Not "any untagged action".
+  //
+  // THE CHAIN IS 1 BY CONSTRUCTION in both grades: the returned action is
+  // either non-damaging or untagged, so it can never publish `super` and can
+  // never re-arm. `_inTurnBack` is belt and braces on top of that.
+  _armTurnBack(result, preBroken) {
+    if (!result || this._inTurnBack || this.isOver) return;
+    if (this.player.turnBackUsedThisTurn) return;              // once per Andrew turn
+    const sup = result.effective === 'super'
+      || (result.hits || []).some(h => h.effective === 'super');
+    if (!sup) return;
+    // Never off the hit that BROKE the bar — the Break already bought a turn.
+    if (result.brokeComposure || result.broke
+      || (result.hits || []).some(h => h.brokeComposure)) return;
+    // Never off a hit on an ALREADY-broken target (P5R's no-re-down rule).
+    if (preBroken) return;
+    this.player.turnBackUsedThisTurn = true;
+    // CROWD SUPPRESSION: no Summary Judgment while more than one enemy is
+    // alive. Measured, the trio cell reads 67.6 % of baseline effective enemy
+    // turns because one extra player action against a three-body queue
+    // accelerates the kill rather than denying a telegraph. Thematically free:
+    // you cannot move for summary judgment against three parties at once.
+    const solo = this.aliveEnemies().length <= 1;
+    const upgrade = this.hasNode('motion_summary_judgment') && !this._msjSpent && solo;
+    if (upgrade) this._msjSpent = true;
+    this.turnBackReady = upgrade ? 'attack' : 'sustain';
+    result.turnBack = this.turnBackReady;
+  }
+
+  /** True if `abilityId` is legal on the current returned turn. */
+  turnBackAllows(abilityId) {
+    if (this.turnBackReady !== 'sustain') return true;
+    const a = PLAYER_ABILITIES[abilityId];
+    if (!a) return false;
+    return a.type === 'heal' || a.type === 'buff';
+  }
+
+  /** Consume the arm and run `fn` as the returned action. */
+  runTurnBack(fn) {
+    if (!this.turnBackReady) return null;
+    this.turnBackReady = null;
+    this._inTurnBack = true;
+    try { return fn(); } finally { this._inTurnBack = false; }
   }
 
   playerItem(itemId) {
@@ -1355,6 +1636,9 @@ export class CombatEngine {
   // until the enemy consumes it. Re-rolling would throw away Locks the player
   // has already paid tagged hits to clear.
   telegraph() {
+    // The Pivot resolves BEFORE the roll is published, so the telegraph hint,
+    // the Objections row and the Composure label all read the same weakness.
+    this.syncAllPhaseTraits();
     for (const e of this.enemies) {
       if (e.hp <= 0) {
         e.telegraphedAbility = null;
@@ -1392,10 +1676,14 @@ export class CombatEngine {
         let finalDamage = shave(dmg.damage);
         let braced = false;
         if (target.isPlayer && this.player.bracing) {
+          const preHalve = finalDamage;
           finalDamage = Math.floor(finalDamage * 0.5);
+          // E6 — STANDARD OF CARE: a FURTHER 25 % off the braced hit.
+          if (this.hasNode('standard_of_care')) finalDamage = Math.max(1, Math.floor(finalDamage * 0.75));
           this.player.bracing = false;
           braced = true;
           this.player.retaliateReady = true;
+          this._afterBracedHit(enemy, preHalve, finalDamage, result);
         }
         target.hp = Math.max(0, target.hp - finalDamage);
         result.damage = finalDamage;
@@ -1475,9 +1763,12 @@ export class CombatEngine {
         let finalDamage = shave(dmg.damage);
         let braced = false;
         if (target.isPlayer && this.player.bracing) {
+          const preHalve = finalDamage;
           finalDamage = Math.floor(finalDamage * 0.5);
+          if (this.hasNode('standard_of_care')) finalDamage = Math.max(1, Math.floor(finalDamage * 0.75));
           this.player.bracing = false;
           braced = true;
+          this._afterBracedHit(enemy, preHalve, finalDamage, result);
         }
         target.hp = Math.max(0, target.hp - finalDamage);
         result.damage = finalDamage;
@@ -1488,7 +1779,31 @@ export class CombatEngine {
     return result;
   }
 
+  // ── E7 + E8 — the two nodes that fire on the frame a Brace CONNECTS ────
+  // `braced` is set in exactly two places in this file (the attack branch and
+  // the summon branch) and nowhere else — verified. Both call this.
+  //
+  // RESERVATION OF RIGHTS is the only damage in the game that scales off the
+  // OPPONENT: it is computed from the PRE-HALVE hit, which is a function of
+  // their Assertiveness, not yours. Accepted under protest. Every word of this
+  // is coming back.
+  _afterBracedHit(enemy, preHalve, dealt, result) {
+    if (this.hasNode('subrogation')) {
+      this.player._subrogation = (this.player._subrogation || 0) + dealt;
+    }
+    if (this.hasNode('reservation_of_rights') && enemy && enemy.hp > 0 && preHalve > 0) {
+      const q = this.player._braceQuality === 'perfect' ? 0.60 : 0.35;
+      const back = Math.max(1, Math.floor(preHalve * q));
+      enemy.hp = Math.max(0, enemy.hp - back);
+      result.reservation = back;
+      this._checkVictory();
+    }
+  }
+
   _pickEnemyAbility(enemy) {
+    // The Pivot resolves before the move is chosen, so the phase message, the
+    // telegraph and the HUD's `COMPOSURE — X ONLY` all agree on the same frame.
+    this._syncPhaseTraits(enemy);
     let abilities = enemy.abilities;
     if (enemy.phases) {
       const hpPercent = enemy.hp / enemy.maxHP;
@@ -1642,6 +1957,18 @@ export class CombatEngine {
       entity.pressAdvantageUsedThisTurn = false;
       entity.loopInUsedThisTurn = false;
       this.loopInReady = false;
+      // TURN-BACK bookkeeping. Once per Andrew turn, and the arm is cleared so
+      // a return can never carry over into the next one.
+      entity.turnBackUsedThisTurn = false;
+      this.turnBackReady = null;
+      // C3 — Notice of Deficiency reads "did he brace on his PREVIOUS turn",
+      // so the flag rolls forward here rather than being read live.
+      entity._bracedLastTurn = !!entity._bracedThisTurn;
+      entity._bracedThisTurn = false;
+      // The Pivot has to be resolved on every turn boundary, not only when the
+      // enemy acts: a DoT or a Reservation reflect can cross a phase threshold
+      // between turns, and the HUD reads `enemy.weakness` live.
+      this.syncAllPhaseTraits();
 
       // The Break window (+20%) outlives the enemy's skipped turn by exactly
       // one player turn — see _reduceComposure. Expire it here so the bonus
@@ -1812,16 +2139,39 @@ export class CombatEngine {
     // rather than a turn spent standing still.
     let composureStripped = 0;
     let brokeComposure = false;
-    if (quality === 'perfect') {
+    // E5 — CONTEMPORANEOUS NOTES REPLACES the shipped flat 20 % perfect strip
+    // (it does not stack with it) and extends it to a GOOD brace, which is what
+    // turns Bracing from a turn spent standing still into the Compliance lane's
+    // route to a Break.
+    const notes = this.hasNode('contemporaneous_notes');
+    const frac = notes
+      ? (quality === 'perfect' ? 0.35 : quality === 'good' ? 0.15 : 0)
+      : (quality === 'perfect' ? COMBAT_DEPTH.BRACE_COMPOSURE_STRIP : 0);
+    if (frac > 0) {
       const target = this.enemy;
       if (target && target.hp > 0 && target.maxComposure > 0 && target.broken <= 0) {
-        const strip = Math.max(1, Math.round(target.maxComposure * COMBAT_DEPTH.BRACE_COMPOSURE_STRIP));
+        const strip = Math.max(1, Math.round(target.maxComposure * frac));
         const res = this._reduceComposure(target, strip);
         composureStripped = res.amount;
         brokeComposure = res.broke;
       }
     }
-    return { type: 'brace', defBonus: cfg.defBonus, duration: cfg.duration, quality, composureStripped, brokeComposure };
+    let objectionsCleared = 0;
+    if (notes && quality !== 'miss') {
+      // A brace is an objection to the move it answers.
+      for (const e of this.enemies) {
+        if (e.hp <= 0 || e.sealed) continue;
+        const open = (e.locks || []).find(l => !l.cleared);
+        if (open) { open.cleared = true; objectionsCleared++; }
+      }
+    }
+    // E6 — STANDARD OF CARE, half one: a perfect Brace refunds 15 Confidence.
+    if (this.hasNode('standard_of_care') && quality === 'perfect') this._gainMomentum(15);
+    // Stamped for Reservation of Rights, which needs to know HOW WELL he braced
+    // on the frame the enemy's blow resolves.
+    this.player._braceQuality = quality;
+    this.player._bracedThisTurn = true;
+    return { type: 'brace', defBonus: cfg.defBonus, duration: cfg.duration, quality, composureStripped, brokeComposure, objectionsCleared };
   }
 
   playerPowerMove(targetIndex) {
@@ -1849,7 +2199,9 @@ export class CombatEngine {
   // i.e. roughly every third turn — tempo, not a free extra action every turn.
   getPressAdvantageCost() {
     const spd = this._getEffective(this.player).spd;
-    return Math.max(25, 40 - Math.floor((spd - 8) * 0.5));
+    const base = Math.max(25, 40 - Math.floor((spd - 8) * 0.5));
+    // AGGRAVATING FACTORS (E10): -10, floored at 15.
+    return this.hasNode('aggravating_factors') ? Math.max(15, base - 10) : base;
   }
 
   // E33's Gradient Attack model: Press Advantage costs momentum but does NOT
@@ -1936,7 +2288,14 @@ export class CombatEngine {
     if (!target) return null;
     const pStats = this._getEffective(this.player);
     const eStats = this._getEffective(target);
-    const dmg = this._calcDamage(pStats.atk, 22, eStats.def, target);
+    // E9 — ADVERSE INFERENCE. Retaliate carries the PRACTICE AREA of the move
+    // it answers, so it clears Objections and can land as a weakness hit, and
+    // its base power goes 22 -> 26. Shipped, Retaliate passed no tag at all,
+    // which is why it moved no Composure and cleared nothing: the QTE lane's
+    // signature move was the one attack in the game outside the tag system.
+    const inference = this.hasNode('adverse_inference');
+    const answeredTag = inference ? this._telegraphedTag(target) : null;
+    const dmg = this._calcDamage(pStats.atk, inference ? 26 : 22, eStats.def, target, answeredTag);
     let finalDamage = Math.max(1, Math.floor(dmg.damage * multiplier));
     if (conf.dampened) finalDamage = Math.max(1, Math.floor(finalDamage * conf.damageMult));
     target.hp = Math.max(0, target.hp - finalDamage);
@@ -1944,9 +2303,20 @@ export class CombatEngine {
     this._checkVictory();
     return {
       type: 'retaliate', damage: finalDamage, critical: dmg.critical && multiplier >= 1.0,
-      targetIndex: this.targetEnemyIndex,
+      targetIndex: this.targetEnemyIndex, effective: dmg.effective,
+      locksCleared: dmg.lockCleared, brokeComposure: dmg.broke,
       confusedScramble: conf.scrambled, confusedDampened: conf.dampened,
     };
+  }
+
+  // The practice area of the move an enemy is currently telegraphing. Enemy
+  // abilities are only 11/93 tagged, so this falls back to the first Objection
+  // on the move — which `_buildLocks` derives hash-stably from the ability id,
+  // and is therefore just as learnable.
+  _telegraphedTag(enemy) {
+    if (!enemy) return null;
+    const ab = ENEMY_ABILITIES[enemy.telegraphedAbility];
+    return (ab && ab.tag) || ((enemy.locks || []).find(l => !l.cleared) || {}).tag || null;
   }
 
   playerDesperateGamble(risk, targetIndex) {

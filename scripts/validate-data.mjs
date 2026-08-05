@@ -37,7 +37,10 @@ const DIALOG_ACTIONS = new Set([
   'unlock_ally_ability',
 ]);
 const PLAYER_STAT_KEYS = new Set(Object.keys(PLAYER_BASE_STATS));
-const ENEMY_STAT_KEYS = new Set(['maxHP', 'hp', 'atk', 'def', 'spd', 'xpReward']);
+// `maxComposure` is a first-class authorable enemy stat (CombatEngine
+// _defaultMaxComposure reads ENEMY_STATS[id].maxComposure and therefore the
+// balance.json enemies block too); it was simply missing from this list.
+const ENEMY_STAT_KEYS = new Set(['maxHP', 'hp', 'atk', 'def', 'spd', 'xpReward', 'maxComposure']);
 const ABILITY_NUMERIC_KEYS = new Set([
   'cost',
   'power',
@@ -459,6 +462,13 @@ function validateShopAndBalance() {
   }
 }
 
+/** A passive must return null from playerAbility, never a castable result. */
+function engineSmokePassiveRefused(abilityId) {
+  const engine = new CombatEngine({ ...PLAYER_BASE_STATS, mp: 999, maxMP: 999 }, 'karen');
+  engine.player.momentum = 100;
+  return engine.playerAbility(abilityId, 0) === null;
+}
+
 function validateCosmetics() {
   const slots = new Set(COSMETIC_SLOTS);
   for (const [id, cosmetic] of Object.entries(COSMETICS)) {
@@ -565,8 +575,17 @@ function validateCombatSmoke() {
   const silencedEnemyResult = silenceEngine.enemyTurn(0);
   assert(silencedEnemyResult?.type === 'silenced', 'silenced enemy did not skip its turn');
 
-  for (const abilityId of Object.keys(PLAYER_ABILITIES)) {
+  for (const [abilityId, ability] of Object.entries(PLAYER_ABILITIES)) {
+    // PASSIVES ARE NOT CASTABLE. They are Practice Group nodes the engine
+    // READS (from CombatEngine.nodes); playerAbility refuses them outright, so
+    // asking one to execute is asking for the null it correctly returns.
+    if (ability.type === 'passive') {
+      assert(engineSmokePassiveRefused(abilityId), `passive ${abilityId} must not be castable`);
+      continue;
+    }
     const engine = new CombatEngine({ ...baseStats, mp: 999, maxMP: 999 }, 'karen');
+    // Confidence-priced abilities (Escalate) need a bar to spend.
+    engine.player.momentum = 100;
     const result = engine.playerAbility(abilityId, 0);
     assert(!!result, `player ability ${abilityId} failed combat smoke execution`);
   }
