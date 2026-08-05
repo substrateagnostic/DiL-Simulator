@@ -1,0 +1,77 @@
+[
+ {
+  "name": "Assert Dominance fires the card on the 680ms contact beat",
+  "pass": true,
+  "detail": "assert_dominance.webp"
+ },
+ {
+  "name": "  card carries the REWARD class (slam left)",
+  "pass": true,
+  "detail": "combat-splash reward"
+ },
+ {
+  "name": "  the old ASSERT DOMINANCE banner is gone (one title, not two)",
+  "pass": true,
+  "detail": ""
+ },
+ {
+  "name": "  the damage number is on screen WITH the card",
+  "pass": true,
+  "detail": "1 numbers"
+ },
+ {
+  "name": "Karen ultimate telegraph fires the warning card",
+  "pass": true,
+  "detail": "boss_karen.webp"
+ },
+ {
+  "name": "  card carries the THREAT class (slam right)",
+  "pass": true,
+  "detail": "combat-splash threat"
+ },
+ {
+  "name": "  NO damage number on a threat card",
+  "pass": true,
+  "detail": "0 numbers"
+ },
+ {
+  "name": "  once per boss per fight (second telegraph plays no card)",
+  "pass": true,
+  "detail": "none"
+ },
+ {
+  "name": "All-In card does NOT fire on the miss",
+  "pass": true,
+  "detail": "none"
+ },
+ {
+  "name": "All-In card fires when the 40% LANDS",
+  "pass": true,
+  "detail": "all_in.webp"
+ },
+ {
+  "name": "Boss-kill card fires on a story boss final blow",
+  "pass": true,
+  "detail": "boss_kill.webp"
+ },
+ {
+  "name": "Reception client kill fires NO card (scarcity law)",
+  "pass": true,
+  "detail": "none"
+ },
+ {
+  "name": "Scripted Karen loss fires her finisher card",
+  "pass": true,
+  "detail": "karen_finisher.webp"
+ },
+ {
+  "name": "  it uses THREAT dress (done TO the player)",
+  "pass": true,
+  "detail": "combat-splash threat"
+ },
+ {
+  "name": "  once per save (flag written)",
+  "pass": true,
+  "detail": ""
+ }
+]

@@ -22,6 +22,7 @@ import {
   activeStretchIds, reviewLevel, noteReviewLevel, pipResistance, REVIEW_COPY,
 } from '../data/review.js';
 import { DEV_MODE } from '../utils/constants.js';
+import { BOSS_ULTIMATE_CARDS, BOSS_KILL_IDS } from '../data/splash-cards.js';
 
 export class CombatState {
   // Which CHARACTER_CONFIGS ids will stand on the stage for this encounter.
@@ -84,6 +85,12 @@ export class CombatState {
     this.cine.onImpact = () => { if (this._impactHook) this._impactHook(); };
     this._impactHook = null;
     this._enemyTelegraphInfo = {}; // per-enemy { attack, heavy } stashed from telegraph
+    // SCARCITY (splash-card-spec section 12.2). Karen's ultimate can be
+    // telegraphed many times across a long fight; the warning card plays the
+    // FIRST time only. Every subsequent telegraph still shows the normal HUD
+    // hint and the OBJECTIONS chips — the card is emphasis, never the only
+    // channel. Per fight, so the Set lives with the state instance.
+    this._ultimateCardShown = new Set();
 
     this.phase = 'intro';                 // intro, ally_turn, targeting, animating, enemy_phase, result
     this.animTimer = 0;
@@ -852,6 +859,22 @@ export class CombatState {
       const type = ab?.type;
       const isAttack = type === 'attack' || type === 'dot';
       this._enemyTelegraphInfo[i] = { attack: isAttack, heavy: isAttack && (ab?.power || 0) >= 26 };
+      // THE ULTIMATE WARNING CARD. A different hook from the reward cards on
+      // purpose: ENEMY_HEAVY fires when the blow LANDS, which is far too late
+      // for a card whose entire message is BRACE NOW. This is the telegraph
+      // beat, at the start of the player's own turn, with the roll already
+      // committed — so the card is telling the truth about what is coming.
+      //
+      // Suppressed while the telegraph is sealed (Under NDA / Summary
+      // Briefing): the card must not leak the intent the banner just hid.
+      const ult = BOSS_ULTIMATE_CARDS[e.enemyId];
+      if (this._enemyTelegraphInfo[i].heavy && ult
+          && ult.ability === e.telegraphedAbility
+          && !sealed && !briefingOnly
+          && !this._ultimateCardShown.has(e.enemyId)) {
+        this._ultimateCardShown.add(e.enemyId);
+        this.hud.showSplashCard(ult.card, 850);
+      }
       const entry = this.scene.enemyGroups?.[i];
       if (!entry || !entry.animator) return;
       // Under NDA the face must not leak the intent the banner just hid.
@@ -1966,6 +1989,17 @@ export class CombatState {
       // Defeat anim for any enemies still in scene at hp 0
       this.engine.enemies.forEach((e, i) => { if (e.hp <= 0) this.scene.enemyDefeatAnim(i); });
 
+      // THE BOSS-KILL CARD. Fires on the victory transition, after the final
+      // damage number has resolved (_handleResult is reached ~620ms past the
+      // contact frame that killed them). STORY BOSSES ONLY — BOSS_KILL_IDS is
+      // deliberately the same six ids as the warning table and nothing else,
+      // which caps this card at six plays across a whole campaign. A reception
+      // client must never get one: the roguelite loop is the grind, and a set
+      // piece that plays during the grind is a load screen.
+      if (this.enemyIdsList.some(id => BOSS_KILL_IDS.has(id))) {
+        this.hud.showSplashCard('boss_kill', 1300);
+      }
+
       // Billable Day performance snapshot — taken BEFORE the post-fight heal,
       // because "what shape you finished in" is the thing the Hours award
       // reads. Harmless for every other fight; onEnd's second arg is optional.
@@ -2041,6 +2075,17 @@ export class CombatState {
       AudioManager.playSfx('defeat');
       const scriptedKarenLoss = this.enemyId === 'karen' && !this.player.getFlag('retry_karen');
       if (!scriptedKarenLoss) this.player.deaths = (this.player.deaths || 0) + 1;
+      // THE SCRIPTED-LOSS FINISHER — the producer's own addition, and the only
+      // card in the system that plays on a DEFEAT. The first splash card the
+      // player ever sees is therefore one being done TO them, which teaches
+      // the grammar before they ever earn one. It uses the THREAT dress (slam
+      // right, red wash, no damage number) because that is exactly what it is.
+      // ONCE PER SAVE: this is the designed tutorial loss, and a player who
+      // reloads into it a second time is not being taught anything.
+      if (scriptedKarenLoss && !this.player.getFlag('seen_karen_finisher')) {
+        this.player.setFlag('seen_karen_finisher', true);
+        this.hud.showSplashCard('karen_finisher', 1500);
+      }
       // JUMPS the plate queue. This is the line that tells the player why the
       // fight ended, and it fires 2500 ms before closeScope('combat') discards
       // whatever is still pending — which is exactly what happened to it once.

@@ -1,0 +1,187 @@
+{
+ "report": [
+  {
+   "id": "assert_dominance",
+   "ok": true,
+   "src": "/src/assets/splash_cards/assert_dominance.webp",
+   "title": "ASSERT DOMINANCE",
+   "sub": "MOMENTUM SPENT",
+   "cls": "combat-splash reward",
+   "typeCls": "combat-splash-type left",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "boss_kill",
+   "ok": true,
+   "src": "/src/assets/splash_cards/boss_kill.webp",
+   "title": "CASE CLOSED",
+   "sub": "MATTER RESOLVED",
+   "cls": "combat-splash reward",
+   "typeCls": "combat-splash-type top-left",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "all_in",
+   "ok": true,
+   "src": "/src/assets/splash_cards/all_in.webp",
+   "title": "ALL IN",
+   "sub": "IT LANDED",
+   "cls": "combat-splash reward",
+   "typeCls": "combat-splash-type bottom-left",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "boss_karen",
+   "ok": true,
+   "src": "/src/assets/splash_cards/boss_karen.webp",
+   "title": "LIVE TWEET RAMPAGE",
+   "sub": "BRACE",
+   "cls": "combat-splash threat",
+   "typeCls": "combat-splash-type bottom-left slab",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "boss_chad",
+   "ok": true,
+   "src": "/src/assets/splash_cards/boss_chad.webp",
+   "title": "RAGE QUIT",
+   "sub": "BRACE",
+   "cls": "combat-splash threat",
+   "typeCls": "combat-splash-type bottom-left slab",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "boss_grandma",
+   "ok": true,
+   "src": "/src/assets/splash_cards/boss_grandma.webp",
+   "title": "THE GERALD INCIDENT",
+   "sub": "BRACE",
+   "cls": "combat-splash threat",
+   "typeCls": "combat-splash-type bottom-left slab",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "boss_meredith",
+   "ok": true,
+   "src": "/src/assets/splash_cards/boss_meredith.webp",
+   "title": "FINAL ASSESSMENT",
+   "sub": "BRACE",
+   "cls": "combat-splash threat",
+   "typeCls": "combat-splash-type bottom-left",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "boss_director",
+   "ok": true,
+   "src": "/src/assets/splash_cards/boss_director.webp",
+   "title": "MARKET CORRECTION",
+   "sub": "BRACE",
+   "cls": "combat-splash threat",
+   "typeCls": "combat-splash-type left",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "boss_algorithm",
+   "ok": true,
+   "src": "/src/assets/splash_cards/boss_algorithm.webp",
+   "title": "TOTAL OPTIMIZATION",
+   "sub": "BRACE",
+   "cls": "combat-splash threat still",
+   "typeCls": "combat-splash-type bottom-left slab teal",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  },
+  {
+   "id": "karen_finisher",
+   "ok": true,
+   "src": "/src/assets/splash_cards/karen_finisher.webp",
+   "title": "ESCALATED",
+   "sub": "YOU LOSE THIS ONE",
+   "cls": "combat-splash threat",
+   "typeCls": "combat-splash-type bottom-left slab",
+   "natural": {
+    "w": 1600,
+    "h": 900,
+    "complete": true
+   }
+  }
+ ],
+ "sizes": [
+  {
+   "file": "boss_kill.webp",
+   "kb": 219.2
+  },
+  {
+   "file": "boss_grandma.webp",
+   "kb": 195.4
+  },
+  {
+   "file": "boss_chad.webp",
+   "kb": 131.5
+  },
+  {
+   "file": "all_in.webp",
+   "kb": 113
+  },
+  {
+   "file": "boss_algorithm.webp",
+   "kb": 106.7
+  },
+  {
+   "file": "boss_karen.webp",
+   "kb": 99.8
+  },
+  {
+   "file": "karen_finisher.webp",
+   "kb": 99.5
+  },
+  {
+   "file": "boss_director.webp",
+   "kb": 87.7
+  },
+  {
+   "file": "assert_dominance.webp",
+   "kb": 82.2
+  },
+  {
+   "file": "boss_meredith.webp",
+   "kb": 70.5
+  }
+ ],
+ "failures": []
+}

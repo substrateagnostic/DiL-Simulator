@@ -1,4 +1,5 @@
 import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
+import { SPLASH_CARDS } from '../data/splash-cards.js';
 
 // Combat HUD — supports 1+ enemies and 1+ party members.
 // Top-center: row of enemy bars with name/HP/telegraph; selected target gets a highlight.
@@ -90,6 +91,104 @@ function _ensureCineStyles() {
   }
   .combat-power-banner.leaving { opacity: 0; transition: opacity 0.4s ease; }
   @media (max-width:700px),(max-height:540px){ .combat-power-banner{font-size:26px} }
+
+  /* ── SPLASH CARDS ────────────────────────────────────────────────────
+     COVER, THEN INSET TO 96.5%. The remaining sliver of darkened combat scene
+     at the corners is what makes it read as a card SLAMMED OVER the fight
+     rather than a cutaway to a different screen. Do not full-bleed it.
+     z-order: card 44, title 47, damage number 48 — the number stays the
+     brightest object on screen and sits ON the card, not under it. */
+  .combat-splash {
+    position: absolute; inset: 1.75% 1.75%; pointer-events: none; z-index: 44;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+  }
+  .combat-splash-img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    border: 0.5vw solid #f2e8dc;                     /* the shirt cream, scaled */
+    box-shadow: 14px 16px 0 rgba(0,0,0,0.67);        /* HARD shadow: a printed card, not a floating pane */
+  }
+  /* Andrew: slams from the LEFT and leans -3.4deg. */
+  .combat-splash.reward { animation: splashSlamL var(--splash-life,1300ms) cubic-bezier(0.2,1.4,0.4,1) both; }
+  /* Boss: mirrored. The sign is the cheapest tell in the system. */
+  .combat-splash.threat { animation: splashSlamR var(--splash-life,850ms) cubic-bezier(0.2,1.4,0.4,1) both; }
+  /* The Algorithm does not lean and does not advance (spec section 13). */
+  .combat-splash.still  { animation: splashSlamStill var(--splash-life,850ms) cubic-bezier(0.2,1.4,0.4,1) both; }
+
+  /* It leaves FASTER and BIGGER than it arrived — it exits toward the viewer,
+     it does not shrink away. Percentages below are of the card's own life, so
+     the reward card (1300ms) and the warning card (850ms) share one curve. */
+  @keyframes splashSlamL {
+    0%   { opacity: 0; transform: scale(1.35) rotate(-7deg); }
+    7%   { opacity: 1; transform: scale(1.00) rotate(-3.4deg); }
+    88%  { opacity: 1; transform: scale(1.00) rotate(-3.4deg); }
+    100% { opacity: 0; transform: scale(1.12) rotate(-8deg); }
+  }
+  @keyframes splashSlamR {
+    0%   { opacity: 0; transform: scale(1.35) rotate(7deg); }
+    10%  { opacity: 1; transform: scale(1.00) rotate(3.4deg); }
+    82%  { opacity: 1; transform: scale(1.00) rotate(3.4deg); }
+    100% { opacity: 0; transform: scale(1.12) rotate(8deg); }
+  }
+  @keyframes splashSlamStill {
+    0%   { opacity: 0; transform: scale(1.06); }
+    10%  { opacity: 1; transform: scale(1.00); }
+    82%  { opacity: 1; transform: scale(1.00); }
+    100% { opacity: 0; transform: scale(1.04); }
+  }
+
+  .combat-splash-type {
+    position: absolute; z-index: 47; display: flex; flex-direction: column;
+    gap: 0.5em; max-width: 46%;
+  }
+  .combat-splash-type.left         { left: 6%;  top: 50%; transform: translateY(-50%); align-items: flex-start; text-align: left; }
+  .combat-splash-type.bottom-left  { left: 6%;  bottom: 12%; align-items: flex-start; text-align: left; }
+  .combat-splash-type.top-left     { left: 6%;  top: 12%;    align-items: flex-start; text-align: left; }
+  .combat-splash-type.bottom-center{ left: 50%; bottom: 12%; transform: translateX(-50%); align-items: center; text-align: center; }
+
+  /* CREAM, NOT GOLD. #ffd700 is the damage-number colour and the achievement
+     colour; gold here would compete with gold on the number. HARD ink offset,
+     no glow — the banner's 18px amber glow is right on a bare backdrop and
+     wrong on illustration, it hazes the art underneath.
+     SKEW is the single highest-value addition: level type on a rotated card
+     reads as a caption, skewed type reads as a graphic object. */
+  .combat-splash-title {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(20px, 3.2vw, 54px); line-height: 1.15;
+    color: #f2e8dc; transform: skewX(-9deg);
+    text-shadow: 6px 6px 0 #0c0a14;
+    letter-spacing: 0.14em;
+    animation: powerBannerSlam 0.4s cubic-bezier(0.2,1.4,0.4,1) 0.09s both;
+  }
+  .combat-splash-sub {
+    font-family: 'Press Start 2P', cursive;
+    font-size: clamp(9px, 1.45vw, 24px);
+    color: #f2e8dc; opacity: 0.88; transform: skewX(-9deg);
+    text-shadow: 4px 4px 0 #0c0a14; letter-spacing: 0.18em;
+    animation: powerBannerSlam 0.4s cubic-bezier(0.2,1.4,0.4,1) 0.14s both;
+  }
+  /* THE SLAB. Some plates came back light-valued in their reserved type zone
+     (wave-1 B's cream sheet, karen_B's radial burst reaching across its own
+     zone), so cream type alone will not hold. A solid crimson bar behind the
+     type is both a legibility device and very much the house voice. */
+  .combat-splash-type.slab .combat-splash-title,
+  .combat-splash-type.slab .combat-splash-sub {
+    background: rgba(160,18,52,0.92); padding: 0.34em 0.5em; text-shadow: 4px 4px 0 #0c0a14;
+  }
+  /* The Algorithm's palette exemption reaches the type as well: it is the only
+     card in the set permitted teal, and the title has to belong to it. */
+  .combat-splash-type.teal .combat-splash-title,
+  .combat-splash-type.teal .combat-splash-sub { color: #9ff0e4; text-shadow: 6px 6px 0 #04161c; }
+  .combat-splash-type.teal.slab .combat-splash-title,
+  .combat-splash-type.teal.slab .combat-splash-sub { background: rgba(10,58,66,0.92); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .combat-splash.reward, .combat-splash.threat, .combat-splash.still {
+      animation-name: splashSlamStill;
+      animation-timing-function: linear;
+    }
+    .combat-splash-title, .combat-splash-sub { animation: none; }
+  }
   `;
   document.head.appendChild(style);
 }
@@ -944,6 +1043,61 @@ export class CombatHUD {
   // Big centered-upper announcement for signature moves (ASSERT DOMINANCE),
   // rendered in its own slot above the combat-message band so it never gets
   // buried behind an enemy phase-taunt firing on the same beat.
+  /**
+   * SPLASH CARD — the set-piece surface. Its own method rather than a widened
+   * `pulseOverlay(kind, colour, ms)`: a full-frame illustration has nothing in
+   * common with a colour pulse. One renderer, three callers (the power beat and
+   * the All-In beat through CombatCinematics' `splash` step, the boss ultimate
+   * telegraph and the two one-off cards direct from CombatState).
+   *
+   * Single-occupancy by construction — a second card replaces the first the way
+   * showBanner does, so two set pieces can never share the screen.
+   *
+   * @param {string|object} card  a SPLASH_CARDS id, or the entry itself
+   * @param {number} ms           total card life; the CSS reads it as --splash-life
+   */
+  showSplashCard(card, ms = 1300) {
+    if (this._closed) return null;
+    const c = typeof card === 'string' ? SPLASH_CARDS[card] : card;
+    // A missing asset must never take the fight down with it: the beat simply
+    // plays without its card, exactly as it did before this system existed.
+    if (!c || !c.src) return null;
+    if (this._splashEl && this._splashEl.parentNode) this._splashEl.remove();
+    clearTimeout(this._splashTimer);
+
+    const el = document.createElement('div');
+    el.className = `combat-splash ${c.cls || 'reward'}${c.still ? ' still' : ''}`;
+    el.style.setProperty('--splash-life', `${ms}ms`);
+    const img = document.createElement('img');
+    img.className = 'combat-splash-img';
+    img.src = c.src;
+    img.alt = '';
+    el.appendChild(img);
+
+    const type = document.createElement('div');
+    type.className = `combat-splash-type ${c.anchor || 'bottom-left'}`
+      + (c.slab ? ' slab' : '') + (c.teal ? ' teal' : '');
+    const title = document.createElement('div');
+    title.className = 'combat-splash-title';
+    title.textContent = c.title || '';
+    type.appendChild(title);
+    if (c.sub) {
+      const sub = document.createElement('div');
+      sub.className = 'combat-splash-sub';
+      sub.textContent = c.sub;
+      type.appendChild(sub);
+    }
+    el.appendChild(type);
+
+    this.container.appendChild(el);
+    this._splashEl = el;
+    this._splashTimer = setTimeout(() => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+      if (this._splashEl === el) this._splashEl = null;
+    }, ms + 40);
+    return el;
+  }
+
   showBanner(text, hold = 1400) {
     if (this._closed) return null;
     if (this._powerBanner && this._powerBanner.parentNode) this._powerBanner.remove();
@@ -1000,6 +1154,9 @@ export class CombatHUD {
     this._closed = true;
     this._closeTargetPicker();
     this._closeLoopIn();
+    clearTimeout(this._splashTimer);
+    if (this._splashEl && this._splashEl.parentNode) this._splashEl.remove();
+    this._splashEl = null;
     if (this._tooltip) { this._tooltip.remove(); this._tooltip = null; }
     if (this.root && this.root.parentNode) this.root.parentNode.removeChild(this.root);
     if (this.enemyRowEl && this.enemyRowEl.parentNode) this.enemyRowEl.parentNode.removeChild(this.enemyRowEl);
