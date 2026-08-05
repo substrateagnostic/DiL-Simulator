@@ -1,3 +1,145 @@
+## [F-REMAINDER FIX ROUND 2 (08-05) - the panel failed the round]
+
+One commit on `display-case`, pushed (`615f30c`). `main` untouched. `npm run
+check` exit 0 before it. **Spend: 0 credits of anything** except three Opus 4.6
+prose drafts in a single call. Nothing signed off was reopened - not the prose,
+not F-8, not the 22 relit rooms that passed.
+
+Both substantive defects were visual, and both are re-shot, not re-argued.
+
+### D1 - THE STREET
+
+The number that mattered was not brightness, it was **contrast**, and the
+existing instrument did not measure it. `_g-lum` reports mean and a lit-pixel
+fraction; neither can tell "the whole frame got brighter" from "the frame grew
+light and dark places", and the second is the only thing a relight is for.
+`tools/_f-lum2.mjs` adds standard deviation. A flat wash raises mean and DROPS
+sd. Pooled fixtures raise mean and HOLD it.
+
+| plate | mean | sd |
+|---|---|---|
+| your `light-before` reference | 21.67 | 38.47 |
+| your `light-after` - the failed round | **18.15** | **28.82** |
+| A pre-wave office troffers, re-shot | 24.32 | 41.23 |
+| B shipped `fixtures: none`, re-shot | 19.13 | 28.92 |
+| **C four lamppost pools - ships** | **23.77** | **39.08** |
+
+Gate: mean +2.10 over your floor, sd +0.61 inside your +/-1.00 band. The fix is
+one `fx.extra` entry per lamppost with a new `housing: false` flag - the pole
+already IS the fixture, so only the shaft and the pool are emitted and no
+ceiling troffer is hung beside it.
+
+**The old plate could not be judged at all** - the first-visit thought bubble
+sat across the middle of it. The new shooter is headed, pins `?qtier=high`, and
+POLLS the arbiter's VOICE zone empty instead of guessing a wait, because those
+lines queue with per-line reading-time ttls. It prints the visible-text-surface
+count next to the filename, so a dirty plate cannot be quoted as a clean one.
+
+**Look at:** `screenshots/f-run/relight-states/index.html` - the three states
+side by side with the table.
+
+### D2 - THE BOX WAS A FILING CABINET
+
+There was no box in the game, so the dressing pass reached for
+`fileCabinetLow` and wrote "Meredith Sterling's box" over it. There is a
+`Furniture.cardboardBox` now - 0.5 m, four walls so the camera sees into it,
+flaps folded out - and it sits on the desktop at her elbow. She was also facing
+*away* from it (`Math.PI` is south); she faces it now.
+
+**I took your second option and rewrote the prose rather than raising four
+transitions I would then have had to prove.** The honest scale, which is the
+tool's own output and is now in the room comments and CLAUDE.md: **two cabinets
+appear** in the farm, **two more bins** in the break room, one cabinet and one
+bin in the conference room, two plants in the lobby, one carton on the exec
+floor. Twelve props across nine transitions. The commit that landed it said
+"pulled files fill the farm" and "the bins overflow", and that was prose
+outrunning geometry by a factor I could not have defended.
+
+### D3 - THE INTERN WAS IN TWO ROOMS
+
+Seated at his cubicle-farm desk AND rehearsing in the conference room, one door
+apart, from Act 6 to the end of the game. `_ux-dev` counted duplicates WITHIN a
+room and was structurally unable to see it. It runs a **cross-room pass** now,
+over **eight** states rather than seven - the seven story presets plus a
+synthetic post-game one, because the presets stop at Act 7 and **the
+penthouse_bar set you asked about was never being measured at all**.
+
+**Census, 8 states x 28 rooms: within-room duplicates 0 (unchanged); cross-room
+unaccepted 23 -> 0; accepted and named 17.**
+
+**On `penthouse_bar` I confirm your read: convention, not defect.** Six allies
+sit in a post-game wing behind a 10,000,000 AUM renovation while each also
+stands in the room they work in - and this game has never simulated one body per
+character; the player is only ever in one room. The census names all six every
+run and does not count them. Twelve of the original 23 were never two rooms at
+all: they were `_resolveRoomId` variant pairs (`penthouse`/`penthouse_expanded`,
+`skip_office`/`skip_office_large`), which the tool now collapses before
+counting. Two genuinely pre-existing rows are in a `KNOWN` map **with written
+reasons**: the Janitor's unconditional garage patrol, and a Grandma pair only a
+preset can reach.
+
+The fix is five derived flags, the only two-way ones in
+`_refreshStoryProgress`. The dangerous half was the conference room needing
+**two** entries: the rehearsal carries a hardcoded `dialogId`, which outranks
+act routing, so one entry there would have shadowed `intern_act6` - the only
+writer of `intern_act6_rallied` - forever, and pinned the Act 6 ally counter at
+4/5 with nothing in the game able to say why. `tools/_f-intern-ladder.mjs`
+walks all five steps through the shipping resolver: 7/7.
+
+### D4/D5/D6 - PROSE
+
+Drafted Opus 4.6 against WRITING.md, wired byte-identically by script.
+Tense on two `intern_rehearsal` narrator nodes. **`chad_return`'s "Four months
+ago" contradicted Skip saying on screen in the Act 1 briefing that Old Man
+Henderson "passed away last month"** - the game does not span three months. The
+replacement also closes a hole the panel did not name: Andrew's "I didn't know
+he'd died", about a trust he is administering and was briefed on. Chad notes it
+in one clause; nodes 1, 2 and 4 are untouched.
+
+**F-12 speaker label: WIRED, not disclaimed.** `janitor_the_name` node 2 speaks
+as **Curtis Briggs** - the one line in the game where the label corrects itself
+on the same beat the character does. The `PORTRAIT_KEYS` coupling is real and
+is exactly why this is a **two-table** edit: DialogBox keys the speaker colour
+AND the portrait stem on the exact string, and a missing row is silent in a
+different way in each. Both rows added, both pointing at his existing colour and
+existing face. He is "Mysterious Janitor" everywhere else, because that is what
+the room calls him.
+
+### THINGS THAT WOULD MISLEAD YOU IF I DID NOT SAY THEM
+
+- **One gate reads FAIL and should.** `_g-stage-verify` reports 3 structurally
+  changed. It content-hashes nodes, so a text edit registers as a node diff -
+  the tool doing its job on the three trees this commit edits on purpose.
+  `tools/_f-prose-shape.mjs` proves the edits are TEXT ONLY against HEAD: node
+  counts 12/6/11 unchanged, node types identical, every `next`/`ifTrue`/
+  `ifFalse` byte-identical. No node inserted, none renumbered.
+- **`_f-evidence`'s intern_rehearsal row needed its fixture changed, and that
+  is the fix working, not a regression.** The blanket fixture is a post-game
+  state - which is precisely when the Intern is back at his desk - so the row
+  was asserting a state the story does not have. Before the derivation it
+  passed for the wrong reason. It overrides to Act 6 for that one row now.
+- **Five derived flags is a lot for one census number, and I considered the
+  alternative.** The elegant fix is to let `condition` take `flags: []` /
+  `notFlags: []` arrays, which would kill this whole class - the one-flag/
+  one-notFlag limit is already named in CLAUDE.md as a pain point. I did not do
+  it: it touches EntityManager, Room and every census tool, mid-fix-round, with
+  two rounds left. **It is the right follow-up and it should be scheduled.**
+- **For you, not acted on:** `penthouse_bar` seats all six allies with no
+  `dialogId`, and `penthouse_pool_table` puts Skip "by the bar" while his NPC
+  entry is at (12.4, 1.8), which the room comment calls the poker table. If a
+  bar-idle prose batch is ever funded, that placement moves with it.
+- **Carried forward:** the fixture-profile census in CLAUDE.md and in the F-10
+  row below now matches disk - 28 rooms, 8/7/6/7, 0 unset.
+
+### GATES
+
+`npm run check` exit 0 | `_ux-smoke` 11/11 | `_ux-dev` 0 within-room duplicates
+and **0 unaccepted cross-room over 8 states x 28 rooms** | `_ux-world` REACH 0
+unreachable, B2 0, S1 0 | `_f-evidence` **62 checks, 0 fails** | `_f-dressing`
+9 transitions, 0 flat | `_f-intern-ladder` 7/7 | `_f-prose-shape` 3/3 text-only.
+
+---
+
 ## [F-REMAINDER BUILD (08-04) - the last nine items off the audited list]
 
 Five commits on `display-case`, all pushed. `main` untouched. `npm run check`
@@ -21,7 +163,7 @@ other eight plus the three F-10 riders, the seam fix, and the drop list.
 | **F-7** | late-game cosmetics | all 17 unlocked off Acts 1-3. Five new ones, one per unpaid pillar; each builds a real mesh (15-22 nodes per equip, none zero) |
 | **F-8** | save export/import + the C2 carry contract | 46,530 chars of JSON -> a 5,845-char code (0.126x). carry.flags is a 47-row whitelist: **10 keys against the save's 1,216** |
 | **F-9** | floor 6's bathroom + copy room + the three predecessors | REACH gate 148 -> 161 interactables and exits, 0 unreachable |
-| **F-10** | act dressing + all three riders | 26 rooms now name a fixture profile, up from 4 lit rooms; 9 act transitions with a measured prop delta |
+| **F-10** | act dressing + all three riders | **28** rooms now name a fixture profile (**8 office / 7 utility / 6 warm / 7 none, 0 unset**), up from 4 lit rooms; 9 act transitions with a measured prop delta, totalling **12 props** across five rooms. *(Both numbers corrected 08-05: this row originally said 26 rooms and 9/6/6/5 — written before floor 6's two rooms landed and never re-counted — and the commit prose described the dressing as files filling a floor. See the round-2 block at the top.)* |
 | **F-11** | ambient scheduler | playSfx had 13 cases and every one was a REACTION. 13 new `amb_*` cues; 7 fired in 90 s in the garage, 0 while a VOICE surface was up, 0 in floor_13 |
 | **F-12** | the Janitor's name | **Curtis Briggs.** The watch is NOT explained - that contradiction is load-bearing, the missing name was not |
 | seam | CityBackdrop near-band | 3/3 near thin towers keep their seam at morning and afternoon, **0/3** at dusk / night / predawn |
