@@ -44,7 +44,10 @@ const run = async () => {
   const results = [];
 
   for (const shot of shots) {
-    if (only && !shot.name.includes(only)) continue;
+    // `--only` takes a COMMA-SEPARATED list of substrings. It used to be a
+    // single substring, so re-shooting a named subset (a lighting pass over
+    // eleven rooms, say) meant eleven browser launches or a full 34-shot run.
+    if (only && !only.split(',').some(t => shot.name.includes(t.trim()))) continue;
     const page = await context.newPage();
     try {
       await page.goto(shot.url, { waitUntil: 'domcontentloaded' });

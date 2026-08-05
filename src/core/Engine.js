@@ -832,14 +832,53 @@ class EngineClass {
     // with a soft underglow, each throwing its green-white pool on the
     // floor below. Bright enough to graze the bloom threshold.
     const amb = roomData.lighting?.ambientIntensity ?? 0.52;
-    const officeRig = (roomData.lighting?.dirIntensity ?? 1.15) >= 0.9;
+
+    // FIXTURE PROFILE (F-10 rider i)
+    // Wave 2 built the Severance top-light rig and then reached exactly FOUR
+    // rooms with it (cubicle_farm, reception, server_room, penthouse_bar).
+    // Every other interior fell through a single derived boolean --
+    // `dirIntensity >= 0.9` -- into one of two states, neither of which is the
+    // ruled standard:
+    //
+    //   * a GRID of sourceless radial pools (the "floor that is somehow lit
+    //     anyway" the round-1 critics named), or
+    //   * nothing at all.
+    //
+    // The boolean is now a named PROFILE that room data can set, and the old
+    // derivation is its default -- so a room that says nothing behaves exactly
+    // as it did before this change. Profiles differ only in fixture COUNT,
+    // TINT and pool weight; all of them run the same `Furniture.ceilingFixture`
+    // geometry and the same pool + light-shaft + specular-streak triple, which
+    // is what makes "conforms to the standard" true by construction instead of
+    // by eye.
+    //
+    //   office   the full Severance troffer run -- 2-3 short bars per row,
+    //            warm diffuser, strong anchored pool. Working floors.
+    //   utility  ONE cool strip per row, dimmer, cooler pool. Concrete and
+    //            back-of-house: garage, stairwell, archive, vault, records.
+    //            (This is server_room's hand-written fixture generalised: that
+    //            block used to live in this file as an `id ===` special case
+    //            and is now just a room that asks for `utility`.)
+    //   warm     one amber pendant per row, soft pool. Rooms lit by lamps
+    //            rather than ceiling grids: break room, board room, diner.
+    //   none     no ceiling fixtures and no grid pools. The room's own point
+    //            lights own the floor -- the penthouse wings, floor 13, the
+    //            lounge. Silence, chosen.
+    const FIXTURE_PROFILES = {
+      office:  { tint: 0xefe9db, pool: 0xffefce, poolOpacity: 0.34, shaft: 0xffe9c8, shaftOpacity: 0.11, streak: 0.42, perRow: 3, poolW: 1.0, poolD: 2.9 },
+      utility: { tint: 0xccdcf0, pool: 0x9fc4e6, poolOpacity: 0.26, shaft: 0x9fc4e6, shaftOpacity: 0.08, streak: 0.18, perRow: 1, poolW: 2.2, poolD: 4.4 },
+      warm:    { tint: 0xffb264, pool: 0xffd9a0, poolOpacity: 0.28, shaft: 0xffc98a, shaftOpacity: 0.09, streak: 0.22, perRow: 2, poolW: 1.4, poolD: 3.2 },
+    };
+    const profile = roomData.fx?.fixtures
+      || ((roomData.lighting?.dirIntensity ?? 1.15) >= 0.9 ? 'office' : (amb >= 0.4 ? 'grid' : 'none'));
+    const rig = FIXTURE_PROFILES[profile] || null;
 
     // Generic grid light pools — a ceiling wash for BRIGHT rooms that do NOT run
     // the office fixture rig (they'd read flat otherwise). Office rooms skip
     // these: their troffers own the floor now, and stacking the grid pools on
     // top of the fixture pools was exactly the SOURCELESS hot spot the critics
     // flagged ("a floor that is somehow lit anyway"). One pool system per room.
-    if (amb >= 0.4 && !officeRig) {
+    if (profile === 'grid') {
       const poolMat = new THREE.MeshBasicMaterial({
         map: this._fxRadialTexture(), color: 0xdfeee2, transparent: true,
         opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false,
@@ -868,9 +907,10 @@ class EngineClass {
     // additive light-shaft joining housing to pool, and a slim specular streak.
     // Pool width is kept close to the fixture and opacity capped so neighbouring
     // washes don't additively stack into blown paper BETWEEN the fixtures.
-    if (officeRig) {
+    if (rig) {
       const nz = Math.max(1, Math.round((h - 3) / 4.5));
-      const nSeg = Math.min(3, Math.max(2, Math.round((w - 2) / 6)));
+      const nSeg = rig.perRow <= 1 ? 1
+        : Math.min(rig.perRow, Math.max(2, Math.round((w - 2) / 6)));
       const gap = 0.9;                                  // dark gap between troffers
       const span = w - 3.0;                             // total run width, inset from walls
       const segLen = Math.max(1.6, span / nSeg - gap);
@@ -878,32 +918,32 @@ class EngineClass {
       // S2.5 polish: one stop more floor presence so light traces fixture->floor
       // at a glance — pool 0.24->0.34, specular streak 0.30->0.42.
       const fxPoolMat = new THREE.MeshBasicMaterial({
-        map: this._fxRadialTexture(), color: 0xffefce, transparent: true,
-        opacity: 0.34, blending: THREE.AdditiveBlending, depthWrite: false,
+        map: this._fxRadialTexture(), color: rig.pool, transparent: true,
+        opacity: rig.poolOpacity, blending: THREE.AdditiveBlending, depthWrite: false,
       });
       const fxStreakMat = new THREE.MeshBasicMaterial({
         map: this._fxGlossStreakTexture(), color: 0xe9f1ff, transparent: true,
-        opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false,
+        opacity: rig.streak, blending: THREE.AdditiveBlending, depthWrite: false,
       });
       const fxPoolGeo = new THREE.PlaneGeometry(1, 1);
       for (let j = 0; j < nz; j++) {
         const pz = 1.0 + (h - 2) * ((j + 0.5) / nz) - 0.5;
         for (let s = 0; s < nSeg; s++) {
           const sx = cxm + (s - (nSeg - 1) / 2) * (segLen + gap);
-          const fixture = Furniture.ceilingFixture(segLen);
+          const fixture = Furniture.ceilingFixture(segLen, rig.tint);
           fixture.position.set(sx, 2.44, pz);
           g.add(fixture);
           // Warm pool on the floor directly beneath the troffer — width held
           // near the fixture so adjacent pools kiss but don't stack hot.
           const pool = new THREE.Mesh(fxPoolGeo, fxPoolMat);
           pool.rotation.x = -Math.PI / 2;
-          pool.scale.set(segLen + 1.0, 2.9, 1);
+          pool.scale.set(segLen + rig.poolW, rig.poolD, 1);
           pool.position.set(sx, 0.017, pz);
           pool.renderOrder = 2;
           g.add(pool);
           // Light-shaft: the SOURCE connective tissue joining housing to pool
           // (0.07->0.11 so the fixture->floor trace reads at a glance).
-          g.add(this._fxLightShaft(sx, pz, 2.36, 0xffe9c8, segLen * 0.7, 0.7, 0.11));
+          g.add(this._fxLightShaft(sx, pz, 2.36, rig.shaft, segLen * 0.7, 0.7, rig.shaftOpacity));
           // Lacquer specular streak. S2.5: pulled back under the bar (+0.35 ->
           // +0.16) so the sheen anchors to its fixture instead of floating a
           // half-tile out in the aisle (cubicle_farm critic).
@@ -917,24 +957,27 @@ class EngineClass {
       }
     }
 
-    // Server room: a cool ceiling fixture over the EAST half — the right side
-    // was sinking into murk (critic: "one more ceiling pool lifts the server
-    // room right half"). Data-centre cool tint, with its own shaft + cool pool
-    // so it sources the same way the office troffers do.
-    if (roomData.id === 'server_room') {
-      const sx = 6, sz = 4, topY = 2.44;
-      const fixture = Furniture.ceilingFixture(3.0, 0xccdcf0);
-      fixture.position.set(sx, topY, sz);
+    // Extra hand-placed fixtures, from room data (`fx.extra`). The server
+    // room's east-half cool troffer used to live HERE as a
+    // `roomData.id === 'server_room'` special case -- the exact shape that
+    // stops a lighting rig being extensible. It is room data now, and any room
+    // can hang one.
+    for (const ex of (roomData.fx?.extra || [])) {
+      const tint = ex.tint ?? 0xccdcf0;
+      const len = ex.len ?? 3.0;
+      const y = ex.y ?? 2.44;
+      const fixture = Furniture.ceilingFixture(len, tint);
+      fixture.position.set(ex.x, y, ex.z);
       g.add(fixture);
-      g.add(this._fxLightShaft(sx, sz, topY - 0.08, 0x9fc4e6, 2.1, 0.7, 0.08));
+      g.add(this._fxLightShaft(ex.x, ex.z, y - 0.08, tint, len * 0.7, 0.7, ex.shaft ?? 0.08));
       const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
         new THREE.MeshBasicMaterial({
-          map: this._fxRadialTexture(), color: 0x9fc4e6, transparent: true,
-          opacity: 0.32, blending: THREE.AdditiveBlending, depthWrite: false,
+          map: this._fxRadialTexture(), color: ex.pool ?? tint, transparent: true,
+          opacity: ex.opacity ?? 0.32, blending: THREE.AdditiveBlending, depthWrite: false,
         }));
       pool.rotation.x = -Math.PI / 2;
-      pool.scale.set(5.0, 5.2, 1);
-      pool.position.set(sx, 0.019, sz);
+      pool.scale.set(ex.poolW ?? 5.0, ex.poolD ?? 5.2, 1);
+      pool.position.set(ex.x, 0.019, ex.z);
       pool.renderOrder = 2;
       g.add(pool);
     }

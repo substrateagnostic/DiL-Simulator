@@ -360,6 +360,81 @@ if (want('scenes')) {
   check('F-12 the pattern scene still comes first', jan.withoutPattern === 'janitor_pattern', jan.withoutPattern);
 }
 
+// ── 7. LIGHTING: every room's fixture profile, measured off the built scene ─
+if (want('light')) {
+  const light = await page.evaluate(async () => {
+    const { ROOMS } = await import('/src/data/rooms/index.js');
+    const ex = window.__explore;
+    // OPEN EVERY DOOR FIRST. `_changeRoom` has a gate table plus two keypad
+    // intercepts, and a blocked change leaves the PREVIOUS room's FX group in
+    // the scene — which reads as "this room has 0 fixtures" and is a lie about
+    // the wrong room. (Five rooms reported 0 that way on the first run: the
+    // stairwell legitimately, and then archive / hr_department / vault /
+    // board_room because the sweep never got in.)
+    Object.assign(ex.player.flags, {
+      branch_chosen: true, hr_accessible: true, vault_accessible: true,
+      archive_accessible: true, board_room_accessible: true,
+      act5_complete: true, act6_complete: true, city_unlocked: true,
+      delia_moved: true, renovation_penthouse: true, floor_13_found: true,
+      has_archive_password: true, vault_code_1: true, vault_code_2: true, vault_code_3: true,
+      // The penthouse elevator scans the charter for a Recorder's seal
+      // BEFORE the gate table (`SEAL NOT RECOGNIZED`), so act6_complete
+      // alone is not enough to get in.
+      charter_certified: true, read_charter_challenge: true,
+    });
+    ex._refreshStoryProgress(true);
+    // Reach the FX group through the APP's own object graph, not through a
+    // fresh `import('/src/core/Engine.js')`. Vite serves an HMR-updated module
+    // at `…?t=<stamp>`, so a plain dynamic import after an edit hands back a
+    // SECOND EngineClass instance whose `scene` and `_roomFX` are null — which
+    // reads as "zero fixtures in every room" and passes any check written the
+    // wrong way round. (It did, once, on this very block.)
+    const rows = [];
+    for (const id of Object.keys(ROOMS)) {
+      await ex._changeRoom(id, 1, 1);
+      await new Promise(r => setTimeout(r, 700));
+      const fx = ex.roomManager?.mainScene?.getObjectByName('room_fx');
+      // A ceiling fixture is a Group whose y sits at wall-top height; the pools
+      // and the seam frame are flat planes on the floor. Count what is actually
+      // in the scene, not what the data asked for.
+      let fixtures = 0, pools = 0;
+      if (fx) for (const c of fx.children) {
+        if (c.isGroup && c.position.y > 1.5) fixtures++;
+        else if (c.isMesh && c.position.y < 0.03 && c.material?.blending === 2) pools++;
+      }
+      rows.push({
+        room: id,
+        entered: ex.player.currentRoom === id,
+        landedIn: ex.player.currentRoom,
+        built: ex.roomManager?.currentRoomId,
+        profile: ROOMS[id].fx?.fixtures || '(derived)',
+        dir: ROOMS[id].lighting?.dirIntensity ?? null,
+        fixtures, pools,
+      });
+    }
+    return rows;
+  });
+  writeFileSync(`${OUT}/lighting-profiles.json`, JSON.stringify(light, null, 2));
+  const authored = light.filter(r => r.profile !== '(derived)');
+  check('every room now names its fixture profile', authored.length === light.length,
+    `${authored.length}/${light.length} authored`);
+  const missed = light.filter(r => !r.entered).map(r => r.room);
+  check('the sweep actually entered every room', missed.length === 0, missed.join(' '));
+  // The three rooms that were running office ceiling troffers by accident.
+  for (const id of ['penthouse_aquarium', 'penthouse_analytics', 'city_street']) {
+    const r = light.find(x => x.room === id);
+    check(`${id} no longer hangs office troffers`, r && r.profile === 'none' && r.fixtures === 0,
+      `profile=${r?.profile} fixtures=${r?.fixtures}`);
+  }
+  // And the rooms that SHOULD have them, do.
+  for (const id of ['cubicle_farm', 'reception', 'executive_floor', 'parking_garage', 'break_room']) {
+    const r = light.find(x => x.room === id);
+    check(`${id} has sourced fixtures (${r?.profile})`, r && r.fixtures > 0,
+      `profile=${r?.profile} fixtures=${r?.fixtures} pools=${r?.pools}`);
+  }
+  console.log('  profiles: ' + light.map(r => `${r.room}=${r.profile}/${r.fixtures}`).join(' '));
+}
+
 const fails = results.filter(r => !r.ok).length;
 writeFileSync(`${OUT}/evidence.json`, JSON.stringify({ results, logs: logs.slice(-40) }, null, 2));
 console.log(`\n${fails === 0 ? 'F-EVIDENCE PASS' : `F-EVIDENCE FAIL (${fails})`} — ${results.length} checks`);

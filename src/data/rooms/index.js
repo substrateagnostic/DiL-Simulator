@@ -29,6 +29,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   cubicle_farm: {
     id: 'cubicle_farm',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // The Wave-2 reference room. Named explicitly so the rig it defines
+    // stops being an accident of dirIntensity >= 0.9.
+    fx: { fixtures: 'office' },
     name: 'Cubicle Farm',
     width: 20,
     height: 16,
@@ -151,7 +155,22 @@ export const ROOMS = {
       { type: 'monitor', x: 3,    z: 9.7, condition: { notFlag: 'renovation_ergonomic_workstations' } },
       { type: 'monitor', x: 2.75, z: 9.7, condition: { flag: 'renovation_ergonomic_workstations' } },
       { type: 'monitor', x: 3.25, z: 9.7, condition: { flag: 'renovation_ergonomic_workstations' } },
-      { type: 'deskPlantSucculent', x: 2.6, z: 9.9 },
+      // ── ACT DRESSING (F-10) ─────────────────────────────────────────
+      // `Room.build()` has supported per-furniture `condition: { flag, notFlag }`
+      // since it shipped, and 171 condition objects existed in this file — every
+      // single one of them `renovation_*` or `quest_network_ghost_complete`. Not
+      // one was act-keyed, so the interiors were identical in Act 7 and Act 1
+      // while TOD_BY_ACT moved the light from morning to dusk over their heads.
+      // These entries are that fix, and they use ONLY props the game already
+      // has and flags the story already sets — no new prop types, no new flags.
+      // ANDREW'S PLANT. ROOM_THOUGHTS says of this desk, on the first visit,
+      // "It has a plant. The plant is dying. We have that in common." — and
+      // ROOM_THOUGHTS_BY_ACT says at act 6 "My plant has a new leaf. Nobody's
+      // mentioned what happened and I think that's how we're handling it."
+      // Until now the prop under both lines was the same succulent. It is the
+      // single cheapest act-keyed change in the game and it pays two lines.
+      { type: 'deskPlantSucculent', x: 2.6, z: 9.9, condition: { notFlag: 'act5_complete' } },
+      { type: 'deskPlant',          x: 2.6, z: 9.9, condition: { flag:    'act5_complete' } },
       { type: 'keyboard', x: 3, z: 10.2 },
       { type: 'chair',         x: 3, z: 10.8, rotation: Math.PI, condition: { notFlag: 'renovation_ergonomic_workstations' } },
       { type: 'executiveChair', x: 3, z: 10.8, rotation: Math.PI, condition: { flag:    'renovation_ergonomic_workstations' } },
@@ -201,6 +220,12 @@ export const ROOMS = {
       // STORAGE — file cabinet rows along north wall (handles face south/center)
       // Left bank (behind NW pod) and right bank (behind NE pod)
       // ============================================================
+      // THE RESTRUCTURING'S PAPERWORK. Acts 4-5 only: the department is being
+      // audited out of existence and the floor fills with pulled files. Against
+      // the north wall beside the existing storage bank, clear of every aisle
+      // (the REACH gate in tools/_ux-world.mjs is the check that stays honest).
+      { type: 'fileCabinetLow', x: 5,  z: 0.5, condition: { flag: 'act3_complete', notFlag: 'act5_complete' } },
+      { type: 'fileCabinetLow', x: 6,  z: 0.5, condition: { flag: 'act3_complete', notFlag: 'act5_complete' } },
       { type: 'fileCabinet',        x: 2,  z: 0.5 },
       { type: 'fileCabinetLateral', x: 3,  z: 0.5 },
       { type: 'fileCabinetLow',     x: 4,  z: 0.5 },
@@ -365,6 +390,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   break_room: {
     id: 'break_room',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Lamps and a window, not a ceiling grid. Was on the sourceless grid
+    // pools.
+    fx: { fixtures: 'warm' },
     name: 'Break Room',
     width: 16,
     height: 12,
@@ -383,6 +412,13 @@ export const ROOMS = {
       { type: 'desk', x: 7, z: 1, rotation: 0 },
       { type: 'microwave', x: 8, z: 1 },
       { type: 'trashCan', x: 6.5, z: 1 },
+      // ── ACT DRESSING (F-10) ──
+      // Acts 3-5 the bins overflow (nobody is thinking about the break room
+      // while the department is being dissolved); after act5_complete they are
+      // gone, which is the prop half of "Someone finally cleaned the
+      // microwave" (ROOM_THOUGHTS_BY_ACT, break_room act 6).
+      { type: 'trashCan', x: 7.5, z: 1, condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
+      { type: 'trashCan', x: 8.6, z: 1, condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
 
       // === Vending machine + supply shop counter (northeast corner) ===
       { type: 'vendingMachine', x: 14, z: 1, rotation: 0 },
@@ -474,6 +510,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   skip_office: {
     id: 'skip_office',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // A working office on the same floor as the farm - same ceiling grid.
+    fx: { fixtures: 'office' },
     name: "Skip's Office",
     width: 8,
     height: 8,
@@ -547,6 +586,9 @@ export const ROOMS = {
   // Loaded automatically instead of skip_office when renovation_corner_office flag is set
   skip_office_large: {
     id: 'skip_office_large',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // The renovation does not change the ceiling.
+    fx: { fixtures: 'office' },
     name: "Skip's Office",
     width: 12,
     height: 10,
@@ -629,6 +671,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   conference_room: {
     id: 'conference_room',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Same floor, same grid. The room is a meeting room, not a mood room.
+    fx: { fixtures: 'office' },
     name: 'Conference Room',
     width: 12,
     height: 8,
@@ -655,6 +700,13 @@ export const ROOMS = {
       { type: 'chair', x: 4.0, z: 4, rotation: Math.PI / 2 },
       // East end — face west
       { type: 'chair', x: 8.0, z: 4, rotation: -Math.PI / 2 },
+
+      // ── ACT DRESSING (F-10) ──
+      // Act 5 is the gauntlet: the restructuring team is packing the department
+      // into boxes and this is the room they stage from. West wall, clear of
+      // the table (x 5-7) and of both doors.
+      { type: 'fileCabinetLow', x: 1, z: 2, condition: { flag: 'act4_complete', notFlag: 'act6_complete' } },
+      { type: 'trashCan',       x: 1, z: 3, condition: { flag: 'act4_complete', notFlag: 'act6_complete' } },
 
       // === Teleconference equipment ===
       { type: 'speakerphone', x: 6, z: 4 },
@@ -685,20 +737,28 @@ export const ROOMS = {
     ],
     npcs: [
       // Henderson beneficiaries appear based on quest progress
-      // THIS ENTRY HAD NO DEFEAT GATE. Its old condition was
-      // `{ briefing_complete, notFlag: retry_karen }`, and `retry_karen` is set
-      // only when the player LOSES to Karen — so a player who beat her first
-      // try left this entry live for the rest of the game. Karen stood in the
-      // conference room forever, her hardcoded `karen_meeting` still won
-      // _getDialogId, and that tree ends on `start_combat: karen`: a defeated
-      // boss re-fightable on demand, the same class of defect as Grandma's
-      // documented re-launch. Measured live at act 7 with every Henderson flag
-      // set. It also collided with the new Act-5 Intern on tile (8,4).
+      // THIS ENTRY HAS NO DEFEAT TERM OF ITS OWN, and its old gate was
+      // `notFlag: retry_karen`. In NORMAL PLAY that is sound and this change is
+      // behaviour-identical: the first Karen fight is a scripted unavoidable
+      // loss (`_startCombat` sets `enemyOverrides: { atk: 999 }` and sets
+      // `retry_karen` on EVERY result, win or lose), so every real save holds
+      // that flag from the moment the encounter ends.
       //
-      // The gate needs TWO notFlags (retry_karen keeps entries 2 and 3 mutually
-      // exclusive; karen_defeated closes the leak) and a condition object holds
-      // exactly one. So it reads a DERIVED flag instead — the documented
-      // pattern for compound conditions — set in _refreshStoryProgress().
+      // It is NOT sound for any state that JUMPS the scripted loss — the F2
+      // dev presets from Act 2 up set the Henderson defeat flags without
+      // `retry_karen`, and so does any harness fixture. In those states Karen
+      // stands at the head of the table for the rest of the run with her
+      // hardcoded `karen_meeting` still winning _getDialogId, and that tree
+      // ends on `start_combat: karen`. Measured exactly that way while building
+      // the Act-5 Intern below, whose chair she was also sharing.
+      //
+      // CLAUDE.md already names the hazard ("any fixture that jumps past a
+      // scripted loss must set that loss's flags"). This closes it from the
+      // other side so the room is correct under BOTH. The gate wants two
+      // notFlags (retry_karen keeps entries 2 and 3 mutually exclusive;
+      // karen_defeated closes the jump) and a condition object holds exactly
+      // one — so it reads a DERIVED flag, the documented pattern for compound
+      // conditions, set in _refreshStoryProgress().
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'briefing_complete', notFlag: 'karen_first_meeting_over' } },
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_not_ready', condition: { flag: 'retry_karen', notFlag: 'karen_retry_ready' } },
       { id: 'karen', x: 8.0, z: 4, facing: -Math.PI / 2, dialogId: 'karen_meeting', condition: { flag: 'karen_retry_ready', notFlag: 'karen_defeated' } },
@@ -756,6 +816,11 @@ export const ROOMS = {
   // ----------------------------------------------------------
   server_room: {
     id: 'server_room',
+    // Hand-placed fill, formerly hardcoded in Engine.applyRoomFX as an
+    // `id === 'server_room'` branch: a cool troffer over the EAST half, which
+    // was sinking into murk ("one more ceiling pool lifts the server room right
+    // half"). Identical numbers, expressed as data.
+    fx: { fixtures: 'utility', extra: [{ x: 6, z: 4, len: 3.0, tint: 0xccdcf0, pool: 0x9fc4e6, opacity: 0.32, poolW: 5.0, poolD: 5.2 }] },
     name: 'Server Room',
     width: 8,
     height: 10,
@@ -876,6 +941,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   reception: {
     id: 'reception',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // The other Wave-2 reference room; same clinical-white troffer run as
+    // the farm.
+    fx: { fixtures: 'office' },
     name: 'Reception',
     width: 14,
     height: 8,
@@ -914,6 +983,15 @@ export const ROOMS = {
       { type: 'chair', x: 12, z: 5, rotation: -Math.PI / 2 },
       { type: 'chair', x: 12, z: 6, rotation: -Math.PI / 2 },
       { type: 'desk', x: 11, z: 5.5, rotation: 0 },  // side table
+      // ── ACT DRESSING (F-10) ──
+      // The lobby gets its money back. Post-board-meeting only: two tall plants
+      // between the reception desk and the two waiting banks — the first thing
+      // a client sees, and the last thing anyone budgeted for in seven acts.
+      // Room is 14 x 8. Both tiles are clear of the chair banks (z 5-6), the
+      // north and south exit pairs (x 6-7), the east elevator (13,3) and the
+      // renovation planters (5,4) / (9,4).
+      { type: 'plantTall', x: 2,  z: 3, condition: { flag: 'act6_complete' } },
+      { type: 'plantTall', x: 11, z: 3, condition: { flag: 'act6_complete' } },
 
 
       // === Company sign area (north wall, above reception desk) ===
@@ -978,6 +1056,11 @@ export const ROOMS = {
   // ----------------------------------------------------------
   parking_garage: {
     id: 'parking_garage',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Concrete and a cool strip. The warm sodium practicals stay in
+    // `lights` - they are the room's identity and the strip sits under
+    // them.
+    fx: { fixtures: 'utility' },
     name: 'Parking Garage',
     width: 14,
     height: 10,
@@ -1066,6 +1149,11 @@ export const ROOMS = {
   // ----------------------------------------------------------
   executive_floor: {
     id: 'executive_floor',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // dirIntensity 0.85 put it a hundredth under the old threshold, so the
+    // nicest working floor in the building was running SOURCELESS grid
+    // pools while the cubicle farm two storeys down had real fixtures.
+    fx: { fixtures: 'office' },
     name: 'Executive Floor',
     width: 16,
     height: 12,
@@ -1099,6 +1187,13 @@ export const ROOMS = {
       { type: 'monitor', x: 2.7, z: 3, rotation: -Math.PI / 2 },
       { type: 'keyboard', x: 3.2, z: 3 },
       { type: 'chair', x: 2, z: 3, rotation: Math.PI / 2 },
+      // ── ACT DRESSING (F-10) ──
+      // Meredith Sterling's box, at the secondary desk she is packing it at.
+      // It appears when she does (act5_complete) and leaves when she does
+      // (meredith_left, set by her footnote scene's stage node) — the prop and
+      // the body share one window, so the desk is never a box with nobody at
+      // it or a woman packing nothing.
+      { type: 'fileCabinetLow', x: 3, z: 2, condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
 
       // === Secondary executive desk (east side, faces west) ===
       { type: 'desk', x: 13, z: 3, rotation: -Math.PI / 2 },
@@ -1239,6 +1334,14 @@ export const ROOMS = {
   // ----------------------------------------------------------
   stairwell: {
     id: 'stairwell',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // One cool strip per landing row - DECLARED, BUT INERT HERE, and that is
+    // worth knowing before someone spends an hour on it: applyRoomFX returns
+    // early for any room with `floorZones` (a terraced room has no single
+    // floor plane to put a pool on), and this is the only such room in the
+    // game. Measured 0 fixtures. The profile is named anyway so that if the
+    // stairwell ever gets per-zone FX it inherits the right family.
+    fx: { fixtures: 'utility' },
     name: 'Back Corridor',
     width: 4,
     height: 20,
@@ -1321,6 +1424,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   archive: {
     id: 'archive',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Tungsten over the stacks - the cool utility strip would fight the
+    // khaki ambient this room is built on.
+    fx: { fixtures: 'warm' },
     name: 'The Archive',
     width: 12,
     height: 10,
@@ -1432,6 +1539,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   hr_department: {
     id: 'hr_department',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Same floor, same grid.
+    fx: { fixtures: 'office' },
     name: 'HR Department',
     width: 16,
     height: 10,
@@ -1510,6 +1620,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   vault: {
     id: 'vault',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // One strip, cold, over the boxes.
+    fx: { fixtures: 'utility' },
     name: 'The Vault',
     width: 8,
     height: 8,
@@ -1565,6 +1678,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   board_room: {
     id: 'board_room',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Warm downlights over a mahogany table. Was on the grid pools.
+    fx: { fixtures: 'warm' },
     name: 'The Board Room',
     width: 16,
     height: 12,
@@ -1757,6 +1873,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   penthouse: {
     id: 'penthouse',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // A mood room. Its own point lights own the floor; the grid pools were
+    // a wash on top of them.
+    fx: { fixtures: 'none' },
     name: 'The Penthouse',
     width: 16,
     height: 12,
@@ -1863,6 +1983,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   penthouse_expanded: {
     id: 'penthouse_expanded',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // As above.
+    fx: { fixtures: 'none' },
     name: 'The Penthouse',
     width: 22,
     height: 16,
@@ -1952,6 +2075,12 @@ export const ROOMS = {
   // ----------------------------------------------------------
   penthouse_aquarium: {
     id: 'penthouse_aquarium',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // DEFECT: this wing carries no `lighting` block at all, so it fell
+    // through to the 1.15 default and ran the OFFICE TROFFER RIG - warm
+    // fluorescent bars hanging over two floor-to-ceiling reef tanks and a
+    // cinema screen.
+    fx: { fixtures: 'none' },
     name: 'The Reef & Reel',
     width: 16,
     height: 8,
@@ -1998,6 +2127,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   penthouse_analytics: {
     id: 'penthouse_analytics',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // DEFECT: same as the aquarium. Office ceiling fixtures over a
+    // five-station mission-control arc.
+    fx: { fixtures: 'none' },
     name: 'Analytics Suite',
     width: 14,
     height: 8,
@@ -2050,6 +2183,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   floor_13: {
     id: 'floor_13',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Silence, chosen. One desk lamp left on by no one is the whole light
+    // rig.
+    fx: { fixtures: 'none' },
     name: 'Floor 13',
     width: 16,
     height: 10,
@@ -2095,6 +2232,10 @@ export const ROOMS = {
   // ----------------------------------------------------------
   penthouse_bar: {
     id: 'penthouse_bar',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Already effectively none by its 0.32 dir; named so it cannot drift
+    // back.
+    fx: { fixtures: 'none' },
     name: 'Private Lounge',
     width: 18,
     height: 12,
@@ -2217,6 +2358,11 @@ export const ROOMS = {
   // ----------------------------------------------------------
   city_street: {
     id: 'city_street',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // DEFECT: dirIntensity 0.95 put an OUTDOOR STREET over the office
+    // threshold. Fluorescent ceiling troffers were being hung at y=2.44
+    // above Fennimore Avenue. `walls: false` and applyRoomFX never checked.
+    fx: { fixtures: 'none' },
     name: 'Fennimore Avenue',
     width: 26,
     height: 12,
@@ -2282,6 +2428,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   transit_bus: {
     id: 'transit_bus',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // A bus interior is one flickering strip and nothing else.
+    fx: { fixtures: 'utility' },
     name: 'The 5:15 Crosstown',
     width: 12,
     height: 5,
@@ -2323,6 +2472,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   records_hall: {
     id: 'records_hall',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // A civic reading room, lit like one.
+    fx: { fixtures: 'warm' },
     name: 'Hall of Records',
     width: 18,
     height: 14,
@@ -2400,6 +2552,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   luckys_diner: {
     id: 'luckys_diner',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Diner pendants.
+    fx: { fixtures: 'warm' },
     name: "Lucky's",
     width: 12,
     height: 8,
@@ -2449,6 +2604,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   old_branch: {
     id: 'old_branch',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // 1947 marble under cafe pendants.
+    fx: { fixtures: 'warm' },
     name: 'The Roastery',
     width: 14,
     height: 10,
@@ -2501,6 +2659,9 @@ export const ROOMS = {
   // ----------------------------------------------------------
   old_vault: {
     id: 'old_vault',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Same as the vault it is the ancestor of.
+    fx: { fixtures: 'utility' },
     name: 'The First Vault',
     width: 8,
     height: 8,
