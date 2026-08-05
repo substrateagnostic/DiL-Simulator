@@ -1333,10 +1333,17 @@ export const ROOMS = {
       // dialog's stage node walks her to the elevator and sets `meredith_left`,
       // which is this entry's notFlag - so the despawn lands after the walk,
       // off-screen, instead of popping her out where she stood.
-      // `facing: 0` is north, i.e. AT the desk and the carton. She shipped at
-      // Math.PI, facing the open floor with her back to the box the comment
-      // said she was packing.
-      { id: 'meredith', x: 3, z: 4, facing: 0, dialogId: 'meredith_footnote', condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
+      // FACING: Math.PI, which is NORTH, which is AT the desk and the carton.
+      // See the FACING LAW at the janet entries (:302-304) and NPC.faceTowards
+      // (`Math.atan2(x - px, z - pz)`): theta -> forward (sin, 0, cos), z=0 is
+      // the NORTH wall, so 0 = SOUTH and Math.PI = NORTH. She is at (3,4); the
+      // carton is at (2.95,3), i.e. due north of her, and faceTowards would
+      // return atan2(-0.05,-1) = -3.09, one twentieth of a radian off Math.PI.
+      // For one round this entry carried `facing: 0` under a comment asserting
+      // 0 was north - that comment was the old inverted CLAUDE.md bullet
+      // (corrected 2026-08-04, see 'Furniture / NPC rotation convention')
+      // walking again, and it turned her back on the box she is packing.
+      { id: 'meredith', x: 3, z: 4, facing: Math.PI, dialogId: 'meredith_footnote', condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -2420,10 +2427,15 @@ export const ROOMS = {
     // CityBackdrop's far-tower discs behind them glowed. `housing: false`
     // entries give each lamp head its own shaft and pool without hanging a
     // second fixture: the pole IS the source, and the light finally comes off
-    // it. Pool half-widths (5.2) exceed the 6.0 pole spacing, so each pool
-    // reaches into its neighbour's falloff and the sidewalk reads as one lit
-    // run with four hot centres rather than four islands. The last two entries
-    // are the shopfront spill under the facade window runs, low opacity.
+    // it. `poolW: 8.6` is a FULL width, so the half-width is 4.3 against a 6.0
+    // pole spacing - adjacent pools OVERLAP, because 2 x 4.3 = 8.6 > 6.0, and
+    // the sidewalk reads as one lit run with four hot centres rather than four
+    // islands. In z the entries sit at 2.2 while the poles sit at 1: 1.2 units
+    // SOUTH, deliberately, because the pole line is against the north kerb and
+    // an unshifted pool would spend half its depth on the building facade. The
+    // shift lands the 6.6-deep pool on the walkable sidewalk the player uses.
+    // The last two entries are the shopfront spill under the facade window
+    // runs, low opacity.
     fx: {
       fixtures: 'none',
       extra: [

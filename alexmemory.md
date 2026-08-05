@@ -1,3 +1,117 @@
+## [F-REMAINDER FIX ROUND 3 (08-05) - four things, and one law]
+
+### THE STANDING NOTE, first, because it is bigger than the fix
+
+**Every claim in the last wave that was checked by an ASSERTION was true. The
+one claim checked by a PRINT STATEMENT was false** - and it was the visual half
+of a visual note. `_f-box-shoot` read `rotation.y` off the live mesh, printed
+`facing=0`, and I read that number back as confirmation of the sentence I had
+just written in the room comment. It was not confirmation of anything. It was a
+number, and the number agreed with me because I was the one deciding what it
+meant.
+
+**The law, going forward: when a harness captures a datum, convert it to the
+JUDGEMENT you actually care about INSIDE the harness.** Direction, not angle.
+Overlap, not width. One-live-placement, not a list of placements. A print
+statement is a rorschach test that agrees with the author; an assertion is the
+only kind of evidence that can disagree with him. `_f-intern-ladder`,
+`_ux-dev`'s D1/D2/D3 and `_f-lum2`'s gate all did this and all held. The box
+tool did not, and it shipped a woman with her back to the box she was packing.
+
+### 1 - SHE IS TURNED AROUND, AND THE HARNESS SAYS SO
+
+I took the MINIMAL option, (a): `facing: Math.PI`, one character, reverting to
+what shipped. She faces north into the desk and the open carton; the iso camera
+sees her back. Option (b) - moving her to (3, 2.15) so the camera catches her
+face - is the better staging and I did not take it, because the surgical brief
+said `Math.PI` and nothing else moves, and a tile-move is a new placement that
+would need its own walkability and leg-clipping evidence in a round that was
+explicitly small.
+
+Citation, `node tools/_f-rotation-probe.mjs`, four seconds, on disk the whole
+time:
+
+```
+rotation 0      -> local +z lands at world (0.000, 1.000)  = SOUTH
+rotation PI     -> local +z lands at world (0.000, -1.000)  = NORTH
+NORTH-wall pieces at rotation 0 : 32   SOUTH-wall at PI: 0   NORTH-wall at PI: 0
+this.facingAngle = Math.atan2(x - this.position.x, z - this.position.z);
+target due NORTH (dz=-1) -> facing 3.1416  (PI)
+VERDICT: rotation/facing 0 = SOUTH (+z). PI = NORTH.
+```
+
+The comment above her now states the law the way the file states it everywhere
+else, cross-references the janet FACING LAW block (`:302-304`) and
+`NPC.faceTowards`, gives the arithmetic (`atan2(-0.05, -1) = -3.09`, one
+twentieth of a radian off PI), and names what went wrong: the old inverted
+CLAUDE.md bullet walking again. **That bullet itself is already corrected** -
+`CLAUDE.md:348` carries the right text with its 2026-08-04 date and its three
+independent verifications, so A2's rule is satisfied and no second edit was
+needed. The corpse was in the room comment, not in the doc.
+
+### 2 - THE TOOL ASSERTS NOW
+
+`_f-box-shoot` computes forward `(sin ry, cos ry)`, normalises the vector from
+her feet to the carton's **world matrix position** (not the authored x/z - the
+assertion has to test the mesh the camera photographs), and requires
+`dot > 0.7` AND wrapped angular error `< 0.6 rad`. Exits non-zero on failure.
+
+```
+FACING  PASS  she is at (3, 4) facing 3.140 rad; carton at (2.95, 3.00);
+              faceTowards would want -3.092; err 0.052 rad (< 0.6);
+              dot(forward, to-box) = 0.9987 (> 0.7)
+              forward vector (0.002, -1.000) -> NORTH; carton lies NORTH of her
+```
+
+**The hero crop needed more than one number.** The carton is **36 px wide in a
+1920x1080 frame** - that is not the crop rect's fault, it is a diorama camera
+looking at a half-metre box, and tightening a rectangle around 36 px produces a
+109x82 postage stamp. So the hero pass renders the *identical* shipping camera
+at **5760x3240** (ortho vertical world extent is fixed and 16:9 is preserved,
+so the framing does not move - only the sample density) and then crops 3x the
+measured prop width: **327x245, carton 109 px across, 33% of the frame, every
+pixel drawn rather than stretched.** `screenshots/f-run/box/exec-hero-box.png`.
+The two wide plates and the context crops re-shot unchanged, except the context
+crop is now centred on the carton instead of the desk tile.
+
+### 3 - THE TWO PROSE CORRECTIONS
+
+`rooms/index.js:2423`. **Half-width 4.3**, from `poolW: 8.6`, against a 6.0 pole
+spacing: adjacent pools **OVERLAP** because 2 x 4.3 = 8.6 > 6.0. The old line
+said half-widths of 5.2 exceeded the spacing, which was two errors wearing one
+coat - wrong number, wrong verb.
+
+And the z offset is now stated instead of left silent: the entries sit at
+`z: 2.2` while the poles sit at `z: 1`, **1.2 units SOUTH, deliberately**,
+because the pole line is against the north kerb and an unshifted 6.6-deep pool
+would spend half its depth on the building facade. The shift lands it on the
+walkable sidewalk. I chose to state it rather than move the entries to `z: 1`,
+because the placement is correct and it was only ever the comment that lied.
+
+### 4 - `_f-prose-shape` TAKES `--base`
+
+Default `HEAD~1`. Comparing against `HEAD` meant that the moment the prose was
+committed the harness went green by measuring nothing, and every later round
+re-running it as a regression check was reading a tautology. Run against the
+real pre-prose commit it still holds:
+
+```
+node tools/_f-prose-shape.mjs --base=66014f3
+PASS  chad_return       nodes 12->12  types identical  routing identical
+PASS  janitor_the_name  nodes  6->6   types identical  routing identical
+PASS  intern_rehearsal  nodes 11->11  types identical  routing identical
+```
+
+### GATES
+
+`npm run check` exit 0. `_f-box-shoot` exit 0 with the new assertion PASS plus
+the hero. `_f-rotation-probe` pasted above. Regression, unchanged: `_ux-dev`
+D1/D2/D3 PASS with **0 duplicate spawns** across 8 presets x 28 rooms;
+`_f-intern-ladder` **7/7**. D1's lighting values, D3's derivation, the prose and
+the census were not reopened.
+
+---
+
 ## [F-REMAINDER FIX ROUND 2 (08-05) - the panel failed the round]
 
 One commit on `display-case`, pushed (`615f30c`). `main` untouched. `npm run
