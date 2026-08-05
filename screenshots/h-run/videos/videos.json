@@ -1,0 +1,54 @@
+[
+ {
+  "beat": "normal-hit",
+  "fight": "karen",
+  "splash": [],
+  "banners": [],
+  "errors": []
+ },
+ {
+  "beat": "weakness-turnback",
+  "fight": "karen",
+  "splash": [],
+  "banners": [
+   "OBJECTION SUSTAINED"
+  ],
+  "errors": []
+ },
+ {
+  "beat": "composure-break",
+  "fight": "karen",
+  "splash": [],
+  "banners": [
+   "COMPOSURE BROKEN"
+  ],
+  "errors": []
+ },
+ {
+  "beat": "power-move-card",
+  "fight": "karen",
+  "splash": [
+   "assert_dominance.webp"
+  ],
+  "banners": [],
+  "errors": []
+ },
+ {
+  "beat": "ultimate-warning-card",
+  "fight": "karen",
+  "splash": [
+   "boss_karen.webp"
+  ],
+  "banners": [],
+  "errors": []
+ },
+ {
+  "beat": "karen-loss-finisher",
+  "fight": "karen",
+  "splash": [
+   "karen_finisher.webp"
+  ],
+  "banners": [],
+  "errors": []
+ }
+]
