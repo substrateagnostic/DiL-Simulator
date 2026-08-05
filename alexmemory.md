@@ -1,3 +1,99 @@
+## [F-REMAINDER BUILD (08-04) - the last nine items off the audited list]
+
+Five commits on `display-case`, all pushed. `main` untouched. `npm run check`
+exit 0 verified before every one. **Spend: 0 credits of anything** - no image
+generation, no Meshy, no clip fetch. The only paid calls were Opus 4.6 prose
+drafts (five batches).
+
+Governing doc: `.claude/plans/f-run/F-remainder-audit.md`. It listed 9 items to
+build; F-1 (epilogue plate art) had already shipped, so this lane built the
+other eight plus the three F-10 riders, the seam fix, and the drop list.
+
+### WHAT LANDED, by the audit's own ids
+
+| id | what | measured |
+|---|---|---|
+| **F-2** | conference_room / vault / parking_garage keep working | conference_room held ZERO people from Act 3 on (5 entries, all `notFlag: *_defeated`). Grandma holds Acts 3-5, the Intern Act 5 on |
+| **F-3** | six city-room thoughts + show-both + act-keyed | 12 new lines; **half of every authored pair was previously dead** (one of two, forever) - now authored=2 posted=2; 12 act-keyed lines across 6 rooms |
+| **F-4** | Chad's one sincere thing | he had ONE placement in the whole game and no scene after Act 2 |
+| **F-5** | Meredith's footnote | after act5_complete the villain did not exist anywhere in the world |
+| **F-6** | the trophy wing does something | all three penthouse wings shipped `npcs: []` AND `interactables: []`. 10,000,000 AUM bought three rooms with nothing to touch |
+| **F-7** | late-game cosmetics | all 17 unlocked off Acts 1-3. Five new ones, one per unpaid pillar; each builds a real mesh (15-22 nodes per equip, none zero) |
+| **F-8** | save export/import + the C2 carry contract | 46,530 chars of JSON -> a 5,845-char code (0.126x). carry.flags is a 47-row whitelist: **10 keys against the save's 1,216** |
+| **F-9** | floor 6's bathroom + copy room + the three predecessors | REACH gate 148 -> 161 interactables and exits, 0 unreachable |
+| **F-10** | act dressing + all three riders | 26 rooms now name a fixture profile, up from 4 lit rooms; 9 act transitions with a measured prop delta |
+| **F-11** | ambient scheduler | playSfx had 13 cases and every one was a REACTION. 13 new `amb_*` cues; 7 fired in 90 s in the garage, 0 while a VOICE surface was up, 0 in floor_13 |
+| **F-12** | the Janitor's name | **Curtis Briggs.** The watch is NOT explained - that contradiction is load-bearing, the missing name was not |
+| seam | CityBackdrop near-band | 3/3 near thin towers keep their seam at morning and afternoon, **0/3** at dusk / night / predawn |
+
+DROPPED, and staying dropped, exactly as the audit ruled: Boss Rush, The Daily
+Client, The Roof, Second Lap's dialog variants, the Performance Review shareable
+card, plus proposal 9's war-room clause and proposal 2's Janitor-placement
+clause.
+
+### YOUR EYE - three things worth looking at
+
+1. `screenshots/f-run/lighting-index.html` - **25 rooms, before and after, side
+   by side.** Wave 2 built the Severance top-light rig and reached exactly four
+   rooms with it; everything else was on a grid of sourceless pools or nothing.
+   The garage pair is the clearest read.
+2. `screenshots/f-run/floor6/` - the two rooms floor 6 never had.
+3. **THREE ROOMS WERE HANGING OFFICE CEILING TROFFERS BY ACCIDENT** because they
+   carry no `lighting` block and fell through to the 1.15 default:
+   penthouse_aquarium (warm fluorescent bars across two reef tanks and a cinema
+   screen), penthouse_analytics, and **city_street** - troffers at y 2.44 above
+   an open-air street. Compare
+   `light-before/room-penthouse_aquarium.png` with `light-after/`.
+
+### THINGS THAT WOULD MISLEAD YOU IF I DID NOT SAY THEM
+
+- **I overclaimed a bug in commit c24ae51 and the commit message is wrong.** It
+  says the conference room's Karen entry left a defeated boss re-fightable in
+  normal play. It does not: the first Karen fight is a scripted unavoidable loss
+  that sets `retry_karen` on every result, so no real save reaches that state.
+  It IS reachable from the F2 dev presets and any harness fixture that jumps the
+  loss - which is how I found it, and which CLAUDE.md already names as a hazard.
+  The fix is correct and behaviour-identical in play; the claim was not. The
+  room data comment now says the true thing.
+- **The stairwell's fixture profile is inert.** `applyRoomFX` returns early for
+  any room with `floorZones` and it is the only one. Named anyway; the data says
+  so.
+- **F-6's copy room is ONE room, not two.** Proposal 21 asked for a copy room
+  AND a supply closet. Two more doors would have cost the cubicle farm a wall
+  run it does not have, so the closet is an alcove. Both objects survive.
+- **The coordinator's poster ruling has one clause I did not follow.** It listed
+  `executivePoster` among the decoration options; the validator classes it as
+  READABLE, so an executivePoster hung as decoration fails `npm run check`. I
+  kept the validator and documented the split by shape instead (poster-shaped =
+  readable and must have an interactable, painting-shaped = decoration). All
+  four shipped executivePosters are readable. If you want it the other way, the
+  validator is the file to change.
+- **A commit swept in 32 instruments that are not mine** (`git add tools/` took
+  every untracked .mjs on the branch). Reverted in 3fb7d79. Worth knowing
+  anyway: those 32 files are the named evidence instruments for waves H, I and
+  J, they are cited in their own commit messages, and **none of them is in the
+  repo.**
+- **F-10 rider (iii) was already done.** g-run A2 corrected the rotation bullet
+  on 2026-08-04 before this lane started. I verified it a fourth independent way
+  and committed the probe; no CLAIM in the brief was wrong, but no work was
+  needed either.
+- **Three renovation acknowledgements shipped one commit later than the other
+  six** - all nine are in now.
+- The economy is untouched (no `ClientGenerator`, `billableDay`, `review.js` or
+  AUM code was edited). `tools/day-sim.mjs` re-run for confirmation, not for a
+  band comparison.
+
+### GATES, every commit
+
+`npm run check` exit 0 | `_ux-smoke` 11/11 | `_ux-dev` 0 duplicate NPCs across
+7 presets x 28 rooms | `_g-stage-verify` 276 trees, **0 structurally changed**
+(every one of the 15 new dialog trees is APPENDED) | `_ux-world` REACH 0
+unreachable, B2 0 NPCs on blocked tiles, S1 0 dead poster props |
+`tools/_f-evidence.mjs` **62 checks, 0 fails** | `tools/_f-dressing.mjs` 9
+transitions, 0 flat.
+
+---
+
 ## [COMBAT BUILD FIX ROUND 2 (08-04) - the judge panel failed the round]
 
 One commit on `display-case`, pushed. `main` untouched. `npm run check` exit 0.
