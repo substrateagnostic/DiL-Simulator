@@ -1,3 +1,138 @@
+## [COMBAT BUILD (08-04) - the attack, the cards, the trees]
+
+Five commits on `display-case`, all pushed. `main` untouched.
+`npm run check` exit 0 verified before every one.
+
+  093a98a  The attack finally happens on the frame the fist lands
+  c030b12  Ten splash cards, three trigger classes, one renderer
+  8a1f4af  Practice Groups: the enemy stops standing still...
+  aba36a7  Dossier build record: what shipped, and the named follow-ups
+  be04807  Judge evidence: six beat-class videos and the after contact strip
+
+Spend: **0 Meshy credits, 0 image-gen credits.** Three clips were stripped from
+raws already on disk; all ten cards were already drawn.
+
+### PACKAGE 1 - the attack was happening in the wrong order
+
+Shipped, every consequence of an attack fired BEFORE contact: hit SFX -735 ms,
+enemy hurt reaction -548, damage number -505, hit-stop -395, HP bar finished
+draining -264, camera home -155. The fist arrived at +741..812 into empty air.
+
+Same instrument (`tools/_h-beat-trace.mjs`, karen, hp400, headed, your RTX 4050),
+contact now measured at +346 ms:
+
+  |damage number - contact|    -505 ms  ->  +17 ms   (ceiling 35)
+  |hit SFX - contact|          -735 ms  ->  +15 ms   (ceiling 35)
+  |hit-stop - contact|         -395 ms  ->  +11 ms   (ceiling 35)
+  HP-bar travel start          -264 ms  ->  +78 ms   (band +60..+160)
+  camera released to rest      -155 ms  ->  +560 ms  (floor +350)
+  clip completion at hand-off      46 %  ->  132 %   (floor 90 %)
+  total exchange                3321 ms ->  2377 ms  (ceiling 2600)
+  attack beat, male / female  2250/2587 ->  767/867 ms, 13.0 % apart
+
+The `a214 @ 1.691x` watch item from the slate is RETIRED rather than tuned: the
+clip is trimmed to its committed shove and plays at 1.000x. Spine gate before
+and after the trims: identical except the reaction floor band moving 0.0011 m
+against a 0.01 tolerance.
+
+Also fixed, and it is the loudest thing in the whole build: **the notification
+layer was eating every mouse click in the game.** `.na-root` is a full-viewport
+div appended as a direct child of `#ui-overlay`, and `main.css` has
+`#ui-overlay > * { pointer-events: auto }` at a higher specificity than
+`.na-root { pointer-events: none }`. Measured with `tools/_h-hittest.mjs`:
+elementFromPoint at the centre of the combat Attack button returned `na-root`,
+not the button. Mouse play has been dead since the NotificationArbiter landed.
+
+### PACKAGE 2 - the ten cards, wired
+
+Your locked slate from `art/splash_cards/PICKS.md`, encoded 1600x900 WebP q80 by
+`tools/splash-encode.py`. Worst card 219 KB against a 300 KB budget, 1206 KB for
+the set, and **none of it is in the initial JS bundle** - a boss card you never
+reach is never fetched.
+
+15/15 trigger checks pass through the shipping path
+(`tools/_h-card-triggers.mjs`): the reward cards fire on their contact beats
+with the damage number, the threat cards fire on the ultimate telegraph with
+ZERO damage numbers and only once per boss per fight, All-In fires nothing on
+the 60 % miss, a reception client kill fires nothing at all, and the scripted
+Karen loss fires her finisher and writes `seen_karen_finisher`.
+
+ONE DIVERGENCE FROM YOUR PICK SHEET, taken off the render: chad_C's crimson
+diagonal runs through its own lower-left type zone, so that card ships with the
+slab on. Proof sheet of all ten over a real combat frame:
+`screenshots/h-run/cards/`.
+
+### PACKAGE 3 - Practice Groups
+
+Every section 7 recommendation in the J dossier, taken as cosigned. Measured on
+the SHIPPED code, not on the design (`tools/_j-verify.mjs`; the panel's own
+harness monkeypatches the engine and would have double-applied on top of the
+real implementation):
+
+  Grandma top-tag, a player who never opens the tab   83.6 %  ->  50.3 %
+  Regional Director                                   72.7 %  ->  66.0 %
+  Meredith                                            50.9 %  ->  41.3 %
+  Karen / the Algorithm (EXEMPT)                      unchanged
+  diversity band, worst rung          9.3 pp; 10 of 12 rungs <= 6.0 pp
+  Director / Compliance   0.79 weakness hits a fight, 67 % of its Break
+                          pressure off Bracing, 97.5 % win
+  casual PIP floor        mean |delta| 1.53 pp over 21 cells, 13 down / 8 up
+
+That last row is the hard constraint and it is a SAME-FILE A/B against the
+pre-package tree (`tools/_j-floor.mjs`), not a comparison against a printed
+table. No stat row, no COMBAT_DEPTH constant and no balance.json player row
+moved anywhere in this package.
+
+### NEEDS YOU
+
+1. **Play a fight.** Every number above is a clock; whether the attack now FEELS
+   like it connects is yours. Six videos at `screenshots/h-run/videos/` - one per
+   beat class, `?qtier` pinned - plus `screenshots/h-run/strip-after.png` read
+   against `strip-player-attack.png` (the shipped build, same instrument).
+2. **The mouse-click bug.** It has been shipped and live. Worth knowing how long,
+   and whether anything else in the same layer is affected.
+3. **`ESCALATED` / `YOU LOSE THIS ONE`** on Karen's finisher card, and
+   `CASE CLOSED` / `MATTER RESOLVED` on the boss-kill card, are MY copy, not
+   yours - the art was title-agnostic by design and the spec left the wording
+   open. Redline freely.
+4. **Two Practice Group decisions I made that the dossier did not specify**, both
+   in the dossier's new section 10: the fourth GENERAL PRACTICE track (the five
+   abilities that belonged to no lane), and the `depth` spend-order field.
+5. **D3's Assert Dominance strip is NOT shipped** and is recorded as a named
+   follow-up with its price: it raises the casual floor up to 13 pp on Meredith.
+
+### THINGS THAT WOULD MISLEAD YOU IF I DID NOT SAY THEM
+
+1. **The diversity band is 9.3 pp against a "<= ~8.0 pp" target**, on
+   `restructuring_trio@7`. The dossier's own worst cell was 8.0 pp on the same
+   rung; mine is 1.3 pp wider at 400 runs where they used 600, on the
+   highest-variance encounter in the game. I did not tune anything to close it.
+2. **The `a178` hurt trim in the design doc was NOT taken alone.** Trimming only
+   the female hurt would have put the two builds' reactions 1.7x apart. I trimmed
+   `a174` alongside it to the same 1.10 s - a row the doc does not contain,
+   justified by a174's own curve going flat at 1.0 s, and by the shipped build
+   ALREADY compressing a174 by 1.4956x.
+3. **`_j-synth`'s pivot table is keyed `rachel_boss`** and is looked up by
+   `enemyId`. The naming sweep renamed that enemy before the J design was
+   written, so **every Meredith pivot number in the dossier was measured against
+   a boss that did not pivot.** The shipped rows live inside her own `phases[]`
+   so the id cannot drift; my numbers are from the shipped path.
+4. **The Regional Director's dead final phase is still dead.** Reviving his costs
+   13.7 pp on the NG+2 lap. Deferred with its price, not overlooked.
+5. **NG+ was not re-tuned.** The dossier calls it the largest unpaid bill in the
+   design and the package moves it. `ng-sim --hpscale` / `--lapdecay` are the
+   knobs and nobody has turned them.
+6. **Motion for Summary Judgment is marked spent when it ARMS**, not when the
+   player takes the attack. A player who is offered the upgraded return and picks
+   Brace instead has spent it. That matches the model the dossier's numbers came
+   from; it is slightly unkind and it is a one-line change if you dislike it.
+7. **`brand_consultant` still fails the spine gate** at trunk 7.16 on one frame
+   of nine. Identical before my changes; it is HANDOFF section 2 item 3, not new.
+8. **I did not judge whether any of this looks good.** Nobody has run the
+   adversarial critic pair on the videos yet. That round has not happened.
+
+---
+
 ## [THE NAMING SWEEP (08-04) - the ids finally match the names]
 
 One commit, `79291c5`, `display-case` only, pushed. `main` untouched at `08a9d84`.
