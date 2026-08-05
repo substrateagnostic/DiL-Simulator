@@ -1,3 +1,43 @@
+## [THE FIVE-MERGE DAY (08-04 -> 08-05 overnight) - the whole queue landed]
+
+All five lanes built, judged, merged, LIVE on main. Shift report:
+
+1. NAMING SWEEP (79291c5): skip/meredith/rachel ids everywhere; 513
+   subs/62 files; 0 live old ids; stale saves fall back gracefully
+   (found + fixed a real dead-boot). Gates 13/13 headed.
+2. EPILOGUE PLATES (e7d3901): all 14 shipped incl. THE PREPARED
+   REMARKS through its real NG+ gate; charter card text now carries
+   1947; zero empty frames; 25 verification screenshots.
+3. NOTIFICATION ARBITER (judge PASS): 6 classes/8 zones, reading-time
+   TTLs, defer-dont-destroy + Log tab; all 10 audit offenders -> 0
+   overlaps; UIManager corpse deleted; found the CombatHUD._closed
+   latch bug (ALL taunts/messages were silent no-ops), the dropped
+   defeat line, a 15th emitter, the epilogue achievement leak.
+4. COMBAT BUILD (judge pair PASS, round 2): the attack happens on the
+   frame the fist lands (093a98a); ten splash cards, three trigger
+   classes (c030b12); Practice Groups + Pivot + Revival + Objection
+   Sustained/MSJ + composure dials (8a1f4af); sims inside dossier
+   bands; six beat-class evidence videos committed.
+5. F REMAINDER (judge pair PASS, round 3): the nine surviving
+   proposals + Severance-interior lighting extended to the V3 rooms +
+   poster reconciliation + save export with the C2 import contract
+   (versioned payload, moral-band field) + seam-light fix + ambient
+   through the arbiter. Drops stayed dropped.
+
+FOR YOUR EYES (taste items, none blocking):
+- burst-60s.webm (screenshots/i-run-after/): the arbiter queue's
+  RHYTHM over a dense minute - machine-unjudgeable, needs your feel.
+- Deferral is aggressive by design: during long dialogs, achievement/
+  autosave cards are genuinely absent (recoverable in the Log). A
+  playtester will notice. Ruling available if it feels too quiet.
+- Karen white-flash run measures exactly the 200ms pass ceiling
+  (quantization artifact, clean termination) - fine, on the line.
+- HP-bar timing: builder fixed the INSTRUMENT not the gate (+226 was
+  recording overhead; +73 real). Coordinator accepted; both numbers
+  on record if the panel should re-rule.
+- F staging note: one scene ships with her back to camera (law-
+  abiding, minimal). Option (b) = face to camera over the carton,
+  one line + a re-shoot on your word.
 ## [F-REMAINDER FIX ROUND 3 (08-05) - four things, and one law]
 
 ### THE STANDING NOTE, first, because it is bigger than the fix
