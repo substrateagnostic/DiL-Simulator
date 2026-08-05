@@ -962,14 +962,24 @@ class EngineClass {
     // `roomData.id === 'server_room'` special case -- the exact shape that
     // stops a lighting rig being extensible. It is room data now, and any room
     // can hang one.
+    //
+    // `housing: false` emits only the SOURCING half -- shaft and pool, no
+    // troffer. Use it when the room's own furniture already IS the fixture: a
+    // `lamppost` carries an emissive head at y 2.5 and a ceilingFixture hung
+    // beside it would read as a fluorescent bar floating over a sidewalk.
+    // `shaftW`/`shaftH` size the shaft independently of `len`, because a street
+    // lamp's cone is narrow and tall where a troffer's is wide and short.
     for (const ex of (roomData.fx?.extra || [])) {
       const tint = ex.tint ?? 0xccdcf0;
       const len = ex.len ?? 3.0;
       const y = ex.y ?? 2.44;
-      const fixture = Furniture.ceilingFixture(len, tint);
-      fixture.position.set(ex.x, y, ex.z);
-      g.add(fixture);
-      g.add(this._fxLightShaft(ex.x, ex.z, y - 0.08, tint, len * 0.7, 0.7, ex.shaft ?? 0.08));
+      if (ex.housing !== false) {
+        const fixture = Furniture.ceilingFixture(len, tint);
+        fixture.position.set(ex.x, y, ex.z);
+        g.add(fixture);
+      }
+      g.add(this._fxLightShaft(ex.x, ex.z, y - 0.08, tint,
+        ex.shaftW ?? len * 0.7, ex.shaftH ?? 0.7, ex.shaft ?? 0.08));
       const pool = new THREE.Mesh(new THREE.PlaneGeometry(1, 1),
         new THREE.MeshBasicMaterial({
           map: this._fxRadialTexture(), color: ex.pool ?? tint, transparent: true,

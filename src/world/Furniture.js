@@ -1580,6 +1580,68 @@ export const Furniture = {
     return group;
   },
 
+  // A packing carton. Half a metre, open, four flaps folded out.
+  //
+  // This exists because the act-dressing pass had no box and reached for
+  // `fileCabinetLow` instead, so the comment said "Meredith Sterling's box"
+  // over a piece of furniture that is a filing cabinet: the prose outran the
+  // geometry by a whole object. It is deliberately ONLY a box -- kraft body,
+  // a darker interior so the open top reads as open at the iso camera, four
+  // flaps raked outward, and one strip of tape. No stacked variants, no
+  // contents, no label.
+  cardboardBox(size = 0.5) {
+    const group = new THREE.Group();
+    const S = Math.max(0.25, typeof size === 'number' ? size : 0.5);
+    const H = S * 0.72;                                  // cartons are wider than they are tall
+    const kraft = Materials.custom(0xa8825a);
+    const kraftDark = Materials.custom(0x6d5238);        // shadowed interior + flap undersides
+    const tape = Materials.custom(0xc9b48c);
+
+    // Four walls rather than one solid box, so the camera sees INTO it.
+    const t = 0.018;
+    const wall = (w, d, x, z) => {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(w, H, d), kraft);
+      m.position.set(x, H / 2, z);
+      return m;
+    };
+    group.add(wall(S, t, 0, -S / 2));
+    group.add(wall(S, t, 0, S / 2));
+    group.add(wall(t, S, -S / 2, 0));
+    group.add(wall(t, S, S / 2, 0));
+
+    // Floor of the carton, sunk a little: the dark plane that makes it read
+    // as a container instead of a lid.
+    const base = new THREE.Mesh(new THREE.BoxGeometry(S - t, 0.02, S - t), kraftDark);
+    base.position.y = 0.06;
+    group.add(base);
+
+    // Flaps: folded out and slightly drooping, one per side, alternating rake
+    // so it looks handled rather than assembled.
+    // Positive X rotation tips the +z end DOWN, so `rakes` reads as droop.
+    const flapGeo = new THREE.BoxGeometry(S, 0.014, S * 0.46);
+    const rakes = [0.42, 0.30, 0.50, 0.36];
+    for (let i = 0; i < 4; i++) {
+      const flap = new THREE.Mesh(flapGeo, i % 2 ? kraft : kraftDark);
+      flap.position.set(0, 0, S * 0.23);           // extends out from the hinge line
+      const arm = new THREE.Group();               // the hinge itself: top edge of a wall
+      arm.position.set(0, H, S / 2);
+      arm.rotation.x = rakes[i];
+      arm.add(flap);
+      const hinge = new THREE.Group();             // which of the four walls
+      hinge.rotation.y = (i / 4) * Math.PI * 2;
+      hinge.add(arm);
+      group.add(hinge);
+    }
+
+    // One strip of packing tape down the near face.
+    const strip = new THREE.Mesh(new THREE.BoxGeometry(S * 0.16, H * 0.9, 0.006), tape);
+    strip.position.set(0, H / 2, S / 2 + 0.012);
+    group.add(strip);
+
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
   trashCan() {
     const group = new THREE.Group();
     const bodyMat = Materials.custom(0x4a4a4a);

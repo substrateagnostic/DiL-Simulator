@@ -52,7 +52,18 @@ try {
     const { DEV_PRESETS } = await import('/src/ui/DevPanel.js');
     const ex = window.__explore;
     const out = [];
-    for (const p of DEV_PRESETS) {
+    // The seven story presets stop at Act 7, so `algorithm_defeated` is never
+    // set and the penthouse_bar set is never measured. The producer asked what
+    // the census reports for it, so it gets an eighth synthetic state -- the
+    // real post-game one, act7 plus the win plus the renovation that builds the
+    // wing at all.
+    const act7 = DEV_PRESETS.find(p => p.key === 'act7');
+    const STATES = [...DEV_PRESETS, {
+      key: 'post',
+      label: 'POST-GAME (synthetic: act7 + algorithm_defeated + renovation_penthouse)',
+      flags: { ...act7.flags, algorithm_defeated: true, renovation_penthouse: true },
+    }];
+    for (const p of STATES) {
       ex.player.flags = {};
       Object.assign(ex.player.flags, p.flags);
       ex._syncActFromFlags();
@@ -65,43 +76,106 @@ try {
         return true;
       };
       const dupes = [];
+      // CROSS-ROOM pass (round 2). The within-room count above catches the
+      // head-inside-a-head case; it says nothing about the SAME id being
+      // simultaneously placeable in two DIFFERENT rooms under one flag state,
+      // which is how the Intern came to be seated at his desk on floor 6 while
+      // also rehearsing at the head of the conference table one door away.
+      const byIdGlobal = {};
       for (const [rid, room] of Object.entries(ROOMS)) {
         const byId = {};
         for (const n of (room.npcs || [])) {
           if (!match(n.condition)) continue;
           (byId[n.id] ||= []).push(n);
+          (byIdGlobal[n.id] ||= new Set()).add(rid);
         }
         for (const [id, list] of Object.entries(byId)) {
           if (list.length > 1) dupes.push(`${rid}:${id} x${list.length}`);
         }
       }
+      const cross = Object.entries(byIdGlobal)
+        .filter(([, set]) => set.size > 1)
+        .map(([id, set]) => ({ id, rooms: [...set].sort() }))
+        .sort((a, b) => a.id.localeCompare(b.id));
       out.push({
         key: p.key, label: p.label,
         rooms: Object.keys(ROOMS).length,
         act: ex.player.actIndex,
         objective: String(ex._getStoryObjective() || '').replace(/<br>/g, ' | ').replace(/<[^>]+>/g, ''),
-        dupes,
+        dupes, cross,
       });
     }
     return out;
   });
 
-  let totalDupes = 0;
+  // The penthouse wing is the ACCEPTED CONVENTION and is reported separately,
+  // not counted as a defect. Six allies are seated in `penthouse_bar` from
+  // `algorithm_defeated` on, and every one of them also stands in the room they
+  // work in: the game has never simulated one body per character, the wing is a
+  // post-game hangout behind a 10,000,000 AUM renovation, and the player can
+  // only ever be in one room. What is NOT convention is two live placements of
+  // the same id in two rooms whose act-scoped dialog describes the same moment
+  // differently -- that is the class the Intern was in.
+  const CONVENTION_ROOMS = new Set(['penthouse_bar']);
+  // `_resolveRoomId` swaps one canonical id for a larger variant on a
+  // renovation flag, so a pair like [penthouse + penthouse_expanded] is ONE
+  // room with two layouts and exactly one of them is ever loaded. Counting
+  // those as "two rooms at once" is the census lying, not the data.
+  const VARIANTS = [
+    ['skip_office', 'skip_office_large'],
+    ['penthouse', 'penthouse_expanded'],
+  ];
+  const collapse = (rooms) => {
+    let r = [...rooms];
+    for (const [a, b] of VARIANTS) if (r.includes(a) && r.includes(b)) r = r.filter(x => x !== b);
+    return r;
+  };
+  // KNOWN, pre-existing, and NOT introduced by this lane. Each is reported by
+  // name every run; none is silently swallowed. Adding a row here is a
+  // producer decision, not a way to make a number go green.
+  const KNOWN = {
+    'janitor|archive+parking_garage':
+      'the garage patrol entry is unconditional and has been since ship; he sweeps the garage from Act 1 and the Archive scenes start at Act 3',
+    'janitor|archive+parking_garage+records_hall':
+      'as above, plus the records-hall placement',
+    'grandma|conference_room+reception':
+      'reachable only in a preset: `chad_defeated && !skip_post_chad` is a window that closes BEFORE act2_complete opens the conference-room entry, and no real ordering holds both',
+    'grandma|break_room+reception':
+      'same preset artefact as above, one act later',
+  };
+  const key = (c) => `${c.id}|${collapse(c.rooms).join('+')}`;
+  const isConvention = (c) => {
+    const r = collapse(c.rooms);
+    if (r.length <= 1) return true;                                  // room variants
+    if (r.filter(x => !CONVENTION_ROOMS.has(x)).length <= 1) return true;  // the bar
+    return Object.hasOwn(KNOWN, key(c));
+  };
+
+  let totalDupes = 0, totalCross = 0, totalConv = 0;
   for (const r of rows) {
     totalDupes += r.dupes.length;
+    const real = r.cross.filter(c => !isConvention(c));
+    const conv = r.cross.filter(c => isConvention(c) && collapse(c.rooms).length > 1);
+    totalCross += real.length; totalConv += conv.length;
     say(`${r.key.padEnd(5)} act=${r.act}  ${r.label}`);
     say(`      objective : ${r.objective}`);
     say(`      dupe NPCs : ${r.dupes.length ? r.dupes.join(', ') : 'none'}`);
+    say(`      cross-room: ${real.length ? real.map(c => `${c.id} in [${c.rooms.join(' + ')}]`).join('; ') : 'none'}`);
+    for (const c of conv) {
+      say(`      accepted  : ${c.id} [${collapse(c.rooms).join(' + ')}] — ${KNOWN[key(c)] || 'penthouse_bar off-shift convention'}`);
+    }
   }
   const act1 = rows.find(r => r.key === 'act1');
   say(`\nD1: preset labelled "${act1.label}" derives act=${act1.act}  ${act1.act === 1 ? 'PASS' : 'FAIL (label says Act 1)'}`);
   say(`D2: total duplicate-NPC spawns across all presets = ${totalDupes}  ${totalDupes === 0 ? 'PASS' : 'FAIL'}`);
+  say(`D3: cross-room simultaneous placements, unaccepted = ${totalCross}  ${totalCross === 0 ? 'PASS' : 'FAIL'}`);
+  say(`     accepted pairs reported by name and NOT counted = ${totalConv} (room variants collapsed first)`);
   say(`     coverage: ${rows.length} presets x ${rows[0]?.rooms ?? 0} rooms`);
 
   if (baselineNote) say(`\nNOTE: ${baselineNote}`);
-  writeFileSync(outFile, JSON.stringify({ tag, rows, totalDupes, log }, null, 2));
+  writeFileSync(outFile, JSON.stringify({ tag, rows, totalDupes, totalCross, totalConv, log }, null, 2));
   say(`\nwrote ${outFile}`);
-  if (act1.act !== 1 || totalDupes !== 0) process.exitCode = 1;
+  if (act1.act !== 1 || totalDupes !== 0 || totalCross !== 0) process.exitCode = 1;
 } finally {
   await browser.close();
 }

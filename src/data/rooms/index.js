@@ -220,10 +220,12 @@ export const ROOMS = {
       // STORAGE — file cabinet rows along north wall (handles face south/center)
       // Left bank (behind NW pod) and right bank (behind NE pod)
       // ============================================================
-      // THE RESTRUCTURING'S PAPERWORK. Acts 4-5 only: the department is being
-      // audited out of existence and the floor fills with pulled files. Against
-      // the north wall beside the existing storage bank, clear of every aisle
-      // (the REACH gate in tools/_ux-world.mjs is the check that stays honest).
+      // THE RESTRUCTURING'S PAPERWORK. Acts 4-5 only: TWO low cabinets appear
+      // against the north wall beside the existing storage bank, clear of every
+      // aisle (the REACH gate in tools/_ux-world.mjs is the check that stays
+      // honest). Scale, stated plainly: two props, not a floor filling with
+      // pulled files. The commit that landed this said the second thing and the
+      // data does the first.
       { type: 'fileCabinetLow', x: 5,  z: 0.5, condition: { flag: 'act3_complete', notFlag: 'act5_complete' } },
       { type: 'fileCabinetLow', x: 6,  z: 0.5, condition: { flag: 'act3_complete', notFlag: 'act5_complete' } },
       { type: 'fileCabinet',        x: 2,  z: 0.5 },
@@ -301,10 +303,17 @@ export const ROOMS = {
       // (sin, 0, cos), so 0 = SOUTH and Math.PI = NORTH. A seated NPC must carry its
       // CHAIR'S rotation. Every seated entry in the game was one half-turn out.
       { id: 'janet', x: 6, z: 3.8, facing: Math.PI, sitting: true, condition: { flag: 'janet_quest_resolved' } },  // settles at her desk (chair 6,3.8 r=PI, desk at z=3 north of her)
-      // Intern — conditional entries covering lunch thief confrontation
-      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { notFlag: 'lunch_thief_culprit_revealed' } },
-      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'lunch_thief_culprit_revealed', notFlag: 'lunch_thief_complete' }, dialogId: 'intern_lunch_thief_confrontation' },
-      { id: 'intern', x: 13, z: 5.8, facing: Math.PI, sitting: true, condition: { flag: 'lunch_thief_complete' } },  // seated at his workstation (chair 13,5.8 r=PI)
+      // Intern — three entries covering the lunch thief chain, all three gated
+      // on him BEING HERE. `intern_at_desk` / `intern_confronting` /
+      // `intern_desk_idle` are derived in _refreshStoryProgress and partition
+      // each other; the last two carry the lunch-thief state so this room goes
+      // dark for the whole Act 6 rehearsal-and-board window, when he is in the
+      // conference room and then the board room. Before the derivation he was
+      // in two rooms at once from act5_complete on, which the cross-room pass
+      // in tools/_ux-dev.mjs now measures.
+      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'intern_at_desk', notFlag: 'lunch_thief_culprit_revealed' } },
+      { id: 'intern', x: 13, z: 7, facing: Math.PI, movement: { type: 'wander', radius: 3 }, condition: { flag: 'intern_confronting' }, dialogId: 'intern_lunch_thief_confrontation' },
+      { id: 'intern', x: 13, z: 5.8, facing: Math.PI, sitting: true, condition: { flag: 'intern_desk_idle' } },  // seated at his workstation (chair 13,5.8 r=PI)
       { id: 'karen', x: 15, z: 12, facing: -Math.PI / 2, movement: { type: 'pace', distance: 1, axis: 'z' }, condition: { notFlag: 'briefing_complete' } }, // water cooler, paces — hidden once briefing starts
       { id: 'isaiah', x: 16, z: 12, facing: Math.PI, movement: { type: 'wander', radius: 2 } }, // near water cooler, wanders
       // Rachel (trust officer, `rachel`) — SW pod, the cubicle two bays over
@@ -424,10 +433,12 @@ export const ROOMS = {
       { type: 'microwave', x: 8, z: 1 },
       { type: 'trashCan', x: 6.5, z: 1 },
       // ── ACT DRESSING (F-10) ──
-      // Acts 3-5 the bins overflow (nobody is thinking about the break room
-      // while the department is being dissolved); after act5_complete they are
-      // gone, which is the prop half of "Someone finally cleaned the
-      // microwave" (ROOM_THOUGHTS_BY_ACT, break_room act 6).
+      // Acts 3-5: TWO extra bins stand by the counter (nobody is thinking about
+      // the break room while the department is being dissolved); after
+      // act5_complete they are gone, which is the prop half of "Someone finally
+      // cleaned the microwave" (ROOM_THOUGHTS_BY_ACT, break_room act 6). Two
+      // bins. Not "the bins overflow" — that was the commit prose, and there is
+      // no overflow geometry in this game.
       { type: 'trashCan', x: 7.5, z: 1, condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
       { type: 'trashCan', x: 8.6, z: 1, condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
 
@@ -713,9 +724,9 @@ export const ROOMS = {
       { type: 'chair', x: 8.0, z: 4, rotation: -Math.PI / 2 },
 
       // ── ACT DRESSING (F-10) ──
-      // Act 5 is the gauntlet: the restructuring team is packing the department
-      // into boxes and this is the room they stage from. West wall, clear of
-      // the table (x 5-7) and of both doors.
+      // Act 5 is the gauntlet and this is the room the restructuring stages
+      // from. TWO props — one low cabinet and one bin — against the west wall,
+      // clear of the table (x 5-7) and of both doors.
       { type: 'fileCabinetLow', x: 1, z: 2, condition: { flag: 'act4_complete', notFlag: 'act6_complete' } },
       { type: 'trashCan',       x: 1, z: 3, condition: { flag: 'act4_complete', notFlag: 'act6_complete' } },
 
@@ -792,7 +803,17 @@ export const ROOMS = {
       // facing EAST down the table; an occupant carries its chair's rotation.
       // Not the east end (8,4) - that is Karen's tile, and two bodies on one
       // tile is the head-inside-a-head failure whatever the conditions say.
-      { id: 'intern', x: 4.0, z: 4, facing: Math.PI / 2, sitting: true, dialogId: 'intern_rehearsal', condition: { flag: 'act5_complete' } },
+      //
+      // TWO entries, same tile, same shape as the Karen and Grandma pairs. The
+      // first is the rehearsal itself and dies once it has been read; the
+      // second carries NO dialogId so act routing resumes and `intern_act6`
+      // -- the rally, and the ONLY writer of `intern_act6_rallied` -- can
+      // fire. A single hardcoded entry would have shadowed the rally forever
+      // (CLAUDE.md, "NPC `dialogId` overrides act routing"): the Intern would
+      // have rehearsed at Andrew for the rest of the game and the Act 6 ally
+      // counter would have been permanently 4/5.
+      { id: 'intern', x: 4.0, z: 4, facing: Math.PI / 2, sitting: true, dialogId: 'intern_rehearsal', condition: { flag: 'intern_rehearsing' } },
+      { id: 'intern', x: 4.0, z: 4, facing: Math.PI / 2, sitting: true, condition: { flag: 'intern_rally_ready' } },
     ],
     exits: [
       // WEST exit -> Alex's Office
@@ -995,7 +1016,7 @@ export const ROOMS = {
       { type: 'chair', x: 12, z: 6, rotation: -Math.PI / 2 },
       { type: 'desk', x: 11, z: 5.5, rotation: 0 },  // side table
       // ── ACT DRESSING (F-10) ──
-      // The lobby gets its money back. Post-board-meeting only: two tall plants
+      // The lobby gets its money back. Post-board-meeting only: TWO tall plants
       // between the reception desk and the two waiting banks — the first thing
       // a client sees, and the last thing anyone budgeted for in seven acts.
       // Room is 14 x 8. Both tiles are clear of the chair banks (z 5-6), the
@@ -1207,12 +1228,19 @@ export const ROOMS = {
       { type: 'keyboard', x: 3.2, z: 3 },
       { type: 'chair', x: 2, z: 3, rotation: Math.PI / 2 },
       // ── ACT DRESSING (F-10) ──
-      // Meredith Sterling's box, at the secondary desk she is packing it at.
-      // It appears when she does (act5_complete) and leaves when she does
-      // (meredith_left, set by her footnote scene's stage node) — the prop and
-      // the body share one window, so the desk is never a box with nobody at
-      // it or a woman packing nothing.
-      { type: 'fileCabinetLow', x: 3, z: 2, condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
+      // ONE PROP: an open packing carton on the secondary desk, at Meredith
+      // Sterling's elbow. It appears when she does (act5_complete) and leaves
+      // when she does (meredith_left, set by her footnote scene's stage node)
+      // — the prop and the body share one window, so the desk is never a box
+      // with nobody at it or a woman packing nothing.
+      //
+      // It was a `fileCabinetLow` at (3,2) for one round, which is a filing
+      // cabinet on the far side of the desk from her, and the comment above it
+      // said "box". `Furniture.cardboardBox` exists now. y 0.74 puts it on the
+      // desktop (desk top is 0.72); x 2.95 keeps its 0.5 m footprint clear of
+      // the keyboard at 3.2 while staying in tile (3,3), which is the tile
+      // Meredith at (3,4) is standing next to.
+      { type: 'cardboardBox', x: 2.95, z: 3, y: 0.74, condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
 
       // === Secondary executive desk (east side, faces west) ===
       { type: 'desk', x: 13, z: 3, rotation: -Math.PI / 2 },
@@ -1305,7 +1333,10 @@ export const ROOMS = {
       // dialog's stage node walks her to the elevator and sets `meredith_left`,
       // which is this entry's notFlag - so the despawn lands after the walk,
       // off-screen, instead of popping her out where she stood.
-      { id: 'meredith', x: 3, z: 4, facing: Math.PI, dialogId: 'meredith_footnote', condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
+      // `facing: 0` is north, i.e. AT the desk and the carton. She shipped at
+      // Math.PI, facing the open floor with her back to the box the comment
+      // said she was packing.
+      { id: 'meredith', x: 3, z: 4, facing: 0, dialogId: 'meredith_footnote', condition: { flag: 'act5_complete', notFlag: 'meredith_left' } },
     ],
     exits: [
       // SOUTH elevator -> Reception
@@ -2381,7 +2412,32 @@ export const ROOMS = {
     // DEFECT: dirIntensity 0.95 put an OUTDOOR STREET over the office
     // threshold. Fluorescent ceiling troffers were being hung at y=2.44
     // above Fennimore Avenue. `walls: false` and applyRoomFX never checked.
-    fx: { fixtures: 'none' },
+    //
+    // Killing the troffers was the right diagnosis and half a remedy: it also
+    // took away the only thing sourcing the sidewalk, and the plate went from
+    // mean 21.67 / sd 38.47 to mean 18.15 / sd 28.82 -- DARKER and FLATTER,
+    // with the four lampposts standing over unlit concrete while the
+    // CityBackdrop's far-tower discs behind them glowed. `housing: false`
+    // entries give each lamp head its own shaft and pool without hanging a
+    // second fixture: the pole IS the source, and the light finally comes off
+    // it. Pool half-widths (5.2) exceed the 6.0 pole spacing, so each pool
+    // reaches into its neighbour's falloff and the sidewalk reads as one lit
+    // run with four hot centres rather than four islands. The last two entries
+    // are the shopfront spill under the facade window runs, low opacity.
+    fx: {
+      fixtures: 'none',
+      extra: [
+        // One per lamppost. Head is at (post.x + 0.42, y 2.5) - see
+        // Furniture.lamppost - so these sit under the arm, not the pole.
+        { x: 3.42,  z: 2.2, y: 2.5, housing: false, tint: 0xffd9a0, pool: 0xffd9a0, opacity: 0.52, poolW: 8.6, poolD: 6.6, shaft: 0.16, shaftW: 0.9, shaftH: 0.9 },
+        { x: 9.42,  z: 2.2, y: 2.5, housing: false, tint: 0xffd9a0, pool: 0xffd9a0, opacity: 0.52, poolW: 8.6, poolD: 6.6, shaft: 0.16, shaftW: 0.9, shaftH: 0.9 },
+        { x: 15.42, z: 2.2, y: 2.5, housing: false, tint: 0xffd9a0, pool: 0xffd9a0, opacity: 0.52, poolW: 8.6, poolD: 6.6, shaft: 0.16, shaftW: 0.9, shaftH: 0.9 },
+        { x: 21.42, z: 2.2, y: 2.5, housing: false, tint: 0xffd9a0, pool: 0xffd9a0, opacity: 0.52, poolW: 8.6, poolD: 6.6, shaft: 0.16, shaftW: 0.9, shaftH: 0.9 },
+        // Shopfront spill: the two long lit facade runs (x 6 var 12, x 19 var 7).
+        { x: 12.0, z: 0.7, y: 2.1, housing: false, tint: 0xffcf92, pool: 0xffcf92, opacity: 0.13, poolW: 13.0, poolD: 3.6, shaft: 0.0, shaftW: 0.1, shaftH: 0.1 },
+        { x: 22.5, z: 0.7, y: 2.1, housing: false, tint: 0xffcf92, pool: 0xffcf92, opacity: 0.13, poolW: 8.0,  poolD: 3.6, shaft: 0.0, shaftW: 0.1, shaftH: 0.1 },
+      ],
+    },
     name: 'Fennimore Avenue',
     width: 26,
     height: 12,

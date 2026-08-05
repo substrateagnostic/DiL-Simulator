@@ -3528,6 +3528,46 @@ export class ExplorationState {
       this.player.setFlag('karen_first_meeting_over', true);
     }
 
+    // ── WHERE THE INTERN IS (round 2, D3) ────────────────────────────────
+    // The only TWO-WAY derived flags in this block, and they are two-way on
+    // purpose: every other flag here is a latch, these three describe a place.
+    //
+    // The Intern has three cubicle-farm entries (pre-quest, mid-quest,
+    // post-quest) and, from `act5_complete`, a conference-room entry as well —
+    // so he was seated at his workstation on floor 6 while ALSO rehearsing at
+    // the head of the conference table one door away. `_ux-dev`'s within-room
+    // duplicate count could not see it; its cross-room pass (added this round)
+    // can, and reported him in both rooms under the act6 and act7 presets.
+    //
+    // `intern_at_desk` is the predicate "the Intern is at his workstation" —
+    // false exactly across the Act 6 rehearsal-and-board window. The other
+    // four PARTITION the two halves, so all five placements (three in the
+    // farm, two in the conference room) are mutually exclusive BY
+    // CONSTRUCTION rather than by five hand-written flag pairs, and the board
+    // room's own `intern_act6_rallied && !board_meeting_closed` slots between
+    // them. Five flags and not one because an NPC `condition` holds a single
+    // flag/notFlag pair and three of these states need two positives.
+    //
+    //   at desk        !act5_complete || board_meeting_closed
+    //     +-- pre-quest      (notFlag lunch_thief_culprit_revealed)
+    //     +-- confronting    intern_confronting
+    //     +-- idle           intern_desk_idle
+    //   away           act5_complete && !board_meeting_closed
+    //     +-- rehearsing     intern_rehearsing
+    //     +-- rally ready    intern_rally_ready
+    //     +-- board room     intern_act6_rallied && !board_meeting_closed
+    const internAtDesk = !this.player.getFlag('act5_complete')
+      || this.player.getFlag('board_meeting_closed');
+    const lunchRevealed = this.player.getFlag('lunch_thief_culprit_revealed');
+    const lunchDone = this.player.getFlag('lunch_thief_complete');
+    const rehearsalRead = this.player.getFlag('read_intern_rehearsal');
+    this.player.setFlag('intern_at_desk', internAtDesk);
+    this.player.setFlag('intern_confronting', internAtDesk && lunchRevealed && !lunchDone);
+    this.player.setFlag('intern_desk_idle', internAtDesk && lunchDone);
+    this.player.setFlag('intern_rehearsing', !internAtDesk && !rehearsalRead);
+    this.player.setFlag('intern_rally_ready',
+      !internAtDesk && rehearsalRead && !this.player.getFlag('intern_act6_rallied'));
+
     // THE THREE PREDECESSORS (F-9). Diane names them in Act 1 — "The first one
     // quit. The second one cried in the bathroom for forty minutes and then
     // quit. The third one is the one who had the parking garage incident." —

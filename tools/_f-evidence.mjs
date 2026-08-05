@@ -290,20 +290,37 @@ if (want('scenes')) {
     ex._refreshStoryProgress(true);
   });
 
+  // A fourth element OVERRIDES flags for that row only, and is restored after.
+  // The blanket fixture above is a post-game state (act6_complete, and with it
+  // the derived board_meeting_closed), which is exactly when the Intern is back
+  // at his cubicle-farm desk -- so asserting the rehearsal from it asserts a
+  // state the story does not have. His scene is an ACT 6 scene and has to be
+  // checked from Act 6. This is the round-2 `intern_at_desk` derivation working,
+  // not a regression: before it he was in both rooms at once and this check
+  // passed for the wrong reason.
   const SCENES = [
     ['break_room', 'chad', 'chad_return'],
     ['executive_floor', 'meredith', 'meredith_footnote'],
-    ['conference_room', 'intern', 'intern_rehearsal'],
+    ['conference_room', 'intern', 'intern_rehearsal',
+      { act6_complete: false, has_rolex: false, algorithm_defeated: false, board_meeting_held: false, board_meeting_closed: false }],
     ['penthouse_bar', null, 'penthouse_pool_table'],
     ['penthouse_aquarium', null, 'penthouse_reel'],
     ['penthouse_analytics', null, 'penthouse_analytics_console'],
     ['vault', null, 'vault_ledger_niche'],
     ['parking_garage', null, 'janitor_closet_after'],
   ];
-  for (const [room, npcId, dialogId] of SCENES) {
-    const r = await page.evaluate(async ({ room, npcId, dialogId }) => {
+  for (const [room, npcId, dialogId, override] of SCENES) {
+    const r = await page.evaluate(async ({ room, npcId, dialogId, override }) => {
       const ex = window.__explore;
       const { DIALOGS } = await import('/src/data/dialogs/index.js');
+      let restore = null;
+      if (override) {
+        restore = {};
+        for (const k of Object.keys(override)) restore[k] = ex.player.flags[k];
+        Object.assign(ex.player.flags, override);
+        ex._syncActFromFlags?.();
+        ex._refreshStoryProgress(true);
+      }
       await ex._changeRoom(room, 1, 1);
       await new Promise(res => setTimeout(res, 500));
       // Visible NPCs the room actually built, with their tiles — two bodies on
@@ -334,8 +351,14 @@ if (want('scenes')) {
             && (!it.condition.notFlag || !ex.player.getFlag(it.condition.notFlag))));
         routed = live ? it.dialogId : null;
       }
-      return { npcs, stacked, routed, nodes: DIALOGS[dialogId]?.length ?? 0, room: ex.player.currentRoom };
-    }, { room, npcId, dialogId });
+      const out = { npcs, stacked, routed, nodes: DIALOGS[dialogId]?.length ?? 0, room: ex.player.currentRoom };
+      if (restore) {
+        Object.assign(ex.player.flags, restore);
+        ex._syncActFromFlags?.();
+        ex._refreshStoryProgress(true);
+      }
+      return out;
+    }, { room, npcId, dialogId, override: override || null });
     check(`${room} -> ${dialogId}`, r.routed === dialogId && r.nodes > 0,
       `routed=${r.routed} nodes=${r.nodes} visible=[${r.npcs.join(' ')}]`);
     check(`${room}: no two bodies on one tile`, r.stacked.length === 0, r.stacked.join(' '));

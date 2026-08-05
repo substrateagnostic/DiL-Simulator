@@ -5348,7 +5348,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "Chad Henderson is in the break room. Not at the Nespresso machine. Not looking at his phone. He appears to have been sitting here for some time. The protein shaker in front of him is full of water." },
     /* 1  */ { type: 'text', speaker: 'Chad Henderson', text: "Oh. Hey. Trust guy. *He does not do the handshake.* I'm not here to fight about anything. Karen's handling all the fighting. She brought a binder to Grandpa's funeral. Tab-indexed. Color-coded tabs for who gets what percent of a man who used to make pancakes shaped like Wyoming." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "I didn't know he'd died." },
-    /* 3  */ { type: 'text', speaker: 'Chad Henderson', text: "Four months ago. Everybody lawyered up the same week. Her estate attorney bills in six-minute increments and sends emails at 2 AM that open with *per our last correspondence*. And I keep thinking about the lake house." },
+    /* 3  */ { type: 'text', speaker: 'Chad Henderson', text: "Last month. You literally have his file on your desk. Everybody lawyered up the same week. Her estate attorney bills in six-minute increments and sends emails at 2 AM that open with *per our last correspondence*. And I keep thinking about the lake house." },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "The one you wanted to put on the blockchain." },
     /* 5  */ { type: 'text', speaker: 'Chad Henderson', text: "Yeah. No. I — *He picks up the shaker, puts it down.* I did a backflip off the dock when I was fourteen." },
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "How bad was the backflip?" },
@@ -5410,7 +5410,14 @@ export const DIALOGS = {
   janitor_the_name: [
     /* 0  */ { type: 'text', speaker: 'Mysterious Janitor', text: "You been calling me that this whole time. *He wrings the mop.* The Janitor. I can hear the capital letters." },
     /* 1  */ { type: 'text', speaker: 'Andrew', text: "You never told me your name." },
-    /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Curtis Briggs. It's on the boiler inspection card downstairs. Been on it since they put the boiler in." },
+    // F-12, the wired half. The SPEAKER LABEL changes on this line and only
+    // this line: the box has said "Mysterious Janitor" for the whole game and
+    // it stops on the beat he corrects it. `DialogBox` keys both the colour and
+    // the portrait on this exact string, so both got a `Curtis Briggs` row
+    // pointing at the same colour and the same `janitor` stem -- nothing about
+    // him changes except what he is called. He is "Mysterious Janitor" again in
+    // every other scene, because that is what the ROOM calls him.
+    /* 2  */ { type: 'text', speaker: 'Curtis Briggs', text: "Curtis Briggs. It's on the boiler inspection card downstairs. Been on it since they put the boiler in." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Floor's looking good, Curtis." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "He dunks the mop and starts on the east corridor. Same as yesterday. Same as 1947." },
     /* 5  */ { type: 'end' },
@@ -5428,9 +5435,9 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'The Intern', text: "Oh. Oh no. You weren't supposed to — I'm not — I was just — sorry about the lights. I can put the lights back." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "The lights are fine." },
     /* 3  */ { type: 'text', speaker: 'The Intern', text: "I've been practicing. Client onboarding. Nobody assigned it. I just thought if someone ever asked and I hadn't prepared, that would be the kind of thing that happens to me specifically." },
-    /* 4  */ { type: 'text', speaker: 'Narrator', text: "He held up his index cards the way a man holds up a parking ticket he knows he deserves. There were fourteen. Card nine had been rewritten so many times the eraser marks went through to the other side." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "He holds up his index cards the way a man holds up a parking ticket he knows he deserves. There are fourteen. Card nine has been rewritten so many times the eraser marks go through to the other side." },
     /* 5  */ { type: 'text', speaker: 'The Intern', text: "So the key distinction — and I think people miss this — is that discretionary distributions aren't discretionary for the trustee. The beneficiary has discretion to request. The trustee has an obligation to evaluate prudently. Doing nothing is still a decision, and it gets reviewed like one." },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "He stopped. He looked at his own index card as though it had said that without his permission." },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "He stops. He looks at his own index card as though it has said that without his permission." },
     /* 7  */ { type: 'text', speaker: 'The Intern', mood: 'worried', text: "Was that right? That sounded right. I don't want that to be right. That is far too much responsibility for a word I learned on Tuesday." },
     /* 8  */ { type: 'text', speaker: 'Andrew', text: "That was right." },
     /* 9  */ { type: 'text', speaker: 'The Intern', text: "Sorry, chair six. You've been very patient about the whole thing." },

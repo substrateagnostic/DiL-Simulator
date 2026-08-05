@@ -27,6 +27,13 @@ const SPEAKER_COLORS = {
   'The Intern':         '#6a6a8a',
   'Monica':             '#2d2d4e',
   'Mysterious Janitor': '#4a5a6a',
+  // F-12. `janitor_the_name` node 2 is the ONE line in the game that speaks
+  // under this string: the label corrects itself on the same beat he does.
+  // Same colour, same portrait stem, so nothing about him changes except what
+  // the box has been calling him. Adding a speaker string means adding it in
+  // BOTH tables -- the colour map here and PORTRAIT_KEYS below are keyed on the
+  // exact string in `src/data/dialogs`, and a missing row is silent in each.
+  'Curtis Briggs':      '#4a5a6a',
   'Karen Henderson':    '#cc6688',
   'Chad Henderson':     '#cc4444',
   'Grandma Henderson':  '#8888aa',
@@ -79,6 +86,7 @@ const PORTRAIT_KEYS = {
   'The Intern': 'intern',
   'Mysterious Janitor': 'janitor',
   'The Janitor': 'janitor',
+  'Curtis Briggs': 'janitor',      // F-12 — same face, the name he actually has
   'Karen Henderson': 'karen',
   'Chad Henderson': 'chad',
   'Grandma Henderson': 'grandma',

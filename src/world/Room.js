@@ -385,6 +385,10 @@ const NO_BLOCK = new Set([
   'popcornPopper', 'neonSign', 'operatorChair',
   'cableTray', 'monitorWall', 'aisleGlow',
   'lamppost', 'hydrant', 'busStopSign', 'newspaperBox', 'curb', 'elevatorDoors',
+  // A 0.5 m carton is ankle-high, and it is ACT-CONDITIONAL: a blocker that
+  // appears at act5_complete is a room whose collision changes under the
+  // player's save. Neither reason alone would settle it; together they do.
+  'cardboardBox',
   'sodiumPool', 'severanceRunner', 'garagePendant',
 ]);
 
