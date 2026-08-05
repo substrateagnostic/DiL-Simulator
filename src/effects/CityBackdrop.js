@@ -295,6 +295,45 @@ export class CityBackdrop {
   // side face allowed to sample the lit seam column at the canvas' left
   // edge; every other side face is inset past it, so a slab carries at
   // most one glowing vertical edge.
+  // ── Orphaned seam guard, near band (F-run) ────────────────────────────────
+  // A slab's lit seam column is meant to read as THE LIT EDGE OF A SLAB. That
+  // only works while the slab's body is visible. In the dark palettes the body
+  // gradient falls to within a few points of the void colour, and a THIN slab
+  // is then nothing but its own seam: a floating vertical orange bar, which is
+  // exactly the "rendering artifact" note the far band was already fixed for
+  // (`_build`, thin && radius > 33).
+  //
+  // The near band could not take the same baked fix, because a near thin tower
+  // is a real, readable building at morning and afternoon — it orphans only
+  // after the palette goes dark. So the rule is evaluated per time of day, and
+  // it is DERIVED FROM THE PALETTE rather than a hardcoded list of tod keys, so
+  // a future TIME_OF_DAY entry inherits the right behaviour instead of
+  // reintroducing the bar:
+  //
+  //   orphan risk  <=>  seamAlpha >= 0.85  AND  body1 luminance < 0.12
+  //
+  // Measured against the shipping palettes (body1 relative luminance):
+  //   morning 0.27 / afternoon 0.31 / goldenhour 0.14  -> body reads, seam kept
+  //   dusk 0.086   / night 0.067    / predawn 0.075    -> body gone, seam culled
+  _seamOrphans(todKey) {
+    const t = TIME_OF_DAY[todKey];
+    if (!t) return false;
+    const hex = parseInt(String(t.body1).slice(1), 16);
+    const r = ((hex >> 16) & 255) / 255, g = ((hex >> 8) & 255) / 255, b = (hex & 255) / 255;
+    const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    return (t.seamAlpha ?? 0) >= 0.85 && lum < 0.12;
+  }
+
+  // The variant a given slab should be TEXTURED with right now. Identical to
+  // its baked variant except for the near-band thin slabs above, which drop to
+  // 3 (silhouette, no seam column) in the dark palettes. Every site that builds
+  // a building facade goes through this — `setTimeOfDay`, `setStreetLevel` and
+  // the initial build's morning pass — or the bar walks back in on one path.
+  _facadeVariant(b, todKey) {
+    if (b.variant === 3) return 3;
+    return (b.thin && this._seamOrphans(todKey)) ? 3 : b.variant;
+  }
+
   _remapBoxUVs(geo, hq = false, seamFace = -1) {
     const P = hq ? PROFILE_HQ : PROFILE_STD;
     const uv = geo.attributes.uv;
@@ -472,6 +511,12 @@ export class CityBackdrop {
       // tower's near-black body vanishes into the void and its lone seam column
       // reads as a disembodied vertical orange/red line — the "rendering
       // artifact" the penthouse_bar / garage stills flagged. Silhouette only.
+      //
+      // F-run: the NEAR band has the same failure, but only in the dark
+      // palettes — see `_seamOrphans()`. It cannot be baked here, because a
+      // near thin tower reads perfectly well at 09:00 and only orphans after
+      // dusk, and the same mesh lives through both. It is applied per time of
+      // day instead, off `rec.thin`.
       if (thin && radius > 33) variant = 3;
       if (variant !== 3) lastGlowVariant = variant;
       const litBucket = Math.floor(rand() * 3);
@@ -492,7 +537,7 @@ export class CityBackdrop {
       const baseDrop = 2.5 + rand() * 4;
       building.position.set(x, -h / 2 - baseDrop, z);
       this.group.add(building);
-      const rec = { mesh: building, h, baseDrop, variant, litBucket, faceSeed, seamLevel, x, z, radius };
+      const rec = { mesh: building, h, baseDrop, variant, litBucket, faceSeed, seamLevel, x, z, radius, thin };
       this.buildings.push(rec);
 
       // Aircraft beacon on the tallest few — slow red pulse. Every
@@ -864,7 +909,7 @@ export class CityBackdrop {
       b.mesh.material.color.setHex(TOWER_TINT);
       if (this.tod) {
         b.mesh.material.map =
-          this._facadeTexture(this.tod, b.variant, b.litBucket, false, b.faceSeed, b.seamLevel, on);
+          this._facadeTexture(this.tod, this._facadeVariant(b, this.tod), b.litBucket, false, b.faceSeed, b.seamLevel, on);
         b.mesh.material.needsUpdate = true;
       }
     }
@@ -907,7 +952,7 @@ export class CityBackdrop {
     // the stretch/tear artifact walks straight back in.
     const st = this.streetLevel === true;
     for (const b of this.buildings) {
-      b.mesh.material.map = this._facadeTexture(key, b.variant, b.litBucket, false, b.faceSeed, b.seamLevel, st);
+      b.mesh.material.map = this._facadeTexture(key, this._facadeVariant(b, key), b.litBucket, false, b.faceSeed, b.seamLevel, st);
       b.mesh.material.needsUpdate = true;
     }
     if (this.hqTower) {

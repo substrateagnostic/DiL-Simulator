@@ -4057,6 +4057,61 @@ function _addCosmeticVisual(group, cosmeticId, rig) {
       lid.position.set(-handX, rig.legLength + rig.torsoH * 0.34 + 0.055, handZ + 0.02);
       group.add(lid);
     },
+    // ── Late-game payouts (F-7) ──
+    // Chest pieces go on the LEFT lapel (x +0.07, the side appreciation_cert
+    // and compliance_pin already use); held props go in the off hand
+    // (-handX), which is the slot fountain_pen and the tumbler share. Nothing
+    // below occupies a spot a same-slot cosmetic could also claim.
+    form_11c_cert: () => {
+      // A county seal, not a lapel pin: an embossed disc on its ribbon.
+      const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.005, 14), Materials.custom(0xc9a227));
+      disc.rotation.x = Math.PI / 2;
+      disc.position.set(0.07, rig.legLength + rig.torsoH * 0.70, rig.frontZ * 0.4 + 0.104);
+      group.add(disc);
+      const ribbon = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.032, 0.004), Materials.custom(0x7a2233));
+      ribbon.position.set(0.07, rig.legLength + rig.torsoH * 0.745, rig.frontZ * 0.4 + 0.1);
+      group.add(ribbon);
+    },
+    fennimore_citation: () => {
+      // A folded parking ticket, carried rather than filed.
+      const slip = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.058, 0.004), Materials.custom(0xf2e2a8));
+      slip.rotation.z = -0.22;
+      slip.position.set(-handX, rig.legLength + rig.torsoH * 0.36, handZ + 0.02);
+      group.add(slip);
+    },
+    ledger_pencil: () => {
+      // Four inches of pencil. Behind the ear, where a tradesman keeps one.
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.062, 6), Materials.custom(0xe0a83c));
+      shaft.rotation.set(0.35, 0, Math.PI / 2 - 0.25);
+      shaft.position.set(headR * 0.86, headR * 0.34, -headR * 0.12);
+      head?.add(shaft);
+      const lead = new THREE.Mesh(new THREE.ConeGeometry(0.005, 0.012, 6), Materials.custom(0x2b2b2b));
+      lead.rotation.set(0.35, 0, -Math.PI / 2 - 0.25);
+      lead.position.set(headR * 0.86 - 0.036, headR * 0.34 + 0.012, -headR * 0.12);
+      head?.add(lead);
+    },
+    high_score_crown: () => {
+      // A cabinet-issue paper crown. Flat band, four points — the arcade would
+      // not spring for anything with a curve in it.
+      const band = new THREE.Mesh(new THREE.CylinderGeometry(headR * 0.86, headR * 0.86, 0.036, 14, 1, true), Materials.custom(0xffcc33));
+      band.position.set(0, headR * 1.30, 0);
+      head?.add(band);
+      for (let i = 0; i < 4; i++) {
+        const pt = new THREE.Mesh(new THREE.ConeGeometry(0.017, 0.042, 4), Materials.custom(0xffcc33));
+        const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+        pt.position.set(Math.cos(a) * headR * 0.86, headR * 1.35, Math.sin(a) * headR * 0.86);
+        head?.add(pt);
+      }
+    },
+    stewards_badge: () => {
+      // A building-keys fob on the belt: nine renovations, one ring.
+      const fob = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.042, 0.006), Materials.custom(0xb08d57));
+      fob.position.set(d.bodyW / 2 + 0.028, rig.legLength + 0.06, 0.03);
+      group.add(fob);
+      const clip = new THREE.Mesh(new THREE.TorusGeometry(0.012, 0.003, 6, 10), Materials.custom(0x8a6f45));
+      clip.position.set(d.bodyW / 2 + 0.028, rig.legLength + 0.09, 0.03);
+      group.add(clip);
+    },
   };
   const fn = COSMETIC_VISUALS[cosmeticId];
   if (fn) fn();

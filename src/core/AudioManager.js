@@ -201,7 +201,133 @@ class AudioManagerClass {
         this._playMelody([440, 370, 330, 220].map((f) => f * p), j(0.2, 0.08), 'sawtooth', j(0.3, 0.1));
         break;
       }
+
+      // ── AMBIENCE (F-11) ────────────────────────────────────────────────
+      // The office was silent between footsteps: thirteen SFX cases and not
+      // one of them fired unless the player pressed something. These are the
+      // room talking to itself. Fired by the scheduler in ExplorationState
+      // off `src/data/ambience.js`.
+      //
+      // RED LINE, restated here where it will be read: SFX ONLY. NO MUSIC.
+      // Music is Alex's domain and his absolute veto. If a beat below ever
+      // wants a musical sting, that is a REQUEST TO ALEX, never a spec.
+      //
+      // Volumes are deliberately a third of the interaction SFX. Ambience the
+      // player NOTICES is ambience that has failed; these sit under the
+      // footsteps, and every one is pitch- and length-jittered so a room
+      // never loops audibly.
+      case 'amb_hvac':                                  // building breathing
+        this._ambNoise(j(2.6, 0.25), j(0.05, 0.25), { freq: 190, q: 0.7, attack: 0.9 });
+        break;
+      case 'amb_fluorescent':                           // a tube about to go
+        this._ambNoise(j(0.5, 0.3), j(0.028, 0.3), { freq: 3600, q: 6, attack: 0.05 });
+        break;
+      case 'amb_printer': {                             // three-page job, two rooms away
+        const n = 2 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < n; i++) {
+          setTimeout(() => this._ambNoise(j(0.14, 0.2), j(0.05, 0.25), { freq: 900, q: 1.4, attack: 0.02 }), i * j(230, 0.18));
+        }
+        break;
+      }
+      case 'amb_phone': {                               // somebody else's desk
+        const p = semis(1.5);
+        this._ambTone([880 * p, 0, 880 * p], 0.13, 'sine', j(0.045, 0.2));
+        break;
+      }
+      case 'amb_keyboard': {                            // a burst of typing
+        const n = 5 + Math.floor(Math.random() * 7);
+        for (let i = 0; i < n; i++) {
+          setTimeout(() => this._ambNoise(0.02, j(0.035, 0.35), { freq: 2400, q: 3, attack: 0.002 }), i * j(72, 0.5));
+        }
+        break;
+      }
+      case 'amb_elevator':                              // a car arriving somewhere
+        this._ambTone([1046, 784], 0.16, 'sine', j(0.05, 0.15));
+        break;
+      case 'amb_pipe':                                  // the plumbing settling
+        this._ambNoise(j(0.09, 0.3), j(0.07, 0.25), { freq: 520, q: 9, attack: 0.003 });
+        break;
+      case 'amb_server':                                // fan wall spinning up
+        this._ambNoise(j(2.2, 0.2), j(0.055, 0.2), { freq: 760, q: 2.2, attack: 0.7 });
+        break;
+      case 'amb_vault':                                 // a room with no windows
+        this._ambNoise(j(3.0, 0.2), j(0.045, 0.25), { freq: 110, q: 0.9, attack: 1.2 });
+        break;
+      case 'amb_paper':                                 // a file drawer, a shuffle
+        this._ambNoise(j(0.34, 0.3), j(0.03, 0.3), { freq: 5200, q: 0.9, attack: 0.09 });
+        break;
+      case 'amb_traffic':                               // outdoors, a car goes by
+        this._ambNoise(j(1.9, 0.25), j(0.055, 0.2), { freq: 340, q: 0.8, attack: 0.8 });
+        break;
+      case 'amb_bus':                                   // air brakes
+        this._ambNoise(j(0.75, 0.2), j(0.05, 0.25), { freq: 2600, q: 1.1, attack: 0.03 });
+        break;
+      case 'amb_diner':                                 // a cup on a saucer
+        this._ambTone([2093 * semis(2)], 0.05, 'triangle', j(0.035, 0.25));
+        break;
+      case 'amb_neon':                                  // the lounge sign
+        this._ambNoise(j(0.7, 0.3), j(0.026, 0.3), { freq: 5000, q: 8, attack: 0.12 });
+        break;
     }
+  }
+
+  // ── Ambience helpers ────────────────────────────────────────────────────
+  // Separate from _playNoise/_playTone on purpose. Ambience needs a real
+  // ATTACK (a swell, not a click), a band-pass so a noise burst reads as a
+  // material rather than static, and a shared source buffer — `_playNoise`
+  // allocates and fills a new Float32Array per call, which at a 3-second HVAC
+  // swell is 140k random() calls on the frame the room loads.
+  _ambBuffer() {
+    if (this._ambBuf) return this._ambBuf;
+    const len = Math.floor(this.ctx.sampleRate * 4);
+    const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    this._ambBuf = buf;
+    return buf;
+  }
+
+  _ambNoise(duration, volume, { freq = 800, q = 1, attack = 0.05 } = {}) {
+    if (!this.ctx || !this.sfxGain) return;
+    const now = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this._ambBuffer();
+    src.loop = true;
+    // Random read offset so two fires of the same cue are not the same noise.
+    const off = Math.random() * (src.buffer.duration - 0.05);
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = freq;
+    filter.Q.value = q;
+    const gain = this.ctx.createGain();
+    const a = Math.min(attack, duration * 0.6);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(volume, now + a);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    src.connect(filter); filter.connect(gain); gain.connect(this.sfxGain);
+    src.start(now, off);
+    src.stop(now + duration + 0.05);
+  }
+
+  // Like _playMelody but soft-edged, and a 0 in the list is a REST — which is
+  // what makes the two-burst telephone read as a telephone.
+  _ambTone(freqs, noteLen, type, volume) {
+    if (!this.ctx || !this.sfxGain) return;
+    const now = this.ctx.currentTime;
+    freqs.forEach((freq, i) => {
+      if (!freq) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = type;
+      osc.frequency.value = freq;
+      const t0 = now + i * noteLen;
+      gain.gain.setValueAtTime(0.0001, t0);
+      gain.gain.linearRampToValueAtTime(volume, t0 + noteLen * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t0 + noteLen);
+      osc.connect(gain); gain.connect(this.sfxGain);
+      osc.start(t0);
+      osc.stop(t0 + noteLen + 0.05);
+    });
   }
 
   _playTone(freqs, duration, type, volume) {

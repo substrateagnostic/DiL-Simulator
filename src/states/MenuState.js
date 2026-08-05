@@ -16,7 +16,7 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Log', 'Achievements', 'Stats', 'Save Game', 'Controls', 'Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Log', 'Achievements', 'Stats', 'Save Game', 'Transfer Save', 'Controls', 'Settings', 'Quit to Title'];
     // New Game+ unlocks after the Algorithm falls
     if (player.getFlag('algorithm_defeated')) {
       this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
@@ -28,6 +28,7 @@ export class MenuState {
     this.audioOverlay = null;
     this.bestiaryOverlay = null;
     this.logOverlay = null;
+    this.transferOverlay = null;
     this.abilitiesOverlay = null;
     this.cosmeticsOverlay = null;
     this.statsOverlay = null;
@@ -54,6 +55,7 @@ export class MenuState {
       'Achievements':   { tag: '[RECORDS]',  tagColor: '#53a8b6', section: null },
       'Stats':          { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
       'Save Game':      { tag: '[SYS]',      tagColor: '#44cc88', section: 'SETTINGS' },
+      'Transfer Save':  { tag: '[SYS]',      tagColor: '#44cc88', section: null },
       'Controls':       { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
       'Settings': { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
       'New Game+':      { tag: '[NG+]',      tagColor: '#ffaa44', section: null },
@@ -133,7 +135,7 @@ export class MenuState {
         <span class="menu-item-arrow">▶</span>
       `;
       item.addEventListener('click', () => {
-        if (this.controlsOverlay) return;
+        if (this.controlsOverlay || this.transferOverlay) return;
         this.selectedIndex = i;
         this._select();
       });
@@ -164,6 +166,7 @@ export class MenuState {
     this._closeLog();
     this._closeBestiary();
     this._closeControls();
+    this._closeTransfer();
     this._closeAudioSettings();
     this._closeAbilities();
     this._closeCosmetics();
@@ -209,6 +212,9 @@ export class MenuState {
         break;
       case 'Save Game':
         this._saveGame();
+        break;
+      case 'Transfer Save':
+        this._showTransfer();
         break;
       case 'Controls':
         this._showControls();
@@ -436,6 +442,147 @@ export class MenuState {
     document.getElementById('menu-controls-back').addEventListener('click', () => {
       this._closeControls();
     });
+  }
+
+  // ── TRANSFER SAVE (F-8) ───────────────────────────────────────────────────
+  // Two jobs in one panel:
+  //   NOW  — itch-browser, itch-desktop and Vercel are three localStorage pools
+  //          a player cannot move a save between (RELEASE.md). This is the
+  //          bridge.
+  //   NEXT — Chapter 2 opens from a card the player saved out of Chapter 1
+  //          (`.claude/plans/ch2/SEASON_SHEET.md`, producer round 6). The CARD
+  //          rendered here is that card; the CODE under it is what C2 reads.
+  //
+  // The panel saves the live game before building the card, because the number
+  // one way an export lies is exporting a slot that is 40 minutes behind the
+  // player.
+  _showTransfer() {
+    if (this.transferOverlay) return;
+
+    // Export what the player is actually holding, not what is on disk.
+    SaveManager.save(this.player.serialize());
+
+    const payload = SaveManager.buildExportPayload();
+    this.transferOverlay = document.createElement('div');
+    this.transferOverlay.className = 'menu-overlay';
+    this.transferOverlay.style.zIndex = '60';
+
+    const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const cardRows = payload
+      ? SaveManager.describeCarry(payload.carry)
+        // Inline, not a stylesheet class: `styles/` has no tx-* rules and a
+        // classed-but-unstyled row renders label and value hard against each
+        // other ("StandingAct 6 - in progress").
+        .map(([k, v]) => `<div class="tx-row" style="display:flex;justify-content:space-between;gap:18px;line-height:1.45;">`
+          + `<span class="tx-k" style="color:#8fa0b0;">${esc(k)}</span>`
+          + `<span class="tx-v" style="color:#e6ecf2;text-align:right;">${esc(v)}</span></div>`)
+        .join('')
+      : '<div class="tx-row"><span class="tx-v">No save found in this slot.</span></div>';
+
+    this.transferOverlay.innerHTML = `
+      <div class="menu-panel" style="max-width:640px;">
+        <div class="menu-title">TRANSFER SAVE</div>
+        <div style="font-family:'VT323',monospace;font-size:19px;color:#9aa3ad;line-height:1.5;margin-bottom:10px;">
+          Move this playthrough between the browser build, the desktop build and
+          anywhere Chapter Two asks for it.
+        </div>
+        <div id="tx-card" style="border:1px solid #3a4450;border-left:3px solid #44cc88;padding:10px 14px;margin-bottom:12px;font-family:'VT323',monospace;font-size:21px;color:#ddd;">
+          <div style="color:#44cc88;font-size:16px;letter-spacing:2px;margin-bottom:6px;">RECORD OF SERVICE</div>
+          ${cardRows}
+        </div>
+        <textarea id="tx-code" spellcheck="false" style="width:100%;height:86px;resize:none;background:#0e1116;color:#8fd6a8;border:1px solid #3a4450;font-family:monospace;font-size:11px;line-height:1.35;padding:6px;word-break:break-all;" placeholder="Paste a code here to import."></textarea>
+        <div id="tx-status" style="font-family:'VT323',monospace;font-size:19px;color:#9aa3ad;min-height:24px;margin-top:4px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+          <div class="menu-item" id="tx-copy"     style="flex:1;min-width:150px;">Copy code</div>
+          <div class="menu-item" id="tx-download" style="flex:1;min-width:150px;">Download file</div>
+          <div class="menu-item" id="tx-import"   style="flex:1;min-width:150px;">Import from box</div>
+        </div>
+        <div class="menu-item" style="margin-top:10px;" id="tx-back">Back</div>
+      </div>
+    `;
+    document.getElementById('ui-overlay').appendChild(this.transferOverlay);
+    if (this.element) this.element.style.display = 'none';
+
+    const codeEl = this.transferOverlay.querySelector('#tx-code');
+    const statusEl = this.transferOverlay.querySelector('#tx-status');
+    const say = (msg, ok = true) => {
+      statusEl.textContent = msg;
+      statusEl.style.color = ok ? '#8fd6a8' : '#ff8080';
+    };
+
+    this._transferCode = '';
+    if (payload) {
+      SaveManager.encodeExport(payload).then((code) => {
+        this._transferCode = code;
+        // Only fill the box if the player has not started typing an import.
+        if (codeEl && !codeEl.value) codeEl.value = code;
+        say(`${code.length.toLocaleString()} characters. Copy it, or paste someone else's here.`);
+      });
+    } else {
+      say('Nothing to export from this slot.', false);
+    }
+
+    this.transferOverlay.querySelector('#tx-copy').addEventListener('click', async () => {
+      if (!this._transferCode) return say('Still packing.', false);
+      codeEl.value = this._transferCode;
+      codeEl.select();
+      try {
+        await navigator.clipboard.writeText(this._transferCode);
+        say('Copied to the clipboard.');
+      } catch {
+        // Clipboard permission is not guaranteed in an itch iframe; the select
+        // above already staged a manual Ctrl+C, so this is a downgrade, not a
+        // failure.
+        say('Selected — press Ctrl+C.');
+      }
+    });
+
+    this.transferOverlay.querySelector('#tx-download').addEventListener('click', () => {
+      if (!payload) return;
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const stamp = new Date().toISOString().slice(0, 10);
+      a.href = url;
+      a.download = `trust-issues-${stamp}.tisave.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      say(`Saved as trust-issues-${stamp}.tisave.json`);
+    });
+
+    this.transferOverlay.querySelector('#tx-import').addEventListener('click', async () => {
+      const raw = codeEl.value.trim();
+      if (!raw) return say('Paste a code into the box first.', false);
+      if (raw === this._transferCode) return say('That is this save. Paste a different one.', false);
+      // Accept either a code or a raw .tisave.json paste.
+      let env = await SaveManager.decodeExport(raw);
+      if (!env) {
+        try { env = SaveManager.validateExport(JSON.parse(raw)); } catch { env = null; }
+      }
+      if (!env) return say('That is not a TRUST ISSUES save code.', false);
+      if (!this._transferArmed) {
+        this._transferArmed = true;
+        const c = env.carry || {};
+        return say(`Level ${c.level ?? '?'}, ${c.finished ? 'finished' : `act ${c.act ?? 0}`}. Press Import again to overwrite this slot.`, false);
+      }
+      const ok = SaveManager.applyImport(env);
+      this._transferArmed = false;
+      if (!ok) return say('Import failed. The slot was not touched.', false);
+      say('Imported. Reloading.');
+      setTimeout(() => window.location.reload(), 700);
+    });
+
+    this.transferOverlay.querySelector('#tx-back')
+      .addEventListener('click', () => this._closeTransfer());
+  }
+
+  _closeTransfer() {
+    if (this.transferOverlay && this.transferOverlay.parentNode) {
+      this.transferOverlay.parentNode.removeChild(this.transferOverlay);
+    }
+    this.transferOverlay = null;
+    this._transferArmed = false;
+    if (this.element) this.element.style.display = '';
   }
 
   _closeControls() {
@@ -1196,6 +1343,15 @@ export class MenuState {
       if (InputManager.isCancelPressed() || InputManager.isConfirmPressed()) {
         this._closeBestiary();
       }
+      return;
+    }
+
+    // Transfer panel owns a TEXTAREA the player pastes into, so — unlike every
+    // other overlay here — confirm must NOT close it (Enter inside the box is a
+    // newline, not a dismissal) and no key may be consumed as navigation.
+    // Escape closes; everything else falls through to the field.
+    if (this.transferOverlay) {
+      if (InputManager.isCancelPressed()) this._closeTransfer();
       return;
     }
 

@@ -32,16 +32,25 @@ import {
 } from '../data/billableDay.js';
 import { ENEMY_STATS, XP_TABLE } from '../data/stats.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
-import { ROOM_THOUGHTS, STORY_THOUGHTS } from '../data/thoughts.js';
+import { ROOM_THOUGHTS, ROOM_THOUGHTS_BY_ACT, STORY_THOUGHTS } from '../data/thoughts.js';
 import { SaveManager } from '../core/SaveManager.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { DEV_MODE, MESHY_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
+import { SHOP_ITEMS } from '../data/shop.js';
+import { ROOM_AMBIENCE, pickAmbientCue, nextAmbientDelay } from '../data/ambience.js';
 import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
 import { showDevPanel } from '../ui/DevPanel.js';
 import { VaultKeypad } from '../ui/VaultKeypad.js';
 import { applyReviewPurchases } from '../data/review.js';
+
+// Every renovation the shop sells, by the flag it sets on purchase. Derived
+// from SHOP_ITEMS rather than hand-listed so a new renovation joins the
+// `renovations_all` completionist gate automatically (F-7).
+const ALL_RENOVATION_FLAGS = SHOP_ITEMS
+  .filter(i => i.category === 'renovation' && i.flag)
+  .map(i => i.flag);
 
 const INTERACTION_OFFSETS = [
   [0, 0],
@@ -132,6 +141,10 @@ export class ExplorationState {
     this.transition = new TransitionOverlay();
     this.tileMap = null;
     this.paused = false;
+    // Ambient scheduler state (F-11) — see _updateAmbience.
+    this._ambRoom = null;
+    this._ambTimer = 0;
+    this._ambState = {};
     this.hudElement = null;
     this.promptElement = null;
     this.locationElement = null;
@@ -572,13 +585,48 @@ export class ExplorationState {
           }
         }
 
-        // Inner monologue on first room visit
+        // Inner monologue on first room visit.
+        //
+        // F-3b: this used to be `thoughts[Math.floor(Math.random() * len)]`
+        // behind a permanent `thought_<roomId>` flag — one of two authored
+        // lines, once, forever. Half of every pair Alex wrote was unreachable
+        // in any single save: 26 rooms x 2 lines, 26 of them dead. The pick
+        // is now the whole array, in AUTHORED order.
+        //
+        // This is only safe because `_showMonologue` posts to the
+        // NotificationArbiter's single-occupancy VOICE zone, so N lines QUEUE
+        // (each with its own reading-time-scaled ttl) instead of the second
+        // assigning over the first mid-read. Before the arbiter this change
+        // would have doubled traffic on a measured first-writer-loses surface.
         const thoughtKey = `thought_${roomId}`;
         if (!this.player.getFlag(thoughtKey) && ROOM_THOUGHTS[roomId]) {
           this.player.setFlag(thoughtKey, true);
           const thoughts = ROOM_THOUGHTS[roomId];
-          const thought = thoughts[Math.floor(Math.random() * thoughts.length)];
-          setTimeout(() => this._showMonologue(thought), 1500);
+          setTimeout(() => { for (const t of thoughts) this._showMonologue(t); }, 1500);
+        }
+
+        // F-3c: act-keyed room lines. The interiors change by act (time of day
+        // already does — TOD_BY_ACT); Andrew never noticed. A line here fires
+        // ONCE per (room, act) on any visit, including revisits long after the
+        // first-visit pair is spent, so a room the player has walked through
+        // forty times says something new when the story moves under it.
+        // Its own flag namespace (`thought_<roomId>_a<act>`) — never reuse
+        // `thought_<roomId>`, which is the first-visit latch.
+        const actLines = ROOM_THOUGHTS_BY_ACT[roomId]?.[this.player.actIndex];
+        if (actLines && actLines.length) {
+          const actKey = `thought_${roomId}_a${this.player.actIndex}`;
+          // An entry may be a bare string or `{ text, flag }` / `{ text, notFlag }`
+          // for a line that asserts something the player might not have seen.
+          const live = actLines
+            .filter(l => typeof l === 'string'
+              || ((!l.flag || this.player.getFlag(l.flag)) && (!l.notFlag || !this.player.getFlag(l.notFlag))))
+            .map(l => (typeof l === 'string' ? l : l.text));
+          // The latch is only spent when a line ACTUALLY fires — a gated line
+          // whose flag is not yet set must stay available for a later visit.
+          if (live.length && !this.player.getFlag(actKey)) {
+            this.player.setFlag(actKey, true);
+            setTimeout(() => { for (const t of live) this._showMonologue(t); }, 2600);
+          }
         }
 
         // Day boons are floor-scoped. Runs for EVERY room (including a load
@@ -3435,6 +3483,15 @@ export class ExplorationState {
       this.player.setFlag('act6_ready', true);
     }
 
+    // Every renovation funded (F-7). Derived because the shop writes one flag
+    // per item and cosmetics.js can only gate on a single flag; ALL_RENOVATION_FLAGS
+    // is the list SHOP_ITEMS ships, so a tenth renovation must be added there
+    // too or this silently stops meaning "all".
+    if (!this.player.getFlag('renovations_all')
+      && ALL_RENOVATION_FLAGS.every(f => this.player.getFlag(f))) {
+      this.player.setFlag('renovations_all', true);
+    }
+
     // THE ROLEX IS GATED ON THE BOARD MEETING, NOT THE OTHER WAY ROUND.
     // Taking the Rolex derives `act6_complete`, which derives
     // `board_meeting_closed`, which clears every Board Room staging NPC — so
@@ -3781,10 +3838,42 @@ export class ExplorationState {
     NotificationArbiter.monologue(text);
   }
 
+  // ── Ambient scheduler (F-11) ──────────────────────────────────────────────
+  // One timer, drained from `src/data/ambience.js`. Only runs in the
+  // exploration state's own update, which `paused` already gates — so the whole
+  // thing is silent during a room fade, a keypad, a dialog push and every
+  // pushed state (Combat/Dialog/Shop/Menu/Arcade run their own update; this
+  // one does not tick while they are on top).
+  //
+  // Two extra suppressions on top of that, both deliberate:
+  //   • A VOICE surface is up. i-run's rule is that prose owns the player's
+  //     attention alone; a cue fired under a line of Diane's is a cue the
+  //     player half-hears. The slot is SKIPPED, not queued — the next one is
+  //     seconds out and a backlog of stale room noise is worse than a gap.
+  //   • The room has no entry. Silence is authored (floor_13).
+  _updateAmbience(dt) {
+    const entry = ROOM_AMBIENCE[this.player.currentRoom];
+    if (!entry) { this._ambTimer = 0; return; }
+    if (this._ambRoom !== this.player.currentRoom) {
+      this._ambRoom = this.player.currentRoom;
+      this._ambState = {};
+      // First cue lands inside the room's own cadence, not on entry — the
+      // room-entry beat already owns that second (transition, thought, toast).
+      this._ambTimer = nextAmbientDelay(entry);
+    }
+    this._ambTimer -= dt;
+    if (this._ambTimer > 0) return;
+    this._ambTimer = nextAmbientDelay(entry);
+    if (NotificationArbiter.isActive(NC.VOICE)) return;
+    const cue = pickAmbientCue(entry, this._ambState);
+    if (cue) AudioManager.playSfx(cue);
+  }
+
   update(dt) {
     if (this.paused) return;
 
     this._updateWallFade(dt);
+    this._updateAmbience(dt);
 
     if (DEV_MODE && InputManager.isJustPressed('f2')) {
       const existing = document.getElementById('dev-panel');

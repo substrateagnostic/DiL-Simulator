@@ -153,6 +153,59 @@ export const COSMETICS = {
     visual: { type: 'wrist_rest', color: 0x3d4550 },
     unlock: 'default',
   },
+  // ── LATE-GAME PAYOUTS (F-7) ───────────────────────────────────────────
+  // Before these, all 17 cosmetics unlocked off Acts 1-3 plus the penthouse
+  // chain. Act 4, Act 5, Act 6, the ENTIRE Act-6½ city chapter, the arcade
+  // cabinet and all nine renovations paid nothing at all — the four longest
+  // stretches of optional content in the game had no wardrobe consequence.
+  // Five items, one per unpaid pillar, each an object the player actually
+  // ended up holding.
+  form_11c_cert: {
+    name: 'Form 11-C Certification',
+    description: 'Certified by a retired Deputy Recorder in booth 4 of a diner. Worth the paperwork. +3 DEF',
+    slot: 'badge',
+    stats: { def: 3 },
+    visual: { type: 'cert_seal', color: 0xc9a227 },
+    unlock: { flag: 'charter_certified' },
+  },
+  fennimore_citation: {
+    name: 'Fennimore Citation',
+    description: 'Officer Reyes has not spoken to you since. The citation is technically void. +2 SPD, +2 ATK',
+    slot: 'accessory',
+    stats: { spd: 2, atk: 2 },
+    visual: { type: 'citation', color: 0xf2e2a8 },
+    unlock: { flag: 'meter_war_done' },
+  },
+  ledger_pencil: {
+    name: 'Ledger Pencil',
+    description: 'Sharpened to four inches. Wrote every name in the ledger since 1947. +2 DEF, +5 MP',
+    slot: 'accessory',
+    stats: { def: 2, maxMP: 5 },
+    visual: { type: 'pencil', color: 0xe0a83c },
+    unlock: { flag: 'janitor_names_complete' },
+  },
+  high_score_crown: {
+    name: 'High Score Crown',
+    description: 'The break room cabinet ran out of leaderboard and awarded this. +3 SPD',
+    slot: 'hat',
+    stats: { spd: 3 },
+    visual: { type: 'crown', color: 0xffcc33 },
+    // The top SPRINT REVIEW distance tier (200 floors). `arcade_` flags carry
+    // through New Game+ by CARRY_PREFIXES, so this survives a second lap the
+    // way the arcade's own cosmetics do.
+    unlock: { flag: 'arcade_fire_horses' },
+  },
+  stewards_badge: {
+    name: 'Steward\'s Badge',
+    description: 'Nine renovations funded one client meeting at a time. +2 ATK, +2 DEF, +10 HP',
+    slot: 'accessory',
+    stats: { atk: 2, def: 2, maxHP: 10 },
+    visual: { type: 'steward_badge', color: 0xb08d57 },
+    // Derived in ExplorationState._refreshStoryProgress() — there is no single
+    // purchase that means "all nine", and the shop sets one flag per item.
+    unlock: { flag: 'renovations_all' },
+  },
+
   // Review Point exclusive — see src/data/review.js.
   svp_tumbler: {
     name: 'SVP-Grade Tumbler',
