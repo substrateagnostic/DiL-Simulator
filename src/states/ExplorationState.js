@@ -2934,6 +2934,21 @@ export class ExplorationState {
       return 'janitor_dave';
     }
 
+    // F-9 · The three predecessors. Diane names them in Act 1 and the game
+    // never mentioned them again; Andrew has now found all three objects they
+    // left in three different rooms. The Janitor has all three in the ledger,
+    // in the section BEFORE page 112, and gives each of them one clause.
+    // Reachable from the moment the third object is found — the scene stands
+    // on its own whether or not Andrew has ever held the ledger, because the
+    // Janitor opens it in front of him.
+    if (id === 'janitor'
+        && this.player.getFlag('met_janitor')
+        && this.player.getFlag('predecessors_all_found')
+        && !this.player.getFlag('read_janitor_predecessors')
+        && DIALOGS.janitor_predecessors) {
+      return 'janitor_predecessors';
+    }
+
     // Name the Pattern (proposal 3). Andrew has just handed back the ledger
     // where every entry ends REMEMBERED — the same word that shows up on 4%
     // of the monitors, on the label taped to Rack 7, and in what the printer
@@ -3135,6 +3150,11 @@ export class ExplorationState {
 
   _updateLocationDisplay(roomId) {
     const names = {
+      // F-9 — floor 6's two new rooms. The room data `name` field is ignored
+      // here by design; this lookup is the HUD's only source, so a room that
+      // is missing from it shows its raw id.
+      bathroom: 'Bathroom',
+      copy_room: 'Copy Room',
       cubicle_farm: 'Cubicle Farm',
       break_room: 'Break Room',
       skip_office: "Skip's Office",
@@ -3506,6 +3526,20 @@ export class ExplorationState {
     if (!this.player.getFlag('karen_first_meeting_over')
       && (this.player.getFlag('karen_defeated') || this.player.getFlag('retry_karen'))) {
       this.player.setFlag('karen_first_meeting_over', true);
+    }
+
+    // THE THREE PREDECESSORS (F-9). Diane names them in Act 1 — "The first one
+    // quit. The second one cried in the bathroom for forty minutes and then
+    // quit. The third one is the one who had the parking garage incident." —
+    // and the game never mentioned them again. Three objects in three rooms,
+    // findable in any order; the third one found derives this, which routes the
+    // Janitor's payoff. Derived because an NPC `condition` and the router both
+    // read a single flag.
+    if (!this.player.getFlag('predecessors_all_found')
+      && this.player.getFlag('pred_bathroom_found')
+      && this.player.getFlag('pred_garage_found')
+      && this.player.getFlag('pred_copy_found')) {
+      this.player.setFlag('predecessors_all_found', true);
     }
 
     // Every renovation funded (F-7). Derived because the shop writes one flag

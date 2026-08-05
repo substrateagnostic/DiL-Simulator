@@ -299,6 +299,14 @@ const FURNITURE_FOOTPRINTS = {
   receptionDeskMarble: { w: 3, h: 1, ox: -1, oz: 0 },
   elevatorDoors:      { w: 2, h: 1 },
   fridge:             { w: 1, h: 1 },
+  // F-9, floor 6's two missing rooms. All four are CENTER-ORIGIN meshes, so
+  // they take the ox/oz anchor form; the numbers are the mesh's own extent
+  // rounded out, never guessed.
+  bathroomStall:      { w: 3, h: 2, ox: -1, oz: 0 },   // 3 stalls x 0.95 = 2.85 wide, 1.15 deep
+  sinkCounter:        { w: 3, h: 1, ox: -1, oz: 0 },   // 2 basins = 2.10 wide, 0.55 deep
+  copier:             { w: 2, h: 1, ox: -1, oz: 0 },   // 0.9 body + a 0.73 finisher tray out the -x side
+  supplyShelf:        { w: 1, h: 1, ox: 0, oz: 0 },
+  garagePillar:       { w: 1, h: 1, ox: 0, oz: 0 },
   fileCabinet:        { w: 1, h: 1, ox: 0, oz: 0 },    // nearest-tile anchor: the old_vault cabinets sit at z .8 fractions
   fileCabinetLow:     { w: 1, h: 1, ox: 0, oz: 0 },
   fileCabinetLateral: { w: 1, h: 1, ox: 0, oz: 0 },

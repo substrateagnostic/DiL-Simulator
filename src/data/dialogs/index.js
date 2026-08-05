@@ -5518,4 +5518,91 @@ export const DIALOGS = {
     /* 9  */ { type: 'end' },
   ],
 
+
+  // ── F-9 · THE THREE PREDECESSORS ──────────────────────────────────────────
+  // Diane, in Act 1: "I've seen three trust officers try to mediate this
+  // family. The first one quit. The second one cried in the bathroom for forty
+  // minutes and then quit. The third one is the one who had the 'parking
+  // garage incident.'" The game then never mentioned them again.
+  //
+  // Three objects, three rooms, findable in ANY order. None of them names its
+  // officer; Diane's line is the key. Each sets one flag, and the third one
+  // found derives `predecessors_all_found` in _refreshStoryProgress, which
+  // routes the Janitor's payoff.
+  //
+  // THE SECOND ONE — the bathroom. Forty minutes and a pen.
+  bathroom_stall_door: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The inside of the middle stall door has a column of numbers in blue ballpoint. Twelve careful lines of arithmetic, working out to the quarter-hour exactly how much paid time off someone was owed." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "That is remarkably steady handwriting for a bathroom stall." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The total at the bottom has been circled twice. One hundred and forty-seven point five." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "I hope they took them." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'pred_bathroom_found', value: true },
+    /* 5  */ { type: 'end' },
+  ],
+
+
+  // THE THIRD ONE — the parking garage incident. Never described; what
+  // survives is the pillar and the repair.
+  garage_pillar: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The pillar nearest the space marked TRUST OFFICER has two concrete patches, both at bumper height. They are four inches apart." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "Someone had a parking error. And then reversed and had a second parking error." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The work order was filed the same afternoon. The space has since been relocated nine feet from the nearest structural element." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "Nine feet seems like a very reasonable amount of distance." },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'pred_garage_found', value: true },
+    /* 5  */ { type: 'end' },
+  ],
+
+
+  // THE FIRST ONE — who simply quit. Bottom shelf of the supply alcove,
+  // behind the toner.
+  copy_room_shelf: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "Behind the third row of toner boxes on the bottom shelf, there is an envelope. The dust on it is the same depth as the dust on the shelf." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "It is addressed to the Henderson Family Trust." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The letter inside is two pages, single-spaced, on bank letterhead. One sentence near the bottom of the first page has been underlined: Your children will not benefit from this arrangement as currently structured." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "They never sent it." },
+    /* 4  */ { type: 'text', speaker: 'Narrator', text: "The stamp is unused. The flap was sealed with tape, not water. Someone intended to mail this and then put it behind toner boxes instead." },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "That would have been a useful thing for someone to read." },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'pred_copy_found', value: true },
+    /* 7  */ { type: 'end' },
+  ],
+
+
+  // The payoff. Routed from `_getDialogId` on `predecessors_all_found`, the
+  // same shape as janitor_pattern and janitor_the_name, so no existing tree is
+  // edited to hold it. He does NOT tell Andrew he is different or better: the
+  // ledger gives the three who left the same ink and the same space on the
+  // page as the ones who stayed, and the new section on page 112 is not a
+  // promotion.
+  janitor_predecessors: [
+    /* 0  */ { type: 'text', speaker: 'Andrew', text: "You knew them. The people who had this job before me." },
+    /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "You found the pillar." },
+    /* 2  */ { type: 'text', speaker: 'Andrew', text: "And a letter. And some arithmetic on a bathroom door." },
+    /* 3  */ { type: 'text', speaker: 'Narrator', text: "The Janitor opens the green ledger and turns to the older pages, where the ink has settled into the grain." },
+    /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "M. Vasquez. Two years. Wrote the Hendersons an honest letter they never read. Kept her desk clean enough to eat off. REMEMBERED. R. Chen. Fourteen months. Did the math and left knowing what she was owed to the half-hour. REMEMBERED." },
+    /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "T. Barlow. Eight months. Hit that pillar once for the job and once for the Hendersons. Good taste in ties. REMEMBERED." },
+    /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Same ink. Same space on the page. The ones who left and the ones who stayed." },
+    /* 7  */ { type: 'text', speaker: 'Andrew', text: "Is the toner requisition form still in the copy room? I think we are running low." },
+    /* 8  */ { type: 'end' },
+  ],
+
+
+  // ── F-9 · the copy room's two props ───────────────────────────────────────
+  // Deliberately NOT the printer gag: this machine is mundane and awful in a
+  // different way, and it is archiving nothing.
+  copy_room_copier: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The copier is a Kyocera 4100, a model number that communicates nothing unless you have worked in a building where one has been running since before the current decade. It weighs more than Andrew and has fourteen buttons on its control panel, two of which are labeled." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "What do the other twelve do?" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "Three of them are believed to collate. The rest are institutional folklore." },
+    /* 3  */ { type: 'text', speaker: 'Andrew', text: "It is warm. And it is making a noise even though nobody is printing anything." },
+    /* 4  */ { type: 'end' },
+  ],
+
+
+  copy_room_supplies: [
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "The shelves hold forty-two boxes of black toner, eleven boxes of cyan, no magenta, eight hundred sheets of letterhead from a rebranding that was reversed four months later, and a laminator that has been repurposed exclusively for preserving break-room lunch menus." },
+    /* 1  */ { type: 'text', speaker: 'Andrew', text: "There are nine rolls of packing tape. That seems like a lot for a department that does not ship anything." },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The top shelf holds a sealed box labeled THERMAL BINDING SUPPLIES - DO NOT OPEN - SEE DIANE. It has been on that shelf longer than anyone named Diane has worked in this building." },
+    /* 3  */ { type: 'end' },
+  ],
+
 };

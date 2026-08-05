@@ -435,6 +435,75 @@ if (want('light')) {
   console.log('  profiles: ' + light.map(r => `${r.room}=${r.profile}/${r.fixtures}`).join(' '));
 }
 
+// ── 8. F-9: floor 6's two rooms, and the three predecessors ────────────────
+if (want('floor6')) {
+  const f9 = await page.evaluate(async () => {
+    const ex = window.__explore;
+    const { DIALOGS } = await import('/src/data/dialogs/index.js');
+    ex.player.setFlag('met_janitor', true);
+    // Clear any prior finds so the derivation is measured, not assumed.
+    for (const k of ['pred_bathroom_found', 'pred_garage_found', 'pred_copy_found',
+      'predecessors_all_found', 'read_janitor_predecessors']) ex.player.flags[k] = false;
+    ex._refreshStoryProgress(true);
+    const out = { rooms: {}, before: ex._getDialogId({ id: 'janitor' }) };
+
+    for (const room of ['bathroom', 'copy_room']) {
+      await ex._changeRoom(room, 1, 1);
+      await new Promise(r => setTimeout(r, 700));
+      const data = ex.roomManager?.currentRoom?.data;
+      const tm = ex.roomManager?.currentRoom?.tileMap;
+      // Every interactable must sit on a tile the player can stand next to,
+      // and every one must have furniture on or beside it (A1 B3).
+      const its = (data?.interactables || []).map(i => i.dialogId);
+      out.rooms[room] = {
+        landed: ex.player.currentRoom === room,
+        props: (data?.furniture || []).length,
+        interactables: its,
+        walkable: tm ? [...tm.grid].filter(v => v === 0 || v === 2 || v === 3).length : 0,
+        thought: (await import('/src/data/thoughts.js')).ROOM_THOUGHTS[room]?.length || 0,
+        ambience: !!(await import('/src/data/ambience.js')).ROOM_AMBIENCE[room],
+        onMap: !!(await import('/src/data/buildingMap.js')).BUILDING_MAP[room],
+      };
+    }
+
+    // Fire the three artifacts through the flags their dialogs set, then let
+    // _refreshStoryProgress derive — the same order play produces.
+    const steps = [];
+    for (const f of ['pred_bathroom_found', 'pred_garage_found', 'pred_copy_found']) {
+      ex.player.setFlag(f, true);
+      ex._refreshStoryProgress(true);
+      steps.push(!!ex.player.getFlag('predecessors_all_found'));
+    }
+    const after = ex._getDialogId({ id: 'janitor' });
+    ex.player.setFlag('read_janitor_predecessors', true);
+    const repeat = ex._getDialogId({ id: 'janitor' });
+    return {
+      ...out, steps, after, repeat,
+      trees: Object.fromEntries(['bathroom_stall_door', 'garage_pillar', 'copy_room_shelf',
+        'janitor_predecessors', 'copy_room_copier', 'copy_room_supplies']
+        .map(k => [k, DIALOGS[k]?.length || 0])),
+    };
+  });
+  for (const [room, r] of Object.entries(f9.rooms)) {
+    check(`${room} builds and is enterable`, r.landed && r.props > 0 && r.walkable > 0,
+      `props=${r.props} walkable=${r.walkable} interactables=[${r.interactables.join(' ')}]`);
+    check(`${room} is wired into thoughts, ambience and the building map`,
+      r.thought > 0 && r.ambience && r.onMap,
+      `thoughts=${r.thought} ambience=${r.ambience} map=${r.onMap}`);
+    await page.evaluate(async (id) => {
+      await window.__explore._changeRoom(id, 1, 1);
+      await new Promise(r => setTimeout(r, 700));
+    }, room);
+    await page.waitForTimeout(400);
+    await page.screenshot({ path: `${OUT}/scene-${room}.png` });
+  }
+  check('all six F-9 trees exist', Object.values(f9.trees).every(n => n > 0), JSON.stringify(f9.trees));
+  check('the Janitor payoff needs ALL THREE artifacts',
+    f9.steps[0] === false && f9.steps[1] === false && f9.steps[2] === true, JSON.stringify(f9.steps));
+  check('and then he has something to say about them', f9.after === 'janitor_predecessors', f9.after);
+  check('once', f9.repeat !== 'janitor_predecessors', f9.repeat);
+}
+
 const fails = results.filter(r => !r.ok).length;
 writeFileSync(`${OUT}/evidence.json`, JSON.stringify({ results, logs: logs.slice(-40) }, null, 2));
 console.log(`\n${fails === 0 ? 'F-EVIDENCE PASS' : `F-EVIDENCE FAIL (${fails})`} — ${results.length} checks`);

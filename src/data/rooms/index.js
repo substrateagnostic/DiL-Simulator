@@ -340,6 +340,17 @@ export const ROOMS = {
       // NE exit -> HR Department (x=19, z=2-3)
       { x: 19, z: 2, targetRoom: 'hr_department', spawnX: 2, spawnZ: 4 },
       { x: 19, z: 3, targetRoom: 'hr_department', spawnX: 2, spawnZ: 4 },
+      // ── F-9. The two rooms floor 6 never had. Both doors are on wall runs
+      // that were empty: the south-wall cabinets sit at x 2-4 and 15-17 and
+      // the reception door is x 9-10, so x 6-7 is the only clear south span;
+      // the north wall carries the resource station at x 11-13 with its
+      // printer, which is exactly where a copy room belongs.
+      // SOUTH-WEST -> the sixth-floor bathroom
+      { x: 6, z: 15, targetRoom: 'bathroom', spawnX: 3, spawnZ: 4 },
+      { x: 7, z: 15, targetRoom: 'bathroom', spawnX: 4, spawnZ: 4 },
+      // NORTH-EAST -> the copy room
+      { x: 12, z: 0, targetRoom: 'copy_room', spawnX: 4, spawnZ: 5 },
+      { x: 13, z: 0, targetRoom: 'copy_room', spawnX: 5, spawnZ: 5 },
     ],
     interactables: [
       { x: 15, z: 12, type: 'water_cooler', dialogId: 'water_cooler' },
@@ -1120,6 +1131,13 @@ export const ROOMS = {
       // this tile and had nothing to aim at — bare concrete (CLAUDE.md "Quest
       // interactable visibility"). Industrial grey-green metal, on his patrol.
       { type: 'fileCabinet', variant: 0x55605a, x: 12, z: 8, rotation: Math.PI },
+      // F-9. Structural columns. The garage has never had one, which is why it
+      // reads as a floor rather than a level of a building — and the middle
+      // one, beside the spot the Trust Officer parks in, carries a repair.
+      // `variant` is the patch height in metres.
+      { type: 'garagePillar', x: 2,  z: 5 },
+      { type: 'garagePillar', x: 7,  z: 5, variant: 0.9 },
+      { type: 'garagePillar', x: 11, z: 5 },
     ],
     npcs: [
       { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage
@@ -1134,6 +1152,7 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 4, z: 6, type: 'andrews_car', dialogId: 'andrews_car' },
+      { x: 7, z: 5, type: 'garage_pillar', dialogId: 'garage_pillar' },
       { x: 12, z: 8, type: 'janitor_closet', dialogId: 'janitor_closet', condition: { notFlag: 'janitor_names_complete' } },
       // F-2. The second reading of the locker. Gated AFTER the ledger changes
       // hands, which is only reachable from inside the vault - so the first
@@ -2707,6 +2726,121 @@ export const ROOMS = {
     },
     playerSpawn: { x: 1, z: 1 },
   },
+  // ==========================================================================
+  // FLOOR 6 — THE TWO ROOMS IT NEVER HAD (F-9, proposals 7 + 21 + 8)
+  // ==========================================================================
+  // A department floor with a boss's office, a conference room and a server
+  // room, and nowhere to wash your hands or make a copy. Both rooms hang off
+  // the cubicle farm's own empty wall runs.
+  //
+  // SCOPE NOTE, said plainly: proposal 21 asked for a copy room AND a supply
+  // closet. This is ONE room with a supply alcove at its east end, not two.
+  // Two more doors on floor 6 would have cost the farm a wall run it does not
+  // have; the alcove keeps both objects (the copier and the shelving) and both
+  // of their interactables.
+  //
+  // Each room also carries one of the three PREDECESSORS — the trust officers
+  // Diane names in Act 1 and the game then never mentions again ("The first
+  // one quit. The second one cried in the bathroom for forty minutes and then
+  // quit. The third one is the one who had the parking garage incident."). The
+  // second is behind the middle stall door here; the first is behind the toner
+  // on the copy room's bottom shelf; the third is the repair on the garage
+  // pillar above. Finding all three derives `predecessors_all_found`, which
+  // routes `janitor_predecessors`.
+
+  bathroom: {
+    id: 'bathroom',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // Institutional cool. One strip, and the tube over the mirror is dead.
+    fx: { fixtures: 'utility' },
+    name: 'Bathroom',
+    width: 8,
+    height: 6,
+    floorColor: 0xc9c6bd,
+    walls: true,
+    // A bathroom is an OVER-lit room; the first still came back reading as a
+    // storage closet at 0.50/0.68. Lifted to the reception family's white so
+    // the tile and the partitions separate, and kept under the old 0.9
+    // office threshold on purpose - the profile above is what picks the rig
+    // now, and this room wants one cool strip, not a troffer run.
+    lighting: { ambient: 0xe6edf1, ambientIntensity: 0.66, dir: 0xf2f6ff, dirIntensity: 0.84, flicker: true },
+    furniture: [
+      // The stall run against the NORTH wall, doors facing SOUTH into the room.
+      // rotation 0 = SOUTH (the rotation law, CLAUDE.md) — and which way a
+      // stall door faces is the entire point of the prop.
+      { type: 'bathroomStall', x: 4, z: 1, rotation: 0, variant: 3 },
+      // Basins on the WEST wall, facing EAST. The mirror is on the prop's own
+      // -z, i.e. against the wall behind the taps.
+      { type: 'sinkCounter', x: 0.6, z: 3.5, rotation: Math.PI / 2, variant: 2 },
+      { type: 'trashCan', x: 6.6, z: 4.2 },
+      { type: 'plantSucculent', x: 7.2, z: 1.2 },
+    ],
+    npcs: [],
+    exits: [
+      { x: 3, z: 5, targetRoom: 'cubicle_farm', spawnX: 6, spawnZ: 14 },
+      { x: 4, z: 5, targetRoom: 'cubicle_farm', spawnX: 7, spawnZ: 14 },
+    ],
+    interactables: [
+      // The middle stall. Co-placed with the stall run, which spans x 2.5-5.5
+      // at z 0.4-1.6 — the invisible-interactable law (A1 B3).
+      { x: 4, z: 1, type: 'stall_door', dialogId: 'bathroom_stall_door' },
+    ],
+    playerSpawn: { x: 4, z: 4 },
+  },
+
+  copy_room: {
+    id: 'copy_room',
+    // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
+    // A working room on the working floor: same office troffer run as the farm
+    // it opens off.
+    fx: { fixtures: 'office' },
+    name: 'Copy Room',
+    width: 10,
+    height: 7,
+    floorColor: 0xc8bfa9,
+    floorPattern: 'carpet',
+    walls: true,
+    lighting: { ambient: 0xeaf1f4, ambientIntensity: 0.56, dir: 0xf2f6ff, dirIntensity: 1.18 },
+    furniture: [
+      // The copier, north wall, facing south. Its finisher tray sticks out the
+      // -x side, which is why nothing sits at x 2.
+      { type: 'copier', x: 4, z: 1, rotation: 0 },
+      { type: 'printer', x: 6, z: 1 },
+      { type: 'desk', x: 7, z: 1, rotation: 0 },   // the collation counter
+      { type: 'trashCan', x: 5.6, z: 2.2 },
+      { type: 'fileCabinetLateral', x: 8, z: 1 },
+      // ── The supply alcove. WEST wall, shelving facing EAST (rotation PI/2).
+      // Not the east wall, which the first still proved: the iso camera reads
+      // the inner faces of NORTH and WEST only, and four bays of shelving hung
+      // on the east wall were a grey smear behind near-transparent glass
+      // (CLAUDE.md, "which wall wall-art goes on" - it is true of any tall
+      // prop, not just art). On the west wall they also fill the empty half of
+      // the room the same still flagged.
+      { type: 'supplyShelf', x: 0.4, z: 2, rotation: Math.PI / 2, variant: 4 },
+      { type: 'supplyShelf', x: 0.4, z: 3, rotation: Math.PI / 2, variant: 4 },
+      { type: 'supplyShelf', x: 0.4, z: 4, rotation: Math.PI / 2, variant: 5 },
+      { type: 'supplyShelf', x: 0.4, z: 5, rotation: Math.PI / 2, variant: 4 },
+      // Decoration, NOT a poster: the DECORATION class is painting-shaped and
+      // never interactable (the two-class ruling in CLAUDE.md). A
+      // motivationalPoster here with nothing to read would fail validate:data,
+      // which is the false-affordance law doing its job.
+      { type: 'abstractPainting', x: 2, z: 0.1 },
+    ],
+    npcs: [],
+    exits: [
+      { x: 4, z: 6, targetRoom: 'cubicle_farm', spawnX: 12, spawnZ: 1 },
+      { x: 5, z: 6, targetRoom: 'cubicle_farm', spawnX: 13, spawnZ: 1 },
+    ],
+    interactables: [
+      { x: 4, z: 1, type: 'copier',       dialogId: 'copy_room_copier' },
+      { x: 0, z: 3, type: 'supply_shelf', dialogId: 'copy_room_supplies' },
+      // The bottom shelf of the tallest bay, behind the toner. Co-placed with
+      // the 5-shelf unit at (0.4, 4).
+      { x: 0, z: 4, type: 'supply_shelf', dialogId: 'copy_room_shelf' },
+    ],
+    playerSpawn: { x: 4, z: 5 },
+  },
+
 };
 
 // Quick-access helpers

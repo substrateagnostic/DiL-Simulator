@@ -70,6 +70,16 @@ export const ROOM_AMBIENCE = {
     every: [10, 22],
     cues: [['amb_paper', 4], ['amb_keyboard', 2], ['amb_hvac', 3], ['amb_fluorescent', 1]],
   },
+  bathroom: {
+    // A tiled room is mostly its own plumbing, and the tube over the mirror is
+    // dead — the flicker cue is the one the writing keeps pointing at.
+    every: [8, 18],
+    cues: [['amb_pipe', 5], ['amb_fluorescent', 4], ['amb_hvac', 2]],
+  },
+  copy_room: {
+    every: [7, 15],
+    cues: [['amb_printer', 5], ['amb_paper', 3], ['amb_hvac', 2], ['amb_fluorescent', 1]],
+  },
 
   // ── The parts of the building nobody maintains ──────────────────────────
   stairwell: {

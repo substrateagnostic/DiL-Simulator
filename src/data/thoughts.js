@@ -83,6 +83,16 @@ export const ROOM_THOUGHTS = {
     "This is either a reward or a liability. Possibly both.",
   ],
 
+  // ── F-9 — the two rooms floor 6 never had.
+  bathroom: [
+    "The mirror has one working fluorescent and one dead one, which means you can see exactly half of how tired you look.",
+    "Someone laminated an Out of Order sign for the hand dryer. The lamination looks newer than the hand dryer.",
+  ],
+  copy_room: [
+    "The copier takes up roughly a quarter of the room. It seems to regard the rest of the room as a concession.",
+    "The supply alcove smells like toner and something faintly medicinal that nobody has been able to identify or locate.",
+  ],
+
   // ── Act 6½ — the city chapter. Andrew leaves the building for the first
   // time in the game. These six rooms shipped with no ROOM_THOUGHTS key at
   // all, so the only chapter that happens outdoors was also the only chapter
@@ -195,4 +205,7 @@ export const STORY_THOUGHTS = {
   renovation_projection_wall: "Five smart boards where the whiteboard was. Those Q2 projections lasted longer than most of the people who wrote them.",
   renovation_corner_office: "Skip's corner office. Twice the square footage, same volume of Skip Hartley.",
   renovation_penthouse: "Ten million dollars. Two reef tanks taller than I am, a pool table, a cinema wall, and five analytics stations. I signed the purchase order with a ballpoint from a compliance seminar.",
+  renovation_marble_counter: "The reception desk has a marble counter now. The invoice described it as Carrara. The invoice was the single most expensive piece of paper I have ever signed, and I work in a building full of expensive paper.",
+  renovation_lobby_sculpture: "There are bronze pieces in the lobby that were not here yesterday. They are abstract in the way that means the artist was paid enough not to explain them.",
+  renovation_trophy_wall: "The board room has display cases now, with adjustable lighting. They exist to prove that what I did here actually happened, which some mornings I appreciate.",
 };

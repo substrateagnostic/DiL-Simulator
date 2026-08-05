@@ -35,6 +35,11 @@ export const BUILDING_MAP = {
   skip_office:         { floor: 6,  offsetX: 10, offsetZ: 0 },
   skip_office_large:   { floor: 6,  offsetX: 9,  offsetZ: 0 },
   conference_room:     { floor: 6,  offsetX: 16, offsetZ: 0 },
+  // F-9. Both hang off the cubicle farm (offset 4,2, 20x16 -> x 4-23, z 2-17):
+  // the bathroom below its south wall at x 6-7, the copy room above its north
+  // wall at x 12-13, so the ghost shell puts each door where the room is.
+  bathroom:            { floor: 6,  offsetX: 8,  offsetZ: 17 },
+  copy_room:           { floor: 6,  offsetX: 13, offsetZ: 0 },
 
   hr_department:       { floor: 9,  offsetX: 6,  offsetZ: 5 },
   floor_13:            { floor: 13, offsetX: 6,  offsetZ: 5 },

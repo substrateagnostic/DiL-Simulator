@@ -19,6 +19,7 @@ const fixture = process.argv.find(a => a.startsWith('--fixture='))?.slice(10) ||
 const ROOMS = [
   'parking_garage', 'reception', 'cubicle_farm', 'break_room', 'skip_office',
   'conference_room', 'server_room', 'executive_floor', 'stairwell', 'archive',
+  'bathroom', 'copy_room',
   'hr_department', 'vault', 'board_room', 'penthouse', 'penthouse_expanded',
   'penthouse_aquarium', 'penthouse_analytics', 'penthouse_bar',
   // Act 6½ city rooms (no-op until they exist)

@@ -5864,6 +5864,216 @@ export const Furniture = {
     group.traverse(c => { if (c.isMesh) { c.castShadow = false; c.receiveShadow = false; } });
     return group;
   },
+  // ── FLOOR 6, THE TWO MISSING ROOMS (F-9) ────────────────────────────────
+  // Four props for `bathroom` and `copy_room`. All four are ordinary office
+  // objects and all four are built the way everything else here is: box and
+  // cylinder primitives on MaterialLibrary toon/pbr materials, origin at the
+  // placement point, front face at LOCAL +z (rotation 0 = SOUTH — see the
+  // rotation law in CLAUDE.md; the whole point of a stall is which way its
+  // door faces).
+
+  // A run of toilet partitions. `variant` = number of stalls (default 3).
+  // Built as one prop rather than three so the shared dividers land exactly
+  // once and the run reads as a unit at the iso camera.
+  bathroomStall(variant = 3) {
+    const group = new THREE.Group();
+    const n = Math.max(1, Math.round(typeof variant === 'number' ? variant : 3));
+    const W = 0.95;            // stall width
+    const D = 1.15;            // stall depth
+    const H = 1.85;            // partition height (floor gap below)
+    const GAP = 0.18;          // the honest 18 cm you can see feet through
+    const panelMat = Materials.custom(0x8f9aa2);
+    const doorMat = Materials.custom(0x7d8891);
+    const hardware = Materials.metal();
+
+    for (let i = 0; i <= n; i++) {
+      // Dividers, including both ends.
+      const div = new THREE.Mesh(new THREE.BoxGeometry(0.045, H, D), panelMat);
+      div.position.set(i * W - (n * W) / 2, GAP + H / 2, 0);
+      group.add(div);
+    }
+    // Back wall of the run.
+    const back = new THREE.Mesh(new THREE.BoxGeometry(n * W + 0.05, H, 0.045), panelMat);
+    back.position.set(0, GAP + H / 2, -D / 2);
+    group.add(back);
+
+    for (let i = 0; i < n; i++) {
+      const cx = (i + 0.5) * W - (n * W) / 2;
+      // Door. The MIDDLE one stands ajar — a closed rank of identical doors
+      // reads as a wall, and the middle stall is the one the writing is in.
+      const door = new THREE.Mesh(new THREE.BoxGeometry(W - 0.09, H - 0.1, 0.04), doorMat);
+      const ajar = (n === 3 && i === 1) ? 0.55 : 0;
+      door.position.set(cx - (ajar ? W * 0.22 : 0), GAP + (H - 0.1) / 2, D / 2 + (ajar ? W * 0.24 : 0));
+      door.rotation.y = ajar;
+      group.add(door);
+      // Latch plate.
+      const latch = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.09, 0.02), hardware);
+      latch.position.set(cx + W * 0.36, 1.12, D / 2 + 0.03);
+      group.add(latch);
+      // The pan itself, only readable through the ajar door, but cheap.
+      const pan = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.14, 0.34, 10), Materials.custom(0xe8e6df));
+      pan.position.set(cx, 0.17, -D / 2 + 0.36);
+      group.add(pan);
+      const cistern = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.36, 0.14), Materials.custom(0xe8e6df));
+      cistern.position.set(cx, 0.52, -D / 2 + 0.14);
+      group.add(cistern);
+    }
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  // Two-basin counter with a mirror band and one dead tube over it.
+  sinkCounter(variant = 2) {
+    const group = new THREE.Group();
+    const n = Math.max(1, Math.round(typeof variant === 'number' ? variant : 2));
+    const W = 0.9 * n + 0.3;
+    const counter = new THREE.Mesh(new THREE.BoxGeometry(W, 0.09, 0.55), Materials.custom(0x5a5f66));
+    counter.position.set(0, 0.86, 0);
+    group.add(counter);
+    const apron = new THREE.Mesh(new THREE.BoxGeometry(W, 0.26, 0.5), Materials.custom(0x4a4f56));
+    apron.position.set(0, 0.7, -0.02);
+    group.add(apron);
+    for (let i = 0; i < n; i++) {
+      const cx = (i + 0.5) * 0.9 - (n * 0.9) / 2;
+      const basin = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.16, 0.11, 12), Materials.custom(0xf0ede6));
+      basin.position.set(cx, 0.88, 0.02);
+      group.add(basin);
+      const tap = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.18, 8), Materials.metal());
+      tap.position.set(cx, 1.0, -0.16);
+      group.add(tap);
+      const spout = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.02, 0.12), Materials.metal());
+      spout.position.set(cx, 1.08, -0.11);
+      group.add(spout);
+    }
+    // Mirror band + its light. The tube is DARK on purpose: the room's own
+    // fixture profile lights the space, and a dead tube over the mirror is the
+    // detail the writing keeps referring to.
+    const mirror = new THREE.Mesh(new THREE.BoxGeometry(W - 0.1, 0.85, 0.03), Materials.glass());
+    mirror.position.set(0, 1.62, -0.27);
+    group.add(mirror);
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(W - 0.04, 0.91, 0.02), Materials.metal());
+    frame.position.set(0, 1.62, -0.29);
+    group.add(frame);
+    const tube = new THREE.Mesh(new THREE.BoxGeometry(W - 0.35, 0.055, 0.07), Materials.custom(0x3a3d42));
+    tube.position.set(0, 2.12, -0.24);
+    group.add(tube);
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  // The copier. Deliberately NOT a bigger `printer`: floor-standing, a metre
+  // and a half of beige, a control panel that glows, and a finisher tray that
+  // sticks out the side far enough to be an obstacle.
+  copier() {
+    const group = new THREE.Group();
+    const shell = Materials.custom(0xd9d5c8);
+    const dark = Materials.custom(0x3a3d42);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.02, 0.72), shell);
+    body.position.y = 0.51;
+    group.add(body);
+    // Glass lid + document feeder on top.
+    const lid = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.09, 0.68), dark);
+    lid.position.y = 1.07;
+    group.add(lid);
+    const feeder = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.13, 0.42), shell);
+    feeder.position.set(0, 1.18, -0.08);
+    group.add(feeder);
+    // Control panel, angled toward the operator (+z), with a lit strip.
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.16, 0.1), dark);
+    panel.position.set(0.24, 1.12, 0.3);
+    panel.rotation.x = -0.5;
+    group.add(panel);
+    const readout = new THREE.Mesh(new THREE.PlaneGeometry(0.24, 0.07),
+      Materials.custom(0x7fe0a0, { emissive: 0x2f8a55, emissiveIntensity: 0.7 }));
+    readout.position.set(0.24, 1.155, 0.345);
+    readout.rotation.x = -0.5;
+    group.add(readout);
+    // Paper drawers.
+    for (let i = 0; i < 3; i++) {
+      const d = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.03, 0.02), dark);
+      d.position.set(0, 0.22 + i * 0.24, 0.37);
+      group.add(d);
+    }
+    // Finisher tray, out the -x side. The obstacle everyone walks into.
+    const tray = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.035, 0.44), dark);
+    tray.position.set(-0.56, 0.74, 0);
+    group.add(tray);
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.1, 0.2), shell);
+    arm.position.set(-0.45, 0.68, 0);
+    group.add(arm);
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+
+  // Open metal supply shelving. `variant` = shelf count (default 4).
+  supplyShelf(variant = 4) {
+    const group = new THREE.Group();
+    const n = Math.max(2, Math.round(typeof variant === 'number' ? variant : 4));
+    const W = 0.98, D = 0.42, H = 1.9;
+    const frameMat = Materials.custom(0x6b7076);
+    for (const sx of [-W / 2, W / 2]) {
+      for (const sz of [-D / 2, D / 2]) {
+        const post = new THREE.Mesh(new THREE.BoxGeometry(0.045, H, 0.045), frameMat);
+        post.position.set(sx, H / 2, sz);
+        group.add(post);
+      }
+    }
+    // Shelves, and the boxes on them. The bottom shelf is deliberately the
+    // fullest — it is where the toner lives, and where the first trust
+    // officer's envelope has been since before Andrew was hired.
+    const boxCols = [0xbfa27a, 0xa8b0b8, 0xc8c2b2, 0x9a8f7d];
+    for (let i = 0; i < n; i++) {
+      const y = 0.14 + i * ((H - 0.24) / (n - 1));
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(W, 0.03, D), frameMat);
+      shelf.position.set(0, y, 0);
+      group.add(shelf);
+      const count = i === 0 ? 3 : (i % 2 ? 1 : 2);
+      for (let b = 0; b < count; b++) {
+        const bw = 0.24 + (b % 2) * 0.06;
+        const box = new THREE.Mesh(
+          new THREE.BoxGeometry(bw, 0.19, D - 0.1),
+          Materials.custom(boxCols[(i + b) % boxCols.length]));
+        box.position.set(-W / 2 + 0.18 + b * 0.31, y + 0.11, 0);
+        group.add(box);
+      }
+    }
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
+  // A structural column in the parking garage, with the repair still on it.
+  // Every garage has these and this one has never had one, which is why the
+  // room reads as a floor rather than a level of a building. `variant` is the
+  // repair patch height in metres; 0 leaves it clean.
+  garagePillar(variant = 0) {
+    const group = new THREE.Group();
+    const H = 2.6;
+    const concrete = Materials.custom(0x9a9a94);
+    const col = new THREE.Mesh(new THREE.BoxGeometry(0.55, H, 0.55), concrete);
+    col.position.y = H / 2;
+    group.add(col);
+    // Safety chevrons at knee height — the yellow-black band every garage has.
+    for (let i = 0; i < 2; i++) {
+      const band = new THREE.Mesh(new THREE.BoxGeometry(0.575, 0.11, 0.575),
+        Materials.custom(i ? 0x1d1d1d : 0xe0b93a));
+      band.position.y = 0.42 + i * 0.13;
+      group.add(band);
+    }
+    // The repair: a rectangle of newer, paler concrete, proud of the face by
+    // 8 mm, on the +z side (the side the drive aisle sees).
+    const h = typeof variant === 'number' ? variant : 0;
+    if (h > 0) {
+      const patch = new THREE.Mesh(new THREE.BoxGeometry(0.5, h, 0.008), Materials.custom(0xc4c2b8));
+      patch.position.set(0, 0.75 + h / 2, 0.284);
+      group.add(patch);
+      // A hairline the filler did not quite close.
+      const crack = new THREE.Mesh(new THREE.BoxGeometry(0.012, h * 0.8, 0.004), Materials.custom(0x6d6b64));
+      crack.position.set(0.09, 0.75 + h / 2, 0.29);
+      crack.rotation.z = 0.16;
+      group.add(crack);
+    }
+    group.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    return group;
+  },
 };
 
 // ── Shared builder for credenza / credenzaEast ───────────────────────────────
