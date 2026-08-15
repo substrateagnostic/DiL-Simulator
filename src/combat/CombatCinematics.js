@@ -210,7 +210,17 @@ const ENEMY_ATTACK = [
   // real contact frame the attacker was entirely off camera. `lean` now HOLDS
   // through contact and the reverse cut lands 60ms after it.
   { t: 0.30, impact: true, shake: 0.5 },
-  { t: 0.36, cam: 'victim', ease: 18, hitstop: 0.06 },               // hard CUT/reverse to Andrew, 60ms after the blow
+  // B21 — 60 ms WAS NOT ENOUGH. Playtest note: "enemy attacks too fast to
+  // read." The combat hunt closed A1 (the real regression was a Meshy warm-up
+  // ceiling staging an A-pose body) but measured a genuine residual underneath
+  // it: with the cut at contact+60 ms the attacker is on camera for only 293 ms
+  // on the female attack clip and 426 ms on the male, which is less than half a
+  // second to see who hit you and with what. The cut is now contact+180 ms, the
+  // top of the 150-200 ms band the hunt recommended. That is the ONE LINE fix;
+  // the alternative was widening the a214 clip trim, which would have made the
+  // meshy-spine-gate re-run mandatory and is a bigger, riskier change for the
+  // same 120 ms.
+  { t: 0.48, cam: 'victim', ease: 18, hitstop: 0.06 },               // hard CUT/reverse to Andrew, 180ms after the blow
   // Impact ACCENT — a hit-spark burst ON the victim's chest + a punch-in, timed so
   // it is still FRESH on the post-cut impact frame (~0.46) instead of firing at the
   // cut and being gone by the time the frame is grabbed (critic #2: "f2 carries no
@@ -218,10 +228,12 @@ const ENEMY_ATTACK = [
   // colour flash here — it fought the stage geometry into an ugly asymmetric wash;
   // the bright spark burst reads as the flash-pop and the real game still flashes
   // via CombatState's own enemy-hit beat.
-  { t: 0.46, punch: 0.5,
+  // (moved with the cut: the accent is timed to be FRESH on the post-cut frame,
+  // so it has to stay 100 ms behind it, not at a fixed absolute time.)
+  { t: 0.58, punch: 0.5,
     burst: { at: 'player', y: 1.6, count: 22, color: 0xff5566, speed: 3.4, lifetime: 0.6 } },
-  { t: 0.52, cam: 'victim', ease: 6 },                               // ride the victim through the follow-through
-  { t: 0.90, cam: 'rest',   ease: 2.8 },
+  { t: 0.64, cam: 'victim', ease: 6 },                               // ride the victim through the follow-through
+  { t: 1.02, cam: 'rest',   ease: 2.8 },
 ];
 
 // Enemy HEAVY (telegraphed) — leaning anticipation + screen-edge vignette pulse
@@ -231,13 +243,16 @@ const ENEMY_HEAVY = [
   { t: 0.02, overlay: { kind: 'vignette', color: '#e94560', ms: 700 } },
   { t: 0.12, rim: 0.4 },
   { t: 0.30, impact: true, shake: 0.75 },                        // the blow lands, still on the attacker
-  { t: 0.34, cam: 'victimHard', ease: 18, hitstop: 0.13 },       // reverse cut 40ms after contact
+  // B21, same band as ENEMY_ATTACK. The heavy was cutting at contact+40 ms —
+  // TIGHTER than the light attack, on the move the player is meant to have
+  // read a telegraph for and to be watching most closely. contact+180 ms.
+  { t: 0.48, cam: 'victimHard', ease: 18, hitstop: 0.13 },       // reverse cut 180ms after contact
   // Impact ACCENT — a bigger hit-spark burst ON the victim + a hard punch-in,
   // timed to land fresh on the post-cut impact frame (critic #2).
-  { t: 0.48, punch: 0.7,
+  { t: 0.62, punch: 0.7,
     burst: { at: 'player', y: 1.6, count: 32, color: 0xff4455, speed: 4.4, lifetime: 0.7 } },
-  { t: 0.54, cam: 'victimHard', ease: 6 },
-  { t: 0.94, cam: 'rest',       ease: 2.6 },
+  { t: 0.68, cam: 'victimHard', ease: 6 },
+  { t: 1.08, cam: 'rest',       ease: 2.6 },
 ];
 
 // Enemy intro — a camera orbit-settle onto the enemy, choreographed with the

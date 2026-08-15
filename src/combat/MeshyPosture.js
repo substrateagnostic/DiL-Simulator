@@ -35,6 +35,35 @@ function softClampMax(x, limit, knee) {
   return limit - knee * Math.exp(-d / knee);
 }
 
+/**
+ * B22 — THE HEAD FLIP, and it is a branch cut.
+ *
+ * `sagittal(v) = atan2(v.forward, v.y)` is the angle this whole file measures
+ * lean in, and atan2 has a discontinuity: it returns (-180, 180], so a vector
+ * that crosses the half-plane behind the character jumps ~360 degrees between
+ * one frame and the next. Every clamp here then compares that raw angle against
+ * a raw limit, so on the crossing frame the correction it computes is not a few
+ * degrees — it is most of a full turn, applied to the head. Measured on the
+ * shipping stance clip a333 (the Intern and Skip Hartley Unhinged both use it):
+ * the RETARGETED head moves 1.85 degrees between adjacent keys, and after the
+ * posture clamp the same pair of keys is 48.41 degrees apart, rising to 172.02
+ * degrees — a near-inversion — as the gaze ceiling is relaxed. The clip is
+ * baked, so it replays at the same instant every time that character animates,
+ * which is exactly the reported "head flips upside down while moving".
+ *
+ * The remedy is to do every comparison in WRAPPED DELTA space. `softClampMax`
+ * satisfies `softClampMax(x, L, k) - L === softClampMax(x - L, 0, k)`, so
+ * clamping `wrapDeg(sag - limit)` against zero is algebraically the same curve
+ * whenever no wrap occurs — every frame that was already correct stays
+ * bit-identical — and is finite and continuous on the frames that cross.
+ */
+function wrapDeg(a) {
+  let x = a % 360;
+  if (x > 180) x -= 360;
+  if (x < -180) x += 360;
+  return x;
+}
+
 function sameTimes(a, b) {
   if (a.length !== b.length) return false;
   for (let i = 0; i < a.length; i++) {
@@ -142,9 +171,12 @@ function clampPostureImpl(clip, targetRest, opts) {
   const clampSegment = (name, worldQuaternion) => {
     direction.copy(targetRest.get(CHILD[name]).p).applyQuaternion(worldQuaternion).normalize();
     const sag = sagittal(direction);
-    const target = softClampMax(sag, limits.get(name), kneeDeg);
-    if (target < sag - 1e-6) {
-      rotation.setFromAxisAngle(lateral, (sag - target) * DEG_TO_RAD);
+    // B22: measure the excess over the ceiling as a WRAPPED delta, never as a
+    // difference of two raw atan2 readings. See wrapDeg.
+    const rel = wrapDeg(sag - limits.get(name));
+    const relTarget = softClampMax(rel, 0, kneeDeg);
+    if (relTarget < rel - 1e-6) {
+      rotation.setFromAxisAngle(lateral, (rel - relTarget) * DEG_TO_RAD);
       worldQuaternion.premultiply(rotation);
     }
   };
@@ -161,11 +193,43 @@ function clampPostureImpl(clip, targetRest, opts) {
   const perp = new THREE.Vector3();
   const e1 = new THREE.Vector3();
   const e2 = new THREE.Vector3();
+  // B22 — THE HEAD FLIP. Playtest note: "enemy head flips upside down while
+  // moving." The combat hunt ruled out a rest-map mis-bind (34/34 GLBs clean)
+  // and named this function's per-frame re-solve as a lead. It is the cause.
+  //
+  // h(u) = 0 over the roll circle has TWO roots, `alpha + acos` and
+  // `alpha - acos`, and they can be most of a half-turn apart. The solver
+  // picked whichever had the smaller absolute angle, INDEPENDENTLY ON EVERY
+  // FRAME, with no memory. Wherever the two roots cross in magnitude — which
+  // they do whenever the head passes through the geometry that generates them —
+  // consecutive frames select different branches and the correction jumps by up
+  // to ~180 deg about the gaze axis. A 180 deg roll about the gaze axis IS the
+  // head upside down, and because it is baked into the clip it replays at
+  // exactly the same moment every time that clip plays.
+  //
+  // Two guards, and they are independent on purpose:
+  //   CONTINUITY — after the first frame, choose the root nearest the root this
+  //     clip chose last frame, not the one nearest zero. That is what makes the
+  //     correction a continuous curve instead of a branch lottery.
+  //   A CEILING — reject any root beyond MAX_UNTILT_DEG. This is the structural
+  //     half: untilting a head is a few degrees of cant, so a solution of 40 deg
+  //     or more is not the answer to the question being asked, whatever the
+  //     continuity pass thinks. With this in place the head CANNOT invert even
+  //     if a future edit reintroduces a discontinuity.
+  // Frames where the solve fails already return without rolling; `prevPsi` is
+  // deliberately NOT reset there, so the next successful frame still resumes on
+  // the branch the clip was on before the gap.
+  const MAX_UNTILT_DEG = 35;
+  let prevPsi = null;
   const untiltHead = (worldQuaternion) => {
     direction.copy(targetRest.get('head_end').p).applyQuaternion(worldQuaternion).normalize();
     const sag = sagittal(direction);
-    const target = softClampMax(sag, limits.get('Head'), kneeDeg);
-    if (target >= sag - 1e-6 || direction.y <= 0) return;
+    // B22, same wrap as clampSegment. `target` is rebuilt as an absolute angle
+    // afterwards because the roll solve below needs tan(target).
+    const rel = wrapDeg(sag - limits.get('Head'));
+    const relTarget = softClampMax(rel, 0, kneeDeg);
+    const target = limits.get('Head') + relTarget;
+    if (relTarget >= rel - 1e-6 || direction.y <= 0) return;
     roll.copy(headfront.p).applyQuaternion(worldQuaternion).normalize();
     const along = direction.dot(roll);
     perp.copy(direction).addScaledVector(roll, -along);
@@ -183,11 +247,20 @@ function clampPostureImpl(clip, targetRest, opts) {
     if (R <= 1e-9 || Math.abs(A) > R) return;   // the target lean is off this circle
     const alpha = Math.atan2(Q, P);
     const acos = Math.acos(THREE.MathUtils.clamp(-A / R, -1, 1));
-    let psi = alpha + acos;
-    const other = alpha - acos;
     const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
-    psi = wrap(psi); const psi2 = wrap(other);
-    if (Math.abs(psi2) < Math.abs(psi)) psi = psi2;   // the least visible of the two roots
+    const roots = [wrap(alpha + acos), wrap(alpha - acos)]
+      // THE CEILING first: a root outside the untilt budget is not a candidate
+      // at all, so no amount of continuity can walk the head onto it.
+      .filter(a => Math.abs(a) * RAD_TO_DEG <= MAX_UNTILT_DEG);
+    if (!roots.length) return;
+    // THE CONTINUITY: nearest the branch this clip is already on. Only the
+    // first corrected frame falls back to "nearest zero".
+    const ref = prevPsi === null ? 0 : prevPsi;
+    let psi = roots[0];
+    for (const r of roots) {
+      if (Math.abs(wrap(r - ref)) < Math.abs(wrap(psi - ref))) psi = r;
+    }
+    prevPsi = psi;
     rotation.setFromAxisAngle(roll, psi);
     worldQuaternion.premultiply(rotation);
   };
@@ -208,12 +281,43 @@ function clampPostureImpl(clip, targetRest, opts) {
       if (name === 'Head') {
         probe.copy(headfront.p).applyQuaternion(world).normalize();
         const gazeSag = sagittal(probe);
-        const gazeDelta = gazeSag - gazeSagBind;
+        // B22 — THE ONE THAT ACTUALLY BIT. The gaze ceiling is 0.34 deg, so
+        // this delta is the tightest clamp in the file and the raw subtraction
+        // of two atan2 readings made it the loudest: one branch crossing turned
+        // `gazeDelta` into ~358 and premultiplied most of a full turn onto the
+        // head. Wrapped, the correction stays the few degrees it is meant to be.
+        const gazeDelta = wrapDeg(gazeSag - gazeSagBind);
         const gazeTargetDelta = Math.sign(gazeDelta)
           * softClampMax(Math.abs(gazeDelta), gazeEpsilonDeg, gazeKneeDeg);
-        const gazeTarget = gazeSagBind + gazeTargetDelta;
-        if (Math.abs(gazeTarget - gazeSag) > 1e-6) {
-          rotation.setFromAxisAngle(lateral, (gazeSag - gazeTarget) * DEG_TO_RAD);
+        // B22, RESIDUAL — READ THIS BEFORE CAPPING THIS CORRECTION.
+        // Traced frame by frame on a333 (the Intern's and Skip Hartley
+        // Unhinged's stance):
+        //
+        //   frame   114     115     116     117     118      119      120
+        //   gazeSag 114.63  122.02  137.06  171.07  -144.15  -120.66  -110.44
+        //
+        // The authored gaze sweeps through near-vertical at up to 45 deg per
+        // 30 fps frame, and crosses the atan2 branch cut between 117 and 118 —
+        // which `wrapDeg` above now absorbs, and that half IS fixed. Against
+        // the 0.34 deg gaze ceiling the rule still asks for an 81 deg
+        // correction on one frame and 126 on the next, and the 45 deg
+        // difference between them is the residual snap: the retargeted head
+        // moves 1.85 deg between those two keys and the clamped head 47.75.
+        //
+        // A CAP HERE WAS TRIED AND MUST NOT BE SHIPPED AS-IS. Capping the
+        // correction at 12 deg with a smoothstep hand-off does fix the snap
+        // (a333 48.41 -> 11.42 deg) but it takes tools/meshy-spine-gate.mjs
+        // from 2 FAILs to 14 — the gate's `gaze <= 0.010` discriminant is
+        // measuring precisely the pin the cap removes, and it breaks on
+        // alex_it, brand_consultant, chief_of_restructuring,
+        // client_m_elder/heavy, compliance, firm_partner, intern and isaiah.
+        // The gaze gate and this stance clip are in genuine tension; resolving
+        // it is a casting/clip decision, not a line change (HANDOFF §2 item 3
+        // already offers swaps for this class). Left named, with a
+        // reproduction, rather than traded for a worse number elsewhere.
+        const gazeCorrection = gazeDelta - gazeTargetDelta;
+        if (Math.abs(gazeCorrection) > 1e-6) {
+          rotation.setFromAxisAngle(lateral, gazeCorrection * DEG_TO_RAD);
           world.premultiply(rotation);
         }
         untiltHead(world);
