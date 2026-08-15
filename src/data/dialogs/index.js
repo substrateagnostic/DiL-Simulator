@@ -672,7 +672,15 @@ export const DIALOGS = {
   alex_it_router: [
     /* 0 */ { type: 'text', speaker: 'Alex from IT', text: "Hey. I've got a couple things going on. What do you want to talk about?" },
     /* 1 */ { type: 'choice', speaker: 'Alex from IT', prompt: "What's on your mind?", choices: [
-      { text: "You look like you're about to combust. What is it?", next: 2 },
+      // B-list "router self-contradiction". Node 0 has Alex calm and offering a
+      // menu ("I've got a couple things going on"), and the story option had
+      // Andrew reading a panic that is not on screen — a state the player had
+      // just been told Alex was not in. (That string was itself a previous
+      // fix: it replaced an option referencing a conversation that never
+      // happened, HANDOFF item 5.) Reworded through the prose law to pick the
+      // serious branch out of the two Alex just offered, without asserting
+      // anything about him. Target unchanged.
+      { text: "What's the serious one?", next: 2 },
       { text: 'Got any IT jobs for me?', next: 5 },
     ]},
     /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_story_chosen', value: true, next: 3 },
@@ -2187,7 +2195,17 @@ export const DIALOGS = {
   act5_trigger: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "You have the charter. The evidence. The team. It's time to confront Meredith." },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "But when you reach the cubicle farm, everything has changed." },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "New people are everywhere. Suits you've never seen. Clipboards. Tablets. Earpieces." },
+    // B18 — THE COUNT-NOT-MOOD LAW, INVERTED. This line promised a floor full of
+    // strangers and the room contained the same coworkers it always did: no
+    // NPC in cubicle_farm is conditional on this act band, and the only thing
+    // F-10 act dressing actually adds there is TWO fileCabinetLow at the north
+    // end. It also spent the Restructuring trio's entrance four lines before
+    // they make it. Adding two or three unfamiliar-suit NPCs was the other
+    // option and was rejected: they would need ids, configs, dialogs (a mute
+    // body is a false affordance) and a cross-room census re-run, and they
+    // would deflate the blockade beat that arrives seconds later. Redrafted
+    // through the prose law to claim only the two cabinets that are there.
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The filing cabinets near the north wall are open and half-emptied. Someone has been through the department's records with a system and without introductions." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "They're calling themselves the 'Restructuring Team.' Meredith brought them in. They're dismantling our systems as we speak." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "One of them tried to reformat my server. MY server. I may have... physically intervened." },
     /* 5  */ { type: 'text', speaker: 'Diane', text: "Andrew, Meredith's moved to the Board Room. She's calling an emergency vote to dissolve the trust department." },
@@ -2351,7 +2369,12 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Right here in the server room. The rack labeled 'PATCH-3' — it has a sticker that says 'DO NOT TOUCH 4ever'. That's the one." },
     /* 7  */ { type: 'action', action: 'set_flag', flag: 'alex_badge_audit_started', value: true, next: 8 },
     /* 8  */ { type: 'end' },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. No worries. The logs aren't going anywhere. Find me when you can." },
+    // B-list — THE "LATER." FALL-THROUGH. This node had no `next`, so declining
+    // fell straight into node 10, the ALREADY-STARTED nag ("Did you check
+    // PATCH-3 yet?"). Saying no got you chased as though you had said yes, and
+    // it read as Alex not listening, which is the opposite of the character.
+    // Routed to the `end` at 11.
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. No worries. The logs aren't going anywhere. Find me when you can.", next: 11 },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Did you check PATCH-3 yet? The rack with the 'DO NOT TOUCH' sticker — right over there." },
     /* 11 */ { type: 'end' },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Thanks again for the patch panel pull. I'll never forget where I was when I confirmed Meredith was the source. The break room. Eating a peanut." },
@@ -2371,8 +2394,16 @@ export const DIALOGS = {
   ],
 
   alex_badge_audit_return: [
-    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 12, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'alex_has_patch_log', ifTrue: 2, ifFalse: 11 },
+    // B-list (act-flag hunt, flagged-not-fixed) — THE NODE SWAP. Node 12 is the
+    // NOT-YET-DONE nudge ("Did you find PATCH-3?") and node 13 is the DONE line
+    // ("Still riding the high"), and they were wired the wrong way round: a
+    // player who had finished the audit got asked to go and start it, and node
+    // 13 was unreachable — the dead node HANDOFF D4 records. Meanwhile the
+    // has-not-pulled-the-log branch pointed at node 11, an `end`, so talking to
+    // Alex mid-quest opened an empty box. Both are EDGE repairs: no node moves,
+    // no node is added, every index stays where it was.
+    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 13, ifFalse: 1 },
+    /* 1  */ { type: 'condition', flag: 'alex_has_patch_log', ifTrue: 2, ifFalse: 12 },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Got the patch log. Cable 47 — 'M. SVP'. Meredith." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "She physically ran a cable from her office to the badge issuer. That's not a corporate workflow. That's a CONSPIRACY." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Joe was here, huh. Joe is a maintenance guy who retired in 2019. So Meredith had this set up for at least four years." },
@@ -2971,7 +3002,15 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Go take a look. Long blink = dash, short blink = dot. See what you can read." },
     /* 7  */ { type: 'action', action: 'set_flag', flag: 'anomaly_started', value: true, next: 8 },
     /* 8  */ { type: 'end' },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Did you check rack C?" },
+    // B-list — THE ANOMALY AUTO-COMPLETED ITSELF. This node had no `next`, so
+    // it fell into node 10 ("okay I got impatient. I decoded it myself") and ran
+    // the whole payoff chain — quest_anomaly_347_complete, +250 XP, +3 SPD —
+    // the first time the player came back to Alex having done nothing at all.
+    // The HUD was meanwhile still printing "Find the Morse code pattern in
+    // server rack C", so the objective and the reward disagreed about whether
+    // the quest existed. Routed through an APPENDED gate at 21, per the
+    // never-insert-into-the-middle law.
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Did you check rack C?", next: 21 },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "...okay I got impatient. I decoded it myself. It says 'TRUST NO ALGORITHM.' Over and over. Every night. For eight years." },
     /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I traced the origin further. It's not coming from the Caymans — it bounces TO the Caymans and BACK. The source is inside this building." },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "I think the building itself has been sending this warning. Which is insane. But also look around you." },
@@ -2983,6 +3022,14 @@ export const DIALOGS = {
     /* 18 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The 3:47 AM Anomaly. +250 XP. SPD +3 permanently.", next: 19 },
     /* 19 */ { type: 'end' },
     /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "The signal went dark after we decoded it. Whatever was warning us knows we got the message.", next: 19 },
+    // ── APPENDED (B-list): the gate node 9 now routes through. ──────────────
+    // Alex racing Andrew to the answer is in character, and node 10 stays
+    // exactly as authored — he simply cannot do it before Andrew has been to
+    // the rack. `morse_decoded` is the same flag the HUD reads to switch this
+    // quest's objective from "find it" to "return to Alex", so the reward path
+    // and the objective now agree by construction.
+    /* 21 */ { type: 'condition', flag: 'morse_decoded', ifTrue: 10, ifFalse: 22 },
+    /* 22 */ { type: 'text', speaker: 'Alex from IT', text: "Then go look. Rack C. The one with the restraining order taped to it.", next: 8 },
   ],
 
   // Morse code interactable on server rack C
@@ -3372,6 +3419,23 @@ export const DIALOGS = {
   // ==========================================================================
   // ACT 6: FIDUCIARY UPRISING — NPC Dialogs
   // ==========================================================================
+
+  // SKIP, ACT 5 (B-list "skip_act5 neutral fallback"). He had no act-5 dialog,
+  // and the act ladder in ExplorationState had no act-5 rung either, so for the
+  // whole of Act 5 — the act where Meredith has locked the building down and
+  // Andrew is fighting up through her team — Skip answered with the generic
+  // `neutral_skip` line. Both halves are fixed: the rung exists now, and this is
+  // what it reaches. A NEW TREE, so no existing tree is edited to hold it.
+  // Four lines, no choices, no rewards, no flags: he is between his Act 4
+  // resolve and the board meeting, rehearsing in an empty office while other
+  // people carry the thing he says he built.
+  skip_act5: [
+    /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Good. Come in. Close the — actually, leave it open. Closed doors are a bad optic right now. I read that in a book called Radical Transparency and the Open-Plan Soul." },
+    /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "I'm writing something. For the board. I've been writing it for two hours and I have eleven words and four of them are \"stakeholder.\" So that's going well." },
+    /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "You should get back out there. I'd come with you, but I think right now my job is to sit here and figure out what this department actually was, so I can stand up and say it to a room full of people who already decided it wasn't anything." },
+    /* 3  */ { type: 'text', speaker: 'Skip Hartley', text: "Eleven words, Andrew. I'll make them count. Or I'll get to twelve. Either way — go. I'll be here. That's what I'm good at." },
+    /* 4  */ { type: 'end' },
+  ],
 
   skip_act6: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Close the door." },

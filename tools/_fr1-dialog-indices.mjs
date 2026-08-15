@@ -16,12 +16,18 @@ import { DIALOGS as NOW } from '../src/data/dialogs/index.js';
 const HEAD = (await import('file:///C:/Users/agall/AppData/Local/Temp/claude/C--Users-agall-projects-DiL-Simulator/fa0e7e41-3b95-493d-99f2-c721aa26a910/scratchpad/head-dialogs.js')).DIALOGS;
 let bad = 0;
 const keysNow = Object.keys(NOW), keysHead = Object.keys(HEAD);
-if (keysNow.length !== keysHead.length) { console.log(`tree COUNT changed ${keysHead.length} -> ${keysNow.length}`); bad++; }
+// A NEW tree is additive and legal; a REMOVED tree is not (checked below).
+for (const k of keysNow) if (!HEAD[k]) console.log(`new tree (legal): ${k}`);
 for (const k of keysHead) {
   const a = HEAD[k], b = NOW[k];
   if (!b) { console.log(`tree removed: ${k}`); bad++; continue; }
-  if (a.length !== b.length) { console.log(`LENGTH CHANGED ${k}: ${a.length} -> ${b.length}`); bad++; continue; }
-  for (let i = 0; i < a.length; i++) {
+  // A tree that GREW AT THE END is the append-only law being obeyed, not
+  // broken — that is the prescribed way to add a node (see alex_it_act3 node
+  // 23). It is only a violation if an index that already existed moved, which
+  // the per-index loop below tests. Shrinking is always a violation.
+  if (b.length < a.length) { console.log(`LENGTH SHRANK ${k}: ${a.length} -> ${b.length}`); bad++; continue; }
+  if (b.length > a.length) console.log(`appended (legal): ${k} ${a.length} -> ${b.length} nodes`);
+  for (let i = 0; i < a.length; i++) {   // existing indices only
     const ta = a[i]?.type, tb = b[i]?.type;
     // The one deliberate type change: poster_cf_5's broken `type:'Andrew'`.
     if (ta !== tb && !(k === 'poster_cf_5' && ta === 'Andrew' && tb === 'text')) {

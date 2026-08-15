@@ -3151,6 +3151,15 @@ export class ExplorationState {
       && isDialogValidForQuestStage(this.player, `${id}_act${n}`);
     if (act >= 7 && actRow(7) && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
     if (act >= 6 && actRow(6) && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
+    // THE MISSING RUNG (B-list). This ladder had rows for acts 7, 6, 4, 3 and 2
+    // and none for 5, so any dialog named `<npc>_act5` was structurally
+    // unreachable — a trap rather than a bug while no such dialog existed, and
+    // the reason Skip answers with `neutral_skip` through the whole of Act 5.
+    // Adding the rung costs nothing for a character with no act-5 scene
+    // (`actRow` returns falsy and it falls straight through) and makes the
+    // ladder continuous, so the next author to write one does not have to
+    // rediscover this the way the orphan-scenes dig did.
+    if (act >= 5 && actRow(5) && !this.player.getFlag(`read_${id}_act5`)) return `${id}_act5`;
     if (act >= 4 && actRow(4) && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
     if (act >= 3 && actRow(3) && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
     // skip_act2 and janet_act2 both reference the Karen binder incident — hold them until Karen is defeated
@@ -3167,6 +3176,7 @@ export class ExplorationState {
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
     if (act >= 7 && actRow(7)) return `${id}_act7`;
     if (act >= 6 && actRow(6)) return `${id}_act6`;
+    if (act >= 5 && actRow(5)) return `${id}_act5`;
     if (act >= 4 && actRow(4)) return `${id}_act4`;
     if (act >= 3 && actRow(3)) return `${id}_act3`;
     if (act >= 1 && actRow(2)) return `${id}_act2`;

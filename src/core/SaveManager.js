@@ -92,6 +92,16 @@ const FLAGS_OF_RECORD = [
   // the flags their recruitment actually writes. The two dead keys stay,
   // because removing a key is the one thing this contract forbids.
   'alex_it_recruited', 'isaiah_recruited',
+  // ADDITIVE (B-list, act-flag hunt flagged-not-fixed): `server_secret_choice`
+  // is a three-way moral pick — 'report' / 'investigate' / 'ignore' — written
+  // by three action nodes in `alex_server_secret` and read BY NOTHING, repo
+  // wide. It is the only branch in Alex's side content where Andrew decides
+  // what kind of person he is about the thing he has found, and it evaporated
+  // the moment it was made. This is exactly what the carry block is for: a
+  // small, stable, hand-readable record a later chapter reads. It is a STRING
+  // flag rather than a latch, which is why the copy below had to stop coercing
+  // to `true` — see the comment there.
+  'server_secret_choice',
   // Renovations — the building's physical state at handoff
   'renovation_espresso_bar', 'renovation_catering_fridge',
   'renovation_ergonomic_workstations', 'renovation_projection_wall',
@@ -244,7 +254,13 @@ class SaveManagerClass {
     const flags = data?.flags || {};
     const stats = data?.stats || {};
     const carriedFlags = {};
-    for (const k of FLAGS_OF_RECORD) if (flags[k]) carriedFlags[k] = true;
+    // The VALUE is preserved, not coerced. This used to be `= true`, which was
+    // right while every flag of record was a latch — but `server_secret_choice`
+    // is a three-way string ('report' / 'investigate' / 'ignore') and flattening
+    // it to `true` would carry that Andrew chose SOMETHING and throw away what.
+    // Every existing key is boolean, so every card already exported is
+    // bit-identical under this line.
+    for (const k of FLAGS_OF_RECORD) if (flags[k]) carriedFlags[k] = flags[k] === true ? true : flags[k];
 
     const ending = ENDING_FLAGS.find(f => flags[f]) || null;
 
