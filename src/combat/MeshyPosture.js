@@ -207,19 +207,28 @@ function clampPostureImpl(clip, targetRest, opts) {
   // head upside down, and because it is baked into the clip it replays at
   // exactly the same moment every time that clip plays.
   //
-  // Two guards, and they are independent on purpose:
-  //   CONTINUITY — after the first frame, choose the root nearest the root this
-  //     clip chose last frame, not the one nearest zero. That is what makes the
-  //     correction a continuous curve instead of a branch lottery.
-  //   A CEILING — reject any root beyond MAX_UNTILT_DEG. This is the structural
-  //     half: untilting a head is a few degrees of cant, so a solution of 40 deg
-  //     or more is not the answer to the question being asked, whatever the
-  //     continuity pass thinks. With this in place the head CANNOT invert even
-  //     if a future edit reintroduces a discontinuity.
-  // Frames where the solve fails already return without rolling; `prevPsi` is
-  // deliberately NOT reset there, so the next successful frame still resumes on
-  // the branch the clip was on before the gap.
-  const MAX_UNTILT_DEG = 35;
+  // THE FIX IS CONTINUITY, AND ONLY CONTINUITY — after the first frame, choose
+  // the root nearest the root this clip chose last frame, not the one nearest
+  // zero. That is what makes the correction a continuous curve instead of a
+  // branch lottery. Frames where the solve fails already return without
+  // rolling; `prevPsi` is deliberately NOT reset there, so the next successful
+  // frame still resumes on the branch the clip was on before the gap.
+  //
+  // A MAGNITUDE CEILING WAS TRIED HERE AND MUST NOT COME BACK. `MAX_UNTILT_DEG
+  // = 35` filtered the roots array before selection, so a frame whose two roots
+  // both sat outside the budget got NO roll while its neighbours got one — the
+  // guard manufactured the exact discontinuity it was added to prevent.
+  // Measured on the Compliance Officer's combat stance (a29): worst
+  // frame-to-frame head step 3.28 deg without the ceiling, 36.14 deg with it,
+  // at frame 77 of 227 — a looping idle on a story boss, so the jerk replays at
+  // the same instant every loop. It bought nothing in return: the case it was
+  // added for (intern / skip_boss on a333) reads 47.75 deg either way, i.e. the
+  // ceiling's entire contribution was the regression. A budget is meaningful on
+  // a value that is CLAMPED; on a value that is SELECTED it just deletes the
+  // selection. Full row-by-row diff: screenshots/fix-round-1/untilt-fix2.json
+  // against untilt-before.json, and `node tools/_fr1-untilt.mjs` now reports
+  // per-row deltas against that baseline down to 15 deg so a 36 deg step can
+  // never again sit inside the probe's own blind spot.
   let prevPsi = null;
   const untiltHead = (worldQuaternion) => {
     direction.copy(targetRest.get('head_end').p).applyQuaternion(worldQuaternion).normalize();
@@ -248,11 +257,9 @@ function clampPostureImpl(clip, targetRest, opts) {
     const alpha = Math.atan2(Q, P);
     const acos = Math.acos(THREE.MathUtils.clamp(-A / R, -1, 1));
     const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
-    const roots = [wrap(alpha + acos), wrap(alpha - acos)]
-      // THE CEILING first: a root outside the untilt budget is not a candidate
-      // at all, so no amount of continuity can walk the head onto it.
-      .filter(a => Math.abs(a) * RAD_TO_DEG <= MAX_UNTILT_DEG);
-    if (!roots.length) return;
+    // Both roots are always candidates. See the note above on why filtering
+    // them by magnitude is not an option.
+    const roots = [wrap(alpha + acos), wrap(alpha - acos)];
     // THE CONTINUITY: nearest the branch this clip is already on. Only the
     // first corrected frame falls back to "nearest zero".
     const ref = prevPsi === null ? 0 : prevPsi;
