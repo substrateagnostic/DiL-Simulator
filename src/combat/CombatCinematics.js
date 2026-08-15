@@ -220,6 +220,13 @@ const ENEMY_ATTACK = [
   // the alternative was widening the a214 clip trim, which would have made the
   // meshy-spine-gate re-run mandatory and is a bigger, riskier change for the
   // same 120 ms.
+  // FIX ROUND 2 — MEASURED AFTER, not asserted. `node tools/_fr2-b21.mjs`
+  // steps this timeline deterministically off the live animators' contactMs
+  // and reports attacker-on-camera at the cut: female (a214, karen) 293 ->
+  // 413 ms, male (a191, chad) 426 -> 546 ms. Replayed on the pre-fix cut the
+  // instrument returns 293 / 426 bit-exact, which is what makes it the hunt's
+  // method rather than a new one. Taking the body's last in-frame projection
+  // instead of the cut frame reads 417 -> 550 and 567 -> 683.
   { t: 0.48, cam: 'victim', ease: 18, hitstop: 0.06 },               // hard CUT/reverse to Andrew, 180ms after the blow
   // Impact ACCENT — a hit-spark burst ON the victim's chest + a punch-in, timed so
   // it is still FRESH on the post-cut impact frame (~0.46) instead of firing at the
