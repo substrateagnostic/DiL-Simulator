@@ -542,7 +542,15 @@ console.log(`floor band REACTIONS  ${mn(r => r.verdict.reactFloorLo).toFixed(4)}
 console.log(`clip build            avg ${(data.reduce((a, r) => a + r.clipMs, 0) / data.length).toFixed(1)}ms  ground avg ${(data.reduce((a, r) => a + r.groundMs, 0) / data.length).toFixed(1)}ms`);
 console.log(`track integrity       ${data.filter(r => r.verdict.tracksOk).length}/${data.length} characters with 25 tracks and 0 dropped in every role`);
 console.log(`idle posture-clamped  ${data.filter(r => r.verdict.clamped).length}/${data.length}`);
-console.log(`FAILURES              ${data.filter(r => !r.verdict.pass).map(r => `${r.id} [${r.verdict.reasons.join('; ')}]`).join(', ') || 'none'}`);
+// COUNT LINE FIRST, and the summary label deliberately does NOT begin with the
+// word FAIL. Fix round 1's commit message reported "2 FAILs baseline" when
+// there is one failing character: `grep -c '^FAIL'` counted the per-character
+// row AND this summary line. A number in a commit message that a grep can be
+// off by one on is a number nobody can reconcile — so the count is printed
+// explicitly and the label is `verdict:`.
+const failing = data.filter(r => !r.verdict.pass);
+console.log(`failing characters    ${failing.length}/${data.length}`);
+console.log(`verdict:              ${failing.map(r => `${r.id} [${r.verdict.reasons.join('; ')}]`).join(', ') || 'none'}`);
 
 // ── THE CASTING SLATE, as shipped. One row per character, the clip actually
 // bound to each role and the beat multiplier it plays at.
