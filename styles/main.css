@@ -40,6 +40,28 @@ html, body {
   pointer-events: auto;
 }
 
+/* B12 — CLICK-TO-ADVANCE TURNED THE DIALOG TEXT BLUE.
+   The dialog box is click-to-advance and click-to-skip-typewriter, so a player
+   who taps twice quickly (or drags a pixel while clicking) makes the browser
+   do what a browser does to a run of selectable text: paint the native
+   selection highlight over it. Nothing in the UI layer is text the player is
+   ever meant to select, so selection is off for the whole overlay rather than
+   patched onto the one surface that got reported.
+   THE ONE EXCEPTION is real form controls — MenuState's Transfer Save panel is
+   a textarea holding a save code the player MUST be able to select and copy,
+   and turning selection off there would break the feature. */
+#ui-overlay {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#ui-overlay input,
+#ui-overlay textarea,
+#ui-overlay [contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 /* Retro scanline effect (subtle) */
 #game-container::after {
   content: '';

@@ -635,6 +635,7 @@ export class MenuState {
             ${row(2, 'Text Speed:', speedLabel)}
             ${row(3, '1998 MODE:', onOff(S.retro) + '<span style="font-size:15px;color:#888;"> (off reduces flicker)</span>')}
             ${row(4, 'Screen Shake:', onOff(S.shake))}
+            ${row(5, 'Light Flicker:', onOff(S.flicker !== false) + '<span style="font-size:15px;color:#888;"> (fluorescent hum)</span>')}
             <div style="font-size:16px;color:#888;margin-left:8px;">↑↓ select &nbsp; ← → adjust</div>
           </div>
           <div class="menu-item" style="margin-top:16px;" id="audio-back">Back</div>
@@ -1383,7 +1384,7 @@ export class MenuState {
 
       const S = this._settings;
       if (S && (up || down)) {
-        this._audioFocus = (this._audioFocus + (down ? 1 : 4)) % 5;
+        this._audioFocus = (this._audioFocus + (down ? 1 : 5)) % 6;
         AudioManager.playSfx('cursor');
       }
       if (S && (left || right)) {
@@ -1399,6 +1400,9 @@ export class MenuState {
           }
           case 3: S.retro = !S.retro; break;
           case 4: S.shake = !S.shake; break;
+          // B9 — the player-facing answer to the cubicle-farm flicker note.
+          // The shipped look is unchanged (default ON); this is a switch.
+          case 5: S.flicker = S.flicker === false; break;
         }
         import('../core/Settings.js').then(({ applySettings, saveSettings }) => {
           applySettings();

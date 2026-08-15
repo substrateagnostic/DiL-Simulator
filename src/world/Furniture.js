@@ -462,12 +462,27 @@ export const Furniture = {
   // Institutional-green carpet runner — the Lumon identity as an architectural
   // SURFACE (Severance green against the clinical white shell). Matte, flat,
   // non-blocking; `variant` = run length in tiles (along +X, default 6).
+  // B8 — "green strip mid-screen" (playtest, cubicle farm). The runner is
+  // AUTHORED, not an artifact: it is the Lumon identity as an architectural
+  // surface. But it was a flat unlit `Materials.custom` plane 10 mm above the
+  // floor, and at the cubicle farm's dirIntensity 1.22 that toon material's lit
+  // band came back at mean luma 92 against a floor in the 50s — a bright mint
+  // stripe with no material at all, which is why it read as an OVERLAY rather
+  // than as carpet. Two changes, both about material, none about layout:
+  //   • the green goes down to a deeper, less saturated institutional shade
+  //     (0x3f7d57 -> 0x2f5f43) so the lit band lands near the floor's value;
+  //   • the band gets an actual carpet weave, so it has texture where it used
+  //     to have none. It is a floor covering; it should look like one.
+  // The bone edge stripes are unchanged in colour and moved 3 mm further off
+  // the band (1 mm of separation between two coplanar quads was asking for it).
   severanceRunner(variant) {
     const group = new THREE.Group();
     const len = (typeof variant === 'number' && variant > 0) ? variant : 6;
     const band = new THREE.Mesh(
       new THREE.PlaneGeometry(len, 1.6),
-      Materials.custom(0x3f7d57),   // institutional Lumon green
+      Materials.carpetPattern
+        ? Materials.carpetPattern(Math.max(1, Math.round(len)), 2, 0x2f5f43)
+        : Materials.custom(0x2f5f43),
     );
     band.rotation.x = -Math.PI / 2;
     band.position.y = 0.01;
@@ -478,7 +493,7 @@ export const Furniture = {
     for (const dz of [-0.72, 0.72]) {
       const edge = new THREE.Mesh(new THREE.PlaneGeometry(len, 0.09), edgeMat);
       edge.rotation.x = -Math.PI / 2;
-      edge.position.set(0, 0.011, dz);
+      edge.position.set(0, 0.014, dz);
       group.add(edge);
     }
     return group;

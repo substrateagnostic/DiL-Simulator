@@ -2050,6 +2050,23 @@ export const ROOMS = {
     floorPattern: 'hardwood',
     walls: true,
     lighting: { ambient: 0xe0c0e8, ambientIntensity: 0.45, dir: 0xcc99dd, dirIntensity: 0.6 },
+    // B19 — THE 10,000,000 AUM RENOVATION USED TO BRICK UP THE GLASS.
+    // `penthouse` carries two north-wall window runs; this layout, which
+    // `_resolveRoomId` swaps in on `renovation_penthouse` and which is the room
+    // the player actually inhabits post-game, carried NO `windows` block at
+    // all. So the most expensive purchase in the game removed the
+    // floor-to-ceiling glass that `penthouse_arrival` narrates as the room's
+    // defining feature ("Floor-to-ceiling windows reveal the Minneapolis
+    // skyline"), and the wing doors opened onto a sealed box.
+    // Three runs on the 22-wide north wall, clear of the analytics-wing exit at
+    // x 8-9 and of the server racks standing at x 16-18: 11 tiles of glass
+    // against the original's 8 of 16, so the expanded suite reads as MORE
+    // window, which is what paying for it should buy.
+    windows: [
+      { wall: 'north', from: 2,  to: 6,  sky: 'night' },
+      { wall: 'north', from: 10, to: 14, sky: 'night' },
+      { wall: 'north', from: 19, to: 20, sky: 'night' },
+    ],
     lights: [
       // Purple-blue wash across larger space
       { type: 'point', color: 0x4444ff, intensity: 0.7, x: 4,  y: 2.5, z: 4,  distance: 10 },

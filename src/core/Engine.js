@@ -3,7 +3,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { TiltShiftPass } from '../effects/TiltShiftPass.js';
-import { createVoidBackdrop, RECOMMENDED_FOG } from '../effects/VoidBackdrop.js';
+import { createVoidBackdrop, createDayBackdrop, DAY_SKY_KEYS, RECOMMENDED_FOG } from '../effects/VoidBackdrop.js';
 import { installFastTransparency } from '../effects/N8AOFastTransparency.js';
 import { Furniture } from '../world/Furniture.js';
 import { batchStatics } from '../world/Room.js';
@@ -306,6 +306,18 @@ class EngineClass {
   // (applyRoomLighting).
   setTimeOfDay(key) {
     this._todKey = key;
+    // B20 — the sky is part of the time of day. It never used to be: the
+    // obsidian void was installed once at init and every act stood under it,
+    // which is why acts 3-4 read as night no matter what the tower palette
+    // said. Built lazily and cached, so a save that never leaves the night
+    // acts never pays for the day canvas.
+    const wantsDay = DAY_SKY_KEYS.has(key);
+    if (this.scene && wantsDay !== this._daySkyOn) {
+      if (wantsDay && !this._daySkyTex) this._daySkyTex = createDayBackdrop();
+      if (!this._nightSkyTex) this._nightSkyTex = this.scene.background;
+      this.scene.background = wantsDay ? this._daySkyTex : this._nightSkyTex;
+      this._daySkyOn = wantsDay;
+    }
     if (this.cityBackdrop) this.cityBackdrop.setTimeOfDay(key);
     else this._pendingTimeOfDay = key;
     if (this._gradePass) this._gradePass.setGrade(key);
@@ -725,6 +737,8 @@ class EngineClass {
     this.scene.add(ambient);
     this._ambient = ambient;
     this._flicker = false;
+    this._roomWantsFlicker = false;   // B9 — the room's authored property
+    this._flickerEnabled = true;      // B9 — the player's switch
     this._baseDirIntensity = 1.15;
 
     // Main directional light (fluorescent ceiling) — steep, near-vertical:
@@ -769,8 +783,30 @@ class EngineClass {
       this._dirLight.intensity = c.dirIntensity ?? 1.15;
       this._baseDirIntensity = this._dirLight.intensity;
     }
-    this._flicker = !!c.flicker;
+    this._roomWantsFlicker = !!c.flicker;
+    this._flicker = this._roomWantsFlicker && this._flickerEnabled !== false;
     this.invalidateShadows();
+  }
+
+  /**
+   * B9 — the player-facing flicker switch (Settings > Light Flicker).
+   *
+   * Two flags, deliberately: `_roomWantsFlicker` is the ROOM's authored
+   * property and is never overwritten, `_flicker` is what the frame loop reads.
+   * Collapsing them into one would make the setting destructive — turning the
+   * switch off and back on inside a flickering room would leave that room
+   * permanently steady until the player walked out and back in.
+   *
+   * Turning it off also restores the base intensity immediately, so the room
+   * does not stay parked on whatever fraction of a buzz-dip the last frame
+   * happened to land on.
+   */
+  setFlickerEnabled(on) {
+    this._flickerEnabled = !!on;
+    this._flicker = !!this._roomWantsFlicker && this._flickerEnabled;
+    if (!this._flicker && this._dirLight && this._baseDirIntensity) {
+      this._dirLight.intensity = this._baseDirIntensity;
+    }
   }
 
   // ── Room FX — the interior lighting design layer ─────────────────────

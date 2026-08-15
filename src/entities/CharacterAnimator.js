@@ -268,12 +268,27 @@ export class CharacterAnimator {
       const legLen = this.group.legLength ?? CHAR.LEG_HEIGHT;
       const hasKnee = !!(this.group.leftLeg && this.group.leftLeg.knee);
       this.group.position.y = hasKnee ? (SEAT_Y - legLen) : Math.max(0.02, SEAT_Y - legLen);
-      // Thighs go horizontal at the hip; knees fold the shins back down.
-      if (this.group.leftLeg)  this.group.leftLeg.rotation.x  = Math.PI / 2;
-      if (this.group.rightLeg) this.group.rightLeg.rotation.x = Math.PI / 2;
+      // B6 — THE THIGHS POINTED BACKWARDS. Playtest note: "sitting NPCs,
+      // broken legs pose."
+      //
+      // The leg's own down-axis is local -Y and `rotation.x` swings it in the
+      // YZ plane: Rx(a) sends (0,-1,0) to (0, -cos a, -sin a). At +PI/2 that is
+      // (0, 0, -1) — straight BACKWARD, because CharacterBuilder puts the nose
+      // at local +z. So every seated body in the game folded its thighs into
+      // the chair back and its shins down behind the seat. Measured on the live
+      // rig, dot(thigh direction, body forward) = -1.000, i.e. exactly
+      // opposite, on every sitting NPC.
+      //
+      // -PI/2 sends the thigh to (0, 0, +1) — forward, over the seat — and the
+      // knee's +PI/2 then returns the shin to straight down, so the ankle lands
+      // where it already did (0.066 m above the floor, which is the shoe). One
+      // sign each; nothing about seat height, hip drop or the +-40 deg shoulder
+      // clamp moves.
+      if (this.group.leftLeg)  this.group.leftLeg.rotation.x  = -Math.PI / 2;
+      if (this.group.rightLeg) this.group.rightLeg.rotation.x = -Math.PI / 2;
       if (hasKnee) {
-        this.group.leftLeg.knee.rotation.x  = -Math.PI / 2;
-        this.group.rightLeg.knee.rotation.x = -Math.PI / 2;
+        this.group.leftLeg.knee.rotation.x  = Math.PI / 2;
+        this.group.rightLeg.knee.rotation.x = Math.PI / 2;
       }
       // Arms rest slightly forward
       if (this.group.leftArm)  this.group.leftArm.rotation.x  = 0.2;

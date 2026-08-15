@@ -368,6 +368,22 @@ const SEAT_PROPS = {
   ],
 };
 
+// B11 — the props that are BOLTED TO A WALL and must therefore touch one.
+// Both readable classes and all four decoration classes (the two-wall-art-class
+// ruling), because the defect is geometric and does not care which class the
+// picture is in. `_snapWallArt` slides each of these back onto its wall face.
+// A prop that merely STANDS against a wall (a fileCabinet, a serverRack) is
+// deliberately absent — it has a footprint on the floor and its own placement.
+const WALL_ART_TYPES = new Set([
+  'motivationalPoster', 'executivePoster',
+  'abstractPainting', 'oilPainting', 'grandPainting', 'portraitPainting',
+]);
+
+// Perimeter wall slab thickness. `_buildPerimeterWalls` and `_snapWallArt` both
+// read it; a wall that got thicker with only one of them updated would put every
+// picture in the game back inside the plaster or back in mid-air.
+const WALL_THICKNESS = 0.15;
+
 // Small/decorative items that should NOT block movement.
 // Players can clip through these slightly for smoother pathing.
 const NO_BLOCK = new Set([
@@ -777,7 +793,7 @@ export class Room {
     // shaft has no floating gaps
     const wallDrop = this.floorMinY ? -this.floorMinY : 0;
     const wallHeight = 2.5 + wallDrop;
-    const wallThickness = 0.15;
+    const wallThickness = WALL_THICKNESS;   // see the constant — B11 shares it
     const wallMat = Materials.wall();
 
     // Collect exit positions keyed by wall side
@@ -1366,6 +1382,44 @@ export class Room {
   /**
    * Instantiate all furniture pieces and block their tiles.
    */
+  /**
+   * B11 — slide a wall-mounted picture back until it touches its wall.
+   * See the call site for the measurement and the rationale.
+   *
+   * The wall interior faces are derived from the same two constants
+   * `_buildPerimeterWalls` uses (TILE_SIZE/2 offset, 0.15 slab), never
+   * re-typed as literals, so a change to wall thickness moves both together.
+   */
+  _snapWallArt(obj, type, x, z) {
+    if (!WALL_ART_TYPES.has(type)) return;
+    const north = -TILE_SIZE / 2;                              // interior face, +z side
+    const west = -TILE_SIZE / 2;                               // interior face, +x side
+    const south = (this.data.height - 1) * TILE_SIZE + TILE_SIZE / 2;
+    const east = (this.data.width - 1) * TILE_SIZE + TILE_SIZE / 2;
+
+    const box = new THREE.Box3().setFromObject(obj);
+    const r = ((obj.rotation.y % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+    const near = (a, b) => Math.abs(a - b) < 0.35;              // quarter-turn tolerance
+
+    // theta -> forward (sin, cos). 0 faces south (mounted on the NORTH wall),
+    // PI faces north (SOUTH wall), PI/2 faces east (WEST wall), 3PI/2 faces
+    // west (EAST wall). Same table as the poster-facing law.
+    let axis = null, face = null, sign = 0;
+    if (near(r, 0))                    { axis = 'z'; face = north; sign = +1; }
+    else if (near(r, Math.PI))         { axis = 'z'; face = south; sign = -1; }
+    else if (near(r, Math.PI / 2))     { axis = 'x'; face = west;  sign = +1; }
+    else if (near(r, Math.PI * 1.5))   { axis = 'x'; face = east;  sign = -1; }
+    if (!axis) return;
+
+    const pos = axis === 'z' ? z * TILE_SIZE : x * TILE_SIZE;
+    if (Math.abs(pos - face) > 1.5) return;                    // not a perimeter hang
+    // Distance from the object's own centre to its BACK face along the normal.
+    const back = sign > 0
+      ? (obj.position[axis] - box.min[axis])
+      : (box.max[axis] - obj.position[axis]);
+    obj.position[axis] = face + sign * back;
+  }
+
   _placeFurniture(furnitureList, flags = {}) {
     for (const item of furnitureList) {
       if (item.condition) {
@@ -1398,6 +1452,30 @@ export class Room {
       if (rotation !== undefined && rotation !== 0) {
         obj.rotation.y = rotation;
       }
+
+      // B11 — WALL ART MUST TOUCH THE WALL.
+      //
+      // Room data hangs north-wall art at `z: 0.1` and west-wall art at
+      // `x: 0.1` (the convention CLAUDE.md records). But a perimeter wall slab
+      // is centred at -0.575 with thickness 0.15, so its INTERIOR FACE is at
+      // -0.5 — and a 0.025-deep poster frame placed at 0.1 therefore hangs
+      // 0.5875 m proud of the plaster. Measured across `cubicle_farm`: all
+      // NINE posters, three on the north wall and six on the west, every one of
+      // them floating 58.75 cm into the room with its own contact shadow
+      // underneath. That is the playtest note "posters not visually ON the
+      // wall", and it is every wall-mounted picture in the game, not one room.
+      //
+      // The snap is geometric rather than a table of hand-corrected
+      // coordinates: take the object's own bounding box and slide it along the
+      // wall normal until its BACK face lands on the wall face. So a prop of
+      // any depth lands right, and room data keeps the readable `0.1`
+      // convention it has always used (nothing in `rooms/index.js` moves).
+      //
+      // Guarded three ways: only these types, only when the prop is already
+      // within a tile and a half of that wall line (so a picture deliberately
+      // hung mid-room on a divider is left alone), and only along the axis its
+      // own rotation says it faces.
+      this._snapWallArt(obj, type, x, z);
 
       obj.name = `${type}_${x}_${z}`;
       // Tag for Engine.applyRoomFX (contact-shadow blobs under furniture)

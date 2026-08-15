@@ -84,10 +84,28 @@ export class Player {
       this.position.z = nz;
     }
 
-    // Ride the terrain: lerp toward the current tile's floor height
+    // Ride the terrain: lerp toward the current tile's floor height.
+    //
+    // B5 — THE STAIRS CLIPPED. `heightAt` is a per-tile STEP function (a tread
+    // is a flat slab; the stairwell's rise is 0.42 m per tile), and this lerp
+    // closes only `dt * 12` of the gap per frame — about 20 % at 60 fps, so a
+    // single riser takes ~15 frames to climb. For those frames the body is
+    // BELOW the tread it is standing on and the step passes through Andrew's
+    // shins. Measured walking the flight: worst foot-to-floor delta -0.267 m,
+    // and -0.15 to -0.16 recurring on every riser.
+    //
+    // The remedy is asymmetric on purpose. Going DOWN, lagging above the new
+    // floor for a few frames reads as a step down and is kept exactly as it
+    // was. Going UP, the body may never sink more than SINK_TOLERANCE into the
+    // stair — 6 cm, inside the shoe, invisible at the shipping camera — so the
+    // lerp is clamped rather than sped up. Speeding it up would pop a 0.42 m
+    // rise in three frames on every tread; clamping keeps the soft weight
+    // shift and just refuses to let it pass through the geometry.
+    const SINK_TOLERANCE = 0.06;
     const targetY = tileMap ? tileMap.heightAt(this.position.x, this.position.z) : 0;
     const curY = this.mesh.position.y;
-    const newY = Math.abs(targetY - curY) < 0.01 ? targetY : curY + (targetY - curY) * Math.min(1, dt * 12);
+    let newY = Math.abs(targetY - curY) < 0.01 ? targetY : curY + (targetY - curY) * Math.min(1, dt * 12);
+    if (newY < targetY - SINK_TOLERANCE) newY = targetY - SINK_TOLERANCE;
     this.mesh.position.set(this.position.x, newY, this.position.z);
   }
 

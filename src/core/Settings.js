@@ -15,6 +15,17 @@ export const SETTINGS = {
                      // since the Display Case rebuild (on = also more flicker)
   shake: true,       // combat screen shake
   textSpeed: 1.0,    // multiplier: 1.5 slow, 1.0 normal, 0.5 fast
+  // B9 — FLUORESCENT FLICKER. Four rooms carry `lighting.flicker` and the
+  // buzz-dip (x0.72, p 0.0015/frame, so about once every 11 seconds at 60 fps)
+  // is AUTHORED subliminal dread, not a bug: an earlier perf round halved the
+  // amplitude and QA correctly rejected that as an unsigned look change, and
+  // that ruling stands — the default here is ON and the shipped look is
+  // untouched for every player who does not go looking.
+  // What was missing is that the playtester read it as a defect and had no way
+  // to answer that. This is the answer, and it is additive: a switch, not a
+  // re-tune. It also does real accessibility work — a repeating luminance dip
+  // is exactly the thing photosensitive players need to be able to turn off.
+  flicker: true,
 };
 
 export function loadSettings() {
@@ -40,4 +51,5 @@ export function applySettings() {
   AudioManager.setMusicVolume(SETTINGS.musicVol);
   AudioManager.setSfxVolume(SETTINGS.sfxVol);
   Engine.setRetroPass(SETTINGS.retro);
+  Engine.setFlickerEnabled(SETTINGS.flicker !== false);
 }

@@ -31,21 +31,46 @@ const CENTER = { x: 13, z: 8 };   // rough center of the room play area
 // dusk/night/predawn: full Refn — sodium #ff9a3c and magenta #e94560
 // living in seams and pools against true black. COLOR POPS, never floods.
 const TIME_OF_DAY = {
+  // B20 — THE TWO DAY KEYS NOW MATCH THEIR OWN COMMENT.
+  // The line above has said "pale overcast corporate — slabs as milky
+  // silhouettes" since these keys were written, but the values were
+  // `#2e3540` / `#343b47`: charcoal at ~20 % luma, i.e. night towers. Under
+  // the (until now permanent) obsidian sky the result was a dark skyline with
+  // scattered white window specks, which is a picture of a city at night. It
+  // was misread as one repeatedly, including inside this project.
+  //
+  // Bodies come up to concrete-under-cloud, roofs with them, and the seams and
+  // pools lift enough to stay visible against the brighter slab instead of
+  // vanishing. `lit` goes DOWN, not up: an office window in daylight is a dark
+  // hole or a reflection, never a lamp, and lit windows at noon were half the
+  // reason the plate read as night. Nothing outside `morning` and `afternoon`
+  // is touched — goldenhour, dusk, night and predawn are byte-for-byte as
+  // shipped, because the Refn grade is the look this game was rebuilt for and
+  // it is not what anyone complained about.
+  // THE SECOND HALF OF THE TUNE, and it is the half that matters. A first pass
+  // took the bodies to `#7a8492`/`#8a94a1` and the plate came back mean 39.5 ->
+  // 168.0 with STANDARD DEVIATION 28.5 -> 26.6: brighter and FLATTER, near-white
+  // towers dissolving into a near-white sky, which is the same mistake in the
+  // opposite direction (see the `fixtures: 'none'` lesson in CLAUDE.md — a flat
+  // wash raises mean and drops sd). Overcast daylight is a BRIGHT SKY WITH DARK
+  // SLABS IN FRONT OF IT: the sky carries the light, the towers stay in the
+  // middle greys and keep their edges. Bodies are therefore ~35 % below the sky
+  // value rather than level with it.
   morning: {
-    body0: '#2e3540', body1: '#3f4754', sheen: 0.07,
-    lit: 0.045, winWarm: '#e8eef4', winCool: '#d5e2ec', coolChance: 0.5,
-    seamSodium: '#9fb2c2', seamMagenta: '#9fb2c2', seamAlpha: 0.22,
-    beacon: 0x8a4040, streakA: 0xd6dde4, streakB: 0xb9c2cc, streakOpacity: 0.28,
-    poolA: 0xb9c6d2, poolB: 0xb9c6d2, poolOpacity: 0.10,
-    haze: 0x8a95a4, hazeOpacity: 0.10, roof: '#272e39', sheen2: 0x11141a, fog: 0x353c49,
+    body0: '#525c68', body1: '#69737f', sheen: 0.07,
+    lit: 0.018, winWarm: '#eef4f9', winCool: '#dde8f1', coolChance: 0.5,
+    seamSodium: '#c3cfda', seamMagenta: '#c3cfda', seamAlpha: 0.30,
+    beacon: 0x8a4040, streakA: 0xe6ecf2, streakB: 0xcdd6df, streakOpacity: 0.34,
+    poolA: 0xc6d0da, poolB: 0xc6d0da, poolOpacity: 0.14,
+    haze: 0xb6c0cc, hazeOpacity: 0.16, roof: '#454e59', sheen2: 0x22272e, fog: 0x9aa5b2,
   },
   afternoon: {
-    body0: '#343b47', body1: '#46505e', sheen: 0.09,
-    lit: 0.03, winWarm: '#eef2f6', winCool: '#dde6ee', coolChance: 0.5,
-    seamSodium: '#a8bac9', seamMagenta: '#a8bac9', seamAlpha: 0.18,
-    beacon: 0x8a4040, streakA: 0xdde3e9, streakB: 0xc3cbd4, streakOpacity: 0.24,
-    poolA: 0xc3ced9, poolB: 0xc3ced9, poolOpacity: 0.08,
-    haze: 0x939eac, hazeOpacity: 0.08, roof: '#2c333f', sheen2: 0x12151b, fog: 0x3d4553,
+    body0: '#5d6773', body1: '#75808d', sheen: 0.09,
+    lit: 0.012, winWarm: '#f2f7fb', winCool: '#e4edf5', coolChance: 0.5,
+    seamSodium: '#ced9e3', seamMagenta: '#ced9e3', seamAlpha: 0.26,
+    beacon: 0x8a4040, streakA: 0xedf2f6, streakB: 0xd6dee6, streakOpacity: 0.30,
+    poolA: 0xced8e2, poolB: 0xced8e2, poolOpacity: 0.12,
+    haze: 0xc2ccd6, hazeOpacity: 0.14, roof: '#4f5866', sheen2: 0x262c34, fog: 0xa8b2bf,
   },
   // Night-family seams are ONE warm sodium family (critic: sodium +
   // magenta + cyan + red at once = synthwave, the brief's fail state).
