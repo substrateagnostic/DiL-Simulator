@@ -219,7 +219,7 @@ const runDialog = async (picks = [], max = 90) => {
 };
 
 const ACT6_BASE = {
-  checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+  checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
   read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
   defeated_intern: true, briefing_complete: true, branch_chosen: true,
   karen_defeated: true, defeated_karen: true, chad_defeated: true, grandma_defeated: true,

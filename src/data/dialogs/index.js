@@ -406,8 +406,8 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'You notice the Janitor is wearing a gold Rolex. His mop bucket has a monogram on it.' },
     /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Something on your mind, son?", choices: [
       { text: "That's a nice watch for a janitor.", next: 5 },
-      { text: 'Do you know anything about the Henderson Trust?', next: 10 },
-      { text: 'People say you used to work here. In a different role.', next: 15 },
+      { text: 'What do you know about the account they gave me?', next: 10 },
+      { text: "You don't really seem like a janitor.", next: 15 },
       { text: "Just passing through.", next: 21 },
     ]},
     /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: 'This? Gift from a client. A long time ago. Back when I was... in a different line of work.' },
@@ -1314,7 +1314,14 @@ export const DIALOGS = {
   poster_cf_5: [
     { type: 'text', speaker: 'Narrator', text: '"COLLABORATE. INNOVATE. DISRUPT." — hands stacking on top of each other in a team huddle.' },
     { type: 'text', speaker: 'Narrator', text: 'Small print: "Disruption is encouraged unless it disrupts the existing hierarchy, workflow, budget cycle, or Skip\'s standing lunch order."' },
-    { type: 'Andrew', speaker: 'Andrew', text: 'I\'m going to disrupt my way right out of this building.' },
+    // Was `type: 'Andrew'`, which is not a node type: `_processNode` fell to
+    // its `default:` arm, console.warn'd and advanced, so this line has never
+    // been shown to a player. Producer ruled REINSERT as a proper Andrew text
+    // node. Fixed IN PLACE — the append-only law protects INDICES, and the
+    // type field is the broken part, so no index moves and the authored line
+    // is unchanged. (poster_cf_6 two entries down is the same beat written
+    // correctly; that is what this should have been.)
+    { type: 'text', speaker: 'Andrew', text: 'I\'m going to disrupt my way right out of this building.' },
     { type: 'end' },
   ],
   poster_cf_6: [
@@ -2876,9 +2883,9 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   board_room_table: [
-    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A mahogany conference table that seats twenty. Each chair costs more than a semester of college." },
-    /* 1  */ { type: 'text', speaker: 'Narrator', text: "A crystal decanter sits in the center, empty. A nameplate at the head reads 'RESERVED FOR STRATEGIC OPERATIONS.'" },
-    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The walls are lined with portraits of past branch directors. The Janitor's portrait is conspicuously absent." },
+    /* 0  */ { type: 'text', speaker: 'Narrator', text: "A mahogany conference table that seats fifteen. Each chair costs more than a semester of college." },
+    /* 1  */ { type: 'text', speaker: 'Narrator', text: "A carafe of water sits in the center, full. No one has poured from it. A nameplate at the head reads 'RESERVED FOR STRATEGIC OPERATIONS.'" },
+    /* 2  */ { type: 'text', speaker: 'Narrator', text: "The walls carry two large paintings that mean nothing and cost everything. Between them, a nail hole where something used to hang." },
     /* 3  */ { type: 'end' },
   ],
 

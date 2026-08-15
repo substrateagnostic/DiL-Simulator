@@ -3707,18 +3707,27 @@ export class ExplorationState {
       if (!this.player.getFlag('met_intern'))  missing.push('the Intern');
       if (!this.player.getFlag('met_isaiah'))  missing.push('Isaiah');
       if (!this.player.getFlag('met_alex_it')) missing.push('Alex from IT');
+      // B10 — Rachel is a coworker on this floor and was the only one the
+      // objective did not name. She is added to BOTH halves of this (the list
+      // the player reads and the `ready_for_skip` gate below) so the two can
+      // never disagree about who counts — the failure mode that made the Act-2
+      // Alex objective ask forever for a scene the router refused to serve.
+      if (!this.player.getFlag('met_rachel'))  missing.push('Rachel');
       return `Meet your coworkers — find ${missing.join(', ')}`;
     }
     return 'Report to Skip for your assignment';
   }
 
   _refreshStoryProgress(silent = false) {
-    // Auto-gate Skip until all four coworkers have been met
+    // Auto-gate Skip until all FIVE coworkers have been met (B10 added Rachel;
+    // she must be in the same list `_getStoryObjective` prints, or the HUD asks
+    // for someone the gate does not want, or vice versa).
     if (
       this.player.getFlag('met_janet') &&
       this.player.getFlag('met_intern') &&
       this.player.getFlag('met_isaiah') &&
       this.player.getFlag('met_alex_it') &&
+      this.player.getFlag('met_rachel') &&
       !this.player.getFlag('ready_for_skip')
     ) {
       this.player.setFlag('ready_for_skip', true);

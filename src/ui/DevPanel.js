@@ -25,7 +25,7 @@ export const DEV_PRESETS = [
     flags: {
       // No `branch_chosen`: this is the REAL Act 1 — Karen live in the
       // conference room, the roguelite tutorial ahead of you.
-      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true,
     },
@@ -34,7 +34,7 @@ export const DEV_PRESETS = [
     key: 'act2',
     label: 'Act 2 — Branch Chosen (finale)',
     flags: {
-      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -46,7 +46,7 @@ export const DEV_PRESETS = [
     key: 'act3',
     label: 'Act 3 — Hendersons Defeated',
     flags: {
-      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -60,7 +60,7 @@ export const DEV_PRESETS = [
     key: 'act4',
     label: 'Act 4 — Archive Evidence Found',
     flags: {
-      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -77,7 +77,7 @@ export const DEV_PRESETS = [
     key: 'act5',
     label: 'Act 5 — Charter Recovered',
     flags: {
-      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -96,7 +96,7 @@ export const DEV_PRESETS = [
     key: 'act6',
     label: 'Act 6 — Meredith Defeated',
     flags: {
-      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -128,7 +128,7 @@ export const DEV_PRESETS = [
     key: 'act7',
     label: 'Act 7 — Penthouse Unlocked',
     flags: {
-      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+      checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,

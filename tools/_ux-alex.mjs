@@ -29,7 +29,7 @@ const say = (s) => { log.push(s); console.log(s); };
 // Base Act-1-complete flag set (the shipped `act1` dev preset), plus the
 // Henderson-arc flags each scenario needs.
 const BASE = {
-  checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true,
+  checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
   read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
   defeated_intern: true, briefing_complete: true,
 };

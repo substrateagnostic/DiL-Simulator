@@ -563,6 +563,15 @@ export const ROOMS = {
       { type: 'fileCabinet', x: 2, z: 1 },
 
       // === Golf putter leaning against wall ===
+      // RESTORED. This comment headed nothing for five months — it is the grave
+      // marker of the plant deleted by 93cab79, a game-wide floor-plants ->
+      // desk-succulents sweep that took out 18 floor plants and, in the same
+      // hunk and unmentioned in its own commit message, the one interactable
+      // bound to one of them. `dying_plant` (Mr. Fernsworth III, Skip's
+      // Responsibility Since 2021) has been unreachable ever since. This is a
+      // literal revert of that hunk; the archaeology is in
+      // .claude/plans/dialog-refactor/orphan-scenes.md section 2.1.
+      { type: 'plant', x: 6, z: 1 },  // the "dying" plant
 
       // === Bookshelf / credenza area (west wall) ===
       { type: 'fileCabinet', x: 0.5, z: 3 },
@@ -601,6 +610,8 @@ export const ROOMS = {
       { x: 1, z: 0, type: 'poster', dialogId: 'poster_rec_1' },
       { x: 3, z: 0, type: 'poster', dialogId: 'poster_rec_2' },
       { x: 6, z: 0, type: 'poster', dialogId: 'poster_rec_3' },
+      // Mr. Fernsworth III. See the furniture entry above.
+      { x: 6, z: 1, type: 'dying_plant', dialogId: 'dying_plant' },
     ],
     playerSpawn: { x: 4, z: 6 },
   },
@@ -641,6 +652,8 @@ export const ROOMS = {
 
       // === Globe stand (east of desk) ===
       { type: 'globeStand', x: 7.5, z: 1.5 },
+      // Mr. Fernsworth III, still not photosynthesising, in the bigger office.
+      { type: 'plant', x: 8, z: 2 },
 
       // === East wall — abstract painting + corner bar ===
       { type: 'abstractPainting', x: 10.9, z: 2, rotation: -Math.PI / 2 },
@@ -684,6 +697,12 @@ export const ROOMS = {
       { x: 3,  z: 0, type: 'poster', dialogId: 'poster_rec_1' },
       { x: 6,  z: 0, type: 'poster', dialogId: 'poster_rec_2' },
       { x: 10, z: 0, type: 'poster', dialogId: 'poster_rec_3' },
+      // Mr. Fernsworth III survives the renovation — same law as the three
+      // posters above: _resolveRoomId swaps this layout in on
+      // corner_office_renovated, so an interactable that exists only in the
+      // small office is one the renovation DELETES. (8,2) is clear of the
+      // globeStand at (7.5,1.5) and of every other claimed tile.
+      { x: 8, z: 2, type: 'dying_plant', dialogId: 'dying_plant' },
     ],
     playerSpawn: { x: 5, z: 7 },
   },
@@ -1879,6 +1898,20 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 8, z: 1, type: 'charter_plaque', dialogId: 'board_charter' },
+      // RESTORED WITH EDITS (orphan-scenes.md section 2.2). Authored by Phase 4,
+      // never wired — that commit has an empty diff against room data — so the
+      // only prop in the game's flagship set-piece had no read on it. Its prose
+      // drifted out of canon in the four months it spent unreachable and all
+      // three lines were redrafted before wiring: the table seats fifteen (the
+      // room authors fourteen side chairs and one at the head), the empty
+      // crystal decanter became the FULL untouched carafe the board meeting
+      // closes on, and the portrait line now points at a nail hole instead of
+      // assigning the Janitor a rank the HR record contradicts.
+      // (8,6) is the table's south edge, dead centre. It is read from (8,7),
+      // which is an executiveChair tile — in NO_BLOCK, so walkable — and which
+      // the board-meeting staging keeps deliberately EMPTY, so no seated body
+      // ever shadows the prompt.
+      { x: 8, z: 6, type: 'board_table', dialogId: 'board_room_table' },
       { x: 1, z: 0, type: 'poster', dialogId: 'poster_exec_4' },
     ],
     // Staging marks. The boardroom table blocks x 4-12 at z 4-6, so every
@@ -2023,6 +2056,15 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 8, z: 2, type: 'algorithm_terminal', dialogId: 'algorithm_terminal' },
+      // RESTORED, NARROW (orphan-scenes.md section 2.3). `penthouse_window`
+      // was authored by Phase 4 and never wired — that commit has an empty diff
+      // against room data — so the plaque gag ("FROM THIS HEIGHT, EVERYTHING
+      // LOOKS LIKE AN ASSET") and the Honda Civic callback down to the garage
+      // the game opens in have never been readable. (10,0) sits inside the
+      // second north window run (from 9 to 12) and is read from (10,1), which is
+      // free floor. The window gap IS the affordance; a propless narrative
+      // interactable has precedent here (board_charter is a plaque with no mesh).
+      { x: 10, z: 0, type: 'penthouse_window', dialogId: 'penthouse_window' },
     ],
     marks: {
       terminal_back: [8, 3],     // behind the desk run — where the Assistant waits
@@ -2140,6 +2182,10 @@ export const ROOMS = {
     ],
     interactables: [
       { x: 14, z: 2, type: 'algorithm_terminal', dialogId: 'algorithm_terminal' },
+      // The twin, now that B19 has given this layout its glass back. Inside the
+      // middle window run (from 10 to 14); read from (12,1), clear of the desk
+      // run and of the terminal's own tile.
+      { x: 12, z: 0, type: 'penthouse_window', dialogId: 'penthouse_window' },
     ],
     playerSpawn: { x: 11, z: 13 },
   },
