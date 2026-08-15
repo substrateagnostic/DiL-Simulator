@@ -72,6 +72,16 @@ export class DialogState {
     this.shownAnyNode = false;
     // Indices already visited by the out-of-band skip walk — see _processNode.
     this._skipSeen = new Set();
+    // B1 SAFE EXIT. True the moment this session executes anything that
+    // changes the world (any `action` node, any `stage` node). Once set it is
+    // never cleared: a tree that has already fired `start_combat` or walked an
+    // actor across a room may not be abandoned, because the consequences are
+    // already in flight and the remaining text is what explains them.
+    this._sideEffectFired = false;
+    // Memo for _isBailSafe, keyed by node index. The scan is a graph walk over
+    // an immutable tree, so the answer for an index never changes within a
+    // session.
+    this._bailMemo = new Map();
   }
 
   // --- State interface ---
@@ -208,6 +218,7 @@ export class DialogState {
   _showTextNode(node) {
     this.shownAnyNode = true;
     if (node.mood) EventBus.emit('dialog-mood', { speaker: node.speaker, mood: node.mood });
+    this.dialogBox.canExit = this._isBailSafe();
     this.dialogBox.show(node.speaker || 'Narrator', node.text, null, undefined, node.mood);
 
     // Set up advance callback
@@ -276,6 +287,10 @@ export class DialogState {
       }
     }
 
+    // A question is not a line you can walk away from — B1's exit is for
+    // non-choice nodes only, so the branch the player is standing on always
+    // gets answered.
+    this.dialogBox.canExit = false;
     this.dialogBox.show(node.speaker || 'Narrator', node.prompt || node.text || '', boxChoices, undefined, node.mood);
 
     // Set up choice callback
@@ -316,6 +331,69 @@ export class DialogState {
   }
 
   /**
+   * B1 — IS IT SAFE TO WALK AWAY FROM THIS CONVERSATION?
+   *
+   * The playtester's complaint was that there is no way out of an NPC talk.
+   * The standing law (June 11, and it stands) is that a dialog may never be
+   * aborted mid-tree, because an abort skipped `set_flag` / `start_combat`
+   * while still writing `read_<id>` — that is how a save loses `city_unlocked`
+   * or the Firm fight forever. Both are true, so the exit is offered only where
+   * it is PROVABLY LOSSLESS:
+   *
+   *   1. nothing consequential has fired yet this session (`_sideEffectFired`),
+   *      so a tree whose combat/stage/flag beat is already behind the player
+   *      cannot be left; and
+   *   2. no `action` node, no `stage` node and no flag-writing choice is
+   *      reachable from where the player is standing.
+   *
+   * Together: the whole remaining conversation is prose. Leaving it costs the
+   * save nothing at all — which is why the bail deliberately does NOT write
+   * `read_<dialogId>` either (see `_endDialog`). The conversation did not
+   * happen; it is offered again next time, and the player can bail again.
+   *
+   * This covers exactly the trees the complaint is about — room flavour,
+   * `<npc>_return` chatter, poster reads — and refuses on every story beat.
+   */
+  _isBailSafe() {
+    if (this._sideEffectFired) return false;
+    const from = this.currentIndex;
+    if (this._bailMemo.has(from)) return this._bailMemo.get(from);
+
+    const tree = this.dialogTree;
+    const seen = new Set();
+    const stack = [from];
+    let safe = true;
+    while (stack.length) {
+      const i = stack.pop();
+      if (!Number.isInteger(i) || i < 0 || i >= tree.length || seen.has(i)) continue;
+      seen.add(i);
+      const n = tree[i];
+      if (!n) continue;
+      if (n.type === 'action' || n.type === 'stage') { safe = false; break; }
+      if (n.type === 'end') continue;
+      if (n.type === 'condition') {
+        stack.push(n.ifTrue !== undefined ? n.ifTrue : i + 1);
+        stack.push(n.ifFalse !== undefined ? n.ifFalse : i + 1);
+        continue;
+      }
+      if (n.type === 'choice') {
+        for (const c of n.choices || []) {
+          // A choice that writes a flag is a decision, not a line.
+          if (c.flag) { safe = false; break; }
+          stack.push(c.next !== undefined ? c.next : i + 1);
+        }
+        if (!safe) break;
+        if (n.fallback !== undefined) stack.push(n.fallback);
+        if (n.next !== undefined) stack.push(n.next);
+        continue;
+      }
+      stack.push(n.next !== undefined ? n.next : i + 1);
+    }
+    this._bailMemo.set(from, safe);
+    return safe;
+  }
+
+  /**
    * Condition node - check player flag and branch.
    */
   _processCondition(node) {
@@ -346,6 +424,7 @@ export class DialogState {
    * Action node - execute side effect and continue.
    */
   _processAction(node) {
+    this._sideEffectFired = true;
     switch (node.action) {
       case 'set_flag':
         this.player.setFlag(node.flag, node.value !== undefined ? node.value : true);
@@ -451,6 +530,7 @@ export class DialogState {
    * calls back; `advanced` makes `done()` idempotent (rule 5).
    */
   _processStage(node) {
+    this._sideEffectFired = true;
     if (node.concurrent) {
       // No gate, no hide, no block: the beats run under the text. `done` is null
       // because nothing is waiting on it — the director still fires its gate, and
@@ -485,9 +565,14 @@ export class DialogState {
   /**
    * End the dialog and pop this state.
    */
-  _endDialog() {
+  _endDialog(bailed = false) {
     this.active = false;
-    if (this.dialogId && this.shownAnyNode) {
+    // A bail is "this conversation did not happen": the tree was provably pure
+    // prose (see _isBailSafe), so nothing is lost by not recording it, and
+    // `read_<id>` is a signal some routers act on (`read_janitor_act3`,
+    // `read_alex_it_act6`). Writing it for a scene the player walked out of
+    // would be the same class of lie the June 11 abort ban was written against.
+    if (!bailed && this.dialogId && this.shownAnyNode) {
       this.player.setFlag(`read_${this.dialogId}`, true);
     }
     EventBus.emit('dialog-end');
@@ -516,14 +601,21 @@ export class DialogState {
       }
     }
 
-    // Escape skips the typewriter but NEVER aborts the dialog — aborting
-    // mid-tree skipped set_flag/start_combat actions while still marking
-    // read_<id>, which could permanently strand story flags (e.g. losing
-    // city_unlocked, met_* intros, or the Firm fight). Dialogs only end
-    // through their own end nodes.
+    // Escape skips the typewriter. A SECOND Escape, on a finished line, leaves
+    // the conversation — but only when `_isBailSafe()` has proved the rest of
+    // the tree is pure prose (B1). A story tree still cannot be aborted:
+    // aborting mid-tree skipped set_flag/start_combat actions while still
+    // marking read_<id>, which could permanently strand story flags (e.g.
+    // losing city_unlocked, met_* intros, or the Firm fight). Those dialogs
+    // still only end through their own end nodes, and the box only advertises
+    // the exit where it exists.
     if (InputManager.isJustPressed('escape')) {
       if (!this.dialogBox.isComplete()) {
         this.dialogBox.skipToEnd();
+      } else if (this.dialogBox.canExit && !this.dialogBox.choicesVisible && this._isBailSafe()) {
+        this.waitingForInput = false;
+        AudioManager.playSfx('cancel');
+        this._endDialog(true);
       }
     }
   }

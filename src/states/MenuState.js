@@ -16,7 +16,7 @@ export class MenuState {
     this.player = player;
     this.element = null;
     this.selectedIndex = 0;
-    this.menuItems = ['Resume', 'Abilities', 'Cosmetics', 'Journal', 'Log', 'Achievements', 'Stats', 'Save Game', 'Transfer Save', 'Controls', 'Settings', 'Quit to Title'];
+    this.menuItems = ['Resume', 'Unstick Andrew', 'Abilities', 'Cosmetics', 'Journal', 'Log', 'Achievements', 'Stats', 'Save Game', 'Transfer Save', 'Controls', 'Settings', 'Quit to Title'];
     // New Game+ unlocks after the Algorithm falls
     if (player.getFlag('algorithm_defeated')) {
       this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
@@ -48,6 +48,7 @@ export class MenuState {
     // Tag definitions per menu item
     const itemMeta = {
       'Resume':         { tag: '[SYS]',      tagColor: '#53a8b6', section: 'SYSTEM' },
+      'Unstick Andrew': { tag: '[FACILITIES]', tagColor: '#ffaa44', section: null },
       'Abilities':      { tag: '[PROFILE]',  tagColor: '#ffcc33', section: 'CHARACTER' },
       'Cosmetics':      { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
       'Journal':        { tag: '[DATABASE]', tagColor: '#53a8b6', section: null },
@@ -190,6 +191,16 @@ export class MenuState {
 
     switch (choice) {
       case 'Resume':
+        this.stateManager.pop();
+        break;
+      case 'Unstick Andrew':
+        // B4 — EMERGENCY UNSTUCK. Pairs with the furniture-embed escape: that
+        // one fires automatically when Andrew is detected inside a prop, this
+        // one is the player's own hand on the lever for anything the detector
+        // does not catch. MenuState holds no world reference and must not grow
+        // one (same law DialogState is held to), so it asks over the bus and
+        // pops itself; ExplorationState owns the tileMap and the spawn tile.
+        EventBus.emit('unstick-player');
         this.stateManager.pop();
         break;
       case 'Abilities':

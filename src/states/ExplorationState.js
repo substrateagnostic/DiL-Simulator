@@ -335,6 +335,7 @@ export class ExplorationState {
       EventBus.on('abilities-viewed', () => {
         this._dismissUpgradeTooltip();
       }),
+      EventBus.on('unstick-player', () => this._unstick()),
       EventBus.on('flag-set', ({ key, value }) => {
         this._refreshStoryProgress();
         // Alex IT router: chain into the chosen dialog after router ends
@@ -652,8 +653,10 @@ export class ExplorationState {
         // assigning over the first mid-read. Before the arbiter this change
         // would have doubled traffic on a measured first-writer-loses surface.
         const thoughtKey = `thought_${roomId}`;
+        let firstVisitFired = false;
         if (!this.player.getFlag(thoughtKey) && ROOM_THOUGHTS[roomId]) {
           this.player.setFlag(thoughtKey, true);
+          firstVisitFired = true;
           const thoughts = ROOM_THOUGHTS[roomId];
           setTimeout(() => { for (const t of thoughts) this._showMonologue(t); }, 1500);
         }
@@ -665,7 +668,17 @@ export class ExplorationState {
         // forty times says something new when the story moves under it.
         // Its own flag namespace (`thought_<roomId>_a<act>`) — never reuse
         // `thought_<roomId>`, which is the first-visit latch.
-        const actLines = ROOM_THOUGHTS_BY_ACT[roomId]?.[this.player.actIndex];
+        //
+        // B2 CADENCE: the act band is SKIPPED — not queued — on the same entry
+        // that spent the first-visit latch. Both blocks fire every line they
+        // hold, so a first walk into a room in a new act stacked up to four
+        // monologues back to back and that is literally the playtester's
+        // "dialogue every 2 seconds". The act latch is only spent when a line
+        // actually fires (see below), so nothing is lost: the act lines land on
+        // the NEXT visit to the room, which is also when they read better —
+        // the first-visit pair is Andrew meeting the room, the act pair is
+        // Andrew noticing it changed.
+        const actLines = firstVisitFired ? null : ROOM_THOUGHTS_BY_ACT[roomId]?.[this.player.actIndex];
         if (actLines && actLines.length) {
           const actKey = `thought_${roomId}_a${this.player.actIndex}`;
           // An entry may be a bare string or `{ text, flag }` / `{ text, notFlag }`
@@ -992,6 +1005,53 @@ export class ExplorationState {
     const insetX = Math.min(2, (roomData.width - 1) / 2);
     const insetZ = Math.min(2, (roomData.height - 1) / 2);
     this.camera.setBounds(insetX, roomData.width - insetX, insetZ, roomData.height - insetZ);
+  }
+
+  /**
+   * B4 — EMERGENCY UNSTUCK. Raised from the pause menu ("Unstick Andrew").
+   *
+   * Teleports to the room's own `playerSpawn` tile — the tile the game itself
+   * would put the player on if they walked in the front door — so this can
+   * never deposit anyone somewhere the room does not expect. If that tile is
+   * not walkable in the CURRENT flag state (act dressing and renovations both
+   * add furniture, and a blocker that appears at `act5_complete` can land on a
+   * spawn), it spirals out to the nearest walkable tile that is not an exit,
+   * because dropping the player onto an exit trigger would immediately fire a
+   * room change they did not ask for.
+   *
+   * Deliberately does NOT change room, touch flags, or save. It is a position
+   * reset and nothing else — the smallest lever that answers "I am inside the
+   * furniture" without becoming a teleport cheat.
+   */
+  _unstick() {
+    if (!this.tileMap || !this.player) return;
+    const data = this.roomManager.currentRoom?.data;
+    const sx = data?.playerSpawn?.x ?? Math.floor((data?.width ?? 10) / 2);
+    const sz = data?.playerSpawn?.z ?? Math.floor((data?.height ?? 10) / 2);
+
+    const ok = (x, z) => this.tileMap.isWalkable(x, z) && !this.tileMap.getExit(x, z);
+    let tx = sx;
+    let tz = sz;
+    if (!ok(tx, tz)) {
+      let best = null;
+      for (let r = 1; r <= 8 && !best; r++) {
+        for (let dx = -r; dx <= r && !best; dx++) {
+          for (let dz = -r; dz <= r; dz++) {
+            if (Math.max(Math.abs(dx), Math.abs(dz)) !== r) continue;
+            if (ok(sx + dx, sz + dz)) { best = [sx + dx, sz + dz]; break; }
+          }
+        }
+      }
+      if (best) { tx = best[0]; tz = best[1]; }
+    }
+
+    // Same coordinate convention `_loadRoom` uses for `result.spawnX/Z` — raw
+    // tile coordinates, not centres. `setPosition` MUST be given the tileMap:
+    // the terrain lerp that keeps Andrew's feet on the floor lives only in
+    // `move()`, and `move()` does not run on a teleport (CLAUDE.md, Player).
+    this.player.setPosition(tx, tz, this.tileMap);
+    this.camera.snapTo(tx, tz, this.player.mesh.position.y);
+    this._showToast('You step back into the aisle.', 'info');
   }
 
   _loadRoom(roomId, spawnX, spawnZ) {

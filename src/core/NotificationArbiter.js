@@ -142,6 +142,24 @@ const DEFAULT_ZONE = {
 // acceptable — serialising them would make the fight feel laggy for no gain.
 const PROSE_ZONES = new Set(['voice-centre']);
 
+// B2 — PROSE CADENCE. Playtest note: "screen popping up dialogue every 2
+// seconds". Measured cause, and it is arithmetic rather than opinion: a first
+// visit to a room in a new act queues up to FOUR monologue cards (F-3b fires
+// every authored first-visit line, F-3c adds the act-keyed lines), each takes
+// its VOICE floor of 2400 ms, the backlog `hurry` multiplier cuts that to
+// 1488 ms, and the zone then waits only its 500 ms fade. One card every ~2.0 s,
+// four in a row, with no beat of silence anywhere in it.
+//
+// Two rules, both scoped to PROSE_ZONES so nothing about combat pacing moves:
+//   • NO HURRY. A backlog draining faster is right for combat plates, where the
+//     player is waiting on their own input. It is exactly wrong for prose: more
+//     to read is not a reason to give less time to read it.
+//   • A GAP between cards. A monologue that replaces a monologue 500 ms later
+//     reads as one continuous popup; a beat of empty screen makes it read as a
+//     separate thought. This is the ONLY thing that stops the sequence feeling
+//     like a scrolling feed, and it is why the fix is not "show fewer lines".
+const PROSE_GAP_MS = 1100;
+
 const COALESCE_PARTS = 3;   // how many merged lines a coalesced card renders
 const QUEUE_CAP = 12;       // per zone; oldest pending spills to the Log
 const LOG_CAP = 40;
@@ -177,7 +195,7 @@ class NotificationArbiterClass {
       if (existing) {
         existing.el = el;
       } else {
-        this._zones.set(name, { el, scope: def.scope, fade: def.fade || FADE_MS, current: null, queue: [], timer: null, shownAt: 0 });
+        this._zones.set(name, { el, scope: def.scope, fade: def.fade || FADE_MS, current: null, queue: [], timer: null, shownAt: 0, gateUntil: 0 });
       }
     }
     overlay.appendChild(this.root);
@@ -511,6 +529,9 @@ class NotificationArbiterClass {
   _pump(z) {
     if (!z || z.current || z.queue.length === 0) return;
     if (this.isSuspended(z.scope) || this._closed.has(z.scope)) return;
+    // B2 cadence gate. Only prose zones ever set it, and only on their own
+    // retire, so this is a no-op for every other surface in the game.
+    if (z.gateUntil && Date.now() < z.gateUntil) return;
 
     // Highest claim first, insertion order as tie-break. Items stay in the
     // queue while blocked — they are deferred, not dropped.
@@ -532,8 +553,10 @@ class NotificationArbiterClass {
 
     // A backed-up zone drains faster. Without this, three queued combat beats
     // at their own floors would put ~5 s of reading between a button press and
-    // the next turn.
-    const hurry = z.queue.length > 0 ? 0.62 : 1;
+    // the next turn. PROSE IS EXEMPT (B2): a queue of thoughts is not a queue
+    // of feedback, and compressing reading time because there is more to read
+    // is the defect, not the remedy.
+    const hurry = (z.queue.length > 0 && !PROSE_ZONES.has(item.zone)) ? 0.62 : 1;
     this._arm(z, item, Math.round(item.ttl * hurry));
 
     // Showing a VOICE item can newly block other zones; showing anything can
@@ -547,10 +570,18 @@ class NotificationArbiterClass {
     z.timer = setTimeout(() => {
       z.timer = null;
       if (z.current === item) {
+        const prose = PROSE_ZONES.has(item.zone);
         this._retire(z, null);
         // Wait the fade out before promoting anything, anywhere. Also gives the
-        // player a beat between messages instead of a hard cut.
+        // player a beat between messages instead of a hard cut. A prose card
+        // additionally holds ITS OWN zone shut for PROSE_GAP_MS (B2) — the
+        // global pump still runs on the fade, so a combat plate or an objective
+        // never waits on a monologue's silence.
         setTimeout(() => this._pumpAll(), z.fade || FADE_MS);
+        if (prose) {
+          z.gateUntil = Date.now() + PROSE_GAP_MS;
+          setTimeout(() => this._pump(z), PROSE_GAP_MS + 20);
+        }
       }
     }, Math.max(400, ms));
   }
@@ -679,7 +710,7 @@ class NotificationArbiterClass {
   reset() {
     for (const [, z] of this._zones) {
       if (z.timer) clearTimeout(z.timer);
-      z.timer = null; z.current = null; z.queue.length = 0;
+      z.timer = null; z.current = null; z.queue.length = 0; z.gateUntil = 0;
       if (z.el) z.el.innerHTML = '';
     }
     this._holds.clear();

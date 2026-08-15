@@ -169,6 +169,11 @@ export class DialogBox {
     this.choiceElements = [];
     this.choicesVisible = false;
 
+    // B1 — DialogState re-asserts this per node from `_isBailSafe()`. Default
+    // CLOSED, so any other path that builds a box never advertises an exit it
+    // cannot honour.
+    this.canExit = false;
+
     // Callbacks
     this.onAdvance = null;
     this.onChoice = null;
@@ -214,11 +219,13 @@ export class DialogBox {
       box-shadow: 0 4px 18px rgba(0,0,0,0.55);
     `;
 
-    // Truth in labelling: Escape (touch: B) only SKIPS the typewriter — it has
-    // never exited the dialog, and aborting mid-tree is deliberately disabled
-    // (DialogState._handleInput, June 11 fix: an aborted tree skipped
-    // set_flag/start_combat while still marking read_<id>). The hint is hidden
-    // once the line finishes typing, because then the key does nothing at all.
+    // Truth in labelling, and the label now has two truths. While the
+    // typewriter runs, Escape (touch: B) SKIPS it. Once the line is finished
+    // the key does nothing at all on a story tree — so the hint disappears —
+    // and means LEAVE on a tree DialogState has proved is pure prose (B1,
+    // `_isBailSafe`). Aborting mid-tree is still banned everywhere else
+    // (June 11 fix: an aborted tree skipped set_flag/start_combat while still
+    // marking read_<id>), which is why the exit is a proof, not a key.
     this.escHintEl = document.createElement('div');
     this.escHintEl.className = 'dialog-esc-hint';
     this.escHintEl.textContent = this._skipHintLabel();
@@ -346,6 +353,17 @@ export class DialogBox {
   }
 
   /**
+   * B1. The label on a finished line, when DialogState has proved the rest of
+   * this tree is pure prose (`DialogState._isBailSafe`). The affordance is
+   * advertised only where it exists — a story tree keeps hiding the hint the
+   * moment the typewriter finishes, exactly as before, because there the key
+   * genuinely does nothing.
+   */
+  _exitHintLabel() {
+    return ('ontouchstart' in window) ? '[B] Leave' : '[ESC] Leave';
+  }
+
+  /**
    * Returns true if the typewriter has finished displaying all text.
    */
   isComplete() {
@@ -368,8 +386,16 @@ export class DialogBox {
    * Called when typewriter finishes. Shows advance indicator or choices.
    */
   _onTextComplete() {
-    // Nothing left to skip — stop advertising the key
-    if (this.escHintEl) this.escHintEl.style.display = 'none';
+    // Nothing left to skip — stop advertising the key, unless this tree is
+    // bail-safe, in which case the same key now means "leave" (B1).
+    if (this.escHintEl) {
+      if (this.canExit && !(this.choices && this.choices.length > 0)) {
+        this.escHintEl.textContent = this._exitHintLabel();
+        this.escHintEl.style.display = '';
+      } else {
+        this.escHintEl.style.display = 'none';
+      }
+    }
     if (this.choices && this.choices.length > 0) {
       this._showChoices();
     } else {

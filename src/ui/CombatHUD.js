@@ -1,6 +1,29 @@
 import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { SPLASH_CARDS } from '../data/splash-cards.js';
 
+/**
+ * B14 — SPECIAL-SCREEN PACING. Playtest note: "special/ability transition
+ * screens scroll too fast." Measured: a splash card's keyframes hold it at full
+ * opacity between 10 % and 82 % of its life, so an 850 ms threat card is
+ * legible for 612 ms and a 900 ms ASSERT DOMINANCE for 648 ms. Its title and
+ * subtitle are four words of Press Start 2P — the arbiter's own reading model
+ * (400 ms fixation + 200 ms/word, the number every other text surface in the
+ * game is timed against) prices that at 1200 ms of READING, which is roughly
+ * twice what the card was giving.
+ *
+ * So the same model is applied here, divided by the 0.72 legible fraction to
+ * turn reading time into card life, and taken as a FLOOR rather than a
+ * replacement — a caller that deliberately wants a longer beat (the 1500 ms
+ * scripted-loss finisher) keeps it. Numbers, not vibes: 850 -> 1667,
+ * 900 -> 1667, 1300 -> 1667, 1500 -> 1500.
+ */
+const LEGIBLE_FRACTION = 0.72;
+export function readingLife(text) {
+  const words = String(text || '').trim().split(/\s+/).filter(Boolean).length;
+  const read = Math.min(3000, Math.max(1200, 400 + words * 200));
+  return Math.round(read / LEGIBLE_FRACTION);
+}
+
 // Combat HUD — supports 1+ enemies and 1+ party members.
 // Top-center: row of enemy bars with name/HP/telegraph; selected target gets a highlight.
 // Bottom-left: stats wrapper. Active actor's full bars on top; remaining party shows compact bars below.
@@ -1084,6 +1107,7 @@ export class CombatHUD {
     // A missing asset must never take the fight down with it: the beat simply
     // plays without its card, exactly as it did before this system existed.
     if (!c || !c.src) return null;
+    ms = Math.max(ms, readingLife(`${c.title || ''} ${c.sub || ''}`));
     if (this._splashEl && this._splashEl.parentNode) this._splashEl.remove();
     clearTimeout(this._splashTimer);
 
@@ -1122,6 +1146,9 @@ export class CombatHUD {
 
   showBanner(text, hold = 1400) {
     if (this._closed) return null;
+    // Same reading floor as the splash card (B14). The banner has no
+    // entry/exit dead time, so it uses the raw read figure, not the divided one.
+    hold = Math.max(hold, Math.round(readingLife(text) * LEGIBLE_FRACTION));
     if (this._powerBanner && this._powerBanner.parentNode) this._powerBanner.remove();
     const el = document.createElement('div');
     el.className = 'combat-power-banner';

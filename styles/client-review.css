@@ -159,7 +159,12 @@
 }
 
 .cr-anger-label { color: #888; white-space: nowrap; }
-.cr-anger-bar { color: #e94560; letter-spacing: -2px; flex: 1; }
+/* B3: the fill is red, the empty track is NOT. Colouring the whole run
+   `#e94560` made ten light-shade glyphs read as a quarter-full red bar at
+   anger 0. The track is a dim neutral so an empty bar reads as empty. */
+.cr-anger-bar { letter-spacing: -2px; flex: 1; }
+.cr-anger-fill { color: #e94560; }
+.cr-anger-track { color: #3a3a44; }
 .cr-anger-val { color: #e94560; white-space: nowrap; }
 .cr-anger-delta { font-size: 16px; white-space: nowrap; }
 .delta-bad { color: #ff6b6b; }

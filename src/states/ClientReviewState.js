@@ -44,7 +44,15 @@ export class ClientReviewState {
     const fmtDollars = (n) => '$' + n.toLocaleString();
     const fmtPct = (r) => (r * 100).toFixed(1) + '%';
     const negotiateChancePct = Math.round(this._negotiateChance() * 100);
-    const angerBar = '█'.repeat(Math.min(10, anger)) + '░'.repeat(Math.max(0, 10 - anger));
+    // B3 — THE BAR READ PART-FILLED AT 0/10. The whole glyph run was one span
+    // painted `#e94560`, so the ten EMPTY-track characters rendered as ten
+    // 25%-hatched red blocks: at anger 0 the bar looked about a quarter full,
+    // which is a lie about the single number this screen exists to inform.
+    // The track and the fill are now separate spans with separate colours; the
+    // glyphs are unchanged, so nothing about the layout or width moves.
+    const angerFilled = Math.max(0, Math.min(10, Math.round(anger)));
+    const angerBar = `<span class="cr-anger-fill">${'█'.repeat(angerFilled)}</span>`
+      + `<span class="cr-anger-track">${'░'.repeat(10 - angerFilled)}</span>`;
     const deltaStr = c.netAngerDelta > 0 ? `+${c.netAngerDelta}` : `${c.netAngerDelta}`;
     const deltaCls = c.netAngerDelta > 0 ? 'delta-bad' : c.netAngerDelta < 0 ? 'delta-good' : 'delta-neutral';
 
