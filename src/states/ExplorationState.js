@@ -66,6 +66,40 @@ const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
 // Matches `Player.deserialize`'s own default for a save with no `currentRoom`.
 const FALLBACK_ROOM = 'parking_garage';
 
+// ── UNFINISHED-SCENE LATCHES ────────────────────────────────────────────────
+// Every code-side story push in this file spends its latch BEFORE the dialog it
+// guards has run — `setFlag(started)` and then `setTimeout(push, 800…1200)` —
+// and the game AUTO-SAVES inside that window (`_changeRoom` ends with
+// `_autoSave`, `_handleDefeat` calls it synchronously). So a quit, a crash or a
+// closed tab banks "this scene has happened" for a scene that did not happen;
+// and because none of these enemies has an NPC entry anywhere in the game, no
+// second thing can ever push that dialog again. The flag the scene was going to
+// set is stranded for the life of the save.
+//
+// `_handleDefeat` has re-armed the gauntlet rows since Act 5 shipped, for
+// exactly this reason. It missed `act5_triggered` — the latch on the single
+// most load-bearing edge in the story. `act4_complete` has ONE setter in the
+// whole game (`act5_trigger` node 8, dialogs/index.js:2177) and `act5_trigger`
+// had ONE pusher. Measured 2026-08-15 with `tools/_r-act5latch.mjs`: an
+// interrupted entry leaves `act5_triggered:true / act4_complete:false` on disk,
+// and walking out of the cubicle farm and back in never recovers it. The
+// Restructuring trio never spawns, `board_room_accessible` is never set,
+// Meredith is never fought — Acts 5, 6 and 7 are unreachable while the world
+// still lets the player walk everywhere they had already unlocked.
+//
+// The table is shared now, and it is reconciled at LOAD as well as on defeat.
+// A row belongs here only when `done` is set by the scene `started` guards and
+// nothing else in the game can serve that scene.
+export const UNFINISHED_SCENE_LATCHES = [
+  { started: 'act5_triggered',                 done: 'act4_complete' },
+  { started: 'restructuring_trio_started',     done: 'restructuring_trio_defeated' },
+  { started: 'brand_consultant_fight_started', done: 'brand_consultant_defeated' },
+  { started: 'restructuring_fight_started',    done: 'restructuring_defeated' },
+  { started: 'data_lead_fight_started',        done: 'data_lead_defeated' },
+  { started: 'chief_fight_started',            done: 'chief_restructuring_defeated' },
+  { started: 'meredith_fight_started',         done: 'act5_complete' },
+];
+
 const QUEST_OBJECTIVES = {
   main_act1: {
     0: 'Find your cubicle and settle in',
@@ -194,6 +228,9 @@ export class ExplorationState {
     // achievement list) so they survive New Game+ and brand-new files. Stamp
     // them onto this player as flags on every load. Idempotent.
     applyReviewPurchases(this.player);
+    // Re-arm any scene whose latch was banked without its content. Runs BEFORE
+    // `_loadRoom` so a save taken inside a cutscene window comes back armed.
+    this._reconcileSceneLatches();
     Engine.scene.add(this.player.mesh);
     this._createHUD();
     // The arbiter's root is page-level, NOT inside `.exploration-hud` — combat
@@ -333,13 +370,29 @@ export class ExplorationState {
           this.player.setFlag('janitor_riddle_chosen', false);
         }
         if (key === 'alex_main_chosen' && value) {
-          // Find the appropriate act-based dialog for Alex
+          // Find the appropriate act-based dialog for Alex.
+          //
+          // THE BAND CHECK IS LOAD-BEARING, and existence alone is not enough.
+          // `_pendingDialog` pushes its target RAW — it never goes through
+          // `_getValidNpcDialogId`, so nothing neutral-swaps an out-of-band
+          // pick. `alex_it_act4` does not exist, so at act 4 or 5 this table
+          // fell through to `alex_it_act3`, whose gate is quest stage 300-399
+          // while `act3_complete` already puts the player at 400. Every node
+          // failed `_isNodeValidForQuestStage`, and the skip walk followed
+          // `alex_it_act3`'s catch-up tail 19->20->21->22->23->19 forever:
+          // `Maximum call stack size exceeded` thrown inside `DialogState.enter()`,
+          // AFTER GameStateManager.push had paused the world — a blank,
+          // input-dead box no key could close. Reproduced on the "What's going
+          // on with the main investigation?" row of `alex_it_side_router`.
+          // (DialogState._processNode now also carries a cycle guard; this is
+          // the other half — do not remove either.)
           const act = this.player.actIndex || 0;
           const actDialogs = ['alex_it_act7', 'alex_it_act6', 'alex_it_act4', 'alex_it_act3'];
           const actThresholds = [7, 6, 4, 3];
           let mainDialog = 'alex_it_return';
           for (let i = 0; i < actDialogs.length; i++) {
-            if (act >= actThresholds[i] && DIALOGS[actDialogs[i]]) {
+            if (act >= actThresholds[i] && DIALOGS[actDialogs[i]]
+                && isDialogValidForQuestStage(this.player, actDialogs[i])) {
               mainDialog = actDialogs[i];
               break;
             }
@@ -689,20 +742,12 @@ export class ExplorationState {
           }
         }
 
-        // Act 5 trigger: entering cubicle farm with charter triggers restructuring team cutscene (one-time)
-        // `act3_complete` is the safety catch for the vault keypad: a player
-        // who cracks 47-19-82 in Act 1 and lifts the charter must not detonate
-        // Act 5 (a level-1 Andrew against the 3v2 Restructuring trio) on the
-        // walk back to his desk. The sequence break gives you the object early;
-        // it does not skip three acts of story. In the normal path act3_complete
-        // is long since set, so this changes nothing.
-        if (roomId === 'cubicle_farm' && this.player.getFlag('has_charter') && this.player.getFlag('act3_complete') && !this.player.getFlag('act4_complete') && !this.player.getFlag('act5_triggered') && DIALOGS.act5_trigger) {
-          this.player.setFlag('act5_triggered');
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
-            this.stateManager.push(dialogState);
-          }, 800);
-        }
+        // (The Act-5 entry cutscene used to live here, as a one-shot
+        // `room-entered` push behind the persisted `act5_triggered` latch. It
+        // is now in `update()` beside the Restructuring-trio push — see
+        // `_maybeTriggerAct5`. `room-entered` fires exactly once per entry, so
+        // a scene lost inside that window needed the player to walk out and
+        // back in, and the persisted latch made even that impossible.)
 
         // Gauntlet fight 4: Data Analytics Duo — Lead + CFO's Assistant on executive floor
         // (replaces the solo Data Analytics Lead encounter; party from player.party comes along)
@@ -862,6 +907,11 @@ export class ExplorationState {
   }
 
   syncFromPlayerState() {
+    this._reconcileSceneLatches();
+    // A loaded save is a new story state: the session-scoped once-guards must
+    // not carry over from the state the player just abandoned, or a scene the
+    // OLD save had already pushed stays suppressed in the NEW one.
+    this._act5Pushed = false;
     this._syncActFromFlags();
     this._refreshStoryProgress(true);
     this._updateMiniStats();
@@ -1495,21 +1545,10 @@ export class ExplorationState {
     // Reset ending gate so boss fights can be retried
     this.player.setFlag('ending_started', false);
 
-    // Reset whichever gauntlet fight-started flag is in progress but not yet won,
-    // so the fight retriggers after the player respawns.
-    const gauntletFlags = [
-      { started: 'restructuring_trio_started',      defeated: 'restructuring_trio_defeated' },
-      { started: 'brand_consultant_fight_started',  defeated: 'brand_consultant_defeated' },
-      { started: 'restructuring_fight_started',     defeated: 'restructuring_defeated' },
-      { started: 'data_lead_fight_started',         defeated: 'data_lead_defeated' },
-      { started: 'chief_fight_started',             defeated: 'chief_restructuring_defeated' },
-      { started: 'meredith_fight_started',            defeated: 'act5_complete' },
-    ];
-    for (const { started, defeated } of gauntletFlags) {
-      if (this.player.getFlag(started) && !this.player.getFlag(defeated)) {
-        this.player.setFlag(started, false);
-      }
-    }
+    // Reset whichever scene latch was banked without its content, so the fight
+    // (or the cutscene) re-arms after the player respawns. Same table the load
+    // path uses — see UNFINISHED_SCENE_LATCHES at the top of this file.
+    this._reconcileSceneLatches();
 
     this._loadRoom('cubicle_farm');
     this._autoSave(false);
@@ -2518,7 +2557,7 @@ export class ExplorationState {
         return;
       }
 
-      const dialogId = this._getNpcDialogId(npc);
+      const dialogId = this._getNpcDialogId(npc, true);
       const dialog = DIALOGS[dialogId];
 
       if (dialog) {
@@ -2563,8 +2602,16 @@ export class ExplorationState {
     }
   }
 
-  _getNpcDialogId(npc) {
-    return this._getValidNpcDialogId(npc, this._getDialogId(npc));
+  // `commit` is FALSE on the per-frame path and TRUE only from `_interact()`.
+  // `_getDialogId` consumes three one-shot router flags
+  // (`alex_story_chosen` / `alex_story_deferred` / `alex_side_deferred`), and
+  // `update()` calls this every frame to label the interact prompt for whatever
+  // NPC the player is standing next to. So the prompt updater ate the deferral
+  // one frame after the router closed, and both "not right now" options in
+  // Alex's routers were dead mechanics — the same hub reopened on the next
+  // press. A query must not have side effects; only the press commits.
+  _getNpcDialogId(npc, commit = false) {
+    return this._getValidNpcDialogId(npc, this._getDialogId(npc, commit));
   }
 
   _getValidNpcDialogId(npc, dialogId) {
@@ -2587,13 +2634,36 @@ export class ExplorationState {
     const f = (k) => this.player.getFlag(k);
     return {
       hasAct2: !!(f('karen_defeated') && !f('knows_server_secret') && !f('act2_complete') && DIALOGS.alex_it_act2),
-      hasAct3: !!(f('act2_complete') && !f('alex_it_act3_done') && DIALOGS.alex_it_act3),
+      // `!act3_complete` mirrors hasAct2's `!act2_complete` ceiling and is not
+      // cosmetic: `alex_it_act3`'s quest-stage band is 300-399, and
+      // `act3_complete` puts the player at 400. Without the term, any state
+      // with `act3_complete && !alex_it_act3_done` (reachable from the F2
+      // presets, and from any future change that grants the archive password
+      // another way) served a dialog the gate then rejects — and through the
+      // router's `_pendingDialog` chain that meant the out-of-band push.
+      hasAct3: !!(f('act2_complete') && !f('act3_complete') && !f('alex_it_act3_done') && DIALOGS.alex_it_act3),
     };
   }
 
   _alexStoryBeatAvailable() {
     const { hasAct2, hasAct3 } = this._alexStoryBeats();
     return hasAct2 || hasAct3;
+  }
+
+  // "Alex owes the player a CRITICAL-PATH conversation right now." Wider than
+  // `_alexStoryBeatAvailable()` by one term: holding the Archive evidence with
+  // `act3_complete` unset means the next thing he must say is `act4_trigger`,
+  // the sole setter of `act3_complete`. Both of Alex's optional side scenes —
+  // the Printer from Hell route and `alex_server_secret` — sat ABOVE that in
+  // `_getDialogId` and shadowed it, and both are started by examining an Act-1
+  // flavour prop (the cubicle-farm printer / a server rack). The printer one
+  // never clears itself, so from one examine onward EVERY Alex conversation
+  // was about toner while the HUD read "Return the Archive evidence to Alex
+  // from IT". Same shape as the `alex_server_secret` exemption already written
+  // at the hardcoded-dialogId return.
+  _alexMainPathPending() {
+    return this._alexStoryBeatAvailable()
+      || !!(this.player.getFlag('has_archive_evidence') && !this.player.getFlag('act3_complete'));
   }
 
   // Appends the Act-2 partition lead to whatever the critical-path objective
@@ -2605,7 +2675,7 @@ export class ExplorationState {
     return `${text}<br>• Alex from IT has something on the servers`;
   }
 
-  _getDialogId(npc) {
+  _getDialogId(npc, commit = false) {
     const id = npc.id;
     const act = this.player.actIndex;
 
@@ -2719,8 +2789,14 @@ export class ExplorationState {
     // objective was sending the player to get: "finding Alex lands on his base
     // dialog". Only `alex_server_secret` is exempted, and only while a story
     // beat is actually on offer, so every other hardcoded dialogId is untouched.
+    // (`_alexMainPathPending()` is one term wider than the old
+    // `_alexStoryBeatAvailable()` here: it also covers "holding the Archive
+    // evidence with act3_complete unset", where the scene Alex owes is
+    // `act4_trigger`. Without that term the exemption did not apply in exactly
+    // the state it was written for, and the server-rack side scene shadowed the
+    // sole setter of `act3_complete`.)
     if (npc.dialogId && npc.dialogId !== npc.id && DIALOGS[npc.dialogId]
-        && !(id === 'alex_it' && npc.dialogId === 'alex_server_secret' && this._alexStoryBeatAvailable())) {
+        && !(id === 'alex_it' && npc.dialogId === 'alex_server_secret' && this._alexMainPathPending())) {
       return npc.dialogId;
     }
 
@@ -2742,8 +2818,18 @@ export class ExplorationState {
       return 'meredith_intro';
     }
 
-    // Printer from Hell side quest: route Alex to explanation dialog while active
-    if (id === 'alex_it' && this.player.getFlag('printer_quest_started') && !this.player.getFlag('printer_quest_done')) {
+    // Printer from Hell side quest: route Alex to explanation dialog while
+    // active — but never over a critical-path beat. `printer_quest_started` is
+    // set by examining the cubicle-farm printer, an Act-1/2 flavour prop, and
+    // `alex_printer_quest` never clears it (the toner does). So from one
+    // examine onward this returned above `act4_trigger`, above the Act-2
+    // partition reveal the HUD was actively advertising, and above the story
+    // router — every Alex conversation was about toner while the objective
+    // said "Return the Archive evidence to Alex from IT". Same exemption shape
+    // as `alex_server_secret` above; the side quest is still served the moment
+    // Alex owes nothing.
+    if (id === 'alex_it' && this.player.getFlag('printer_quest_started')
+        && !this.player.getFlag('printer_quest_done') && !this._alexMainPathPending()) {
       return 'alex_printer_quest';
     }
 
@@ -2784,7 +2870,7 @@ export class ExplorationState {
 
       // Player chose story from the router — go straight to the story dialog
       if ((hasAct2 || hasAct3) && this.player.getFlag('alex_story_chosen')) {
-        this.player.setFlag('alex_story_chosen', false);
+        if (commit) this.player.setFlag('alex_story_chosen', false);
         return hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
       }
       // Show router when story is available and not deferred
@@ -2793,7 +2879,7 @@ export class ExplorationState {
         return hasAct2 ? 'alex_it_act2' : 'alex_it_act3';
       }
       // Clear deferred flag after one side quest interaction so router shows again next time
-      if (this.player.getFlag('alex_story_deferred')) {
+      if (this.player.getFlag('alex_story_deferred') && commit) {
         this.player.setFlag('alex_story_deferred', false);
       }
     }
@@ -2804,7 +2890,7 @@ export class ExplorationState {
       if (sideQuest && sideQuest !== 'alex_it_return') {
         // If player deferred side quests, skip to regular dialog
         if (this.player.getFlag('alex_side_deferred')) {
-          this.player.setFlag('alex_side_deferred', false);
+          if (commit) this.player.setFlag('alex_side_deferred', false);
         } else if (DIALOGS.alex_it_side_router) {
           return 'alex_it_side_router';
         } else {
@@ -2991,27 +3077,39 @@ export class ExplorationState {
       if (DIALOGS.janitor_return) return 'janitor_return';
     }
 
-    if (act >= 7 && DIALOGS[`${id}_act7`] && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
-    if (act >= 6 && DIALOGS[`${id}_act6`] && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
-    if (act >= 4 && DIALOGS[`${id}_act4`] && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
-    if (act >= 3 && DIALOGS[`${id}_act3`] && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
+    // AN OUT-OF-BAND ACT ROW MUST FALL THROUGH, NOT BE NEUTRAL-SWAPPED.
+    // These rows are `act >= N`, but `dialogGating` caps an `_actN` dialog at
+    // quest stage N00-N99 — so `act >= 3 && !read_<id>_act3` kept returning
+    // `<id>_act3` at act 4, 5, 6 and 7, and `_getValidNpcDialogId` then
+    // silently substituted `neutral_<id>`. The `<id>_return` line four rows
+    // below was unreachable for the rest of the game, and the character read as
+    // broken: Alex from IT answered "Not a great time. Something is blinking
+    // that should not be blinking" forever if the 100%-missable Act-2 partition
+    // scene was skipped. `actRow` makes the row agree with the gate that judges
+    // it, so a stale act dialog falls through to `<id>_return` instead.
+    const actRow = (n) => DIALOGS[`${id}_act${n}`]
+      && isDialogValidForQuestStage(this.player, `${id}_act${n}`);
+    if (act >= 7 && actRow(7) && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
+    if (act >= 6 && actRow(6) && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
+    if (act >= 4 && actRow(4) && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
+    if (act >= 3 && actRow(3) && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
     // skip_act2 and janet_act2 both reference the Karen binder incident — hold them until Karen is defeated
     if (act >= 1 && (id === 'skip' || id === 'janet') && !this.player.getFlag('karen_defeated') && !this.player.getFlag(`read_${id}_act2`)) {
       if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
       if (DIALOGS[`${id}_return`]) return `${id}_return`;
     }
-    if (act >= 1 && DIALOGS[`${id}_act2`] && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
+    if (act >= 1 && actRow(2) && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
     // Gate team intros until the player has checked their desk
     if (PRE_DESK_TEAM.includes(id) && !this.player.getFlag('checked_desk') && !this.player.getFlag(`read_${id}_intro`)) {
       return 'team_pre_intro';
     }
     if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
     if (DIALOGS[`${id}_return`]) return `${id}_return`;
-    if (act >= 7 && DIALOGS[`${id}_act7`]) return `${id}_act7`;
-    if (act >= 6 && DIALOGS[`${id}_act6`]) return `${id}_act6`;
-    if (act >= 4 && DIALOGS[`${id}_act4`]) return `${id}_act4`;
-    if (act >= 3 && DIALOGS[`${id}_act3`]) return `${id}_act3`;
-    if (act >= 1 && DIALOGS[`${id}_act2`]) return `${id}_act2`;
+    if (act >= 7 && actRow(7)) return `${id}_act7`;
+    if (act >= 6 && actRow(6)) return `${id}_act6`;
+    if (act >= 4 && actRow(4)) return `${id}_act4`;
+    if (act >= 3 && actRow(3)) return `${id}_act3`;
+    if (act >= 1 && actRow(2)) return `${id}_act2`;
     if (DIALOGS[`${id}_intro`]) return `${id}_intro`;
     if (DIALOGS[id]) return id;
 
@@ -3241,6 +3339,69 @@ export class ExplorationState {
 
   _initQuests() {
     this._refreshStoryProgress(true);
+  }
+
+  // ── THE ACT-5 ENTRY CUTSCENE ────────────────────────────────────────────
+  // The single most load-bearing push in the game: `act5_trigger` node 8 is the
+  // ONLY setter of `act4_complete`, which gates the Restructuring trio, the
+  // whole executive-floor gauntlet, `board_room_accessible`, Meredith, and
+  // therefore Acts 5, 6 and 7.
+  //
+  // It lives in `update()` — not in the `room-entered` listener where it used
+  // to — and its once-guard is a SESSION field, not a save flag. Both halves
+  // matter, and each fixes a measured strand (tools/_r-act5latch.mjs):
+  //   * `room-entered` fires once per entry. The scene is pushed 800 ms later
+  //     and the autosave lands inside that window, so a quit, a crash or a
+  //     defeat dump (`_handleDefeat` -> `_loadRoom('cubicle_farm')`, which also
+  //     emits `room-entered`) banked `act5_triggered:true` with
+  //     `act4_complete:false` — and the persisted latch then refused the scene
+  //     forever, on this save, with nothing else in the game able to push it.
+  //   * `update()` re-offers it whenever the player is standing in the room
+  //     with the charter: straight after a load, straight after a defeat, and
+  //     without asking them to walk out and back in.
+  // `!act4_complete` is the real guard — the scene sets it, so this can fire at
+  // most once per save. `_act5Pushed` only stops a second push during the ~1 s
+  // before the box is on screen, and it clears the moment the player leaves the
+  // room, so a walk-out/walk-in always retries.
+  // `act5_triggered` is still WRITTEN (shipped saves and the F2 presets carry
+  // it, and it reads as a record that the scene happened) but never READ.
+  _maybeTriggerAct5() {
+    if (this.player.currentRoom !== 'cubicle_farm') { this._act5Pushed = false; return; }
+    if (this._act5Pushed) return;
+    // `act3_complete` is the safety catch for the vault keypad: a player who
+    // cracks 47-19-82 in Act 1 and lifts the charter must not detonate Act 5
+    // (a level-1 Andrew against the 3v2 Restructuring trio) on the walk back to
+    // his desk. The sequence break gives you the object early; it does not skip
+    // three acts of story.
+    if (!this.player.getFlag('has_charter')) return;
+    if (!this.player.getFlag('act3_complete')) return;
+    if (this.player.getFlag('act4_complete')) return;
+    // A/B switch in the shape of `window.__boardDeferOff`: reproduces the
+    // PRE-FIX persisted-latch guard so `tools/_r-act5latch.mjs --pre` can be
+    // shown failing on the defect the gate exists to catch. Never true in play.
+    if (typeof window !== 'undefined' && window.__sceneLatchLegacy === true
+      && this.player.getFlag('act5_triggered')) return;
+    if (!DIALOGS.act5_trigger) return;
+    this._act5Pushed = true;
+    this.player.setFlag('act5_triggered');
+    setTimeout(() => {
+      const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
+      this.stateManager.push(dialogState);
+    }, 800);
+  }
+
+  // Re-arm every scene whose latch is banked but whose payoff never landed.
+  // Called from `enter()` (before the room loads), from `syncFromPlayerState()`
+  // (dev-panel load, MenuState load) and from `_handleDefeat()`. Idempotent and
+  // one-directional: it only ever CLEARS a `started` flag whose `done` is unset,
+  // so a finished scene is untouched. See UNFINISHED_SCENE_LATCHES.
+  _reconcileSceneLatches() {
+    if (typeof window !== 'undefined' && window.__sceneLatchLegacy === true) return;
+    for (const { started, done } of UNFINISHED_SCENE_LATCHES) {
+      if (this.player.getFlag(started) && !this.player.getFlag(done)) {
+        this.player.setFlag(started, false);
+      }
+    }
   }
 
   _syncActFromFlags() {
@@ -3999,6 +4160,8 @@ export class ExplorationState {
         this._showDevPanel();
       }
     }
+
+    this._maybeTriggerAct5();
 
     // Act 5 — Restructuring Trio: 3v2 multi-combatant fight (Andrew + Janet vs all three analysts).
     // Fires once act4_complete is set (set by act5_trigger dialog) and runs once.

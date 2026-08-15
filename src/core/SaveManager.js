@@ -86,6 +86,12 @@ const FLAGS_OF_RECORD = [
   // Allies, by their recruit flags
   'janet_rallied', 'diane_rallied', 'isaiah_rallied', 'alex_rallied',
   'janitor_rallied', 'skip_speech_ready',
+  // ADDITIVE (rule 1): `alex_rallied` and `isaiah_rallied` above are written by
+  // NOTHING — repo-wide, their only occurrence is this list — so every carry
+  // card ever exported has reported Alex and Isaiah as never-rallied. These are
+  // the flags their recruitment actually writes. The two dead keys stay,
+  // because removing a key is the one thing this contract forbids.
+  'alex_it_recruited', 'isaiah_recruited',
   // Renovations — the building's physical state at handoff
   'renovation_espresso_bar', 'renovation_catering_fridge',
   'renovation_ergonomic_workstations', 'renovation_projection_wall',

@@ -4,6 +4,7 @@ import { AudioManager } from '../core/AudioManager.js';
 import { DialogBox } from '../ui/DialogBox.js';
 import { ITEMS } from '../data/items.js';
 import { getDialogQuestGate, getQuestStage, isStageInRange } from '../utils/dialogGating.js';
+import { DEV_MODE } from '../utils/constants.js';
 
 /**
  * DialogState - Game state for displaying dialog trees.
@@ -69,6 +70,8 @@ export class DialogState {
     this.waitingForInput = false;
     this.active = false;
     this.shownAnyNode = false;
+    // Indices already visited by the out-of-band skip walk — see _processNode.
+    this._skipSeen = new Set();
   }
 
   // --- State interface ---
@@ -138,6 +141,25 @@ export class DialogState {
 
     const node = this.dialogTree[this.currentIndex];
     if (!this._isNodeValidForQuestStage(node)) {
+      // THE SKIP WALK MUST BE TOTAL. A dialog served outside its quest-stage
+      // band fails EVERY node, and this branch then chases `next` pointers —
+      // which in a tree whose tail loops back is infinite recursion, not a
+      // walk. `alex_it_act3`'s appended catch-up tail is 19 -> 20 -> 21 -> 22
+      // (an `end`, so +1) -> 23 -> 19, and the `alex_it_side_router` "main
+      // investigation" row pushed that dialog raw at quest stage 400/500
+      // against a 300-399 gate. The result was `Maximum call stack size
+      // exceeded` thrown inside `enter()` — AFTER `GameStateManager.push` had
+      // already paused the world — leaving a blank, input-dead box that no key
+      // could close. Every jump out of this branch is one the player never
+      // sees, so revisiting an index means the walk has closed a loop: end the
+      // dialog instead of the frame. (The router that served it out of band is
+      // fixed too; this is the structural half. Keep both.)
+      if (this._skipSeen.has(this.currentIndex)) {
+        if (DEV_MODE) console.warn(`DialogState: "${this.dialogId}" skip-walk looped at node ${this.currentIndex} — ending`);
+        this._endDialog();
+        return;
+      }
+      this._skipSeen.add(this.currentIndex);
       this.currentIndex = node.fallback !== undefined
         ? node.fallback
         : node.next !== undefined

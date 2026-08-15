@@ -1431,10 +1431,21 @@ export const DIALOGS = {
     /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A third note, much older: "admin_legacy — DO NOT DECOMMISSION — R.M."' },
     /* 4 */ { type: 'text', speaker: 'Narrator', text: 'The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.', next: 5 },
     /* 5 */ { type: 'condition', flag: 'server_secret_started', ifTrue: 9, ifFalse: 6 },
-    /* 6 */ { type: 'condition', flag: 'met_alex_it', ifTrue: 7, ifFalse: 9 },
+    /* 6 */ { type: 'condition', flag: 'met_alex_it', ifTrue: 10, ifFalse: 9 },
     /* 7 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 1, next: 8 },
     /* 8 */ { type: 'action', action: 'set_flag', flag: 'server_secret_started', value: true, next: 9 },
     /* 9 */ { type: 'end' },
+    // SERVER ROOM SECRETS STARTS WITH THE OTHER ALEX SIDE QUESTS, NOT BEFORE
+    // SKIP. Meeting Alex is enough to reach the server room in Act 1, so
+    // `met_alex_it` alone let a player start this before the briefing and
+    // before a single Henderson — reported from playtest 2026-08-15. Every
+    // other Alex side quest is already held behind `act2_complete`
+    // (`_getAlexSideQuestDialog`: "Side quests only available after Henderson
+    // Trust arc is resolved"); this one bypassed that rule because it is
+    // started by a room interactable rather than by his router. The four
+    // flavour lines above still read at any act — only the QUEST waits.
+    // Appended and routed to from node 6, per the never-insert-mid-array law.
+    /* 10 */ { type: 'condition', flag: 'act2_complete', ifTrue: 7, ifFalse: 9 },
   ],
 
   alex_it_desk: [
