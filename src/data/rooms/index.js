@@ -1326,7 +1326,7 @@ export const ROOMS = {
       // return dialogs were unreachable before — no Meredith NPC existed
       // anywhere until the board room (#20). Routing in _getDialogId serves
       // meredith_intro first, then meredith_act3, then meredith_return.
-      { id: 'meredith', x: 12, z: 8, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'act4_complete' } },
+      { id: 'meredith', x: 12, z: 8, facing: Math.PI, movement: { type: 'pace', distance: 1.5, axis: 'x' }, condition: { flag: 'act2_complete', notFlag: 'meredith_era_over' } },
       // F-5. She is beaten in the Board Room at act5_complete and then does
       // not exist anywhere in the world. One last scene: at the SECONDARY desk
       // (3,3), standing on the open tile south of it, packing one box. Her

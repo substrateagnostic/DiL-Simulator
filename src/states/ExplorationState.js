@@ -2731,6 +2731,12 @@ export class ExplorationState {
     // era can never serve the stale intro.
     if (id === 'meredith'
         && !this.player.getFlag('act4_complete')
+        // Belt AND suspenders: a straddling save (pre-rename flags under
+        // post-rename code, live 08-05) reached act 5+ with act4_complete
+        // unset, and the stale Henderson-era intro fired at night. Any
+        // later-act evidence ceilings the intro, not just act4.
+        && !this.player.getFlag('act5_complete')
+        && !this.player.getFlag('meredith_left')
         && !this.player.getFlag('met_meredith')
         && DIALOGS.meredith_intro) {
       return 'meredith_intro';
@@ -3526,6 +3532,17 @@ export class ExplorationState {
     if (!this.player.getFlag('karen_first_meeting_over')
       && (this.player.getFlag('karen_defeated') || this.player.getFlag('retry_karen'))) {
       this.player.setFlag('karen_first_meeting_over', true);
+    }
+
+    // Meredith's acts-3-4 era is over once ANY later-act evidence exists. Her
+    // pacing entry needs "act2_complete && !act4_complete && !act5_complete",
+    // and an NPC `condition` holds one notFlag — so the compound lives here
+    // (the documented synthetic-flag pattern). Latch, one-way. Added 08-05
+    // after a straddling save reached act 5+ with act4_complete unset and the
+    // acts-3-4 pacer stood mid-room at night serving her stale intro.
+    if (!this.player.getFlag('meredith_era_over')
+      && (this.player.getFlag('act4_complete') || this.player.getFlag('act5_complete'))) {
+      this.player.setFlag('meredith_era_over', true);
     }
 
     // ── WHERE THE INTERN IS (round 2, D3) ────────────────────────────────
