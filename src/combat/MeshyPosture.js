@@ -229,6 +229,16 @@ function clampPostureImpl(clip, targetRest, opts) {
   // against untilt-before.json, and `node tools/_fr1-untilt.mjs` now reports
   // per-row deltas against that baseline down to 15 deg so a 36 deg step can
   // never again sit inside the probe's own blind spot.
+  //
+  // B22 IS NOT CLOSED, and removing the ceiling did not close it. The Intern
+  // and Skip Hartley (Unhinged) both ride a333 and both still read a 47.75 deg
+  // worst frame-to-frame head step — the largest in the cast, on a story boss.
+  // The retarget input for that clip is 1.85 deg, so the step is manufactured
+  // here, by a stance whose authored gaze leaves the horizon far enough that
+  // the gaze clamp has to work every frame. Two ways out, both producer calls
+  // and neither a build task: swap a333 for those two characters, or relax the
+  // gaze gate for stances that are authored to look away. Do not let the
+  // ceiling fix be read as an answer to this.
   let prevPsi = null;
   const untiltHead = (worldQuaternion) => {
     direction.copy(targetRest.get('head_end').p).applyQuaternion(worldQuaternion).normalize();

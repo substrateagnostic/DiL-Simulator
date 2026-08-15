@@ -678,9 +678,37 @@ export class ExplorationState {
         // the NEXT visit to the room, which is also when they read better —
         // the first-visit pair is Andrew meeting the room, the act pair is
         // Andrew noticing it changed.
-        const actLines = firstVisitFired ? null : ROOM_THOUGHTS_BY_ACT[roomId]?.[this.player.actIndex];
+        //
+        // B2 ROUND 2 — DEFERRED IS NOT DROPPED. The skip above is right about
+        // cadence and wrong about lifetime: an act band is keyed to ONE act, so
+        // a room first entered DURING act 3 or act 6 and never revisited inside
+        // that act lost its lines outright. Six rooms carry both bands and the
+        // stairwell is realistically first-entered in act 6, which is where its
+        // Floor 13 graffiti line lives. So a skipped band now leaves an IOU —
+        // `thought_<roomId>_a<act>_owed` — and a later visit in any act pays the
+        // oldest outstanding one. Nothing fires twice: paying an IOU spends the
+        // same `thought_<roomId>_a<act>` latch the band would have spent, and
+        // the IOU is only ever written for a band the player was actually
+        // standing in the room for. A room the player never visited during act 3
+        // has no IOU and gets nothing, which is the correct behaviour and the
+        // reason this is not "walk down the acts until something fires".
+        const actIdx = this.player.actIndex;
+        if (firstVisitFired && ROOM_THOUGHTS_BY_ACT[roomId]?.[actIdx]?.length
+            && !this.player.getFlag(`thought_${roomId}_a${actIdx}`)) {
+          this.player.setFlag(`thought_${roomId}_a${actIdx}_owed`, true);
+        }
+        let owedAct = null;
+        if (!firstVisitFired && !ROOM_THOUGHTS_BY_ACT[roomId]?.[actIdx]?.length) {
+          for (const a of Object.keys(ROOM_THOUGHTS_BY_ACT[roomId] || {}).map(Number).sort((p, q) => p - q)) {
+            if (a >= actIdx) break;
+            if (this.player.getFlag(`thought_${roomId}_a${a}_owed`)
+                && !this.player.getFlag(`thought_${roomId}_a${a}`)) { owedAct = a; break; }
+          }
+        }
+        const bandAct = owedAct ?? actIdx;
+        const actLines = firstVisitFired ? null : ROOM_THOUGHTS_BY_ACT[roomId]?.[bandAct];
         if (actLines && actLines.length) {
-          const actKey = `thought_${roomId}_a${this.player.actIndex}`;
+          const actKey = `thought_${roomId}_a${bandAct}`;
           // An entry may be a bare string or `{ text, flag }` / `{ text, notFlag }`
           // for a line that asserts something the player might not have seen.
           const live = actLines

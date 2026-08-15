@@ -406,7 +406,14 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'You notice the Janitor is wearing a gold Rolex. His mop bucket has a monogram on it.' },
     /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Something on your mind, son?", choices: [
       { text: "That's a nice watch for a janitor.", next: 5 },
-      { text: 'What do you know about the account they gave me?', next: 10 },
+      // B7 round 2. This option used to read "What do you know about the
+      // account they gave me?" — and janitor_intro is reachable in the PARKING
+      // GARAGE, before Skip has briefed Andrew or assigned him anything, so it
+      // put a client in his hands that the player had not been given. Round 1
+      // softened the wording and left the presupposition standing. The line now
+      // presupposes nothing; the Janitor volunteering "Henderson Trust" is the
+      // reveal, which is what node 10 was always written to be.
+      { text: 'Anything I should know before I go up there?', next: 10 },
       { text: "You don't really seem like a janitor.", next: 15 },
       { text: "Just passing through.", next: 21 },
     ]},
