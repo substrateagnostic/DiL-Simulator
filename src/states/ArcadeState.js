@@ -1,4 +1,4 @@
-import { NotificationArbiter } from '../core/NotificationArbiter.js';
+import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import * as THREE from 'three';
 import { Engine } from '../core/Engine.js';
 import { InputManager } from '../core/InputManager.js';
@@ -891,6 +891,27 @@ export class ArcadeState {
     if (tiers > 0) {
       this.player.stats.atk = (this.player.stats.atk || 0) + tiers;
       this.player.stats.def = (this.player.stats.def || 0) + tiers;
+      // B17 — SAY SOMETHING. The permanent stat ladder paid out silently
+      // except for a number on the game-over card, which is the one screen the
+      // player is least likely to read carefully (they are looking at the
+      // distance and pressing retry). A PERMANENT change to Assertiveness and
+      // Composure is exactly the class the arbiter calls PROGRESS.
+      //
+      // Posted to the WORLD scope, which this state suspends — so it does not
+      // paint over the cabinet, it is held and shown when the player is back in
+      // the break room with the rest of the game around them. That is the
+      // correct read for a stat change: it belongs to the office, not the game
+      // inside the game. DEFER, DON'T DESTROY does the rest.
+      NotificationArbiter.post({
+        cls: NC.PROGRESS,
+        tone: 'item',
+        text: `SPRINT REVIEW: Assertiveness +${tiers}, Composure +${tiers} — permanently.`,
+        key: 'Sprint Review',
+      });
+    }
+    // Same treatment for a cosmetic milestone, which had the same problem.
+    for (const label of unlocks) {
+      NotificationArbiter.post({ cls: NC.PROGRESS, tone: 'item', text: `SPRINT REVIEW: ${label}`, key: 'Sprint Review' });
     }
 
     this.hud.showGameOver({

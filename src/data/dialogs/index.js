@@ -984,7 +984,14 @@ export const DIALOGS = {
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "TIP: Go to the Reception area and interact with the desk to take on clients. Each win earns XP and AUM currency." },
     /* 8 */ { type: 'text', speaker: 'Skip Hartley', text: "Handle 3 clients. Get yourself to Level 3. Then head back to the conference room and face Karen again — at that level you'll actually have a fighting chance." },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "Oh — and check the motivational posters around the building. Sounds dumb, but they're actually worth reading. Trust me." },
-    /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "Also, there's an old Stagecoach Stampede cabinet in the break room. Don't laugh — if you can hit 500 distance, that thing gives you +5 Composure and +5 Assertiveness. Permanent." },
+    // B15 — THE ARCADE'S OLD NAME, AND A REWARD LADDER THAT WAS NEVER TRUE.
+    // The cabinet was rebuilt as SPRINT REVIEW and this line still called it
+    // Stagecoach Stampede; it also promised the full +5/+5 for "500 distance"
+    // when the ladder is +1/+1 per 40 FLOORS of personal best capped at 5
+    // (ArcadeState: floors/40, min(5)), i.e. 200 floors. This is the only
+    // place in the game that tells the player the ladder exists, so it has to
+    // be true. Redrafted through the prose law.
+    /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "Also, there's an old Sprint Review cabinet in the break room. Don't laugh — every forty floors you clear, that thing gives you +1 Composure and +1 Assertiveness. Permanent. Caps at five each. Two hundred floors and you're basically a new hire." },
     /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: "One more thing. I've dealt with the Hendersons before. Let me save you some pain." },
     /* 12 */ { type: 'text', speaker: 'Skip Hartley', text: "Karen? Don't try to schmooze her. She's immune to that stuff. But cite actual case law — legal arguments — and she folds like a cheap suit." },
     /* 13 */ { type: 'text', speaker: 'Skip Hartley', text: "Chad's the opposite. He name-drops lawyers constantly but he's never read a legal document in his life. Legal tactics bounce right off him. But call him out publicly — social pressure — and he completely crumbles." },

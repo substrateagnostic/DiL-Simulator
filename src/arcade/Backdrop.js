@@ -87,7 +87,14 @@ export class Backdrop {
     const far = new THREE.Group();
     const towerA = this._m(0x18262f);
     const towerB = this._m(0x1e2f3a);
-    const winMat = this._m(0x4d7f8d, { transparent: true, opacity: 0.5 });
+    // B16 — CONTRAST. The lit-window accent was luma 117.4 and the monitor glow
+    // 133.2, which put the BACKGROUND brighter than half the gameplay props in
+    // front of it. Measured worst case: the binder tower (a hard block that ends
+    // the run) sat 0.4 luma from the mid-layer panel cap, and the rolling chair
+    // (a smashable) 2.6 from the planter. Genesis convention is a dark,
+    // low-chroma background with saturated objects on top of it; these two are
+    // the only backdrop elements that broke it. Ceiling 133.2 -> 76.1.
+    const winMat = this._m(0x2d4a52, { transparent: true, opacity: 0.5 });
     const SPAN_FAR = 120;
     for (let i = 0; i < 52; i++) {
       const w = 3.0 + rnd() * 5.0;
@@ -115,7 +122,7 @@ export class Backdrop {
     const mid = new THREE.Group();
     const panelMat = this._m(0x23343f);
     const panelCap = this._m(0x33505f);
-    const monMat = this._m(0x3f9a86, { transparent: true, opacity: 0.55 });
+    const monMat = this._m(0x24584c, { transparent: true, opacity: 0.55 });
     const SPAN_MID = 96;
     for (let i = 0; i < 68; i++) {
       const x = -SPAN_MID + (i / 68) * SPAN_MID * 2;

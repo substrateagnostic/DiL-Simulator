@@ -79,14 +79,23 @@ export class PropFactory {
         cardboard: this._m(C(0xc79a5e)),
         cardboardDark: this._m(C(0x9c7643)),
         tape: this._m(C(0xe8dcc0)),
-        chair: this._m(C(0x2c3742)),
-        chairSeat: this._m(C(0x4a5a6b)),
+        // B16 — CONTRAST PASS. Every one of the eight rows below is a
+        // GAMEPLAY-CRITICAL object (badnik, hard block, spring, checkpoint) and
+        // every one of them measured within 10 luma of a backdrop layer:
+        // binderB 0.4, chair 2.6, cardboardDark 5.0, deskTop 6.3, binderA 8.2,
+        // desk 9.5. They are lifted while KEEPING their chroma — scaling toward
+        // white would have hit the same luma target and turned them grey, which
+        // loses an object a different way. With the two backdrop accents pulled
+        // down as well, the worst prop-to-backdrop luma gap in the whole set
+        // goes 0.4 -> 27.3.
+        chair: this._m(C(0x5a7fa8)),
+        chairSeat: this._m(C(0x7d97b5)),
         chrome: this._m(C(0xb9c6d2)),
-        binderA: this._m(C(0xb03a3a)),
-        binderB: this._m(C(0x2f4f7a)),
-        binderC: this._m(C(0x2a7a52)),
+        binderA: this._m(C(0xd05252)),
+        binderB: this._m(C(0x4f7fc0)),
+        binderC: this._m(C(0x3fa672)),
         cooler: this._m(C(0xdff0f5)),
-        coolerBase: this._m(C(0x53636f)),
+        coolerBase: this._m(C(0x6f8390)),
         pipe: this._m(C(0x8c98a4)),
         pipeBand: this._m(C(0xd8a63a)),
         clip: this._m(C(0xd8dee6)),
@@ -99,8 +108,8 @@ export class PropFactory {
         cupBand: this._m(C(0x6b3d1f)),
         stapler: this._m(C(0xf0c419)),
         staplerDark: this._m(C(0xb08d0a)),
-        desk: this._m(C(0x6a5136)),
-        deskTop: this._m(C(0x8a6b48)),
+        desk: this._m(C(0x8a6a45)),
+        deskTop: this._m(C(0xb08a5c)),
         lamp: this._m(C(0x51d6a4)),
         lampOff: this._m(C(0xc44c4c)),
       };
