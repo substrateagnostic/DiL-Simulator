@@ -91,6 +91,14 @@ export class TileMap {
 
   // Check if player can move to position (with sub-tile precision)
   canMove(x, z, radius = 0.2, fromX = null, fromZ = null) {
+    // EMBED ESCAPE: a body standing INSIDE blocked geometry must always be
+    // allowed to walk out. Destination-only corner checks reject every
+    // sub-tile step whose target is still inside the tile the body starts
+    // in, which jails the player permanently — measured live 08-05 when the
+    // ending scene's staged sit-down parked Andrew on the exec conference
+    // chair's own collision tile. Normal collision resumes the moment the
+    // body stands on walkable ground again.
+    if (fromX !== null && !this.isWalkable(fromX, fromZ)) return true;
     // Check all four corners of the bounding circle approximation
     const walkable = this.isWalkable(x - radius, z - radius) &&
            this.isWalkable(x + radius, z - radius) &&

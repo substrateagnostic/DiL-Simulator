@@ -4009,6 +4009,12 @@ export class ExplorationState {
     // and `move()` would overwrite the facing every frame.
     if (!this.player._stageDriven) {
       const { x, z } = InputManager.getMovementVector();
+      // A staged scene may legitimately END with Andrew seated (the ending
+      // sit-down does). The director has no post-scene claim on his hips:
+      // the first movement input stands him back up.
+      if ((x !== 0 || z !== 0) && this.player.animator?.isSitting) {
+        this.player.animator.setSitting(false);
+      }
       this.player.move(x, z, dt, this.tileMap);
       this.player.update(dt);
     }
