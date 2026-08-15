@@ -234,8 +234,23 @@ export function clipsFor(inst, id, modelId = id) {
 let _clipsFor = null;
 let _phaseFor = null;
 let _beatsFor = null;
-export function registerClipProvider(fn, phaseFn, beatsFn) {
-  _clipsFor = fn; _phaseFor = phaseFn; _beatsFor = beatsFn;
+let _readyFor = null;
+export function registerClipProvider(fn, phaseFn, beatsFn, readyFn) {
+  _clipsFor = fn; _phaseFor = phaseFn; _beatsFor = beatsFn; _readyFor = readyFn || null;
+}
+
+// CAN THIS SLOT BE STAGED AS A MESHY BODY *RIGHT NOW*?
+//
+// `instance()` alone is not the question. A body whose GLB is parsed but whose
+// shared reaction clips are still in flight stages as a Meshy figure holding its
+// baked idle — no attack, no hurt, no cast, for the whole fight. That is the
+// A-pose the casting slate exists to remove, and it is indistinguishable from
+// "the enemy is not animating" to a player. Everything the fight needs must be
+// warm before the body goes on stage; until then CombatScene stands the
+// procedural build (which DOES have gestures) and upgrades in place later.
+export function isStageable(id, modelId = id) {
+  if (!cache.has(modelId) || !_skelUtils) return false;
+  return !_readyFor || _readyFor(id, modelId);
 }
 export function phaseFor(id) { return _phaseFor ? _phaseFor(id) : 0; }
 // Per-role playback multipliers that land every build's reaction on the same
@@ -314,5 +329,5 @@ export function _resetCache() { cache.clear(); failed.clear(); inflight.clear();
 // Harness handle (?dev only) — tools/meshy-entry-timing.mjs measures preload and
 // instance costs directly off this, the same way ?dev exposes window.__explore.
 if (DEV_MODE && typeof window !== 'undefined') {
-  window.__meshyCast = { load, preload, instance, isCached, hasModel, resolveId, MESHY_MODELS, _resetCache };
+  window.__meshyCast = { load, preload, instance, isCached, isStageable, hasModel, resolveId, MESHY_MODELS, _resetCache };
 }

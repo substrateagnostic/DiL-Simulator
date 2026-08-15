@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { buildCharacter } from '../entities/CharacterBuilder.js';
 import { CharacterAnimator } from '../entities/CharacterAnimator.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
-import { MESHY_MODE } from '../utils/constants.js';
+import { MESHY_MODE, DEV_MODE } from '../utils/constants.js';
 import * as MeshyCast from './MeshyCast.js';
 import { MeshyAnimator } from './MeshyAnimator.js';
 import * as MeshyProps from './MeshyProps.js';
@@ -343,19 +343,96 @@ export class CombatScene {
   // this slot back to the procedural v7 build. Returns { group, animator }
   // shaped exactly like the procedural pair either way, so nothing downstream
   // knows which cast it got.
-  // Returns { group, animator, figureH } where figureH is the combatant's height
-  // in MODEL units at scale 1 — the number the stage-framing law measures from.
+  // Returns { group, animator, figureH, meshyPending } where figureH is the
+  // combatant's height in MODEL units at scale 1 — the number the stage-framing
+  // law measures from.
+  //
+  // THE WARM-UP RACE, AND WHY THIS RETURNS `meshyPending`.
+  //
+  // ExplorationState._startCombat races the Meshy warm-up against a 2500 ms
+  // ceiling so the fade can never hang on an asset. Measured through the
+  // shipping entry point on the PRODUCTION build (tools/_z-warm-timing.mjs):
+  // a first fight costs 7.8-9.3 s (two bodies + fourteen clip GLBs) and every
+  // NEW opponent thereafter 3.1-5.8 s — 1.2x to 3.7x over the ceiling. When the
+  // ceiling wins, `instance()` is null and this slot used to become the
+  // procedural v7 build FOR THE REST OF THE FIGHT, silently. That is the
+  // playtest report "enemies are not using attack animations (A-posing only)":
+  // the procedural stance is literally an A-pose and the authored 0.77-0.87 s
+  // punch clips never play (screenshots/z-run/security_guard-proc/f00.png).
+  //
+  // The decision is no longer permanent. A slot that fell back only because its
+  // asset was still in flight is marked, and tickMeshyUpgrade() swaps the real
+  // body in at the next beat where nothing is moving. That is correct for ANY
+  // load time — 2.5 s, 9 s, or a cold cache on a phone — which no amount of
+  // ceiling tuning can be.
   _buildCombatant(config, id) {
+    let meshyPending = null;
     if (MESHY_MODE) {
-      const built = this._buildMeshyCombatant(config, id);
-      if (built) return built;
+      const modelId = MeshyCast.resolveId(id, config);
+      if (MeshyCast.isStageable(id, modelId)) {
+        const built = this._buildMeshyCombatant(config, id);
+        if (built) return built;
+      }
+      // Registered, not failed — the bytes are simply not here yet.
+      if (MeshyCast.hasModel(modelId)) meshyPending = modelId;
     }
     const group = buildCharacter(config, { detailed: true });
     const animator = new CharacterAnimator(group);
     // max.y, not getSize().y — same reason the Meshy ruler strips accessories:
     // a prop below the floor plane would inflate the reading.
     const figureH = new THREE.Box3().setFromObject(group).max.y;
-    return { group, animator, figureH };
+    return { group, animator, figureH, meshyPending };
+  }
+
+  // Swap one slot's body in place. The old group is removed exactly the way
+  // _clearGroups removes it (mixer released, travel tween stopped, nothing
+  // disposed — geometry and materials are shared with the caches). Position and
+  // rotation are COPIED off the outgoing group, not recomputed, so a swap during
+  // the intro slide lands the new body exactly where the old one stood.
+  _swapSlot(entry, built, scale) {
+    const old = entry.group;
+    built.group.position.copy(old.position);
+    built.group.rotation.copy(old.rotation);
+    built.group.scale.setScalar(scale);
+    built.animator.setCombatMode(true);
+    built.animator.setFacing(entry.baseRotY);
+    this._addContactBounce(built.group, scale);
+    this.scene.add(built.group);
+    entry._travel?.stop();
+    entry._travel = null;
+    entry.animator?.dispose?.();
+    this.scene.remove(old);
+    entry.group = built.group;
+    entry.animator = built.animator;
+    entry.baseScale = scale;
+  }
+
+  // True while any slot is still standing in for a Meshy body that has not
+  // landed. CombatState reads it to hold the intro a beat longer, so the swap
+  // hides under the entrance instead of popping on the player's first turn.
+  meshyPending() { return this._meshyPending > 0; }
+
+  // Called every frame from CombatState.update. `quiet` means nothing is
+  // mid-beat (the intro, or the player choosing an action) — a body may only be
+  // exchanged then, never inside a swing.
+  tickMeshyUpgrade(dt, quiet) {
+    if (!this._meshyPending) return;
+    this._upgradeT = (this._upgradeT || 0) + dt;
+    if (this._upgradeT < 0.35 || !quiet) return;
+    this._upgradeT = 0;
+    const sides = [[this.enemyGroups, true], [this.allyGroups, false]];
+    for (const [list, isEnemy] of sides) {
+      for (const entry of list) {
+        if (!entry.meshyPending) continue;
+        if (!MeshyCast.isStageable(entry.characterId, entry.meshyPending)) continue;
+        const built = this._buildMeshyCombatant(entry.slotConfig, entry.characterId);
+        if (!built) continue;
+        this._swapSlot(entry, built, isEnemy ? this._stageScale(built.figureH, entry.slotCount) : 1.45);
+        entry.meshyPending = null;
+        this._meshyPending--;
+        if (DEV_MODE) console.info(`[meshy] ${entry.characterId}: body landed late — stage upgraded in place`);
+      }
+    }
   }
 
   // ── STAGE FRAMING LAW ────────────────────────────────────────────────────
@@ -492,6 +569,8 @@ export class CombatScene {
   // partyIds defaults to ['andrew']. player is the Player entity (for cosmetic equipment merge).
   setCombatants(enemyIds, partyIds, player) {
     this._clearGroups();
+    this._meshyPending = 0;
+    this._upgradeT = 0;
 
     // Multi-enemy fights pull the camera back so nobody's head crops out
     this._basePos.z = enemyIds.length > 1 ? 5.9 : 5;
@@ -502,7 +581,7 @@ export class CombatScene {
       const id = enemyIds[i];
       const config = CHARACTER_CONFIGS[id];
       if (!config) continue;
-      const { group, animator, figureH } = this._buildCombatant(config, id);
+      const { group, animator, figureH, meshyPending } = this._buildCombatant(config, id);
       animator.setCombatMode(true);   // quiet idle: no body-shell morph at close range
       const pos = positions[i];
       // MEASURED, not constant — see _stageScale. A flat 1.9 decapitated seven
@@ -522,7 +601,15 @@ export class CombatScene {
       // limp A-stand (critic: "a P5 intro gives the boss a silhouette pose").
       animator.setSignaturePose(SIGNATURE_BY_CHAR[id] || 'ready');
       const attackGesture = ATTACK_VARIANT_BY_CHAR[id] || 'attack_shove';
-      this.enemyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: 0, baseScale: scale, characterId: id, introDelay: i * 0.12, attackGesture });
+      // slotConfig / slotCount are what tickMeshyUpgrade needs to rebuild this
+      // slot later; keeping them on the entry means the upgrade path and the
+      // first build cannot drift apart.
+      this.enemyGroups.push({
+        group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: 0, baseScale: scale,
+        characterId: id, introDelay: i * 0.12, attackGesture,
+        slotConfig: config, slotCount: enemyIds.length, meshyPending: meshyPending || null,
+      });
+      if (meshyPending) this._meshyPending++;
     }
     // Enemies slide in from stage right over ~half a second
     this._introT = 0;
@@ -555,7 +642,7 @@ export class CombatScene {
         }
         combatConfig.accessories = extraAccessories;
       }
-      const { group, animator } = this._buildCombatant(combatConfig, id);
+      const { group, animator, meshyPending } = this._buildCombatant(combatConfig, id);
       animator.setCombatMode(true);
       const pos = partyPositions[i];
       group.position.set(pos.x, 0, pos.z);
@@ -579,7 +666,23 @@ export class CombatScene {
       animator.setFacing(faceRotY);
       this._addContactBounce(group, 1.45);
       this.scene.add(group);
-      this.allyGroups.push({ group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: faceRotY, baseScale: 1.45, characterId: id });
+      this.allyGroups.push({
+        group, animator, baseX: pos.x, baseZ: pos.z, baseRotY: faceRotY, baseScale: 1.45,
+        characterId: id, slotConfig: combatConfig, slotCount: 1, meshyPending: meshyPending || null,
+      });
+      if (meshyPending) this._meshyPending++;
+    }
+
+    // Guarantee the pending loads are actually in flight. ExplorationState's
+    // combat transition already called preload(); this is idempotent (it resolves
+    // off the same inflight promises) and makes the scene self-sufficient for any
+    // future call site that stages a fight without going through that transition.
+    if (this._meshyPending > 0) {
+      if (DEV_MODE) {
+        const late = [...this.enemyGroups, ...this.allyGroups].filter(e => e.meshyPending).map(e => e.characterId);
+        console.warn(`[meshy] warm-up ceiling beat the assets — staged procedurally, will upgrade in place: ${late.join(', ')}`);
+      }
+      MeshyCast.preload([...enemyIds, ...partyIds]);
     }
   }
 

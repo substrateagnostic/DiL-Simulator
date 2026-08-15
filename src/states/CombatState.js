@@ -97,6 +97,9 @@ export class CombatState {
 
     this.phase = 'intro';                 // intro, ally_turn, targeting, animating, enemy_phase, result
     this.animTimer = 0;
+    // Seconds the intro may borrow while a Meshy body is still loading. Spent
+    // once per fight, only when the scene actually has a pending slot.
+    this._meshyGrace = 1.2;
     this.inputEnabled = false;
     this._lastPhaseIndex = -1;
     this._activeAllyIndex = 0;            // Index into engine.allies that's currently acting
@@ -2874,6 +2877,13 @@ export class CombatState {
 
   update(dt) {
     this.scene.update(dt);
+    // DEFERRED MESHY UPGRADE. A body whose GLB missed the combat transition's
+    // 2500 ms warm-up ceiling opened the fight as the procedural build — the
+    // A-pose the playtest reported. The scene swaps the real body in the moment
+    // the asset lands, and only at a beat where nothing is moving: the intro, or
+    // the player sitting on the action menu. Never inside a swing.
+    this.scene.tickMeshyUpgrade(dt, this.phase === 'intro'
+      || (this.phase === 'ally_turn' && this.inputEnabled));
     // FREEZE MEANS FREEZE. CombatScene.update() early-returns during hit-stop,
     // but the camera timeline and the particles were advanced UNCONDITIONALLY
     // here — so a "freeze" moved the camera and kept the sparks flying while
@@ -2889,6 +2899,17 @@ export class CombatState {
 
     if (this.phase === 'intro') {
       this.animTimer -= dt;
+      // INTRO GRACE. If a body is still on its way, hold the entrance a beat
+      // longer so the swap lands under the slide-in and the name banner rather
+      // than popping on the player's first turn. Bounded and one-shot: the whole
+      // window is the 1.2 s seeded into _meshyGrace in the constructor, and it
+      // never fires at all on a warm cache — which is every fight after the
+      // first one against a given character.
+      if (this.animTimer <= 0 && this._meshyGrace > 0 && this.scene.meshyPending()) {
+        const spend = Math.min(this._meshyGrace, dt);
+        this._meshyGrace -= spend;
+        this.animTimer += spend;
+      }
       if (this.animTimer <= 0) {
         this._startRound();
       }

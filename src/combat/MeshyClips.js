@@ -361,6 +361,24 @@ export function beatTimeScales(clips) {
   return out;
 }
 
-registerClipProvider(clipsFor, phaseFor, beatTimeScales);
+// IS THIS CHARACTER SAFE TO STAGE YET?
+//
+// clipsFor() is SYNCHRONOUS and silently omits any role whose file has not
+// landed, and MeshyAnimator degrades a missing role to the stance. That degrade
+// is correct for a permanent failure and WRONG for a fetch still in flight: a
+// body staged before the shared library arrives holds its baked GLB idle for the
+// whole fight — which is the A-pose this slate exists to replace, with no
+// attack, no hurt and no cast. CombatScene asks this before it stages a Meshy
+// body, and keeps asking until it is true (see tickMeshyUpgrade).
+export function clipsReady(id, modelId = id) {
+  if (!isLoaded(idleIdFor(id, modelId))) return false;
+  const gender = genderFor(id, modelId);
+  for (const role of REACTION_ROLES) {
+    if (!isLoaded(CLIP_IDS[role][gender])) return false;
+  }
+  return true;
+}
+
+registerClipProvider(clipsFor, phaseFor, beatTimeScales, clipsReady);
 
 export function isLoaded(actionId) { return cache.has(actionId) && !!cache.get(actionId)?.clip; }
