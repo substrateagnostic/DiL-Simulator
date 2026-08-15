@@ -98,7 +98,17 @@ export class TileMap {
     // ending scene's staged sit-down parked Andrew on the exec conference
     // chair's own collision tile. Normal collision resumes the moment the
     // body stands on walkable ground again.
-    if (fromX !== null && !this.isWalkable(fromX, fromZ)) return true;
+    // The test must use the same four-corner footprint as the destination
+    // check: a center-tile-only test missed the pocket case (standing on a
+    // walkable tile with the RADIUS overlapping chair/table blocks — every
+    // direction's corner test fails and the center test never fires).
+    if (fromX !== null) {
+      const fromClear = this.isWalkable(fromX - radius, fromZ - radius) &&
+        this.isWalkable(fromX + radius, fromZ - radius) &&
+        this.isWalkable(fromX - radius, fromZ + radius) &&
+        this.isWalkable(fromX + radius, fromZ + radius);
+      if (!fromClear) return true;
+    }
     // Check all four corners of the bounding circle approximation
     const walkable = this.isWalkable(x - radius, z - radius) &&
            this.isWalkable(x + radius, z - radius) &&
