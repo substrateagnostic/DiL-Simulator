@@ -67,6 +67,11 @@ const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
 
 const STORY_TRIGGER_BY_ID = new Map(TRIGGERS.map(trigger => [trigger.id, trigger]));
 const FLAG_SET_STORY_TRIGGERS = TRIGGERS.filter(trigger => trigger.on === 'flag-set');
+// See `_reconcileSceneLatches`. Declared on the row, not inferred here, so the
+// list is reviewable in the graph diff.
+const REARM_ON_DEFEAT_TRIGGERS = TRIGGERS.filter(
+  trigger => trigger.reArmOnDefeat && trigger.grants?.length,
+);
 
 // Where `_loadRoom` lands when the requested room does not exist in this build.
 // Matches `Player.deserialize`'s own default for a save with no `currentRoom`.
@@ -1269,12 +1274,9 @@ export class ExplorationState {
       && this.player.getFlag('act6_complete')
       && !this.player.getFlag('charter_certified')) {
       this._showToast('The elevator scans the charter. A red light: SEAL NOT RECOGNIZED.', 'info');
-      if (!this.player.getFlag('read_charter_challenge') && DIALOGS.charter_challenge) {
-        setTimeout(() => {
-          const dialogState = new DialogState(DIALOGS.charter_challenge, this.player, this.stateManager, 'charter_challenge');
-          this.stateManager.push(dialogState);
-        }, 700);
-      }
+      // Same reason as receptionist-first-entry: the graph row owns the once
+      // predicate, not a hand-written flag test beside a bare setTimeout.
+      this._scheduleStoryTrigger('charter-certification-block');
       return;
     }
     // ── THE KNOWLEDGE GATE ────────────────────────────────────────────
@@ -1391,12 +1393,11 @@ export class ExplorationState {
       }
       AudioManager.playMusic(this._getMusicForRoom(targetRoom));
 
-      if (targetRoom === 'reception' && !this.player.getFlag('reception_intro_done')) {
-        setTimeout(() => {
-          const dialogState = new DialogState(DIALOGS['receptionist_intro'], this.player, this.stateManager, 'receptionist_intro');
-          this.stateManager.push(dialogState);
-        }, 400);
-      }
+      // Routed through the graph like every other code-side push, so it gets
+      // the released session claim and the deferred precondition re-check. It
+      // was a bare setTimeout while its TRIGGERS row claimed once:'scene',
+      // which made the row a description rather than the thing in charge.
+      if (targetRoom === 'reception') this._scheduleStoryTrigger('receptionist-first-entry');
     }
 
     // Compile the new room's shaders and upload its textures while the wipe is
@@ -3607,7 +3608,11 @@ export class ExplorationState {
   // because its latch was already spent. Re-check the precondition as well as
   // the once-guard, and release the claim on every path that does not push.
   _storyTriggerPreconditionHolds(trigger) {
-    if (trigger.room && this.player.currentRoom !== trigger.room) return false;
+    // `on: 'room-blocked'` names the room the player was REFUSED, so they are
+    // by definition not standing in it and the room test must not apply. This
+    // is the whole charter_challenge beat: the penthouse elevator rejects the
+    // uncertified charter and the scene plays where the player still is.
+    if (trigger.room && trigger.on !== 'room-blocked' && this.player.currentRoom !== trigger.room) return false;
     if (trigger.flag && !this.player.getFlag(trigger.flag)) return false;
     if (trigger.when === undefined || trigger.when === true) return true;
     return evalExpr(trigger.when, {
@@ -3721,12 +3726,42 @@ export class ExplorationState {
   // one-directional: it only ever CLEARS a `started` flag whose `done` is unset,
   // so a finished scene is untouched. This is legacy-save repair only; current
   // debt is the derived (and now empty) UNFINISHED_SCENE_LATCHES export.
+  // A READ FLAG IS MONOTONE, AND A LOST FIGHT IS NOT A FINISHED SCENE.
+  //
+  // `read_<sceneId>` is written when the dialog ends — which for a scene whose
+  // last action is `fight` is BEFORE the fight is entered, and it is never
+  // cleared. That is exactly right for an interrupted scene and exactly wrong
+  // for a lost one: four trigger scenes start a fight that has NO
+  // player-initiable route anywhere in `rooms/index.js` (no NPC, no
+  // interactable), so a single defeat would strand the flags they grant. Three
+  // of them are the Act-5 gauntlet and between them they are the sole writers
+  // of `corporate_lawyer_defeated`, `data_lead_defeated` and
+  // `board_room_accessible`; the fourth is The Firm, sole writer of
+  // `charter_certified`. Stranding any one of them takes Acts 5, 6 and 7 with
+  // it — the exact failure this whole refactor exists to make impossible, which
+  // the pre-P8 code avoided only because `_reconcileSceneLatches` cleared its
+  // started flag on defeat.
+  //
+  // So the reconciler now does both halves, from the graph rather than a
+  // hand-kept list: it clears the closed LEGACY_SCENE_LATCHES rows for saves
+  // written before P8, and it clears `read_<scene>` for any trigger declaring
+  // `reArmOnDefeat` whose payoff has not landed. Both run at LOAD and on
+  // DEFEAT, and both are one-directional — a scene whose grant is set is never
+  // touched. `tools/story-sim.mjs` check E fails the build if a fight-bearing
+  // `once: 'scene'` trigger with grants has neither `reArmOnDefeat` nor a
+  // player-initiable fallback, so the next one cannot be authored silently.
   _reconcileSceneLatches() {
     if (typeof window !== 'undefined' && window.__sceneLatchLegacy === true) return;
     for (const { started, done } of LEGACY_SCENE_LATCHES) {
       if (this.player.getFlag(started) && !this.player.getFlag(done)) {
         this.player.setFlag(started, false);
       }
+    }
+    for (const trigger of REARM_ON_DEFEAT_TRIGGERS) {
+      const readFlag = `read_${trigger.scene}`;
+      if (!this.player.getFlag(readFlag)) continue;
+      if (trigger.grants.some(flag => this.player.getFlag(flag))) continue;
+      this.player.setFlag(readFlag, false);
     }
   }
 

@@ -51,7 +51,19 @@ if (existsSync(ROUTES_PATH)) {
   DIALOG_ROUTES = routeModule.DIALOG_ROUTES || null;
 }
 
-const LIMITATION = 'Monotone closure does not model resource ordering (AUM prices or level gates); Check F covers negative-precondition expiry only.';
+// Say the limits out loud, in the tool's own output, every run. The second
+// sentence was added after a judge found a critical bug of exactly that shape
+// that A-G could not see: the closure banks defeated_<id> AND retry_<id> for
+// every reachable encounter, so it models a player who wins and loses every
+// fight at once and never loses access to anything. Check E's second half now
+// covers the one variant that can strand the critical path (a fight-bearing
+// once:'scene' trigger with no player-initiable route), but the general class
+// remains outside the proof and nobody should believe otherwise.
+const LIMITATION = 'Monotone closure does not model resource ordering (AUM prices or level gates); '
+  + 'Check F covers negative-precondition expiry only. It also does not model COMBAT OUTCOME: the '
+  + 'closure grants both defeated_<id> and retry_<id> for every reachable encounter, so a bug of the '
+  + 'form "X becomes unreachable after a defeat" is invisible to A-G except for the one shape Check E '
+  + 'now tests by hand (a fight-bearing once:scene trigger whose encounter has no player-initiable route).';
 const CHECK_NAMES = {
   A: 'ACT COMPLETABILITY',
   B: 'FLAG REACHABILITY',
@@ -553,22 +565,39 @@ function makeModel(overrides = {}) {
     for (const scene of overrides.removeStructuralScenes) structural.delete(scene);
   }
 
+  // Encounters a PLAYER can start on their own: any scene an NPC entry or an
+  // interactable in room data points at, that contains a start_combat. An
+  // encounter's own preDialogId does NOT count — that is the push the fight
+  // already came from, so it is no recovery route at all.
+  const playerInitiableEncounters = overrides.playerInitiableEncounters ?? (() => {
+    const out = new Set();
+    for (const room of Object.values(ROOMS)) {
+      for (const entry of [...(room.npcs ?? []), ...(room.interactables ?? [])]) {
+        for (const node of dialogs[entry.dialogId] ?? []) {
+          if (node.type === 'action' && node.action === 'start_combat') out.add(node.encounter);
+        }
+      }
+    }
+    return out;
+  })();
+
   return {
     dialogs, gates, triggers, codeGrants, dispositions, dialogRoutes,
     sceneRoutes: overrides.sceneRoutes || sceneRoutes, roomEdges,
     structural, reads, dialogGrants, combatStarts, severedEvidence,
+    playerInitiableEncounters,
     extraGrants: overrides.extraGrants || [],
   };
 }
 
-function reachableRooms(model, flags) {
+function reachableRooms(model, flags, blockedRooms) {
   const reachable = new Set(['parking_garage']);
   let changed = true;
   while (changed) {
     changed = false;
     for (const room of [...reachable]) {
       for (const target of model.roomEdges.get(room) || []) {
-        if (reachable.has(target)) continue;
+        if (reachable.has(target) || blockedRooms?.has(target)) continue;
         if (!evalExpr(gateAccessExpr(target, model.gates), flags, { room: target })) continue;
         reachable.add(target);
         changed = true;
@@ -690,7 +719,7 @@ function runClosure(model, startFlags = [], options = {}) {
         }
       }
     }
-    const rooms = reachableRooms(model, activeFlags);
+    const rooms = reachableRooms(model, activeFlags, options.blockedRooms);
 
     for (const route of model.sceneRoutes) {
       if (routeIsOpen(route, model, activeFlags, rooms) && addScene(route.scene, route.src)) changed = true;
@@ -822,6 +851,20 @@ function checkC(model) {
   return findings;
 }
 
+// D HAS TWO HALVES AND THIS USED TO IMPLEMENT ONE.
+// Closure membership proves the key EXISTS. The ordering half — DESIGN 4.6's
+// "and reached BEFORE the room behind it is needed" — is the property that
+// actually matters, and the old comment argued it was implied. It is not, quite:
+// some sceneRoutes (the legacy-route fallbacks and the ladder-retry rows) are
+// built with `room: null`, so `routeIsOpen` applies no gate to them and a scene
+// behind a locked door can be counted reachable through one of those.
+//
+// The direct test, and the one a player would recognise: THE KEY MUST NOT BE
+// INSIDE THE LOCKED ROOM. Re-run the closure with the gate's own flag blocked;
+// if the room's contents can still grant it, the gate is circular. Blocking the
+// flag is stronger than blocking the room and needs no new machinery — a flag
+// that is only obtainable behind its own gate cannot appear in a closure that
+// refuses to add it, and one that has an outside source is unaffected.
 function checkD(model, closure) {
   const findings = [];
   for (const gate of model.gates.filter(item => item.requires)) {
@@ -829,18 +872,52 @@ function checkD(model, closure) {
       findings.push(finding('D', `${gate.room}:${gate.requires}`, `Gate for ${gate.room} cannot close: ${gate.requires} is absent from fresh-save closure (including room-order constraints).`, 'src/data/story/graph.js'));
       continue;
     }
-    // Room routes include this requirement in their access predicate. A flag
-    // granted only behind its own room therefore cannot enter the closure at
-    // all (the failure above), which is the ordering proof without confusing a
-    // scene that also has a separate, earlier legacy route.
+    const withoutRoom = runClosure(model, [], { blockedRooms: new Set([gate.room]) });
+    if (!withoutRoom.flags.has(gate.requires)) {
+      findings.push(finding('D', `${gate.room}:${gate.requires}`,
+        `Gate for ${gate.room} is CIRCULAR: ${gate.requires} is only grantable from inside ${gate.room}, the room it unlocks. `
+        + `The key is behind its own door.`,
+        'src/data/story/graph.js'));
+    }
   }
   return findings;
+}
+
+// E2, and it is the half the first cut of this check did not have.
+// `once: 'scene'` fixes spend-before-grant for an INTERRUPTED scene, because
+// `read_<scene>` is written only when a node was shown. It does NOT fix a LOST
+// one: for a scene whose last action is `fight`, the read flag lands before the
+// fight is entered and is never cleared. If that encounter has no other
+// player-initiable route — no NPC in any room, no interactable — one defeat
+// strands every flag the scene grants, permanently, on a live save.
+// Measured on the shipped tree the day it was introduced: four such triggers,
+// between them the sole writers of corporate_lawyer_defeated,
+// data_lead_defeated, board_room_accessible and charter_certified. A trigger in
+// that shape must declare `reArmOnDefeat`, which `_reconcileSceneLatches`
+// honours at load and on defeat.
+function fightEncountersOf(model, sceneId) {
+  const tree = model.dialogs[sceneId] || [];
+  return tree.filter(node => node.type === 'action' && node.action === 'start_combat')
+    .map(node => node.encounter);
 }
 
 function checkE(model) {
   const findings = [];
   for (const trigger of model.triggers) {
-    if (trigger.once === 'scene' || trigger.once === 'always') continue;
+    if (trigger.once === 'scene' || trigger.once === 'always') {
+      if (trigger.once !== 'scene' || !trigger.grants?.length || trigger.reArmOnDefeat) continue;
+      const encounters = fightEncountersOf(model, trigger.scene);
+      if (!encounters.length) continue;
+      const stranded = encounters.filter(encounter => !model.playerInitiableEncounters.has(encounter));
+      if (!stranded.length) continue;
+      findings.push(finding('E', trigger.id,
+        `Trigger ${trigger.id} is once:'scene' and its scene ${trigger.scene} starts ${stranded.join(', ')}, `
+        + `which no NPC or interactable can start. read_${trigger.scene} is written before the fight and is never `
+        + `cleared, so ONE DEFEAT strands ${trigger.grants.join(', ')} for the life of the save. `
+        + `Declare reArmOnDefeat: true on the row, or give the encounter a player-initiable route.`,
+        trigger.src));
+      continue;
+    }
     if (trigger.once?.startsWith('flag:') && typeof trigger.waiver === 'string' && trigger.waiver.trim()) continue;
     findings.push(finding('E', trigger.id, `Trigger ${trigger.id} spends ${trigger.once || '<missing once>'} before ${trigger.scene} without a named waiver.`, trigger.src));
   }
@@ -1157,7 +1234,10 @@ function runRegressionRow(baseModel) {
   const model = { ...baseModel, triggers: legacyTriggers };
   const eRed = observedRed(checkE(model), row => row.id === 'regression-act5-persisted-latch');
   const interrupted = runClosure(model, ['briefing_complete', 'branch_chosen', 'act2_complete', 'act3_complete', 'has_charter', 'act5_triggered']);
-  const aRed = !interrupted.flags.has('act4_complete');
+  // Same law as the selftest rows: assert the CHECK fires, not just that the
+  // closure lost the flag. checkA is run against the interrupted start state.
+  const aClosureLost = !interrupted.flags.has('act4_complete');
+  const aRed = aClosureLost && observedRed(checkA(model, interrupted), row => row.id === 'act5');
   return {
     check: 'REGRESSION #1 (E+A)',
     mutation: 'restore pre-fix act5_triggered persisted latch; start interrupted save with latch=true / act4_complete=false',
@@ -1171,7 +1251,13 @@ function runSelftests() {
 
   const withoutAct4 = { ...base, dialogGrants: base.dialogGrants.filter(grant => grant.flag !== 'act4_complete') };
   const aResult = runClosure(withoutAct4);
-  rows.push({ check: 'A', mutation: 'delete the sole act4_complete grant from act5_trigger', expected: 'RED', observed: observedRed(checkA(withoutAct4, aResult), row => row.id === 'act5') ? 'RED' : 'GREEN', ok: !aResult.flags.has('act4_complete') });
+  // `ok` MUST assert the CHECK reported, not merely that the closure changed.
+  // It used to read `!aResult.flags.has('act4_complete')`, which is a property of
+  // the mutation rather than of check A: stubbing checkA to `return []` printed
+  // A | RED | GREEN in the table and still exited 0, and the exit code is the
+  // only thing npm run check reads. Every row below asserts `observed === 'RED'`.
+  const aRed = observedRed(checkA(withoutAct4, aResult), row => row.id === 'act5');
+  rows.push({ check: 'A', mutation: 'delete the sole act4_complete grant from act5_trigger', expected: 'RED', observed: aRed ? 'RED' : 'GREEN', ok: aRed && !aResult.flags.has('act4_complete') });
 
   const bReads = new Map([...base.reads].map(([flag, sources]) => [flag, new Set(sources)]));
   bReads.set('selftest_unwritten_route_flag', new Set(['selftest:route']));

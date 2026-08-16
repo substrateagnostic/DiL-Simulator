@@ -203,7 +203,12 @@ All game data is plain JS objects/exports:
   `AUTO_GRANTS` (the four pattern rules), `NEVER_SET` (currently empty), `SCENE_DISPOSITION`
   (the three ratified dead scenes). Read by `tools/story-sim.mjs` only.
 - `story/evaluator.js`, `story/predicates.js` — the derive/act evaluator, and a deliberately
-  EMPTY named-predicate whitelist (no derive rule needs an escape hatch).
+  EMPTY named-predicate whitelist (no derive rule needs an escape hatch). **One documented
+  gap:** the ROUTING table's `['pred', X]` does NOT resolve through that whitelist —
+  `route-eval.js` reads nine closures built inline in `_getDialogRouteContext`, so the
+  simulator's checks B and G are blind through them and under-report (they can never false-
+  alarm). The reason and the deadline — close it before `?routes=legacy` is deleted — are in
+  `predicates.js`'s own header.
 - `quests/index.js`, `encounters/index.js` — quests, encounter configs
 
 ### Dialog authoring (`src/data/dialogs/*.dlg`)
@@ -221,12 +226,18 @@ lowercase directives are `ask if goto end set fight give xp stat heal quest recr
 a speaker name must begin with a capital letter, which is how the two are told apart.
 **The one-page grammar card is `tools/dlg/grammar-card.md`. Read it before authoring.**
 
-`dialogs.lock.json` is the **append-only label→index ledger**, and it is what makes the
+`dialogs.lock.json` is the **append-only label→index ledger** — *append-only*, not frozen.
+`npm run dialogs:build` writes it when the change is purely additive (a new label, a new
+scene, a grown length) and prints each addition; `dialogs:check` reports a stale lock exactly
+the way it reports a stale `index.js`. A **non-additive** change — a label that would move or
+be dropped, a scene that would shrink — is a hard compile error and nothing is written, with
+a message naming the label, both indices and the consequence (*"would change the `_chose_`
+save keys of every player who has taken a choice in this scene"*). It is what makes the
 whole thing safe. A label keeps its index forever; a new label takes the next free index; a
 removed label leaves its index RESERVED and the compiler emits an `{ type: 'end' }` pad
 into the hole (the padding convention this corpus already used — 41 unreferenced pads
 shipped). No index is ever reused. That is not tidiness: `_chose_${dialogId}_${nodeIndex}_${choiceIndex}`
-(`DialogState.js:238`, `:273`) is a persisted save key, and the lock is what keeps it stable
+(`DialogState.js:271` reads it, `:310` writes it) is a persisted save key, and the lock is what keeps it stable
 for every save in the wild. The lock is committed and its diff is the human-readable proof
 that a content change added nodes and moved none. `--reseed` is refused without
 `DIALOGS_LOCK_RESEED=i-know` in the environment; it has been used exactly once.
@@ -305,8 +316,8 @@ a thing you find by playing.** Seven checks:
 | **A** | every `ACTS[].when` flag is in the closure from a fresh save |
 | **B** | every flag READ anywhere is in the closure, in `CODE_GRANTS`, or has a `NEVER_SET` reason |
 | **C** | every scene in the corpus is routed, triggered, or carries a `SCENE_DISPOSITION` row |
-| **D** | every gate flag is reachable, and reached BEFORE the room behind it is needed |
-| **E** | no spend-before-grant: every trigger is `scene`, `always`, or a named waiver |
+| **D** | every gate flag is reachable, **and** still reachable with its own room blocked (the key is not behind its own door) |
+| **E** | no spend-before-grant: every trigger is `scene`, `always`, or a named waiver — **and** a fight-bearing `once:'scene'` trigger whose encounter has no player-initiable route must declare `reArmOnDefeat` |
 | **F** | the expiry check — a grant behind `¬f` must be orderable before `f` |
 | **G** | route shadowing: every route row has a satisfying assignment where no earlier row fires |
 
@@ -325,8 +336,33 @@ with it: `dialogExists` and `act` operands are **not flags** (harvesting them as
 fixed, act is enumerated 0–7, `npcDialogId` over every literal in the table; pinning it to
 null falsely called three Janitor rows shadowed).
 
-**The honest limit, which the tool prints in its own footer:** monotone closure does not
-model resource ordering — AUM prices and level gates are outside this proof.
+**A READ FLAG IS MONOTONE, AND A LOST FIGHT IS NOT A FINISHED SCENE.** `read_<sceneId>` is
+written when the dialog ENDS — which for a scene whose last action is `fight` is *before*
+the fight is entered — and nothing clears it. That is right for an interrupted scene and
+wrong for a lost one. Four trigger scenes start an encounter with **no player-initiable
+route anywhere in `rooms/index.js`** (no NPC, no interactable), and between them they are
+the sole writers of `corporate_lawyer_defeated`, `data_lead_defeated`,
+`board_room_accessible` and `charter_certified` — so one defeat would have taken Acts 5, 6
+and 7 with it, which is the exact bug the refactor exists to kill. Those rows declare
+**`reArmOnDefeat: true`**, and `_reconcileSceneLatches` clears `read_<scene>` at LOAD and on
+DEFEAT whenever the payoff has not landed. **Check E fails the build if a fight-bearing
+`once: 'scene'` trigger with grants has neither `reArmOnDefeat` nor a player-initiable
+fallback**, so the next one cannot be authored silently. `tools/_dr-latch-interrupt.mjs`
+carries the matching leg: lose the fight, assert the scene IS re-served.
+
+**The honest limits, which the tool prints in its own footer:** monotone closure does not
+model resource ordering (AUM prices, level gates), and it does not model **combat outcome**
+— the closure banks `defeated_<id>` *and* `retry_<id>` for every reachable encounter, so
+"X becomes unreachable after a defeat" is invisible to A–G apart from the one shape check E
+now tests by hand. If you are hunting a progression bug that only appears after a loss, the
+simulator will not find it for you.
+
+**One more thing `npm run check` does not do:** it does not notice a *content* change. A
+`.dlg` prose edit passes `dialogs:check` (which only proves the artifact matches the source),
+`story:sim` and `validate:data`. That is deliberate — editing prose is what authoring IS —
+and it means the review artifact for a content change is the `.dlg` diff itself.
+`node tools/_g-stage-verify.mjs` is the tool that catches an *unintended* one, and it is not
+wired into `check`; run it by hand when a change was supposed to be structural only.
 
 ### Arcade (`src/arcade/`)
 
@@ -433,7 +469,7 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
   had already been.
   **The once-guard is now the scene's own `read_<sceneId>`**, declared as `once: 'scene'` on
   the trigger's `TRIGGERS` row. `DialogState._endDialog` writes that flag only after a node
-  has actually been SHOWN (`DialogState.js:466-473`), so an interrupted scene is re-servable
+  has actually been SHOWN (`DialogState.js:575-576`, guarded by `shownAnyNode`), so an interrupted scene is re-servable
   by construction and this bug cannot be authored again. All 19 waived triggers were
   converted; the started flags are all still **written** (saves carry them and they read as a
   record) and none of them is **read** as a guard. `once: 'flag:<name>'` still exists and

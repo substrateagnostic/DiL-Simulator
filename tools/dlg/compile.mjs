@@ -130,6 +130,40 @@ function displayPath(filePath) {
   return path.relative(REPO_DIR, filePath).split(path.sep).join('/');
 }
 
+// Additive means: every scene the lock already had is still there, every label
+// it already had is still there AT THE SAME INDEX, and no scene's length shrank.
+// Everything else is a violation and fails the build.
+export function classifyLockDelta(before, after) {
+  const violations = [];
+  const additions = [];
+  for (const [sceneId, scene] of Object.entries(before.scenes ?? {})) {
+    const next = after.scenes?.[sceneId];
+    if (!next) {
+      violations.push(`dialogs.lock.json: scene ${sceneId} would be dropped from the lock.`);
+      continue;
+    }
+    for (const [label, index] of Object.entries(scene.labels ?? {})) {
+      if (!Object.hasOwn(next.labels ?? {}, label)) {
+        violations.push(`dialogs.lock.json: @${label} would be dropped from scene ${sceneId} (its index must stay reserved).`);
+      } else if (next.labels[label] !== index) {
+        violations.push(`dialogs.lock.json: @${label} in scene ${sceneId} would move ${index} -> ${next.labels[label]}, which changes _chose_ save keys.`);
+      }
+    }
+    if ((next.length ?? 0) < (scene.length ?? 0)) {
+      violations.push(`dialogs.lock.json: scene ${sceneId} would shrink ${scene.length} -> ${next.length}.`);
+    }
+  }
+  for (const [sceneId, scene] of Object.entries(after.scenes ?? {})) {
+    const prev = before.scenes?.[sceneId];
+    if (!prev) { additions.push(`+ scene ${sceneId} (${Object.keys(scene.labels ?? {}).length} labels, length ${scene.length})`); continue; }
+    for (const [label, index] of Object.entries(scene.labels ?? {})) {
+      if (!Object.hasOwn(prev.labels ?? {}, label)) additions.push(`+ @${label} = ${index} in ${sceneId}`);
+    }
+    if ((scene.length ?? 0) > (prev.length ?? 0)) additions.push(`~ ${sceneId} length ${prev.length} -> ${scene.length}`);
+  }
+  return { violations, additions, dirty: !deepEqual(before, after) };
+}
+
 export async function compileCorpus() {
   const filenames = (await readdir(DIALOG_DIR)).filter((name) => name.endsWith('.dlg')).sort();
   if (!filenames.length) throw new Error('No src/data/dialogs/*.dlg files were found.');
@@ -183,7 +217,21 @@ export async function compileCorpus() {
       allocationIssues.push(`${file} / ${scene.id}: ${error.message}`);
     }
   }
-  const lockIssues = deepEqual(lock, lockAfter) ? [] : ['dialogs.lock.json would change during a non-reseed compile.'];
+  // THE LOCK IS APPEND-ONLY, NOT FROZEN (DESIGN 3.3 rule 1: "a new label takes
+  // the next free index"). This used to be a flat `deepEqual(lock, lockAfter)`
+  // error, which made the lock immutable rather than append-only and therefore
+  // made the corpus UNGROWABLE: adding one labelled statement — or one scene —
+  // failed both `dialogs:build` and `dialogs:check`, and the only writer of the
+  // file was the one-shot `--reseed` converter. Chapter 2 authoring would have
+  // been blocked on its first line.
+  //
+  // What must stay hard is the invariant the lock exists FOR: no label may move
+  // and none may be dropped, because `_chose_${dialogId}_${nodeIndex}_${choiceIndex}`
+  // is a persisted save key. `allocate()` already throws on a backwards move and
+  // already carries a removed label's index forward as a reserved pad, so the
+  // classification here only has to catch a lock that changed some other way.
+  const lockDelta = classifyLockDelta(lock, lockAfter);
+  const lockIssues = lockDelta.violations;
 
   const unknownTypes = [];
   let nodeCount = 0;
@@ -297,6 +345,9 @@ export async function compileCorpus() {
   const errorCount = named.reduce((total, check) => total + check.count, 0) + infrastructure.length;
   return {
     dialogs,
+    lockAfter,
+    lockDelta,
+    lockFile: LOCK_FILE,
     files: filenames,
     sceneRecords,
     named,

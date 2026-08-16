@@ -254,7 +254,14 @@ export const TRIGGERS = [
     once: 'scene', scene: 'data_analytics_duo_intro', delayMs: 800,
     grants: ['data_lead_defeated', 'cfos_assistant_duo_defeated'],
     src: 'ExplorationState.js:795',
-    note: 'data_lead_fight_started is still written as a record; read_data_analytics_duo_intro is the once-guard.',
+    reArmOnDefeat: true,
+    note: 'data_lead_fight_started is still written as a record; read_data_analytics_duo_intro is the once-guard. '
+      + 'reArmOnDefeat is MANDATORY here: this scene starts a fight, grants a critical-path flag, '
+      + 'and data_analytics_duo has NO player-initiable route anywhere in rooms/index.js - no NPC, no '
+      + 'interactable. A read flag is monotone and a defeat cannot clear it, so without this a single '
+      + 'loss would strand data_lead_defeated and with it the Chief, board_room_accessible, Meredith '
+      + 'and Acts 5-7. The pre-P8 latch was cleared on defeat by _reconcileSceneLatches; this restores '
+      + 'that and keeps the interruption repair.',
   },
   {
     id: 'alex-it-recruit-entry', on: 'room-entered', room: 'server_room',
@@ -290,7 +297,10 @@ export const TRIGGERS = [
     grants: ['restructuring_trio_defeated', 'brand_consultant_defeated',
       'restructuring_defeated', 'corporate_lawyer_defeated'],
     src: 'ExplorationState.js:4319',
-    note: 'restructuring_trio_started is still written as a record; read_restructuring_trio_intro is the once-guard.',
+    reArmOnDefeat: true,
+    note: 'restructuring_trio_started is still written as a record; read_restructuring_trio_intro is the '
+      + 'once-guard. reArmOnDefeat is MANDATORY: restructuring_trio has no NPC and no interactable '
+      + 'anywhere, and this fight is the sole writer of corporate_lawyer_defeated.',
   },
   {
     id: 'chief-restructuring-update', on: 'update', room: 'executive_floor',
@@ -298,7 +308,10 @@ export const TRIGGERS = [
     scene: 'chief_restructuring_combat', delayMs: 2000,
     grants: ['chief_restructuring_defeated', 'board_room_accessible'],
     src: 'ExplorationState.js:4331',
-    note: 'chief_fight_started is still written as a record; read_chief_restructuring_combat is the once-guard.',
+    reArmOnDefeat: true,
+    note: 'chief_fight_started is still written as a record; read_chief_restructuring_combat is the '
+      + 'once-guard. reArmOnDefeat is MANDATORY: chief_of_restructuring has no NPC and no interactable, '
+      + 'and this fight is the sole writer of board_room_accessible.',
   },
   {
     id: 'charter-certification-block', on: 'room-blocked', room: 'penthouse',
@@ -324,7 +337,10 @@ export const TRIGGERS = [
     id: 'firm-ambush-chain', on: 'flag-set', flag: 'has_recorder_seal',
     when: true, once: 'scene', scene: 'the_firm_ambush', delayMs: 500,
     grants: ['charter_certified'], src: 'ExplorationState.js:523',
-    note: 'has_recorder_seal remains the event source; read_the_firm_ambush is the once-guard and permits interrupted-event replay.',
+    reArmOnDefeat: true,
+    note: 'has_recorder_seal remains the event source; read_the_firm_ambush is the once-guard and permits '
+      + 'interrupted-event replay. reArmOnDefeat is MANDATORY: the_firm has no NPC and no interactable, '
+      + 'and this fight is the sole writer of charter_certified, which the penthouse elevator demands.',
   },
   {
     id: 'cfos-assistant-chain', on: 'flag-set', flag: 'penthouse_entered',

@@ -8,6 +8,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { compileCorpus, printCompileSummary } from './compile.mjs';
+import { saveLock } from './lock.mjs';
 
 const REPO_DIR = path.resolve(import.meta.dirname, '../..');
 const OUTPUT_FILE = path.join(REPO_DIR, 'src/data/dialogs/index.js');
@@ -59,9 +60,26 @@ async function main() {
   const expected = Buffer.from(source, 'utf8');
   const summary = `${result.files.length} files, ${Object.keys(result.dialogs).length} scenes, ${result.nodeCount} nodes, ${result.warningCount} warnings`;
 
+  // THE LOCK IS APPEND-ONLY, SO `build` MUST BE ABLE TO APPEND TO IT.
+  // A non-additive change never reaches here — compileCorpus counts it as an
+  // error above and nothing is written. What lands here is a new label, a new
+  // scene, or a grown length, and refusing to write that is what made the
+  // corpus ungrowable. `--check` reports it as stale, exactly like index.js.
+  const lockDirty = Boolean(result.lockDelta?.dirty);
   if (!check) {
     await writeFile(OUTPUT_FILE, source, { encoding: 'utf8' });
     process.stdout.write(`WRITE ${OUTPUT_NAME}: ${summary}\n`);
+    if (lockDirty) {
+      await saveLock(result.lockFile, result.lockAfter);
+      process.stdout.write(`WRITE src/data/dialogs/dialogs.lock.json: ${result.lockDelta.additions.length} addition(s)\n`);
+      for (const line of result.lockDelta.additions) process.stdout.write(`  ${line}\n`);
+    }
+    return;
+  }
+  if (lockDirty) {
+    process.stderr.write(`FAIL src/data/dialogs/dialogs.lock.json is stale: ${result.lockDelta.additions.length} addition(s). Run npm run dialogs:build.\n`);
+    for (const line of result.lockDelta.additions) process.stderr.write(`  ${line}\n`);
+    process.exitCode = 1;
     return;
   }
 

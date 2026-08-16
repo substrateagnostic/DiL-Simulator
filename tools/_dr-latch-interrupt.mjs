@@ -128,6 +128,12 @@ const historicalAct5 = {
 };
 
 const triggerById = new Map(TRIGGERS.map(trigger => [trigger.id, trigger]));
+// A reArmOnDefeat row only stays served-once once its payoff has landed; the
+// harness must therefore hand assertNoThirdServe the grants a win would set.
+for (const test of converted) {
+  const trigger = triggerById.get(test.id);
+  if (trigger?.reArmOnDefeat && trigger.grants?.length) test.reArmGrants = trigger.grants;
+}
 const expectedIds = new Set(converted.map(test => test.id));
 const missing = converted.filter(test => !triggerById.has(test.id));
 const wrongOnce = converted.filter(test => triggerById.get(test.id)?.once !== 'scene');
@@ -300,6 +306,14 @@ async function assertNoThirdServe(test) {
     if (testRow.scene.startsWith('ending_')) ex.player.flags.read_post_credits = true;
     if (testRow.scene === 'penthouse_arrival') ex.player.flags.read_cfos_assistant_combat = true;
     if (testRow.scene === 'act5_trigger') ex.player.flags.read_restructuring_trio_intro = true;
+    // "NEVER AGAIN" IS ONLY TRUE OF A SCENE THAT PAID OUT. This leg plays the
+    // dialog to its end but never fights the fight it starts, and for a
+    // `reArmOnDefeat` row that is indistinguishable from a loss — so
+    // `_reconcileSceneLatches` correctly clears read_<scene> and offers it
+    // again. That is the repair working, not a defect; asserting otherwise
+    // would be asserting the soft-lock is correct. Land the grant first, then
+    // assert never-again, which is the state a WIN produces.
+    if (testRow.reArmGrants) for (const flag of testRow.reArmGrants) ex.player.flags[flag] = true;
     ex._autoSave(false);
   }, test);
   await reloadThroughLoadGame(test);
@@ -334,10 +348,53 @@ async function runCase(test) {
   }
 }
 
+// ── LEG 4: A LOST FIGHT MUST BE RE-ARMED ───────────────────────────────────
+// The three legs above are arm -> interrupt -> re-served -> played -> NOT
+// served a third time. That last assertion is correct for a scene the player
+// FINISHED and dead wrong for one they LOST: `read_<scene>` is written when the
+// dialog ends, which for a scene whose last action is `fight` is before the
+// fight is entered, and nothing clears it. Four trigger scenes start an
+// encounter with no NPC and no interactable anywhere in rooms/index.js, so one
+// defeat would strand their grants for the life of the save — between them the
+// sole writers of corporate_lawyer_defeated, data_lead_defeated,
+// board_room_accessible and charter_certified, i.e. Acts 5, 6 and 7.
+// The graph declares `reArmOnDefeat` on those rows and
+// `_reconcileSceneLatches` honours it at LOAD and on DEFEAT. This leg drives
+// the shipping defeat path and asserts the scene comes back.
+async function runDefeatRearm() {
+  const rows = await page.evaluate(async () => {
+    const { TRIGGERS } = await import('/src/data/story/graph.js');
+    const ex = window.__explore;
+    const out = [];
+    for (const trigger of TRIGGERS.filter(t => t.reArmOnDefeat && t.grants?.length)) {
+      while (ex.stateManager.stack.length > 1) ex.stateManager.pop();
+      // Exactly the state a defeat leaves: the scene was read, the payoff did not land.
+      ex.player.flags[`read_${trigger.scene}`] = true;
+      for (const flag of trigger.grants) ex.player.flags[flag] = false;
+      const before = !!ex.player.getFlag(`read_${trigger.scene}`);
+      ex._handleDefeat('reception_client');
+      ex.syncFromPlayerState();
+      out.push({
+        id: trigger.id, scene: trigger.scene, grants: trigger.grants,
+        before, after: !!ex.player.getFlag(`read_${trigger.scene}`),
+        offerable: ex._storyTriggerOnceAvailable(trigger.id),
+      });
+    }
+    return out;
+  });
+  if (!rows.length) { failures++; console.log('FAIL  defeat-rearm | no reArmOnDefeat trigger rows found — the leg would silently pass'); return; }
+  for (const row of rows) {
+    const ok = row.before && !row.after && row.offerable;
+    if (!ok) failures++;
+    console.log(`${ok ? 'PASS' : 'FAIL'}  DEFEAT RE-ARM ${row.id} | read_${row.scene} ${row.before} -> ${row.after} | re-offerable=${row.offerable} | protects ${row.grants.join(', ')}`);
+  }
+}
+
 try {
   for (const test of converted) await runCase(test);
   await runCase(historicalAct5);
-  console.log(`\n${failures === 0 ? 'ALL PASS' : `${failures} FAIL(S)`} — ${converted.length} converted trigger(s) + historical act5_trigger`);
+  await runDefeatRearm();
+  console.log(`\n${failures === 0 ? 'ALL PASS' : `${failures} FAIL(S)`} — ${converted.length} converted trigger(s) + historical act5_trigger + the defeat re-arm leg`);
 } finally {
   await browser.close();
 }
