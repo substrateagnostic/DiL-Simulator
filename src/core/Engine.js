@@ -960,6 +960,24 @@ class EngineClass {
     //                     the documented round-1 critic defect ("a floor that is
     //                     somehow lit anyway") this whole rig exists to prevent,
     //                     and hiding housings alone would re-create it exactly.
+    //   perRow: N         override the profile's segments-per-row for THIS room
+    //                     only. `utility` is authored at 1 because it was sized
+    //                     for the parking garage; in an 8-wide room that makes
+    //                     ONE 4.1 m bar per row, which is over half the room's
+    //                     width, and it is why server_room needed a hand-placed
+    //                     off-grid `extra` to reach its east half at all. The
+    //                     nSeg formula still caps it against room width, so this
+    //                     can ask and not get.
+    //   poolW / poolD     the FINAL floor-pool width and depth in metres for
+    //                     this room, overriding the profile's `segLen +
+    //                     rig.poolW` and `rig.poolD`. Same names as `fx.extra`
+    //                     already uses, so the room-data vocabulary is one
+    //                     vocabulary. This exists because `rig.poolD` is an
+    //                     ABSOLUTE 4.4 m for `utility` while the row spacing is
+    //                     derived from room height -- in an 8x10 room the rows
+    //                     land 4.0 m apart, so a 4.4 m pool overlaps its
+    //                     neighbour BY CONSTRUCTION, and the rig's own comment
+    //                     ("pools kiss but don't stack hot") stops being true.
     //   housingScale: [x, y, z]   scale the troffer BODY only (the pool, shaft
     //                     and streak are separate meshes added to `g`, so the
     //                     illumination is untouched by construction). [1, 0.6,
@@ -977,8 +995,9 @@ class EngineClass {
     const housingScale = roomData.fx?.housingScale || null;
     if (rig) {
       const nz = Math.max(1, Math.round((h - 3) / 4.5));
-      const nSeg = rig.perRow <= 1 ? 1
-        : Math.min(rig.perRow, Math.max(2, Math.round((w - 2) / 6)));
+      const perRow = Math.max(1, Math.round(roomData.fx?.perRow ?? rig.perRow));
+      const nSeg = perRow <= 1 ? 1
+        : Math.min(perRow, Math.max(2, Math.round((w - 2) / 6)));
       const gap = 0.9;                                  // dark gap between troffers
       const span = w - 3.0;                             // total run width, inset from walls
       const segLen = Math.max(1.6, span / nSeg - gap);
@@ -1014,7 +1033,7 @@ class EngineClass {
           // near the fixture so adjacent pools kiss but don't stack hot.
           const pool = new THREE.Mesh(fxPoolGeo, fxPoolMat);
           pool.rotation.x = -Math.PI / 2;
-          pool.scale.set(segLen + rig.poolW, rig.poolD, 1);
+          pool.scale.set(roomData.fx?.poolW ?? (segLen + rig.poolW), roomData.fx?.poolD ?? rig.poolD, 1);
           pool.position.set(sx, 0.017, pz);
           pool.renderOrder = 2;
           g.add(pool);

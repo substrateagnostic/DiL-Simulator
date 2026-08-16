@@ -124,12 +124,47 @@ class Game {
     // with nothing patched in the scene graph afterwards -- which is the whole
     // point: an overlay applied to a built room is a picture of the overlay,
     // not of the option. Dev-only, and only ever touches the shot room.
-    if (shot && (params.has('fxevery') || params.has('fxhousing'))) {
+    // The gate is a PREFIX test, not a list. An explicit list of six keys
+    // silently dropped every override on any URL that happened to carry only
+    // the key missing from it (`?fxpool=` alone did nothing, and the A/B
+    // reported two different options as identical).
+    if (shot && [...params.keys()].some(k => k.startsWith('fx'))) {
       const { ROOMS } = await import('./data/rooms/index.js');
       const room = ROOMS[shot];
       if (room) {
         room.fx = { ...(room.fx || {}) };
         if (params.has('fxevery')) room.fx.fixtureEvery = Number(params.get('fxevery'));
+        if (params.has('fxperrow')) room.fx.perRow = Number(params.get('fxperrow'));
+        if (params.has('fxpool')) {
+          const [pw, pd] = String(params.get('fxpool')).split(',').map(Number);
+          if (Number.isFinite(pw)) room.fx.poolW = pw;
+          if (Number.isFinite(pd)) room.fx.poolD = pd;
+        }
+        // ?fxextra=off drops the room's hand-placed fixtures; ?fxextra=W,D
+        // resizes their floor pools; ?fxextraadd=x,z,len,poolW,poolD appends
+        // one. All three are things a room's own `fx` block can already say --
+        // exercised here so an A/B needs no source edit per option, and so a
+        // rig that has been REPLACED stays reproducible from a URL after the
+        // room data moved on (which is what a before/after pair needs to remain
+        // honest once the after has shipped).
+        const ex2 = params.get('fxextra');
+        if (ex2 === 'off') room.fx.extra = [];
+        else if (ex2) {
+          const [pw, pd] = String(ex2).split(',').map(Number);
+          if (Number.isFinite(pw) && Number.isFinite(pd)) {
+            room.fx.extra = (room.fx.extra || []).map(e => ({ ...e, poolW: pw, poolD: pd }));
+          }
+        }
+        const add = params.get('fxextraadd');
+        if (add) {
+          const [x, z, len, pw, pd] = String(add).split(',').map(Number);
+          if ([x, z, len].every(Number.isFinite)) {
+            room.fx.extra = [...(room.fx.extra || []), {
+              x, z, len, tint: 0xccdcf0, pool: 0x9fc4e6, opacity: 0.32,
+              poolW: Number.isFinite(pw) ? pw : 5.0, poolD: Number.isFinite(pd) ? pd : 5.2,
+            }];
+          }
+        }
         if (params.has('fxhousing')) {
           const v = String(params.get('fxhousing')).split(',').map(Number);
           room.fx.housingScale = v.length === 3 && v.every(Number.isFinite) ? v : null;

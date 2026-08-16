@@ -880,11 +880,31 @@ export const ROOMS = {
   // ----------------------------------------------------------
   server_room: {
     id: 'server_room',
-    // Hand-placed fill, formerly hardcoded in Engine.applyRoomFX as an
-    // `id === 'server_room'` branch: a cool troffer over the EAST half, which
-    // was sinking into murk ("one more ceiling pool lifts the server room right
-    // half"). Identical numbers, expressed as data.
-    fx: { fixtures: 'utility', extra: [{ x: 6, z: 4, len: 3.0, tint: 0xccdcf0, pool: 0x9fc4e6, opacity: 0.32, poolW: 5.0, poolD: 5.2 }] },
+    // CEILING RIG, rebuilt 2026-08-15 (playtest: "lighting is also janky").
+    //
+    // What it was: `utility` at its profile default of perRow 1, which in an
+    // 8-wide room is ONE 4.1 m bar per row -- over half the room's width -- plus
+    // a HAND-PLACED off-grid `fx.extra` troffer at (6,4) of a different length
+    // (3.0 m), inherited from the era when this was an `id === 'server_room'`
+    // branch inside Engine and added because the east half was sinking into
+    // murk. Three parallel bars at three different (x,z) in two different
+    // lengths, crossing two cable trays 0.185 m below them.
+    //
+    // Measured on that build: the three floor pools totalled 81.4 m2 of additive
+    // wash on an 80 m2 floor -- 101.8% coverage, 25.2% of the floor DOUBLE-LIT,
+    // the highest in the game (office reference cubicle_farm: 47% / 0.5%). The
+    // cause is arithmetic, not taste: `utility` carries an ABSOLUTE poolD of
+    // 4.4 m while this room's two fixture rows land 4.0 m apart, so the pools
+    // overlap by construction and the rig's own "pools kiss but don't stack hot"
+    // stops being true.
+    //
+    // Now: four identical 1.6 m bars on a true 2x2 grid, each fully sourced,
+    // with a pool footprint sized to the row spacing. 47.5% coverage, 0%
+    // double-lit, 43% less glowing bar length (11.2 m -> 6.4 m). The east half
+    // the hand-placed extra existed to protect is served by the x=4.75 column
+    // and measured 0.4-1.5 luma lower out of 255 at four framings.
+    // Evidence: screenshots/fix-round-2/b26-itroom/ (tools/_fr2-b26-itroom.mjs).
+    fx: { fixtures: 'utility', perRow: 2, poolW: 2.5, poolD: 3.8 },
     name: 'Server Room',
     width: 8,
     height: 10,
