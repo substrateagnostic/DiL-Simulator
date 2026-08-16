@@ -45,7 +45,10 @@ export const ROOMS = {
     //
     // Contact strip: screenshots/fix-round-2/b25-fixtures/contact_*.png
     // Full option study: .claude/plans/playtest-notes/lighting-options.md
-    fx: { fixtures: 'office', fixtureEvery: 1, housingScale: null },
+    // Producer letter B (08-05): V1-LAWFUL. Quincunx density — 4 fixtures drop
+    // as COMPLETE pairs (housing+pool+shaft together, no sourceless light).
+    // Room-scoped on purpose: the shared 'office' profile does not move.
+    fx: { fixtures: 'office', fixtureEvery: 2, housingScale: null },
     name: 'Cubicle Farm',
     width: 20,
     height: 16,
