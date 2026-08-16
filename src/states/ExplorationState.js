@@ -44,6 +44,8 @@ import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
 import { showDevPanel } from '../ui/DevPanel.js';
 import { VaultKeypad } from '../ui/VaultKeypad.js';
 import { applyReviewPurchases } from '../data/review.js';
+import { GATES } from '../data/story/graph.js';
+import { actIndexFor, deriveFlags, questIdFor } from '../data/story/evaluator.js';
 
 // Every renovation the shop sells, by the flag it sets on purchase. Derived
 // from SHOP_ITEMS rather than hand-listed so a new renovation joins the
@@ -1224,9 +1226,8 @@ export class ExplorationState {
     );
   }
 
-  async _changeRoom(targetRoom, spawnX, spawnZ) {
-    // Room gating — check access before allowing entry
-    const gatedRooms = {
+  _gatedRoomsLegacy() {
+    return {
       // The reception elevator tile is walkable (elevatorDoors don't
       // block), so standing on it bypassed the elevator dialog's
       // branch_chosen check entirely (logic-sweep MAJOR #10)
@@ -1248,6 +1249,22 @@ export class ExplorationState {
       penthouse_analytics: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
       penthouse_bar: { flag: 'renovation_penthouse', message: "The suite wing is unfinished. Fund the renovation first." },
     };
+  }
+
+  _gatedRooms() {
+    if (typeof window !== 'undefined' && window.__graphOff === true) {
+      return this._gatedRoomsLegacy();
+    }
+    return Object.fromEntries(
+      GATES
+        .filter(gate => !gate.kind)
+        .map(gate => [gate.room, { flag: gate.requires, message: gate.message }]),
+    );
+  }
+
+  async _changeRoom(targetRoom, spawnX, spawnZ) {
+    // Room gating — check access before allowing entry
+    const gatedRooms = this._gatedRooms();
 
     // Block executive floor while the corporate lawyer is active and undefeated.
     // INTENTIONALLY VESTIGIAL (#27): the trio post-dialog sets both flags in
@@ -3503,6 +3520,14 @@ export class ExplorationState {
   }
 
   _syncActFromFlags() {
+    if (typeof window !== 'undefined' && window.__graphOff === true) {
+      this._syncActFromFlagsLegacy();
+      return;
+    }
+    this.player.actIndex = actIndexFor(this.player.flags);
+  }
+
+  _syncActFromFlagsLegacy() {
     let act = 0;
     if (this.player.getFlag('briefing_complete')) act = 1;
     if (this.player.getFlag('branch_chosen')) act = 2;
@@ -3757,6 +3782,39 @@ export class ExplorationState {
   }
 
   _refreshStoryProgress(silent = false) {
+    const graphOff = typeof window !== 'undefined' && window.__graphOff === true;
+    if (graphOff) {
+      this._refreshStoryProgressLegacyDerive();
+    } else {
+      const ignoreDefers = typeof window !== 'undefined' && window.__boardDeferOff === true;
+      const result = deriveFlags(this.player, { ignoreDefers });
+      if (result.deferred.includes('board_meeting_closed')) {
+        this._boardCloseDeferred = true;
+      } else if (result.changed.some(change => change.id === 'board_meeting_closed')) {
+        this._boardCloseDeferred = false;
+      }
+    }
+
+    this._syncActFromFlags();
+
+    let questId;
+    if (graphOff) {
+      questId = 'main_act1';
+      if (this.player.getFlag('briefing_complete')) questId = 'main_act2';
+      if (this.player.getFlag('branch_chosen')) questId = 'main_act2_finale';
+      if (this.player.getFlag('act2_complete')) questId = 'main_act3';
+      if (this.player.getFlag('act3_complete')) questId = 'main_act4';
+      if (this.player.getFlag('act4_complete')) questId = 'main_act5';
+      if (this.player.getFlag('act5_complete')) questId = 'main_act6';
+      if (this.player.getFlag('act6_complete')) questId = 'main_act7';
+    } else {
+      questId = questIdFor(this.player.flags);
+    }
+
+    this._setQuest(this._getStoryObjective(), { questId, silent });
+  }
+
+  _refreshStoryProgressLegacyDerive() {
     // Auto-gate Skip until all FIVE coworkers have been met (B10 added Rachel;
     // she must be in the same list `_getStoryObjective` prints, or the HUD asks
     // for someone the gate does not want, or vice versa).
@@ -3932,18 +3990,6 @@ export class ExplorationState {
       }
     }
 
-    this._syncActFromFlags();
-
-    let questId = 'main_act1';
-    if (this.player.getFlag('briefing_complete')) questId = 'main_act2';
-    if (this.player.getFlag('branch_chosen')) questId = 'main_act2_finale';
-    if (this.player.getFlag('act2_complete')) questId = 'main_act3';
-    if (this.player.getFlag('act3_complete')) questId = 'main_act4';
-    if (this.player.getFlag('act4_complete')) questId = 'main_act5';
-    if (this.player.getFlag('act5_complete')) questId = 'main_act6';
-    if (this.player.getFlag('act6_complete')) questId = 'main_act7';
-
-    this._setQuest(this._getStoryObjective(), { questId, silent });
   }
 
   _setQuest(objective, { questId = this.currentQuestId, silent = false } = {}) {
