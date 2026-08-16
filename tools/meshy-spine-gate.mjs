@@ -59,6 +59,13 @@ const GAZE_ABS = 0.010;
 // in the 50 deg gap between the two populations, so nothing that skipped the
 // fix can pass and nothing that took it can fail.
 const HIPS_ABS = 60.0;
+// THE GROUNDING CEILING, added after the producer read the shipped collapse as
+// "they're sitting on an invisible chair". A settled pelvis may park no higher
+// than this fraction of the same body's STANDING pelvis on the `defeat` role.
+// The chair sit reads 0.56-0.64 here, the grounded solve 0.15-0.24; 0.35 is in
+// the empty half of that gap. Every other role is exempt — a jab is supposed to
+// keep its hips where they are.
+const SIT_RATIO_MAX = 0.35;
 const SAMPLES = 9;
 
 const MIME = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.glb': 'model/gltf-binary', '.json': 'application/json', '.wasm': 'application/wasm' };
@@ -154,6 +161,10 @@ window.__chain = () => {
     const hp = h.getWorldPosition(new THREE.Vector3());
     out.headFwd = +(hp.sub(mid).dot(forward)).toFixed(4);
   } else out.headFwd = null;
+  // PELVIS ALTITUDE. The B23 defeat round shipped a chair sit because nothing in
+  // this gate read where the hips END UP — only how the spine was bent getting
+  // there. It is reported on every role and gated on 'defeat'.
+  out.hipsY = bones.Hips ? +bones.Hips.getWorldPosition(new THREE.Vector3()).y.toFixed(4) : null;
   return out;
 };
 
@@ -190,8 +201,10 @@ window.__load = (id) => new Promise((res, rej) => {
       collectBones(); deriveForward();
       H = new THREE.Box3().setFromObject(model).getSize(new THREE.Vector3()).y || 1.7;
       const t0 = performance.now();
-      // THE SHIPPING CALL. Same arguments MeshyCast.clipsFor passes.
-      clips = clipsFor(id, id, targetRest);
+      // THE SHIPPING CALL. Same arguments MeshyCast.clipsFor passes — INCLUDING
+      // the model, which the defeat clip's floor-sit fit probes. Dropping it
+      // would put the gate on a different code path from the fight.
+      clips = clipsFor(id, id, targetRest, model);
       const t1 = performance.now();
       // The before column: the same stance clip through the same retarget with
       // the posture clamp withheld. Also the proof that clipsFor() really is
@@ -245,8 +258,14 @@ window.__pose = (role, t, ground) => {
   if (!role) { group.updateMatrixWorld(true); return; }
   const clip = clips[role]; if (!clip) return;
   mixer = new THREE.AnimationMixer(model);
-  mixer.clipAction(clip).play();
-  mixer.setTime(t);
+  // LoopOnce + clamp, and never exactly at the duration. Under the default
+  // LoopRepeat, setTime(duration) wraps to clip time 0 — so every sweep in this
+  // gate re-read the FIRST frame as its last sample, and on 'defeat' the first
+  // frame is the character standing. The one frame the collapse is about was the
+  // one frame the gate could not see.
+  const action = mixer.clipAction(clip);
+  action.setLoop(THREE.LoopOnce, 1); action.clampWhenFinished = true; action.play();
+  mixer.setTime(Math.max(0, Math.min(t, (clip.duration || 0) - 1e-4)));
   if (ground !== false) inner.position.y = -(offsets[role] ?? 0);
   group.updateMatrixWorld(true);
 };
@@ -353,6 +372,10 @@ const browser = await chromium.launch({ headless: false });
 const page = await (await browser.newContext({ viewport: { width: TILE + 40, height: TILE + 60 } })).newPage();
 page.on('pageerror', e => console.log('[page error]', String(e).slice(0, 400)));
 page.on('console', m => { if (m.type() === 'error') console.log('[console]', m.text().slice(0, 250)); });
+// --noground reproduces the pre-fix chair sit through the same shipping
+// clipsFor(), so the grounding ceiling can be demonstrated failing on the defect
+// it was written for instead of only passing on the fix.
+if (args.noground) await page.addInitScript(() => { globalThis.__floorSitOff = true; });
 await page.goto(`http://localhost:${port}/harness.html`);
 await page.waitForFunction(() => window.__ready === true, { timeout: 60000 });
 
@@ -493,6 +516,9 @@ for (const id of ids) {
       clip: rec.cast[role],
       maxExcess: +Math.max(...rows.map(row => Math.max(...ABOVE.map(k => row.j[k].sag - bind.j[k].sag)))).toFixed(2),
       hipsSpine02Max: +Math.max(...rows.map(row => row.j['Hips>Spine02'].tot)).toFixed(2),
+      // Standing pelvis is the clip's own first frame; settled is its true last.
+      hipsStand: rows[0]?.hipsY ?? null, hipsSettle: rows[rows.length - 1]?.hipsY ?? null,
+      sitRatio: rows[0]?.hipsY ? +(rows[rows.length - 1].hipsY / rows[0].hipsY).toFixed(3) : null,
       floorLo: +Math.min(...rows.map(r2 => r2.floor)).toFixed(4), floorHi: +Math.max(...rows.map(r2 => r2.floor)).toFixed(4) };
     reactLo = Math.min(reactLo, rec.reactions[role].floorLo); reactHi = Math.max(reactHi, rec.reactions[role].floorHi);
     // THE V8 RETARGET WITNESS, now read across every role and not only the
@@ -509,6 +535,8 @@ for (const id of ids) {
     reactFloorLo: +reactLo.toFixed(4), reactFloorHi: +reactHi.toFixed(4),
     tracksOk: !badTracks.length && !badDropped.length,
     clamped: info.idleMatchesRaw === false,
+    defeatSitRatio: rec.reactions.defeat?.sitRatio ?? null,
+    defeatFloorLo: rec.reactions.defeat?.floorLo ?? null,
   };
   // WHY, not just whether. The mechanical checks (tracks, retarget witness,
   // joint budget, gaze) say the pipeline is intact; the absolute trunk ceiling
@@ -522,6 +550,9 @@ for (const id of ids) {
   if (worstJointExcess > JOINT_BUDGET) reasons.push(`joint +${worstJointExcess.toFixed(2)}`);
   if (worstGaze > GAZE_ABS) reasons.push(`gaze ${worstGaze.toFixed(4)}`);
   if (worstTrunk > TRUNK_ABS) reasons.push(`trunk ${worstTrunk.toFixed(2)} (calmness, peak sample)`);
+  if (rec.verdict.defeatSitRatio != null && rec.verdict.defeatSitRatio > SIT_RATIO_MAX) {
+    reasons.push(`defeat pelvis ${rec.verdict.defeatSitRatio} of standing (chair sit; ceiling ${SIT_RATIO_MAX})`);
+  }
   rec.verdict.reasons = reasons;
   rec.verdict.pass = reasons.length === 0;
   if (!rec.verdict.pass) fails++;
@@ -544,6 +575,14 @@ console.log(`worst |gaze dy|       unclamped ${mx(r => r.raw.worstGaze).toFixed(
 console.log(`Hips>Spine02 max      ${mn(r => r.verdict.hipsSpine02Max).toFixed(2)} .. ${mx(r => r.verdict.hipsSpine02Max).toFixed(2)} deg  ALL ROLES  (retarget witness, ceiling ${HIPS_ABS}; unretargeted reads 90-164)`);
 console.log(`floor band STANCE     ${mn(r => r.verdict.floorLo).toFixed(4)} .. ${mx(r => r.verdict.floorHi).toFixed(4)} m`);
 console.log(`floor band REACTIONS  ${mn(r => r.verdict.reactFloorLo).toFixed(4)} .. ${mx(r => r.verdict.reactFloorHi).toFixed(4)} m  (the cheer and the jab leave the floor by design)`);
+{
+  const withSit = data.filter(r => r.verdict.defeatSitRatio != null);
+  if (withSit.length) {
+    const worst = withSit.reduce((a, r) => (r.verdict.defeatSitRatio > a.verdict.defeatSitRatio ? r : a));
+    console.log(`defeat pelvis settled ${mn(r => r.verdict.defeatSitRatio ?? Infinity).toFixed(3)} .. ${mx(r => r.verdict.defeatSitRatio ?? -Infinity).toFixed(3)} of standing  (ceiling ${SIT_RATIO_MAX}; a chair sit reads 0.56-0.64; worst ${worst.id})`);
+    console.log(`defeat floor band     ${mn(r => r.reactions.defeat?.floorLo ?? Infinity).toFixed(4)} .. ${mx(r => r.reactions.defeat?.floorHi ?? -Infinity).toFixed(4)} m  (sole candidates, settled frame included)`);
+  }
+}
 console.log(`clip build            avg ${(data.reduce((a, r) => a + r.clipMs, 0) / data.length).toFixed(1)}ms  ground avg ${(data.reduce((a, r) => a + r.groundMs, 0) / data.length).toFixed(1)}ms`);
 console.log(`track integrity       ${data.filter(r => r.verdict.tracksOk).length}/${data.length} characters with 25 tracks and 0 dropped in every role`);
 console.log(`idle posture-clamped  ${data.filter(r => r.verdict.clamped).length}/${data.length}`);

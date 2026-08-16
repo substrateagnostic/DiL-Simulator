@@ -151,7 +151,8 @@ Instruments — all write measurements, not opinions:
 | `tools/meshy-cast-shoot.mjs` | multi-angle character stills through the shipping code path |
 | `tools/meshy-clip-fetch.mjs` | clip download + strip (`--outdir`, `--rawdir`, `--rawtag`) |
 | `tools/meshy-clip-strip.mjs` | frame strips for judging a clip on a real body |
-| `tools/meshy-spine-gate.mjs` | slate-aware spine/floor discriminants (see §4.3) |
+| `tools/meshy-spine-gate.mjs` | slate-aware spine/floor/pelvis discriminants (see §4.3); `--noground` reproduces the pre-fix chair sit |
+| `tools/_fr2-b23-hips.mjs` | defeat grounding: settled pelvis + whole-mesh floor, before/after on one instrument, with side + 3/4 sheets |
 | `tools/meshy-framing-gate.mjs` | every combatant in frame at the real combat camera |
 | `tools/meshy-comp-video.mjs` | scripted fight video capture |
 | `tools/meshy-destreak.mjs` | dark-fabric destreak; re-derives runtime GLBs from the 2048 raws (`--audit` measures only) |
@@ -187,7 +188,10 @@ ours did, for two rounds, showing a defect worse than the game had. Render throu
 the real entry points (`clipsFor()`, `groundOffset()`, the actual combat camera).
 Current gate values to hold: `Hips>Spine02` **32.8–40.5°** (ceiling 60; raw-bound
 reads 90–164), joint excess over own bind **≤6°**, gaze dy **≤0.010**, floor
-penetration **within ±0.01 m**.
+penetration **within ±0.01 m**, settled `defeat` pelvis **≤0.35** of standing.
+`clipsFor()` takes a **fourth argument, the model** — a harness that drops it is
+back on a different code path from the fight, which is the failure this section is
+about, in a new coat.
 
 ### 4.4 Craft laws
 - **ISO CAMERA LAW** — judge at the camera the player actually uses. Combat is the
@@ -318,6 +322,23 @@ verification had missed.
   `defeat` is the only role played with `{ stay: true }` — it stops on its final
   frame and latches `_down`, because a defeated body that returns to its
   breathing stance has stood up again.
+- **Both defeat clips are CHAIR sits and are grounded at build time.** a58 and
+  a359 settle onto furniture the arena does not have (measured: hips at 31–37 %
+  of character height with both soles flat on the floor — the producer's "they're
+  sitting on an invisible chair"). `src/combat/MeshyFloorSit.js` sinks the pelvis
+  the rest of the way along the clip's own descent curve and re-solves both legs
+  with two-bone IK so the ankles never move; the drop is fitted PER BODY against a
+  whole-mesh probe, because karen can reach 8.7 % of height with nothing touching
+  while client_m_heavy's thigh is under the stage at the same number. Do not judge
+  a collapse clip by silhouette descent — that is what let this ship. The number
+  that discriminates is **settled pelvis / standing pelvis**: a chair sit reads
+  0.55–0.64, a floor sit 0.14–0.26, and `meshy-spine-gate.mjs` now gates it at
+  0.35 on the `defeat` role.
+- **`mixer.setTime(clip.duration)` returns FRAME 0** under three's default
+  `LoopRepeat`. Every end-of-clip sample in this project was silently reading the
+  first frame instead; use `LoopOnce` + `clampWhenFinished` and `duration − 1e-4`.
+  This is why a chair sit passed a floor check for a round, and fixing it in
+  `groundOffset` removed 2.7 cm of real cast-wide floor penetration.
 - The male idle pool is at **exactly zero slack** — 16 clips for 16 male characters.
   One more male character breaks it; roguelite client bodies may share (Alex's ruling).
 - **Chad turning his back during a Composure Break is intentional** (Alex, 2026-08-01):

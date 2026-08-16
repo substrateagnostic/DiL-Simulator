@@ -27,7 +27,24 @@ import { join } from 'path';
 const arg = (k, d) => (process.argv.find(a => a.startsWith(`--${k}=`)) || `=${d}`).split('=').slice(1).join('=');
 const PORT = arg('port', '5173');
 const OUT = arg('out', 'screenshots/fix-round-2/b23-defeat');
+// Round 2 writes its plates beside round 1's rather than over them: the whole
+// claim is a BEFORE/AFTER, and overwriting the before is how a fix stops being
+// checkable. `--suffix=-floor` is what the grounded run ships under.
+const SUF = arg('suffix', '');
+// --noground reproduces the shipped chair sit through the same shipping path, so
+// the grounding assertion below can be demonstrated failing on the defect it was
+// written for. A gate nobody has watched fail is a gate nobody can trust.
+const NOGROUND = process.argv.includes('--noground');
 mkdirSync(OUT, { recursive: true });
+
+// THE GROUNDING GATE. A settled pelvis is allowed to park no higher than this
+// fraction of the same body's STANDING pelvis height, measured live in the
+// fight. The chair sit that shipped reads 0.56-0.64 here (karen 0.562, chad
+// 0.644, client_m_heavy 0.638); the grounded solve reads 0.15-0.24. 0.35 sits in
+// the empty half of that gap, so nothing on a chair can pass and nothing on the
+// floor can fail. Expressed against the body's own standing hips because the
+// cast's heights differ by 23 cm.
+const SIT_RATIO_MAX = 0.35;
 
 // One per performed build. Karen is female (a359), Chad male (a58) -
 // MeshyClips.genderFor off CHARACTER_CONFIGS.gender.
@@ -51,6 +68,7 @@ let failures = 0;
 try {
   for (const s of SUBJECTS) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    if (NOGROUND) await page.addInitScript(() => { globalThis.__floorSitOff = true; });
     await page.addInitScript(() => {
       const RealWS = window.WebSocket;
       const Dead = function () {
@@ -77,15 +95,34 @@ try {
       const e = c.scene.enemyGroups[0];
       const an = e?.animator;
       const clip = an?.actions?.defeat?.getClip?.();
+      // PELVIS ALTITUDE, on the body that is actually on stage. Read straight off
+      // the world matrices (element 13 is the translation Y) so the probe needs
+      // no THREE import — an `import()` inside page.evaluate can hand back a
+      // SECOND, uninitialised module copy, which is its own documented trap.
+      // Taken relative to the group so the stage height cancels, and divided by
+      // the group scale so the per-character fit cancels too.
+      window.__hipsAbove = () => {
+        const g = window.__combat?.scene?.enemyGroups?.[0];
+        if (!g) return null;
+        let hips = null;
+        g.group.traverse(o => { if (!hips && o.name === 'Hips') hips = o; });
+        if (!hips) return null;
+        hips.updateWorldMatrix(true, false);
+        g.group.updateWorldMatrix(true, false);
+        const s = g.group.scale.y || 1;
+        return +((hips.matrixWorld.elements[13] - g.group.matrixWorld.elements[13]) / s).toFixed(4);
+      };
       return {
         hasMeshy: !!an?.mixer,
         clipName: clip?.name ?? null,
         clipMs: clip ? Math.round(clip.duration * 1000) : null,
         trimmed: clip?.userData?.trimmed ?? null,
+        floorSit: clip?.userData?.floorSit ?? null,
         y: +e.group.position.y.toFixed(4),
         scale: +e.group.scale.x.toFixed(4),
         baseScale: +e.baseScale.toFixed(4),
         tier: window.__engine.qualityTier,
+        hipsAbove: window.__hipsAbove(),
       };
     });
 
@@ -134,10 +171,11 @@ try {
           // so at rest this equals the clip duration.
           actionTime: an?.actions?.defeat ? +an.actions.defeat.time.toFixed(3) : null,
           actionRunning: an?.actions?.defeat ? an.actions.defeat.isRunning() : null,
+          hipsAbove: window.__hipsAbove(),
         };
       });
       samples.push({ ms, ...st });
-      await page.screenshot({ path: join(OUT, `${s.fight}-${s.build}-${s.clip}-t${String(ms).padStart(4, '0')}.png`) });
+      await page.screenshot({ path: join(OUT, `${s.fight}-${s.build}-${s.clip}-t${String(ms).padStart(4, '0')}${SUF}.png`) });
     }
 
     // HOW LONG DOES THE BODY STAY? The ruling is "the body remains until the
@@ -179,19 +217,31 @@ try {
     if (stageClearedAt != null && base.clipMs && stageClearedAt < base.clipMs) {
       bad.push(`stage cleared at ${stageClearedAt}ms, before the ${base.clipMs}ms collapse finished`);
     }
-    rows.push({ ...s, base, collapseLatency, stageClearedAt, samples, failures: bad });
+    // ROUND 2: is the body actually ON THE FLOOR, or on the chair that is not
+    // there? Read on the settled frame, against this body's own standing pelvis.
+    let sitRatio = null;
+    if (!last.gone && base.hipsAbove && last.hipsAbove != null) {
+      sitRatio = +(last.hipsAbove / base.hipsAbove).toFixed(3);
+      if (sitRatio > SIT_RATIO_MAX) {
+        bad.push(`settled pelvis at ${sitRatio} of standing (ceiling ${SIT_RATIO_MAX}) - this is a chair sit, not a floor sit`);
+      }
+    } else if (!last.gone) {
+      bad.push('could not read the pelvis height - Hips bone not found on the staged body');
+    }
+    rows.push({ ...s, base, collapseLatency, stageClearedAt, sitRatio, samples, failures: bad });
     failures += bad.length;
-    console.log(`${s.fight.padEnd(6)} ${s.build.padEnd(7)} ${base.clipName} ${base.clipMs}ms trimmed=${base.trimmed}  kill->collapse ${collapseLatency}ms  seated hold ${stageClearedAt != null ? stageClearedAt - base.clipMs : '?'}ms  stage clears +${stageClearedAt}ms  ${bad.length ? 'FAIL' : 'PASS'}`);
+    console.log(`${s.fight.padEnd(6)} ${s.build.padEnd(7)} ${base.clipName} ${base.clipMs}ms trimmed=${base.trimmed}  kill->collapse ${collapseLatency}ms  seated hold ${stageClearedAt != null ? stageClearedAt - base.clipMs : '?'}ms  stage clears +${stageClearedAt}ms  pelvis ${base.hipsAbove} -> ${last.hipsAbove} (${sitRatio} of standing, ceiling ${SIT_RATIO_MAX})  ${bad.length ? 'FAIL' : 'PASS'}`);
+    if (base.floorSit) console.log(`   floorSit  hips ${base.floorSit.hipsFrom} -> ${base.floorSit.hipsTo}  drop ${base.floorSit.drop}  fitted frac ${(+base.floorSit.frac).toFixed(4)}  slide ${base.floorSit.slide}`);
     for (const b of bad) console.log('   !! ' + b);
     for (const p of samples) {
-      console.log(`   t${String(p.ms).padStart(4)}  y ${String(p.y).padStart(7)}  scale ${String(p.scale).padStart(6)}  role ${String(p.current).padEnd(7)} down=${p.down}  clip@${p.actionTime}s running=${p.actionRunning}`);
+      console.log(`   t${String(p.ms).padStart(4)}  y ${String(p.y).padStart(7)}  scale ${String(p.scale).padStart(6)}  pelvis ${String(p.hipsAbove).padStart(7)}  role ${String(p.current).padEnd(7)} down=${p.down}  clip@${p.actionTime}s running=${p.actionRunning}`);
     }
   }
 } finally {
   await browser.close();
 }
 
-writeFileSync(join(OUT, 'report.json'), JSON.stringify({ generated: new Date().toISOString(), subjects: SUBJECTS, marks: MARKS, rows }, null, 2));
+writeFileSync(join(OUT, `report${SUF}.json`), JSON.stringify({ generated: new Date().toISOString(), subjects: SUBJECTS, marks: MARKS, sitRatioMax: SIT_RATIO_MAX, rows }, null, 2));
 
 // ── contact strip: the collapse, both builds, one sheet ─────────────────────
 const sheets = await chromium.launch({ headless: true });
@@ -200,7 +250,7 @@ const dataURL = (p) => `data:image/png;base64,${readFileSync(p).toString('base64
 for (const s of SUBJECTS) {
   const row = rows.find(r => r.fight === s.fight);
   if (!row || row.samples.some(x => x.gone)) continue;
-  const out = join(OUT, `contact_${s.fight}.png`);
+  const out = join(OUT, `contact_${s.fight}${SUF}.png`);
   const png = await sp.evaluate(async ({ tiles, title }) => {
     const load = (u) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
     const ims = await Promise.all(tiles.map(t => load(t.src)));
@@ -222,9 +272,9 @@ for (const s of SUBJECTS) {
     });
     return c.toDataURL('image/png');
   }, {
-    title: `DEFEAT - ${s.fight} (${s.build} build) - ${s.clip} "${s.name}" - ms after the collapse starts`,
+    title: `DEFEAT${SUF ? ' (GROUNDED)' : ''} - ${s.fight} (${s.build} build) - ${s.clip} "${s.name}" - pelvis ${row.sitRatio} of standing - ms after the collapse starts`,
     tiles: MARKS.map(ms => ({
-      src: dataURL(join(OUT, `${s.fight}-${s.build}-${s.clip}-t${String(ms).padStart(4, '0')}.png`)),
+      src: dataURL(join(OUT, `${s.fight}-${s.build}-${s.clip}-t${String(ms).padStart(4, '0')}${SUF}.png`)),
       label: `+${ms} ms`,
     })),
   });

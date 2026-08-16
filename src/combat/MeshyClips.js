@@ -29,6 +29,7 @@ import { CLIP_LOADER, registerClipProvider } from './MeshyCast.js';
 import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { captureRest, retargetClip } from './MeshyRetarget.js';
 import { clampPosture } from './MeshyPosture.js';
+import { fitFloorSit } from './MeshyFloorSit.js';
 
 // REACTION ROLES — gender-keyed catalog ids. Names are Meshy's.
 // `m` plays on the 23 male-built bodies, `f` on the 10 female-built ones.
@@ -67,6 +68,17 @@ export const CLIP_IDS = {
   defeat:  { m: 58,  f: 359 },  // "Step to Sit Transition" / "Look Back and Sit"
 };
 const REACTION_ROLES = Object.keys(CLIP_IDS);
+
+// ROLES THAT END ON THE FLOOR. Both defeat clips are CHAIR sits — the performer
+// settles onto furniture this stage does not have, which is the producer's
+// "they're sitting on an invisible chair". Measured on the real bodies through
+// this function, the settled hips park at 36.7% (chad), 33.1% (karen) and 32.6%
+// (client_m_heavy) of CHARACTER HEIGHT, with both soles still flat on the floor
+// — a bar stool, not a collapse. MeshyFloorSit re-solves
+// the last part of the descent onto the ground; see that file for why a straight
+// translation would put the shins through the floor. Membership is opt-in and
+// deliberately narrow: nothing but a collapse should be reshaped this way.
+const FLOOR_SIT_ROLES = new Set(['defeat']);
 
 // ── CLIP BEATS — trim windows and contact frames, in SOURCE clip seconds ────
 //
@@ -313,11 +325,16 @@ export function preloadClips(ids = []) {
 // `idle` role, plus its build's reaction pair. Synchronous — anything not
 // warmed is simply absent, and MeshyAnimator degrades that role to the stance
 // (and MeshyCast keeps the GLB's own baked idle underneath as the last resort).
-export function clipsFor(id, modelId = id, targetRest) {
+// `model` is optional and only the floor-sit fit uses it: how far a pelvis can
+// sink before something is under the stage is a fact about the MESH, and the
+// cast's builds disagree about it by 14 cm. Without it the collapse still lands
+// on the floor, at the un-probed aim height. Every caller that has a body should
+// pass one — including the harnesses, so the gate keeps measuring what ships.
+export function clipsFor(id, modelId = id, targetRest, model = null) {
   const out = {};
   // `stance` selects the posture clamp: forward-flexion limiting belongs to a
   // held calm pose and would fight a reaction that is supposed to double over.
-  const clipFor = (actionId, stance) => {
+  const clipFor = (actionId, stance, sit = false) => {
     const entry = cache.get(actionId);
     if (!entry?.clip) return null;
     if (!targetRest?.size || !entry.donorRest?.size) {
@@ -328,7 +345,10 @@ export function clipsFor(id, modelId = id, targetRest) {
       return entry.clip;
     }
     const beat = CLIP_BEATS[actionId];
-    const key = `${modelId}|a${actionId}|${stance ? 'c' : 'r'}${beat?.trim ? '|t' : ''}`;
+    // The floor-sit fit is model-dependent, so the probed and un-probed results
+    // must not share a cache slot: a harness that asked without a body would
+    // otherwise poison the entry the fight then reads.
+    const key = `${modelId}|a${actionId}|${stance ? 'c' : 'r'}${beat?.trim ? '|t' : ''}${sit ? (model ? '|gf' : '|g') : ''}`;
     if (retargeted.has(key)) return retargeted.get(key);
     try {
       let clip = retargetClip(entry.clip, entry.donorRest, targetRest);
@@ -339,6 +359,15 @@ export function clipsFor(id, modelId = id, targetRest) {
         const t = trimClip(clip, beat.trim[0], Math.min(beat.trim[1], clip.duration), beat.contact);
         if (t) clip = t;
       }
+      // Grounding runs AFTER the trim, on the window that actually ships: the
+      // solve normalises against the clip's own first and last frame, and the
+      // untrimmed a58 ends on a loop-closing STANDING frame (hips back at 1.1x
+      // the settle) that would flatten the whole descent to nothing.
+      // `globalThis.__floorSitOff` reproduces the pre-fix chair sit, so the
+      // grounding gate can be SHOWN to fail on the defect it exists to catch
+      // (tools/_fr2-b23-defeat.mjs --noground). Same shape as __boardDeferOff:
+      // one read, no cost, never set by the game.
+      if (sit && !globalThis.__floorSitOff) clip = fitFloorSit(clip, targetRest, model);
       retargeted.set(key, clip);
       return clip;
     } catch (err) {
@@ -352,7 +381,7 @@ export function clipsFor(id, modelId = id, targetRest) {
   if (stance) out.idle = stance;
   const gender = genderFor(id, modelId);
   for (const role of REACTION_ROLES) {
-    const c = clipFor(CLIP_IDS[role][gender], false);
+    const c = clipFor(CLIP_IDS[role][gender], false, FLOOR_SIT_ROLES.has(role));
     if (c) out[role] = c;
   }
   // `cast` is a real role now (CLIP_IDS.cast). The alias that used to live here

@@ -225,7 +225,11 @@ export function resolveId(id, config) {
 // failed clip fetch degrades to wave-1 behaviour rather than a frozen bind pose.
 export function clipsFor(inst, id, modelId = id) {
   const clips = { idle: inst.animations?.[0] || null };
-  if (_clipsFor) Object.assign(clips, _clipsFor(id, modelId, inst.restPose));
+  // The instance's own scene goes with the rest pose: the defeat clip's floor-sit
+  // fit probes the MESH to find how far this build's pelvis can sink before
+  // something is under the stage, and the answer differs by 14 cm across the
+  // cast. It poses and restores the body exactly the way groundOffsets does.
+  if (_clipsFor) Object.assign(clips, _clipsFor(id, modelId, inst.restPose, inst.scene));
   return clips;
 }
 

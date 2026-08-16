@@ -244,10 +244,24 @@ export function groundOffset(root, clip, opts = {}) {
     const duration = Math.max(0, clip.duration || 0);
     const v = new THREE.Vector3();
     mixer = new THREE.AnimationMixer(root);
-    mixer.clipAction(clip).play();
+    // LoopOnce + clamp, and the last sample a hair short of the end. Under the
+    // default LoopRepeat, setTime(duration) wraps to clip time 0, so the final
+    // sample of every sweep silently re-read the FIRST frame and the true end
+    // pose was never measured on any role. Harmless on a clip that returns to
+    // its stance; not harmless on `defeat`, whose whole point is the pose it
+    // stops on. Frame 0 is still sampled at s=0, so this only ADDS information:
+    // the measured minimum can only fall, the offset the animator subtracts can
+    // only shrink, and a character can therefore only be LIFTED by this fix,
+    // never sunk. Measured on chad's defeat: offset 0.0625 -> 0.0313, which is
+    // exactly the 3.5 cm his right foot was spending under the stage on the
+    // settled frame that nothing had ever looked at.
+    const action = mixer.clipAction(clip);
+    action.setLoop(THREE.LoopOnce, 1);
+    action.clampWhenFinished = true;
+    action.play();
     for (let s = 0; s < samples; s++) {
-      const t = samples === 1 ? 0 : duration * s / (samples - 1);
-      mixer.setTime(t);
+      const t = samples === 1 ? 0 : Math.min(duration - 1e-4, duration * s / (samples - 1));
+      mixer.setTime(Math.max(0, t));
       root.updateMatrixWorld(true);
       for (const { mesh, index } of candidates) {
         v.fromBufferAttribute(mesh.geometry.attributes.position, index);

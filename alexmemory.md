@@ -8,8 +8,9 @@ jail, embed escape, Meredith haunting) -> act-chain root cause (the
 self-heal at load now) -> alex_it 8 defects incl. reproducible
 soft-lock -> Meshy staging race (enemies A-posed because bodies lost a
 2.5s warm-up race on every FIRST encounter; staging now upgrades
-mid-fight) -> full 30-item fix round -> defeat collapses (a58/a359,
-BUT they sit on an invisible CHAIR - floor-grounding lane in flight)
+mid-fight) -> full 30-item fix round -> defeat collapses (a58/a359) and then
+GROUNDED them - the invisible chair is gone, settled pelvis 0.55-0.64
+-> 0.14-0.26 of standing across all 33
 -> fixtures letter B live (cubicle quincunx, room-scoped) -> runner
 olive 0x6d8a78 -> IT room double-lit fixed -> BALANCE Tier 1 live
 (Escalation Response: a boss owed turns throws its real attacks;
@@ -17,7 +18,7 @@ Tier 2 DECLINED - the 13-round-Meredith bill) -> DIALOG REFACTOR
 P0-P3 DONE: 292/292 byte-identity, .dlg corpus committed, runtime
 untouched, Alex calls it "so much more legible."
 
-IN FLIGHT: floor-sit grounding lane (invisible chair fix).
+IN FLIGHT: none.
 
 COMMISSIONED NEXT (Alex-signed, not started):
 1. PHASE-LIST SURGERY round - redraw boss phase ability lists toward
@@ -37,6 +38,122 @@ OPEN LETTERS: none. Alex's board is clear.
 LAWS: HANDOFF_PACKAGE.md section 4. Fleet: builders opus-high/codex-
 xhigh, judge pair opus-xhigh+fable-high, single judge for fix rounds.
 NO Set-Content on source files (line-ending trap, hit again tonight).
+## [THE INVISIBLE CHAIR (08-15 late) - the defeat collapse now lands on the floor]
+
+Your catch, verbatim: the new defeat collapses are "good, except...
+they're not sitting on the floor. They're sitting on an invisible
+chair, lol." You were right, and the numbers are worse than the read.
+
+WHAT WAS ACTUALLY WRONG. a58 "Step to Sit Transition" and a359 "Look
+Back and Sit" are CHAIR sits. Measured on the real bodies through the
+shipping path, the settled hips park at 36.7% of character height on
+chad, 33.1% on karen, 32.6% on client_m_heavy - with both soles still
+flat on the floor. That is a bar stool, not a collapse.
+
+WHY THE FIRST ROUND MISSED IT, stated plainly because it is the
+lesson. The B23 sweep screened 255 clips by SILHOUETTE DESCENT off the
+vendor's preview GIFs, and a chair sit descends. The clips' own
+catalog rows said so in a number nobody re-read: heightRatio_last
+0.9167 for a58 and 0.7539 for a359, against 0.2471 for a body that is
+actually on the ground. The round-1 human review called both of them
+"cross-legged floor sit"; that call was wrong and its own measurement
+contradicted it on the same page.
+
+WHAT SHIPPED (option 1 of your three, grounding the existing clips -
+no re-hunt, no new Meshy spend, 0 credits this lane).
+src/combat/MeshyFloorSit.js keeps sinking the pelvis past where the
+chair would have been, riding the clip's OWN descent curve (a running-
+minimum normalisation, so it is zero on every standing frame and full
+at the settle, with no per-clip time constant typed anywhere), and
+re-solves both legs with two-bone IK so THE ANKLES DO NOT MOVE. That
+is the part that makes it legal: a chair sit translated straight down
+puts the shins through the floor, because the shins are near-vertical
+and the feet are already planted. The knee spends the distance
+instead.
+
+BEFORE -> AFTER, settled pelvis as a fraction of the same body's own
+standing pelvis, whole cast, off meshy-spine-gate.mjs:
+
+  0.545 .. 0.643   ->   0.140 .. 0.264      (33/33 characters)
+
+and as a fraction of character height on the three you asked for:
+
+  karen           33.1% -> 8.7%
+  chad            36.7% -> 9.7%
+  client_m_heavy  32.6% -> 12.2%
+
+FLOOR, which is the thing that could have gone wrong. Defeat floor
+band cast-wide -0.0348..0.0441 -> -0.0071..0.0624 m, inside the
++/-0.01 penetration rule. On all three review bodies the floor band is
+BIT-IDENTICAL before and after, because the solve pins the ankle
+height exactly. No leg-through-floor, no thigh in the belly on the
+heavy build - checked by eye on true-profile stills, not just numbers.
+
+HOW FAR DOWN IS BODY-SPECIFIC, and that surprised me enough to be
+worth a line. At one fixed pelvis height karen has 20 cm of daylight
+under her while client_m_heavy has 14 cm of thigh under the stage. So
+the drop is PROBED against the mesh and raised only as far as the
+settled frame demands: fitted 0.138 / 0.204 / 0.288 of bind hip height
+on karen / chad / client_m_heavy. A single constant would have had to
+serve the worst build and would have left karen sitting on a box.
+
+A REAL BUG FELL OUT OF IT. three's AnimationMixer wraps
+setTime(duration) back to frame 0 under the default LoopRepeat, so
+every "sample the end of the clip" loop in the project - the engine's
+own groundOffset(), the spine gate, the round-1 defeat tool - was
+silently re-reading the FIRST frame as its last sample. On a collapse
+clip the first frame is the character standing up. Fixed; it only adds
+information, so bodies can only be lifted, never sunk. Chad's right
+foot was spending 3.5 cm under the stage on the settled frame and
+nothing had ever looked at that frame. Cast-wide worst reaction-role
+floor penetration -0.0348 -> -0.0079 m.
+
+GATES. meshy-spine-gate.mjs now measures settled pelvis on the defeat
+role and fails above 0.35 of standing; _fr2-b23-defeat.mjs asserts the
+same thing through the REAL victory path (dev instant-kill, normal
+XP/flags/post-dialog). Both carry --noground, which reproduces the
+shipped chair sit so the gate can be watched failing on the defect it
+was written for: 33/33 characters fail it, karen 0.591 and chad 0.679
+in a live fight. With the fix: 32/33 gate PASS (the one failure is the
+pre-existing brand_consultant trunk 7.16 deg on its IDLE, HANDOFF item
+3, unchanged from before this lane), and the live fight PASSES at
+karen 0.156 / chad 0.181.
+
+Trims untouched - both clips still 1.733 s and 1.867 s at 1.000x, so
+the matched-pair law holds by construction. Cost: clip build 15.6 ->
+28.8 ms per character, once per session per body.
+
+FOR YOUR REVIEW (screenshots/fix-round-2/b23-defeat/, gitignored):
+  contact_karen-floor.png / contact_chad-floor.png   the real fight
+  contact_karen-preground.png / contact_chad-preground.png   the defect
+  karen|chad|client_m_heavy-floor-side.png           true profile,
+      BEFORE over AFTER, red floor line at y=0 - this is the pair that
+      shows the invisible chair and shows it gone
+  ...-floor-tq.png                                   3/4, same rows
+  slide/chad-floor-side.png                          the ankle-slide
+      tuning I did not take (0 / 0.25 / 0.55) - kept 0.55
+
+HONEST, things that would mislead you if I did not say them:
+- The live-fight gate runs karen + chad only. client_m_heavy is a
+  roguelite client body with no story encounter, so it is verified
+  through the shipping clipsFor() on the real GLB, not through a real
+  fight. Same code path, one fewer layer.
+- Chad's grounded legs end up fairly extended rather than knees-up. I
+  rendered the tighter variant (ankle slide 0.25) and it looks slightly
+  better on him and slightly worse on the heavy build, where it pulls
+  the thigh into the gut and re-introduces 2 mm of penetration. I kept
+  the safe one. If you disagree it is one constant, ANKLE_SLIDE.
+- Karen's grounded sit is side-saddle, legs to one side, not
+  cross-legged. That is a359's own performance, not the solve.
+- The procedural (?nomeshy) cast is untouched - it still topples and
+  stays toppled. Nothing to ground there.
+- Option 2 (re-hunt the catalog) was NOT run. It did not need to be,
+  but for the record: re-ranking the existing 255-clip sweep by final
+  silhouette height, the only non-violent clip that ends genuinely low
+  is a370 "Stand to Side Lying", which reads as passed out rather than
+  defeated. There is no better-cast floor sit sitting unused.
+- 0 Meshy credits this lane. No generation, no new assets.
+
 ## [THE FIVE-MERGE DAY (08-04 -> 08-05 overnight) - the whole queue landed]
 
 All five lanes built, judged, merged, LIVE on main. Shift report:
