@@ -27,13 +27,21 @@ Everything id-derived moved with them in one commit: every flag (`ready_for_skip
 ## Commands
 
 ```bash
-npm run dev      # Start dev server at localhost:5173 (--port 5173 to force it)
-npm run build    # Build to dist/ (chunk size warning is expected, not an error)
-npm run preview  # Preview production build
-npm run editor   # Start balance/room/character editor at localhost:3747 (developer-only, never bundled)
+npm run dev            # Start dev server at localhost:5173 (--port 5173 to force it)
+npm run build          # Build to dist/ (chunk size warning is expected, not an error)
+npm run preview        # Preview production build
+npm run editor         # Start balance/room/character editor at localhost:3747 (developer-only, never bundled)
+npm run dialogs:build  # Compile src/data/dialogs/*.dlg -> src/data/dialogs/index.js
+npm run dialogs:check  # Byte-compare that artifact against a fresh render
+npm run story:sim      # The story simulator, checks A-G
+npm run check          # dialogs:check && story:sim && validate:data && build
 ```
 
-There is no test suite. Verification is manual playtest + `npx vite build`.
+There is no unit-test suite, but `npm run check` is now four gates, and the first two
+are the ones this codebase did not have for most of its life: **`dialogs:check` fails if
+the generated dialog module has been hand-edited or is stale**, and **`story:sim` fails if
+the story graph cannot be completed from a fresh save**. Beyond that, verification is
+manual playtest plus the harnesses in `tools/`.
 
 ### Balance & Room Editor
 
@@ -61,7 +69,7 @@ Append `?dev` to the game URL to enable dev mode (e.g. `http://localhost:5173/?d
 **In exploration** — press `F2`: opens a dev panel with two sections:
 
 - **Save Scum** — three save slots with Save and Load buttons. Save writes the current state to that slot and marks it active (future auto-saves go there). Load deserializes the save, reloads the room, and calls `syncFromPlayerState()`. The active slot is highlighted with ★.
-- **Quest Skip** — seven cumulative act presets. Clicking a preset writes directly to `player.flags`, then calls `_syncActFromFlags()` and `_refreshStoryProgress()`. Some narrative read-flags are not included, so a small number of NPC dialogs may replay, but all room gates, NPC conditions, and act routing will be correct.
+- **Quest Skip** — seven cumulative act presets. Clicking a preset writes directly to `player.flags`, then calls `_syncActFromFlags()` and `_refreshStoryProgress()`. Some narrative read-flags are not included, so a small number of NPC dialogs may replay, but all room gates, NPC conditions, and act routing will be correct. **Since P8 that replay set is slightly wider**: a code-pushed scene's once-guard is its own `read_<sceneId>`, so a preset that sets a record flag (e.g. `visited_archive`) without the matching read flag re-offers that scene. Real saves are unaffected — `read_<dialogId>` has been written for every dialog that showed a node since the game shipped. A preset or fixture that jumps past a scene should set its read flag.
 
 | Preset | Derived act | Key flags set |
 |--------|---|--------------|
@@ -177,10 +185,148 @@ All game data is plain JS objects/exports:
 - `bestiary.js` — `BESTIARY_DATA`: maps every enemy `id` to `{ name, category, quip }`. Displayed in the Journal tab of MenuState. Add an entry here whenever a new enemy is added to `ENEMY_STATS`.
 - `thoughts.js` — three tables. **`ROOM_THOUGHTS`**: room id → array of Andrew inner-monologue lines, fired on FIRST VISIT behind a permanent `thought_<roomId>` flag. **Every line in the array now fires, in authored order** — it used to be `thoughts[Math.floor(Math.random() * len)]`, i.e. one of two, forever, so half of every authored pair was dead in any given save. That is only safe because `_showMonologue` posts to the NotificationArbiter's single-occupancy VOICE zone and the second line QUEUES; before the arbiter it would have doubled traffic on a measured first-writer-loses surface. **`ROOM_THOUGHTS_BY_ACT`** (`{ roomId: { actIndex: [lines] } }`): fires once per (room, act) on ANY visit, under its own `thought_<roomId>_a<act>` namespace — never reuse `thought_<roomId>`, that is the first-visit latch. An entry may be a bare string or `{ text, flag }` / `{ text, notFlag }` when the line asserts something the player might not have seen (the stairwell's act-6 graffiti names Floor 13, and a player who never took the elevator detour must not be read that punchline); a gated line that does not fire does NOT spend the act latch. **`STORY_THOUGHTS`**: flag → one line, fired by the `flag-set` listener — this is where the renovation acknowledgements live. `floor_13` is deliberately absent from all three.
 - `characters.js` — NPC visual configs
-- `cosmetics.js` — Unlockable cosmetics with unlock conditions. `unlock` accepts **only** `'default'`, `{ flag }` or `{ quest }` (`Player.isCosmeticUnlocked`), so anything compound needs a derived flag — `renovations_all` is derived in `_refreshStoryProgress()` from `SHOP_ITEMS`' renovation rows so a tenth renovation joins the completionist gate automatically. **Every `visual.type` needs a matching arm in `_addCosmeticVisual` (`CharacterBuilder.js`) or the item equips to nothing**; chest pieces go on the left lapel (x +0.07), held props in the off hand (`-handX`).
+- `cosmetics.js` — Unlockable cosmetics with unlock conditions. `unlock` accepts **only** `'default'`, `{ flag }` or `{ quest }` (`Player.isCosmeticUnlocked`), so anything compound needs a derived flag — `renovations_all` is a DERIVE row in `src/data/story/graph.js` reading `SHOP_ITEMS`' renovation rows so a tenth renovation joins the completionist gate automatically. **Every `visual.type` needs a matching arm in `_addCosmeticVisual` (`CharacterBuilder.js`) or the item equips to nothing**; chest pieces go on the left lapel (x +0.07), held props in the off hand (`-handX`).
 - `ClientGenerator.js` — Procedurally generates Reception-room clients. `give_item` actions use the `item` field (not `itemId`). Roguelite enemy HP scales as `Math.round((100 + tier * 160) * levelMultiplier)`.
 - `rooms/index.js` — All room definitions. NPC entries support `condition: { flag, notFlag }` for conditional spawning. Break room has `type: 'supply_shop'` furniture that triggers `ShopState`. Rooms may also carry an optional **`marks: { name: [x, z], … }`** block — named staging destinations consumed by `stage` dialog nodes (see `src/world/StageDirector.js`). Marks are data only; nothing breaks if one is unused.
-- `dialogs/index.js`, `quests/index.js`, `encounters/index.js` — dialog trees, quests, encounter configs
+- `dialogs/*.dlg` — **the dialog corpus, and the only file an author edits.** 13 files, 292
+  scenes, 3,392 nodes. See "Dialog authoring" below.
+- `dialogs/index.js` — **GENERATED. DO NOT EDIT.** `npm run dialogs:build` writes it from the
+  `.dlg` files; `npm run dialogs:check` byte-compares it and fails the build on any hand
+  edit. It is still a plain ES module exporting `DIALOGS`, so every importer (the game,
+  `scripts/validate-data.mjs`, `tools/_g-stage-verify.mjs`, every harness) is unchanged.
+- `dialogs/dialogs.lock.json` — the append-only label→index ledger. See "Dialog authoring".
+- `story/graph.js` — **the story graph.** `ACTS` (7), `DERIVE` (13), `GATES` (13), `TRIGGERS`
+  (30). See "The story graph" below.
+- `story/routes.js` + `story/route-eval.js` — **the NPC dialog routing table**, 65 rows in
+  priority order plus a 62-line evaluator. See "Dialog routing" below.
+- `story/grants.js` — `CODE_GRANTS` (183 flags written by JS, each with `src` and `note`),
+  `AUTO_GRANTS` (the four pattern rules), `NEVER_SET` (currently empty), `SCENE_DISPOSITION`
+  (the three ratified dead scenes). Read by `tools/story-sim.mjs` only.
+- `story/evaluator.js`, `story/predicates.js` — the derive/act evaluator, and a deliberately
+  EMPTY named-predicate whitelist (no derive rule needs an escape hatch).
+- `quests/index.js`, `encounters/index.js` — quests, encounter configs
+
+### Dialog authoring (`src/data/dialogs/*.dlg`)
+
+**The `.dlg` files are the source. `index.js` is output.** Edit a `.dlg`, run
+`npm run dialogs:build`, commit both. Editing `index.js` turns the build red at
+`dialogs:check`, which runs FIRST in `npm run check` for exactly that reason.
+
+The format is line-oriented: **one node per line, no brackets, no commas, no quoting.**
+Every prose-bearing line splits at its FIRST colon and everything after it is verbatim —
+apostrophes, quotes, colons, dashes, asterisks, arrows. Prose never needs escaping in any
+position. A malformed line is ONE diagnostic and every other line in the file still parses;
+that non-cascading property is why the format was chosen over JS object literals. The 13
+lowercase directives are `ask if goto end set fight give xp stat heal quest recruit teach`;
+a speaker name must begin with a capital letter, which is how the two are told apart.
+**The one-page grammar card is `tools/dlg/grammar-card.md`. Read it before authoring.**
+
+`dialogs.lock.json` is the **append-only label→index ledger**, and it is what makes the
+whole thing safe. A label keeps its index forever; a new label takes the next free index; a
+removed label leaves its index RESERVED and the compiler emits an `{ type: 'end' }` pad
+into the hole (the padding convention this corpus already used — 41 unreferenced pads
+shipped). No index is ever reused. That is not tidiness: `_chose_${dialogId}_${nodeIndex}_${choiceIndex}`
+(`DialogState.js:238`, `:273`) is a persisted save key, and the lock is what keeps it stable
+for every save in the wild. The lock is committed and its diff is the human-readable proof
+that a content change added nodes and moved none. `--reseed` is refused without
+`DIALOGS_LOCK_RESEED=i-know` in the environment; it has been used exactly once.
+
+**Dev loop:** `npm run dev` serves the freshly compiled module in place of the file
+(`tools/dlg/vite-plugin-dlg.mjs`, `apply: 'serve'`). Edit a `.dlg`, save, the running game
+reloads with the new line. A compile error logs diagnostics and **keeps serving the last
+good module** — a typo must not white-screen the game. `vite build` never uses the plugin;
+production reads the committed artifact.
+
+Compiler checks that fail the build, beyond the grammar: unknown node type (the corpus
+shipped a `{ type: 'Andrew' }` node that never rendered once and nothing ever said so);
+unresolved label with nearest-three suggestions; duplicate label in a scene; duplicate scene
+id across files; a scene with no reachable `end`; `mode quiz` / `mode evergreen-hub`
+disagreeing with `DialogState`'s two `Set` literals in either direction; every `fight` id in
+`ENCOUNTERS`, every `give` in `ITEMS`, every `stat` in `PLAYER_BASE_STATS`; every stage beat
+actor and mark resolving. Nodes with no path from index 0 are **warnings**, not errors —
+there are 42 and 41 of them are the intentional pads.
+
+### The story graph (`src/data/story/graph.js`)
+
+Four blocks, all plain data, all expressed in one array-shaped expression language
+(`'flag'`, `['not',X]`, `['all',…]`, `['any',…]`, `['room',id]`, `['set','RENOVATION_FLAGS']`,
+`['pred',name]`, and for routes also `['npc',…]`, `['npcDialogId',…]`, `['dialogExists',…]`,
+`['act','>=',n]`).
+
+- **`ACTS`** — 7 rows. Highest satisfied index wins. This is one list now, where
+  `_syncActFromFlags` and the `questId` ladder used to be two hand-kept parallel ones.
+- **`DERIVE`** — 13 rows, 8 `latch` and 5 `live`. **ORDER IS BEHAVIOUR: this is ONE ORDERED
+  PASS, NOT A FIXPOINT.** `intern_at_desk` is rule 5 and reads `board_meeting_closed`, which
+  is rule 13, so within a single call the Intern flags deliberately lag one call behind;
+  rules 6–9 read the value rule 5 just wrote, which is intra-pass. Both are reproduced from
+  the shipping code and both are load-bearing. Do not "fix" this to converge. (The
+  simulator's closure IS a fixpoint — that is a different tool with a different job, and its
+  header says so.)
+- **`GATES`** — 9 flag rows (the old `gatedRooms` table) plus 4 declaration-only rows: the
+  `archive` and `vault` knowledge gates and the two special conditionals. Those four are
+  DATA ONLY; `_changeRoom` still owns them as explicit conditionals that `return` before the
+  table lookup, which is why a flag row for either would be unreachable.
+- **`TRIGGERS`** — 30 rows, one per code-side scene push, each with its `file:line`. `once`
+  is `'scene'` (22), `'always'` (8) or `'flag:<name>'` (0, and a `flag:` row now REQUIRES a
+  waiver the simulator prints). See the one-shot law below.
+
+Every rule carries a `note` that says WHY it exists, not what it does. Several of those
+notes are the only surviving record of a bug that cost a round — keep them when you edit.
+
+### Dialog routing (`src/data/story/routes.js`)
+
+`_getDialogId` is a context builder plus one `resolveRoute` call. **`DIALOG_ROUTES` is 65
+rows and ARRAY ORDER IS PRIORITY** — greppable and diffable, where it used to be "how far
+down a 450-line function the rule happens to sit". Every row carries a unique `id`, a
+mandatory `why`, and the `src` line span it was extracted from.
+
+- The act/intro/return suffix ladder stays ONE named resolver (`_resolveDialogLadder`), not
+  40 rows. It is genuinely a loop.
+- `_getValidNpcDialogId` is NOT part of the table and still wraps the result — an
+  out-of-band dialog still degrades to `neutral_<npc>`.
+- `_getDialogId` still has **side effects, and only when `commit` is true**: three one-shot
+  router flags. The two Janitor stashes (`_janitorBeatDialog` / `_janitorRiddleDialog`)
+  deliberately ignore `commit` because the flag-set listener reads them. Reproduced exactly.
+- **`?routes=legacy`** boots the preserved `_getDialogIdLegacy` for one release, and
+  `tools/_dr-route-diff.mjs` replays one against the other: 8 DevPanel states × 73 npc/dialogId
+  variants × 28 rooms, plus 20,000 seeded-random assignments over the 139 flags any route
+  reads. Zero mismatches is the bar. Delete the legacy function and the flag together.
+- A row may carry `shadowed: '<reason>'` when it is a faithful transcription of a branch that
+  is ALREADY dead in the shipped function. Three rows have one. The simulator prints every
+  such row by name on every run and counts it in the summary, so the number can only go down.
+
+### The story simulator (`tools/story-sim.mjs`)
+
+Pure Node, ~3 s, joins `npm run check`. **A broken story chain is now a red build rather than
+a thing you find by playing.** Seven checks:
+
+| | |
+|---|---|
+| **A** | every `ACTS[].when` flag is in the closure from a fresh save |
+| **B** | every flag READ anywhere is in the closure, in `CODE_GRANTS`, or has a `NEVER_SET` reason |
+| **C** | every scene in the corpus is routed, triggered, or carries a `SCENE_DISPOSITION` row |
+| **D** | every gate flag is reachable, and reached BEFORE the room behind it is needed |
+| **E** | no spend-before-grant: every trigger is `scene`, `always`, or a named waiver |
+| **F** | the expiry check — a grant behind `¬f` must be orderable before `f` |
+| **G** | route shadowing: every route row has a satisfying assignment where no earlier row fires |
+
+`--selftest` mutates the model seven ways and asserts each check goes RED, plus an eighth row
+labelled REGRESSION #1: the pre-fix `act5_triggered` persisted latch, caught by E and by A
+from the interrupted start state. **A gate that has never been seen to fail is not a gate.**
+
+**Check G is a SAT problem — do not branch it in a fixed variable order.** The terminal
+`act-ladder` row has 64 earlier compatible rules and 151 atoms between them; a fixed order is
+a 2^151 search and the tool ran over ten minutes without finishing, inside `npm run check`.
+It branches only on an atom of a currently-undecided constraint, and a decision budget
+reports COULD NOT DECIDE as a **failure**, never as a silent pass. Two modelling rules go
+with it: `dialogExists` and `act` operands are **not flags** (harvesting them as flags gave
+40+ phantom check-B findings — scene ids and the literals `>=`, `==`, `<`), and
+`dialogExists`, `act` and `npcDialogId` are **concrete, not free variables** (the corpus is
+fixed, act is enumerated 0–7, `npcDialogId` over every literal in the table; pinning it to
+null falsely called three Janitor rows shadowed).
+
+**The honest limit, which the tool prints in its own footer:** monotone closure does not
+model resource ordering — AUM prices and level gates are outside this proof.
 
 ### Arcade (`src/arcade/`)
 
@@ -273,11 +419,46 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **State lifecycle**: `enter()` sets up DOM/scene; `exit()` tears it down (remove DOM elements, dispose Three.js geometries/materials, remove event listeners).
 - **Combat result flow**: `onEnd(result)` returns `'victory'`, `'defeat'`, or `'flee'`. On story victory: `defeated_<encounterId>` flag is set automatically by `ExplorationState`, `bestiary_<encounterId>` flag is set, HP/MP restored to max, then `encounter.postDialogId` dialog auto-plays if defined. On defeat: `retry_<encounterId>` flag is set; the next encounter routes to a `<encounterId>_retry` dialog. `ending_started` is reset on defeat so the executive floor boss re-triggers. `_handleDefeat(encounterId)` also calls `_offerPIP(encounterId)`, which surfaces the free Performance Improvement Plan (the casual assist, `src/data/review.js`) as a toast — once per story boss, keyed on `pip_notice_<encounterId>`, suppressed on `reception_client`, on the scripted first-Karen loss (which returns before `_handleDefeat`), and once `rp_pip` is owned. **Flag naming gotcha**: `defeated_<encounterId>` (e.g., `defeated_regional`) is the auto-set combat victory flag. Post-dialogs sometimes also set a *differently named* flag via a `set_flag` action (e.g., `regional_director_defeated` in the penthouse chain dialog). These are distinct flags — always verify which one ExplorationState's event listeners use before writing NPC conditions.
 - **Encounter config**: defined in `encounters/index.js`. Each entry has `enemyId`, `preDialogId` (dialog with `start_combat` action node that triggers the fight), `postDialogId` (auto-played after victory), and `canFlee`. The `start_combat` action in a dialog emits `start-combat` on EventBus; ExplorationState queues it via `_pendingCombat` and fires after `dialog-end`.
-- **NEVER GUARD A CODE-PUSHED SCENE WITH A PERSISTED LATCH ALONE** (`UNFINISHED_SCENE_LATCHES` + `_reconcileSceneLatches()`, top of `ExplorationState.js`). Every code-side story push in that file has the shape `setFlag(started)` then `setTimeout(() => push(dialog), 800…1200)`, and the game **auto-saves inside that window** (`_changeRoom` ends with `_autoSave`; `_handleDefeat` calls it synchronously). A quit, a crash, a closed tab or a defeat therefore banks *this scene has happened* for a scene that never ran — and none of these enemies has an NPC entry anywhere in the game, so nothing else can ever push that dialog again. **`act4_complete` has ONE setter in the whole game** (`act5_trigger` node 8) and `act5_trigger` had ONE pusher; measured 2026-08-15 with `tools/_r-act5latch.mjs`, an interrupted entry left `act5_triggered:true / act4_complete:false` on disk and walking out of the cubicle farm and back never recovered it — the Restructuring trio never spawns, `board_room_accessible` is never set, Meredith is never fought, **Acts 5, 6 and 7 unreachable** while the world still lets the player everywhere they had already been. `_handleDefeat` had re-armed the five gauntlet rows since Act 5 shipped for exactly this reason and simply had no row for `act5_triggered`. The table is now shared and reconciled at LOAD (`enter()` before `_loadRoom`, and `syncFromPlayerState()`) as well as on defeat. **A row belongs there only when `done` is set by the scene `started` guards and nothing else in the game can serve that scene.** The Act-5 cutscene itself moved out of the `room-entered` listener into `update()` (`_maybeTriggerAct5`, beside the Restructuring-trio push): `room-entered` fires exactly once per entry, `update()` re-offers while the player stands in the room. Its once-guard is the **session** field `_act5Pushed` (cleared on leaving the room and in `syncFromPlayerState`), never a save flag; `act5_triggered` is still written for the record and for old saves/F2 presets but is **never read**. A/B switch `window.__sceneLatchLegacy` (`tools/_r-act5latch.mjs --pre`) restores the shipped guard so the gate can be shown failing.
+- **NEVER GUARD A CODE-PUSHED SCENE WITH A PERSISTED LATCH.** Every code-side story push in
+  `ExplorationState.js` used to have the shape `setFlag(started)` then
+  `setTimeout(() => push(dialog), 800…2000)`, and the game **auto-saves inside that window**
+  (`_changeRoom` ends with `_autoSave`; `_handleDefeat` calls it synchronously). A quit, a
+  crash, a closed tab or a defeat therefore banked *this scene has happened* for a scene that
+  never ran — and none of these enemies has an NPC entry anywhere in the game, so nothing
+  else could ever push that dialog again. **`act4_complete` has ONE setter in the whole game**
+  (`act5_trigger` node 8) and `act5_trigger` had ONE pusher; measured 2026-08-15 with
+  `tools/_r-act5latch.mjs`, an interrupted entry left `act5_triggered:true /
+  act4_complete:false` on disk and walking out of the cubicle farm and back never recovered
+  it — **Acts 5, 6 and 7 unreachable** while the world still let the player everywhere they
+  had already been.
+  **The once-guard is now the scene's own `read_<sceneId>`**, declared as `once: 'scene'` on
+  the trigger's `TRIGGERS` row. `DialogState._endDialog` writes that flag only after a node
+  has actually been SHOWN (`DialogState.js:466-473`), so an interrupted scene is re-servable
+  by construction and this bug cannot be authored again. All 19 waived triggers were
+  converted; the started flags are all still **written** (saves carry them and they read as a
+  record) and none of them is **read** as a guard. `once: 'flag:<name>'` still exists and
+  still works, but it **requires a `waiver` string** and the simulator's check E prints every
+  waiver by name on every run, so the count can only go down. It is 0.
+  `UNFINISHED_SCENE_LATCHES` is now DERIVED from `TRIGGERS` and evaluates empty;
+  `LEGACY_SCENE_LATCHES` is the frozen, explicitly-closed seven-row table for saves written
+  before the change, and `_reconcileSceneLatches()` keeps running over it at LOAD and on
+  defeat. **Do not add a row to the legacy table.**
+  Two mechanics keep the delay window honest and both were earned by a measured defect:
+  a **session claim** reserves the scene between the decision and the push and is RELEASED on
+  every path that abandons the push (plus cleared wholesale in `_handleDefeat`) — never
+  released, it becomes exactly the persisted latch this all exists to delete; and the
+  deferred push **re-checks the trigger's `when`, `room` and `flag`**, not just the
+  once-guard, because a load or a defeat dump can wipe the precondition inside the window.
+  Gates: `tools/_dr-latch-interrupt.mjs` (arms each trigger, interrupts inside its window by
+  reloading, asserts the scene is re-served, plays it out, asserts no third serve) and
+  `tools/_r-act5latch.mjs` legs A/B/C. A/B switch `window.__sceneLatchLegacy`
+  (`tools/_r-act5latch.mjs --pre`) restores the shipped guard so the gate can be shown failing.
+  **A fixture that skips a scene must set that scene's `read_` flag** — the same law as the
+  CAPTURE LAW one level up, and the thing that made two harnesses look like game defects.
 - **THE QUEST-STAGE BAND IS A SILENT SWAP, AND `_pendingDialog` BYPASSES IT.** `_getValidNpcDialogId` substitutes `neutral_<id>` / `neutral_npc` whenever `isDialogValidForQuestStage` rejects the routed dialog, so an out-of-band route does not error — the character just says a placeholder line forever. Two consequences, both shipped and both fixed: (1) the generic act rows in `_getDialogId` were `act >= N && DIALOGS[<id>_actN]` while `dialogGating` caps an `_actN` dialog at quest stage N00–N99, so `act >= 3 && !read_alex_it_act3` kept returning a stale `alex_it_act3` at acts 4–7 and Alex answered *"Not a great time. Something is blinking that should not be blinking"* for the rest of the game with `alex_it_return` unreachable — the rows now go through `actRow(n)`, which band-checks, so a stale act dialog falls THROUGH to `<id>_return`; (2) `_pendingDialog` pushes its target **raw**, with no neutral swap, so the `alex_main_chosen` listener's table (which falls through the **non-existent `alex_it_act4`** to `alex_it_act3`) pushed an out-of-band dialog at act 4/5 — every node failed `_isNodeValidForQuestStage` and the skip walk followed `alex_it_act3`'s appended catch-up tail `19→20→21→22→23→19` forever: **`Maximum call stack size exceeded` inside `DialogState.enter()`**, thrown *after* `GameStateManager.push` had already paused the world, leaving a blank input-dead box no key could close. Both halves are fixed and **both must stay**: the listener band-checks, and `DialogState._processNode`'s skip branch carries a `_skipSeen` visited set that ends the dialog on a closed loop. Gate: `tools/_r-alex.mjs` (8 legs fail on `0c0253f`, all pass after).
 - **`_getDialogId(npc, commit)` — A QUERY MUST NOT MUTATE.** `update()` calls `_getNpcDialogId(nearNPC)` **every frame** to label the interact prompt, and the router consumes three one-shot flags (`alex_story_chosen`, `alex_story_deferred`, `alex_side_deferred`). So the prompt updater ate the deferral one frame after the router closed and both routers' *"not right now"* rows were dead mechanics — which also made Alex's Badge Audit personal mission unreachable, because deferring the side-quest hub is the only way past it. `commit` defaults to **false**; the single `true` call site is `_interact()`. Every tool harness calls it as a query and now gets one.
 - **A SIDE QUEST STARTED BY A ROOM PROP BYPASSES THE ROUTER'S GATES.** Alex's six IT side quests are held behind `act2_complete` inside `_getAlexSideQuestDialog` ("only available after the Henderson Trust arc is resolved"), but **Server Room Secrets is started by an interactable**, `server_rack_inspect`, which gated only on `met_alex_it` — so a fresh save could start it before the briefing and before a single Henderson (playtest, 2026-08-15). It now routes through an **appended** node 10 that adds the `act2_complete` term; the four flavour lines still read at any act, only the quest waits. Same class: `printer_quest_started` and `server_secret_started` are both set by Act-1 flavour props and both pinned Alex's routing ABOVE `act4_trigger`, the sole setter of `act3_complete` — `_alexMainPathPending()` (story beat available **or** holding the Archive evidence with `act3_complete` unset) is the one predicate both exemptions now use.
-- **NPC conditional spawning**: set `condition: { flag: 'x' }` or `condition: { notFlag: 'x' }` in the room data NPC entry. NPCs with any condition initialize hidden; no extra code needed. Multiple entries with the same `id` but different conditions are used for state-dependent dialogs (e.g., the Archive janitor has 5 conditional entries covering each quest stage). **Limitation**: a single condition object supports exactly one `flag` AND/OR one `notFlag`. For compound conditions (e.g., "all 4 coworkers met"), derive a synthetic flag in `ExplorationState._refreshStoryProgress()` and gate on that instead.
+- **NPC conditional spawning**: set `condition: { flag: 'x' }` or `condition: { notFlag: 'x' }` in the room data NPC entry. NPCs with any condition initialize hidden; no extra code needed. Multiple entries with the same `id` but different conditions are used for state-dependent dialogs (e.g., the Archive janitor has 5 conditional entries covering each quest stage). **Limitation**: a single condition object supports exactly one `flag` AND/OR one `notFlag`. For compound conditions (e.g., "all 4 coworkers met"), add a DERIVE row to `src/data/story/graph.js` and gate on the flag it writes.
 - **Reception roguelite loop**: `ClientGenerator` procedurally generates enemies. After victory, `ClientReviewState` is pushed. `bossAnger` player flag drives branching. On client acceptance: AUM earned = max(50, floor(assets × 0.01)). Beneficiary chains: use `generateBeneficiaryChain()` + `applyChainModifiers()`.
 - **AUM currency**: stored in `player.stats.aum`. Earned from accepted reception clients. Spent in `ShopState`. Permanent stat upgrades from the shop modify `player.stats` directly.
 - **Achievements**: `AchievementManager.check(player, ctx)` is called after key game events. The `ctx.event` string is matched against each achievement's `check` function. For `client_accepted`, ctx must also carry `assets` (number) and `attributes` (array with `.positive` booleans) for the Dream Client / High Roller checks. `client_declined` fires in the decline branch of the reception loop. Act-completion achievements fire from the `flag-set` EventBus listener in ExplorationState via the `ACT_ACHIEVEMENT_FLAGS` array — no explicit event string needed, just call `check(player, {})` when any of those flags is set.
@@ -337,15 +518,29 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 - **Quest interactable visibility**: Any `{ type: 'poster' }` (or other) interactable placed on an otherwise empty tile is invisible — the player has nothing to click toward. Wall-mounted quest items (signal boosters, terminals, etc.) need a matching `motivationalPoster` furniture entry at `x ± 0.9` from the wall tile with the appropriate rotation. Items described as "on a shelf" need a `fileCabinet` (or similar) at the same tile. The interactable tile and the furniture piece must be at the same `x`/`z` (or within 0.9 units for wall-edge alignment).
 - **`questFlagMap` and ability unlocks**: The `questFlagMap` object inside `ExplorationState`'s `flag-set` listener maps completion flags to `questStates` keys that gate `PLAYER_ABILITIES[id].unlockQuest`. Only add a flag here if the quest *actually* unlocks an ability. Adding a side-quest done-flag (e.g. `printer_quest_done`) that has no corresponding ability will prematurely set `questStates` and fire a false "New ability unlocked!" toast — and if another quest later sets the same key, the toast fires a second time.
 - **Dialog multi-flag gating**: When a quest requires finding N things before completing, the dialog's completion branch must check **all N flags** — not just the last one found. If node 1 only checks the second item's flag, a player who finds that item first can skip the first step entirely. Fix: add a chained condition node between "all found" and the completion path that checks each remaining flag and redirects to a "you still need X" response if any is missing.
-- **NEVER insert a node into the middle of a dialog array**: every `next` / `ifTrue` / `ifFalse` / `choice.next` in `dialogs/index.js` is an **absolute index**, and the `/* NN */` comments are the only thing an author reads. `team_chat_hub`'s "30-39 The Witness" block reserved ten slots and wrote nine, so from that point every comment was one ahead of its real index — 80 of 119 labels wrong, **48 of 119 nodes with no path from node 0** (all four ally chat blocks among them), and the Skeptic's-chair `modify_stat maxMP +5` permanently uncollectable because the jump before it landed one slot too far. To add a node: **append it at the end and route to it** (see `alex_it_act3` node 23). To repair a drift: insert one `end` pad at the gap, which is the padding convention these trees already use. `npm run validate:data` now fails if any node carrying `give_item`/`give_xp`/`modify_stat`/`heal`/`recruit_ally`/`unlock_ally_ability` has no path from node 0.
+- **THE NEVER-INSERT LAW IS NOW A MACHINE INVARIANT, NOT A HUMAN ONE.** It used to read
+  "never insert a node into the middle of a dialog array", because every `next` / `ifTrue` /
+  `ifFalse` / `choice.next` in `dialogs/index.js` was an **absolute index** and the
+  `/* NN */` comments were the only thing an author read. `team_chat_hub`'s "30-39 The
+  Witness" block reserved ten slots and wrote nine, and from that point every comment was one
+  ahead of its real index — 80 of 119 labels wrong, **48 of 119 nodes with no path from node
+  0** (all four ally chat blocks among them), and the Skeptic's-chair `modify_stat maxMP +5`
+  permanently uncollectable because the jump before it landed one slot too far.
+  **The law still holds for the generated artifact, but the authoring surface no longer has
+  absolute indices** — you write `@label` and `goto label`, and `dialogs.lock.json` pins
+  every label to its index forever. Adding a scene or a line cannot move an existing node,
+  and the lock's diff is the review artifact that proves it. Renaming a label costs one
+  reserved slot and one `{ type: 'end' }` pad, by design. `npm run validate:data` still fails
+  if any node carrying `give_item`/`give_xp`/`modify_stat`/`heal`/`recruit_ally`/`unlock_ally_ability`
+  has no path from node 0, and the compiler now reports *every* orphan node as a warning.
 - **`ENEMY_ABILITIES` key uniqueness**: `ENEMY_ABILITIES` in `stats.js` is a plain JS object literal — duplicate keys silently overwrite with no error. When multiple enemies share a generic ability name (e.g. `strategic_pivot`), prefix each key with the enemy name (`chief_strategic_pivot`) to avoid silent collisions. Always grep for the key before adding a new ability.
 - **JSON imports require `with { type: 'json' }`**: Node.js 24 (used by the editor server) requires the import attribute on all JSON imports. Vite 7 also supports it. Any file that does `import x from './foo.json'` must use `import x from './foo.json' with { type: 'json' }` — otherwise the editor server fails to load that module via dynamic import. Current files: `stats.js`, `shop.js`, `characters.js`, `Room.js`.
 - **Buff duration off-by-one**: `processTurnStart()` fires at the *start* of the player's turn before they act. The removal threshold is `< 0` (not `<= 0`) so a buff at `duration: 0` survives the current turn and expires after it. A buff with `buffDuration: 3` in `balance.json` therefore provides 3 full player turns of benefit. Do not change the threshold back to `<= 0`.
-- **NPC `dialogId` overrides act routing**: `_getDialogId()` returns the NPC's hardcoded `dialogId` before it reaches the act-based table. If an NPC entry has `dialogId: 'foo'`, it will always show that dialog regardless of act. To re-enable act routing for a previously hardcoded NPC, add a new room entry with the right `condition` and **no** `dialogId`. **This return sits ABOVE every Alex-from-IT route** (printer quest, Act-4 trigger, Phantom Approver, and the story router with its three documented guards), so reading a server rack — an optional Act-1 flavour interactable — set `server_secret_started`, pinned Alex to `alex_server_secret`, and shadowed the Act-2 story beat the objective was sending the player to get. There are now **two** narrow exemptions, both spelled out as blocks directly above that return: (1) `alex_it` + `alex_server_secret` falls through while `_alexMainPathPending()` is true (widened from `_alexStoryBeatAvailable()`: without the `has_archive_evidence && !act3_complete` term the exemption did not apply in the one state it was written for, and the rack scene shadowed `act4_trigger`); (2) `skip` in `board_room` with `board_meeting_held` returns `board_meeting_after` — Skip's Board Room entry carries `dialogId: 'board_meeting'` and he deliberately **stays in the room** after the meeting (`board_meeting_closed` is deferred until the player walks out so eighteen bodies never delete themselves on camera), so the E prompt on him was wired straight back into the 177-node set-piece **including its `give_xp 300` on node 176** — farmable once per press. `board_meeting_after` is 3 nodes with **zero reward actions and zero flags** precisely because it is re-enterable forever. Do NOT instead add a `notFlag` to Skip's room entry (that is the on-camera delete round 3 fixed) or a second `skip` entry at (7,9) (his post-meeting position is staged and varies — measured [6.9,8.2], [8.02,8.77], [2.4,5] — so a second entry teleports him on camera). `tools/_g-board-close.mjs` leg (e) is the regression gate: it walks to the live Skip mesh, sends a real `e`, and fails if the dialog is `board_meeting` or if `player.stats.xp` moves. Every other hardcoded `dialogId` still wins.
+- **NPC `dialogId` overrides act routing** (route row `npc-hardcoded-dialogid`, and the two exemptions are the rows named beside it): the table returns the NPC's hardcoded `dialogId` before it reaches the act-based table. If an NPC entry has `dialogId: 'foo'`, it will always show that dialog regardless of act. To re-enable act routing for a previously hardcoded NPC, add a new room entry with the right `condition` and **no** `dialogId`. **This return sits ABOVE every Alex-from-IT route** (printer quest, Act-4 trigger, Phantom Approver, and the story router with its three documented guards), so reading a server rack — an optional Act-1 flavour interactable — set `server_secret_started`, pinned Alex to `alex_server_secret`, and shadowed the Act-2 story beat the objective was sending the player to get. There are now **two** narrow exemptions, both spelled out as blocks directly above that return: (1) `alex_it` + `alex_server_secret` falls through while `_alexMainPathPending()` is true (widened from `_alexStoryBeatAvailable()`: without the `has_archive_evidence && !act3_complete` term the exemption did not apply in the one state it was written for, and the rack scene shadowed `act4_trigger`); (2) `skip` in `board_room` with `board_meeting_held` returns `board_meeting_after` — Skip's Board Room entry carries `dialogId: 'board_meeting'` and he deliberately **stays in the room** after the meeting (`board_meeting_closed` is deferred until the player walks out so eighteen bodies never delete themselves on camera), so the E prompt on him was wired straight back into the 177-node set-piece **including its `give_xp 300` on node 176** — farmable once per press. `board_meeting_after` is 3 nodes with **zero reward actions and zero flags** precisely because it is re-enterable forever. Do NOT instead add a `notFlag` to Skip's room entry (that is the on-camera delete round 3 fixed) or a second `skip` entry at (7,9) (his post-meeting position is staged and varies — measured [6.9,8.2], [8.02,8.77], [2.4,5] — so a second entry teleports him on camera). `tools/_g-board-close.mjs` leg (e) is the regression gate: it walks to the live Skip mesh, sends a real `e`, and fails if the dialog is `board_meeting` or if `player.stats.xp` moves. Every other hardcoded `dialogId` still wins.
 - **NPCs must not stand on blocked tiles**: an NPC whose tile is furniture-blocked and which has no `sitting: true` renders as a head embedded in the prop. Grandma stood on the break-room tabletop from Act 5 on. Seat them (`sitting: true` on a chair tile) or move them to open floor. `sitting` drops the hips to `CharacterAnimator.SEAT_Y = 0.44` — a chair, **not** a bar stool (this bar's stool seats are at 0.745), so do not seat anyone on a stool. Fixing B1 (`setInteractable`) turns previously-hollowed furniture solid, which can newly expose an NPC placement — re-run the census after any collision change.
-- **`_getDialogId()` Janitor priority chain** (fires before hardcoded `dialogId` check): (1) **A live story beat outranks the riddles.** `JANITOR_STORY_BEATS` = `janitor_act3` / `janitor_needs_skip` / `janitor_act4` / `janitor_act6`, all delivered as hardcoded `dialogId`s on Archive room entries. When a beat AND an unanswered riddle are both live, `janitor_router` offers the choice (exact `alex_it_router` precedent, incl. the `janitor_*_chosen` -> `_pendingDialog` chain in the flag-set listener, so the chosen scene plays immediately with no second interaction); beat alone wins if the router is missing. This ordering is load-bearing: the riddle block used to return first, so an unanswered riddle shadowed `janitor_act4` — the sole source of `vault_accessible` / `hr_accessible` / `vault_code_1` / `janitor_rallied` — and a wrong riddle answer sets no done-flag, so the `riddle_*_attempted` gate re-served it forever with no exit. (2) Janitor riddles — only at `actIndex >= 3` AND `met_janitor` AND `read_janitor_act3`; without `read_janitor_act3` the riddles are suppressed so `janitor_act3` can fire first. Riddles stay reachable forever: the post-`has_rolex` room entry carries no `dialogId`, so the chain resumes ahead of the ledger mission (this keeps `janitor_riddle_3_done`, one of the two Architect-ending gates, obtainable). (3) Intro bypass — if `npc.dialogId === 'janitor_intro'` and `met_janitor`, routes to `janitor_return` instead. Use explicit `dialogId: 'janitor_return'` on room entries where routing should produce the return dialog; never rely on `janitor_intro` as a proxy.
-- **Executive floor Act 5 gate**: `_changeRoom()` blocks `executive_floor` when `restructuring_defeated` is set but `corporate_lawyer_defeated` is not (the gauntlet is in progress). Toast: "The elevator won't open. Someone's waiting for you in the lobby." The gate is not present before `restructuring_defeated` is set (Acts 1–4) or after `corporate_lawyer_defeated` is set. Do not add a separate `gatedRooms` entry — the check is an explicit conditional before the main gate table.
-- **Team pre-intro guard in `_getDialogId()`**: `janet`, `intern`, `isaiah`, and `alex_it` return `'team_pre_intro'` if `checked_desk` is not set and the NPC's personal intro-read flag (`read_<id>_intro`) is not set. This prevents the player from doing full NPC conversations before settling at their desk. The guard fires before act routing.
+- **The Janitor priority chain** (rows `janitor-story-or-riddle-router` / `janitor-story-beat` / `janitor-riddle` / `janitor-intro-bypass`, all ABOVE `npc-hardcoded-dialogid` in `DIALOG_ROUTES`): (1) **A live story beat outranks the riddles.** `JANITOR_STORY_BEATS` = `janitor_act3` / `janitor_needs_skip` / `janitor_act4` / `janitor_act6`, all delivered as hardcoded `dialogId`s on Archive room entries. When a beat AND an unanswered riddle are both live, `janitor_router` offers the choice (exact `alex_it_router` precedent, incl. the `janitor_*_chosen` -> `_pendingDialog` chain in the flag-set listener, so the chosen scene plays immediately with no second interaction); beat alone wins if the router is missing. This ordering is load-bearing: the riddle block used to return first, so an unanswered riddle shadowed `janitor_act4` — the sole source of `vault_accessible` / `hr_accessible` / `vault_code_1` / `janitor_rallied` — and a wrong riddle answer sets no done-flag, so the `riddle_*_attempted` gate re-served it forever with no exit. (2) Janitor riddles — only at `actIndex >= 3` AND `met_janitor` AND `read_janitor_act3`; without `read_janitor_act3` the riddles are suppressed so `janitor_act3` can fire first. Riddles stay reachable forever: the post-`has_rolex` room entry carries no `dialogId`, so the chain resumes ahead of the ledger mission (this keeps `janitor_riddle_3_done`, one of the two Architect-ending gates, obtainable). (3) Intro bypass — if `npc.dialogId === 'janitor_intro'` and `met_janitor`, routes to `janitor_return` instead. Use explicit `dialogId: 'janitor_return'` on room entries where routing should produce the return dialog; never rely on `janitor_intro` as a proxy.
+- **Executive floor Act 5 gate** (declared in `GATES` as a `kind: special` row, and STILL an explicit conditional ahead of the table): `_changeRoom()` blocks `executive_floor` when `restructuring_defeated` is set but `corporate_lawyer_defeated` is not (the gauntlet is in progress). Toast: "The elevator won't open. Someone's waiting for you in the lobby." The gate is not present before `restructuring_defeated` is set (Acts 1–4) or after `corporate_lawyer_defeated` is set. Do not add a separate `gatedRooms` entry — the check is an explicit conditional before the main gate table.
+- **Team pre-intro guard** (route row `team-pre-intro`): `janet`, `intern`, `isaiah`, and `alex_it` return `'team_pre_intro'` if `checked_desk` is not set and the NPC's personal intro-read flag (`read_<id>_intro`) is not set. This prevents the player from doing full NPC conversations before settling at their desk. The guard fires before act routing.
 - **Karen NPC multi-entry pattern**: The conference room has three conditional Karen entries sharing `id: 'karen'` at the same position — `briefing_complete+!retry_karen` (first meeting), `retry_karen+!karen_retry_ready` (locked out, uses `karen_not_ready` dialog), `karen_retry_ready+!karen_defeated` (retry available, uses `karen_meeting`). When adding a similar "gated re-fight" NPC, use this three-entry pattern rather than dialog condition nodes.
 - **`getCombatStats()` for display**: Always call `player.getCombatStats()` (not `player.stats`) when displaying stats in UI — it applies equipped cosmetic bonuses. `player.stats` holds the raw base values; `getCombatStats()` is the authoritative in-battle and display value.
 - **Alex IT act routing gates**: `alex_it_act2` (encrypted partition reveal) is gated on `karen_defeated`, NOT `briefing_complete`. Three separate guards enforce this: (1) the special story routing block's `hasAct2` condition; (2) the `alex_story_chosen` flag-set listener; (3) an explicit guard after the side quest routing block that returns `alex_it_return` when `karen_defeated` is false and `alex_it_act2` hasn't been read. The third guard exists because the generic `act >= 1` routing would otherwise bypass the special block entirely. Do not remove any of the three. **`hasAct2`/`hasAct3` now come from one place, `_alexStoryBeats()`** — guard (1), the listener (2) and the HUD objective each used to spell the condition out independently and they drifted: the objective demanded the Act-2 conversation with no `!act2_complete` term while the router required one, so past Act 2 the HUD asked forever for a scene the game structurally refused to serve, and `knows_server_secret` was permanently strandable (`dialogGating` caps `alex_it_act2` at quest stage 299). `alex_it_act3` now sets `knows_server_secret` itself, via an **appended** node 23 that node 18 routes through — the reveal is re-established in full by its own node 1, so the scene legitimately confers the knowledge.
@@ -356,7 +551,9 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
   - **Proposal 21 asked for a copy room AND a supply closet; this is ONE room with a supply alcove.** Said plainly because the scope call is not recoverable from the code: two more doors would have cost the farm a wall run it does not have. Both objects and both interactables survive.
   - **The alcove shelving is on the WEST wall, and that is not decoration.** It was authored on the east wall first and the still came back a grey smear: the iso camera reads the inner faces of NORTH and WEST only, and the "which wall wall-art goes on" law is true of ANY tall prop, not just art. Anything over ~1.2 m goes north or west or it is behind glass seen from behind.
 - **THE THREE PREDECESSORS.** Diane's Act-1 line — *"The first one quit. The second one cried in the bathroom for forty minutes and then quit. The third one is the one who had the 'parking garage incident.'"* — was the only mention of them in the game. Three objects now carry the rest: `bathroom_stall_door` (middle stall), `garage_pillar` (the repair on the pillar beside the Trust Officer's space) and `copy_room_shelf` (behind the toner). Findable in any order; each sets one `pred_*_found` flag and the third derives **`predecessors_all_found`** in `_refreshStoryProgress()`, which routes `janitor_predecessors` off `_getDialogId` — the same shape as `janitor_pattern` and `janitor_the_name`, so no existing tree was edited to hold any of it. **None of the three objects names its officer.** Diane's line is the key, and the Janitor's payoff gives each of them exactly one ledger clause in the section BEFORE page 112.
-- **Room access gating**: `_changeRoom()` has a `gatedRooms` table in `ExplorationState`. Rooms `hr_department`, `board_room`, `penthouse`, `city_street`, `old_vault`, and the three penthouse wings (`penthouse_aquarium`, `penthouse_analytics`, `penthouse_bar`) are blocked with a toast message unless the corresponding flag is set. **`archive` and `vault` are NOT in that table** — both are knowledge gates, intercepted by `_openArchiveKeypad()` / `_openVaultKeypad()` in explicit conditionals that `return` *before* the table lookup, so a row for either would be unreachable. Do not re-add them. The exit tile exists unconditionally in room data — the gate lives entirely in `_changeRoom()`. `hr_accessible` and `vault_accessible` are both set simultaneously by `janitor_act4` (along with `janitor_rallied` and `vault_code_1`). The penthouse wing rooms require `renovation_penthouse` and show "The suite wing is unfinished. Fund the renovation first."
+- **Room access gating**: the table is `GATES` in `src/data/story/graph.js` now; `_changeRoom()`
+  builds its lookup from the rows that carry a `requires` (the four `kind:` rows are
+  declaration-only). `window.__graphOff` restores the old literal for one release. Rooms `hr_department`, `board_room`, `penthouse`, `city_street`, `old_vault`, and the three penthouse wings (`penthouse_aquarium`, `penthouse_analytics`, `penthouse_bar`) are blocked with a toast message unless the corresponding flag is set. **`archive` and `vault` are NOT in that table** — both are knowledge gates, intercepted by `_openArchiveKeypad()` / `_openVaultKeypad()` in explicit conditionals that `return` *before* the table lookup, so a row for either would be unreachable. Do not re-add them. The exit tile exists unconditionally in room data — the gate lives entirely in `_changeRoom()`. `hr_accessible` and `vault_accessible` are both set simultaneously by `janitor_act4` (along with `janitor_rallied` and `vault_code_1`). The penthouse wing rooms require `renovation_penthouse` and show "The suite wing is unfinished. Fund the renovation first."
 - **`QUEST_OBJECTIVES` vs `_getStoryObjective()`**: `QUEST_OBJECTIVES` (top of `ExplorationState`) is only consulted by `_updateQuest()`, which fires on the `quest-update` EventBus event emitted by dialog action nodes. The primary HUD display is driven entirely by `_getStoryObjective()` — edit that function to change what the player sees moment-to-moment.
 - **Act-scoped flags**: When a flag (e.g. `janet_rallied`) is set in an earlier act and reused in a later act's objective counter, it will appear pre-satisfied. Use act-specific flag names (e.g. `janet_act6_rallied`) for any flag that must only be set within a specific act's flow.
 - **Objective display supports HTML**: `_getStoryObjective()` return values are injected as `innerHTML` in `_setQuest()`, so `<br>`, `<b>`, etc. work in the HUD panel. The toast notification strips all HTML tags before display — use `.replace(/<br>/gi, ' ').replace(/<[^>]+>/g, '')` pattern already in `_setQuest()`.
@@ -372,7 +569,14 @@ All UI is DOM-based HTML/CSS overlaid on the canvas:
 
 ## Key Story Flags
 
-Critical flags that are easy to get wrong (not derivable from a single file):
+Critical flags that are easy to get wrong (not derivable from a single file).
+
+**Every row below that says "Derived only — `_refreshStoryProgress()` sets it when …" is now
+a `DERIVE` row in `src/data/story/graph.js`, and the reason in that row's `note` is the
+authority.** The prose here is kept because the reasons are worth reading twice, but the
+data is one place. Remember the ordered-single-pass rule: `DERIVE` runs top to bottom once
+per call, never to a fixpoint, and the Intern rows deliberately read the PREVIOUS pass's
+`board_meeting_closed`.
 
 | Flag | When set | Effect |
 |------|----------|--------|
@@ -388,7 +592,7 @@ Critical flags that are easy to get wrong (not derivable from a single file):
 | `has_archive_password` | Compliance crossword (talk to Compliance Auditor at act >= 3) | Gates `archive_terminal` interactable; player must complete crossword first |
 | `janitor_rallied` | `janitor_act4` dialog | Simultaneously sets `vault_accessible`, `hr_accessible`, and `vault_code_1` |
 | `act4_complete` | **`act5_trigger` node 8, and nowhere else in the game.** The scene is pushed from `ExplorationState._maybeTriggerAct5()` (`update()`, cubicle farm, `has_charter && act3_complete && !act4_complete`) | The single most load-bearing edge in the story: gates the Restructuring trio, the whole executive-floor gauntlet, `board_room_accessible`, the Meredith fight, and therefore Acts 5, 6 and 7. It is also the ceiling on Meredith's acts-3-4 executive-floor pacer (via `meredith_era_over`), so a stranded `act4_complete` reads as *she is still standing mid-room serving her intro at Act 5* |
-| `act5_triggered` | Written by `_maybeTriggerAct5()` **as a record only — nothing reads it.** Re-armed by `_reconcileSceneLatches()` whenever `act4_complete` is unset | It used to GUARD the push, and it was persisted (auto-saved) 800 ms before the dialog existed. See the `UNFINISHED_SCENE_LATCHES` bullet in Key Patterns; do not restore it as a guard |
+| `act5_triggered` | Written by `_maybeTriggerAct5()` **as a record only — nothing reads it.** Re-armed by `_reconcileSceneLatches()` over the frozen `LEGACY_SCENE_LATCHES` table whenever `act4_complete` is unset. The live once-guard is `read_act5_trigger` | It used to GUARD the push, and it was persisted (auto-saved) 800 ms before the dialog existed. See the `UNFINISHED_SCENE_LATCHES` bullet in Key Patterns; do not restore it as a guard |
 | `act5_complete` | After Meredith Sterling (id meredith) defeated | Starts Act 6; hides archive janitor |
 | `janet_act6_rallied` | `janet_act6` dialog | Act 6 ally counter — NOT `janet_rallied` |
 | `diane_act6_rallied` | `diane_act6` dialog | Act 6 ally counter |
@@ -418,7 +622,7 @@ Critical flags that are easy to get wrong (not derivable from a single file):
 | `read_janitor_the_name` | Auto — `read_<dialogId>` on `janitor_the_name` | Gates the name reveal to once. Routed from `_getDialogId` AFTER `janitor_pattern`, same shape as that scene |
 | `read_<dialogId>` | Auto — `DialogState._endDialog()` on any dialog that showed a node | Save-safe "this conversation happened" signal. `read_alex_it_act6` is the epilogue's ally-counter signal for Alex, whose act-6 dialog sets no flag of its own |
 
-- **THE ACT LADDER HAS AN ACT-5 RUNG NOW.** `_getDialogId`'s generic act rows ran 7, 6, 4, 3, 2 with **no 5**, so any dialog named `<npc>_act5` was structurally unreachable — which is why Skip answered with `neutral_skip` through the whole of Act 5. Both passes carry the rung; it costs nothing for a character with no act-5 scene (`actRow` returns falsy). `skip_act5` is the first scene to use it.
+- **THE ACT LADDER HAS AN ACT-5 RUNG NOW.** `_getDialogId`'s generic act rows ran 7, 6, 4, 3, 2 with **no 5**, so any dialog named `<npc>_act5` was structurally unreachable — which is why Skip answered with `neutral_skip` through the whole of Act 5. Both passes carry the rung; it costs nothing for a character with no act-5 scene (`actRow` returns falsy). `skip_act5` is the first scene to use it. **Any tool that models the ladder must span act2 THROUGH act7** — the retired P0 census tool modelled it as act{2,3,4,6,7} and therefore reported `skip_act5` as an orphan; the simulator's check C spans the full range.
 - **`tools/_fr1-dialog-indices.mjs` is the append-only law checked DIRECTLY.** `_g-stage-verify` signs NODE CONTENT, so an authorized in-place prose edit trips it and its FAIL cannot tell a producer-ruled rewording from a node inserted mid-tree that silently renumbered 80 jump targets. This one checks tree count, tree LENGTHS, per-index node TYPES and every `next`/`ifTrue`/`ifFalse`/`fallback`/`choice.next` against HEAD, and labels a new tree or a tail append as legal. Run both whenever a round edits dialog text in place.
 
 ## Playwright harness gotchas (tools/)
@@ -439,3 +643,26 @@ Each of these has cost a round of evidence that turned out to be measuring the h
 - `Quest.md` — full quest list with objectives and XP rewards. Authoritative source for story structure and side quest steps.
 - `Gameplay.md` — roguelite loop, item reference, achievements, cosmetics, and combat attributes. Authoritative source for those systems.
 - `ROADMAP.md` — visual overhaul + engagement + release plan (June 2026). Authoritative forward plan; includes Playwright playtest harness notes and the F2 dev panel rewrite spec.
+- `tools/dlg/grammar-card.md` — the one-page `.dlg` authoring card. Read before writing dialog.
+- `.claude/plans/dialog-refactor/DESIGN.md` — the governing spec for the dialog/story/routing
+  refactor (P0–P9). Read it before changing the compiler, the graph, the routing table or the
+  simulator; it records which proofs each layer owes and why each shape was chosen.
+- `.claude/plans/dialog-refactor/orphan-scenes.md` — the archaeology and producer verdicts on
+  the six unrouted scenes. Three were restored and wired; three are `SCENE_DISPOSITION` cuts.
+
+### The five living proof harnesses
+
+These carry a `_dr-` (throwaway) prefix but are **not** disposable yet — each one backs an
+A/B switch that ships for one release. Delete a harness only when its switch goes:
+
+| harness | proves | switch |
+|---|---|---|
+| `tools/_dr-route-diff.mjs` | the routing table == `_getDialogIdLegacy`, 16,352 states + 20,000 fuzz | `?routes=legacy` |
+| `tools/_dr-route-check.mjs` | every route row has a unique id, a `why` and a `src` | — |
+| `tools/_dr-graph-diff.mjs` | the graph's derived flags/act/quest == the legacy block, 416 rows | `window.__graphOff` |
+| `tools/_dr-graph-selfcheck.mjs` | the ordered-single-pass lag, the defer and its bypass | `window.__boardDeferOff` |
+| `tools/_dr-latch-interrupt.mjs` | every converted trigger re-serves after an interrupt | `window.__sceneLatchLegacy` |
+
+The four P0 measurement throwaways (`_dr-corpus`, `_dr-ledger`, `_dr-graph`,
+`_dr-semantic-equal`) are **deleted** — `tools/story-sim.mjs` supersedes all four, and the
+last of them had a known false positive (see the act-5 rung).

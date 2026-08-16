@@ -440,7 +440,8 @@ function makeModel(overrides = {}) {
   literalFlagReads(objectiveSlice, objectiveBase, addRead);
 
   // The actual legacy ladder has the formerly missing Act-5 rung. Model Act 2
-  // THROUGH Act 7; do not copy tools/_dr-graph.mjs's pre-fix template list.
+  // THROUGH Act 7. The retired P0 census tool modelled it as act{2,3,4,6,7},
+  // predating the act-5 rung, and therefore called skip_act5 an orphan.
   const actWhen = { 2: 'briefing_complete', 3: 'act2_complete', 4: 'act3_complete', 5: 'act4_complete', 6: 'act5_complete', 7: 'act6_complete' };
   for (const npc of roomNpcIds) {
     const templates = [

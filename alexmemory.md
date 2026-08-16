@@ -1,3 +1,91 @@
+## [DIALOG REFACTOR P4-P9 — THE CUTOVER AND FINISH, 08-16 (Fable 5, oversight; codex gpt-5.6-sol xhigh, implementation)]
+
+Branch `display-case`, six commits, all pushed, NOT merged to main. P0-P3 (the
+corpus freeze, the normalisation, the parser, the converter) landed the night
+before; this block is the cutover and everything after it.
+
+WHAT LANDED, in order:
+
+- **P4 `6b99b4e` — index.js is output now.** `src/data/dialogs/*.dlg` are the
+  source; `src/data/dialogs/index.js` is generated with a DO-NOT-EDIT banner;
+  `npm run dialogs:check` byte-compares it and runs FIRST in `npm run check`, so
+  a hand edit to the generated file cannot ship. A dev-only Vite plugin serves
+  the freshly compiled module, watches the corpus, and keeps serving the last
+  good module on a compile error. Identity re-proved FROM THE .dlg SOURCE:
+  292/292 deep-equal, 2,541 prose values, 0 errors. The file changed and the
+  values did not — 58 of 3,392 nodes changed JSON key order and nothing else.
+- **P5 `c3c507e` — the act ladder and 13 latches become data.**
+  `src/data/story/graph.js`. A/B harness: 208 states x 2 rooms x 2 passes = 416
+  rows, 0 mismatches against the preserved legacy block.
+- **P6 `0cc4f0e` — a broken story chain is a red build now.**
+  `tools/story-sim.mjs`, checks A-G, joins `npm run check`, runs in 3 s.
+  `--selftest` mutates the model seven ways and asserts each check goes red,
+  plus an eighth row: REGRESSION #1, the act5_triggered latch that made Acts 5,
+  6 and 7 unreachable on an interrupted save.
+- **P7 `5f7d0d3` — 450 lines of nesting become 65 rows in priority order.**
+  `src/data/story/routes.js`. Differential proof: 16,352 preset comparisons +
+  20,000 fuzz states + a commit-effects pass, ZERO mismatches. `?routes=legacy`
+  ships for one release.
+- **P8 `60bb516` — nineteen scenes stop banking that they happened before they
+  happened.** Every waived trigger now uses the scene's own `read_<sceneId>` as
+  its once-guard. Simulator check E: 19 waivers -> 0. Interrupt harness ALL
+  PASS: arm, kill the page inside the delay window, reload, scene re-serves,
+  play it out, no third serve.
+- **P9 `<this commit>` — the freeze.** CLAUDE.md rewritten for the new world,
+  four finished throwaways deleted, five living proof harnesses documented with
+  the A/B switch each one backs.
+
+WHAT THIS ACTUALLY BUYS, in one line each:
+- Dialog is authored in a line format where a broken line is ONE broken line,
+  and the lock file makes CLAUDE.md's never-insert-into-the-middle law a machine
+  invariant instead of a human promise.
+- The story chain is checkable. The bug that shipped — one interrupted room
+  entry making the last three acts unreachable forever — is now a build that
+  does not go green.
+- Routing priority is greppable. Every documented exemption is a row with a
+  reason and the line it came from.
+
+FIVE DEFECTS FOUND BY RUNNING THE GATES RATHER THAN READING THE DIFFS:
+1. Check G did not terminate against the real 65-row table (2^151 search) — it
+   had only ever run on a 2-row selftest model. Fixed; 10+ min -> 3.0 s.
+2. Check B reported 40+ phantom findings the first time routes existed (scene
+   ids and the literals >=, ==, < harvested as flags).
+3. Check G modelled three concrete things as free variables and falsely called
+   three Janitor rows shadowed.
+4. P8's session claim was never released, so a defeat inside a delay window
+   suppressed the scene for the rest of the session — weaker than the field it
+   replaced.
+5. P8's deferred push re-checked the once-guard but not the precondition.
+Plus one PRE-EXISTING harness defect, latent since P1: `tools/_r-alex.mjs`
+walked dialog edges without the `?? i+1` fall-through default, so it had been
+reporting a failure that was never in the game.
+
+NEEDS YOU:
+- **Nothing is merged.** `main` is untouched; this is `display-case` only, and
+  the merge is yours as always.
+- **P8 is the one phase that deliberately changes behaviour**: an interrupted
+  cutscene is now re-served instead of lost. Worth one playtest pass through the
+  penthouse chain and the endings, which is where the flag-set triggers live.
+- **Three orphaned scenes were CUT and are now recorded as cut** —
+  `vault_entrance`, `vault_charter`, `penthouse_terminal`. The other three from
+  the dig (`dying_plant`, `board_room_table`, `penthouse_window`) turned out to
+  have been wired already. If you disagree with any cut, the row is one line in
+  `src/data/story/grants.js`.
+- **Three routing rows are recorded as dead** and the simulator prints them
+  every run. They are dead in the shipped function too; the table just says so
+  out loud now.
+
+HONEST LIST — things that would mislead you if I did not say them:
+- The 292 trees are byte-identical in VALUE, not in file layout. `index.js` is a
+  different-looking file now: generated, no `//` comments (all 943 of them live
+  in the .dlg files), key order canonicalised on 58 nodes.
+- `?routes=legacy` and `window.__graphOff` keep the old code alive in the
+  bundle. That is deliberate for one release and should be deleted after it.
+- The simulator's honest limit is printed in its own footer: monotone closure
+  does not model resource ordering. AUM prices and level gates are NOT proven
+  reachable by it, and nobody should believe otherwise.
+- No line of dialogue was rewritten by any of this.
+
 ## [RESUME HERE - state as of 08-05 late (Fable, remote-control session)]
 
 MAIN == display-case == 66c3a88. Everything below is LIVE for playtesters.

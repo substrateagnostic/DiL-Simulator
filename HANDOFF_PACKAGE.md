@@ -96,6 +96,39 @@ doesn't govern):
 8. **`timeScale` a214 at 1.691×** is the most aggressive correction applied — watch
    it in playtest for a sped-up read.
 
+**Landed since this file was written:**
+
+13. ~~**The dialog system refactor.**~~ **EXECUTED 2026-08-15/16**, branch `display-case`,
+    P0–P9, not merged. Three of the four layers were replaced and the renderer
+    (`DialogState.js` / `DialogBox.js`) was not touched by one byte.
+    - **Corpus** — 292 scenes are authored in `src/data/dialogs/*.dlg`, a line-oriented
+      format where a broken line is one broken line. `dialogs/index.js` is now a
+      GENERATED artifact and `npm run dialogs:check` fails the build on a hand edit.
+      `dialogs.lock.json` pins every label to its index forever, which turns CLAUDE.md's
+      never-insert-into-the-middle law from a human promise into a machine invariant and
+      keeps the `_chose_` save keys stable.
+    - **Story state** — the act ladder, the 13 derived-flag latches, the room gate table
+      and the 30 code-side scene triggers are declarative data in `src/data/story/graph.js`.
+    - **Routing** — `_getDialogId`'s 450 lines are 65 rows in priority order
+      (`src/data/story/routes.js`), each with an id, a mandatory `why` and the source line
+      it came from.
+    - **The gate that did not exist before** — `tools/story-sim.mjs` runs seven checks over
+      the whole story and joins `npm run check`. A story flag nothing can grant, a scene
+      nothing routes to, a gate that closes too late, or an act that cannot be completed
+      from a fresh save is now a RED BUILD. `--selftest` mutates the model seven ways and
+      proves each check goes red, because a gate that has never been seen to fail is not a
+      gate.
+    - **The bug this was aimed at** is fixed and is regression test #1: one interrupted
+      room entry used to bank `act5_triggered` without `act4_complete` and make Acts 5, 6
+      and 7 unreachable for the life of the save. Nineteen triggers now use the scene's own
+      `read_<sceneId>` as the once-guard, which is only written after a node has actually
+      been shown.
+    - Read `CLAUDE.md`'s "Dialog authoring", "The story graph", "Dialog routing" and "The
+      story simulator" sections before touching any of it; the governing spec is
+      `.claude/plans/dialog-refactor/DESIGN.md`.
+    - **Two A/B switches ship for one release and should then be deleted with their
+      harnesses**: `?routes=legacy` and `window.__graphOff`.
+
 **Larger lanes, unstarted:**
 
 9. **Run D — AAA Audio.** SFX, ambience, mixing, plus music auditions. **Music is
