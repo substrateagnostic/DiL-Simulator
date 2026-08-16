@@ -3,7 +3,7 @@
 **Lane:** L-run, balance seat. Commissioned 2026-08-05 by the producer: *"yes, balance
 pass. Way too easy."*
 **Nothing here is shipped.** `src/` at rest is the shipped baseline. The proposal is a
-138-line diff at `.claude/plans/l-run/PROPOSAL.diff`, applied and reverted by
+131-line diff at `.claude/plans/l-run/PROPOSAL.diff`, applied and reverted by
 `node tools/_l-apply.mjs --on|--off`, which is byte-exact in both directions (verified
 against `git diff`). The producer signs the band before it merges.
 **Harness:** `tools/_l-balance.mjs`, which imports the lane policies and the tree
@@ -34,15 +34,27 @@ The proposal therefore spends nothing on enemy stats and everything on enemy tur
 one — fires only on a turn the player denied, which the casual floor never does), **the
 Denial Tax seal at one denial instead of two**, **Press Advantage repriced 40 → 52**, and
 **starting Coffee 75 → 60** (B24, already proposed). It moves the 21-cell PIP floor by
-**1.24 pp** against an instrument whose own null arm is **1.12 pp**, and it
-is the only candidate set tested that does. The brief's premise that *"every ENEMY buff is
+**1.24 pp** against an instrument whose own null arm is **1.12 pp**, and it is the only
+candidate set tested that does. The brief's premise that *"every ENEMY buff is
 casual-safe"* is **false and now measured**: a flat +15 % on boss ability power moves the
 floor **12.13 pp, 21 cells down and 0 up, worst cell −23.2 pp** — and still leaves eleven
-of twelve rungs outside the requested win band. Two costs are declared
-rather than buried: the Practice-Group diversity band widens (**6.5 pp -> 16.5 pp**), all of it
-Audit, and NG+ gets harder (`ng-sim`: `algorithm@NG+3` 68.5 % -> 48.0 %). And the honest answer to the requested
+of twelve rungs outside the requested win band. The honest answer to the requested
 70–85 % win band is **no, not at a price this game can pay** — §7 shows what reaching it
-costs and why the right band for this instrument is a different number.
+costs and why the right band for this instrument is a different number (low-water and
+near-death, both of which move hard: low-water 89.0 % → 70.8 % on grandma@8, near-death
+4.3 % → 35.3 % on meredith@8).
+
+**It splits cleanly into two tiers, and only the second has a bill (§8.1).** *Tier 1* is
+the Escalation Response alone: it fixes precisely the two rungs the diagnosis named,
+fights get *shorter*, and nothing else in the game moves. *Tier 2* is the other three
+components; it buys `chad@6` and the Regional Director, and it charges **three declared
+costs** — a 13-round Meredith and the Practice-Group band widening to 16.5–21.3 pp (all
+of it the two slow lanes, Audit on Meredith down 18–22 pp), the **Composure Break falling
+to 0.01 on Karen and the Director** (§4.2), and NG+3 on the Algorithm at 48 % (§6.4).
+**One encounter is exempted from the Escalation Response on evidence** — the Algorithm,
+the only fight where a casual player's ALLIES deny enemy turns on their behalf; leaving it
+in cost that PIP cell **−6.0 pp**, taking it out costs **−2.4 pp**, and the interaction
+that caused it is decomposed in §5.1.
 
 ---
 
@@ -91,11 +103,18 @@ raises no enemy stat anywhere.
 Andrew is level-pinned to 7 — his designed rung — and **not** HP-pinned, because
 whether he survives is the measurement.
 
-Over twelve turns at level 7, Grandma's telegraph row read *cookies, cookies, cookies,
-changed the will, changed the will, changed the will, cookies, The Look* — nine
-announcements, one of them a damaging move, none of which landed. Andrew finished on
-**172 / 172, having taken no damage at all**, with Grandma down from 750 HP to 56.
-Full ledger and video: `screenshots/l-run/grandma-before/`. The A/B, and the honest
+Over **twelve turns** Grandma published **seven** telegraphs, and this is the complete
+list, in order, off `screenshots/l-run/grandma-before/ledger.json`:
+
+> *changed the will → fresh cookies → changed the will → emergency shortbread →
+> fresh cookies → changed the will → emergency shortbread*
+
+Three threats to revise the trust (`debuff`), two batches of cookies and two tins of
+emergency shortbread (`heal`). **Not one damaging move in the entire fight.** Andrew
+finished on **172 / 172 — he took no damage at all** — with Grandma down from 750 HP
+to **64**.
+
+Full ledger, per-turn screenshots and video in that directory. The A/B, and the honest
 limits of an n = 3 capture, are in §7.1.
 
 ---
@@ -144,7 +163,18 @@ the answer to:
 CASUAL lands no tagged hit, so it clears no Objection and fills no Composure bar, and it
 never Braces. **It denies zero enemy turns on every solo rung.** Anything priced against
 a denied turn is therefore unreachable for the floor *by construction* rather than by
-tuning — and that is the whole architecture of the proposal.
+tuning — and that is the architecture of **three** of the four components.
+
+**The fourth is not, and saying otherwise would be the same overclaim this section is
+correcting.** `C1` (Coffee 75 → 60) *is* reachable: `casualTurn` gates its only heal on
+`p.mp >= coffee_break.cost`, so a smaller pool is a smaller number of heals for the floor
+too. It is priced in §8 at **+0.15 pp** on B24's own measurement and sits inside the null
+here, but it is priced, not exempt. `F1` is exempt for a different reason — `casualTurn`
+has no branch that calls `playerPressAdvantage` at all — and `E3` / `B3` are exempt by
+the denial gate above. Verified by reading `casualTurn` (`tools/combat-sim.mjs`), which
+has exactly four branches: `coffee_break`, `coffee_large`, `playerPowerMove`,
+`playerAttack`. `playerPowerMove` carries no tag and bypasses `_calcDamage`, so it cannot
+clear a Lock or move a Composure bar either.
 
 **The one exception is published rather than buried.** `algorithm@10` reads 6.1 %,
 because that fight stages Janet and Isaiah and *the allies* clear locks on the casual
@@ -155,13 +185,13 @@ outside the null (§4), and it is named for that reason.
 
 ## 3. THE PROPOSAL
 
-Four components. Three files: the diff adds **15** lines and rewrites **3**.
+Four components. Three files: the diff adds **14** lines and rewrites **3**.
 
 | # | component | where | what |
 |---|---|---|---|
-| **E3** | **THE ESCALATION RESPONSE** | `src/combat/EnemyAI.js` — `escalateAfterDenial: 0.85` on 15 rows | A pick the enemy makes **while it is owed a turn** (its last move fizzled, or it was Broken, stunned or blocked, or it is holding the Denial Tax seal) is a damaging move 85 % of the time instead of a uniform draw from a phase list that is mostly cookies. |
+| **E3** | **THE ESCALATION RESPONSE** | `src/combat/EnemyAI.js` — `escalateAfterDenial: 0.85` on 14 rows (`intern` and `algorithm` exempt — see §5.1) | A pick the enemy makes **while it is owed a turn** (its last move fizzled, or it was Broken, stunned or blocked, or it is holding the Denial Tax seal) is a damaging move 85 % of the time instead of a uniform draw from a phase list that is mostly cookies. |
 | **B3** | **the seal at one denial** | `COMBAT_DEPTH.DENIAL_LIMIT` 2 → 1 | The Denial Tax already exists and is already announced ("Escalated to Committee"). It now fires after one denied turn instead of two. |
-| **F1** | **Press Advantage 40 → 52** | `COMBAT_DEPTH.PRESS_ADVANTAGE_BASE` | Andrew takes about two actions a round (main + the free Press Advantage + the Objection-Sustained return) against a boss landing well under one. This is the only player-side knob in the set, and `casualTurn` has no branch that calls it. |
+| **F1** | **Press Advantage 40 → 52** | `COMBAT_DEPTH.PRESS_ADVANTAGE_BASE` | Andrew gets more actions per round than the boss does. **Measured, not asserted:** Press Advantage fires **0.22–0.54 times per ROUND** at baseline (the harness `PA` column is per FIGHT — 0.89 uses over 3.96 rounds on karen@3, 3.29 over 6.11 on algorithm@10), on top of a main action every round and the Objection-Sustained return on every weakness hit. An earlier draft said "about two actions a round", which overstated it by roughly double; the component is still the only lever that reaches `chad@6` and the Director. This is the only player-side knob in the set, and `casualTurn` has no branch that calls it. |
 | **C1** | **starting Coffee 75 → 60** | `balance.json` `player.maxMP` | B24 / C4, already proposed and already priced (`.claude/plans/playtest-notes/b24-coffee-proposal.md`: −2.75 pp competent, **+0.15 pp casual**). Folded in here so the producer signs one number, not two. |
 
 ### 3.1 The Escalation Response, and why the ordering is the mechanic
@@ -200,64 +230,99 @@ take away are unchanged.**
 
 ## 4. THE PROPOSAL TABLE
 
-`node tools/_l-balance.mjs --ladder --runs 600 --cand E3,P8`. COMPETENT policy on the
+`node tools/_l-balance.mjs --ladder --runs 600 --cand P8,P10` (`LADDER-v2.txt`, the run
+that carries the Algorithm exemption, i.e. the config the diff actually writes).
+COMPETENT policy on the
 SHIPPED kit — a player who never opens the Abilities tab, which is the population the
 producer's complaint is about. `before -> after`.
 
 | encounter | lvl | **win** | rounds | HP-left | **low-water** | **near-death** | denial | **dmg/T** |
 |---|---|---|---|---|---|---|---|---|
-| karen | 3 | 99.5 → **94.2 %** | 3.96 → 5.22 | 72.6 → 70.6 % | 63.2 → **55.7 %** | 0.8 → **10.3 %** | 31.8 → 21.9 % | 15.18 → **21.49** |
-| karen | 4 | 99.5 → 98.0 % | 3.87 → 4.25 | 76.6 → 75.3 % | 66.7 → 64.2 % | 0.8 → 3.7 % | 32.9 → 28.1 % | 14.30 → 18.36 |
-| chad | 5 | 99.8 → 98.3 % | 4.30 → 6.03 | 65.3 → 58.8 % | 60.3 → **43.0 %** | 5.3 → **17.7 %** | 41.4 → 25.7 % | 16.58 → 22.52 |
-| **chad** | **6** | 100 → 99.7 % | 3.55 → 4.05 | **89.2 → 75.0 %** | **89.2 → 73.5 %** | 0.0 → 2.2 % | **62.1 → 44.2 %** | **6.74 → 15.86** |
-| **grandma** | **7** | 100 → **96.3 %** | 6.26 → 8.04 | **87.0 → 72.2 %** | **80.2 → 57.7 %** | 2.2 → **11.3 %** | 22.9 → 17.3 % | **6.25 → 12.96** |
-| **grandma** | **8** | 100 → 98.5 % | 5.95 → 7.15 | **89.7 → 77.5 %** | **89.4 → 70.4 %** | 0.0 → 4.5 % | 24.2 → 19.3 % | **4.01 → 10.63** |
-| restructuring_trio | 7 | 99.7 → 99.8 % | 6.19 → 6.87 | 58.8 → 58.8 % | 45.6 → 40.2 % | 9.5 → 16.5 % | 8.5 → 4.6 % | 10.89 → 12.64 |
-| restructuring_trio | 8 | 100 → 100 % | 6.08 → 7.00 | 59.0 → 58.0 % | 49.7 → 42.6 % | 3.8 → 11.2 % | 7.7 → 3.4 % | 10.51 → 12.17 |
-| **meredith_boss** | **8** | 98.7 → **90.0 %** | **8.10 → 13.14** | 73.9 → 60.3 % | **68.8 → 40.5 %** | 4.5 → **32.5 %** | 38.1 → 19.3 % | **9.43 → 20.33** |
-| meredith_boss | 9 | 99.7 → 96.3 % | 7.31 → 9.90 | 81.3 → 62.2 % | **79.3 → 49.3 %** | 2.8 → **20.8 %** | 41.8 → 24.5 % | 7.10 → 17.12 |
-| **regional_director** | **10** | 100 → 99.5 % | 4.22 → 5.57 | 75.7 → 66.2 % | **75.2 → 55.5 %** | 0.2 → 7.5 % | 32.3 → 23.7 % | 16.06 → **23.59** |
-| algorithm | 10 | 100 → 98.8 % | 6.11 → 7.02 | 81.4 → 69.1 % | 80.2 → 63.1 % | 0.8 → 9.5 % | 25.2 → 21.3 % | 8.22 → 13.74 |
+| karen | 3 | 99.5 → 95.3 % | 3.97 → 5.32 | 72.9 → 71.2 % | 63.3 → 56.1 % | 1.2 → 8.5 % | 31.6 → 21.5 % | 15.44 → 21.28 |
+| karen | 4 | 100.0 → 99.0 % | 3.88 → 4.29 | 76.8 → 75.4 % | 67.0 → 64.2 % | 0.0 → 3.7 % | 33.7 → 28.4 % | 13.87 → 18.26 |
+| **chad** | **5** | 100.0 → 98.0 % | 4.22 → 6.02 | 65.1 → 58.6 % | **61.6 → 42.6 %** | **4.2 → 19.3 %** | 42.0 → 25.9 % | 16.00 → 22.51 |
+| **chad** | **6** | 100.0 → 100.0 % | 3.52 → 4.03 | 89.8 → 74.3 % | **89.8 → 73.4 %** | 0.0 → 1.5 % | 61.9 → 44.1 % | **6.46 → 15.02** |
+| **grandma** | **7** | 100.0 → 97.7 % | 6.24 → 8.13 | 86.1 → 72.1 % | **79.6 → 58.7 %** | 1.2 → 10.5 % | 22.5 → 16.3 % | **6.64 → 12.44** |
+| **grandma** | **8** | 100.0 → 99.0 % | 5.95 → 7.06 | 89.3 → 77.3 % | **89.0 → 70.8 %** | 0.2 → 3.7 % | 24.0 → 19.6 % | **4.21 → 10.41** |
+| restructuring_trio | 7 | 100.0 → 99.5 % | 6.17 → 6.83 | 59.0 → 58.7 % | 45.7 → 40.2 % | **12.0 → 16.8 %** | 8.0 → 4.4 % | 10.98 → 12.57 |
+| restructuring_trio | 8 | 100.0 → 99.7 % | 6.25 → 6.95 | 57.5 → 59.4 % | 48.9 → 42.6 % | 4.8 → 11.3 % | 8.2 → 3.1 % | 10.62 → 12.29 |
+| **meredith_boss** | **8** | 99.5 → **88.3 %** | 8.13 → 13.31 | 73.7 → 60.3 % | **69.7 → 39.0 %** | **4.3 → 35.3 %** | 37.8 → 19.3 % | **9.78 → 20.91** |
+| **meredith_boss** | **9** | 100.0 → **94.7 %** | 7.28 → 10.17 | 80.5 → 62.6 % | **79.3 → 48.2 %** | **2.0 → 26.7 %** | 41.7 → 24.8 % | **7.00 → 17.43** |
+| **regional_director** | **10** | 100.0 → 100.0 % | 4.21 → 5.55 | 75.6 → 66.7 % | **75.2 → 56.4 %** | 0.0 → 4.5 % | 32.5 → 23.7 % | 16.17 → 23.38 |
+| algorithm | 10 | 100.0 → 100.0 % | 6.24 → 7.17 | 80.8 → 71.4 % | 79.5 → 67.5 % | 0.3 → 5.7 % | 25.0 → 20.6 % | 8.22 → 11.26 |
 
 **The ladder as a band:**
 
 | | before | after |
 |---|---|---|
-| win rate | 98.7 – 100 % | **90.0 – 100 %** |
-| HP-left at victory | 58.8 – 89.7 % | **58.0 – 77.5 %** |
-| **low-water** | 45.6 – 89.4 % | **40.2 – 73.5 %** |
-| **near-death** (touched 25 % HP) | 0.0 – 9.5 % | **2.2 – 32.5 %** |
-| denial (share of turns taken from the boss) | 7.7 – 62.1 % | **3.4 – 44.2 %** |
-| **damage per enemy turn** | 4.01 – 16.58 | **10.63 – 23.59** (× 1.28 – × 2.65) |
+| win rate | 99.5 – 100 % | **88.3 – 100 %** |
+| HP-left at victory | 57.5 – 89.8 % | **58.6 – 77.3 %** |
+| **low-water** | 45.7 – 89.8 % | **39.0 – 73.4 %** |
+| **near-death** (touched 25 % HP) | 0.0 – 12.0 % | **1.5 – 35.3 %** |
+| denial (share of turns taken from the boss) | 8.0 – 61.9 % | **3.1 – 44.1 %** |
+| **damage per enemy turn** | 4.21 – 16.17 | **10.41 – 23.38** (× 1.14 – × 2.49) |
 
 Read the **low-water** and **near-death** columns, not the win rate. Win rate saturates
 at 100 % long before a fight stops being frightening, and the two rungs that were most
 obviously not fights — `chad@6` and `grandma@8`, where Andrew finished having never
-dropped below **89 %** of his health bar — now bottom out at 73.5 % and 70.4 %.
-`meredith_boss@8` goes from a fight Andrew wins at 68.8 % low-water to one where he
-touches 25 % HP **a third of the time**.
+dropped below **89 %** of his health bar (89.8 and 89.0) — now bottom out at **73.4 %**
+and **70.8 %**. `meredith_boss@8` goes from a fight Andrew wins at 69.7 % low-water to
+one where he touches 25 % HP **35.3 % of the time**.
+
+### 4.2 THE THIRD COST: the Composure Break goes quiet on four rungs
 
 **The denial column falls even though nothing about Objections or Composure was
 changed.** That is `DENIAL_LIMIT: 1` working as designed: the seal arrives sooner, and a
-sealed move cannot be fizzled and does not move the Composure bar. `breaks/fight` drops
-with it (Karen 0.36 → 0.07, the Director 0.55 → 0.01), and that is the one mechanical
-regression inside combat itself: **on the two shortest boss fights the Break is now
-close to unreachable.** It is a consequence of B3 and it is the price of the component
-that reaches `chad@6`.
+sealed move cannot be fizzled and does not move the Composure bar. `breaks/fight` falls
+with it, and this is a **third declared cost**, not a footnote:
 
-### 4.1 What each component is doing
+| encounter | lvl | breaks/fight before → after |
+|---|---|---|
+| karen | 3 | 0.36 → **0.07** |
+| **karen** | **4** | 0.32 → **0.00** |
+| meredith_boss | 8 | 0.29 → 0.09 |
+| meredith_boss | 9 | 0.10 → 0.08 |
+| **regional_director** | **10** | 0.55 → **0.01** |
+| grandma | 7 / 8 | 0.83 → 0.69 / 0.70 → 0.60 |
+| chad | 5 / 6 | 0.59 → 0.32 / 0.50 → 0.35 |
+| algorithm | 10 | 0.68 → 0.71 |
 
-`E3` alone (same table, middle block of `LADDER-final.txt`) moves the two rungs the
-diagnosis named and almost nothing else: `grandma@7` HP-left 87.0 → 78.3 %, `grandma@8`
-89.7 → 80.7 %, `meredith@9` 81.3 → 72.5 %, `algorithm` 81.4 → 79.3 %, and `karen` /
-`chad` / the trio / the Director within noise. That is the correct shape for a lever
+**`karen@4` reads 0.00 across 600 fights — not "close to unreachable", unreachable.**
+The Director reads 0.01. `CLAUDE.md` documents Composure/Break as a whole shipped
+subsystem — a per-enemy HUD bar, a break flash, `vulnerable = 2` arming, a +20 % broken
+band — and a standing **×0.9 pre-Break tax** whose entire justification is that Breaking
+"reads as unlocking your real damage." **On four of twelve rungs the player now pays that
+tax and the unlock never arrives.**
+
+It is not recoverable by any fallback offered here: the Director reads **0.00** breaks
+under `E3 + B3 + B2` too (`_final-ladder.txt`), so it is `B3` and only `B3`. And `B3` is
+the component that reaches `chad@6`, whose HP-left goes 89.2 → 75.0 %. **If the producer
+would rather keep the Break economy than have Chad-at-6 be a fight, B3 is the line to
+cut** — and that is a real fork, not a rhetorical one.
+
+(An earlier draft called this "the two shortest boss fights." `meredith_boss@8` is the
+**longest** fight in the table at 13.14 rounds and is on the list; the phrase was wrong.)
+
+### 4.3 What each component is doing
+
+`E3` alone (`LADDER-final.txt`, middle block — that run predates the Algorithm exemption,
+so read its `algorithm` row as the E3all variant) moves the two rungs the diagnosis named
+and almost nothing else: `grandma@7` HP-left 87.0 → 78.3 %, `grandma@8` 89.7 → 80.7 %,
+`meredith@9` 81.3 → 72.5 %, and `karen` / `chad` / the trio / the Director within noise. That is the correct shape for a lever
 aimed at *quiet turns*: it does nothing to a boss that was already swinging (Chad reads
 5.7 % quiet and does not move) and a great deal to one that was not.
 
+**And a limit of E3 that follows from its own gate, stated because it is not obvious.**
+The escalation fires only after a denial, so its reach scales with DENIAL, not with quiet
+turns. `restructuring_trio@7` is 49.3 % quiet but only 7.7 % denied, and E3 alone moves
+its dmg/T from **10.89 to 10.89** — literally nothing. The lever answers half of the
+diagnosis on the rungs where both halves are present, and none of it where they are not.
+
 `B3` + `F1` + `C1` are what reach `chad@6` and the `regional_director` — the two rungs
 whose problem was never quiet turns but the sheer **number** of actions Andrew takes per
-round. Press Advantage use falls from 1.92 to 1.14 a fight on the Director and from 2.29
-to 1.75 on Meredith.
+round. Press Advantage use falls from 1.92 to 1.14 **per fight** on the Director and from
+2.29 to 1.79 on Meredith — that is 0.45 → 0.21 and 0.28 → 0.13 per ROUND, which is the
+honest unit and is why §3's first draft overstated the action economy.
 
 ---
 
@@ -294,23 +359,63 @@ itself produced (−2.8 pp)**, and the direction is a coin flip (11 down / 9 up)
 the three Algorithm cells entirely, the remaining eighteen read mean \|Δ\| **0.91 pp**,
 signed mean **+0.07 pp**, 8 down / 9 up — flat, and *below* the null's own 1.12 pp.
 
-**The one cell that is not noise is `algorithm@10 / PIP 0 %` at −6.2 pp, and the
-mechanism is named rather than hand-waved.** That fight stages Janet and Isaiah, and
-*the allies* land tagged hits
-on a casual player's behalf: it is the only encounter in the game where CASUAL denies any
-enemy turn at all (**6.1 %**; every solo rung reads 0.0 %). The denial pricing therefore
-reaches the floor there and only there. The affected cell reads **81.0 % at zero deaths**,
-which is the highest-margin cell in the table and still inside the documented 40–85 %
-band. The `regional_director` — the game's other party fight, with the same two allies —
-shows **no** such effect (−0.3 / −1.2 / +0.3, all inside the null). **Why the two party
-fights differ is not measured and is not claimed here.** The plausible reading is that the
-Algorithm's kit carries more lockable moves for the allies to clear, but that is a
-hypothesis, not a result, and it is the first thing to check if this cell is ever
-tightened.
+**One cell moves further than the null, it is `algorithm@10 / PIP 0 %`, and it is now
+ATTRIBUTED rather than named.** That fight stages Janet and Isaiah, and *the allies* land
+tagged hits on a casual player's behalf: it is the only encounter in the game where CASUAL
+denies any enemy turn at all (**6.1 %**; every solo rung reads 0.0 %). The
+`regional_director` — the game's other party fight, with the same two allies — shows **no**
+such effect (−0.3 / −1.2 / +0.3, all inside the null); why the two differ is unmeasured
+and is not claimed here.
 
-**Sized mitigation, untested, offered rather than assumed:** dropping the
-`escalateAfterDenial` row from `algorithm` alone is one line and would remove one of the
-two contributors to that cell. It was not measured, so it is not claimed.
+### 5.1 The Algorithm cell, decomposed — and the one line that fixes it
+
+A first draft of this document offered *"sized mitigation, untested"* — drop the
+`escalateAfterDenial` row from `algorithm` — and shipped the regression anyway. That was
+the wrong call on a hard constraint, and it turned out the guess about the mechanism was
+also wrong. Measured on the cell itself (`algorithm@10 / PIP 0 %`, CASUAL, **4000 runs per
+arm**, one process, `tools/_l-apply.mjs` component definitions):
+
+| arm | win | Δ vs base |
+|---|---|---|
+| base | 85.9 % | — |
+| **NULL (base again)** | 85.5 % | **−0.4** |
+| **E3all** (escalation incl. algorithm) alone | 85.9 % | **−0.0** |
+| E3 (algorithm exempt) alone | 87.3 % | +1.4 |
+| **B3 alone** (`DENIAL_LIMIT` 1) | 83.7 % | **−2.1** |
+| F1 alone | 86.3 % | +0.4 |
+| C1 alone | 85.8 % | −0.1 |
+| **E3all + B3** | 81.8 % | **−4.1** |
+| **E3 + B3, algorithm exempt** | 85.4 % | **−0.5** |
+
+**It is an INTERACTION, not a component.** The escalation on the Algorithm alone costs
+nothing (−0.0); `DENIAL_LIMIT: 1` alone costs −2.1; together they cost −4.1, which is more
+than the sum. The mechanism is legible once you see it: with the seal firing after ONE
+ally-denial instead of two, the Algorithm holds the Denial Tax seal far more often, and
+the escalation makes that unanswerable, `SEALED_DAMAGE_BONUS`-boosted move a **damaging**
+one. Exempting the Algorithm from the escalation breaks the interaction and B3's −2.1
+mostly evaporates with it.
+
+**Head-to-head at n = 9000 on the same cell:**
+
+| arm | win | Δ vs base |
+|---|---|---|
+| base | 86.7 % | — |
+| NULL (base again) | 86.2 % | −0.5 |
+| **THE PROPOSAL** (algorithm exempt) | **84.3 %** | **−2.4** |
+| the proposal with algorithm INCLUDED | 80.7 % | **−6.0** |
+
+**`algorithm` is therefore EXEMPT from `escalateAfterDenial` in the shipped diff** — 14
+rows, not 15 — which takes the worst cell in the table from **−6.0 pp to −2.4 pp**, i.e.
+to the same magnitude as the null arm's own worst cell across runs (−2.4 to −3.7 pp).
+The exemption is also the one the fiction already argues for: `COMBAT-PLAYSTYLE-DOSSIER`
+§2.1 exempts the Algorithm from THE PIVOT because *"it already modelled you. It does not
+care what you say twice"* — and a thing that does not care what you say twice does not
+have feelings about being objected to either.
+
+**What the exemption costs, stated:** the Algorithm gets easier for competent players too.
+`algorithm@10` reads HP-left 71.4 % / low-water 67.5 % / near-death 5.7 % with the
+exemption against 69.1 / 63.1 / 9.5 without it. That is the price of the only cell in the
+21 that could not be defended, and it is worth paying.
 
 ---
 
@@ -318,8 +423,14 @@ two contributors to that cell. It was not measured, so it is not claimed.
 
 ### 6.1 The Practice-Group diversity band — THIS IS THE COST
 
-`node tools/_l-balance.mjs --lanes --runs 400`. The J-run's law is **≤ ~10 pp** of win
-rate between the three lanes at every rung.
+`node tools/_l-balance.mjs --lanes --runs 400`. **The J-run's law is ≤ 8.0 pp**, not 10 —
+COMBAT-PLAYSTYLE-DOSSIER §2.5 / §5.5 / §10.5 all say 8.0, with a SHIPPED worst rung of
+9.3 pp. Counted against the real law this breaches on **four** rungs, not three.
+
+**And this table has no null arm, which the PIP table does.** Four 400-run passes of the
+IDENTICAL shipped config read max bands of **6.3 / 6.5 / 7.5 / 10.0 pp**, so a single
+sub-10 pp cell here is not a reading. Only Audit-on-Meredith (99.5 → 81.8) moves further
+than that spread, and it is the finding.
 
 | encounter | lvl | before: lit / comp / audit | band | after: lit / comp / audit | **band** |
 |---|---|---|---|---|---|
@@ -337,8 +448,11 @@ rate between the three lanes at every rung.
 | algorithm | 10 | 99.8 / 100 / 99.8 | 0.2 | 99.8 / 99.5 / 96.8 | 3.0 |
 | | | | **6.5 max** | | **16.5 max** |
 
-**This breaches J's law on three rungs and it is the largest declared cost of the
-proposal.** The mechanism is not mysterious: the two lanes that lose are the two SLOW
+**This breaches J's law (≤ 8.0 pp) on FOUR rungs — karen@3 12.0, karen@4 8.8, chad@5 10.8,
+meredith@8 16.5 — and it is the largest declared cost of the proposal.** Only the last of
+those moves further than the baseline instrument's own 6.3–10.0 pp spread, so
+**meredith@8 / Audit (99.5 → 81.8 %) is the finding and the other three are at or inside
+noise.** The mechanism is not mysterious: the two lanes that lose are the two SLOW
 lanes. Audit's whole identity is accumulating Findings and closing a file, and Compliance's
 is counterpunching off a Brace; both are worst in exactly the conditions this proposal
 creates — longer fights against a boss that spends more of its turns hitting you.
@@ -356,8 +470,15 @@ inventing one, but 6.5 → 16.5 pp is not a rounding error.
    Director, whose low-water goes back from 55.5 % to 68.2 %. Not worth it.
 3. **Hold the whole proposal** until Audit is repaired.
 
-**Recommendation: (1).** The band is a win-rate band and every cell in it is still above
-81 %; the fights it describes are ones the lane wins four times in five.
+**Recommendation: (1).** The band is a win-rate band and the worst cell in it is still a
+fight the Audit lane wins three times in four.
+
+**Second draw, published because the first was a single sample.** A repeat 400-run pass
+(`LANES-v2.txt`) reads baseline max band **7.5 pp** and P8 max band **21.3 pp**, with
+meredith@8 / Audit at **77.3 %** against the first draw's 81.8 %. The cell is noisy and it
+is consistently the outlier: across both draws it is the only rung whose movement exceeds
+the baseline instrument's own 6.3–10.0 pp spread. **Read the finding as "Audit loses
+18–22 pp on Meredith at 8", not as a specific band number.**
 
 ### 6.2 Monotony — the number the J-run's Pivot exists to protect
 
@@ -397,8 +518,11 @@ NG+ gets harder. The worst cell is `algorithm@NG+3` at **48.0 %** — and NG+3 i
 documented in `CombatEngine.js` as *"below the 40–85 % story band on purpose, because the
 top rung of a voluntary ladder is a flex, not a checkpoint — but a flex you can pass."*
 48 % passes that description. **The ladder-correctness rule (`CARRY@NG+1 ≤ FRESH@NG`) is
-violated at baseline on karen, grandma and meredith and is still violated after; the
-proposal neither creates nor fixes it.** If the producer wants NG+ held where it was, the
+violated at baseline on karen (100.0 vs 96.3) and meredith (99.8 vs 99.5) and is still
+violated after — but grandma PASSES at baseline (99.8 vs 99.8) and FAILS after (96.0 vs
+94.8), so the proposal takes the violations from two to three. It creates one.** (An
+earlier draft said three at baseline and that the proposal neither creates nor fixes any;
+both were wrong.) If the producer wants NG+ held where it was, the
 knobs already exist and are already swept-for: `NG_PLUS_ENTRY.atk` and `NG_PLUS_LAP.decay`
 via `node tools/ng-sim.mjs --sweep` / `--lapdecay`. Not folded in here, because it is a
 second signature.
@@ -419,7 +543,7 @@ own output. **Every NG+ claim in this document is from `ng-sim`.**
 ## 7. THE 70–85 % WIN BAND, ANSWERED HONESTLY
 
 The brief asks for competent at-level win rates of 70–85 % on story bosses. The proposal
-delivers **90.0 – 100 %**. That gap is deliberate and here is the argument.
+delivers **88.3 – 100 %**. That gap is deliberate and here is the argument.
 
 **1. It was measured, the bill is on the wrong account, AND IT STILL DOES NOT GET THERE.**
 `A15` — this proposal plus boss ability power × 1.15 — costs the PIP floor **12.13 pp
@@ -445,14 +569,15 @@ the PIP band the last three balance runs were tuned to defend. The three A/B cap
 at low-water **100 % / 17.4 % / 9.3 %**.
 
 **4. The metric the producer actually asked for is in the table.** "Way too easy" is not
-a win-rate observation — at 98.7–100 % it was already unwinnable-to-lose. It is a
+a win-rate observation — at 99.5–100 % it was already unwinnable-to-lose. It is a
 *low-water* observation: Andrew finished `chad@6` and `grandma@8` having never dropped
-below 89 % of his health bar. **That number moves 89.4 % → 70.4 %, and near-death goes
-0.0 % → 32.5 % on Meredith.** That is the fight showing up.
+below 89 % of his health bar. **That number moves 89.0 % → 70.8 % on grandma@8 and
+89.8 % → 73.4 % on chad@6, and near-death goes 4.3 % → 35.3 % on Meredith.** That is the
+fight showing up.
 
 **Proposed band, for signature:** competent at-level **low-water 40–75 %** and
 **near-death 5–35 %**, with win rate reported as a consequence and expected to sit
-**90–100 %** on this instrument. If the producer wants the win-rate band anyway, §7 point
+**88–100 %** on this instrument. If the producer wants the win-rate band anyway, §7 point
 1 is the price and it is payable only by the casual floor.
 
 ### 7.1 The A/B capture
@@ -471,11 +596,18 @@ Grandma published across the three runs of each arm:
 | **before** | 19 | **4 (21.1 %)** | `changed_the_will` ×7, `fresh_cookies` ×5, `emergency_shortbread` ×3, `guilt_trip` ×3, `passive_aggression` ×1 |
 | **after** | 20 | **10 (50.0 %)** | `guilt_trip` ×5, `passive_aggression` ×5, `fresh_cookies` ×4, `changed_the_will` ×3, `emergency_shortbread` ×2, `final_revision` ×1 |
 
-In the cleanest baseline run the whole fight is legible in one column: over twelve turns
-Grandma's telegraph row read *cookies, cookies, cookies, changed the will, changed the
-will, changed the will, cookies, The Look* — and Andrew ended on **172/172, having taken
-no damage at all** while she went from 750 HP to 56. In the after runs her opening
-telegraph is `Guilt Trip` and it lands for **85 on a 172 HP bar** on turn one.
+In the cleanest baseline run the whole fight is legible in one column — see §1.1 for the
+verbatim seven-telegraph sequence, none of them a damaging move, ending 172/172. In the
+after runs her opening telegraph is `Guilt Trip` and it lands for **85 on a 172 HP bar**
+on turn one.
+
+**A correction to an earlier draft of this document, kept visible.** §1.1 originally
+narrated that run as *"nine announcements, one of them a damaging move… 750 to 56,"* and
+put `The Look` in the sequence. All four details were wrong: it is seven announcements,
+**zero** damaging, 750 to **64**, and `the_look` never fires in that run (it is also a
+`stun`, not a damaging move, so it would not have counted either way). The prose was
+written from memory of a different take while the census beneath it was computed from the
+files. **The census is the artefact; the narration was not, and now is.**
 
 **What is NOT evidence, said plainly:** the per-run outcome. Low-water across three runs
 reads **100 / 17.4 / 9.3 %** before and **45.3 / 35.5 / 9.3 %** after. The scripted line
@@ -500,23 +632,73 @@ both tax the floor by ~2 pp, and 40 additionally turns Karen into a difficulty r
 smuggled in under a resource change. Folded into this proposal so there is one signature
 rather than two.
 
-**Everything else in this document is measured. One thing is not, and cannot be:**
+### 8.1 THE PROPOSAL IS TWO TIERS, AND ONLY THE SECOND ONE HAS A BILL
 
-> **Longer?**
+An earlier draft put a single question — *"Longer?"* — and offered F1 as the escape hatch.
+That was the wrong fork, because the two halves of this package answer two different
+problems at two very different prices, and §4.3 already separates them.
 
-Fights get longer. Meredith at 8 goes from **8.1 rounds to 13.1**. Grandma at 7 goes 6.3
-→ 8.0, Chad at 5 goes 4.3 → 6.0, the Regional Director 4.2 → 5.6. That is not a side
-effect — it is half the mechanism, because a boss that is granted more turns *is* a
-longer fight, and the alternative (making each turn hit harder) is the one the PIP floor
-refuses to pay for.
+**TIER 1 — `E3`, the Escalation Response. One data field, 14 rows, and it is free.**
+
+| | base | **E3 alone** | the full proposal |
+|---|---|---|---|
+| grandma@7 HP-left / low-water | 87.0 / 80.2 % | **78.3 / 70.1 %** | 72.1 / 58.7 % |
+| grandma@8 HP-left | 89.7 % | **80.7 %** | 77.3 % |
+| meredith@9 HP-left | 81.3 % | **72.5 %** | 62.6 % |
+| **meredith@8 rounds** | 8.10 | **7.97** | 13.31 |
+| director breaks/fight | 0.55 | **0.38** | 0.01 |
+| karen@4 breaks/fight | 0.32 | **0.31** | 0.01 |
+| Practice-Group band | 6.3–10.0 pp | **untouched** | 16.5–21.3 pp |
+
+E3 alone fixes **exactly the two rungs §1 diagnosed** — Grandma and Meredith, the fights
+with 72–73 % and 49–52 % quiet turns — and it does so with fights getting *shorter*, the
+Break economy intact, the lane band untouched, and the PIP floor inside its own null.
+**There is no argument against Tier 1.**
+
+**TIER 2 — `B3 + F1 + C1`. This is where every declared cost in this document lives.**
+It buys the two rungs Tier 1 cannot reach, because their problem was never quiet turns:
+`chad@6` (89.2 → 74.3 % HP-left) and the `regional_director` (75.2 → 56.4 % low-water).
+The bill: a 13-round Meredith, the Composure Break falling to 0.01 on Karen and the
+Director, Audit down 18–22 pp on Meredith, NG+3 on the Algorithm at 48 %, and the one
+casual cell at −2.4 pp.
+
+**Everything in this document is measured except one thing, and it is Tier 2:**
+
+> **Both?**
+
+Tier 1 costs nothing and merges on your word alone. Tier 2 buys two more rungs and
+charges four things, of which only one is a matter of taste: **fights get longer.**
+Meredith at 8 goes from **8.1 rounds to 13.3**. Grandma at 7 goes 6.3 → 8.1, Chad at 5
+goes 4.3 → 6.0, the Regional Director 4.2 → 5.6. That is not a side effect — it is half
+the mechanism, because a boss that is granted more turns *is* a longer fight, and the
+alternative (making each turn hit harder) is the one the PIP floor refuses to pay for.
 
 A 13-round Meredith is a Persona-length boss. It might be exactly the weight the finale
 of Act 5 should have, or it might be a slog in a satirical office RPG whose other fights
-run four rounds. No table settles that. **If the answer is yes, the diff merges as
-written. If the answer is no, the component to cut is F1 (Press Advantage 40 → 52): it is
-the largest contributor to fight length, and cutting it keeps every one of Grandma's and
-Meredith's gains while giving back the Regional Director** (low-water 55.5 % → 71.0 %,
-the `--cand P5` block of `_pkg-ladder.txt`).
+run four rounds. No table settles that, and the other three costs of Tier 2 — the Break
+economy, the Audit lane, NG+3 — are each their own small veto if you want to use one.
+
+**If Tier 2 is a yes, the diff merges as written. If it is a maybe, the cheapest single
+cut is F1** (Press Advantage 40 → 52) — but here is what that actually buys and costs,
+measured as its own arm (`--cand P10` = `E3 + B3 + C1`, 600 runs/cell, `LADDER-v2.txt`),
+because an earlier draft of this section asserted it from the wrong candidate in the wrong
+file and was wrong in both directions:
+
+| | base | **THE PROPOSAL** | **without F1** |
+|---|---|---|---|
+| meredith@8 rounds | 8.10 | 13.31 | **10.63** |
+| meredith@8 low-water / near-death | 68.8 % / 4.5 % | 39.0 % / 35.3 % | **45.5 % / 25.7 %** |
+| grandma@7 low-water / near-death | 80.2 % / 2.2 % | 58.7 % / 10.5 % | **61.8 % / 8.0 %** |
+| grandma@8 low-water | 89.0 % | 70.8 % | **77.8 %** |
+| regional_director low-water | 75.2 % | 56.4 % | **63.6 %** |
+| chad@6 HP-left | 89.2 % | 74.3 % | **77.7 %** |
+
+**Cutting F1 does not restore the old pacing and does not keep every gain.** Meredith is
+still **10.6 rounds** against a baseline 8.1 — F1 accounts for only 2.7 of the 5.2 added
+rounds, and `C1` accounts for most of the rest. It gives back a third of Grandma's
+low-water gain, a quarter of Meredith's, and roughly 40 % of the Regional Director's. It
+is a real option and it is cheaper than it looks; it is not free, and the earlier claim
+that it *"keeps every one of Grandma's and Meredith's gains"* was false.
 
 ---
 

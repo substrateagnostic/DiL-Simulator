@@ -353,19 +353,57 @@ export const CANDIDATES = {
   // while it is owed a turn — after a fizzle, a Break, a stun, a block, or
   // while holding the Denial Tax seal. CASUAL denies 0.0% of turns, so this
   // is unreachable for the floor by construction rather than by tuning.
+  // THE REJECTED VARIANT, kept because it is the measurement that justifies
+  // the exemption in E3 below. `algorithm` is the ONE encounter where CASUAL
+  // denies any enemy turn at all (6.1%, via Janet and Isaiah), so it is the one
+  // row of the fifteen that the PIP floor can actually feel.
+  E3all: {
+    label: 'E3all  ESCALATION RESPONSE on every pattern incl. algorithm  [REJECTED]',
+    apply: (c) => {
+      for (const id of Object.keys(ENEMY_AI_PATTERNS)) {
+        if (id === 'intern') continue;
+        c.ai(id, 'escalateAfterDenial', 0.85);
+      }
+    },
+  },
   E3: {
-    label: 'E3  ESCALATION RESPONSE: escalateAfterDenial 0.85 on every boss',
+    label: 'E3  ESCALATION RESPONSE: escalateAfterDenial 0.85, algorithm EXEMPT',
     note: 'EnemyAI.js rows. Fires only on a turn the player took away.',
     // `intern` is excluded so this candidate is byte-for-byte what
     // `tools/_l-apply.mjs --on` writes. It is in no measured cell (it is the
     // scripted tutorial), so nothing in any table moves either way — but a
     // harness that measures a slightly different thing than the patch applies
     // is the whole reason `_j-verify.mjs` had to replace `_j-synth.mjs`.
+    // TWO EXEMPTIONS.
+    // `intern` — the scripted tutorial enemy, in no measured cell, and an
+    //   escalation response on a character whose whole kit is 4-power jabs is
+    //   noise in the diff.
+    // `algorithm` — the ONLY encounter where the CASUAL policy denies an enemy
+    //   turn (6.1%; every solo rung reads 0.0%), because that fight stages
+    //   Janet and Isaiah and the ALLIES clear locks on the casual player's
+    //   behalf. Leaving it in put `algorithm@10 / PIP 0%` at -6.0 pp against a
+    //   null arm whose own worst cell is -2.8; taking it out puts the same cell
+    //   at -1.6. It is also the one exemption the fiction already argues for:
+    //   the Algorithm is exempt from THE PIVOT for the same reason (it already
+    //   modelled you), and a thing that does not care what you say twice does
+    //   not have feelings about being objected to either.
     apply: (c) => {
       for (const id of Object.keys(ENEMY_AI_PATTERNS)) {
-        if (id === 'intern') continue;
+        if (id === 'intern' || id === 'algorithm') continue;
         c.ai(id, 'escalateAfterDenial', 0.85);
       }
+    },
+  },
+  // THE FALLBACK §8 offers if the producer says no to longer fights. It was
+  // cited from the wrong file and the wrong candidate in the first draft, so
+  // it is a first-class arm now and gets measured like one.
+  P10: {
+    label: 'P10  THE PROPOSAL WITHOUT F1  = E3 + B3 + C1',
+    note: 'What cutting Press Advantage actually gives back, measured.',
+    apply: (c) => {
+      CANDIDATES.E3.apply(c);
+      CANDIDATES.B3.apply(c);
+      CANDIDATES.C1.apply(c);
     },
   },
   E4: {
@@ -604,7 +642,11 @@ function runPip() {
 function runLanes() {
   const keys = selectedCandidates();
   console.log(`\n=== THE DIVERSITY BAND, PER CANDIDATE (${RUNS} runs/cell) ===`);
-  console.log("J's law: <= ~10pp spread between the three Practice Groups at every rung.");
+  console.log("J's law is <= 8.0 pp between the three Practice Groups at every rung");
+  console.log('(COMBAT-PLAYSTYLE-DOSSIER sections 2.5 / 5.5 / 10.5; the SHIPPED worst rung is 9.3 pp).');
+  console.log('This table has no null arm and one 400-run draw of the SAME shipped config has');
+  console.log('read a max band of 6.3 / 6.5 / 7.5 / 10.0 pp across four passes -- read a single');
+  console.log('cell only when it moves further than that spread.');
   for (const k of keys) {
     const cand = CANDIDATES[k];
     console.log(`\n-- ${cand.label}`);

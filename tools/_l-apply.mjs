@@ -38,11 +38,21 @@ const LOCK2_CLEANUP = ['guilt_trip', 'hostile_takeover', 'market_correction',
   'rage_quit_attack', 'algorithmic_trading'];   // B2, CUT — see above. Listed
   // only so `--off` still removes an older application rather than stranding it.
 // E3  THE ESCALATION RESPONSE. Every enemy that already HAS an AI pattern row
-//     gets it; the four enemies with no row (chief_of_restructuring,
-//     data_analytics_lead, reception_client, networking_guy) deliberately do
-//     NOT, because that is exactly the set the sim measured. `reception_client`
-//     being outside it is why the roguelite loop is untouched by this component.
+//     gets it, MINUS two exemptions; the four enemies with no row
+//     (chief_of_restructuring, data_analytics_lead, reception_client,
+//     networking_guy) deliberately do NOT, because that is exactly the set the
+//     sim measured. `reception_client` being outside it is why the roguelite
+//     loop is untouched by this component.
+//     EXEMPT: `intern` (scripted tutorial, 4-power jabs, in no measured cell)
+//     and `algorithm` — the only encounter where the CASUAL policy denies an
+//     enemy turn at all (6.1%, because that fight stages Janet and Isaiah and
+//     the ALLIES clear locks on the casual player's behalf). With it in, that
+//     encounter's PIP 0% cell moved -6.0 pp against a null arm whose own worst
+//     cell is -2.8; with it out, -1.6 pp. It is the one row of fifteen the
+//     floor could feel, and the fiction already exempts the Algorithm from
+//     THE PIVOT for the same reason.
 const ESCALATE = 0.85;
+const AI_EXEMPT = ['intern', 'algorithm'];
 // B3  DENIAL_LIMIT 2 -> 1 ; F1  PRESS_ADVANTAGE_BASE 40 -> 52
 const DENIAL_ON = 1, DENIAL_OFF = 2;
 const PA_ON = 52, PA_OFF = 40;
@@ -80,13 +90,23 @@ function patchAI(on) {
     // regex that stops at `$` cannot see whether the file is LF or CRLF — in
     // JS multiline mode `$` matches before `\r` too — and the first version of
     // this inserted a blank line into every row on a CRLF checkout.
-    // `intern` is skipped: it is the scripted tutorial enemy, it is in no
-    // measured cell, and an escalation response on a character whose whole kit
-    // is 4-power jabs is noise in the diff.
+    // Insert on every row, then take it back off the exempt ones. The removal
+    // is anchored to the row's OWN block — `\{[^{}]*?` cannot run past the
+    // closing brace, so it can never strip the next row's field if an exempt
+    // row is moved, renamed or loses its own copy. (The first version used a
+    // lazy `[\s\S]*?`, which could.)
     out = out.replace(/^([ \t]*)pattern: '[a-z]+',[ \t]*(\r?\n)/gm,
       (m, ind, eol) => `${m}${ind}escalateAfterDenial: ${ESCALATE},${eol}`);
-    // …then take it back off the one row that should not carry it.
-    out = out.replace(/(\bintern:\s*\{[\s\S]*?)^[ \t]*escalateAfterDenial: [0-9.]+,[ \t]*\r?\n/m, '$1');
+    for (const id of AI_EXEMPT) {
+      const re = new RegExp(`(\\b${id}:\\s*\\{[^{}]*?)^[ \\t]*escalateAfterDenial: [0-9.]+,[ \\t]*\\r?\\n`, 'm');
+      const before = out;
+      out = out.replace(re, '$1');
+      if (out === before) {
+        console.error(`WARNING: could not exempt '${id}' — its row did not match. `
+          + 'The proposal must not ship with that row carrying escalateAfterDenial.');
+        process.exitCode = 1;
+      }
+    }
   } else {
     out = out.replace(/^[ \t]*escalateAfterDenial: [0-9.]+,[ \t]*\r?\n/gm, '');
   }
