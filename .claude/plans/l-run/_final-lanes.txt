@@ -1,0 +1,35 @@
+
+=== THE DIVERSITY BAND, PER CANDIDATE (400 runs/cell) ===
+J's law: <= ~10pp spread between the three Practice Groups at every rung.
+
+-- BASELINE (shipped)
+encounter              lvl   win: lit / comp / audit          band   topTag(shipped)
+karen                   3   99.0% / 95.0% / 98.8%     4.0 pp     63.9%
+karen                   4   99.5% / 97.5% / 96.5%     3.0 pp     60.8%
+chad                    5   99.8% / 96.0% / 96.5%     3.8 pp     58.5%
+chad                    6  100.0% / 99.3% /100.0%     0.7 pp     55.7%
+grandma                 7   99.0% /100.0% / 96.5%     3.5 pp     47.9%
+grandma                 8  100.0% /100.0% / 99.8%     0.2 pp     50.2%
+restructuring_trio      7   96.3% / 95.5% / 86.3%    10.0 pp     74.6%
+restructuring_trio      8   99.8% / 97.5% / 96.5%     3.3 pp     67.9%
+meredith_boss           8  100.0% /100.0% / 99.0%     1.0 pp     49.0%
+meredith_boss           9  100.0% /100.0% / 99.8%     0.2 pp     41.2%
+regional_director      10  100.0% / 97.3% / 95.8%     4.2 pp     67.2%
+algorithm              10   99.8% /100.0% /100.0%     0.2 pp     83.0%
+   MAX BAND: 10.0 pp
+
+-- P6  THE PROPOSAL = P5 + F1 (Press Advantage 52) + C1 (Coffee 60)
+encounter              lvl   win: lit / comp / audit          band   topTag(shipped)
+karen                   3   98.5% / 89.3% / 95.8%     9.3 pp     67.0%
+karen                   4   99.3% / 91.8% / 92.3%     7.5 pp     65.9%
+chad                    5   99.5% / 93.5% / 87.8%    11.8 pp     62.3%
+chad                    6  100.0% / 99.5% / 99.3%     0.7 pp     58.5%
+grandma                 7   98.5% / 97.8% / 97.0%     1.5 pp     60.8%
+grandma                 8   99.8% / 99.8% / 98.8%     1.0 pp     62.0%
+restructuring_trio      7   97.8% / 93.8% / 86.0%    11.8 pp     84.6%
+restructuring_trio      8   98.0% / 98.8% / 96.5%     2.3 pp     79.1%
+meredith_boss           8   99.3% / 98.0% / 87.0%    12.3 pp     55.2%
+meredith_boss           9  100.0% / 99.3% / 88.8%    11.3 pp     46.3%
+regional_director      10   99.5% / 97.5% / 93.5%     6.0 pp     56.9%
+algorithm              10   99.8% / 99.8% / 98.0%     1.8 pp     83.4%
+   MAX BAND: 12.3 pp

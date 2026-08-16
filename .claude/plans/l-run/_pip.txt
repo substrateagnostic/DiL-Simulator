@@ -1,0 +1,59 @@
+
+=== THE 21-CELL PIP FLOOR (500 runs/cell, CASUAL) ===
+CASUAL: basic attacks, the free starter heal, Assert Dominance when the bar
+fills on its own. Never a tagged hit, never a Brace. The floor moves <= 2pp
+or the candidate is out.
+
+-- BASELINE (shipped)
+encounter              lvl   PIP 0%   PIP 20%  PIP 30%
+karen                   3     13.0%    59.8%    72.2%
+karen                   4     44.6%    79.4%    84.2%
+grandma                 7      4.8%    38.6%    58.0%
+grandma                 8     23.8%    63.8%    70.6%
+meredith_boss           9     26.0%    72.6%    90.0%
+regional_director      10     60.4%    90.8%    98.0%
+algorithm              10     84.8%    94.6%    98.2%
+
+-- P1  PACKAGE "the boss shows up"  = E1 + B3 + B2
+encounter              lvl   PIP 0%   PIP 20%  PIP 30%     (delta vs base)
+karen                   3     11.8%  -1.2    59.2%  -0.6    75.2%  +3.0
+karen                   4     44.0%  -0.6    78.8%  -0.6    85.6%  +1.4
+grandma                 7      0.4%  -4.4     9.8% -28.8    26.6% -31.4
+grandma                 8      2.2% -21.6    32.2% -31.6    43.6% -27.0
+meredith_boss           9     14.8% -11.2    65.8%  -6.8    87.2%  -2.8
+regional_director      10     60.4%  +0.0    91.2%  +0.4    96.8%  -1.2
+algorithm              10     75.4%  -9.4    89.6%  -5.0    95.6%  -2.6
+   mean |delta| over 21 cells: 9.12 pp   worst cell: -31.6 pp   17 down / 3 up   FAIL
+
+-- P2  PACKAGE + rhythm  = P1 + C1 (Coffee 60) + F1 (Press Advantage 52)
+encounter              lvl   PIP 0%   PIP 20%  PIP 30%     (delta vs base)
+karen                   3     17.6%  +4.6    59.6%  -0.2    72.2%  +0.0
+karen                   4     44.0%  -0.6    78.8%  -0.6    85.8%  +1.6
+grandma                 7      0.2%  -4.6     9.0% -29.6    25.4% -32.6
+grandma                 8      2.0% -21.8    29.6% -34.2    45.8% -24.8
+meredith_boss           9     18.0%  -8.0    63.6%  -9.0    89.8%  -0.2
+regional_director      10     62.0%  +1.6    89.8%  -1.0    97.4%  -0.6
+algorithm              10     74.6% -10.2    89.6%  -5.0    93.4%  -4.8
+   mean |delta| over 21 cells: 9.31 pp   worst cell: -34.2 pp   17 down / 3 up   FAIL
+
+-- P3  P2 + boss ability power x1.15
+encounter              lvl   PIP 0%   PIP 20%  PIP 30%     (delta vs base)
+karen                   3      4.2%  -8.8    38.6% -21.2    65.0%  -7.2
+karen                   4     22.4% -22.2    69.8%  -9.6    79.6%  -4.6
+grandma                 7      0.0%  -4.8     0.8% -37.8    12.6% -45.4
+grandma                 8      0.2% -23.6     6.8% -57.0    31.2% -39.4
+meredith_boss           9      4.0% -22.0    42.8% -29.8    65.8% -24.2
+regional_director      10     51.6%  -8.8    84.0%  -6.8    89.6%  -8.4
+algorithm              10     62.2% -22.6    84.0% -10.6    91.2%  -7.0
+   mean |delta| over 21 cells: 20.09 pp   worst cell: -57.0 pp   21 down / 0 up   FAIL
+
+-- P4  P2 + boss ability power x1.30  (the "70-85% win" attempt)
+encounter              lvl   PIP 0%   PIP 20%  PIP 30%     (delta vs base)
+karen                   3      2.0% -11.0    23.2% -36.6    47.6% -24.6
+karen                   4     11.0% -33.6    54.6% -24.8    70.0% -14.2
+grandma                 7      0.2%  -4.6     0.2% -38.4     4.0% -54.0
+grandma                 8      0.2% -23.6     4.4% -59.4    16.0% -54.6
+meredith_boss           9      0.8% -25.2    18.2% -54.4    48.8% -41.2
+regional_director      10      5.6% -54.8    54.4% -36.4    79.0% -19.0
+algorithm              10     46.2% -38.6    78.8% -15.8    89.2%  -9.0
+   mean |delta| over 21 cells: 32.09 pp   worst cell: -59.4 pp   21 down / 0 up   FAIL

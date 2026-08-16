@@ -1,0 +1,47 @@
+
+=== THE LADDER, PER CANDIDATE (600 runs/cell, COMPETENT shipped kit) ===
+
+-- BASELINE (shipped)
+encounter              lvl    win  rounds  HP-left  low-water  near-death  denial   dmg/T  breaks    PA
+karen                   3  99.7%    3.90    72.8%      63.4%        1.0%   32.0%   14.87    0.35  0.86
+karen                   4  99.8%    3.87    76.4%      67.0%        0.2%   33.5%   13.84    0.30  0.92
+chad                    5  99.8%    4.35    64.8%      60.3%        5.8%   42.2%   16.18    0.57  0.72
+chad                    6  100.0%    3.45    89.3%      89.3%        0.0%   61.2%    6.89    0.51  0.87
+grandma                 7  99.8%    6.29    86.0%      79.7%        1.7%   23.4%    6.35    0.75  2.29
+grandma                 8  100.0%    5.87    90.6%      90.6%        0.2%   23.3%    3.61    0.71  2.02
+restructuring_trio      7  99.7%    6.13    59.6%      46.1%        8.0%    8.1%   10.60    0.39  1.37
+restructuring_trio      8  99.7%    6.20    58.5%      48.2%        5.2%    7.2%   10.83    0.17  1.41
+meredith_boss           8  98.3%    8.00    73.8%      68.5%        4.5%   37.9%    9.45    0.30  2.29
+meredith_boss           9  99.5%    7.25    81.9%      80.1%        2.7%   41.5%    6.85    0.12  2.19
+regional_director      10  100.0%    4.17    76.1%      75.9%        0.0%   32.5%   15.90    0.60  1.93
+algorithm              10  100.0%    6.13    81.9%      80.8%        0.3%   25.5%    7.93    0.68  3.28
+
+-- P5  THE DENIAL PACKAGE = E3 + B3 + B2   [Every component is unreachable by a player who never denies a turn.]
+encounter              lvl    win  rounds  HP-left  low-water  near-death  denial   dmg/T  breaks    PA
+karen                   3  98.8%    4.00    72.6%      61.4%        3.2%   24.4%   18.76    0.06  0.80
+karen                   4  99.0%    3.92    75.4%      65.8%        1.8%   25.8%   17.86    0.00  0.85
+chad                    5  99.8%    4.89    62.8%      53.3%       12.2%   28.4%   20.43    0.36  0.61
+chad                    6  100.0%    3.52    82.1%      81.9%        0.2%   44.8%   11.35    0.29  0.88
+grandma                 7  98.7%    6.55    75.2%      65.4%        6.8%   13.2%   11.26    0.88  2.20
+grandma                 8  99.2%    5.65    79.7%      76.6%        4.2%   15.8%    9.97    0.83  1.96
+restructuring_trio      7  99.5%    6.13    60.2%      44.2%        9.0%    7.0%   11.09    0.30  1.37
+restructuring_trio      8  99.8%    6.08    58.5%      47.6%        7.5%    5.9%   11.18    0.11  1.42
+meredith_boss           8  95.7%    9.06    60.7%      47.9%       16.8%   23.8%   17.72    0.11  2.24
+meredith_boss           9  97.7%    7.99    64.0%      55.2%       14.8%   20.8%   16.13    0.08  2.05
+regional_director      10  100.0%    4.26    73.1%      71.0%        0.3%   30.7%   18.91    0.00  1.85
+algorithm              10  99.3%    6.10    73.8%      70.8%        5.2%   20.9%   12.24    0.61  3.23
+
+-- P6  THE PROPOSAL = P5 + F1 (Press Advantage 52) + C1 (Coffee 60)   [F1 is ceiling-only. C1 is B24, already priced at +0.15pp on the floor.]
+encounter              lvl    win  rounds  HP-left  low-water  near-death  denial   dmg/T  breaks    PA
+karen                   3  96.5%    5.21    70.8%      56.6%        7.0%   22.6%   20.53    0.06  0.56
+karen                   4  99.2%    4.17    74.3%      65.4%        2.2%   29.2%   17.60    0.00  0.26
+chad                    5  97.3%    6.04    60.3%      44.2%       18.7%   24.4%   23.27    0.31  0.30
+chad                    6  99.7%    3.96    74.0%      72.4%        2.2%   40.5%   16.13    0.33  0.31
+grandma                 7  98.2%    8.64    73.0%      58.9%       12.5%   12.1%   11.39    0.93  1.85
+grandma                 8  99.2%    6.51    77.1%      73.1%        4.0%   15.4%   10.09    0.87  1.52
+restructuring_trio      7  99.5%    6.83    57.8%      39.2%       15.2%    4.6%   12.45    0.46  0.70
+restructuring_trio      8  99.7%    6.92    59.0%      43.4%       11.0%    3.3%   12.01    0.19  0.81
+meredith_boss           8  90.2%   12.94    58.1%      36.0%       35.8%   16.7%   20.67    0.26  1.56
+meredith_boss           9  98.3%    9.69    60.6%      48.0%       16.5%   22.7%   16.60    0.20  1.65
+regional_director      10  100.0%    5.82    61.4%      52.9%        3.5%   20.8%   24.17    0.00  1.05
+algorithm              10  98.8%    7.07    68.3%      60.0%       14.2%   19.2%   15.28    0.69  2.39

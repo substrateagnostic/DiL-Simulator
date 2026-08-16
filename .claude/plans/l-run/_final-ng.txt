@@ -1,0 +1,11 @@
+
+=== NEW GAME+ LAPS (400 runs/cell, COMPETENT) ===
+cand   encounter          lvl   FRESH    NG+1     NG+2     NG+3
+base   grandma              8   100.0%    95.8%    92.0%    80.8%
+base   meredith_boss        9    99.8%    40.8%    14.0%     5.5%
+base   regional_director   10   100.0%    87.3%    50.2%    29.5%
+base   algorithm           10   100.0%    73.5%    40.3%    23.8%
+P6     grandma              8    99.3%    89.3%    67.8%    51.2%
+P6     meredith_boss        9    99.0%    16.8%     1.5%     0.5%
+P6     regional_director   10   100.0%    63.7%    30.8%     9.0%
+P6     algorithm           10    98.0%    42.3%    21.0%    10.3%

@@ -1,0 +1,20 @@
+
+=== RECEPTION / ROGUELITE LOOP (400 runs/cell) ===
+The grind that funds the level-ups. A candidate that breaks this breaks pacing.
+cand   lvl  slot  policy       win     rounds   HP-left
+base     4     0  competent    94.0%     3.85    86.1%
+base     4     0  casual       62.5%    11.66    51.4%
+base     4     3  competent    76.5%     7.06    73.1%
+base     4     3  casual       18.0%    15.71    50.4%
+base     8     0  competent    99.3%     2.58    91.5%
+base     8     0  casual       78.3%    11.11    52.6%
+base     8     3  competent    89.8%     4.25    83.7%
+base     8     3  casual       43.8%    20.01    48.8%
+P6       4     0  competent    90.5%     4.47    81.8%
+P6       4     0  casual       62.3%    12.04    51.2%
+P6       4     3  competent    72.8%     7.67    66.2%
+P6       4     3  casual       19.3%    16.26    50.8%
+P6       8     0  competent    97.3%     2.58    91.0%
+P6       8     0  casual       80.5%    10.34    52.4%
+P6       8     3  competent    85.5%     4.89    81.5%
+P6       8     3  casual       37.8%    18.90    49.0%

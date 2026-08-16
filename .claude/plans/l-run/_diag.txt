@@ -1,0 +1,32 @@
+
+=== DIAGNOSIS — where does the difficulty leak? (300 runs/cell, shipped) ===
+One row per story rung, COMPETENT (shipped-kit) policy.
+eTurns = enemy turn attempts.  denial = fizzled + Broken share of them.
+quiet  = turns that landed but dealt zero damage (heal/buff/debuff/stun/confuse).
+dmg/T  = player HP lost per enemy turn ATTEMPT.  dmg/hit = per turn that actually hurt.
+
+encounter              lvl    win  rounds  HP-left  eTurns  denial   quiet  sealed   dmg/T  dmg/hit   TTK
+TTK = enemy turn ATTEMPTS needed to kill Andrew at that dmg/T, against the turns
+      he actually grants. A boss that needs 46 and gets 5 was never in the fight.
+karen                   3  99.0%    4.10    72.5%    4.10   29.8%   31.5%    0.1%   16.58    33.05    7.5
+karen                   4  99.3%    3.83    75.9%    3.83   33.6%   32.1%    0.5%   14.27    30.30    9.5
+chad                    5  99.3%    4.44    64.3%    4.44   41.0%    5.4%    6.0%   17.13    31.99    8.6
+chad                    6  100.0%    3.48    89.3%    2.51   61.6%    5.7%    7.2%    6.84    20.93   23.4
+grandma                 7  100.0%    6.22    87.4%    6.22   22.8%   72.4%    1.6%    6.51    72.82   26.4
+grandma                 8  99.7%    5.88    89.8%    4.89   25.3%   73.0%    2.3%    4.08    47.12   45.1
+restructuring_trio      7  100.0%    6.00    58.5%    9.67    7.7%   49.3%    0.4%   10.71    24.88   16.1
+restructuring_trio      8  100.0%    6.12    58.2%    9.78    6.8%   48.6%    0.9%   10.73    24.04   17.1
+meredith_boss           8  99.3%    7.97    75.3%    6.98   38.4%   48.8%    8.2%    8.71    40.87   21.1
+meredith_boss           9  99.7%    7.02    82.3%    6.03   40.8%   51.6%    8.6%    6.63    38.87   29.6
+regional_director      10  100.0%    4.22    75.7%    3.22   32.6%   30.2%    0.0%   16.03    28.01   13.0
+algorithm              10  100.0%    6.07    82.4%    5.15   25.9%   48.3%    1.4%    7.98    29.14   26.1
+
+--- CASUAL: does the floor ever deny an enemy turn? ---
+encounter              lvl    win  eTurns  denial   breaks  braces   dmg/T
+karen                   3  17.3%   12.28    0.0%    0.00    0.00   34.32
+karen                   4  44.0%   13.93    0.0%    0.00    0.00   32.80
+grandma                 7   4.7%   24.38    0.0%    0.00    0.00   16.32
+grandma                 8  21.7%   29.53    0.0%    0.00    0.00   15.09
+meredith_boss           9  24.0%   31.50    0.0%    0.00    0.00   35.30
+regional_director      10  61.7%   11.61    0.0%    0.00    0.00   49.41
+algorithm              10  88.7%   14.68    6.1%    0.00    0.00   21.42

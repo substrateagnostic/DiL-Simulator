@@ -1,0 +1,21 @@
+
+=== NG+ LADDER — 400 runs/cell, competent policy ===
+Entry rung  {"maxHP":1.7,"atk":1.45,"def":1.3,"xpReward":1.25}
+Per-lap     {"maxHP":1.15,"atk":1.15,"def":1.1,"xpReward":1.2}  (cap 3 laps, decay 0.35)
+
+Effective enemy multipliers:
+lap    maxHP    atk    def     xp
+NG      1.00   1.00   1.00   1.00
+NG+1     1.70   1.45   1.30   1.25
+NG+2     1.95   1.67   1.43   1.50
+NG+3     2.05   1.75   1.48   1.60
+
+Win rates — FRESH kit vs CARRIED kit (all abilities + maxed shop):
+encounter          lvl   FRESH@NG   CARRY@NG  CARRY@NG+1  CARRY@NG+2  CARRY@NG+3
+karen               4       81.0%    100.0%       95.0%       82.3%       66.5%
+chad                6       99.0%    100.0%      100.0%       99.5%       99.3%
+grandma             8       97.5%    100.0%       97.8%       96.8%       96.8%
+meredith_boss       9       88.5%    100.0%       94.8%       76.3%       71.3%
+algorithm          10       95.5%    100.0%       87.3%       65.3%       49.8%
+
+Ladder is correct when CARRY@NG+1 <= FRESH@NG (a second lap must not be easier).

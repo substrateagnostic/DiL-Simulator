@@ -1,0 +1,9 @@
+Win rates — FRESH kit vs CARRIED kit (all abilities + maxed shop):
+encounter          lvl   FRESH@NG   CARRY@NG  CARRY@NG+1  CARRY@NG+2  CARRY@NG+3
+karen               4       85.0%    100.0%       91.8%       82.8%       68.3%
+chad                6       98.3%    100.0%       99.8%      100.0%      100.0%
+grandma             8       94.8%    100.0%       96.0%       95.0%       94.0%
+meredith_boss       9       89.0%    100.0%       93.0%       77.5%       69.0%
+algorithm          10       97.3%    100.0%       86.5%       64.5%       48.0%
+
+Ladder is correct when CARRY@NG+1 <= FRESH@NG (a second lap must not be easier).
