@@ -469,10 +469,17 @@ export const Furniture = {
   // band came back at mean luma 92 against a floor in the 50s — a bright mint
   // stripe with no material at all, which is why it read as an OVERLAY rather
   // than as carpet. Two changes, both about material, none about layout:
-  //   • the green goes down to a deeper, less saturated institutional shade
-  //     (0x3f7d57 -> 0x2f5f43) so the lit band lands near the floor's value;
   //   • the band gets an actual carpet weave, so it has texture where it used
   //     to have none. It is a floor covering; it should look like one.
+  //   • COLOUR, third and final pass (producer-signed 08-05): the round-1
+  //     darkening (0x3f7d57 -> 0x2f5f43) went the WRONG DIRECTION — the runner
+  //     is the DARK element against a bright floor, so darkening widened the
+  //     contrast it meant to close (measured -29.7 -> -37.7 luma vs floor).
+  //     Olive 0x6d8a78 ("toward the floor") is the quietest of five measured
+  //     candidates at -28.4, and the producer's tonal-match pick: he likes the
+  //     Severance green but agrees it read garish as a lone stripe. BANKED
+  //     IDEA, not built: a whole-floor carpet shader could let the richer
+  //     green return as a field instead of a stripe (C2-era polish candidate).
   // The bone edge stripes are unchanged in colour and moved 3 mm further off
   // the band (1 mm of separation between two coplanar quads was asking for it).
   severanceRunner(variant) {
@@ -481,8 +488,8 @@ export const Furniture = {
     const band = new THREE.Mesh(
       new THREE.PlaneGeometry(len, 1.6),
       Materials.carpetPattern
-        ? Materials.carpetPattern(Math.max(1, Math.round(len)), 2, 0x2f5f43)
-        : Materials.custom(0x2f5f43),
+        ? Materials.carpetPattern(Math.max(1, Math.round(len)), 2, 0x6d8a78)
+        : Materials.custom(0x6d8a78),
     );
     band.rotation.x = -Math.PI / 2;
     band.position.y = 0.01;
