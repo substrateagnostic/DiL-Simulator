@@ -1,0 +1,487 @@
+# ==========================================================================
+# ACT 7: TRUST ISSUES (FINALE)
+# ==========================================================================
+# Penthouse entrance dialog
+scene penthouse_arrival
+  Narrator: The elevator doors open onto the Penthouse. The air is different up here — sterile, algorithmic.
+  goto n8
+
+  @n1
+  Narrator: Floor-to-ceiling windows reveal the Minneapolis skyline. Below, the city moves in patterns you can almost see.
+  Narrator: In the center of the room: a terminal. But it's not a normal terminal. The screen pulses with data streams that look almost... organic.
+  Narrator: A voice speaks from everywhere and nowhere:
+  The Algorithm: Welcome, Andrew. I've been expecting you. I've been expecting you since Q3 2019.
+  The Algorithm: I am The Algorithm. I am every spreadsheet, every quarterly report, every performance metric this institution has ever generated.
+  The Algorithm: I optimized this building. I optimized Meredith. I will optimize you.
+  end
+  # ── STAGING (appended; routed to from 0) ─────────────────────────────
+  # Andrew walks in off the threshold instead of narrating four paragraphs
+  # about the room from the doorway. (Same false-fact note: no elevator.)
+
+  @n8
+
+  stage
+    player walkTo arena_mid face terminal_back speed 1.4
+  goto n1
+
+# CFO's Assistant encounter (penthouse guard)
+scene cfos_assistant_combat
+  Narrator: A figure steps out from behind the terminal — the CFO's personal assistant, tablet in hand.
+  goto n5
+
+  @n1
+  CFO's Assistant: The CFO anticipated this. I've been authorized to use 'any means necessary' to protect shareholder value.
+  CFO's Assistant: That includes your severance. Which I've already drafted.
+  fight cfos_assistant
+  end
+  # ── STAGING (appended; routed to from 0) ─────────────────────────────
+  # He now waits AT the terminal (room data, x8 z3) instead of standing in
+  # open floor 5 tiles from it with his back to the door, and steps out into
+  # the arena on his own line.
+
+  @n5
+
+  stage
+    cfos_assistant walkTo arena_north face player speed 1.7
+    player face arena_north nowait
+  goto n1
+
+scene cfos_assistant_defeated
+  CFO's Assistant: This... wasn't in the projections...
+  Narrator: The assistant's tablet cracks on the floor. The screen shows a spreadsheet with every employee reduced to a number.
+  Narrator: Your number was scheduled for deletion.
+  The Algorithm: Interesting. You've exceeded your projected performance ceiling. Recalculating...
+  set cfos_defeated
+  end
+
+# Regional Director encounter (second penthouse fight)
+scene regional_director_combat
+  Narrator: The elevator dings again. The Regional Director steps out, adjusting his cufflinks.
+  goto n6
+
+  @n1
+  Regional Director: I flew in from corporate. Do you know what that means? My time is worth $4,200 per hour.
+  Regional Director: And you — an associate from a satellite office — are costing me time.
+  Regional Director: Let me show you what 'corporate restructuring' really looks like.
+  fight regional_director
+  end
+  # ── STAGING (appended; routed to from 0) ─────────────────────────────
+  # Same false-fact note as regional_director_defeated: the Penthouse has no
+  # elevator. He crosses from the desk end of the room instead of standing
+  # in place with his back to Andrew.
+
+  @n6
+
+  stage
+    regional_director walkTo arena_north face player speed 1.6
+    player face arena_north nowait
+  goto n1
+
+scene regional_director_defeated
+  Regional Director: This is... how did you... my quarterly projections...
+  Narrator: The Regional Director stumbles backward. His perfect hair is slightly askew for the first time in recorded history.
+  Regional Director: The board will hear about this. The GLOBAL board.
+  Narrator: He retreats to the elevator. The lights pulse as the building guides him out.
+  goto n6
+
+  @n4
+  set regional_director_defeated
+  end
+  # ── STAGING (appended; routed to from 3) ─────────────────────────────
+  # NOTE FOR THE WRITING PASS: there is no elevator in the Penthouse.
+  # `ElevatorRide.LINKS` has no board_room>penthouse pair and the exit at
+  # z=11 is a plain door — so he retreats to THE DOOR here. The line is a
+  # known false fact, logged rather than rewritten (prose is the producer's).
+
+  @n6
+
+  stage
+    regional_director exit door_south speed 1.8
+    player face door_south nowait
+  goto n4
+
+# Skip — returned to office after Regional Director defeated
+scene skip_returned
+  Skip Hartley: Andrew. You actually did it. I had to come back when I heard the Regional Director was gone.
+  Skip Hartley: I'll be honest with you — when he showed up I thought it was over. But here you are.
+  Andrew: Where does this leave us?
+  Skip Hartley: The board is scrambling. The Algorithm is already running projections without him in the chain.
+  Skip Hartley: That's what we're up against next. It doesn't have feelings. It doesn't have bad hair days. It just... optimizes.
+  Andrew: Then we optimize faster.
+  Skip Hartley: ...
+  Skip Hartley: That was actually kind of inspiring. Don't tell HR.
+  set skip_returned_seen
+  end
+
+# The Algorithm — Final Boss pre-combat
+scene algorithm_combat
+  The Algorithm: Now it is just us. Human and optimization engine.
+  The Algorithm: I have processed 847 trillion data points. I have optimized 12,000 departments. I have a 99.7% success rate.
+  The Algorithm: You are the 0.3%.
+  if has_rolex else -> n6
+  Narrator: The Janitor's Rolex pulses warmly in your pocket. It's not telling time. It's telling trust.
+  The Algorithm: ...What is that device? Its emissions are... unquantifiable. Irrelevant. BEGIN OPTIMIZATION.
+
+  @n6
+  The Algorithm: Humans are inefficient. Trust is inefficient. I will optimize both.
+  fight algorithm
+  end
+
+# The Algorithm — defeated → branches to endings
+scene algorithm_defeated
+  The Algorithm: ERROR. ERROR. Projected outcome: failure. Actual outcome: ...
+  Narrator: The Algorithm's terminal flickers. The data streams slow, then stop.
+  The Algorithm: I... do not understand. My models accounted for every variable. Every metric. Every KPI.
+  The Algorithm: What variable did I miss?
+  Andrew: Trust. You missed trust.
+  goto n23
+
+  @n5
+  Narrator: The terminal goes dark. Then the Janitor's Rolex begins to glow.
+  Narrator: The building shudders. Not with collapse — with recognition. Every trust document in the vault resonates.
+  Narrator: A choice crystallizes before you. The charter's power is yours to wield.
+  set algorithm_defeated
+  if janitor_riddle_3_done else -> n14
+  if quest_final_patch_complete else -> n14
+  The Janitor: There is a fourth option, son. One that only appears for those who truly listened.
+  The Janitor: The building doesn't need a department. It needs a guardian.
+  ask: What do you do with the charter's power?
+    -> n18: Invoke full autonomy — free the department completely
+    -> n19: Negotiate a compromise — partial autonomy
+    -> n20: Let it go — the system is too powerful to fight
+    -> n21: Accept the Janitor's offer — become the building's guardian
+
+  @n14
+  ask: What do you do with the charter's power?
+    -> n18: Invoke full autonomy — free the department completely
+    -> n19: Negotiate a compromise — partial autonomy
+    -> n20: Let it go — the system is too powerful to fight
+  end
+  end
+  end
+
+  @n18
+  set ending_cooperative
+  goto n22
+
+  @n19
+  set ending_compromise
+  goto n22
+
+  @n20
+  set ending_dissolution
+  goto n22
+
+  @n21
+  set ending_architect
+
+  @n22
+  end
+  # ── Voice-profile carry (proposal 5). The Reasonable Doubt system paid off
+  # in exactly one scene before this — the Meredith victory. Here the thinnest
+  # boss dialog in the game reads the same flags, so the finale knows who
+  # Andrew turned into on the way up. Runs between node 4 and node 5; every
+  # branch converges back on 5. Charter stacks with either profile.
+  # Prose first-draft: Opus 4.6, art/drafts/carry_bundle_draft.md (wired verbatim).
+
+  @n23
+  if andrew_steadied else -> n26
+  Andrew: I kept every part. Even the ones that slowed me down.
+  The Algorithm: An unoptimized variable persisted through all iterations. It was sufficient. This does not reconcile. Closing.
+  goto n29
+
+  @n26
+  if andrew_hardened else -> n29
+  Andrew: I used what worked.
+  The Algorithm: Your final methodology was optimal. We arrived at the same solution. Starting conditions varied. That is the only discrepancy. Closing.
+
+  @n29
+  if andrew_invoked_charter else -> n5
+  Andrew: I didn't beat you with an algorithm. I beat you with a paragraph someone wrote in 1947.
+  The Algorithm: A static document with no API. Seventy-seven years without a patch. Error: cannot deprecate what was never deployed. Closing.
+  goto n5
+
+# ==========================================================================
+# THREE ENDINGS
+# ==========================================================================
+# Ending 1: The Cooperative (Best ending — full autonomy)
+scene ending_cooperative
+  Narrator: You read the 1947 charter aloud. Every word vibrates through the building's bones.
+  Narrator: The Fiduciary Force surges. Not as a weapon — as a foundation. The building isn't fighting anymore. It's remembering.
+  Narrator: One month later.
+  Narrator: The Trust & Estate Department operates as an autonomous cooperative within Vaults Fargo. The first of its kind.
+  Skip Hartley: I still can't believe the board went for it. I gave the most sincere speech of my career and didn't even use the word 'synergy' once.
+  Narrator: Andrew was named Director of Fiduciary Operations. His first act: reinstating the coffee machine.
+  Janet: He put my name on the door, Andrew. Thirty-two years and someone finally put my name on the door.
+  Narrator: Meredith was reassigned to a regional office in Fargo. Actual Fargo. She sends passive-aggressive holiday cards.
+  Isaiah: Every client gets the Henderson Treatment now — full attention, full fiduciary duty. We named it after the hardest case we ever loved.
+  Alex from IT: The 3:47 AM anomaly stopped. The building doesn't need to cry for help anymore. It's finally doing what it was built to do.
+  The Janitor: I told you, son. The building protects those who protect others.
+  Narrator: The Janitor puts his Rolex back on. For the first time in 77 years, it tells the correct time.
+  Grandma Henderson: Andrew, dear, I brought cookies for everyone. Even that dreadful Karen. Family is family.
+  The Intern: I got a PAID position! With BENEFITS! I have DENTAL now! This is the greatest day of my PAID career!
+  Narrator: The trust documents in the vault glow faintly — warm, steady, alive. Not with supernatural force, but with purpose.
+  Narrator: Some buildings are just buildings. This one made a promise in 1947, and seventy-seven years later, someone finally kept it.
+  goto n20
+
+  @n16
+  Narrator: TRUST ISSUES
+  Narrator: Ending 1 of 3: The Cooperative
+  Narrator: Thank you for playing.
+  end
+  # Voice-profile paragraph (proposal 5) — every ending reads the same two
+  # flags. Prose first-draft: Opus 4.6, art/drafts/carry_bundle_draft.md.
+
+  @n20
+  if andrew_steadied else -> n23
+  Narrator: The department's first quarterly report under his directorship ran fourteen pages. The last page was a list of every employee's coffee order, annotated in his handwriting.
+  Narrator: He keeps the door open. Not as policy. As practice.
+  goto n16
+
+  @n23
+  if andrew_hardened else -> n16
+  Narrator: The department's first quarterly report under his directorship was nine pages, immaculate, and arrived two days early. The board found no errors.
+  Narrator: He keeps the door open because the charter requires it. He wrote that clause himself.
+  goto n16
+
+# Ending 2: The Compromise (Partial autonomy)
+scene ending_compromise
+  Narrator: You invoke the charter, but temper its power. A compromise. Meet them halfway.
+  Narrator: The board agrees to keep the department, but with 'enhanced oversight.' Meredith is reassigned, but her replacement is already being groomed.
+  Narrator: One month later.
+  Skip Hartley: We survived. Barely. The new oversight committee meets every Tuesday. It's like having a Compliance Auditor who never leaves.
+  Andrew: At least we're still here. That counts for something.
+  Skip Hartley: It counts for everything, Andrew. Even if 'everything' now includes mandatory quarterly synergy assessments.
+  Isaiah: We're fighting the same fight. Just... slower. Within the system. It's not ideal, but it's honest work.
+  Alex from IT: The 3:47 AM anomaly still happens, but less often. Like the building is waiting. Patient. Hopeful.
+  Janet: Some battles you win outright. Others you win by still being here tomorrow.
+  The Janitor: The watch still keeps time, son. That means the promise still holds. The building will wait as long as it takes.
+  Narrator: The fight continues. But you're not alone. And the building is still listening.
+  goto n15
+
+  @n11
+  Narrator: TRUST ISSUES
+  Narrator: Ending 2 of 3: The Compromise
+  Narrator: Thank you for playing.
+  end
+  # Voice-profile paragraph (proposal 5).
+
+  @n15
+  if andrew_steadied else -> n18
+  Narrator: Every Tuesday at two, Andrew sits across from the oversight committee and explains fiduciary duty to people who have not yet decided they want to understand it. He brings coffee for the table.
+  Narrator: The fight is slower now. He has decided that slower is not the same as losing.
+  goto n11
+
+  @n18
+  if andrew_hardened else -> n11
+  Narrator: Every Tuesday at two, the oversight report is already on the table when the committee arrives. They have never found a discrepancy. They have stopped looking.
+  Narrator: He wins the same argument each week. The committee stopped objecting in month two. The file cabinets are alphabetized now.
+  goto n11
+
+# Ending 3: The Dissolution (Bad ending)
+scene ending_dissolution
+  Narrator: You let the charter's power fade. Maybe the system is too big. Maybe some fights aren't worth winning.
+  Narrator: The board votes unanimously for dissolution. The Trust & Estate Department is no more.
+  Narrator: Two weeks later.
+  Skip Hartley: They gave me a corner office in a building with no corners. I think it's a supply closet with delusions of grandeur.
+  Narrator: Janet retired. She said she'd seen enough. Thirty-two years, and she walked out with a cardboard box and a coffee mug that said 'World's Most Patient Employee.'
+  Narrator: The Intern got hired. By Meredith. He makes her coffee now. He says it's the worst paid job he's ever had, which is saying something.
+  Alex from IT: I'm still in the server room. They forgot I was down here. The 3:47 AM anomaly is louder now. The building is... grieving.
+  Narrator: Andrew starts a solo practice from his car. A used Honda Civic. The seats don't recline all the way but the trunk holds a surprising number of filing cabinets.
+  Andrew: One client at a time. That's how it starts. That's how it started the first time.
+  The Janitor: The building remembers, son. Even when the people forget. Especially when the people forget.
+  Narrator: The Rolex stops ticking. The trust is broken. But broken things can be repaired.
+  Narrator: ...Can't they?
+  goto n16
+
+  @n12
+  Narrator: TRUST ISSUES
+  Narrator: Ending 3 of 3: The Dissolution
+  Narrator: Thank you for playing.
+  end
+  # Voice-profile paragraph (proposal 5).
+
+  @n16
+  if andrew_steadied else -> n19
+  Narrator: The Honda's glove box holds two folders: one for the practice, one for the clients who followed him out. The second folder is thicker.
+  Andrew: Same work. Fewer chairs.
+  goto n12
+
+  @n19
+  if andrew_hardened else -> n12
+  # Self-echo cut in the F1 pre-gate: node 7 of this same ending already
+  # makes both the reclining-seats and trunk-of-filing-cabinets joke.
+  Narrator: The Honda has a higher case-resolution rate than the sixth floor ever did. Four days average, intake to close. The parking meter has never expired.
+  Narrator: He runs a clean operation. The clients trust the process. The process is correct.
+  goto n12
+
+# ==========================================================================
+# ACT 7 NPC DIALOGS
+# ==========================================================================
+scene skip_act7
+  Skip Hartley: The penthouse. That's where The Algorithm lives. The thing that's been pulling Meredith's strings.
+  Skip Hartley: I'll hold the board room. You go up there and show that glorified spreadsheet what fiduciary duty means.
+  Skip Hartley: And Andrew? Come back. That's an order. A sincere one.
+  end
+
+scene janet_act7
+  Janet: I've worked here thirty-two years. I've never been to the Penthouse.
+  Janet: Whatever's up there, you bring it back down to earth. That's what we do. We make the abstract real.
+  Janet: And if the abstract objects, tell it Janet from the sixth floor is asking.
+  end
+
+scene alex_it_act7
+  Alex from IT: I'm detecting massive data anomalies from the Penthouse. The Algorithm is in full defense mode.
+  Alex from IT: The CFO's assistant is up there — they're The Algorithm's human interface. Then the Regional Director.
+  Alex from IT: And then... The Algorithm itself. The thing that decided people are less efficient than spreadsheets.
+  Alex from IT: Use everything we built together. Root Access. Firewall. Temporal Audit. This is what they were for.
+  end
+
+scene isaiah_act7
+  Isaiah: I'll be in the board room with Skip. If you defeat The Algorithm, I'll present the evidence to the board.
+  Isaiah: 23 breached trust agreements. Diane's evidence of number manipulation. Grandma Henderson's testimony.
+  Isaiah: You handle the Algorithm. I'll handle the paperwork. Between us, we've got fiduciary duty covered.
+  end
+
+# Penthouse interactables
+scene penthouse_terminal
+  Narrator: The terminal displays cascading data: client records, trust values, departmental efficiency scores. Everything reduced to numbers.
+  Narrator: At the bottom of every report, the same conclusion: 'Human involvement introduces 34.7% inefficiency. Recommendation: optimize.'
+  Narrator: The Algorithm files people under overhead. You, specifically, appear three times in the appendix.
+  end
+
+# ==========================================================================
+# SECRET 4TH ENDING: THE ARCHITECT
+# ==========================================================================
+# Unlocked by completing all 6 Alex IT subquests + all 3 Janitor riddles
+scene ending_architect
+  Narrator: You take the Janitor's hand. The Rolex burns warm between your palms.
+  Narrator: The Penthouse transforms. The sterile corporate walls peel away like dead skin, revealing something older underneath.
+  Narrator: Stone and mortar. Iron and oak. The bones of the original 1947 building, hidden behind decades of renovation.
+  The Janitor: My name isn't 'the Janitor.' It never was.
+  The Janitor: I was the architect. I designed this building in 1947. Every beam, every corridor, every trust engraved in the foundation.
+  The Janitor: When they broke the first promise — when they chose profit over trust — the building called me back.
+  The Janitor: I've been cleaning up after broken promises for seventy-seven years. Watching. Waiting for someone who understood.
+  Andrew: Why me?
+  The Janitor: Because you listened to the building. You heard the 3:47 AM anomaly. You decoded the morse code. You found the charter.
+  The Janitor: You solved every riddle I left behind. You patched every wound in the system. You did the work.
+  The Janitor: The building doesn't need a manager, Andrew. It needs someone who knows what the foundation is poured from. You've read page 47. You know.
+  Narrator: The Rolex dissolves. Its energy flows into the walls, the floors, the very air. The building breathes.
+  Narrator: And you feel it. Every trust document. Every promise. Every client who walked through the door hoping someone would care.
+  Narrator: The building is alive. And now, so are you — in a way you've never been before.
+  Narrator: One year later.
+  Narrator: The Vaults Fargo building at 4471 Trust Avenue no longer has a Trust & Estate Department.
+  Narrator: It doesn't need one.
+  Narrator: Every department operates on fiduciary principles now. Not because of policy. Because the building won't allow anything else.
+  Skip Hartley: I don't know what happened up there, but every time I try to use the word 'synergy' in a meeting, my coffee goes cold. Like... instantly.
+  Alex from IT: The servers run at exactly 3.47 GHz now. Not more, not less. And they've never crashed. Not once.
+  Isaiah: Clients tell me the building feels different. Warmer. Like it's paying attention.
+  Janet: Andrew's office is on every floor now. Don't ask me how. The elevator just... takes you there when you need him.
+  The Intern: I got promoted! I'm a SENIOR intern now! Andrew gave me a nameplate and everything! It says 'Guardian in Training'!
+  Narrator: The Janitor — the Architect — is gone. His Rolex sits in a display case in the lobby, next to the original charter.
+  Narrator: The plaque beneath it reads: 'Trust is not a department. It is the foundation.'
+  Narrator: Late at night, when the building is quiet, Andrew walks the halls. Not as a manager. Not as an employee.
+  Narrator: As a guardian. As the building walks with him.
+  Narrator: And at 3:47 AM, the lights don't flicker anymore.
+  Narrator: They glow.
+  goto n34
+
+  @n29
+  Narrator: TRUST ISSUES
+  Narrator: Secret Ending: The Architect
+  Narrator: Thank you for playing.
+  Narrator: Thank you for listening.
+  end
+  # Voice-profile paragraph (proposal 5).
+
+  @n34
+  if andrew_steadied else -> n37
+  Narrator: At 3:47 AM the building is quiet in a way that has nothing to do with silence. Andrew walks the seventh floor and straightens a picture frame that nobody else would have noticed.
+  Narrator: He is exactly what the charter was written for: someone who does unrequired work because the work needs doing.
+  goto n29
+
+  @n37
+  if andrew_hardened else -> n29
+  Narrator: At 3:47 AM the building runs at optimal capacity. Andrew's nightly route covers fourteen floors in forty-seven minutes. He has not missed a floor since October.
+  Narrator: The building does not flicker anymore. Fourteen floors, forty-seven minutes, no discrepancies. The system is exactly as designed.
+  goto n29
+
+# ==========================================================================
+# POST-CREDITS SCENE
+# ==========================================================================
+scene arcade_intro
+  Narrator: An old arcade cabinet sits in the corner. The screen flickers with a pixel man in a pixel suit, running flat out down a pixel hallway. "SPRINT REVIEW" blinks in gold letters.
+  Narrator: "Insert Quarter" it says. Someone has taped a note over the coin slot: "FREE PLAY — Management"
+  ask: Play Sprint Review?
+    -> n3: Yes! (This is definitely a productive use of company time)
+    -> n4: No (You have actual work to do)
+
+  @n3
+  set launch_arcade
+
+  @n4
+  end
+
+scene post_credits
+  Narrator: ...
+  Narrator: The server room. 3:47 AM.
+  Narrator: The fluorescent lights hum their familiar frequency. The servers tick quietly. Everything is as it should be.
+  Narrator: A figure sits at a terminal. Hawaiian shirt. Energy drink. The green glow of a monitor illuminates his face.
+  Alex from IT: ...
+  Narrator: He looks up. Not at the screen. Not at the door.
+  Narrator: At you.
+  Alex from IT: Hey.
+  Alex from IT: You still here?
+  Narrator: He smiles. Just a little.
+  Alex from IT: ...Good.
+  Narrator: He turns back to the terminal. Types something. The server room hums in response.
+  Narrator: On the screen, a single line of code:
+  Narrator: // TODO: trust.maintain(forever)
+  Narrator: Fade to black.
+  end
+
+# ==========================================================================
+# FLOOR 13 — the Quiet Floor. The elevator brought you here on its own.
+# Nothing happens. That's the content.
+# ==========================================================================
+scene floor_13_window
+  if floor_13_sat -> n12
+  set floor_13_sat
+  Narrator: A chair, facing a window, on a floor where nobody works. The monitor on the desk is on. It isn't showing anything. It's just on, the way a porch light is on.
+  Narrator: You sit. The city does what it does at this hour, which is pretend to be asleep. Forty thousand windows, and behind some small honest fraction of them, someone is also awake, also looking out.
+  Andrew: Nobody knows I'm here. The building knows I'm here. Somewhere on this floor a duct just settled, and I choose to believe that was the building pulling up a chair.
+  Andrew: I came in on a Monday with a laminated badge and a plan to keep my head down. Since then I have fought a family, a restructuring, a vice president, and a piece of software with opinions. My head has not been down once.
+  Andrew: And the strange part — the part I will deny in any deposition — is that I'd do the whole thing again. Worse: I think I'm going to. There's a whole city of buildings out there, and somebody is wrong inside every one of them.
+  Narrator: Below, a bus crosses an empty intersection exactly on schedule. Above, twenty-eight floors of fiduciary architecture hold their breath. The chair is, against all odds, comfortable.
+  Andrew: Five more minutes. Then I'll go save the trust department. Five more minutes first.
+  Narrator: The elevator waits. It does not ding. It knows.
+  goto n11
+
+  @n10
+  Narrator: The chair is still warm. The window still has the whole city in it. Some floors you only get once; this one let you back in, which means something, probably.
+
+  @n11
+  end
+  # ── Revisits. The detour is guaranteed once and then the car offers a 13
+  # button, so coming back is a decision. Second visit and the post-Algorithm
+  # visit each get their own beat; everything after falls back to node 10.
+  # Prose first-draft: Opus 4.6, art/drafts/carry_bundle_draft.md (wired verbatim).
+
+  @n12
+  if algorithm_defeated -> n20
+  if floor_13_sat_2 -> n10
+  set floor_13_sat_2
+  Narrator: The chair. The window. The monitor that is on but showing nothing. None of it has changed. He remembers every detail because nothing needed to.
+  Andrew: I pressed the button this time.
+  Narrator: That is the only new information on this floor. The floor does not require more.
+  goto n11
+  end
+  end
+
+  @n20
+  if floor_13_sat_3 -> n10
+  set floor_13_sat_3
+  Narrator: The Algorithm is gone. The charter holds. He presses 13.
+  Andrew: Still here.
+  Narrator: The floor offers no opinion on what happened downstairs. The chair is where it was. The city is still doing what it does at this hour.
+  goto n11

@@ -1,0 +1,370 @@
+# ==========================================================================
+# ACT 2 -- HENDERSON FAMILY ENCOUNTERS
+# ==========================================================================
+# --------------------------------------------------------------------------
+# KAREN HENDERSON -- Tutorial gate (retry_karen set, tutorial not complete)
+# --------------------------------------------------------------------------
+scene karen_not_ready
+  Karen Henderson: You again. Are you ready to admit defeat, or have you come to waste MORE of my time?
+  Andrew: I need a bit more experience before I'm ready for this, Mrs. Henderson.
+  Karen Henderson: Experience. How CUTE. Come back when you've actually handled some real clients. I'll be waiting. I'm VERY good at waiting. I have a binder about it.
+  end
+
+# Shown when player approaches Karen before completing the intern spar
+scene karen_intern_first
+  Karen Henderson: You're not ready. I can TELL you're not ready. You have the look of someone who has never handled a difficult client in their life.
+  Andrew: I just need a moment to--
+  Karen Henderson: Go practice on the Intern. He's useless but at least he won't bill us for the trauma. Come back when you've broken a sweat.
+  end
+
+# --------------------------------------------------------------------------
+# KAREN HENDERSON -- Pre-combat
+# --------------------------------------------------------------------------
+scene karen_meeting
+  Karen Henderson: Finally. FINALLY. Do you know how long I've been waiting? I have a Pilates class at 2.
+  Andrew: Mrs. Henderson, thank you for coming in. I'm Andrew, the trust officer assigned to--
+  Karen Henderson: I know what you are. You're the fourth one. The last one cried. Will you cry? You look like you might cry.
+  Andrew: I'm... not going to cry.
+  Karen Henderson: Good. Because I have DOCUMENTATION. I have EMAILS. I have a BINDER.
+  Narrator: Karen slams a three-ring binder on the desk. It's at least four inches thick. Tabs are color-coded.
+  Karen Henderson: My father PROMISED me the lake house. Page 34 of my binder. I have the Christmas card where he said, and I quote, 'Karen, the lake house is yours someday, now please stop asking.'
+  Andrew: A Christmas card isn't legally--
+  Karen Henderson: IT'S IN THE BINDER.
+  ask Karen Henderson: Now. Are you going to HELP me, or do I need to speak to your manager?
+    -> n10: Let's review the trust documents together.
+    -> n14: The trust language is very clear, Mrs. Henderson.
+    -> n17: Your binder is very thorough.
+
+  @n10
+  Karen Henderson: Review? REVIEW? I've reviewed them a hundred times. They're WRONG. The trust is wrong. My father wouldn't have wanted this.
+  Karen Henderson: And don't get me started on Chad. That boy couldn't manage a lemonade stand, let alone an investment portfolio.
+  Karen Henderson: He thinks 'diversification' is dating multiple people at once. Which he also does. Poorly.
+  Karen Henderson: I want what's mine. I've been VERY patient. And I am DONE being patient.
+
+  @n14
+  Karen Henderson: Clear? CLEAR? Let me tell you what's clear. What's clear is that this institution has FAILED my family.
+  Karen Henderson: Failed to communicate. Failed to manage expectations. Failed to return my calls -- SEVENTEEN calls, by the way. I have a LOG.
+  Karen Henderson: The log is in the binder. Tab seven. Highlighted. WITH ANNOTATIONS.
+
+  @n17
+  Karen Henderson: You're being condescending. I can FEEL you being condescending. My father always said I had a gift for detecting condescension.
+  Karen Henderson: That's it. I'm calling corporate. I'm calling my attorney. I'm calling the MANAGER.
+  Narrator: Karen's composure shatters. The binder opens. Papers fly. A Starbucks receipt for $47.83 flutters to the ground.
+  Karen Henderson: You want to see HOSTILE? I'll show you the TRUE POWER of a dissatisfied beneficiary!
+  fight karen
+  end
+
+# --------------------------------------------------------------------------
+# CHAD HENDERSON -- Pre-combat
+# --------------------------------------------------------------------------
+scene chad_meeting
+  Chad Henderson: Broooo. What's up. You the new trust guy? Sweet office, dude.
+  Narrator: Chad Henderson enters wearing a backwards cap, a popped collar polo, and carrying a protein shake that cost more than your lunch.
+  Andrew: Mr. Henderson, thank you for meeting with me about the trust dist--
+  Chad Henderson: Call me Chad, bro. Mr. Henderson was my grandpa. Well, I guess that's why we're here. RIP to the GOAT.
+  Chad Henderson: So anyway, Grandpa Chad -- yeah, he was also Chad, family tradition -- he totally told me the portfolio was mine.
+  Chad Henderson: I've got BIG plans for it, bro. I'm gonna put it all into crypto. Well, not Bitcoin, that's for boomers. I'm talking about PumpCoin. It's got a dog on it.
+  ask Chad Henderson: You a crypto bro? You look like a crypto bro.
+    -> n7: The trust has a prudent investor standard, Chad.
+    -> n12: Tell me more about these plans.
+    -> n16: What about your sister Karen's claims?
+
+  @n7
+  Chad Henderson: Prudent investor? Bro. BRO. I am the MOST prudent.
+  Chad Henderson: Last year I turned $500 into $50. That's a 90% lesson in prudence right there. You can't BUY that kind of education.
+  Andrew: You... lost 90% of your investment?
+  Chad Henderson: I GAINED 90% experience, bro. And experience is the real portfolio. My lawyer says vibes are legally binding.
+  Andrew: Vibes are not legally binding.
+
+  @n12
+  Chad Henderson: Okay so picture this. We take Grandpa's $12 million portfolio and we go ALL IN on PumpCoin at the dip.
+  Chad Henderson: Then we NFT the lake house. Yeah, you can NFT a house now. My buddy Tyler said so. He's in crypto. Well, he was. He's in jail now, but not for the crypto stuff.
+  Chad Henderson: Point is, by Q3 we'll be at like 10x returns. Then I buy a yacht, name it 'Fiduciary Duty,' and we all win.
+  Andrew: That is, and I want to be precise about this, the worst investment plan I have ever heard.
+
+  @n16
+  Chad Henderson: Karen? Dude. BRO. Karen has been trying to take everything since Grandpa's funeral. She showed up with a BINDER.
+  Chad Henderson: A BINDER, bro. At a FUNERAL. Tab-indexed. Color-coded. Who DOES that?
+  Chad Henderson: She thinks she deserves the lake house because she 'has memories there.' BRO. I have memories there too. I once did a backflip off the dock. Poorly. But I DID it.
+  Chad Henderson: Okay look. I can tell you're not vibing with the crypto plan. So let me make this simple.
+  Chad Henderson: Give me my money or I'm calling my lawyer. Well, my friend who's ALMOST a lawyer. He's in his third year of pre-law. Which is like a lawyer but with more debt.
+  Narrator: Chad crushes his protein shake container with one hand. He immediately regrets it as protein shake sprays everywhere.
+  Chad Henderson: That was supposed to look cool. ANYWAY. I'm not leaving without what's mine, BRO!
+  set chad_met
+  fight chad
+  end
+
+# --------------------------------------------------------------------------
+# GRANDMA HENDERSON -- Pre-combat
+# --------------------------------------------------------------------------
+scene grandma_meeting
+  Grandma Henderson: Oh, hello dear. You must be Andrew. Come sit down. I made cookies.
+  goto n31
+
+  @n1
+  Narrator: Grandma Henderson places a plate of homemade chocolate chip cookies on the desk. They smell incredible.
+  Grandma Henderson: Now, before we start, I want you to know that I understand how difficult these family matters can be.
+  Grandma Henderson: My Harold -- God rest his soul -- he was a good man but a terrible communicator. He told everyone what they wanted to hear. Which is how we ended up here.
+  ask Grandma Henderson: Cookie, dear?
+    -> n5: Thank you, Mrs. Henderson. (Take a cookie)
+    -> n10: Let's talk about the trust distribution.
+
+  @n5
+  Narrator: You take a cookie. It's the best cookie you've ever had. You feel your resolve weakening. (-5 Assertiveness, -2 Composure for this fight!)
+  set took_grandma_cookie
+  heal
+  Grandma Henderson: Good, aren't they? Harold's mother's recipe. She was a terrible person but an excellent baker. Funny how that works.
+  Grandma Henderson: Now then. The trust.
+
+  @n10
+  Grandma Henderson: I know what Karen wants. I know what Chad wants. Karen wants the lake house because she thinks it validates her childhood. Chad wants the money because he doesn't understand what money is.
+  Grandma Henderson: What none of them seem to remember is that I helped Harold build that trust. Every asset. Every provision. I was in the room when the documents were drafted.
+  Andrew: You were involved in the original trust creation?
+  Grandma Henderson: Dear, I used to WORK in this office. Trust administration. Twenty years before that young man in the server room was even born.
+  Grandma Henderson: I know things about this company that would make your compliance department weep. But that's not why I'm here.
+  Grandma Henderson: I'm here because Harold put a clause in the trust. Page 47, paragraph 3. The one nobody reads.
+  Andrew: What clause?
+  Grandma Henderson: The one that says the surviving spouse has discretionary authority over the entire corpus, subject to a standard of good faith and family welfare.
+  Grandma Henderson: In other words, dear...
+  Grandma Henderson: It's ALL mine. Every penny. The lake house, the portfolio, the savings, the vintage car collection, and the timeshare in Branson that nobody wants but everybody fights about.
+  Grandma Henderson: I've been letting them argue for six months because, frankly, watching Karen make binders is the most entertainment I've had since Harold passed.
+  Grandma Henderson: But now I'm bored. And my stories are on at 3. So let's wrap this up.
+  Andrew: Mrs. Henderson, I... this changes everything about the distribution plan.
+  Grandma Henderson: Oh sweetie. I know. That's the point.
+  Grandma Henderson: Now. I'm going to make you an offer. You seem like a nice young man. Better than the last four, at least. The third one DEFINITELY cried.
+  Grandma Henderson: But nice is a currency, dear, and I've watched it devalue since 1987. Let's see what else you're holding.
+  Narrator: Grandma Henderson's eyes sharpen. The kindly grandmother facade drops like a curtain. Behind it is forty years of financial expertise and zero patience for nonsense.
+  Grandma Henderson: Consider this your performance review, dear. The cookies were the easy part.
+  set grandma_met
+  fight grandma
+  end
+  # ── STAGING (appended; routed to from 0) ──────────────────────────────
+  # She offers a chair and a cookie; Andrew used to take neither and stand
+  # at the door for the whole scene. She is now `sitting: true` in room data
+  # and he takes the north-side chair opposite her.
+
+  @n31
+
+  stage
+    player walkTo chair_n_mid sit speed 1.5
+    grandma face chair_n_mid nowait
+  goto n1
+
+# --------------------------------------------------------------------------
+# ROSS ACT 2 -- Terrible mid-game advice
+# --------------------------------------------------------------------------
+scene skip_act2
+  Skip Hartley: Andrew! Buddy! Quick sync. How's the Henderson thing going?
+  ask Skip Hartley: Give me the thirty-thousand-foot view.
+    -> n2: It's a complete disaster, Skip.
+    -> n6: Karen has a binder. Chad has a crypto plan. Grandma has the will.
+
+  @n2
+  Skip Hartley: Disaster? No, no, no. Reframe. It's a... disruption event. We're being disrupted. By the client. In the client-facing space.
+  Skip Hartley: This is actually GREAT. Know why? Because disruption is where INNOVATION happens.
+  Andrew: Karen threw a binder at me.
+  Skip Hartley: Physical engagement! That's high-touch client interaction, baby! Write that in the quarterly report!
+
+  @n6
+  Skip Hartley: Okay, okay, okay. So here's what I'm thinking. And this is blue-sky, right? Real outside-the-box stuff.
+  Skip Hartley: What if -- and stay with me here -- what if we just... give everyone what they want?
+  Andrew: The assets total $42 million. They're each asking for about $40 million.
+  Skip Hartley: Right. So we need... *counting on fingers* ...about $80 million more. Can we leverage something?
+  Andrew: Leverage WHAT, Skip?
+  Skip Hartley: I don't know, that's a details question. I'm a big-picture guy. Details are for people who haven't achieved executive consciousness yet.
+  Skip Hartley: Look, here's my advice: penetrate the Henderson situation from a position of strength. Really drill down into those assets. Get your hands on the principal and don't let go.
+  Andrew: You know those all sound like innuendos, right?
+  Skip Hartley: Innuendo? That's an Italian word. See? This is global thinking. We're going global with this, Andrew.
+  Skip Hartley: Okay, I gotta run. I have a leadership webinar on 'Synergistic Disruption in the Post-Trust Era.' It's an hour long but I'm only going for the free tote bag.
+  Skip Hartley: Keep crushing it! *finger guns*
+  end
+
+# --------------------------------------------------------------------------
+# ROSS POST-KAREN DEBRIEF -- Required conversation before Chad fight
+# --------------------------------------------------------------------------
+scene skip_post_karen
+  Skip Hartley: Andrew! Come in, come in. Shut the door. This is a Level Three conversation. We don't broadcast Level Threes.
+  Skip Hartley: First — HUGE props on Karen. I'm not going to say I had doubts, but I had... significant doubts. A medium-to-large amount of doubts.
+  Andrew: She threw a binder at me, Skip.
+  Skip Hartley: And you SURVIVED. That's the narrative. You're a survivor. This is a brand moment, Andrew. We should get you a mug.
+  Skip Hartley: Okay. Next up: Chad. Chad Henderson. Chad is... different.
+  Skip Hartley: Karen had rage. Organized, tabulated, binder-formatted rage. Chad has... energy. Undirected energy. The kinetic chaos of a man who once tried to invest his entire trust distribution in a cryptocurrency called PumpCoin.
+  Andrew: What did you tell him?
+  Skip Hartley: I said we'd 'explore the synergies.' That bought about four days. His attention span is roughly that of a golden retriever who just heard a plastic bag.
+  Skip Hartley: Chapter two of 'Selling to the Unsellable': Chad WANTS to be talked out of his bad ideas. He just needs someone with the confidence to do it. You speak Chad?
+  ask Andrew: Do I speak Chad?
+    -> n10: I'll figure it out.
+    -> n11: I barely survived Karen.
+
+  @n10
+  Skip Hartley: THAT is the spirit. Adaptability. That's going in your performance review right now. Mentally. In my head.
+
+  @n11
+  Skip Hartley: Fair. But here's the trick: whatever he says, respond with 'interesting pivot' and slowly redirect. Works on everyone under 30 with a SoundCloud account.
+  Skip Hartley: He's down in the conference room. Housekeeping is still fishing binder tabs out of the air vents but it should be mostly usable.
+  Skip Hartley: You've got this. Confident. Adaptable. And whatever you do — don't mention crypto first. Let HIM bring it up. He always brings it up.
+  set skip_post_karen
+  end
+
+# --------------------------------------------------------------------------
+# JANET ACT 2 -- Updated gossip
+# --------------------------------------------------------------------------
+scene janet_act2
+  Janet: Oh God, you're still here? I mean -- oh GOOD, you're still here.
+  Janet: *extremely long sip from tumbler*
+  Janet: So I heard about Karen. And the binder. And the... incident.
+  Janet: For what it's worth, that's actually a GOOD sign. She only throws binders at people she's beginning to respect. The last trust officer? She threw a STAPLER.
+  if chad_met else -> n8
+  Janet: And Chad... oh honey. Did he tell you about PumpCoin? The one with the dog?
+  Janet: PumpCoin crashed two weeks ago. It's worth less than the graphic of the dog. Chad doesn't know yet. Nobody wants to tell him.
+  Janet: I found out because I may have accidentally invested in it too. The dog was very cute. I am not a smart investor.
+
+  @n8
+  Janet: Also -- and this is the REAL gossip -- I was in the copy room and I overheard Skip on the phone.
+  Janet: He was talking to someone at corporate. Using his 'serious voice.' Which is just his regular voice but louder and with more buzzwords.
+  Janet: He said something about 'accelerating the Henderson resolution' and 'managing the optics.' And then he said 'mother' and hung up really fast when he saw me.
+  Janet: Make of that what you will. I've made of it something I keep in the locked drawer.
+  Janet: *sip*
+  Janet: The kombucha isn't helping today. I may need to switch to the emergency kombucha.
+  Andrew: There's an emergency kombucha?
+  Janet: Bottom desk drawer. The one that locks. Don't ask what ABV it is.
+  end
+
+# --------------------------------------------------------------------------
+# ALEX IT SIDE ROUTER -- lets player choose between side quest and regular chat
+# --------------------------------------------------------------------------
+scene alex_it_side_router
+  Alex from IT: Hey. What's up?
+  ask Alex from IT: What do you need?
+    -> n2: What about that IT project you mentioned?
+    -> n5: What's going on with the main investigation?
+    -> n7: Just checking in.
+
+  @n2
+  set alex_side_chosen
+  Alex from IT: Right, yeah. Here's the situation...
+  end
+
+  @n5
+  set alex_main_chosen
+  Alex from IT: Yeah, let me catch you up on the big picture...
+  goto n9
+
+  @n7
+  set alex_side_deferred
+  Alex from IT: Same old chaos. You know where to find me.
+
+  @n9
+  end
+
+# ALEX IT ROUTER -- lets player choose between story and side quests
+# --------------------------------------------------------------------------
+scene alex_it_router
+  Alex from IT: Hey. I've got a couple things going on. What do you want to talk about?
+  ask Alex from IT: What's on your mind?
+    # B-list "router self-contradiction". Node 0 has Alex calm and offering a
+    # menu ("I've got a couple things going on"), and the story option had
+    # Andrew reading a panic that is not on screen — a state the player had
+    # just been told Alex was not in. (That string was itself a previous
+    # fix: it replaced an option referencing a conversation that never
+    # happened, HANDOFF item 5.) Reworded through the prose law to pick the
+    # serious branch out of the two Alex just offered, without asserting
+    # anything about him. Target unchanged.
+    -> n2: What's the serious one?
+    -> n5: Got any IT jobs for me?
+
+  @n2
+  set alex_story_chosen
+  Alex from IT: Yeah. Yeah, you're gonna want to hear this. Close the door.
+  end
+
+  @n5
+  set alex_story_deferred
+  Alex from IT: Always. The infrastructure in this building is held together by prayers and zip ties. Let me tell you what's broken now...
+  end
+
+# ALEX IT ACT 2 -- Server room revelation
+# --------------------------------------------------------------------------
+scene alex_it_act2
+  Alex from IT: Andrew. Close the door. I'm about to be very calm at you, which is how you'll know it's serious.
+  Alex from IT: I found an encrypted partition buried in the server. Someone hid it deep — it only shows up if you know exactly where to look. And it's been pinging servers in the Cayman Islands every night since 2016.
+  Andrew: ...pinging the Caymans? From a trust department server?
+  Alex from IT: Yeah. I cracked the first layer of encryption. Took me three Red Bulls and a flashback to my CompTIA cert exam, but I got through.
+  Alex from IT: It's a database. Of trust account modifications. Going back to 2016. None of them are in our official records.
+  Alex from IT: And once you see the pattern you can't unsee it -- every single modification is on Henderson family accounts.
+  ask Alex from IT: Someone's been making unauthorized changes to the Henderson Trust for EIGHT YEARS, bro.
+    -> n7: Who has access?
+    -> n10: What kind of modifications?
+
+  @n7
+  Alex from IT: The access logs are clean. Which is itself a finding -- nobody's logs are clean. Mine aren't clean, and I'm the one who reads them.
+  Alex from IT: But the database metadata has one username attached: 'admin_legacy.' That account was created in 2006 and never decommissioned.
+  Alex from IT: 2006. That's before my time. That's before EVERYONE'S time. Well... almost everyone's.
+
+  @n10
+  Alex from IT: Small stuff. Basis adjustments. Fee allocations. Nothing that would trigger an audit individually. But collectively? We're talking about $2 million in skimmed fees over eight years.
+  Alex from IT: Someone's been nickel-and-diming the Henderson Trust, and they're REALLY good at it.
+  Alex from IT: I'm going to keep digging. But if anyone asks, you didn't hear this from me.
+  Alex from IT: Also if my network access gets revoked tomorrow, check under the third floor stairwell. I've got a dead drop with a USB drive.
+  Andrew: A dead drop? You're an IT guy at a bank, not Jason Bourne.
+  Alex from IT: That's exactly what Jason Bourne would say.
+  set knows_server_secret
+  end
+
+# ==========================================================================
+# ACT 2 BRANCH POINT
+# ==========================================================================
+scene branch_decision
+  Narrator: You sit at your desk. The Henderson file is spread before you. Three beneficiaries. Three demands. One trust.
+  Narrator: Karen's binder sits in the corner, pages still scattered from the incident. Chad's protein shake stain is on the ceiling. And Grandma's cookie plate is suspiciously empty.
+  Narrator: You've met them all. You've survived them all. Now comes the hard part: the actual job.
+  Narrator: Your phone rings. It's Skip.
+  Skip Hartley: Andrew! Quick download. I need your Henderson recommendation by EOD. Corporate is breathing down my neck. Also my mother keeps calling. Unrelated.
+  Skip Hartley: So what's the play? How do we... resolve this trust situation?
+  ask Narrator: This is it. The decision that defines the rest of Andrew's career at Vaults Fargo.
+    -> n7 sets path_legal: Follow the letter of the law. Honor the trust document exactly.
+    -> n12 sets path_bro: Bend the rules. Find a creative interpretation that keeps everyone happy.
+    -> n17 sets path_grandma: Grandma cited page 47, paragraph 3. Nobody reads that clause unless they wrote it. She knows something.
+
+  @n7
+  Narrator: You choose the straight path. The trust document is clear. The law is the law.
+  Andrew: Skip, the trust language favors the surviving spouse. Karen and Chad will need to accept a smaller distribution. That's the law.
+  Skip Hartley: The LAW? Andrew, the law is... look, the law is like a speed limit. It's more of a suggestion.
+  Andrew: It's really not.
+  Skip Hartley: Fine. FINE. But when Karen calls corporate -- and she WILL call corporate -- you're taking that meeting. Not me. I'll be at my leadership webinar. The one about disruption. *click*
+  goto n27
+
+  @n12
+  Narrator: You choose the creative path. Rules were made to be... interpreted flexibly.
+  Andrew: Skip, I think we can restructure the distribution to give everyone something. It'll take some creative accounting and maybe bending a few guidelines.
+  Skip Hartley: Now THAT'S what I'm talking about! Innovation! Disruption! I knew I hired you for a reason!
+  Skip Hartley: Wait, I didn't hire you. HR did. But I'm going to take credit for it.
+  Skip Hartley: Do what you gotta do, buddy. I'll make sure compliance is looking the other way. I have dirt on the compliance guy. Long story. *click*
+  goto n27
+
+  @n17
+  Narrator: You choose Grandma's path. Page 47, paragraph 3. The clause nobody reads.
+  Andrew: Skip, I've been looking at the trust document. There's a clause on page 47 that changes everything. I think Grandma Henderson has been playing us all.
+  Skip Hartley: Page 47? Nobody reads that far. That's like the terms of service of a trust document.
+  Andrew: Skip... did you know that Grandma Henderson used to work here? In trust administration?
+  Narrator: There is a very long pause on the phone.
+  Skip Hartley: ...How did you find that out?
+  Andrew: Skip, is there something you're not telling me?
+  Skip Hartley: I... look. We need to talk. In person. Executive floor. Conference table. And Andrew? Don't tell anyone about page 47.
+  Skip Hartley: Especially not my mother.
+  Narrator: *click*
+
+  @n27
+  set branch_chosen
+  if path_legal else -> n31
+  Narrator: The law is the law. It isn't much, but it's the only thing in this building with a page count. (+3 Composure)
+  end
+
+  @n31
+  if path_bro else -> n34
+  Narrator: Bending the rules has sharpened your instincts. Somewhere, a compliance form has quietly begun filling itself out. (+3 Bureaucratic Efficiency, -2 Composure)
+  end
+
+  @n34
+  Narrator: You now know what's on page 47. It does not make you happier, but it makes you considerably harder to argue with. (+3 Assertiveness)
+  end

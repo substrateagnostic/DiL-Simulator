@@ -1,0 +1,1954 @@
+{
+  "version": 1,
+  "scenes": {
+    "receptionist_intro": {
+      "labels": {},
+      "length": 15
+    },
+    "team_pre_intro": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_npc": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_janet": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_alex_it": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_intern": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_isaiah": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_diane": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_skip": {
+      "labels": {},
+      "length": 2
+    },
+    "neutral_janitor": {
+      "labels": {},
+      "length": 2
+    },
+    "janet_intro": {
+      "labels": {
+        "n3": 3,
+        "n4": 4,
+        "n8": 8,
+        "n13": 13,
+        "n18": 18,
+        "n22": 22
+      },
+      "length": 25
+    },
+    "alex_it_intro": {
+      "labels": {
+        "n6": 6,
+        "n7": 7,
+        "n11": 11,
+        "n16": 16,
+        "n20": 20
+      },
+      "length": 24
+    },
+    "intern_intro": {
+      "labels": {
+        "n6": 6,
+        "n11": 11,
+        "n15": 15
+      },
+      "length": 21
+    },
+    "skip_not_ready": {
+      "labels": {},
+      "length": 5
+    },
+    "skip_intro": {
+      "labels": {
+        "n11": 11,
+        "n12": 12,
+        "n15": 15,
+        "n18": 18,
+        "n21": 21
+      },
+      "length": 26
+    },
+    "diane_intro": {
+      "labels": {
+        "n1": 1,
+        "n2": 2,
+        "n7": 7,
+        "n13": 13
+      },
+      "length": 18
+    },
+    "water_cooler": {
+      "labels": {
+        "n6": 6,
+        "n10": 10,
+        "n15": 15
+      },
+      "length": 16
+    },
+    "vending_machine": {
+      "labels": {
+        "n3": 3,
+        "n6": 6,
+        "n9": 9,
+        "n12": 12,
+        "n14": 14,
+        "n16": 16,
+        "n17": 17,
+        "n18": 18,
+        "n19": 19,
+        "n20": 20,
+        "n21": 21
+      },
+      "length": 22
+    },
+    "fridge_notes": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n10": 10,
+        "n17": 17,
+        "n19": 19
+      },
+      "length": 23
+    },
+    "printer_interact": {
+      "labels": {
+        "n4": 4,
+        "n20": 20,
+        "n21": 21,
+        "n34": 34,
+        "n37": 37
+      },
+      "length": 38
+    },
+    "janitor_intro": {
+      "labels": {
+        "n4": 4,
+        "n5": 5,
+        "n10": 10,
+        "n15": 15,
+        "n21": 21
+      },
+      "length": 26
+    },
+    "karen_not_ready": {
+      "labels": {},
+      "length": 4
+    },
+    "karen_intern_first": {
+      "labels": {},
+      "length": 4
+    },
+    "karen_meeting": {
+      "labels": {
+        "n10": 10,
+        "n14": 14,
+        "n17": 17
+      },
+      "length": 23
+    },
+    "chad_meeting": {
+      "labels": {
+        "n7": 7,
+        "n12": 12,
+        "n16": 16
+      },
+      "length": 26
+    },
+    "grandma_meeting": {
+      "labels": {
+        "n1": 1,
+        "n5": 5,
+        "n10": 10,
+        "n31": 31
+      },
+      "length": 32
+    },
+    "skip_act2": {
+      "labels": {
+        "n2": 2,
+        "n6": 6
+      },
+      "length": 18
+    },
+    "skip_post_karen": {
+      "labels": {
+        "n10": 10,
+        "n11": 11
+      },
+      "length": 16
+    },
+    "janet_act2": {
+      "labels": {
+        "n8": 8
+      },
+      "length": 17
+    },
+    "alex_it_side_router": {
+      "labels": {
+        "n2": 2,
+        "n5": 5,
+        "n7": 7,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "alex_it_router": {
+      "labels": {
+        "n2": 2,
+        "n5": 5
+      },
+      "length": 8
+    },
+    "alex_it_act2": {
+      "labels": {
+        "n7": 7,
+        "n10": 10
+      },
+      "length": 18
+    },
+    "branch_decision": {
+      "labels": {
+        "n7": 7,
+        "n12": 12,
+        "n17": 17,
+        "n27": 27,
+        "n31": 31,
+        "n34": 34
+      },
+      "length": 36
+    },
+    "legal_eagle_ending": {
+      "labels": {
+        "n3": 3,
+        "n5": 5,
+        "n12": 12,
+        "n19": 19,
+        "n22": 22,
+        "n23": 23,
+        "n24": 24,
+        "n25": 25
+      },
+      "length": 26
+    },
+    "bro_code_ending": {
+      "labels": {
+        "n3": 3,
+        "n17": 17,
+        "n20": 20,
+        "n21": 21
+      },
+      "length": 22
+    },
+    "secret_ending": {
+      "labels": {
+        "n1": 1,
+        "n4": 4,
+        "n12": 12,
+        "n13": 13,
+        "n17": 17,
+        "n35": 35,
+        "n38": 38,
+        "n49": 49,
+        "n56": 56,
+        "n57": 57,
+        "n58": 58,
+        "n59": 59,
+        "n60": 60,
+        "n61": 61,
+        "n62": 62
+      },
+      "length": 63
+    },
+    "karen_first_loss_tutorial": {
+      "labels": {},
+      "length": 18
+    },
+    "karen_retry": {
+      "labels": {},
+      "length": 3
+    },
+    "chad_retry": {
+      "labels": {},
+      "length": 3
+    },
+    "grandma_retry": {
+      "labels": {},
+      "length": 3
+    },
+    "skip_boss_retry": {
+      "labels": {},
+      "length": 3
+    },
+    "compliance_retry": {
+      "labels": {},
+      "length": 3
+    },
+    "regional_retry": {
+      "labels": {},
+      "length": 3
+    },
+    "intern_retry": {
+      "labels": {},
+      "length": 3
+    },
+    "janet_return": {
+      "labels": {
+        "n4": 4,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "alex_it_return": {
+      "labels": {},
+      "length": 2
+    },
+    "intern_return": {
+      "labels": {},
+      "length": 3
+    },
+    "diane_return": {
+      "labels": {},
+      "length": 3
+    },
+    "janitor_return": {
+      "labels": {
+        "n4": 4,
+        "n6": 6,
+        "n9": 9
+      },
+      "length": 11
+    },
+    "karen_defeated": {
+      "labels": {
+        "n4": 4,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "chad_defeated": {
+      "labels": {
+        "n6": 6,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "skip_post_chad": {
+      "labels": {
+        "n11": 11,
+        "n16": 16
+      },
+      "length": 17
+    },
+    "grandma_defeated": {
+      "labels": {},
+      "length": 8
+    },
+    "chad_breakroom_idle": {
+      "labels": {},
+      "length": 4
+    },
+    "grandma_reception_idle": {
+      "labels": {},
+      "length": 4
+    },
+    "compliance_defeated": {
+      "labels": {
+        "n4": 4,
+        "n13": 13
+      },
+      "length": 14
+    },
+    "regional_defeated": {
+      "labels": {
+        "n6": 6,
+        "n13": 13
+      },
+      "length": 14
+    },
+    "skip_boss_defeated": {
+      "labels": {},
+      "length": 19
+    },
+    "andrews_desk": {
+      "labels": {
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 9
+    },
+    "coffee_machine": {
+      "labels": {},
+      "length": 6
+    },
+    "microwave": {
+      "labels": {},
+      "length": 6
+    },
+    "dying_plant": {
+      "labels": {},
+      "length": 5
+    },
+    "poster_cf_1": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_cf_2": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_cf_3": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_cf_4": {
+      "labels": {},
+      "length": 5
+    },
+    "poster_cf_5": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_cf_6": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_cf_7": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_br_1": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_rec_1": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_rec_2": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_rec_3": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_conf_1": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_exec_1": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_exec_2": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_exec_3": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_exec_4": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_stair_1": {
+      "labels": {},
+      "length": 4
+    },
+    "poster_hr_1": {
+      "labels": {},
+      "length": 4
+    },
+    "skip_desk": {
+      "labels": {},
+      "length": 5
+    },
+    "conference_whiteboard": {
+      "labels": {},
+      "length": 5
+    },
+    "server_rack_inspect": {
+      "labels": {
+        "n7": 7,
+        "n9": 9,
+        "n10": 10
+      },
+      "length": 11
+    },
+    "alex_it_desk": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n14": 14,
+        "n15": 15,
+        "n16": 16,
+        "n17": 17
+      },
+      "length": 18
+    },
+    "elevator": {
+      "labels": {
+        "n5": 5
+      },
+      "length": 7
+    },
+    "reception_desk": {
+      "labels": {},
+      "length": 5
+    },
+    "andrews_car": {
+      "labels": {},
+      "length": 5
+    },
+    "janitor_closet": {
+      "labels": {},
+      "length": 7
+    },
+    "executive_desk": {
+      "labels": {},
+      "length": 5
+    },
+    "executive_water_cooler": {
+      "labels": {},
+      "length": 4
+    },
+    "elevator_executive": {
+      "labels": {},
+      "length": 3
+    },
+    "karen_intro": {
+      "labels": {},
+      "length": 6
+    },
+    "karen_return": {
+      "labels": {},
+      "length": 2
+    },
+    "grandma_return": {
+      "labels": {},
+      "length": 3
+    },
+    "grandma_exec_idle": {
+      "labels": {},
+      "length": 3
+    },
+    "regional_intro": {
+      "labels": {},
+      "length": 4
+    },
+    "compliance_intro": {
+      "labels": {},
+      "length": 6
+    },
+    "intern_combat_intro": {
+      "labels": {},
+      "length": 10
+    },
+    "isaiah_intro": {
+      "labels": {
+        "n3": 3,
+        "n7": 7,
+        "n9": 9,
+        "n10": 10
+      },
+      "length": 12
+    },
+    "isaiah_return": {
+      "labels": {},
+      "length": 2
+    },
+    "rachel_intro": {
+      "labels": {},
+      "length": 7
+    },
+    "rachel_return_act1": {
+      "labels": {
+        "n5": 5
+      },
+      "length": 7
+    },
+    "rachel_return_act2": {
+      "labels": {
+        "n6": 6
+      },
+      "length": 8
+    },
+    "rachel_return_act3": {
+      "labels": {
+        "n6": 6
+      },
+      "length": 8
+    },
+    "rachel_note": {
+      "labels": {},
+      "length": 3
+    },
+    "meredith_intro": {
+      "labels": {
+        "n5": 5,
+        "n7": 7
+      },
+      "length": 12
+    },
+    "meredith_return": {
+      "labels": {},
+      "length": 2
+    },
+    "alex_it_act3": {
+      "labels": {
+        "n6": 6,
+        "n10": 10,
+        "n14": 14,
+        "n19": 19,
+        "n23": 23
+      },
+      "length": 24
+    },
+    "janet_act3": {
+      "labels": {},
+      "length": 10
+    },
+    "skip_act3": {
+      "labels": {
+        "n6": 6,
+        "n8": 8
+      },
+      "length": 13
+    },
+    "intern_act3": {
+      "labels": {},
+      "length": 9
+    },
+    "diane_act3": {
+      "labels": {},
+      "length": 8
+    },
+    "janitor_act3": {
+      "labels": {
+        "n7": 7,
+        "n11": 11
+      },
+      "length": 22
+    },
+    "isaiah_act3": {
+      "labels": {
+        "n4": 4,
+        "n7": 7,
+        "n9": 9
+      },
+      "length": 11
+    },
+    "meredith_act3": {
+      "labels": {
+        "n5": 5,
+        "n8": 8
+      },
+      "length": 12
+    },
+    "archive_terminal": {
+      "labels": {
+        "n3": 3
+      },
+      "length": 17
+    },
+    "archive_cabinets": {
+      "labels": {
+        "n9": 9,
+        "n10": 10
+      },
+      "length": 12
+    },
+    "stairwell_graffiti": {
+      "labels": {
+        "n4": 4,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "security_guard_combat": {
+      "labels": {
+        "n1": 1,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "security_guard_defeated": {
+      "labels": {},
+      "length": 5
+    },
+    "act4_trigger": {
+      "labels": {},
+      "length": 17
+    },
+    "janet_act4": {
+      "labels": {},
+      "length": 9
+    },
+    "diane_act4": {
+      "labels": {},
+      "length": 8
+    },
+    "skip_act4": {
+      "labels": {
+        "n4": 4,
+        "n6": 6,
+        "n8": 8,
+        "n10": 10,
+        "n12": 12,
+        "n14": 14,
+        "n16": 16,
+        "n18": 18,
+        "n20": 20,
+        "n23": 23,
+        "n27": 27,
+        "n30": 30,
+        "n32": 32
+      },
+      "length": 35
+    },
+    "intern_act4": {
+      "labels": {},
+      "length": 9
+    },
+    "janitor_needs_skip": {
+      "labels": {},
+      "length": 3
+    },
+    "janitor_act4": {
+      "labels": {},
+      "length": 15
+    },
+    "hr_rep_intro": {
+      "labels": {
+        "n6": 6
+      },
+      "length": 8
+    },
+    "hr_rep_combat": {
+      "labels": {},
+      "length": 8
+    },
+    "hr_rep_defeated": {
+      "labels": {},
+      "length": 6
+    },
+    "hr_vault_code": {
+      "labels": {
+        "n3": 3,
+        "n7": 7
+      },
+      "length": 9
+    },
+    "server_vault_code": {
+      "labels": {
+        "n4": 4,
+        "n5": 5
+      },
+      "length": 6
+    },
+    "vault_boxes": {
+      "labels": {
+        "n13": 13,
+        "n15": 15,
+        "n16": 16
+      },
+      "length": 17
+    },
+    "act5_trigger": {
+      "labels": {},
+      "length": 12
+    },
+    "restructuring_trio_intro": {
+      "labels": {
+        "n1": 1,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "restructuring_trio_defeated": {
+      "labels": {},
+      "length": 11
+    },
+    "alex_it_recruit": {
+      "labels": {
+        "n7": 7,
+        "n12": 12
+      },
+      "length": 14
+    },
+    "isaiah_recruit": {
+      "labels": {
+        "n6": 6,
+        "n11": 11
+      },
+      "length": 14
+    },
+    "diane_recruit": {
+      "labels": {},
+      "length": 7
+    },
+    "data_analytics_duo_intro": {
+      "labels": {},
+      "length": 7
+    },
+    "data_analytics_duo_defeated": {
+      "labels": {
+        "n1": 1,
+        "n3": 3,
+        "n7": 7,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "alex_badge_audit_offer": {
+      "labels": {
+        "n6": 6,
+        "n9": 9,
+        "n10": 10,
+        "n11": 11,
+        "n12": 12
+      },
+      "length": 14
+    },
+    "alex_badge_audit_pull": {
+      "labels": {
+        "n6": 6,
+        "n7": 7,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "alex_badge_audit_return": {
+      "labels": {
+        "n11": 11,
+        "n12": 12,
+        "n13": 13
+      },
+      "length": 14
+    },
+    "team_chat_hub": {
+      "labels": {
+        "n0": 0,
+        "n1": 1,
+        "n5": 5,
+        "n9": 9,
+        "n13": 13,
+        "n17": 17,
+        "n19": 19,
+        "n20": 20,
+        "n26": 26,
+        "n27": 27,
+        "n28": 28,
+        "n29": 29,
+        "n30": 30,
+        "n40": 40,
+        "n47": 47,
+        "n49": 49,
+        "n52": 52,
+        "n53": 53,
+        "n56": 56,
+        "n57": 57,
+        "n58": 58,
+        "n62": 62,
+        "n64": 64,
+        "n67": 67,
+        "n68": 68,
+        "n71": 71,
+        "n72": 72,
+        "n73": 73,
+        "n77": 77,
+        "n79": 79,
+        "n82": 82,
+        "n83": 83,
+        "n87": 87,
+        "n88": 88,
+        "n89": 89,
+        "n92": 92,
+        "n94": 94,
+        "n97": 97,
+        "n98": 98,
+        "n102": 102,
+        "n103": 103,
+        "n104": 104,
+        "n107": 107,
+        "n110": 110,
+        "n113": 113,
+        "n116": 116
+      },
+      "length": 120
+    },
+    "restructuring_combat": {
+      "labels": {},
+      "length": 7
+    },
+    "restructuring_defeated": {
+      "labels": {},
+      "length": 4
+    },
+    "brand_consultant_combat": {
+      "labels": {},
+      "length": 8
+    },
+    "brand_consultant_defeated": {
+      "labels": {
+        "n1": 1,
+        "n2": 2,
+        "n4": 4,
+        "n5": 5
+      },
+      "length": 6
+    },
+    "data_analytics_combat": {
+      "labels": {},
+      "length": 9
+    },
+    "data_analytics_defeated": {
+      "labels": {
+        "n1": 1,
+        "n5": 5,
+        "n7": 7,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "chief_restructuring_combat": {
+      "labels": {},
+      "length": 8
+    },
+    "chief_restructuring_defeated": {
+      "labels": {
+        "n1": 1,
+        "n5": 5,
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 11
+    },
+    "corporate_lawyer_combat": {
+      "labels": {},
+      "length": 7
+    },
+    "corporate_lawyer_defeated": {
+      "labels": {},
+      "length": 5
+    },
+    "meredith_boss_combat": {
+      "labels": {
+        "n1": 1,
+        "n5": 5,
+        "n13": 13,
+        "n15": 15,
+        "n18": 18,
+        "n21": 21,
+        "n22": 22,
+        "n23": 23
+      },
+      "length": 24
+    },
+    "meredith_boss_defeated": {
+      "labels": {
+        "n7": 7,
+        "n30": 30,
+        "n50": 50,
+        "n60": 60,
+        "n70": 70,
+        "n72": 72
+      },
+      "length": 73
+    },
+    "board_room_table": {
+      "labels": {},
+      "length": 4
+    },
+    "suggestion_box": {
+      "labels": {},
+      "length": 5
+    },
+    "penthouse_window": {
+      "labels": {},
+      "length": 5
+    },
+    "vault_entrance": {
+      "labels": {
+        "n2": 2
+      },
+      "length": 4
+    },
+    "vault_charter": {
+      "labels": {
+        "n4": 4
+      },
+      "length": 6
+    },
+    "board_charter": {
+      "labels": {},
+      "length": 5
+    },
+    "algorithm_terminal": {
+      "labels": {
+        "n7": 7,
+        "n13": 13,
+        "n16": 16
+      },
+      "length": 17
+    },
+    "alex_it_quest_anomaly": {
+      "labels": {
+        "n8": 8,
+        "n9": 9,
+        "n10": 10,
+        "n19": 19,
+        "n20": 20,
+        "n21": 21
+      },
+      "length": 23
+    },
+    "morse_code_rack": {
+      "labels": {
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "alex_it_quest_legacy": {
+      "labels": {
+        "n7": 7,
+        "n9": 9,
+        "n10": 10,
+        "n17": 17,
+        "n18": 18,
+        "n19": 19,
+        "n20": 20
+      },
+      "length": 22
+    },
+    "alex_it_quest_network": {
+      "labels": {
+        "n9": 9,
+        "n10": 10,
+        "n11": 11,
+        "n21": 21,
+        "n22": 22
+      },
+      "length": 23
+    },
+    "alex_it_quest_dave": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9,
+        "n10": 10,
+        "n19": 19,
+        "n20": 20,
+        "n21": 21
+      },
+      "length": 22
+    },
+    "janitor_dave": {
+      "labels": {
+        "n6": 6
+      },
+      "length": 7
+    },
+    "network_booster_br": {
+      "labels": {
+        "n4": 4,
+        "n5": 5,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "network_booster_stairwell": {
+      "labels": {
+        "n4": 4,
+        "n5": 5,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "network_booster_conf": {
+      "labels": {
+        "n4": 4,
+        "n5": 5,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "alex_it_quest_printer": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9,
+        "n13": 13,
+        "n14": 14,
+        "n15": 15,
+        "n17": 17
+      },
+      "length": 19
+    },
+    "alex_it_quest_final": {
+      "labels": {
+        "n6": 6,
+        "n8": 8,
+        "n16": 16,
+        "n17": 17
+      },
+      "length": 18
+    },
+    "patch_defense_defeated": {
+      "labels": {},
+      "length": 7
+    },
+    "compliance_crossword": {
+      "labels": {
+        "n6": 6,
+        "n8": 8,
+        "n9": 9,
+        "n11": 11,
+        "n12": 12,
+        "n14": 14,
+        "n15": 15,
+        "n17": 17,
+        "n18": 18,
+        "n20": 20,
+        "n30": 30,
+        "n35": 35,
+        "n37": 37
+      },
+      "length": 38
+    },
+    "janitor_riddle_1": {
+      "labels": {
+        "n3": 3,
+        "n5": 5,
+        "n8": 8,
+        "n10": 10
+      },
+      "length": 11
+    },
+    "janitor_riddle_2": {
+      "labels": {
+        "n3": 3,
+        "n5": 5,
+        "n8": 8,
+        "n10": 10
+      },
+      "length": 11
+    },
+    "janitor_riddle_3": {
+      "labels": {
+        "n3": 3,
+        "n5": 5,
+        "n9": 9,
+        "n11": 11
+      },
+      "length": 12
+    },
+    "social_engineering_1": {
+      "labels": {
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "social_engineering_2": {
+      "labels": {
+        "n7": 7
+      },
+      "length": 8
+    },
+    "social_engineering_3": {
+      "labels": {
+        "n8": 8
+      },
+      "length": 9
+    },
+    "skip_act5": {
+      "labels": {},
+      "length": 5
+    },
+    "skip_act6": {
+      "labels": {},
+      "length": 10
+    },
+    "janet_act6": {
+      "labels": {},
+      "length": 6
+    },
+    "diane_act6": {
+      "labels": {},
+      "length": 7
+    },
+    "diane_documents": {
+      "labels": {
+        "n4": 4,
+        "n5": 5,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "intern_act6": {
+      "labels": {},
+      "length": 6
+    },
+    "isaiah_act6": {
+      "labels": {},
+      "length": 6
+    },
+    "alex_it_act6": {
+      "labels": {},
+      "length": 5
+    },
+    "janitor_act6": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n11": 11
+      },
+      "length": 12
+    },
+    "janitor_waits_for_board": {
+      "labels": {},
+      "length": 5
+    },
+    "janitor_router": {
+      "labels": {
+        "n2": 2,
+        "n4": 4
+      },
+      "length": 6
+    },
+    "grandma_act6": {
+      "labels": {},
+      "length": 7
+    },
+    "board_meeting": {
+      "labels": {
+        "n1": 1,
+        "n10": 10,
+        "n12": 12,
+        "n15": 15,
+        "n19": 19,
+        "n22": 22,
+        "n25": 25,
+        "n33": 33,
+        "n38": 38,
+        "n42": 42,
+        "n46": 46,
+        "n48": 48,
+        "n49": 49,
+        "n50": 50,
+        "n54": 54,
+        "n55": 55,
+        "n59": 59,
+        "n64": 64,
+        "n70": 70,
+        "n71": 71,
+        "n75": 75,
+        "n76": 76,
+        "n81": 81,
+        "n82": 82,
+        "n87": 87,
+        "n88": 88,
+        "n93": 93,
+        "n98": 98,
+        "n103": 103,
+        "n108": 108,
+        "n112": 112,
+        "n116": 116,
+        "n118": 118,
+        "n119": 119,
+        "n120": 120,
+        "n121": 121,
+        "n122": 122,
+        "n136": 136,
+        "n146": 146,
+        "n153": 153,
+        "n154": 154,
+        "n162": 162,
+        "n164": 164,
+        "n166": 166,
+        "n167": 167,
+        "n178": 178,
+        "n179": 179,
+        "n180": 180,
+        "n181": 181,
+        "n182": 182,
+        "n183": 183,
+        "n184": 184,
+        "n185": 185,
+        "n186": 186,
+        "n187": 187,
+        "n188": 188,
+        "n189": 189,
+        "n190": 190,
+        "n191": 191,
+        "n192": 192,
+        "n193": 193,
+        "n194": 194
+      },
+      "length": 195
+    },
+    "board_meeting_janet": {
+      "labels": {},
+      "length": 4
+    },
+    "board_meeting_diane": {
+      "labels": {},
+      "length": 4
+    },
+    "board_meeting_isaiah": {
+      "labels": {},
+      "length": 3
+    },
+    "board_meeting_intern": {
+      "labels": {},
+      "length": 4
+    },
+    "board_meeting_grandma": {
+      "labels": {},
+      "length": 4
+    },
+    "board_meeting_after": {
+      "labels": {},
+      "length": 4
+    },
+    "penthouse_arrival": {
+      "labels": {
+        "n1": 1,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "cfos_assistant_combat": {
+      "labels": {
+        "n1": 1,
+        "n5": 5
+      },
+      "length": 6
+    },
+    "cfos_assistant_defeated": {
+      "labels": {},
+      "length": 6
+    },
+    "regional_director_combat": {
+      "labels": {
+        "n1": 1,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "regional_director_defeated": {
+      "labels": {
+        "n4": 4,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "skip_returned": {
+      "labels": {},
+      "length": 10
+    },
+    "algorithm_combat": {
+      "labels": {
+        "n6": 6
+      },
+      "length": 9
+    },
+    "algorithm_defeated": {
+      "labels": {
+        "n5": 5,
+        "n14": 14,
+        "n18": 18,
+        "n19": 19,
+        "n20": 20,
+        "n21": 21,
+        "n22": 22,
+        "n23": 23,
+        "n26": 26,
+        "n29": 29
+      },
+      "length": 32
+    },
+    "ending_cooperative": {
+      "labels": {
+        "n16": 16,
+        "n20": 20,
+        "n23": 23
+      },
+      "length": 26
+    },
+    "ending_compromise": {
+      "labels": {
+        "n11": 11,
+        "n15": 15,
+        "n18": 18
+      },
+      "length": 21
+    },
+    "ending_dissolution": {
+      "labels": {
+        "n12": 12,
+        "n16": 16,
+        "n19": 19
+      },
+      "length": 22
+    },
+    "skip_act7": {
+      "labels": {},
+      "length": 4
+    },
+    "janet_act7": {
+      "labels": {},
+      "length": 4
+    },
+    "alex_it_act7": {
+      "labels": {},
+      "length": 5
+    },
+    "isaiah_act7": {
+      "labels": {},
+      "length": 4
+    },
+    "penthouse_terminal": {
+      "labels": {},
+      "length": 4
+    },
+    "ending_architect": {
+      "labels": {
+        "n29": 29,
+        "n34": 34,
+        "n37": 37
+      },
+      "length": 40
+    },
+    "arcade_intro": {
+      "labels": {
+        "n3": 3,
+        "n4": 4
+      },
+      "length": 5
+    },
+    "post_credits": {
+      "labels": {},
+      "length": 16
+    },
+    "floor_13_window": {
+      "labels": {
+        "n10": 10,
+        "n11": 11,
+        "n12": 12,
+        "n20": 20
+      },
+      "length": 25
+    },
+    "daemon_rack7": {
+      "labels": {
+        "n12": 12,
+        "n13": 13,
+        "n17": 17,
+        "n20": 20,
+        "n23": 23,
+        "n24": 24,
+        "n25": 25,
+        "n26": 26,
+        "n27": 27
+      },
+      "length": 28
+    },
+    "quest_atk_1": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_atk_2": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_atk_3": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_atk_4": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_atk_5": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_def_1": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_def_2": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_def_3": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_def_4": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "quest_def_5": {
+      "labels": {
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "janet_lunch_thief_investigate": {
+      "labels": {},
+      "length": 11
+    },
+    "janet_lunch_thief_resolved": {
+      "labels": {},
+      "length": 6
+    },
+    "intern_lunch_thief_confrontation": {
+      "labels": {
+        "n9": 9,
+        "n11": 11,
+        "n14": 14
+      },
+      "length": 15
+    },
+    "alex_printer_quest": {
+      "labels": {
+        "n4": 4,
+        "n16": 16
+      },
+      "length": 17
+    },
+    "alex_server_secret": {
+      "labels": {
+        "n11": 11,
+        "n15": 15,
+        "n19": 19,
+        "n21": 21,
+        "n22": 22,
+        "n23": 23
+      },
+      "length": 27
+    },
+    "phantom_expense_hr": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "phantom_workstation_cf": {
+      "labels": {
+        "n6": 6,
+        "n7": 7,
+        "n8": 8
+      },
+      "length": 9
+    },
+    "tuesday_floppy": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "tuesday_server_tag": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "tuesday_sticky_note": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "printer_firmware_disk": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "printer_ethernet_port": {
+      "labels": {
+        "n5": 5,
+        "n6": 6,
+        "n7": 7
+      },
+      "length": 8
+    },
+    "unauthorized_patch_monitor": {
+      "labels": {
+        "n4": 4,
+        "n5": 5,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "isaiah_receipts_offer": {
+      "labels": {
+        "n7": 7,
+        "n10": 10,
+        "n11": 11,
+        "n12": 12,
+        "n13": 13
+      },
+      "length": 14
+    },
+    "isaiah_receipts_pull": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "isaiah_receipts_return": {
+      "labels": {
+        "n12": 12,
+        "n13": 13,
+        "n14": 14
+      },
+      "length": 16
+    },
+    "diane_handbook_offer": {
+      "labels": {
+        "n8": 8,
+        "n11": 11,
+        "n12": 12,
+        "n13": 13,
+        "n14": 14
+      },
+      "length": 15
+    },
+    "diane_handbook_search": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "diane_handbook_return": {
+      "labels": {
+        "n13": 13,
+        "n14": 14,
+        "n15": 15,
+        "n16": 16,
+        "n17": 17
+      },
+      "length": 20
+    },
+    "janet_vacancy_offer": {
+      "labels": {
+        "n8": 8,
+        "n11": 11,
+        "n12": 12,
+        "n13": 13,
+        "n14": 14
+      },
+      "length": 15
+    },
+    "janet_vacancy_search": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "janet_vacancy_return": {
+      "labels": {
+        "n11": 11,
+        "n12": 12,
+        "n13": 13,
+        "n14": 14,
+        "n15": 15
+      },
+      "length": 16
+    },
+    "janitor_names_offer": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9,
+        "n11": 11,
+        "n12": 12,
+        "n13": 13
+      },
+      "length": 14
+    },
+    "janitor_names_search": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9
+      },
+      "length": 10
+    },
+    "janitor_names_return": {
+      "labels": {
+        "n12": 12,
+        "n13": 13,
+        "n14": 14
+      },
+      "length": 15
+    },
+    "janitor_pattern": {
+      "labels": {
+        "n10": 10,
+        "n12": 12,
+        "n14": 14
+      },
+      "length": 19
+    },
+    "charter_challenge": {
+      "labels": {
+        "n8": 8,
+        "n12": 12,
+        "n13": 13,
+        "n17": 17,
+        "n18": 18,
+        "n19": 19
+      },
+      "length": 20
+    },
+    "records_clerk_form11c": {
+      "labels": {
+        "n5": 5,
+        "n7": 7,
+        "n8": 8,
+        "n9": 9,
+        "n15": 15,
+        "n16": 16,
+        "n17": 17
+      },
+      "length": 18
+    },
+    "deep_stacks_file": {
+      "labels": {
+        "n7": 7,
+        "n8": 8,
+        "n9": 9,
+        "n10": 10
+      },
+      "length": 11
+    },
+    "delia_booth4": {
+      "labels": {
+        "n6": 6,
+        "n12": 12,
+        "n13": 13,
+        "n19": 19,
+        "n20": 20
+      },
+      "length": 21
+    },
+    "delia_roastery": {
+      "labels": {},
+      "length": 5
+    },
+    "barista_vault": {
+      "labels": {
+        "n3": 3,
+        "n5": 5
+      },
+      "length": 6
+    },
+    "vault_box_0001": {
+      "labels": {
+        "n3": 3,
+        "n8": 8,
+        "n9": 9,
+        "n10": 10
+      },
+      "length": 11
+    },
+    "the_firm_ambush": {
+      "labels": {
+        "n1": 1,
+        "n11": 11
+      },
+      "length": 12
+    },
+    "the_firm_retry": {
+      "labels": {},
+      "length": 6
+    },
+    "the_firm_defeated": {
+      "labels": {},
+      "length": 15
+    },
+    "delia_epilogue": {
+      "labels": {},
+      "length": 3
+    },
+    "parking_enforcer_intro": {
+      "labels": {
+        "n3": 3,
+        "n4": 4,
+        "n6": 6
+      },
+      "length": 7
+    },
+    "parking_enforcer_defeated": {
+      "labels": {
+        "n3": 3,
+        "n4": 4,
+        "n7": 7,
+        "n8": 8,
+        "n9": 9,
+        "n10": 10,
+        "n11": 11
+      },
+      "length": 12
+    },
+    "networking_guy_intro": {
+      "labels": {
+        "n3": 3
+      },
+      "length": 6
+    },
+    "networking_guy_defeated": {
+      "labels": {},
+      "length": 4
+    },
+    "bus_driver_515": {
+      "labels": {
+        "n9": 9,
+        "n10": 10,
+        "n12": 12,
+        "n13": 13
+      },
+      "length": 18
+    },
+    "bus_transfer_ledger": {
+      "labels": {
+        "n3": 3,
+        "n4": 4
+      },
+      "length": 5
+    },
+    "diner_regular_chat": {
+      "labels": {},
+      "length": 3
+    },
+    "chad_return": {
+      "labels": {},
+      "length": 12
+    },
+    "meredith_footnote": {
+      "labels": {},
+      "length": 15
+    },
+    "janitor_the_name": {
+      "labels": {},
+      "length": 6
+    },
+    "intern_rehearsal": {
+      "labels": {},
+      "length": 11
+    },
+    "vault_ledger_niche": {
+      "labels": {},
+      "length": 5
+    },
+    "janitor_closet_after": {
+      "labels": {},
+      "length": 5
+    },
+    "penthouse_pool_table": {
+      "labels": {},
+      "length": 13
+    },
+    "penthouse_reel": {
+      "labels": {},
+      "length": 11
+    },
+    "penthouse_analytics_console": {
+      "labels": {},
+      "length": 10
+    },
+    "bathroom_stall_door": {
+      "labels": {},
+      "length": 6
+    },
+    "garage_pillar": {
+      "labels": {},
+      "length": 6
+    },
+    "copy_room_shelf": {
+      "labels": {},
+      "length": 8
+    },
+    "janitor_predecessors": {
+      "labels": {},
+      "length": 9
+    },
+    "copy_room_copier": {
+      "labels": {},
+      "length": 5
+    },
+    "copy_room_supplies": {
+      "labels": {},
+      "length": 4
+    }
+  }
+}

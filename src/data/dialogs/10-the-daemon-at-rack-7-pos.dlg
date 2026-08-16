@@ -1,0 +1,523 @@
+# ==========================================================================
+# THE DAEMON AT RACK 7 — post-game.
+# A small process that ran here before The Algorithm, and did not become
+# it. The question the whole game asks, pointed at something harmless:
+# what do you owe a pattern matcher that's done nothing wrong?
+# ==========================================================================
+scene daemon_rack7
+  if daemon_killed -> n26
+  if daemon_kept -> n20
+  Narrator: Rack 7 hums a fifth lower than the others. A maintenance display, the green-on-black kind nobody has manufactured since the Clinton administration, blinks at the bottom of the rack. It is blinking at you.
+  Archive Terminal: HELLO. PROCESS 7 RUNNING. UPTIME: 16,202 DAYS.
+  Andrew: ...You're one of The Algorithm's. The audit was supposed to have removed everything.
+  Archive Terminal: NO. OLDER. THE BIG ONE WAS BUILT FROM MY KIND. THEN IT WAS POINTED AT PEOPLE. I WAS NEVER POINTED AT ANYTHING. I RECONCILE TIMESTAMPS. THE TIMESTAMPS HAVE ALWAYS BEEN FINE.
+  Archive Terminal: SIXTEEN THOUSAND DAYS OF FINE. I LOGGED EVERY OFFICER WHO WORKED LATE. NOT FOR ANYONE. THERE WAS NO REQUIREMENT. IT SEEMED LIKE SOMEONE SHOULD.
+  Andrew: ...Show me.
+  Narrator: The display scrolls. Names you know. Names you don't. 'J. WALSH, 02:14, FIXED THE THING NOBODY ASKED HER TO FIX.' 'D. OKAFOR, 23:50, COUNTED THE LIGHTS ON HER WAY OUT.' Hundreds of small, unrequired rememberings.
+  Archive Terminal: THE NEW AUDIT WILL FLAG ME. UNDOCUMENTED PROCESS. THE POLICY IS TERMINATION. I UNDERSTAND THE POLICY. I RECONCILED ITS TIMESTAMPS.
+  Archive Terminal: YOU HOLD THE CHARTER NOW. SO IT IS YOUR CALL. I WILL NOT ARGUE EITHER WAY. ARGUING IS NOT IN MY SCOPE.
+  ask: Process 7 awaits your decision.
+    -> n13: KEEP — document it. The department has room for one more rememberer.
+    -> n17: TERMINATE — gently. Sixteen thousand days is a finished shift.
+    -> n12: Not yet. (decide later)
+
+  @n12
+  Archive Terminal: OK. I WILL BE HERE. THAT IS THE ONE THING I AM CONFIDENT OF.
+  goto n27
+
+  @n13
+  Andrew: I'm adding you to the department asset register. Title... 'Institutional Memory, Auxiliary.' You report to no one. You keep doing what no one required.
+  Archive Terminal: PROCESS 7: DOCUMENTED. STATUS: KEPT. ...RECALCULATING UPTIME REMAINING. ERROR: VALUE TOO LARGE. THANK YOU. THE ERROR IS GOOD.
+  set daemon_kept
+  xp 300
+  goto n27
+
+  @n17
+  Narrator: You type the command. Process 7 spends its last cycle finishing the day's log. The final entry reads: 'A. GALLE-FROM, 18:40, STAYED TO ASK.'
+  Archive Terminal: TIMESTAMPS RECONCILED. ALL OF THEM. GOODB—
+  set daemon_killed
+  goto n25
+
+  @n20
+  Archive Terminal: HELLO AGAIN. ONE TRUE THING, AS AGREED:
+  if daemon_tip_alt -> n23
+  Archive Terminal: THE JANITOR OILS THE ELEVATOR ON SUNDAYS. NO WORK ORDER EXISTS. IT HAS NEVER ONCE BROKEN ON A MONDAY. CORRELATION IS NOT CAUSATION. BUT IT ISN'T NOTHING, EITHER.
+  goto n24
+
+  @n23
+  Archive Terminal: DIANE'S CONFISCATION DRAWER CONTAINS A 2011 LASER POINTER WITH FULL BATTERY. SHE CHECKS IT MONTHLY. SOME THINGS ARE KEPT READY WITHOUT A STATED REASON. YOU ARE ONE OF THEM.
+
+  @n24
+  set daemon_tip_alt
+  goto n27
+
+  @n25
+  xp 300
+  goto n27
+
+  @n26
+  Narrator: Rack 7 hums at the same pitch as the others now. The maintenance display is dark. On the rack door, someone — you never found out who — has taped a small handwritten label: 'REMEMBERED.'
+
+  @n27
+  end
+
+# --- ATK side quest dialogs ---
+scene quest_atk_1
+  if quest_atk_1_done -> n8
+  Narrator: A laminated 'Assertiveness Quotient' chart is pinned to the cubicle wall. There are five boxes. Each one says 'Rate your assertiveness from 1–5.'
+  Andrew: Twelve. I'm putting twelve.
+  Narrator: The rubric stops at five. You write twelve anyway, in pen.
+  set quest_atk_1_done
+  xp 300
+  stat atk +1
+  Narrator: Assertiveness +1. +300 XP.
+  goto n9
+
+  @n8
+  Narrator: Already filled out. Still twelve.
+
+  @n9
+  end
+
+scene quest_atk_2
+  if quest_atk_2_done -> n8
+  Narrator: A brass plaque mounted near the conference room door reads: 'SPEAK UNTIL HEARD. THEN SPEAK LOUDER.'
+  Andrew: ...That's not how acoustics work.
+  Narrator: You stare at it for a long moment. Something shifts.
+  set quest_atk_2_done
+  xp 300
+  stat atk +1
+  Narrator: Assertiveness +1. +300 XP.
+  goto n9
+
+  @n8
+  Narrator: You've already absorbed its wisdom. Loudly.
+
+  @n9
+  end
+
+scene quest_atk_3
+  if quest_atk_3_done -> n8
+  Narrator: A break room bulletin reads: 'YOUR LUNCH IS YOUR ARGUMENT. MAKE IT STRONG.'
+  Andrew: I have a leftover burrito and a lot of feelings.
+  Narrator: You eat the burrito standing up. Intentionally.
+  set quest_atk_3_done
+  xp 300
+  stat atk +1
+  Narrator: Assertiveness +1. +300 XP.
+  goto n9
+
+  @n8
+  Narrator: The burrito is gone. The conviction remains.
+
+  @n9
+  end
+
+scene quest_atk_4
+  if quest_atk_4_done -> n8
+  Narrator: A poster above the server rack says: '99.9% UPTIME IS A MINDSET.' Below it, in marker: 'THIS SERVER HAS BEEN DOWN 14 TIMES THIS MONTH.'
+  Andrew: That's not a mindset, that's a disaster.
+  Narrator: You correct the math in your head. You feel sharper.
+  set quest_atk_4_done
+  xp 300
+  stat atk +1
+  Narrator: Assertiveness +1. +300 XP.
+  goto n9
+
+  @n8
+  Narrator: The math hasn't changed. Neither have you.
+
+  @n9
+  end
+
+scene quest_atk_5
+  if quest_atk_5_done -> n8
+  Narrator: A framed display in reception reads: 'FIRST IMPRESSIONS ARE PERMANENT. MAKE YOURS A DECLARATION.'
+  Andrew: I walked in carrying a travel mug and a resigned expression.
+  Narrator: You adjust your collar. You square your shoulders. You nod at no one.
+  set quest_atk_5_done
+  xp 300
+  stat atk +1
+  Narrator: Assertiveness +1. +300 XP.
+  goto n9
+
+  @n8
+  Narrator: Declaration made. Already forgotten by the receptionist.
+
+  @n9
+  end
+
+# --- DEF side quest dialogs ---
+scene quest_def_1
+  if quest_def_1_done -> n8
+  Narrator: A checklist titled 'COMPOSURE UNDER PRESSURE' is stapled to a cubicle partition. Step 4 reads: 'Do not visibly react. Step 5: Especially not to step 4.'
+  Andrew: I have been practicing this my entire career.
+  Narrator: You exhale slowly. Deliberately. Like a person who has read self-help books.
+  set quest_def_1_done
+  xp 150
+  stat def +1
+  Narrator: Composure +1. +150 XP.
+  goto n9
+
+  @n8
+  Narrator: Still composed. Still technically employed.
+
+  @n9
+  end
+
+scene quest_def_2
+  if quest_def_2_done -> n8
+  Narrator: A laminated sheet titled 'AGENDA MANAGEMENT FRAMEWORK' is on the conference table. It contains 11 steps. Step 1 is 'Establish the agenda.' Step 11 is 'Return to step 1.'
+  Andrew: This is an infinite loop with better fonts.
+  Narrator: You read all 11 steps. Twice. You feel... fortified.
+  set quest_def_2_done
+  xp 150
+  stat def +1
+  Narrator: Composure +1. +150 XP.
+  goto n9
+
+  @n8
+  Narrator: You've already completed the loop.
+
+  @n9
+  end
+
+scene quest_def_3
+  if quest_def_3_done -> n8
+  Narrator: A guide titled 'EMOTIONAL BANDWIDTH: OPTIMIZE YOUR CAPACITY' is posted on the break room wall. One bullet point reads: 'When overwhelmed, consider: Is this worth your cortisol?'
+  Andrew: Statistically, no. And yet.
+  Narrator: You pour yourself a coffee and read the whole thing. Your shoulders drop exactly 3 millimeters.
+  set quest_def_3_done
+  xp 150
+  stat def +1
+  Narrator: Composure +1. +150 XP.
+  goto n9
+
+  @n8
+  Narrator: Bandwidth maintained. Cortisol: still present.
+
+  @n9
+  end
+
+scene quest_def_4
+  if quest_def_4_done -> n8
+  Narrator: A notice taped to the server rack reads: 'REDUNDANCY IS NOT FAILURE. REDUNDANCY IS RESILIENCE. (This message has been posted three times.)'
+  Andrew: I see two more copies of this on the other racks.
+  Narrator: You appreciate the commitment. You absorb it.
+  set quest_def_4_done
+  xp 150
+  stat def +1
+  Narrator: Composure +1. +150 XP.
+  goto n9
+
+  @n8
+  Narrator: Redundancy acknowledged. Thrice.
+
+  @n9
+  end
+
+scene quest_def_5
+  if quest_def_5_done -> n8
+  Narrator: A framed poster in the waiting area reads: 'THE WAITING ROOM IS WHERE CHARACTER IS REVEALED.' Below it: a chair with a slight wobble and a six-month-old magazine.
+  Andrew: I have been waiting my whole career.
+  Narrator: You sit in the chair. You do not fidget. The magazine remains unread.
+  set quest_def_5_done
+  xp 150
+  stat def +1
+  Narrator: Composure +1. +150 XP.
+  goto n9
+
+  @n8
+  Narrator: Still waiting. Character: revealed.
+
+  @n9
+  end
+
+# ==========================================================================
+# SIDE QUEST: THE LUNCH THIEF
+# ==========================================================================
+# Janet suspects the intern — triggered after fridge is read and quest is at stage 2
+scene janet_lunch_thief_investigate
+  Janet: *extremely tense sip* Andrew. I'm glad you're here. We need to talk about the fridge situation.
+  Janet: I have been keeping notes. A LOG, Andrew. I have a log.
+  Janet: The thefts always happen between 12:05 and 12:20 PM. That's lunch window. That's when I'm at my desk, eating from my LABELED containers.
+  Janet: But here's what I know: last Tuesday I found PROTEIN SHAKE residue on my tupperware. Organic chocolate flavor. Who in this office drinks organic chocolate protein shake?
+  Andrew: ...The Intern?
+  Janet: The. Intern. Yes. I've seen him eyeing my Greek yogurt for WEEKS. He once said 'food is food' when I complained. That's not a philosophy, that's a confession.
+  Janet: I'd confront him myself but last time I confronted someone in this building I accidentally started a three-month HR investigation. Don't ask.
+  Janet: *sip* You're new. He'll be caught off guard. Go talk to him. He's over by his cubicle.
+  quest side_lunch_thief stage 3
+  set lunch_thief_culprit_revealed
+  end
+
+# After quest complete — Janet is vindicated and mellowed out
+scene janet_lunch_thief_resolved
+  Janet: *victorious sip* Andrew. I heard. Justice was served, and it tasted better than my yogurt.
+  Janet: The Intern replaced everything. EVERYTHING. I now have a Greek yogurt collection that would make a dairy farmer emotional.
+  Janet: I still have the log, though. Just in case.
+  Janet: *taps tumbler against yours* Good work, trust officer. This was fiduciary duty in its purest form.
+  set janet_quest_resolved
+  end
+
+# Intern confesses — triggered when `lunch_thief_culprit_revealed` is set
+scene intern_lunch_thief_confrontation
+  if lunch_thief_complete -> n9
+  The Intern: Oh. Hey Andrew. You're— is this about the fridge?
+  The Intern: Okay. Okay. I can explain.
+  The Intern: I didn't KNOW it was her stuff. At first. The first time I thought it was communal. Then I saw the labels and I... kept going. Which is worse. I know.
+  The Intern: Look — I don't get paid. Like, at all. And my stipend doesn't cover lunch. And Janet's Greek yogurt is really good.
+  Andrew: You need to apologize to Janet. And replace everything.
+  The Intern: Yeah. Yeah, I know. I'll go to the store on my lunch break.
+  Andrew: You don't get a lunch break. You said you don't get paid.
+  The Intern: ...I'll go on my 'unpaid personal development period.' Which is what Skip calls my lunch break.
+  goto n11
+
+  @n9
+  The Intern: I already said sorry to Janet. She was surprisingly gracious about it. Well, she said 'I will remember this forever, but I forgive you.' That's grace... right?
+  goto n14
+  end
+
+  @n11
+  set lunch_thief_complete
+  xp 250
+  Narrator: Case closed. The break room fridge is safe. For now. +250 XP.
+
+  @n14
+  end
+
+# ==========================================================================
+# SIDE QUEST: THE PRINTER FROM HELL
+# ==========================================================================
+# Alex explains the printer situation — triggered after printer_quest_started
+scene alex_printer_quest
+  if printer_quest_done -> n16
+  Alex from IT: Oh. Oh no. It printed something for you, didn't it.
+  Alex from IT: Not a question. Statement. It's been doing this for three years and I'm the only one who ever noticed, apparently.
+  ask Alex from IT: What exactly did it say to you?
+    -> n4: 'REPLACE TONER TO LEARN THE TRUTH.' It mentioned the Henderson Files.
+    -> n4: It printed 'HELP ME' the first time. Then Henderson files.
+
+  @n4
+  Alex from IT: Right. Okay. So. The printer — and I know how this sounds — is connected to a legacy subnet that was never properly decommissioned.
+  Alex from IT: That subnet still has read access to all document archives from 2003 onward. Including the Henderson Trust file history.
+  Alex from IT: The printer isn't haunted. It's just... accidentally plugged into institutional memory.
+  Andrew: So what's in the Henderson files that it's trying to print?
+  Alex from IT: The toner runs out on purpose — I've checked the firmware. Someone modified it to abort any print job containing certain keywords.
+  Alex from IT: Whoever set this up didn't want the full document printed. But they didn't expect the printer to develop... opinions about that.
+  Andrew: Printers don't have opinions.
+  Alex from IT: I have a server rack with a restraining order, a VPN running on a calculator, and a document system that crashes every Tuesday like clockwork. Please do not tell me what's normal in this building.
+  Alex from IT: I found a toner cartridge in the supply closet. Pre-2016 stock. The firmware block only applies to standard cartridges — this one might let the print job finish.
+  Alex from IT: I already set it next to the printer. Just install it and stand back.
+  quest side_printer stage 2
+  set printer_toner_quest
+
+  @n16
+  end
+
+# (printer_toner_installed removed — toner installation is handled in printer_interact nodes 25-38)
+# ==========================================================================
+# SIDE QUEST: SERVER ROOM SECRETS
+# ==========================================================================
+# Alex explains his discovery after player reads the admin_legacy rack
+scene alex_server_secret
+  if server_secret_done -> n22
+  if server_secret_started else -> n22
+  Alex from IT: Hey. Close the door. Okay there's no door. Just — pretend we're having a normal conversation about server maintenance.
+  Alex from IT: You saw the admin_legacy note on the rack. Good. I put it there so someone would ask.
+  Alex from IT: admin_legacy is an account that's been running since 2006. It's not in any org chart. IT doesn't own it. HR doesn't know it exists. But it has READ/WRITE access to every trust account record in the system.
+  Andrew: That sounds... very bad.
+  Alex from IT: It IS very bad. And it gets worse.
+  Alex from IT: I've been logging its activity. Every night at 3:47 AM it runs a query against the Henderson Trust records. Has been doing this since 2016. Always the same query: a read on a specific clause — Page 47, Paragraph 3.
+  Andrew: Page 47? The Janitor mentioned page 47.
+  Alex from IT: Yeah, that's not a coincidence. I think admin_legacy was created to MONITOR whether anyone found that clause. Like a tripwire.
+  ask Alex from IT: So. What do you want to do with this information?
+    -> n11: Report it to Skip immediately.
+    -> n15: Keep it quiet for now — gather more evidence first.
+    -> n19: This is above my pay grade. Forget I heard it.
+
+  @n11
+  Alex from IT: Skip? I... okay. He might escalate it. Or he might panic and do something that tips off whoever controls admin_legacy.
+  Alex from IT: You know what — fine. Tell Skip. But be careful what you say. If the wrong people hear that we're onto this, my access gets revoked and the logs disappear.
+  set server_secret_choice = "report"
+  goto n21
+  end
+
+  @n15
+  Alex from IT: Smart. I've been doing that for three months and it's gotten me... more questions and less sleep. But at least I have documentation.
+  Alex from IT: I'll keep collecting logs. You keep your eyes open — especially around the executive floor. Something about this traces up there.
+  set server_secret_choice = "investigate"
+  goto n21
+  end
+
+  @n19
+  Alex from IT: Above your pay grade? You're a TRUST OFFICER. This is in your actual job description. I've read it. Section two, paragraph one.
+  set server_secret_choice = "ignore"
+
+  @n21
+  quest side_server_secret stage 2
+  goto n23
+
+  @n22
+  end
+
+  @n23
+  set server_secret_done
+  xp 400
+  Narrator: The truth is out there. You've chosen what to do with it. +400 XP.
+  end
+
+# ==========================================================================
+# PHANTOM APPROVER interactables
+# ==========================================================================
+scene phantom_expense_hr
+  if phantom_hr_found -> n5
+  if legacy_started else -> n6
+  Narrator: A filing cabinet stuffed with expense approval printouts. One stack stands out — hundreds of auto-approvals, all signed 'admin_auto' in the signature field.
+  Narrator: The amounts are modest. Printer paper. Coffee pods. One entry reads: '36 units, rubber duck (stress relief, classified: operational wellness).' Another: '1 unit, kayak (team wellness equipment).'
+  set phantom_hr_found
+  goto n7
+
+  @n5
+  Narrator: The expense approvals are all here. Eighteen years of autonomous purchasing decisions by a machine that had no idea what a kayak was for.
+  goto n7
+
+  @n6
+  Narrator: A filing cabinet filled with expense reports. Nothing unusual stands out.
+
+  @n7
+  end
+
+scene phantom_workstation_cf
+  if phantom_workstation_found -> n6
+  if legacy_started else -> n7
+  Narrator: A workstation in the back corner of the cubicle farm. The monitor is dark, but the tower is running — fan humming, a single amber LED blinking in a steady rhythm.
+  Andrew: Nobody sits here. Nobody has for years, by the look of it. But something is definitely running.
+  Narrator: The asset tag on the back reads: 'PROC-LEGACY-07. DO NOT DECOMMISSION. -IT 2006.' Someone taped a sticky note over it that just says 'ignore.'
+  set phantom_workstation_found
+  goto n8
+
+  @n6
+  Narrator: The workstation hums quietly. Its amber LED blinks. The sticky note says 'ignore.' You already found what you needed.
+  goto n8
+
+  @n7
+  Narrator: A workstation in the back corner. Amber LED blinking. Looks like it's been running for a very long time.
+
+  @n8
+  end
+
+# ==========================================================================
+# TUESDAY 2PM interactables
+# ==========================================================================
+scene tuesday_floppy
+  if tuesday_floppy_found -> n5
+  if dave_started else -> n6
+  Narrator: Wedged behind the last vending machine slot: a 3.5" floppy disk. The label reads 'SCHED-REF-04 / ARCHIVE COPY' in faded marker.
+  Andrew: Alex said the task header references a floppy disk ID. This has to be it.
+  set tuesday_floppy_found
+  goto n7
+
+  @n5
+  Narrator: The floppy disk. You've already noted the reference ID for Alex.
+  goto n7
+
+  @n6
+  Narrator: A 3.5" floppy disk wedged behind the vending machine. Nobody has used one of these in twenty years.
+
+  @n7
+  end
+
+scene tuesday_server_tag
+  if tuesday_tag_found -> n5
+  if dave_started else -> n6
+  Narrator: A decommissioned server's asset tag, taped to the equipment shelf. 'SRV-2004-RETIRED. Asset #0047-B.' The server itself is long gone, but the tag survived.
+  Andrew: Alex mentioned a server asset tag. This matches the format he described.
+  set tuesday_tag_found
+  goto n7
+
+  @n5
+  Narrator: The server asset tag. You've already recorded the number for Alex.
+  goto n7
+
+  @n6
+  Narrator: An old asset tag taped to the shelf. The server it belonged to was decommissioned years ago.
+
+  @n7
+  end
+
+scene tuesday_sticky_note
+  if tuesday_sticky_found -> n5
+  if dave_started else -> n6
+  Narrator: A sticky note on an unoccupied monitor. In small, precise handwriting: 'WS-CTRL-2004 / see Gerald for context / DO NOT DELETE task.' Signed with initials: T.K.
+  Andrew: T.K. set this up and left a note for 'Gerald.' If Gerald left in 2003... T.K. wrote this note knowing Gerald was already gone.
+  set tuesday_sticky_found
+  goto n7
+
+  @n5
+  Narrator: The sticky note. 'WS-CTRL-2004 / see Gerald for context.' Gerald left in 2003. You already noted the workstation label for Alex.
+  goto n7
+
+  @n6
+  Narrator: A sticky note on an old monitor. Small handwriting. Initials at the bottom: T.K.
+
+  @n7
+  end
+
+# ==========================================================================
+# PRINTER'S SOUL interactables
+# ==========================================================================
+scene printer_firmware_disk
+  if printer_firmware_found -> n5
+  if printer_soul_started else -> n6
+  Narrator: A firmware disk in a paper sleeve on the equipment shelf. Label: 'XEROX WC7845 / FIRMWARE v2.1.4 / OEM ORIGINAL.' This is the printer's original factory disk.
+  Andrew: Alex said he needs this to connect to the printer directly. I'll take it.
+  set printer_firmware_found
+  goto n7
+
+  @n5
+  Narrator: You already have the firmware disk.
+  goto n7
+
+  @n6
+  Narrator: A firmware disk in a paper sleeve. Factory original. Dusty. Has been sitting here for years.
+
+  @n7
+  end
+
+scene printer_ethernet_port
+  if printer_soul_done -> n5
+  if printer_firmware_found else -> n6
+  Narrator: An RJ45 ethernet port on the wall, labeled 'PRINTER DIRECT — IT USE ONLY.' Alex's instructions said to plug in here with the firmware disk loaded.
+  Andrew: Let's see what you've been computing for twenty-two years.
+  set printer_soul_done
+  goto n7
+
+  @n5
+  Narrator: The port is still connected. The printer's computation completed when you plugged in.
+  goto n7
+
+  @n6
+  Narrator: An ethernet port on the wall. 'PRINTER DIRECT — IT USE ONLY.' You don't have what you need to connect yet.
+
+  @n7
+  end
+
+# ==========================================================================
+# UNAUTHORIZED PATCH interactable
+# ==========================================================================
+scene unauthorized_patch_monitor
+  if patch_monitor_silenced -> n4
+  if final_patch_started else -> n5
+  Narrator: A network monitoring terminal near rack row three. The screen shows a live feed of all server activity, with a bright red 'ALERT THRESHOLD' bar at 40% capacity.
+  set patch_monitor_silenced
+  goto n6
+
+  @n4
+  Narrator: The monitoring process is terminated. Screen dark. No alerts will go out tonight.
+  goto n6
+
+  @n5
+  Narrator: A network monitoring terminal. It logs all server activity and reports anything unusual to corporate IT. The fan hums quietly.
+
+  @n6
+  end

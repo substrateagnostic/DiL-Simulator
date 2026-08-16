@@ -1,0 +1,544 @@
+# ============================================================================
+# TRUST ISSUES: A Trust Officer Simulator -- All Dialog Trees
+# ============================================================================
+# Node types:
+#   { type: 'text', speaker, text }
+#   { type: 'choice', speaker, text, choices: [{ text, next, flag?, flagValue? }] }
+#   { type: 'condition', flag, ifTrue, ifFalse }
+#   { type: 'action', action, ...params, next }
+#   { type: 'end' }
+#
+# Nodes auto-advance to next index unless a 'next' field redirects.
+# Choice 'next' values are absolute indices within the dialog array.
+# ============================================================================
+# --------------------------------------------------------------------------
+# RECEPTIONIST INTRO — plays once on first entry to reception
+# --------------------------------------------------------------------------
+scene receptionist_intro
+  Diane (Front Desk): Oh! You must be the new hire. Andrew, right?
+  Diane (Front Desk): I'm Diane. I run the front desk. Welcome to Vaults Fargo. Please don't touch the orchid.
+  Andrew: ...There's no orchid.
+  Diane (Front Desk): Exactly. Chad killed it. The point stands.
+  Diane (Front Desk): HR asked me to give you this.
+  give coffee_large x1
+  Diane (Front Desk): It's a large coffee. You'll want it. Trust me.
+  Diane (Front Desk): Your desk is on the cubicle floor. Through the north door, up the stairs. Well — there are no stairs. Through the north door.
+  Diane (Front Desk): Your manager is Skip Hartley. He'll brief you. Don't be late.
+  Diane (Front Desk): Oh, and keep your badge visible at all times. Skip gets... particular about that.
+  Andrew: What does a Seasonal Compliance Associate even do?
+  Diane (Front Desk): ...
+  Diane (Front Desk): Good luck, Andrew.
+  set reception_intro_done
+  end
+
+# ==========================================================================
+# ACT 1 -- INTRODUCTION NPCs
+# ==========================================================================
+# Shown to all team members before the player has checked their desk
+scene team_pre_intro
+  Narrator: You're still hovering awkwardly in the doorway. Maybe settle in at your desk first before introducing yourself around the office.
+  end
+
+scene neutral_npc
+  Narrator: They give you the nod of someone saving their conversation for a better fiscal quarter.
+  end
+
+scene neutral_janet
+  Janet: One crisis at a time, hon.
+  end
+
+scene neutral_alex_it
+  Alex from IT: Not a great time. Something is blinking that should not be blinking.
+  end
+
+scene neutral_intern
+  The Intern: I'm on standby! I don't know for what, but I'm ready.
+  end
+
+scene neutral_isaiah
+  Isaiah: Files come in, files go out. It steadies a person, if you let it.
+  end
+
+scene neutral_diane
+  Diane: Quiet at the front desk just now. I've been here long enough not to say that out loud.
+  end
+
+scene neutral_skip
+  Skip Hartley: Circle back with me when the timing is right, buddy.
+  end
+
+scene neutral_janitor
+  Mysterious Janitor: Some conversations arrive when they're ready.
+  end
+
+# --------------------------------------------------------------------------
+# JANET -- The wine-tumbler-wielding trust officer
+# --------------------------------------------------------------------------
+scene janet_intro
+  Janet: Ah. The new trust officer. They get younger every year. Or I'm aging in the cask. One of those.
+  Janet: I'm Janet. I handle the... *sip* ...smaller accounts. The ones where nobody's fighting. So, like, three of them.
+  Janet: Welcome to the sixth floor. We call it 'The Trust Fall.' Nobody catches you.
+
+  @n3
+  ask Janet: Anyway -- what can I help you with, hon?
+    -> n4: What's in the tumbler?
+    -> n8: Any tips for surviving here?
+    -> n13: Who's who around the office?
+    -> n18: I should get going.
+
+  @n4
+  Janet: This? It's... kombucha.
+  Andrew: At 9:30 AM?
+  Janet: It's fermented. That's the POINT of kombucha. Don't make it weird.
+  Janet: *extremely long sip*
+  goto n3
+
+  @n8
+  Janet: Oh sweetie. Okay. Number one: never eat anything from the break room fridge. The notes in there have gotten... hostile.
+  Janet: Number two: if the printer starts making noises, just walk away. We've had three repair techs quit this year.
+  Janet: Number three: Skip will use the word 'synergy' at least fourteen times before lunch. Don't drink every time or you'll end up like me.
+  Janet: *looks at tumbler* ...Successful. You'll end up successful like me.
+  Janet: Oh, and someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means.
+  goto n22
+
+  @n13
+  Janet: Let's see... Skip is your boss. He's... enthusiastic. He once described a simple trust amendment as 'a paradigm-shifting leverage event.'
+  Janet: Alex from IT lives in the server room. I'm not sure he has a home. He speaks entirely in acronyms.
+  Janet: The Intern... bless his heart. He's been here three months and still thinks fiduciary duty is a type of military service.
+  Janet: Diane at reception is the only competent person in this building. If you need anything actually done, talk to her.
+  Janet: And then there's the Janitor. He wears a gold Rolex and gives financial advice while mopping. Nobody asks questions.
+  goto n3
+
+  @n18
+  set met_janet
+  Janet: Anyway, good luck with the Henderson case. You're going to need it. Those people make Thanksgiving look like a contact sport.
+  Janet: *sip*
+  end
+
+  @n22
+  if lunch_thief_started -> n3
+  quest side_lunch_thief stage 1
+  set lunch_thief_started
+  goto n3
+
+# --------------------------------------------------------------------------
+# ALEX FROM IT
+# --------------------------------------------------------------------------
+scene alex_it_intro
+  Alex from IT: Andrew, right? I knew at 8:52 — the badge server and I keep each other informed. Welcome to Vaults Fargo.
+  Alex from IT: I'm Alex. IT department. Well, I AM the IT department. Had a team once. They all 'transferred.' That's corporate for 'fled.'
+  Alex from IT: Anyway — good to have you. The trust department could use someone who hasn't been here long enough to stop trying.
+  Alex from IT: One thing before we get into it. Have you touched any of the legacy systems yet?
+  Andrew: I just started tod--
+  Alex from IT: Good. Don't. The VPN runs on a modified TI-84 calculator from 2003. It has never crashed once, and I've chosen not to ask why.
+
+  @n6
+  ask Alex from IT: So. What do you want to know?
+    -> n7: What happened to the IT team?
+    -> n11: What's in the server room?
+    -> n16: Any tech I should know about?
+    -> n20: I'll let you get back to it.
+
+  @n7
+  Alex from IT: They said it was 'restructuring.' I say it was the Server Room Incident of 2024.
+  Alex from IT: I'm not legally allowed to discuss it. NDA. Also a restraining order from the server rack in Row C.
+  Andrew: A restraining order from a server rack?
+  Alex from IT: It's a legal gray area. Like most things at this company.
+  goto n6
+
+  @n11
+  Alex from IT: The server room. Everything in this building is connected, and the server room is where it admits it.
+  Alex from IT: Okay look. Officially, it houses our document management system and the trust accounting database. SSL certificates. Normal stuff.
+  Alex from IT: Unofficially... there's a partition I found that's been running since 2016. It's encrypted with something I've never seen before.
+  Alex from IT: Every night at 3:47 AM it sends a packet to an IP address that traces back to a P.O. box in the Cayman Islands.
+  Alex from IT: I haven't blocked it. You don't block a thing like that. You watch it, and you let it think it's alone.
+  goto n6
+
+  @n16
+  Alex from IT: Your workstation password is 'password123.' I know because everyone's password is 'password123.'
+  Alex from IT: The document management system crashes every Tuesday at 2 PM. Nobody knows why. I've stopped looking into it because every time I do, my access gets revoked for 24 hours.
+  Alex from IT: Also, the VOIP phones record everything. I mean, they're NOT supposed to. But the red light stays on even when you hang up.
+  Alex from IT: I unplugged mine in 2022. I communicate exclusively through Slack messages and aggressive eye contact.
+  goto n6
+
+  @n20
+  set met_alex_it
+  Alex from IT: Anyway, if your computer does anything weird -- and it will -- just restart it three times, slap the left side of the monitor, and say 'please.' In that order.
+  Alex from IT: The 'please' is important. These machines run on spite and desperation.
+  end
+
+# --------------------------------------------------------------------------
+# THE INTERN
+# --------------------------------------------------------------------------
+scene intern_intro
+  The Intern: Oh hey! You're the new guy! Austin, right?
+  Andrew: Andrew.
+  The Intern: Right, right, Arnold. Sorry, I'm terrible with names.
+  The Intern: I'm the intern! Well, I was the intern. Now I'm the 'Trust Operations Support Specialist.' Same pay though.
+  The Intern: Which is zero. The pay is zero.
+  ask The Intern: Hey, you're not with Compliance, are you?
+    -> n6: No, why?
+    -> n11: What if I am?
+
+  @n6
+  The Intern: Oh thank God. Because I was JUST shredding some documents and--
+  The Intern: Wait. I mean. I was FILING some documents. In the shredder. Which is where we file things we're done with.
+  Andrew: That's... not what a shredder is for.
+  The Intern: Skip said to 'make the Henderson pre-audit documents disappear.' I assumed he meant magically but the budget didn't cover a magician so...
+  The Intern: Anyway! If anyone asks, I was photocopying. For three hours. Both sides.
+  goto n15
+
+  @n11
+  The Intern: I mean-- the shredding was... it was already shredded when I got here. Pre-shredded documents. It's a new system.
+  The Intern: We call it... Proactive Document Lifecycle Management.
+  Andrew: ...
+  The Intern: Please don't tell Skip I told you about the Henderson thing. He already made me reorganize the supply closet by 'emotional resonance.'
+
+  @n15
+  set met_intern
+  The Intern: Oh! I almost forgot. Skip said to tell you the Henderson meeting is 'mission critical.' He said those words while doing finger guns.
+  The Intern: Good luck, Adam!
+  Andrew: Andrew.
+  The Intern: That's what I said!
+  end
+
+# --------------------------------------------------------------------------
+# ROSS -- Your boss. The briefing.
+# --------------------------------------------------------------------------
+scene skip_not_ready
+  Skip Hartley: Andrew! My man. Before we get into the big stuff — have you met the team yet? Like, all of them?
+  Skip Hartley: Janet runs the front desk. She knows everything and will tell you exactly half of it. The Intern does whatever we point him at. He's enthusiastic. That's his whole thing.
+  Skip Hartley: Then there's Isaiah and Alex from IT. Load-bearing walls, metaphorically. Isaiah knows where everything is filed. Alex knows why nothing works.
+  Skip Hartley: Go say hi to all four of them. Then come back and we'll talk Henderson. Big things, buddy. Big things. *finger guns*
+  end
+
+scene skip_intro
+  Skip Hartley: Andrew! My man! Come in, come in. Close the door. Actually, leave it open. Actually, close it halfway. Power move.
+  Skip Hartley: So. The Henderson Trust. This is the big one, buddy. This is our Super Bowl. Our moon landing. Our... what's that thing where they do the thing?
+  Andrew: Could you be more specific?
+  Skip Hartley: The specifics aren't important. What's important is the ENERGY. And the energy here is: Henderson family, big trust, lots of assets.
+  Skip Hartley: Mrs. Henderson's assets are... substantial. Very well-endowed. The trust, I mean. The trust is well-endowed.
+  Skip Hartley: We need to handle those assets with extreme care. Really get in there and... manage them. Thoroughly.
+  Andrew: Can we maybe just talk about the actual case?
+  Skip Hartley: Right! So. Old Man Henderson passed away last month. Left behind a trust worth about $42 million.
+  Skip Hartley: Three beneficiaries: Karen, his daughter. Classic. Chad, his grandson. Also classic but in a different way. And Grandma Henderson, his wife.
+  Skip Hartley: They all want the assets. ALL of them. Karen says Daddy promised her the lake house. Chad says Grandpa promised him the investment portfolio.
+  Skip Hartley: And Grandma Henderson... well. She's got the actual will. And a very good memory. And a cane she's not afraid to use.
+
+  @n11
+  ask Skip Hartley: Your job is to meet with each of them and resolve this. Questions?
+    -> n12: What's our fiduciary obligation here?
+    -> n15: This sounds like a disaster.
+    -> n18: Why me? I just started.
+    -> n21: Got it. I'm on it.
+
+  @n12
+  Skip Hartley: Fiduciary obligation? Great question. Love the initiative. Very on-brand.
+  Skip Hartley: Our fiduciary obligation is to... leverage our core competencies to maximize stakeholder value while maintaining regulatory alignment across all verticals.
+  Andrew: That didn't answer my question at all.
+  goto n11
+
+  @n15
+  Skip Hartley: Disaster? No no no. This is an OPPORTUNITY. Every trust dispute is a chance to demonstrate our value proposition.
+  Skip Hartley: Plus, the fee structure on a disputed $42 million trust? *chef's kiss* That's quarterly bonus territory, my friend.
+  Skip Hartley: Just remember: we need to penetrate the Henderson account from multiple angles. Get deep into those assets. Really feel them out.
+  goto n11
+
+  @n18
+  Skip Hartley: Why you? Because you're fresh! Untainted by our... previous approaches to trust management.
+  Skip Hartley: The last trust officer who handled the Henderson account had a 'nervous event' in the parking garage. He's fine now. Mostly. He flinches when he hears the word 'beneficiary.'
+  Skip Hartley: But that won't happen to you! Probably! Go get 'em, tiger!
+  goto n11
+
+  @n21
+  set briefing_complete
+  quest main_act2 objective 0 status complete
+  Skip Hartley: Oh, one more thing. If Karen asks you about the pre-audit documents, just say they're 'in process.' Don't say anything about the shredder.
+  Skip Hartley: Wait, you don't know about the shredder. Forget I said that. Circle back later. *finger guns*
+  end
+
+# --------------------------------------------------------------------------
+# DIANE -- Reception, actually competent
+# --------------------------------------------------------------------------
+scene diane_intro
+  Diane: I'm Diane. The title says reception. What I actually run is everything that has to be running by nine o'clock.
+
+  @n1
+  ask Diane: What do you need?
+    -> n2: How does this place actually work?
+    -> n7: What should I know about the Henderson case?
+    -> n13: I think I'm good, thanks.
+
+  @n2
+  Diane: How does it work? It doesn't. It continues. There's a difference, and the difference is me.
+  Diane: Skip makes decisions based on whatever business book he read that morning. The Intern executes those decisions incorrectly. Janet handles the fallout. I document everything.
+  Diane: Alex maintains the systems that are held together with duct tape and optimism. And the Janitor... well, the Janitor knows things.
+  Diane: My advice? Keep your head down, document EVERYTHING, and never CC Skip on an email unless you want a 45-minute reply about 'synergistic client engagement strategies.'
+  Diane: Also, I keep a stash of antacids in my desk drawer. You're going to need them.
+  goto n1
+
+  @n7
+  Diane: The Henderson Trust? Oh boy.
+  Diane: I've seen three trust officers try to mediate this family. The first one quit. The second one cried in the bathroom for forty minutes and then quit. The third one is the one who had the 'parking garage incident.'
+  Diane: Here's what you need to know: Karen is aggressive but predictable. She'll demand to speak to a manager within four minutes of any conversation.
+  Diane: Chad is... Chad. He'll try to bro his way through fiduciary law. It won't work, but he'll be very confident about it.
+  Diane: Grandma Henderson is the one to watch. She seems sweet, but she's been managing her own investments since 1987 and she's sharper than everyone in this building combined.
+  Diane: Also -- and I probably shouldn't tell you this -- she used to work here. A long time ago. Ask the Janitor if you want to know more.
+  goto n1
+
+  @n13
+  Diane: Well, good luck. And seriously -- my desk, bottom drawer, antacids. Anytime you need them.
+  set met_diane
+  give antacid x1
+  Diane: Here, take one now. Consider it a welcome gift.
+  end
+
+# --------------------------------------------------------------------------
+# WATER COOLER -- Random gossip
+# --------------------------------------------------------------------------
+scene water_cooler
+  if cooler_visit_count_3 -> n10
+  if cooler_visit_count_2 -> n6
+  Narrator: You approach the water cooler. Two coworkers whose names you don't know stop talking immediately.
+  Narrator: One of them says 'We were just talking about... the weather' before speed-walking away.
+  Narrator: You overhear a whisper: 'That's the one they gave the Henderson case to. Poor bastard.'
+  set cooler_visit_count_2
+  goto n15
+
+  @n6
+  Narrator: The same two coworkers are back at the water cooler. This time they don't bother hiding it.
+  Narrator: 'I heard Karen Henderson threw a binder at the last trust officer. A BINDER. Three-ring.'
+  Narrator: 'That's nothing. I heard Grandma Henderson once made a compliance auditor cry just by reading his own report back to him. Out loud. With commentary.'
+  set cooler_visit_count_3
+  goto n15
+
+  @n10
+  Narrator: The water cooler crowd has grown. There are now four people, and they're openly staring at you.
+  Narrator: 'He's still here? I had him in the betting pool for day two.' 'I had him for this afternoon.' 'I had him for never showing up.'
+  Narrator: One of them raises their cup in what might be a salute, or might be pity. Hard to tell.
+  Narrator: You fill your cup. The water is room temperature, and has been since 2019.
+  set cooler_exhausted
+
+  @n15
+  end
+
+# --------------------------------------------------------------------------
+# VENDING MACHINE -- Fortunes
+# --------------------------------------------------------------------------
+scene vending_machine
+  Narrator: You approach the vending machine. It hums menacingly.
+  Narrator: The selection buttons are labeled with numbers that don't correspond to any visible products.
+  ask Vending Machine: INSERT COIN FOR WISDOM
+    -> n16: Press B7
+    -> n17: Press C3
+    -> n18: Press A1
+    -> n14: Walk away
+
+  @n3
+  Vending Machine: CLUNK. WHIRR. DISPENSING...
+  Narrator: A small slip of paper falls out. It reads: 'Your principal is well-endowed... with growth potential. Lucky numbers: 4, 8, 15, 16, 23, 42.'
+  give vending_fortune
+  goto n19
+
+  @n6
+  Vending Machine: CLUNK. WHIRR. DISPENSING...
+  Narrator: A small slip of paper falls out. It reads: 'He who diversifies his portfolio diversifies his suffering. But at least it is diversified.'
+  give vending_fortune
+  goto n20
+
+  @n9
+  Vending Machine: CLUNK. WHIRR. DISPENSING...
+  Narrator: A small slip of paper falls out. It reads: 'The market will do what the market will do. This fortune cost $1.50. Consider it your first loss.'
+  give vending_fortune
+  goto n21
+
+  @n12
+  Vending Machine: CLUNK. WHIRR. ERROR: OUT OF WISDOM. DISPENSING EXISTENTIAL DREAD INSTEAD.
+  Narrator: Nothing comes out. Somehow that feels worse.
+
+  @n14
+  Narrator: The vending machine's hum shifts slightly. Was that always a B-flat? You decide not to investigate.
+  end
+  # Each button dispenses its fortune once; after that it is OUT OF WISDOM
+  # (nodes 12-13 were orphaned before this gate — logic-sweep #20).
+
+  @n16
+  if vending_b7_done -> n12 else -> n3
+
+  @n17
+  if vending_c3_done -> n12 else -> n6
+
+  @n18
+  if vending_a1_done -> n12 else -> n9
+
+  @n19
+  set vending_b7_done
+  goto n14
+
+  @n20
+  set vending_c3_done
+  goto n14
+
+  @n21
+  set vending_a1_done
+  goto n14
+
+# --------------------------------------------------------------------------
+# FRIDGE NOTES -- Escalating passive-aggression
+# --------------------------------------------------------------------------
+scene fridge_notes
+  if lunch_thief_culprit_revealed -> n10
+  if read_fridge_1 -> n5
+  Fridge Note: ATTENTION: Someone has been taking items that do not belong to them from this refrigerator. You know who you are. -Management
+  Fridge Note: P.S. The yogurt was LABELED. With my NAME. In SHARPIE. This is not ambiguous. -Janet
+  set read_fridge_1
+  goto n6
+
+  @n5
+  if read_fridge_2 -> n10
+
+  @n6
+  Fridge Note: RE: RE: RE: FRIDGE THEFT. I have installed a camera. Yes, this is legal. I checked with legal. They said 'please stop emailing us.' I'm taking that as approval. -Janet
+  Fridge Note: ADDENDUM: The camera was stolen from the fridge within 24 hours. The irony is not lost on me. -Janet
+  Fridge Note: NEW NOTE (different handwriting): If you can't handle the heat, get out of the kitchen. Also I took your sandwich. It was mediocre. -Anonymous
+  set read_fridge_2
+
+  @n10
+  Fridge Note: THIS IS NOW A CRIME SCENE. DO NOT OPEN THIS REFRIGERATOR. -Janet
+  Fridge Note: I have retained counsel. This is no longer a break room matter. This is a LEGAL matter. My attorney will be in contact. -Janet
+  Fridge Note: Janet, your 'attorney' is a paralegal from the second floor who owes you a favor. Please stop terrorizing the break room. -Diane
+  Fridge Note: FINAL WARNING: I have dusted my tupperware for fingerprints. Results are pending. -Janet
+  Fridge Note: P.S. The fingerprints came back. It was me. I ate my own lunch by accident on Tuesday and forgot. I am not apologizing because the principle still stands.
+  Narrator: There are seventeen more notes underneath, each more unhinged than the last. You decide you've read enough.
+  set fridge_saga_complete
+  goto n19
+
+  @n17
+  Narrator: You quietly close the fridge. The yogurt inside has been there so long it may have achieved sentience.
+  end
+
+  @n19
+  if lunch_thief_fridge_done -> n17
+  if lunch_thief_started else -> n17
+  quest side_lunch_thief stage 2
+  set lunch_thief_fridge_done
+  goto n17
+
+# --------------------------------------------------------------------------
+# PRINTER -- Haunted
+# --------------------------------------------------------------------------
+scene printer_interact
+  # Gate: quest already done
+  if printer_quest_done -> n34
+  # Gate: toner installation stage
+  if printer_toner_quest -> n21
+  # Gate: requires Skip briefing — no Henderson spoilers before then
+  if briefing_complete -> n4
+  Narrator: You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.' It's just a printer.
+  goto n20
+  # Gate: quest already started (waiting on Alex)
+
+  @n4
+  if printer_quest_started -> n20
+  # Main encounter
+  Narrator: You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'
+  Narrator: No one has printed anything. The printer begins printing anyway.
+  Printer: *CHUNK CHUNK WHIRRRRR*
+  Narrator: A single sheet of paper emerges. It reads, in 72-point bold Comic Sans:
+  Printer: HELP ME
+  Narrator: You stare at the paper. The printer stares back. You're not sure how, but it does.
+  Narrator: The display changes to: 'REPLACE TONER SOUL.' Then, before you can process that:
+  Printer: I KNOW ABOUT THE HENDERSON FILES
+  Andrew: What?!
+  Narrator: The printer prints another page. It's a detailed org chart of the Henderson Trust with one name circled three times in red.
+  Narrator: But the toner runs out halfway through. The circled name is illegible.
+  Printer: *sad beeping noises*
+  Narrator: The display reads: 'REPLACE TONER TO LEARN THE TRUTH.' You check. There is no replacement toner on this floor.
+  quest side_printer stage 1
+  set printer_quest_started
+
+  @n20
+  end
+  # Toner installation flow
+
+  @n21
+  Narrator: You install the old toner cartridge Alex set aside. The printer makes a sound like a sigh of relief.
+  Printer: *CHUNK CHUNK CHUNK WHIRRRRRR*
+  Narrator: Three pages print. Slowly. Deliberately. The printer seems almost dignified about it.
+  Narrator: Page 1: An internal memo from 2016 authorizing the 'admin_legacy protocol.' Signed by the Regional Manager.
+  Narrator: Page 2: A list of Henderson Trust account adjustments — small enough to avoid audit flags, large enough to matter. Over eight years.
+  Narrator: Page 3: A single note in different ink: 'If anyone is reading this — check page 47 of the trust document. Original copy is in the Archive. — D.K.'
+  Andrew: D.K. ...Dave Kowalski? Alex's predecessor?
+  Printer: *one quiet beep*
+  Narrator: The display changes to: 'THANK YOU.' Then the printer powers down completely. For the first time in years, it seems at peace.
+  set printer_quest_done
+  xp 350
+  Printer: TWENTY-TWO YEARS OF DOCUMENTS. ALL WITNESSED. NONE FORGOTTEN. TRUTH DELIVERED.
+  Narrator: The Printer from Hell has been laid to rest. +350 XP.
+  goto n20
+  # Quest done state
+
+  @n34
+  if printer_soul_done -> n37
+  if printer_soul_started else -> n37
+  Narrator: The printer is still, its display dark. But Alex mentioned an ethernet port on the wall right beside it — labeled 'PRINTER DIRECT.' That's what you need.
+  goto n20
+
+  @n37
+  Narrator: The printer sits in silence. Its display is dark. It has said everything it needed to say.
+  goto n20
+
+# --------------------------------------------------------------------------
+# MYSTERIOUS JANITOR
+# --------------------------------------------------------------------------
+scene janitor_intro
+  Mysterious Janitor: Hmm. New face on the sixth floor. Trust department?
+  Andrew: Yeah, I'm the new trust officer. Andrew.
+  Mysterious Janitor: Andrew. Good name. Means 'strong.' You're going to need that.
+  Narrator: You notice the Janitor is wearing a gold Rolex. His mop bucket has a monogram on it.
+
+  @n4
+  ask Mysterious Janitor: Something on your mind, son?
+    -> n5: That's a nice watch for a janitor.
+    # B7 round 2. This option used to read "What do you know about the
+    # account they gave me?" — and janitor_intro is reachable in the PARKING
+    # GARAGE, before Skip has briefed Andrew or assigned him anything, so it
+    # put a client in his hands that the player had not been given. Round 1
+    # softened the wording and left the presupposition standing. The line now
+    # presupposes nothing; the Janitor volunteering "Henderson Trust" is the
+    # reveal, which is what node 10 was always written to be.
+    -> n10: Anything I should know before I go up there?
+    -> n15: You don't really seem like a janitor.
+    -> n21: Just passing through.
+
+  @n5
+  Mysterious Janitor: This? Gift from a client. A long time ago. Back when I was... in a different line of work.
+  Mysterious Janitor: Let me give you some advice, free of charge -- though in this building, nothing is truly free.
+  Mysterious Janitor: The floors I mop see everything. Deals made in hallways. Arguments in stairwells. The truth always comes out in what people say when they think nobody's listening.
+  Mysterious Janitor: Or what they print. That printer on the sixth floor? It remembers everything. Every document. Every draft. Every panicked 3 AM printout.
+  Mysterious Janitor: Some people think machines don't have memory. Those people haven't worked here long enough.
+  goto n4
+
+  @n10
+  Mysterious Janitor: Henderson Trust. Now there's a name I haven't heard in a while.
+  Mysterious Janitor: Did you know Old Man Henderson built that trust himself? Filed the paperwork at this very office. Thirty years ago. I watched him do it.
+  Andrew: You've been here for thirty years?
+  Mysterious Janitor: The floors don't mop themselves. And some of us... we stay because there are things that need watching.
+  Mysterious Janitor: Listen -- Old Man Henderson put a clause in that trust. Page 47, paragraph 3. Nobody reads that far. But someone should.
+  goto n4
+
+  @n15
+  Mysterious Janitor: A different role? Heh.
+  Mysterious Janitor: I was Senior Vice President of Trust Administration for this branch. Twenty-two years. Built the trust department from scratch.
+  Andrew: And now you're... mopping?
+  Mysterious Janitor: Sometimes the best view of the maze is from the floor, not the corner office.
+  Mysterious Janitor: Also, the pension is excellent and I have zero emails to answer. Do you know how many emails a VP gets? Three hundred a day. Now I get zero and I know everything.
+  Mysterious Janitor: Think about that, Andrew. Really think about it.
+  goto n4
+
+  @n21
+  set met_janitor
+  Mysterious Janitor: One more thing. When the time comes to make your choice about the Hendersons...
+  Mysterious Janitor: Read the will. Not the summary. Not the abstract. Not Skip's bullet points. The actual will. Page 47.
+  Narrator: The Janitor resumes mopping. The Rolex catches the fluorescent light.
+  end

@@ -1,0 +1,589 @@
+# ==========================================================================
+# ALEX FROM IT SUBQUESTS
+# ==========================================================================
+# --------------------------------------------------------------------------
+# SUBQUEST 1: The 3:47 AM Anomaly
+# Reward: Overclocked Badge (+3 SPD)
+# --------------------------------------------------------------------------
+scene alex_it_quest_anomaly
+  if quest_anomaly_347_complete -> n20
+  if anomaly_started -> n9
+  Alex from IT: Hey. I've been tracking a weird signal. Something's pinging an external IP at exactly 3:47 AM every night.
+  Alex from IT: I set up a packet sniffer. It's not just data — it's Morse code. Embedded in the headers of our trust accounting database.
+  Alex from IT: Someone has been sending Morse code through our trust system at 3:47 AM every night. Eight years running.
+  Alex from IT: The signal originates from server rack C — the one with the restraining order. There should be a blinking LED pattern on it.
+  Alex from IT: Go take a look. Long blink = dash, short blink = dot. See what you can read.
+  set anomaly_started
+
+  @n8
+  end
+  # B-list — THE ANOMALY AUTO-COMPLETED ITSELF. This node had no `next`, so
+  # it fell into node 10 ("okay I got impatient. I decoded it myself") and ran
+  # the whole payoff chain — quest_anomaly_347_complete, +250 XP, +3 SPD —
+  # the first time the player came back to Alex having done nothing at all.
+  # The HUD was meanwhile still printing "Find the Morse code pattern in
+  # server rack C", so the objective and the reward disagreed about whether
+  # the quest existed. Routed through an APPENDED gate at 21, per the
+  # never-insert-into-the-middle law.
+
+  @n9
+  Alex from IT: Did you check rack C?
+  goto n21
+
+  @n10
+  Alex from IT: ...okay I got impatient. I decoded it myself. It says 'TRUST NO ALGORITHM.' Over and over. Every night. For eight years.
+  Alex from IT: I traced the origin further. It's not coming from the Caymans — it bounces TO the Caymans and BACK. The source is inside this building.
+  Alex from IT: I think the building itself has been sending this warning. Which is insane. But also look around you.
+  Alex from IT: The signal timestamp 3:47? That's not a time. It's a frequency. 3.47 GHz. Someone buried that hint in the ping data.
+  Alex from IT: I overclocked a security badge to run at exactly that frequency. It resonates with the building's systems somehow.
+  Alex from IT: Here. It's technically an FCC violation. Consider it a thank you.
+  set quest_anomaly_347_complete
+  xp 250
+  Narrator: Quest complete: The 3:47 AM Anomaly. +250 XP. SPD +3 permanently.
+
+  @n19
+  end
+
+  @n20
+  Alex from IT: The signal went dark after we decoded it. Whatever was warning us knows we got the message.
+  goto n19
+  # ── APPENDED (B-list): the gate node 9 now routes through. ──────────────
+  # Alex racing Andrew to the answer is in character, and node 10 stays
+  # exactly as authored — he simply cannot do it before Andrew has been to
+  # the rack. `morse_decoded` is the same flag the HUD reads to switch this
+  # quest's objective from "find it" to "return to Alex", so the reward path
+  # and the objective now agree by construction.
+
+  @n21
+  if morse_decoded -> n10
+  Alex from IT: Then go look. Rack C. The one with the restraining order taped to it.
+  goto n8
+
+# Morse code interactable on server rack C
+scene morse_code_rack
+  if anomaly_started else -> n6
+  Narrator: Server rack C. The restraining order is taped to the side. But behind it, a single LED blinks in a distinct pattern.
+  Narrator: Long... short short short... long short... short short short... long... / short... short long short short... short long... short short short long... short short short... long short short... short short... short short short short short... short short short...
+  Andrew: If I remember my Boy Scout Morse code... T-R-U-S-T... N-O... A-L-G-O-R-I-T-H-M-S...
+  Andrew: 'Trust No Algorithm.' That's... oddly specific for a blinking light.
+  set morse_decoded
+  goto n7
+
+  @n6
+  Narrator: Server rack C hums quietly. One LED blinks in a pattern that seems deliberate, but you don't know what to look for yet.
+
+  @n7
+  end
+
+# --------------------------------------------------------------------------
+# SUBQUEST 2: Legacy Admin Account
+# Reward: Root Access ability
+# --------------------------------------------------------------------------
+scene alex_it_quest_legacy
+  if quest_legacy_admin_complete -> n18
+  if phantom_workstation_found -> n20
+  if legacy_started -> n7
+  Alex from IT: Okay so. There is an admin account that has been auto-approving expense reports for eighteen years.
+  Alex from IT: I only noticed because this month it approved 'One (1) kayak.' For the marketing department. Nobody in marketing kayaks.
+  Alex from IT: I've traced it to an active IP on this floor. It's running on a physical machine somewhere. Check the filing cabinets in HR — there'll be a paper trail. Then find the source workstation.
+  set legacy_started
+  goto n17
+
+  @n7
+  if phantom_hr_found else -> n9
+  Alex from IT: Good, you found the HR trail. Now find the workstation — it'll be in the cubicle farm somewhere. Look for a machine that's running hot for no reason.
+  goto n17
+
+  @n9
+  Alex from IT: Check HR for the expense printouts first. There should be a paper trail in the filing cabinets.
+  goto n17
+
+  @n10
+  Alex from IT: You found it. Give me a second to pull the logs...
+  Narrator: Alex connects remotely and types for about twenty seconds. Then he leans back slowly.
+  Alex from IT: The account was set up in 2006 by the previous IT manager as an automated procurement bot. He left, forgot to decommission it, and it just... kept running.
+  Alex from IT: It approved everything that matched its original criteria. 'Operational supplies.' The kayak technically qualified under 'team wellness equipment.'
+  Alex from IT: I wrote you a root access exploit from the technique I used to kill it. Strips every defense. Consider it hazard pay.
+  set quest_legacy_admin_complete
+  xp 300
+  goto n19
+
+  @n17
+  end
+
+  @n18
+  Alex from IT: The phantom approver is gone. HR is still processing the kayak return.
+  goto n17
+
+  @n19
+  Narrator: Quest complete: The Phantom Approver. +300 XP. Learned ability: Root Access! Deals 50 damage and strips all enemy buffs.
+  goto n17
+
+  @n20
+  if phantom_hr_found -> n10
+  Alex from IT: You found the machine — good. But I still need the HR paper trail to map the account's full history. Check the filing cabinets in HR.
+  goto n17
+
+# --------------------------------------------------------------------------
+# SUBQUEST 3: Network Ghost
+# Reward: Firewall ability
+# --------------------------------------------------------------------------
+scene alex_it_quest_network
+  if quest_network_ghost_complete -> n22
+  if all_boosters_placed -> n11
+  if network_started -> n9
+  Alex from IT: There's something on the network I can't identify. A ghost. It's consuming bandwidth and leaving no trace in the logs.
+  Alex from IT: To triangulate it, I need signal boosters placed in three locations: break room, back corridor, and conference room.
+  Alex from IT: Self-adhesive. Military grade. Well — I bought them from a guy named Military Mike on eBay. But they work.
+  Alex from IT: Look for spots on the walls in each room. Interact with the booster. Come back when all three are placed.
+  quest network_ghost stage 1
+  set network_started
+  goto n10
+
+  @n9
+  Alex from IT: Still need boosters? Break room east wall, back corridor midpoint, conference room east wall.
+
+  @n10
+  end
+
+  @n11
+  Alex from IT: All three boosters are live! Triangulating now...
+  Narrator: Alex stares at his screen. Three signal blips converge on a single point on the floor plan.
+  Alex from IT: The network ghost is... the printer. The PRINTER is on the network. Actively sending data.
+  Alex from IT: It's been uploading scanned documents to a hidden partition every time someone uses it. Every document ever printed here — archived.
+  Alex from IT: The building has been keeping its own records. A backup that nobody can tamper with. It's been protecting itself.
+  Alex from IT: This is... beautiful? In a deeply unsettling way?
+  Alex from IT: Here. I wrote you a firewall subroutine based on what the printer does — blocks the next attack directed at you.
+  set quest_network_ghost_complete
+  xp 300
+  Narrator: Quest complete: Network Ghost. +300 XP. Learned ability: Firewall! Blocks the next enemy ability entirely.
+
+  @n21
+  end
+
+  @n22
+  Alex from IT: The ghost went quiet after we triangulated it. The printer keeps doing its thing, though.
+  goto n21
+
+# --------------------------------------------------------------------------
+# SUBQUEST 4: Dave's Legacy
+# Reward: Temporal Audit ability
+# --------------------------------------------------------------------------
+scene alex_it_quest_dave
+  if quest_daves_legacy_complete -> n20
+  if tuesday_all_found -> n10
+  if dave_started -> n7
+  Alex from IT: Okay, new mystery. There's a scheduled task that runs every Tuesday at exactly 2 PM. Has been running since 2004.
+  Alex from IT: The logs are encrypted with a key I can't crack. It executes something, completes in under a second, and leaves no trace. Every Tuesday for twenty years.
+  Alex from IT: There are three physical references in the task header: a floppy disk ID, a server asset tag, and a workstation label. I need all three to reconstruct the decryption key.
+  set dave_started
+  goto n8
+
+  @n7
+  Alex from IT: Still looking? Floppy disk somewhere in the break room, server tag on the equipment shelf in here, and a label on one of the cubicle farm monitors.
+  goto n9
+
+  @n8
+  quest daves_legacy stage 1
+
+  @n9
+  end
+
+  @n10
+  Alex from IT: You got all three. Give me a minute...
+  Narrator: Alex cross-references the three identifiers and runs the decryption. He reads the result. He reads it again. He closes his eyes.
+  Alex from IT: It's an automated birthday email. For someone named Gerald Hitchcock. Who left this company in 2003.
+  Alex from IT: Gerald's last day here, someone set up a script to email him happy birthday every year. It's been running for twenty-one years, bouncing off a dead mailbox, logging nothing.
+  Alex from IT: Twenty-one years of digital birthday wishes going absolutely nowhere.
+  Andrew: That's... either the saddest or the sweetest thing I've ever heard.
+  Alex from IT: I'm going to leave it running. Also — I wrote you an ability based on the timestamp exploit I used. Two actions in one turn. It's called Temporal Audit. Gerald would've appreciated that.
+  set quest_daves_legacy_complete
+  xp 300
+  goto n21
+
+  @n19
+  end
+
+  @n20
+  Alex from IT: The Tuesday 2PM is still running. Gerald's birthday was last Tuesday. He got his email.
+  goto n19
+
+  @n21
+  Narrator: Quest complete: The Tuesday 2PM. +300 XP. Learned ability: Temporal Audit! Take two actions in one turn.
+  goto n19
+
+# Dave Kowalski — the D.K. who signed the printer's 2016 note (Printer
+# from Hell). Routed from the Janitor once printer_quest_done is set (#20).
+scene janitor_dave
+  if dave_janitor_done -> n6
+  Mysterious Janitor: Dave? Dave Kowalski. Good man. Better IT specialist.
+  Mysterious Janitor: He found something in the servers in 2016. Same thing Alex found years later. The shadow accounts.
+  Mysterious Janitor: He reported it. Through official channels. By the book. And the book ate him alive.
+  Mysterious Janitor: They transferred him to a branch that doesn't exist anymore. Closed six months later. Convenient timing.
+  set dave_janitor_done
+
+  @n6
+  end
+
+# (janitor_legacy_token deleted — an orphaned remnant of an earlier Legacy
+# Admin design. It contradicted current canon twice over: the Phantom
+# Approver quest attributes the bot to the previous IT manager, and the
+# archive's 2006 admin_legacy request is signed by the Regional Manager.
+# No NPC, interactable, or routing ever referenced it. Logic-sweep #20.)
+# Signal booster interactables for Network Ghost quest
+scene network_booster_br
+  if booster_br_placed -> n4
+  if network_started else -> n5
+  Narrator: You press Alex's signal booster against the east wall. It clicks into place and a tiny green LED begins blinking.
+  set booster_br_placed
+  goto n6
+
+  @n4
+  Narrator: Signal booster: active. Green light steady.
+  goto n6
+
+  @n5
+  Narrator: A small black device with an adhesive backing. You're not sure what it's for.
+
+  @n6
+  end
+
+scene network_booster_stairwell
+  if booster_stair_placed -> n4
+  if network_started else -> n5
+  Narrator: The concrete wall of the back corridor holds the signal booster perfectly. The LED blinks once, then settles into a steady green.
+  set booster_stair_placed
+  goto n6
+
+  @n4
+  Narrator: Signal booster: active. Green light steady.
+  goto n6
+
+  @n5
+  Narrator: A small black device stuck to the wall. Looks like something an IT person would hide here.
+
+  @n6
+  end
+
+scene network_booster_conf
+  if booster_conf_placed -> n4
+  if network_started else -> n5
+  Narrator: The conference room's east wall. The signal booster fits neatly between two whiteboards. Nobody will notice it for months.
+  set booster_conf_placed
+  goto n6
+
+  @n4
+  Narrator: Signal booster: active. Green light steady.
+  goto n6
+
+  @n5
+  Narrator: A small black device with an adhesive backing. You're not sure what it's for.
+
+  @n6
+  end
+
+# --------------------------------------------------------------------------
+# SUBQUEST 5: Printer's Soul
+# Reward: Notarized Strike ability
+# --------------------------------------------------------------------------
+scene alex_it_quest_printer
+  if quest_printer_soul_complete -> n14
+  if printer_soul_done -> n9
+  if printer_soul_started -> n17
+  Alex from IT: Okay so the printer thing. Not the haunted messages — I've been watching something else.
+  Alex from IT: The printer draws about six times more power than it should in standby. It's not just idling. It's running a continuous background calculation. Has been for years.
+  Alex from IT: I need the firmware disk to connect to it directly — should be on the equipment shelf in here. Then there's an ethernet port on the wall next to the printer. Plug in and I can pull the computation logs.
+  set printer_soul_started
+  goto n13
+
+  @n7
+  Alex from IT: Find the firmware disk on the equipment shelf first. Then the ethernet port is on the wall right next to the printer.
+  goto n13
+
+  @n8
+  quest printers_soul stage 2
+  goto n13
+
+  @n9
+  Alex from IT: I analyzed the computation logs. The printer has been generating the mathematical foundation for an unforgeable elliptic curve digital signature. For twenty-two years.
+  Alex from IT: It didn't know what it was building. But I do. It's done now — it completed the sequence at the moment you connected.
+  Alex from IT: I wrote you an attack from it. Notarized Strike. Carries the weight of twenty-two years of mathematical work. Very difficult to argue with.
+  set quest_printer_soul_complete
+  goto n15
+
+  @n13
+  end
+
+  @n14
+  Alex from IT: The printer finally went quiet. Twenty-two years of work — complete.
+  goto n13
+
+  @n15
+  xp 350
+  Narrator: Quest complete: Printer's Soul. +350 XP. Learned ability: Notarized Strike! A legally binding attack — Power 60.
+  goto n13
+  # Stage-aware reminder: once the disk is found, the stage-2 quest_update
+  # (node 8) fires — it was orphaned before this gate (logic-sweep #20).
+
+  @n17
+  if printer_firmware_found else -> n7
+  Alex from IT: You have the disk. Good. Now the ethernet port on the wall beside the printer — plug in, and the printer and I will handle the rest.
+  goto n8
+
+# --------------------------------------------------------------------------
+# SUBQUEST 6: The Unauthorized Patch
+# Reward: Invoke Charter ability
+# --------------------------------------------------------------------------
+scene alex_it_quest_final
+  if quest_final_patch_complete -> n17
+  if patch_monitor_silenced -> n8
+  if final_patch_started -> n6
+  Alex from IT: I'm doing it. Nine months I've been waiting for an approved maintenance window. No one will sign off. The vulnerability is documented. The patch is written. Nobody cares.
+  Alex from IT: It's a remote code execution flaw in the building's network OS. Nothing to do with trust accounts — just old, unpatched infrastructure that's been sitting here since 2019.
+  Alex from IT: Building's empty. I'm deploying it tonight. But first — the network monitoring terminal near rack row three. It'll ping corporate the moment I start. Silence it, then come back.
+
+  @n6
+  set final_patch_started
+  Alex from IT: The monitoring terminal is near rack row three. Kill the process, then come back and we'll deploy.
+  goto n16
+
+  @n8
+  Alex from IT: Monitor's offline. Perfect. Starting the patch deploy now. Four minutes. And — there it is.
+  Alex from IT: The building runs automated security sweeps when it detects unauthorized server access. I probably should have mentioned that. It won't stop the patch. It will, however, stop us.
+  Alex from IT: I need you to handle the sweep while I finish the deploy. I have very strong feelings about not doing that myself.
+  Narrator: Alex turns back to his keyboard and begins typing at an alarming speed. From the server room entrance, you hear footsteps.
+  Security Guard: UNAUTHORIZED SERVER ACCESS DETECTED. PLEASE STEP AWAY FROM THE EQUIPMENT.
+  Andrew: There is a completely legitimate explanation for this.
+  Security Guard: SIR. STEP AWAY FROM THE EQUIPMENT.
+  fight patch_defense
+
+  @n16
+  end
+
+  @n17
+  Alex from IT: Patch is live. Permanently encrypted into the network stack. They'd have to take down the whole building to roll it back.
+  goto n16
+
+scene patch_defense_defeated
+  Narrator: The security sweep is handled. From behind three monitors, Alex raises one fist without looking up.
+  Alex from IT: DONE. Patch deployed. Signed, distributed, live. It is permanently part of this building's infrastructure.
+  Alex from IT: I wrote you an ability based on what I did tonight. Unauthorized, technically. Absolutely necessary. I'm calling it Invoke Charter. Don't ask why. It just felt right.
+  set quest_final_patch_complete
+  xp 400
+  Narrator: Quest complete: The Unauthorized Patch. +400 XP. Learned ability: Invoke Charter! Power 100. Devastating to bad-faith enemies.
+  end
+
+# ==========================================================================
+# PUZZLES
+# ==========================================================================
+# --------------------------------------------------------------------------
+# COMPLIANCE CROSSWORD — 5 regulation questions for archive terminal password
+# Talk to Compliance Auditor NPC on executive floor when act >= 3
+# --------------------------------------------------------------------------
+scene compliance_crossword
+  mode quiz
+  if compliance_crossword_done -> n35
+  Compliance Auditor: You again. I've been expecting you.
+  Compliance Auditor: You want access to the secure terminal in the Archive. I know because I monitor all access requests. Even the ones that haven't been made yet.
+  Compliance Auditor: The password is regulatory knowledge. Prove to me that you understand compliance, and I'll give you the key.
+  Compliance Auditor: Five questions. Five correct answers. No partial credit. This is compliance, not a poetry class.
+  ask Compliance Auditor: Question 1: Under the prudent investor rule, a fiduciary must invest trust assets as what?
+    -> n6 sets crossword_1=true: A reasonable person would.
+    -> n8: A maximum-return optimizer.
+    -> n8: The beneficiary requests.
+
+  @n6
+  Compliance Auditor: Correct. A reasonable person standard. Not a genius. Not Skip. A REASONABLE person.
+  Compliance Auditor: Moving on.
+
+  @n8
+  ask Compliance Auditor: Question 2: What fiduciary duty prohibits self-dealing in trust administration?
+    -> n9 sets crossword_2=true: Duty of loyalty.
+    -> n11: Duty of care.
+    -> n11: Duty of synergy.
+
+  @n9
+  Compliance Auditor: Correct. Loyalty. Not to be confused with the thing Skip asks for at every team meeting.
+  Compliance Auditor: Three more.
+
+  @n11
+  ask Compliance Auditor: Question 3: What form must be filed with FINRA when a trust officer discovers a regulatory violation?
+    -> n14: Form U4.
+    -> n12 sets crossword_3=true: Form 27B/6.
+    -> n14: Form 1099.
+
+  @n12
+  Compliance Auditor: Correct. Form 27B/6. Forty-seven pages. Double-sided. My personal favorite form.
+  Compliance Auditor: You're doing well. Suspiciously well.
+
+  @n14
+  ask Compliance Auditor: Question 4: What is the maximum statute of limitations for breach of fiduciary duty in most jurisdictions?
+    -> n17: 3 years.
+    -> n15 sets crossword_4=true: 6 years.
+    -> n17: There is no limit.
+
+  @n15
+  Compliance Auditor: Correct. Six years in most jurisdictions. Which means the admin_legacy account's activities are still within the window.
+  Compliance Auditor: One more question.
+
+  @n17
+  ask Compliance Auditor: Final question: What document establishes the foundational obligations of a trust institution?
+    -> n20: The operating agreement.
+    -> n18 sets crossword_5=true: The trust charter.
+    -> n20: The employee handbook.
+
+  @n18
+  Compliance Auditor: Correct. The trust charter. The very foundation this building stands on.
+  Compliance Auditor: Interesting that you know that.
+
+  @n20
+  Compliance Auditor: Results are in.
+  if crossword_1 else -> n30
+  if crossword_2 else -> n30
+  if crossword_3 else -> n30
+  if crossword_4 else -> n30
+  if crossword_5 else -> n30
+  Compliance Auditor: Perfect score. I'm... impressed. That's the second time I've ever said that. The first was in a mirror.
+  Compliance Auditor: The archive terminal password is: FIDUCIARY. All caps. No spaces. Because compliance doesn't believe in spaces.
+  set compliance_crossword_done
+  set has_archive_password
+  goto n37
+
+  @n30
+  Compliance Auditor: Insufficient. Your regulatory knowledge has gaps. Like your department's internal controls.
+  Compliance Auditor: Come back when you've studied. I recommend reading the entire CFR Title 12. It's only 40,000 pages.
+  set crossword_1 = false
+  set crossword_2 = false
+  set crossword_3 = false
+
+  @n35
+  set crossword_4 = false
+  set crossword_5 = false
+
+  @n37
+  end
+
+# --------------------------------------------------------------------------
+# JANITOR'S RIDDLES — 3 visits, 3 riddles, +2 all stats
+# --------------------------------------------------------------------------
+scene janitor_riddle_1
+  mode quiz
+  if riddle_1_attempted -> n3
+  set riddle_1_attempted
+  Mysterious Janitor: Ah, Andrew. Looking for wisdom? I have a riddle for you.
+
+  @n3
+  Mysterious Janitor: I am owed by many but owned by none. I am earned by actions, not by transactions. What am I?
+  ask Mysterious Janitor: Take your time.
+    -> n5: Trust.
+    -> n8: Money.
+    -> n8: Respect.
+
+  @n5
+  Mysterious Janitor: Trust. Correct. The very thing this building was built to protect.
+  Mysterious Janitor: Come back — I have more riddles.
+  set janitor_riddle_1_done
+  goto n10
+
+  @n8
+  Mysterious Janitor: Not quite. Think about what this place is supposed to protect. What people give us when they walk through those doors.
+  Mysterious Janitor: Come back when you've thought about it.
+
+  @n10
+  end
+
+scene janitor_riddle_2
+  mode quiz
+  if riddle_2_attempted -> n3
+  set riddle_2_attempted
+  Mysterious Janitor: Back for more? Good. Second riddle.
+
+  @n3
+  Mysterious Janitor: I grow stronger when tested, weaker when assumed. I am the foundation of every contract but written in no clause. What am I?
+  ask Mysterious Janitor: Think carefully.
+    -> n5: Good faith.
+    -> n8: Power.
+    -> n8: Obligation.
+
+  @n5
+  Mysterious Janitor: Good faith. The implied covenant. Every contract assumes it, but no one can define it.
+  Mysterious Janitor: Two for two. One more to go.
+  set janitor_riddle_2_done
+  goto n10
+
+  @n8
+  Mysterious Janitor: Close, but no. Think about what holds a contract together even when the words fail.
+  Mysterious Janitor: Come back and try again.
+
+  @n10
+  end
+
+scene janitor_riddle_3
+  mode quiz
+  if riddle_3_attempted -> n3
+  set riddle_3_attempted
+  Mysterious Janitor: The final riddle. The hardest one.
+
+  @n3
+  Mysterious Janitor: I was here before the building. I will be here after it falls. I am not in the charter, but the charter is in me. What am I?
+  ask Mysterious Janitor: Last chance.
+    -> n5: Duty.
+    -> n9: The building.
+    -> n9: Memory.
+
+  @n5
+  Mysterious Janitor: Duty. Not the legal kind. The human kind. The obligation we feel to each other, written in no law but felt in every bone.
+  Mysterious Janitor: Three for three. You remind me of someone I used to be.
+  Narrator: The Janitor's Rolex glows briefly. You feel stronger. Wiser. More... composed.
+  set janitor_riddle_3_done
+  goto n11
+
+  @n9
+  Mysterious Janitor: Not quite. Duty predates every institution. It's what makes us build them in the first place.
+  Mysterious Janitor: Come back when you've considered what brought you to this building.
+
+  @n11
+  end
+
+# --------------------------------------------------------------------------
+# SOCIAL ENGINEERING — 3-step info chain from Isaiah → Diane → Intern
+# --------------------------------------------------------------------------
+scene social_engineering_1
+  if social_eng_started -> n6
+  Isaiah: Hey Andrew. I overheard something. Meredith has an assistant — someone she brought with her. They're on the executive floor.
+  Isaiah: The assistant has Meredith's schedule. If we knew when she was meeting the board, we could prepare.
+  Isaiah: But the assistant won't talk to anyone from our department. We'd need to... get creative.
+  Isaiah: Diane might know who the assistant is. She processes everyone who enters the building.
+  set social_eng_started
+  goto n7
+
+  @n6
+  Isaiah: Talk to Diane about Meredith's assistant. She processes everyone who enters the building.
+
+  @n7
+  end
+
+scene social_engineering_2
+  if social_eng_started else -> n7
+  if social_eng_diane -> n7
+  Diane: Meredith's assistant? Yes, I signed them in. Name is Morgan. Very young. Very nervous.
+  Diane: They asked me where the bathroom was three times. And where to get coffee. They're out of their depth.
+  Diane: If someone brought them a coffee — large, oat milk, extra shot — they might be grateful enough to chat.
+  Diane: The Intern makes coffee runs. He could deliver it without raising suspicion.
+  set social_eng_diane
+
+  @n7
+  end
+
+scene social_engineering_3
+  if social_eng_diane else -> n8
+  if social_eng_complete -> n8
+  The Intern: A coffee mission? A STEALTH coffee mission? This is the greatest day of my unpaid career!
+  Narrator: Ten minutes later, the Intern returns, vibrating with excitement.
+  The Intern: OKAY so Morgan is SUPER stressed. Meredith makes them carry three tablets and a backup clipboard.
+  The Intern: The board meeting is scheduled for 4 PM tomorrow. Meredith is presenting a 'dissolution recommendation.' And she has backup from the Regional Manager's office.
+  The Intern: Also Morgan said thank you for the coffee and asked if we're all going to be fired. I said 'probably not!' Which I realize was not reassuring.
+  set social_eng_complete
+
+  @n8
+  end

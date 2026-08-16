@@ -1,0 +1,1521 @@
+# ==========================================================================
+# ACT 3 -- THE DEEPER LEDGER
+# ==========================================================================
+# --------------------------------------------------------------------------
+# ACT 3 NPC DIALOGS — triggered when actIndex >= 3
+# --------------------------------------------------------------------------
+scene alex_it_act3
+  Alex from IT: You're here. Good. Don't lock the door — locked doors get noticed. Just stand in front of it and look boring.
+  Alex from IT: Okay. So. The encrypted partition? The one that's been pinging the Caymans since 2016?
+  Alex from IT: It just decrypted itself. Not 'I cracked it' decrypted. ITSELF. Like it WANTED to be found.
+  Alex from IT: And what's inside is... it's a shadow ledger. Every trust account this branch has ever managed. Parallel books.
+  Alex from IT: Not just the Hendersons. Dozens of accounts. Hundreds of small adjustments. Basis point skims. Fee reallocations. All traced back to one account: admin_legacy.
+  ask Alex from IT: Someone's been running a shadow trust system for EIGHT YEARS. And the building's servers just... revealed it. On purpose.
+    -> n6: Who created admin_legacy?
+    -> n10: What do you mean the building revealed it on purpose?
+    -> n14: How much money are we talking about?
+
+  @n6
+  Alex from IT: The account metadata traces back to an IP address on the executive floor. Created 2006. The username format matches old Vaults Fargo sysadmin conventions.
+  Alex from IT: But the Janitor told me something, and it connects. When he was SVP, there was a server room in the basement. The Archive. It had the original trust records going back to 1947.
+  Alex from IT: The Archive was sealed in 2016. Same year admin_legacy was created. Coincidence? In this building, nothing is a coincidence.
+  Alex from IT: I need you to find the Archive. There's supposed to be access through the back corridor. Some kind of old passage behind the north wall.
+
+  @n10
+  Alex from IT: I know how it sounds. I said it out loud to myself first, as a test. The decryption key that was used? It's not any standard algorithm I've seen.
+  Alex from IT: It's a hash of a trust document. A SPECIFIC trust document. Dated 1947. The original Vaults Fargo branch charter.
+  Alex from IT: Someone — or something — used a 77-year-old legal document as a cryptographic key. And then used it to unlock itself.
+  Alex from IT: Either this building has an automated system nobody documented, or it has opinions. I've stopped betting against the second one.
+
+  @n14
+  Alex from IT: Conservative estimate? $23 million across all accounts over eight years. The Henderson Trust was the biggest target — $2 million — but it wasn't the only one.
+  Alex from IT: This is FINRA territory. SEC territory. Possibly FBI territory. We're talking systematic breach of fiduciary duty at an institutional level.
+  Alex from IT: And the only person who had consistent executive access across all eight years is the Regional Manager. He rotated through three other branches but kept 'oversight' of this one.
+  Alex from IT: But we need proof. Physical proof. The digital trail isn't enough — they'll say I fabricated it. We need the original trust records from the Archive.
+  # CATCH-UP, routed through node 23 (appended, so no index shifts).
+  # `alex_it_act2` is the only other setter of `knows_server_secret` and it
+  # is gated to quest stages 100-299, so a player who reached Act 3 without
+  # it could never set the flag again — while the HUD objective went on
+  # demanding "Talk to Alex from IT about the encrypted partition" forever,
+  # a conversation the router structurally refuses to serve. Node 1 above
+  # re-establishes the partition in full, so this scene legitimately confers
+  # the same knowledge. NEVER insert a node mid-array in this file: every
+  # `next:` is an absolute index (see the team_chat_hub off-by-one repair).
+  set alex_it_act3_done
+  goto n23
+
+  @n19
+  set archive_accessible
+  Alex from IT: Find the Archive. The Janitor might know how to get in. And Andrew — be careful. If the Regional Manager finds out we're looking...
+  Alex from IT: Well. Let's just say 'restructuring' isn't always a metaphor.
+  end
+
+  @n23
+  set knows_server_secret
+  goto n19
+
+scene janet_act3
+  Janet: Andrew. Close the door. *very aggressive sip*
+  Janet: Have you noticed anything... weird today? The lights keep flickering. The elevator went to a floor that doesn't exist. And my computer printed a document I didn't write.
+  Janet: It was a trust account statement from 1987. I wasn't even WORKING here in 1987. I was in middle school. Badly.
+  Janet: Also — and this is the part that's making me drink faster — there's a woman on the executive floor I've never seen before.
+  Janet: Silver hair. Navy suit. Looks at everyone like she's calculating their net worth and finding it insufficient.
+  Janet: Someone said her name is Meredith Sterling. SVP of Strategic Operations. Nobody knew we HAD a Strategic Operations.
+  Janet: She's been in Skip's office for two hours. Skip hasn't said 'synergy' once. That's how I know it's serious.
+  Janet: *extremely long sip* I'm switching to the emergency reserves.
+  set read_janet_act3
+  end
+
+scene skip_act3
+  Skip Hartley: Andrew. Hey. Come in. Sit down. Actually, don't sit down. Actually... I don't know. Everything is weird today.
+  Skip Hartley: So. There's a woman from corporate here. Meredith Sterling. She's... she's doing a review.
+  Skip Hartley: A 'comprehensive operational assessment.' That's corporate for 'finding reasons to fire people.'
+  Skip Hartley: She asked me about the Henderson Trust. About our procedures. About our... 'fiduciary controls.'
+  Skip Hartley: I tried to use buzzwords. They bounced off her like... like buzzwords bouncing off a wall. She's immune. Nobody's ever been immune before.
+  ask Skip Hartley: Andrew, I'm scared. Is it okay to say that? Leadership books say you're never supposed to say that.
+    -> n6: It's okay to be scared, Skip.
+    -> n8: What does Meredith actually want?
+
+  @n6
+  Skip Hartley: Really? Because 'Lead Like a Lion, Land Like a Feather' says fear is just 'an unrealized growth metric.' But it doesn't feel like a growth metric. It feels like fear.
+  Skip Hartley: Thanks, Andrew. You're... you're a good employee. And maybe also a good person. I'm realizing those might be different things.
+
+  @n8
+  Skip Hartley: She wants to 'optimize' the trust department. Which I think means cutting half of us and making the other half do twice the work.
+  Skip Hartley: She mentioned something about 'legacy systems' and 'archival redundancies.' I think she's talking about the old records in the basement.
+  Skip Hartley: Also she asked about the Janitor. By name. Which is weird because nobody knows the Janitor's actual name. I just call him 'sir' because he scares me a little.
+  set read_skip_act3
+  end
+
+scene intern_act3
+  The Intern: Aiden! I mean Andrew! I mean... whoever you are, HELP.
+  The Intern: The lady from corporate — Meredith — she asked me for 'all Henderson-related documentation from the past five years.'
+  The Intern: I may have... accidentally told her about the shredding. And the fire. And the coffee machine.
+  The Intern: She wrote something on her tablet. I think it was 'terminate.' She might have been playing Wordle but I'm NOT optimistic.
+  The Intern: Also something really weird happened. I was alone in the copy room and the printer turned on by itself.
+  The Intern: It printed a list of names. People who used to work here. Some of them going back to the '40s. And at the bottom it said 'THE CHARTER REMEMBERS.'
+  The Intern: I don't know what that means and I'm choosing not to find out. I'm going to go reorganize the supply closet by color. And also hide.
+  set read_intern_act3
+  end
+
+scene diane_act3
+  Diane: Andrew. I need to talk to you. Privately.
+  Diane: Meredith — the SVP from corporate — she's not just doing a review. I've been watching her. She's been accessing old personnel files. Trust records from before my time.
+  Diane: She asked me about the Archive. The old records room in the sub-basement. It's been sealed since 2016.
+  Diane: I told her I didn't have access. Which is true. But I didn't tell her that the Janitor does.
+  Diane: Andrew, I've worked here for twelve years. I've seen managers come and go. Regional directors. SVPs. None of them ever asked about the Archive.
+  Diane: Whatever's down there, Meredith doesn't want you to find it first. So maybe you should.
+  set read_diane_act3
+  end
+
+scene janitor_act3
+  Mysterious Janitor: I've been expecting you, Andrew.
+  Mysterious Janitor: You felt it too, didn't you? The building shifting. The lights. The printer.
+  Mysterious Janitor: Let me tell you something I should have told you on your first day.
+  Mysterious Janitor: When this branch was chartered in 1947, the founders wrote something into the original trust charter. Not a legal clause. Something... older.
+  Mysterious Janitor: A declaration that the fiduciary duty of this institution was not just to its clients but to the concept of trust itself. The actual, philosophical concept.
+  Mysterious Janitor: Decades of promises. Decades of people putting their faith in this building. Their estates. Their families' futures. All of that faith... accumulated.
+  ask Mysterious Janitor: This building is alive, Andrew. It has been for a very long time.
+    -> n7: That's impossible.
+    -> n11: The Fiduciary Force.
+
+  @n7
+  Mysterious Janitor: Is it? You've seen the printer. You've felt the elevator. You've watched documents appear from nowhere.
+  Mysterious Janitor: This building was built on trust. Literal trust. Fiduciary trust. And when someone breaches that trust — really, fundamentally breaches it — the building reacts.
+  Mysterious Janitor: Why do you think I stayed? Twenty-two years as SVP, and then I picked up a mop. Because someone needs to watch.
+  Mysterious Janitor: The Fiduciary Force. That's what the founders called it. The accumulated weight of every promise made within these walls.
+
+  @n11
+  Mysterious Janitor: You're quick. Good. The Fiduciary Force is waking up because someone has been violating the charter for eight years. The admin_legacy account. The shadow ledger.
+  Mysterious Janitor: Every skimmed basis point. Every redirected fee. The building felt each one. And now it's reached a threshold.
+  Mysterious Janitor: The Archive has the original records. The 1947 charter. The proof of what this institution was SUPPOSED to be.
+  Mysterious Janitor: I can get you in. Through the back corridor — north end. Use this keycard.
+  set has_archive_key
+  give compliance_manual x1
+  Mysterious Janitor: Take my old compliance manual too. You'll need it where you're going.
+  Mysterious Janitor: And Andrew — be careful in the Archive. The building protects its secrets. Not everything down there wants to be found.
+  set janitor_confronted
+  set read_janitor_act3
+  end
+
+scene isaiah_act3
+  Isaiah: Andrew. Interesting morning. I've been practicing not reacting to it.
+  Isaiah: The woman from corporate — Meredith — she asked me to compile a list of everyone in the trust department and their 'redundancy potential.'
+  Isaiah: I told her I'd get right on it. Politely. Then I immediately came to find you.
+  ask Isaiah: What's going on? Can I help?
+    -> n4 sets isaiah_friendly=2: We're investigating something big. Could use your help.
+    -> n7: Stay out of it. It's safer for you.
+
+  @n4
+  Isaiah: I knew it. The building's been... strange. I thought it was just me.
+  Isaiah: Whatever you need — filing, research, distraction — I'm in. Just ask nicely.
+  set isaiah_act3_allied
+  goto n9
+
+  @n7
+  Isaiah: Noted. But I've been here long enough to know when something needs fixing, and this has the smell.
+  Isaiah: I'll keep my head down, but if you change your mind, you know where to find me.
+
+  @n9
+  set read_isaiah_act3
+  end
+
+scene meredith_act3
+  Meredith Sterling: Andrew. I've been reviewing your work on the Henderson Trust.
+  Meredith Sterling: Interesting approach. Some would say reckless. I say it produced a measurable outcome, which in this department qualifies as exotic.
+  Meredith Sterling: I'm here to ensure this department meets corporate standards. Standards that, frankly, it has not been meeting.
+  Meredith Sterling: Skip is a competent motivational speaker. As a department head, however, he leaves much to be desired.
+  ask Meredith Sterling: I have plans for this department. Big plans. You could be part of them.
+    -> n5: What kind of plans?
+    -> n8: I'm happy with how things are.
+
+  @n5
+  Meredith Sterling: Optimization. Modernization. Eliminating redundancies. This department has twelve people doing work that six could handle.
+  Meredith Sterling: I've identified several positions for... reassignment. But someone with your results could have a future here.
+  Meredith Sterling: Think about it. And don't waste time on 'investigations.' I know what Alex from IT has been doing in that server room. It stops now.
+
+  @n8
+  Meredith Sterling: 'Happy.' That's a luxury, Andrew. Not a strategy.
+  Meredith Sterling: This department will change. The question is whether you're driving the change or being driven over by it.
+  set read_meredith_act3
+  end
+
+# --------------------------------------------------------------------------
+# ARCHIVE ROOM INTERACTIONS
+# --------------------------------------------------------------------------
+scene archive_terminal
+  if has_archive_password -> n3
+  Archive Terminal: ACCESS DENIED. AUTHORIZATION CODE REQUIRED. Contact the Compliance Officer for clearance.
+  end
+
+  @n3
+  Narrator: A CRT monitor coated in dust. The keyboard has keys that haven't been pressed since the Obama administration.
+  Narrator: You press Enter. The screen flickers to life. Green text on black. It reads:
+  Archive Terminal: VAULTS FARGO TRUST ARCHIVE — BRANCH 4471 — ESTABLISHED 1947
+  Archive Terminal: WARNING: UNAUTHORIZED ACCESS DETECTED. FIDUCIARY INTEGRITY CHECK... PASSED.
+  Andrew: 'Fiduciary integrity check'? The terminal is checking if I'm trustworthy?
+  Archive Terminal: DISPLAYING: ADMIN_LEGACY TRANSACTION LOG — 2016 TO PRESENT
+  Narrator: Rows and rows of transactions scroll by. Small amounts. $50 here. $200 there. Fee adjustments. Basis point modifications. All from the same account.
+  Narrator: At the bottom, a total: $23,478,912.20. Skimmed from 47 trust accounts over eight years.
+  Andrew: Twenty-three million dollars. I'm going to need to sit down on something that isn't evidence.
+  Archive Terminal: PRINT EVIDENCE? [Y/N]
+  Narrator: You press Y. A dot-matrix printer in the corner whirs to life and produces a thick stack of transaction records.
+  set has_archive_evidence
+  Andrew: Alex was right. Now we have the proof.
+  end
+
+scene archive_cabinets
+  if archive_filing_done -> n9
+  Narrator: Filing cabinets stretch from floor to ceiling. Each is labeled with a year, going back to 1947.
+  Narrator: Most are locked. But five cabinets are ajar, their locks rusted open: 1947, 1971, 1993, 2006, and 2016.
+  Narrator: 1947: The original branch charter. Yellowed paper. The ink has a faint gold shimmer that shouldn't be possible.
+  Narrator: 1971: A restructuring memo. The trust department was nearly shut down. A janitor — the FIRST janitor — filed a motion to preserve it.
+  Narrator: 1993: Performance reviews for a young trust officer. The name is familiar: it's the Janitor. Top marks in every category.
+  Narrator: 2006: A system access request for 'admin_legacy.' Approved by the Regional Manager. No other signatures.
+  Narrator: 2016: A memo ordering the Archive sealed. 'Redundant records. Digital migration complete.' Signed by the Regional Manager.
+  set archive_filing_done
+  goto n10
+
+  @n9
+  Narrator: The filing cabinets have nothing further to add. They said everything between 1947 and 2016.
+
+  @n10
+  Narrator: The timeline is clear: the Regional Manager created the shadow account, then sealed the evidence. The building's been waiting for someone to open these drawers.
+  end
+
+scene stairwell_graffiti
+  if act2_complete -> n4
+  Narrator: The corridor walls are concrete. Someone has scratched into them: 'TRUST FALLS — FLOOR COUNT: 17'
+  Narrator: Below it: 'If found, return to the 6th floor. Or don't. — The Intern (probably)'
+  Narrator: The corridor echoes with the hum of the building. It sounds almost... intentional.
+  goto n8
+
+  @n4
+  Narrator: New graffiti has appeared since last time. In gold ink that shouldn't exist on concrete:
+  Narrator: 'THE FIDUCIARY FORCE IS NOT A METAPHOR.'
+  Narrator: Below it, in different handwriting: 'Neither is my mop. — J'
+  Narrator: The gold ink pulses faintly. You're not imagining it.
+
+  @n8
+  end
+
+# --------------------------------------------------------------------------
+# ACT 3 COMBAT DIALOGS — Security Guard encounter in Archive
+# --------------------------------------------------------------------------
+scene security_guard_combat
+  Narrator: A security guard steps out from behind a row of filing cabinets. He does not look friendly.
+  goto n9
+
+  @n1
+  Security Guard: Hold it. This area is restricted. I don't care what keycard you have.
+  Andrew: I'm a trust officer. I have authorization to—
+  Security Guard: You have authorization to LEAVE. The Regional Manager gave me specific orders: nobody accesses these records.
+  Security Guard: Now turn around, or I'll file a security incident report. And NOBODY wants to deal with that paperwork.
+  Andrew: I can't do that. There are trust accounts being—
+  Security Guard: Wrong answer.
+  fight security_guard
+  end
+  # ── STAGING (appended; routed to from 0) ─────────────────────────────
+  # He waits in the east bank's z=6 gap (room data) and steps out into the
+  # aisle between Andrew and the stairs he came down.
+
+  @n9
+
+  stage
+    security_guard walkTo guard_block face player speed 2
+    player face guard_block nowait
+  goto n1
+
+scene security_guard_defeated
+  Security Guard: Alright, alright! I'm just doing my job, man. The Regional Manager pays extra for 'archive duty.' I didn't ask questions.
+  Security Guard: But between you and me? He's been down here three times this month. Always after hours. Always alone.
+  Security Guard: I don't know what he's hiding, but it's not my problem anymore. I'm going back to the lobby.
+  set security_guard_info
+  end
+
+# --------------------------------------------------------------------------
+# ACT 4 -- THE TRUST AWAKENS
+# --------------------------------------------------------------------------
+# Act 4 starts when player returns evidence to Alex from IT
+scene act4_trigger
+  Alex from IT: You found it. The transaction logs. The filing records. The 2006 access request.
+  Alex from IT: This is everything we need. I can correlate this with the server data and build a complete case.
+  Narrator: As Alex speaks, the monitors in the server room all switch to the same display: the 1947 trust charter.
+  Alex from IT: Uh... I didn't do that.
+  Narrator: The text of the charter begins to glow. Not the screen — the TEXT ITSELF, as if the words have weight and light.
+  Narrator: A deep hum resonates through the building. You feel it in your chest. In your teeth. In the space behind your eyes.
+  Alex from IT: Okay, THAT is not a server issue. That is a BUILDING issue. And I am only certified for server issues.
+  Narrator: Your phone rings. It's Diane.
+  Diane: Andrew. Meredith just locked down the entire floor. Security at every exit. Nobody in or out without her approval.
+  Diane: She knows. I don't know how, but she knows you've been in the Archive.
+  Diane: She's calling an emergency board meeting. She wants to dissolve the trust department entirely.
+  set act3_complete
+  set meredith_lockdown
+  Alex from IT: Dissolve the— she can't DO that. Can she?
+  Andrew: Not if we can prove what the Regional Manager has been doing. We need to rally the team — find Janet at her desk, Diane in reception, and the Mysterious Janitor in the Archive.
+  Alex from IT: The Janitor's been waiting for this moment for twenty years. And once you have Janet and Diane on board, work on convincing Skip — he won't budge without the right words.
+  end
+
+# Act 4 NPC dialogs
+scene janet_act4
+  Janet: Rally? You want me to RALLY? Andrew, I'm not a rally person. I'm a 'sit quietly and drink' person.
+  Janet: But... *sip* ...you know what? Fine. You know why?
+  Janet: Because Meredith tried to take my tumbler. Said it was 'unprofessional.' UNPROFESSIONAL.
+  Janet: This is a $40 insulated wine tumbler with a motivational quote that says 'Rosé All Day' and I will DIE before I surrender it.
+  Janet: What do you need from me? I know where every document in this building is. Including the ones Skip hid in the ceiling tiles.
+  set janet_rallied
+  Janet: I'm in. For the tumbler.
+  Janet: ...And for the department, I guess. But mostly the tumbler.
+  end
+
+scene diane_act4
+  Diane: I've been documenting everything Meredith's done since she arrived. Every meeting. Every access request. Every personnel file she's reviewed.
+  Diane: Old habits. I document everything. It's why they haven't been able to fire me for twelve years.
+  Diane: Here's what I know: Meredith has been in contact with the Regional Manager. Frequently. Before she even arrived for the 'review.'
+  Diane: This isn't a review, Andrew. This is a cover-up. She's here to bury the evidence before you can use it.
+  Diane: The HR Department has the original employment records. If the Janitor was really SVP, there's a paper trail. Meredith can't delete paper.
+  set diane_rallied
+  Diane: I can get you into the HR Department once the team is fully on board. Talk to the Janitor first — he knows more than any of us.
+  end
+
+# Convince Skip puzzle — need to use his buzzwords correctly (4 choice
+# points, need 3/4, checked by the condition tree at nodes 23+).
+# Failing ends without skip_rallied; ExplorationState re-offers the
+# dialog at act 4 until he's rallied, and skip_convince_* flags persist
+# across attempts so a retry only needs the missed buzzwords.
+scene skip_act4
+  Skip Hartley: Andrew. I... I've been thinking. Which is new for me, but I'm trying it.
+  Skip Hartley: Meredith wants to dissolve the department. MY department. The one I built from... okay, I didn't build it. The Janitor built it. But I've been MANAGING it.
+  Skip Hartley: The thing is... she's not wrong about everything. I haven't been a great leader. I've been a great TALKER. Those are different things.
+  ask Skip Hartley: So tell me, Andrew. Why should I fight for this department?
+    -> n4 sets skip_convince_1=true: Because this department leverages core competencies that can't be outsourced.
+    -> n6: Because you care about your team, Skip.
+
+  @n4
+  Skip Hartley: 'Leverages core competencies'... that's... that's MY phrase. You're speaking my language.
+  Skip Hartley: Okay, I'm listening. But I need more.
+
+  @n6
+  Skip Hartley: I DO care about the team. Janet. The Intern. Even Alex, who definitely runs Minecraft on company servers.
+  ask Skip Hartley: But caring isn't a strategy. What's the strategy?
+    -> n8 sets skip_convince_2=true: We disrupt Meredith's narrative by pivoting to a transparency-first paradigm.
+    -> n10: We tell the truth about what's been happening.
+
+  @n8
+  Skip Hartley: 'Disrupt.' 'Pivot.' 'Paradigm.' Andrew, you magnificent bastard. You're speaking fluent Skip.
+  Skip Hartley: I'm getting FIRED UP. What else?
+
+  @n10
+  Skip Hartley: The truth? The TRUTH? Andrew, the truth is terrifying. The truth is that someone has been stealing from our clients and I didn't notice because I was too busy reading leadership books.
+  ask Skip Hartley: How do we actually win this?
+    -> n12 sets skip_convince_3=true: We need to synergize our stakeholder alignment across all trust verticals.
+    -> n14: We show the board that Meredith is part of the cover-up.
+
+  @n12
+  Skip Hartley: 'SYNERGIZE.' 'STAKEHOLDER ALIGNMENT.' 'TRUST VERTICALS.'
+  Skip Hartley: Andrew. That sentence means absolutely nothing. And yet... it means EVERYTHING to me.
+
+  @n14
+  Skip Hartley: Meredith is part of it? She's not just reviewing us, she's PROTECTING the person who—
+  ask Skip Hartley: If that's true, we need to move fast. What's the endgame?
+    -> n16 sets skip_convince_4=true: We circle back to the original charter and leverage our fiduciary moat.
+    -> n18: We go to the board with the evidence. All of it.
+
+  @n16
+  Skip Hartley: 'Circle back.' 'Fiduciary moat.' That's... that's beautiful. I don't know what it means but I feel it in my SOUL.
+  Skip Hartley: I'm in. Whatever it takes. For the department. For the team. For the synergy.
+
+  @n18
+  Skip Hartley: The board. You're right. We take the evidence to the board meeting. All of it.
+  Skip Hartley: I'm done hiding behind buzzwords. Well... I'm done hiding behind MOST buzzwords. Some of them are load-bearing.
+  goto n23
+
+  @n20
+  set skip_rallied
+  Skip Hartley: Let's do this. *finger guns* ...Sorry. Force of habit.
+  end
+  # Buzzword tally: pass (→20) needs at least 3 of skip_convince_1..4.
+  # Every fail route lands on 32.
+
+  @n23
+  if skip_convince_1 else -> n27
+  if skip_convince_2 else -> n30
+  if skip_convince_3 -> n20
+  if skip_convince_4 -> n20 else -> n32
+
+  @n27
+  if skip_convince_2 else -> n32
+  if skip_convince_3 else -> n32
+  if skip_convince_4 -> n20 else -> n32
+
+  @n30
+  if skip_convince_3 else -> n32
+  if skip_convince_4 -> n20
+
+  @n32
+  Skip Hartley: I want to believe you, Andrew. I do. But half of that pitch was just... words. REGULAR words. Anyone can say regular words.
+  Skip Hartley: Come back when you can say it in fluent Skip. I'll be here. Leveraging my feelings. Circling back to my doubts.
+  end
+
+scene intern_act4
+  The Intern: Andrew! I know I'm just an intern — well, a 'Trust Operations Support Specialist' — but I want to help!
+  The Intern: Meredith told me to clean out my desk. Which is harsh because I don't even HAVE a desk. I have a folding table near the fire exit.
+  The Intern: But I found something! When she told me to shred the Henderson pre-audit files? I didn't shred ALL of them.
+  The Intern: I couldn't figure out the shredder setting so some of them came out as really thin strips instead of confetti. I taped them back together!
+  Narrator: The Intern produces a crumpled sheet of paper that has been reassembled with scotch tape, band-aids, and what appears to be a Fruit Roll-Up wrapper.
+  The Intern: It's a memo from the Regional Manager to Meredith. From THREE MONTHS AGO. Before she was supposedly 'assigned' to review us.
+  The Intern: It says 'Re: Archive Containment' and then there's a bunch of words I don't understand but 'destroy records' seems pretty clear.
+  The Intern: Did I do good? I feel like I did good. This is the best day of my unpaid career!
+  end
+
+scene janitor_needs_skip
+  Mysterious Janitor: Not yet, Andrew. There's one more person who needs to decide where they stand.
+  Mysterious Janitor: Talk to Skip. He needs to choose: the buzzwords or the truth. Until he chooses, I have nothing more to give.
+  end
+
+scene janitor_act4
+  Mysterious Janitor: You've done well, Andrew. The Archive. The evidence. The team.
+  Mysterious Janitor: But there's one more thing you need. The original charter. The 1947 document.
+  Mysterious Janitor: It's not in the Archive. I moved it years ago. To the Vault. Behind the Archive.
+  Mysterious Janitor: The Vault has a combination lock. Three numbers. They're scattered across the building — I hid them so no one person could access it alone.
+  Mysterious Janitor: One is in the HR Department records. One is in Alex's server room. One is...
+  Mysterious Janitor: ...engraved on the back of this Rolex.
+  Narrator: The Janitor removes his gold Rolex and turns it over. On the case back, tiny numbers are engraved: 47.
+  Mysterious Janitor: 47. For 1947. The year it all began.
+  set janitor_rallied
+  set vault_code_1
+  set vault_accessible
+  set hr_accessible
+  Mysterious Janitor: Find the other two numbers. Open the Vault. Get the charter.
+  Mysterious Janitor: And when the time comes to confront Meredith... read it aloud. Every word. Trust me.
+  end
+
+# HR Department interaction
+scene hr_rep_intro
+  if defeated_hr_rep -> n6
+  HR Representative: Welcome to Human Resources! I'm here to help with any concerns. As long as those concerns are pre-approved on Form 27B/6.
+  HR Representative: Please note that entering this department constitutes implicit agreement to our 47-page conflict resolution policy.
+  Andrew: I just need to look at some personnel files.
+  HR Representative: Personnel files? Those are classified. And by 'classified' I mean I have personally sorted them into classes. A through F. Yours is... well.
+  end
+
+  @n6
+  HR Representative: ...I'm still filing that incident report. In triplicate. The third copy is for my therapist.
+  end
+
+scene hr_rep_combat
+  HR Representative: I'm sorry, you can't be in here. This area is restricted during the departmental review.
+  Andrew: I need to access the employment records. Historical personnel files.
+  HR Representative: Those files are sealed. By order of the SVP of Strategic Operations.
+  HR Representative: I'm going to have to ask you to leave. And then attend a mandatory conflict resolution seminar.
+  Andrew: I'm not leaving without those records.
+  HR Representative: Then I'm afraid this is going to go on your permanent record. ALL of the records.
+  fight hr_rep
+  end
+
+scene hr_rep_defeated
+  HR Representative: Fine. FINE. Take the records. But I'm filing an incident report. In triplicate.
+  Narrator: You search the HR files. In the historical personnel section, you find the Janitor's original employment record.
+  Narrator: 'HIRED: 1982. POSITION: Trust Officer. PROMOTED: Senior VP, Trust Administration, 1993. VOLUNTARY RECLASSIFICATION: Facilities, 2005.'
+  Narrator: Attached to the file is a sticky note with a number: 19. The second vault combination digit.
+  set vault_code_2
+  end
+
+# HR vault code (file cabinet in HR department)
+scene hr_vault_code
+  if vault_code_2 -> n7
+  if defeated_hr_rep -> n3
+  Narrator: Personnel files, meticulously organized. The drawer labeled 'HISTORICAL — CONFIDENTIAL' has a padlock. The HR Representative eyes you suspiciously.
+
+  @n3
+  Narrator: With the HR Rep out of commission, you rifle through the historical personnel files.
+  Narrator: 'HIRED: 1982. POSITION: Trust Officer. PROMOTED: Senior VP, Trust Administration, 1993. VOLUNTARY RECLASSIFICATION: Facilities, 2005.'
+  Narrator: Attached to the file is a sticky note with a number: 19. The second vault combination digit.
+  set vault_code_2
+
+  @n7
+  Narrator: You've already found what you need in these files. The Janitor's employment record — and the second vault code.
+  end
+
+# Server room vault code
+scene server_vault_code
+  if vault_code_3 -> n4
+  Narrator: You check the server rack the Janitor mentioned. Behind the third-floor stairwell dead drop location.
+  Narrator: Taped to the back of server rack C — the one with the restraining order — is a small card with the number: 82.
+  set vault_code_3
+  goto n5
+
+  @n4
+  Narrator: You already noted the number on the card taped to server rack C.
+
+  @n5
+  end
+
+# Vault interaction
+scene vault_boxes
+  if has_charter -> n15
+  if vault_code_1 else -> n13
+  if vault_code_2 else -> n13
+  if vault_code_3 else -> n13
+  Narrator: A heavy safe deposit box. Three-dial combination lock. You enter the numbers: 47-19-82.
+  Narrator: *CLUNK*. The lock turns. The door swings open.
+  Narrator: Inside is a single document. Thick parchment. Gold-embossed letterhead. The ink has a warmth to it, like sunlight trapped in amber.
+  Narrator: 'VAULTS FARGO TRUST CHARTER — BRANCH 4471 — ORIGINAL CHARTER OF FIDUCIARY OBLIGATION'
+  Narrator: The moment you touch the document, the room trembles. Not an earthquake. Something deeper. The building is responding.
+  Andrew: It's warm. Paper shouldn't be warm. I'm going to assume that's normal and keep holding it.
+  set has_charter
+  Narrator: The Fiduciary Force surges through the charter. You feel the building take your side, the way a very large dog decides it likes you.
+  Andrew: I need to get back to the cubicle farm. The team is waiting.
+  goto n16
+
+  @n13
+  Narrator: The safe is locked. A three-dial combination. You don't have all the numbers yet.
+  Narrator: The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room.
+  goto n16
+
+  @n15
+  Narrator: The safe is open. Empty now. The charter is with you. Where it belongs.
+
+  @n16
+  end
+
+# --------------------------------------------------------------------------
+# ACT 5 -- CORPORATE ESCALATION
+# --------------------------------------------------------------------------
+scene act5_trigger
+  Narrator: You have the charter. The evidence. The team. It's time to confront Meredith.
+  Narrator: But when you reach the cubicle farm, everything has changed.
+  # B18 — THE COUNT-NOT-MOOD LAW, INVERTED. This line promised a floor full of
+  # strangers and the room contained the same coworkers it always did: no
+  # NPC in cubicle_farm is conditional on this act band, and the only thing
+  # F-10 act dressing actually adds there is TWO fileCabinetLow at the north
+  # end. It also spent the Restructuring trio's entrance four lines before
+  # they make it. Adding two or three unfamiliar-suit NPCs was the other
+  # option and was rejected: they would need ids, configs, dialogs (a mute
+  # body is a false affordance) and a cross-room census re-run, and they
+  # would deflate the blockade beat that arrives seconds later. Redrafted
+  # through the prose law to claim only the two cabinets that are there.
+  Narrator: The filing cabinets near the north wall are open and half-emptied. Someone has been through the department's records with a system and without introductions.
+  Alex from IT: They're calling themselves the 'Restructuring Team.' Meredith brought them in. They're dismantling our systems as we speak.
+  Alex from IT: One of them tried to reformat my server. MY server. I may have... physically intervened.
+  Diane: Andrew, Meredith's moved to the Board Room. She's calling an emergency vote to dissolve the trust department.
+  Diane: You need to get up there. But first, you'll need to deal with her team down here. They're blocking all access.
+  Janet: I'm coming with you. If they're going to dissolve me, they can do it to my face. While I'm drinking.
+  set act4_complete
+  set janet_recruited
+  recruit janet
+  end
+
+# Act 5 — Restructuring Trio (Brand Consultant + Restructuring Analyst + Corporate Lawyer all at once)
+# Andrew + Janet vs three. The first multi-combatant fight in the game.
+scene restructuring_trio_intro
+  Narrator: Three suits step out from between the cubicles, blocking the path to the elevator. They've coordinated this.
+  goto n8
+
+  @n1
+  Brand Consultant: Oh PERFECT. We can do the rebranding pitch and the metrics review and the legal threat all at once. SO efficient.
+  Restructuring Analyst: Joint engagement reduces single-point dependency on any individual change vector. Standard practice.
+  Corporate Lawyer: I've already drafted three NDAs, four severance riders, and a non-compete that would survive a nuclear strike. Sign anywhere.
+  Janet: Andrew. I'll take the one with the binder. You handle whichever one's loudest.
+  Andrew: Right. Whatever happens, nobody signs anything.
+  fight restructuring_trio
+  end
+  # ── STAGING (appended; routed to from 0) ─────────────────────────────
+  # None of the three has an NPC entry in the cubicle farm, so "three suits
+  # step out from between the cubicles, blocking the path to the elevator"
+  # used to be four lines of dialogue over an empty corridor. They spawn
+  # south of the player in the x8-11 corridor and form a line across it —
+  # between him and the Reception exits at (9,15)/(10,15).
+
+  @n8
+
+  stage
+    brand_consultant spawn spawnAt 8.4,13.4 walkTo block_w face player speed 1.8
+    corporate_lawyer spawn spawnAt 9.5,13.8 walkTo block_c face player speed 1.7
+    restructuring_analyst spawn spawnAt 10.6,13.4 walkTo block_e face player speed 1.9
+    player walkTo aisle_mid face block_c speed 1.5
+  goto n1
+
+scene restructuring_trio_defeated
+  Narrator: All three of them are on the floor of the cubicle farm. The brand consultant is crying about their mood board. The analyst is muttering at a spreadsheet. The lawyer is drafting a settlement to himself.
+  Janet: I forgot how good it feels to be right.
+  Andrew: We're not done. Meredith's whole team is between us and the Board Room.
+  Janet: Then I'm not done either. Lead the way.
+  set restructuring_trio_defeated
+  set brand_consultant_defeated
+  set restructuring_defeated
+  set corporate_lawyer_defeated
+  set brand_consultant_fight_started
+  set restructuring_fight_started
+  end
+
+# ── Alex from IT recruitment ───────────────────────────────────────
+# Triggered when Andrew enters the IT office after the trio fight, before
+# heading up to the executive floor. Alex has been guerilla-warring the
+# Restructuring Team's reformat order with `rm -rf`.
+scene alex_it_recruit
+  Narrator: Alex from IT is standing on a chair, holding a network cable like a bullwhip.
+  Alex from IT: Andrew. Hi. Don't ask about the chair.
+  Andrew: What happened?
+  Alex from IT: A consultant tried to reimage every workstation on this floor. I unplugged the rack. Then I unplugged HIM.
+  Alex from IT: He's going to come back with reinforcements. And a manager. I need to come with you.
+  Alex from IT: Look — I'm not a fighter. But I have root on every box in this building. That counts.
+  ask: Bring Alex along?
+    -> n7: "Glad to have you. Welcome to the team."
+    -> n12: "I work better alone."
+
+  @n7
+  Alex from IT: Hell yes. Let me grab my laptop and a Red Bull.
+  set alex_it_recruited
+  recruit alex_it
+  Narrator: Alex closes 47 browser tabs. The fans on his laptop slow down for the first time in weeks.
+  end
+
+  @n12
+  Alex from IT: ...okay. Cool. I'll be down here. Yelling at packets. If you change your mind, the door's open.
+  end
+
+# ── Isaiah recruitment ─────────────────────────────────────────────
+# Triggered after the trio fight when Andrew talks to Isaiah at his desk.
+scene isaiah_recruit
+  Isaiah: I saw what you did downstairs. The whole department saw.
+  Isaiah: Andrew, you know I run ops. I keep paper. I file things in triplicate. I take notes during meetings nobody else takes notes during.
+  Isaiah: I have nine years of receipts on Meredith. NINE.
+  Andrew: Why didn't you say anything before?
+  Isaiah: Because I didn't think anyone would do anything with it. I was wrong. I want in.
+  ask: Recruit Isaiah?
+    -> n6: "We need everything you have. You're in."
+    -> n11: "Just send me the documents. Stay safe down here."
+
+  @n6
+  Isaiah: You won't regret it. I packed a go-bag last Tuesday. I had a feeling.
+  set isaiah_recruited
+  recruit isaiah
+  Narrator: Isaiah picks up a binder labeled 'CONTINGENCIES.' It is alarmingly heavy.
+  end
+
+  @n11
+  Isaiah: Okay. I'll send the encrypted folder to your work email. Don't let anything happen to that printout.
+  set isaiah_documents_shared
+  end
+
+# ── Diane recruitment (formalizes ally-form for combat) ────────────
+# Hooked into the Act 6 ally rally chain. Existing diane_act6 dialog already
+# set diane_act6_rallied; this step adds the actual combat recruit.
+scene diane_recruit
+  Diane: I've been documenting Meredith's policy violations since I started in HR.
+  Diane: I'm not just sharing the file with you, Andrew. I'm walking up there with you.
+  Andrew: You're sure?
+  Diane: Andrew. I am one of three people in this building who has read the entire employee handbook. I am SURE.
+  set diane_recruited
+  recruit diane
+  end
+
+# ── Data Analytics duo ─────────────────────────────────────────────
+# Replaces the solo Data Analytics Lead. Now the Lead has a CFO's Assistant
+# tagging along — the metric-pusher and the budget-cutter.
+scene data_analytics_duo_intro
+  Data Analytics Lead: I told the CFO's office you'd come up. They wanted to be here for it.
+  CFO's Assistant: Per Q3 projections, your department represents a 94% drag on synergies. We're going to need that resolved before the board vote.
+  Andrew: You're a finance assistant. You don't run trust.
+  CFO's Assistant: Correct. I run COSTS. And you're a line item with a red number next to it.
+  Data Analytics Lead: We've consolidated the analysis. We'd like to walk you through it. Personally.
+  fight data_analytics_duo
+  end
+
+scene data_analytics_duo_defeated
+  Data Analytics Lead: My model... has rejected my model. This is bad for my model.
+  goto n7
+
+  @n1
+  CFO's Assistant: I'm... I'm going to need to escalate this. To my direct supervisor. Who is currently in the Bahamas.
+  Narrator: They retreat toward the elevators. The Lead is still muttering about confidence intervals.
+  goto n8
+
+  @n3
+  set data_lead_defeated
+  # Renamed from 'cfos_assistant_defeated' — that name collides with the
+  # penthouse post-combat DIALOG id of the same spelling (logic-sweep #23).
+  set cfos_assistant_duo_defeated
+  set data_lead_fight_started
+  end
+  # ── STAGING (appended; routed to from 0/2) ───────────────────────────
+  # Neither of the duo has an NPC entry on the executive floor. Two bodies
+  # for the length of this dialog, then they leave together.
+
+  @n7
+
+  stage
+    data_analytics_lead spawn spawnAt confront_north face player
+    cfos_assistant spawn spawnAt 9.4,5.6 face player
+    player face confront_north nowait
+  goto n1
+
+  @n8
+
+  stage
+    data_analytics_lead exit elevator speed 1.7
+    cfos_assistant exit 8.9,10.3 speed 1.9
+  goto n3
+
+# ── Alex from IT — Personal Mission: "Badge Audit" ─────────────────
+# Unlocked after recruit. Andrew helps Alex trace where the Restructuring
+# Team's badges were issued from. Reward: free unlock of `kernel_panic`
+# (Alex's tier-2 AoE) + 200 XP + small backstory beat about Alex's roots.
+scene alex_badge_audit_offer
+  if alex_badge_audit_complete -> n12
+  if alex_badge_audit_started -> n10
+  Alex from IT: Hey. Got a minute? I've been pulling badge logs since the trio went down.
+  Alex from IT: Every Restructuring goon who came in this week was issued from a single workstation. Not HR. Not Reception. Somewhere upstairs.
+  Alex from IT: I can't get the source from a remote query — Meredith's office IP is air-gapped. But if YOU could pull the physical patch panel logs off rack PATCH-3, I can correlate them.
+  ask: Help Alex trace the badges?
+    -> n6: "On it. Where do I look?"
+    -> n9: "Later. Big stuff happening upstairs."
+
+  @n6
+  Alex from IT: Right here in the server room. The rack labeled 'PATCH-3' — it has a sticker that says 'DO NOT TOUCH 4ever'. That's the one.
+  set alex_badge_audit_started
+  end
+  # B-list — THE "LATER." FALL-THROUGH. This node had no `next`, so declining
+  # fell straight into node 10, the ALREADY-STARTED nag ("Did you check
+  # PATCH-3 yet?"). Saying no got you chased as though you had said yes, and
+  # it read as Alex not listening, which is the opposite of the character.
+  # Routed to the `end` at 11.
+
+  @n9
+  Alex from IT: Yeah. No worries. The logs aren't going anywhere. Find me when you can.
+  goto n11
+
+  @n10
+  Alex from IT: Did you check PATCH-3 yet? The rack with the 'DO NOT TOUCH' sticker — right over there.
+
+  @n11
+  end
+
+  @n12
+  Alex from IT: Thanks again for the patch panel pull. I'll never forget where I was when I confirmed Meredith was the source. The break room. Eating a peanut.
+  end
+
+scene alex_badge_audit_pull
+  if alex_badge_audit_complete -> n8
+  if alex_badge_audit_started else -> n7
+  Narrator: Server rack PATCH-3. The 'DO NOT TOUCH 4ever' sticker has been laminated, suggesting it has been touched.
+  Narrator: You pull the patch panel log — a hand-written notebook taped to the inside of the rack door. The last entry reads: 'CABLE 47 → EXEC FLOOR (M. SVP). UNLABELED. JOE WAS HERE.'
+  Narrator: You photograph the page with your phone. Alex will know what to do with this.
+  set alex_has_patch_log
+
+  @n6
+  end
+
+  @n7
+  Narrator: A server rack labeled PATCH-3. There is a faded sticker. Whatever Alex needs in here, you don't have a reason to look — yet.
+  goto n6
+
+  @n8
+  Narrator: The patch panel sits quietly. You already gave Alex what he needed.
+  goto n6
+
+scene alex_badge_audit_return
+  # B-list (act-flag hunt, flagged-not-fixed) — THE NODE SWAP. Node 12 is the
+  # NOT-YET-DONE nudge ("Did you find PATCH-3?") and node 13 is the DONE line
+  # ("Still riding the high"), and they were wired the wrong way round: a
+  # player who had finished the audit got asked to go and start it, and node
+  # 13 was unreachable — the dead node HANDOFF D4 records. Meanwhile the
+  # has-not-pulled-the-log branch pointed at node 11, an `end`, so talking to
+  # Alex mid-quest opened an empty box. Both are EDGE repairs: no node moves,
+  # no node is added, every index stays where it was.
+  if alex_badge_audit_complete -> n13
+  if alex_has_patch_log else -> n12
+  Andrew: Got the patch log. Cable 47 — 'M. SVP'. Meredith.
+  Alex from IT: She physically ran a cable from her office to the badge issuer. That's not a corporate workflow. That's a CONSPIRACY.
+  Alex from IT: Joe was here, huh. Joe is a maintenance guy who retired in 2019. So Meredith had this set up for at least four years.
+  Alex from IT: Andrew. You just gave me what I've been chasing for half a year. Let me show you something.
+  Alex from IT: I built this little script for emergencies. Hard reboot the whole building. I never thought I'd actually USE it. But for a moment like this — yeah. Take it.
+  set alex_badge_audit_complete
+  xp 200
+  teach alex_it kernel_panic
+  Narrator: Alex teaches you the Kernel Panic command. He's beaming.
+
+  @n11
+  end
+
+  @n12
+  Alex from IT: Did you find PATCH-3? The 'DO NOT TOUCH' sticker is the one.
+  goto n11
+
+  @n13
+  Alex from IT: Still riding the high from cracking that conspiracy. We made history in a server closet.
+  goto n11
+
+# ── Team chat hub: out-of-combat conversations ─────────────────────
+# Cycles through ally-specific lines based on which allies are recruited.
+# Acts as a Mass Effect-style "talk to your squad between missions" beat.
+# Voice-profile choices (Reasonable Doubt) appear when the cumulative voice
+# counts cross thresholds set in CombatState.
+scene team_chat_hub
+  mode evergreen-hub
+  @n0
+  ask: Who do you want to talk to?
+    -> n47 requires janet_recruited: Janet
+    -> n62 requires alex_it_recruited: Alex from IT
+    -> n77 requires isaiah_recruited: Isaiah
+    -> n92 requires diane_recruited: Diane
+    # Voice-profile branches — only appear when the corresponding voice
+    # has been used heavily across the campaign
+    -> n20 requires voice_litigator_high unless janet_warning_seen: [Janet looks at you differently lately]
+    -> n30 requires voice_witness_high unless witness_charter_read: [Open the charter and read]
+    -> n40 requires voice_skeptic_high unless skeptic_chair_seen: [Just sit. The day is heavy]
+    # Voice-noticed extras — ally observations about Andrew's profile shift
+    -> n107 requires voice_litigator_high unless janet_litigator_noticed: [Janet's noticed something different about you]
+    -> n110 requires voice_witness_high unless alex_witness_noticed: [Alex keeps catching you reading the charter]
+    -> n113 requires voice_skeptic_high unless isaiah_skeptic_noticed: [Isaiah has something to say about leaving]
+    -> n116 requires voice_apprentice_high unless diane_apprentice_noticed: [Diane noticed you being easy on yourself today]
+    -> n17: Just check in with the team. Nothing specific.
+    -> n19: Get back to work.
+
+  @n1
+  Janet: Andrew. You doing okay?
+  Janet: I keep thinking about the Henderson account. Three generations of grandparents trusted us with that. The minute Meredith got the keys to this branch, she was looking for ways to liquidate it.
+  Janet: I don't do speeches. But somebody in this building should keep a promise before the decade's out. Might as well be us.
+  Andrew: I know. That's why I'm not done.
+  goto n0
+
+  @n5
+  Alex from IT: Hey. So I rolled the badge audit logs. Nine of the new hires didn't badge in through reception. Meredith issued them direct from the executive floor.
+  Alex from IT: That's not a hiring freeze. That's a private army.
+  Alex from IT: I screenshotted everything. Three places. One of them is a Tor hidden service. Don't ask.
+  Andrew: ...I won't.
+  goto n0
+
+  @n9
+  Isaiah: I want to say something out loud. Then I want to write it down.
+  Isaiah: I've worked here eleven years. I've watched seven boss types come through. Most of them just wanted the title. Meredith is the first one who wanted the building.
+  Isaiah: Whatever happens upstairs — I'm glad you came back. I almost gave up on this place last year. Then you didn't.
+  Andrew: We're getting it back, Isaiah.
+  goto n0
+
+  @n13
+  Diane: Tell me you're sleeping.
+  Diane: I'm not joking. The only thing standing between this branch and a hostile dissolution is your ability to make sound decisions on the executive floor. So tell me you're sleeping.
+  Andrew: ...I'm trying.
+  Diane: Try harder. Coffee is not a substitute for REM. — Anyway. The handbook does have a clause for emergency board recall. I bookmarked it.
+  goto n0
+
+  @n17
+  Narrator: The team is getting ready for what's coming. Janet's making coffee. Alex is hunched over a laptop. Isaiah is filing something. Diane is already on a call.
+  Narrator: It feels, briefly, like a real team.
+  goto n0
+
+  @n19
+  end
+  # ── Voice-profile reactivity branches ────────────────────────────
+  # 20-29: The Litigator — Janet warning. Andrew has been getting cold.
+
+  @n20
+  Janet: Andrew. Sit down for a second.
+  Janet: I want to say something out loud and I want you to hear it without the binder voice on.
+  Janet: You've been... clinical. In the last few. The way you talked down the analyst — that wasn't argument, that was a closing.
+  Janet: I know what that sounds like. I did three years of corporate before I came back to trust. There's a version of you who can win this fight by becoming exactly the thing we're fighting.
+  Janet: Don't do that. We can win and stay people. Both. I refuse to let you forget that.
+  ask: ...
+    -> n26: "You're right. Thank you."
+    -> n27: "It works. That's what matters."
+    -> n28: "I hear you."
+
+  @n26
+  set andrew_steadied
+  goto n29
+
+  @n27
+  set andrew_hardened
+  goto n29
+
+  @n28
+  set andrew_steadied
+
+  @n29
+  set janet_warning_seen
+  goto n0
+  # 30-39: The Witness — Andrew opens the charter and reads
+
+  @n30
+  Narrator: You take the 1947 charter out of your bag. The leather binding is soft from forty years of careful handling. The pages smell like the bank smelled when you started.
+  Narrator: Section 1, Paragraph A: 'A trustee shall, at all times, place the interests of the beneficiary above all other considerations, including the interests of the trustee, the institution, and any successor entity.'
+  Narrator: Section 1, Paragraph B: 'No reorganization, restructuring, or rebranding of the institution shall release the trustee from this duty. The duty survives the institution.'
+  Narrator: There's a handwritten note in the margin, in pencil, faded. You don't recognize the handwriting.
+  Narrator: It says: 'For the people whose names you will never know, who trusted you anyway. — D. Henderson, founding trustee, 1947.'
+  Andrew: ...Mrs. Henderson's grandfather wrote this.
+  Narrator: You close the charter. You sit with it on your knees for a moment. The day is heavy, and that's okay. The day is supposed to be heavy.
+  set witness_charter_read
+  xp 100
+  goto n0
+  # OFF-BY-ONE REPAIR. The "30-39 The Witness" block reserved ten slots and
+  # wrote nine, so from here down every `/* NN */` comment was one ahead of
+  # its real array index — and every `next:` in this tree was authored
+  # against the COMMENTS. 80 of 119 labels were wrong, 48 of 119 nodes had no
+  # path from node 0 (all four ally chat blocks among them), and node 45's
+  # `next: 46` landed on the Janet dispatcher instead of the Skeptic's-chair
+  # `modify_stat maxMP +5`, so that permanent reward could never be
+  # collected. One pad node re-aligns the whole tree — the same `end`-node
+  # padding convention this dialog already uses at 59-61, 74-76, 90-91,
+  # 105-106 and 119. Do not delete it without renumbering every jump.
+  end
+  # 40-49: The Skeptic — Andrew sits and lets the day press
+
+  @n40
+  Narrator: You sit at your desk. You don't open anything. You don't pick anything up. You just sit.
+  Narrator: Across the room, Janet is laughing at something Alex said. Isaiah is on the phone with someone whose grandmother is sick. The fluorescents hum at the same exact frequency they hummed when you started here.
+  Narrator: You think: I could quit. I could walk out the front of the building and not come back. There's a version of every life where you just don't show up the next day.
+  Narrator: And then you think: yeah. But not this one.
+  Narrator: You stand up. You're still tired. But you're standing.
+  set skeptic_chair_seen
+  stat maxMP +5
+  goto n0
+  # ── Act-tier dispatchers and content ──────────────────────────────────
+  # Each ally's main choice routes here first.
+  # Pattern per ally:
+  #   dispatcher → check act7 (→ act7 gate) or act6 (→ act6 gate) or default
+  #   act6 gate  → if already seen → default; else → act6 lines → set_flag → 0
+  #   act7 gate  → if already seen → default; else → act7 lines → set_flag → 0
+  # ── JANET dispatcher (47–61) ──────────────────────────────────────────
+
+  @n47
+  if act6_complete else -> n1
+  if act7_complete -> n57 else -> n52
+  # Act 6: Karen's just gone, Meredith is still upstairs
+
+  @n49
+  Janet: I keep thinking about Karen's face when she finally backed down. Three meetings in. She was exhausted before I was.
+  Janet: I spent ten years scared of people like Karen. Turns out they're just afraid too. They've just had longer to practice hiding it.
+  Andrew: And now we go upstairs.
+  goto n56
+
+  @n52
+  if chat_janet_act6_seen -> n1 else -> n49
+  # Act 7: Meredith's gone, the department is saved
+
+  @n53
+  Janet: I called my mom last night. First time in six months. I said: 'I work somewhere worth keeping.' That's all I said. She cried.
+  Janet: *very long sip*
+  Janet: I've been here twelve years, Andrew. This is the first time I've actually meant it.
+  goto n58
+
+  @n56
+  set chat_janet_act6_seen
+  goto n0
+
+  @n57
+  if chat_janet_act7_seen -> n1 else -> n53
+
+  @n58
+  set chat_janet_act7_seen
+  goto n0
+  end
+  end
+  end
+  # ── ALEX dispatcher (62–76) ───────────────────────────────────────────
+
+  @n62
+  if act6_complete else -> n5
+  if act7_complete -> n72 else -> n67
+  # Act 6: forensics guy finally named
+
+  @n64
+  Alex from IT: You know what I actually am? I'm a forensics guy. That's the thing I always was. Every job I've had, I ended up being the one who found the thing nobody wanted found.
+  Alex from IT: They called it 'over-involved.' I called it thorough. Turns out they're the same thing.
+  Andrew: That quality has saved this building twice.
+  goto n71
+
+  @n67
+  if chat_alex_act6_seen -> n5 else -> n64
+  # Act 7: audit trail preserved, records survive Meredith
+
+  @n68
+  Alex from IT: I forwarded the audit trail. To everyone. Yes, including the board.
+  Alex from IT: Every badge, every cable, every 3 AM packet. Meredith can claim ignorance. The logs cannot.
+  Alex from IT: That's the thing about records. They don't care who wins.
+  goto n73
+
+  @n71
+  set chat_alex_act6_seen
+  goto n0
+
+  @n72
+  if chat_alex_act7_seen -> n5 else -> n68
+
+  @n73
+  set chat_alex_act7_seen
+  goto n0
+  end
+  end
+  end
+  # ── ISAIAH dispatcher (77–91) ─────────────────────────────────────────
+
+  @n77
+  if act6_complete else -> n9
+  if act7_complete -> n87 else -> n82
+  # Act 6: the notes he kept for seven years
+
+  @n79
+  Isaiah: I started keeping a second set of notes after Merger Four. Not copies of work — observations. Who said what in what room on what day.
+  Isaiah: I told myself it was just documentation practice.
+  Isaiah: Seven years of practice. Turned out to be exactly what we needed.
+  goto n88
+
+  @n82
+  if chat_isaiah_act6_seen -> n9 else -> n79
+  # Act 7: the binder and what it means now
+
+  @n83
+  Isaiah: Eleven years. Eleven years of notes in a binder nobody asked for.
+  Isaiah: For the first time since I started keeping them, I hope I never need them again.
+  Andrew: Keep the binder.
+  Isaiah: I'm going to keep the binder.
+  goto n89
+
+  @n87
+  if chat_isaiah_act7_seen -> n9 else -> n83
+
+  @n88
+  set chat_isaiah_act6_seen
+  goto n0
+
+  @n89
+  set chat_isaiah_act7_seen
+  goto n0
+  end
+  end
+  # ── DIANE dispatcher (92–106) ─────────────────────────────────────────
+
+  @n92
+  if act6_complete else -> n13
+  if act7_complete -> n102 else -> n97
+  # Act 6: sixty-three pages, twice
+
+  @n94
+  Diane: I read the whole restructuring packet last night. All sixty-three pages. Twice.
+  Diane: Meredith isn't wrong that the department is inefficient. She's wrong about what that means. Inefficiency in trust work is sometimes just called — being thorough.
+  Diane: Page forty-seven of the original charter. I've bookmarked it for you.
+  goto n103
+
+  @n97
+  if chat_diane_act6_seen -> n13 else -> n94
+  # Act 7: the post-restructuring review form
+
+  @n98
+  Diane: The handbook has a provision for post-restructuring review. Nobody ever gets to that page.
+  Diane: I filed for it this morning. Standard form. Three signatures required.
+  Andrew: You filed it the morning after the fight.
+  Diane: Twenty minutes after. I had the form pre-filled.
+  goto n104
+
+  @n102
+  if chat_diane_act7_seen -> n13 else -> n98
+
+  @n103
+  set chat_diane_act6_seen
+  goto n0
+
+  @n104
+  set chat_diane_act7_seen
+  goto n0
+  end
+  end
+  # ── Voice-noticed extras (Task 4) ─────────────────────────────────────
+  # Separate from the existing voice branches (20-46). Different requiresNot flags.
+  # Each is 2-3 nodes: an ally's quiet observation about Andrew's profile shift.
+  # 107–109: Janet notices Litigator energy (different angle from janet_warning_seen)
+
+  @n107
+  Janet: You've been... lawyer-ish. The way you phrase things. 'From an obligation standpoint.' 'As a matter of record.'
+  Janet: It works. I'm not saying it doesn't. It's just — it's not a fit on you the same way a good blazer is. It's more like a suit of armor you borrowed from someone else's closet.
+  set janet_litigator_noticed
+  goto n0
+  # 110–112: Alex notices Witness energy
+
+  @n110
+  Alex from IT: I keep finding you reading the charter. Not referencing it — reading it. Like it's a letter someone wrote you.
+  Alex from IT: That's not normal Andrew. Normal Andrew reads the lunch menu like it might be a legal document.
+  set alex_witness_noticed
+  goto n0
+  # 113–115: Isaiah notices Skeptic energy
+
+  @n113
+  Isaiah: You can leave. You know that, right? There's no chain here. You don't owe this building anything.
+  Isaiah: I won't tell anyone you wanted to. Some days wanting to leave is just proof you're paying attention.
+  set isaiah_skeptic_noticed
+  goto n0
+  # 116–118: Diane notices Apprentice energy
+
+  @n116
+  Diane: You're being kind to yourself today. I noticed. It's in how you're walking — less braced.
+  Diane: Keep doing that. It's data. People who are kind to themselves make better decisions under pressure. That's not philosophy — that's in the literature.
+  set diane_apprentice_noticed
+  goto n0
+  end
+
+scene restructuring_combat
+  Restructuring Analyst: Ah. Andrew, is it? I've heard about you. The 'disruptive element.'
+  Restructuring Analyst: I've been reviewing your department's metrics. Your efficiency ratio is 0.34. Industry standard is 0.78.
+  Andrew: You can't reduce trust administration to a ratio.
+  Restructuring Analyst: Everything can be reduced to a ratio. People. Departments. The reduction is the part I'm best at.
+  Restructuring Analyst: Your number is up.
+  fight restructuring_analyst
+  end
+
+scene restructuring_defeated
+  Restructuring Analyst: This is... not in my efficiency model. Human variables. Always the hardest to account for.
+  Restructuring Analyst: You know Meredith won't stop. She's been planning this for months. The Regional Manager promised her this branch.
+  set restructuring_defeated
+  end
+
+scene brand_consultant_combat
+  Brand Consultant: Oh! Perfect timing. I'm redesigning your department's identity. Trust is SO last decade.
+  Brand Consultant: We're pivoting to 'Wealth Solutions.' Or maybe 'Asset Synergy Partners.' I'm still workshopping.
+  Andrew: We're a trust department. We manage trusts. The name is fine.
+  Brand Consultant: 'Fine' is the ENEMY of 'brand excellence.' Let me show you the mood board.
+  Narrator: The mood board is just a photo of a sunset with the word 'DISRUPT' in Helvetica.
+  Brand Consultant: You don't appreciate art. Or vision. Or mid-century modern fonts.
+  fight brand_consultant
+  end
+
+scene brand_consultant_defeated
+  Brand Consultant: Fine. Keep your boring name. Keep your boring department. But mark my words — 'trust' as a brand is OVER.
+  goto n4
+
+  @n1
+  Narrator: The Brand Consultant retreats, clutching their mood board. The sunset looks dimmer somehow.
+  goto n5
+
+  @n2
+  set brand_consultant_defeated
+  end
+  # ── STAGING (appended; routed to from 0/1) ───────────────────────────
+  # The Brand Consultant has no NPC entry anywhere — this whole conversation
+  # used to be Andrew talking to an empty floor. `spawn` gives the fight a
+  # body for the length of its own dialog and takes it away at `dialog-end`.
+
+  @n4
+
+  stage
+    brand_consultant spawn spawnAt confront_north face player
+    player face confront_north nowait
+  goto n1
+
+  @n5
+
+  stage
+    brand_consultant exit elevator speed 1.9
+  goto n2
+
+scene data_analytics_combat
+  Data Analytics Lead: Hold on. Before you go anywhere, I need to walk you through some numbers.
+  Data Analytics Lead: Your department's trust resolution rate is down 12% quarter-over-quarter. Client satisfaction is in the third percentile. Overhead per FTE is — and I cannot stress this enough — alarming.
+  Andrew: Those metrics don't capture what we actually do.
+  Data Analytics Lead: Everything that matters can be measured. Everything that can be measured can be optimized. Everything that can be optimized has already been scheduled for elimination.
+  Andrew: Who authorized you to be in this building?
+  Data Analytics Lead: I don't see that question on my intake form. I do see, however, that your continued presence here represents a 94% drag on projected synergies.
+  Narrator: The lead opens a laptop. The screen is a spreadsheet so dense it's practically a weapon.
+  fight data_analytics_lead
+  end
+
+scene data_analytics_defeated
+  Data Analytics Lead: This is... statistically anomalous. My model had you at a 3% win probability.
+  goto n7
+
+  @n1
+  Andrew: What does your model say now?
+  Data Analytics Lead: It's... refusing to run. I think you broke my confidence interval.
+  Data Analytics Lead: For what it's worth — the Chief is still up here. He doesn't have a model. He doesn't need one. He's been doing this for twenty years.
+  Narrator: The lead closes their laptop and walks toward the elevator, muttering about outliers.
+  goto n8
+
+  @n5
+  set data_lead_defeated
+  end
+  # ── STAGING (appended; routed to from 0/4) ───────────────────────────
+
+  @n7
+
+  stage
+    data_analytics_lead spawn spawnAt confront_north face player
+    player face confront_north nowait
+  goto n1
+
+  @n8
+
+  stage
+    data_analytics_lead exit elevator speed 1.7
+  goto n5
+
+scene chief_restructuring_combat
+  Narrator: He's at the far end of the executive floor. No laptop. No clipboard. Just a suit that costs more than your annual salary and an expression that has never once entertained doubt.
+  Chief of Restructuring: Andrew. I've eliminated twelve departments across nine companies. Your file came across my desk on day one.
+  Andrew: Then you know I have the charter. I have the evidence. This restructuring has no legal basis.
+  Chief of Restructuring: Legal basis. Sentiment is not a KPI, Andrew. Neither is loyalty. Neither, frankly, is you.
+  Chief of Restructuring: I've broken harder people than you. With less paperwork.
+  Andrew: Good. I hate paperwork.
+  fight chief_of_restructuring
+  end
+
+scene chief_restructuring_defeated
+  Chief of Restructuring: I don't... this doesn't happen.
+  goto n8
+
+  @n1
+  Chief of Restructuring: You want to know something? Meredith didn't call us last week. She called us six weeks ago. Before you ever found the archive. Before the charter. She knew you'd get this far.
+  Andrew: Then she knows what's coming.
+  Chief of Restructuring: She's in the Board Room. She's been there all morning. She has the full board on a call. Andrew — whatever you're planning, you have maybe ten minutes before the vote passes.
+  Narrator: The Chief straightens his tie. Steps aside. For the first time in twenty years, he gets out of someone's way.
+  goto n9
+
+  @n5
+  set chief_restructuring_defeated
+  set board_room_accessible
+  end
+  # ── STAGING (appended; routed to from 0/4) ───────────────────────────
+  # "Steps aside" is a one-tile walk and it is the most cinematic beat in
+  # Act 5: he is standing between Andrew and the Board Room door, and he
+  # moves. He spawns for this dialog (no NPC entry) and stays put after —
+  # stepping ASIDE is not leaving, and the room rebuild takes him away.
+
+  @n8
+
+  stage
+    chief_of_restructuring spawn spawnAt 7.5,2.2 face player
+    player walkTo 7.6,4.6 face chief_of_restructuring speed 1.5
+  goto n1
+
+  @n9
+
+  stage
+    chief_of_restructuring walkTo 5.8,2.2 face player speed 1 hold 0.5
+    player face board_door nowait
+  # ── EXIT BEAT (appended; routed to from 9) ───────────────────────────
+  # He was spawned by node 8, so `endScene()` despawns him IN PLACE at the
+  # end of the dialog — a body deleting itself on camera, the same defect the
+  # board meeting had. `regional_director_defeated` node 6 is the working
+  # form: walk to a real door, then hide. Stepping aside is still the beat
+  # the prose describes (node 9, unchanged); this is the follow-through that
+  # gets him off screen under his own power before the scene closes.
+
+  stage
+    chief_of_restructuring exit board_door speed 1.8
+    player face board_door nowait
+  goto n5
+
+scene corporate_lawyer_combat
+  Corporate Lawyer: Mr. Andrew. I represent the interests of Vaults Fargo Regional Operations.
+  Corporate Lawyer: You have been engaging in unauthorized access of restricted company records. Insubordination. Disruption of corporate operations.
+  Corporate Lawyer: I have here a cease and desist order, a termination notice, and a non-disclosure agreement. Sign all three.
+  Andrew: I'm a trust officer with evidence of systematic fiduciary breach. I'm not signing anything.
+  Corporate Lawyer: Brave. Foolish. But brave. Very well. Let's do this the litigious way.
+  fight corporate_lawyer
+  end
+
+scene corporate_lawyer_defeated
+  Corporate Lawyer: I... I've never lost a case. Or a fight. This is unprecedented.
+  Corporate Lawyer: For the record, I was retained by the Regional Manager personally. Not by Vaults Fargo corporate. That distinction may matter later.
+  Corporate Lawyer: Meredith is upstairs. The Board Room. She's presenting her case to dissolve your department. You'd better hurry.
+  set corporate_lawyer_defeated
+  end
+
+# --------------------------------------------------------------------------
+# RACHEL BOSS FIGHT — Board Room confrontation
+# --------------------------------------------------------------------------
+scene meredith_boss_combat
+  Narrator: You enter the Board Room. Meredith stands at the head of the table. Behind her, a screen displays charts and graphs that all say the same thing: DISSOLVE.
+  goto n21
+
+  @n1
+  Meredith Sterling: Andrew. I was wondering when you'd show up.
+  Meredith Sterling: I've already presented my case to the board. The vote is in one hour. Your department is finished.
+  Andrew: Not if they see this.
+  Narrator: You place the evidence on the table. The transaction logs. The filing records. The Intern's taped-together memo. And the charter.
+  goto n22
+
+  @n5
+  Meredith Sterling: ...Where did you get that charter. That was locked in the Vault.
+  Andrew: The building helped.
+  Meredith Sterling: The BUILDING. You've lost your mind. Just like the old janitor. Just like everyone who works in trust too long.
+  Meredith Sterling: You think a 77-year-old piece of paper is going to save your department? Paper only matters when it's denominated, Andrew.
+  Meredith Sterling: I've spent fifteen years climbing the corporate ladder. I will NOT be stopped by a first-week trust officer and a JANITOR.
+  Narrator: The building hums. The charter on the table begins to glow with that impossible warm light.
+  Meredith Sterling: What is— this is some kind of trick. Fine. If you want a fight, I'll give you one.
+  Meredith Sterling: I am Meredith, SVP of Strategic Operations. I have a Harvard MBA, a corner office, and ZERO patience for corporate fairy tales.
+  goto n15
+
+  @n13
+  fight meredith_boss
+  end
+  # Quarterly-review leverage (logic-sweep MAJOR #11): the flags are
+  # consumed mechanically in _startCombat (enemy stat overrides) —
+  # these lines tell the player it's happening.
+
+  @n15
+  if portfolio_strong else -> n18
+  Meredith Sterling: ...I reviewed your book of business, by the way. Clean acquisitions, defensible fee structure. It's annoying. It's going to be a footnote in my report.
+  Narrator: She says 'footnote' like it costs her something. Your portfolio is load-bearing — Meredith's arguments have visible cracks. (Meredith's stats are reduced.)
+  goto n13
+
+  @n18
+  if portfolio_weak else -> n13
+  Meredith Sterling: And I reviewed your book of business. Underperforming. Undercapitalized. Exhibit A, Andrew. You built my case FOR me.
+  Narrator: She slides a copy of your quarterly review across the table like a subpoena. It lands harder than it should. (Meredith's attack is increased.)
+  goto n23
+  # ── STAGING (appended; routed to from 0/4/20) ────────────────────────
+  # Meredith paced (8,2) — 5.8 tiles from the head chair at (3,5) and NORTH
+  # of the table rather than at its end — while the prose put her at the
+  # head of it. The boardroom table blocks x 4-12 at z 4-6, so she routes
+  # along the north side first (the walker is a straight line with an axis
+  # slide, not a pathfinder).
+
+  @n21
+
+  stage
+    @b0 meredith walkTo 3,2.4 speed 1.5
+    meredith walkTo head_stand face table_edge_s speed 1.4 after b0
+    player walkTo table_edge_s face head_stand speed 1.5
+  goto n1
+
+  @n22
+
+  stage
+    player face head_stand gesture cast hold 0.8
+  goto n5
+
+  @n23
+
+  stage
+    meredith face player gesture attack_ally hold 0.7
+  goto n13
+
+scene meredith_boss_defeated
+  # ── Voice-profile branching: how this victory FELT depends on Andrew's profile.
+  # Charter Read → rhetorical-kill epilogue (path 30+). Steadied → humble (path 50+).
+  # Hardened → cold (path 60+). Default → existing universal celebration. All paths
+  # converge on the act5_complete flag at index 70.
+  if andrew_invoked_charter -> n30
+  Meredith Sterling: I... this isn't possible. No one has ever...
+  Narrator: The charter glows brighter. The Fiduciary Force fills the Board Room. Every promise ever made within these walls resonates.
+  Narrator: Meredith's phone rings. She answers. Her face goes white.
+  Meredith Sterling: The Regional Manager has been arrested. The SEC found the offshore accounts. The board vote is... cancelled.
+  Meredith Sterling: You win. This time. But corporations have long memories, Andrew. Longer than any building.
+  Narrator: Meredith leaves the Board Room. Her heels echo on the marble floor, each step a little less certain than the last.
+  goto n72
+
+  @n7
+  Narrator: The charter's glow fades to a gentle warmth. The building settles. Not asleep — just... satisfied.
+  Narrator: Skip appears in the doorway. Behind him, Janet, Diane, Alex, the Intern, Isaiah, and the Janitor.
+  Skip Hartley: Andrew... did we just save the department?
+  Andrew: Apparently. I'd like to sit down now, if the building doesn't mind.
+  Mysterious Janitor: The charter is restored. The trust is honored. The building remembers.
+  Janet: *raises tumbler* To trust issues. May we always have them.
+  Skip Hartley: That's the most beautiful thing I've ever heard. And I've read SEVEN leadership books this month.
+  Narrator: ~ END OF ACT 5 ~
+  Narrator: The trust department stands. Battered, caffeinated, and slightly traumatized. But standing.
+  Narrator: The Fiduciary Force sleeps again. Until the next breach. Until the next broken promise.
+  Narrator: But that's a story for another day. Or maybe... another floor.
+  Narrator: The penthouse elevator dings. Nobody pressed it.
+  # Voice-profile epilogue branch — runs AFTER the universal celebration
+  if andrew_steadied -> n50
+  if andrew_hardened -> n60 else -> n70
+  # 21–29 reserved (intentionally empty so future epilogue paths can be inserted without renumbering downstream)
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  end
+  # ── Charter Read epilogue (30-49) — Andrew rhetorical-killed Meredith by reading the founding clause.
+
+  @n30
+  Meredith Sterling: ...what... was that...
+  Narrator: She'd been ready for everything. The legal threat. The compliance audit. The HR complaint. The PowerPoint counter-deck. She had answers prepared for all of it.
+  Narrator: She wasn't ready for someone to read the document aloud.
+  Narrator: You held it up — softly, not as a weapon, just as itself — and read Section 1, Paragraph B again. Slower this time. The board members in the room couldn't quite look away from you.
+  Andrew: 'The duty survives the institution.' That's the whole thing. That's the only thing it ever was.
+  Narrator: One of the board members — old, tired-looking, mostly silent in every meeting for years — quietly stood up and walked out. He came back two minutes later carrying a coffee mug. He sat back down on YOUR side of the table.
+  Narrator: Meredith's phone rang. She answered. Her face went white.
+  Narrator: The Regional Manager had been arrested. SEC. Offshore accounts. The vote was cancelled before it could be called.
+  Meredith Sterling: You... beat me by reading from a book.
+  Andrew: It's not a book. It's the contract everyone in this building forgot they signed.
+  Narrator: Meredith left without finishing her sentence. The Janitor was waiting in the hallway. He nodded at her once, the way you nod at the weather.
+  Mysterious Janitor: She'll be back, in a different form, with a different name. They always are. The charter stays anyway. The charter is what stays.
+  Janet: I'm framing the page you read from. I'm hanging it over the coffee machine. That's a hill I will die on.
+  Narrator: ~ END OF ACT 5 ~
+  Narrator: You won by quoting a forty-seven-year-old paragraph at a hostile takeover. The most boring possible victory. The realest possible victory.
+  Narrator: The penthouse elevator dings. Nobody pressed it.
+  goto n70
+  # 46-49 reserved
+  end
+  end
+  end
+  end
+  # ── Steadied epilogue (50-59) — Andrew accepted Janet's warning, won as a person.
+
+  @n50
+  Narrator: After Meredith leaves, the room is too quiet. Janet is the first one to put her tumbler down.
+  Janet: Andrew. Look at me. — Yeah. Hi. You're still you. I can see it. Good.
+  Andrew: I almost wasn't, for a minute.
+  Janet: I know. Almost is not the same as wasn't. Almost is fine. Almost is part of the job.
+  Narrator: You sit down on the conference table — not at it, ON it — and exhale for what might be the first time since Tuesday.
+  Narrator: You won. You stayed yourself. Both at once. It's enough.
+  goto n70
+  # 56-59 reserved
+  end
+  end
+  end
+  end
+  # ── Hardened epilogue (60-69) — Andrew brushed off Janet, victory tastes off.
+
+  @n60
+  Narrator: Meredith leaves. The team celebrates. You watch yourself watch them celebrate. There is a small, professional distance between you and the room that you do not entirely understand.
+  Janet: Andrew? You okay?
+  Andrew: Yeah. We won.
+  Janet: ...yeah. We did.
+  Narrator: She doesn't say what she's looking at when she says it. She's looking at you. She's looking at the version of you that did the closing arguments. The version that doesn't fully come back when the fight ends.
+  Narrator: You won. The department stands. There is a thing in the way you hold the charter now that wasn't there a month ago. It might be care. It might be something else.
+  goto n70
+  # 66-69 reserved
+  end
+  end
+  end
+  end
+  # ── Final flag + end — every path converges here ──
+
+  @n70
+  set act5_complete
+  end
+  # ── STAGING (appended; routed to from 6) ─────────────────────────────
+  # "Her heels echo on the marble floor, each step a little less certain
+  # than the last" — she walks the length of the room and out the south
+  # door, slowly (1.15 tiles/s), instead of vanishing where she stood.
+
+  @n72
+
+  stage
+    @b0 meredith walkTo 3,8.4 speed 1.15
+    meredith exit door_south speed 1.15 after b0
+    player face door_south nowait
+  goto n7
+
+# --------------------------------------------------------------------------
+# NEW ROOM INTERACTION DIALOGS
+# --------------------------------------------------------------------------
+scene board_room_table
+  Narrator: A mahogany conference table that seats fifteen. Each chair costs more than a semester of college.
+  Narrator: A carafe of water sits in the center, full. No one has poured from it. A nameplate at the head reads 'RESERVED FOR STRATEGIC OPERATIONS.'
+  Narrator: The walls carry two large paintings that mean nothing and cost everything. Between them, a nail hole where something used to hang.
+  end
+
+scene suggestion_box
+  Narrator: An HR suggestion box. The lock has been glued shut.
+  Narrator: Through the slot, you can see dozens of slips of paper. The top one reads: 'SUGGESTION: Actually read these. — Everyone (2019-2024)'
+  Narrator: Another reads: 'Please provide a suggestion box that works. This one has been glued shut since February. — Anonymous'
+  Narrator: The most recent one is in Meredith's handwriting: 'Suggestion: eliminate the suggestion box. Optimize.'
+  end
+
+scene penthouse_window
+  Narrator: Floor-to-ceiling windows. The Minneapolis skyline stretches in every direction.
+  Narrator: From up here, the world looks clean. Organized. Like a spreadsheet come to life.
+  Narrator: You can see the parking garage below. Your Honda Civic looks very small. Much like your savings account.
+  Narrator: A plaque on the window reads: 'FROM THIS HEIGHT, EVERYTHING LOOKS LIKE AN ASSET.' It's meant to be inspirational. It isn't.
+  end
+
+scene vault_entrance
+  if vault_accessible -> n2
+  Narrator: A heavy steel door behind the Archive shelving. It won't budge. You need more information.
+
+  @n2
+  Narrator: The vault door is open. The Janitor's keycard works here too.
+  end
+
+scene vault_charter
+  if has_charter -> n4
+  Narrator: A glass display case. Inside, you can see a document on a velvet stand. It glows faintly.
+  Narrator: A plaque reads: 'THE ORIGINAL CHARTER — To be opened only in times of fiduciary crisis.'
+  Narrator: The display case is locked. The combination lock has three dials.
+
+  @n4
+  Narrator: The display case is empty. You carry the charter now. Its warmth pulses against your chest like a second heartbeat.
+  end
+
+scene board_charter
+  Narrator: A bronze plaque on the wall. Engraved in old-fashioned script:
+  Narrator: 'THIS INSTITUTION SHALL SERVE AS FAITHFUL STEWARD OF THE PUBLIC TRUST. ANY BREACH OF THIS SACRED DUTY SHALL BE MET WITH THE FULL WEIGHT OF THE CHARTER.'
+  Narrator: '— Original Board of Directors, 1947'
+  Narrator: The words shimmer slightly, in the manner of something that has been waiting since 1947 and is prepared to keep waiting.
+  end
+
+scene algorithm_terminal
+  if regional_director_defeated else -> n7
+  if defeated_algorithm -> n13
+  # Fight path — player came to the terminal instead of waiting for the cutscene
+  The Algorithm: Initiating direct interface. Interesting choice.
+  The Algorithm: You chose confrontation over ceremony. Efficiency rating: acceptable.
+  Andrew: Let's skip the rest of the speech.
+  The Algorithm: Agreed. COMMENCING OPTIMIZATION.
+  fight algorithm
+  goto n16
+  # Pre-fight flavor (Regional Director not yet beaten — terminal is just scenery)
+
+  @n7
+  Narrator: A sleek terminal unlike anything else in the building. Modern. Minimalist. Cold.
+  Narrator: The screen displays cascading numbers. Portfolio values. Trust balances. Client assets. All flowing in real-time.
+  Narrator: A cursor blinks: 'THE ALGORITHM SEES ALL. THE ALGORITHM OPTIMIZES ALL. THE ALGORITHM IS ALL.'
+  Andrew: That's... ominous. Even for a bank.
+  Narrator: The screen flickers. For a moment, you think you see a face in the numbers. Then it's gone.
+  end
+  # Post-defeat flavor
+
+  @n13
+  Narrator: The terminal is dark. Where cascading numbers once flowed, only a blinking cursor remains.
+  Andrew: Just a computer now.
+  end
+
+  @n16
+  end

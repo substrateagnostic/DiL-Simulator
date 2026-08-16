@@ -1,0 +1,474 @@
+# ==========================================================================
+# MISSING INTERACTABLE DIALOGS
+# ==========================================================================
+scene andrews_desk
+  if grandma_defeated -> n7
+  if checked_desk -> n6
+  Narrator: Your cubicle. It smells faintly of despair and Febreze. The previous occupant left a motivational calendar stuck on March 2019.
+  Narrator: There's a drawer full of antacids and a sticky note that reads: "RUN WHILE YOU CAN — T.O. #3"
+  give antacid x2
+  set checked_desk
+
+  @n6
+  quest main_act1 objective 1
+
+  @n7
+  Narrator: Your desk. Your life now. The monitor displays a screensaver that says "COMPLIANCE IS NOT OPTIONAL" in Comic Sans.
+  end
+
+# Triggered when all Henderson meetings are done — redirect to branch decision
+scene coffee_machine
+  Narrator: The coffee machine was manufactured during an era when "ergonomic" meant "won't explode."
+  Narrator: A sign reads: "COFFEE IS A PRIVILEGE, NOT A RIGHT. — Management"
+  Narrator: Below it, in Sharpie: "Management can fight me. — Anonymous (Janet)"
+  Narrator: You pour yourself a large coffee. It tastes like determination and existential compromise.
+  give coffee_large x1
+  end
+
+scene microwave
+  Narrator: The break room microwave. A monument to culinary war crimes.
+  Narrator: The inside is stained with what you desperately hope is marinara sauce.
+  Narrator: A sign: "WHOEVER MICROWAVED FISH ON FRIDAY: WE WILL FIND YOU. — The Entire Office"
+  Narrator: Below it: "It was Alex." Below THAT: "No it wasn't. — Alex (sent from my phone in the server room, which has no microwave)"
+  Narrator: The microwave beeps once, unprompted. You back away slowly.
+  end
+
+scene dying_plant
+  Narrator: A plant that has given up on photosynthesis as a lifestyle.
+  Narrator: A label reads: "Mr. Fernsworth III — Skip's Responsibility Since 2021."
+  Narrator: Mr. Fernsworth III has clearly not been watered since 2021. His leaves are the color of compliance documentation.
+  Narrator: A tiny post-it on the pot reads: "help me" in suspiciously plant-like handwriting.
+  end
+
+# --- Cubicle Farm posters ---
+scene poster_cf_1
+  Narrator: "SYNERGY" — printed over a stock photo of six people fist-bumping over a laptop. Nobody in this building has ever fist-bumped. Not once.
+  Narrator: A sticker has been added: "This word has appeared in 6 consecutive quarterly reviews. We looked it up. No one agrees what it means."
+  Andrew: I have already been here four hours and I feel less synergized than when I arrived.
+  end
+
+scene poster_cf_2
+  Narrator: "RISE AND GRIND" — a man staring at a laptop at 2 AM surrounded by empty coffee cups. The stock graph behind him is going up. His posture is going down.
+  Narrator: Sub-heading: "Sleep is a recovery mechanism. Recovery is for the inefficient."
+  Andrew: Who approved this? Who looked at this and said: yes, this will help.
+  end
+
+scene poster_cf_3
+  Narrator: "TOGETHER WE ACHIEVE MORE" — geese flying in a V formation at sunset.
+  Narrator: Fine print: "The goose at the front does 47% more aerodynamic work. The geese at the back have never mentioned this. This is called professionalism."
+  Andrew: I am the front goose. I have always been the front goose.
+  end
+
+scene poster_cf_4
+  Narrator: "GOOD ENOUGH IS THE ENEMY OF GREAT" — an eagle soaring alone over a mountain range.
+  Narrator: In red marker beneath: "What's the enemy of getting home before 8 PM? This poster."
+  Narrator: In a second handwriting: "HR has been notified about the marker. - Facilities"
+  Narrator: In a third handwriting: "HR IS the marker. - Anonymous"
+  end
+
+scene poster_cf_5
+  Narrator: "COLLABORATE. INNOVATE. DISRUPT." — hands stacking on top of each other in a team huddle.
+  Narrator: Small print: "Disruption is encouraged unless it disrupts the existing hierarchy, workflow, budget cycle, or Skip's standing lunch order."
+  # Was `type: 'Andrew'`, which is not a node type: `_processNode` fell to
+  # its `default:` arm, console.warn'd and advanced, so this line has never
+  # been shown to a player. Producer ruled REINSERT as a proper Andrew text
+  # node. Fixed IN PLACE — the append-only law protects INDICES, and the
+  # type field is the broken part, so no index moves and the authored line
+  # is unchanged. (poster_cf_6 two entries down is the same beat written
+  # correctly; that is what this should have been.)
+  Andrew: I'm going to disrupt my way right out of this building.
+  end
+
+scene poster_cf_6
+  Narrator: "YOUR ONLY COMPETITION IS WHO YOU WERE YESTERDAY" — a man sprinting alone on a track.
+  Narrator: Someone has drawn an arrow pointing to the runner and written: "Yesterday-him also had dental. Think about that."
+  Andrew: Yesterday-me did not know about the Henderson trust. Yesterday-me was thriving.
+  end
+
+scene poster_cf_7
+  Narrator: "THERE IS NO 'I' IN TEAM"
+  Narrator: In neat handwriting below: "There is no 'I' in team, but there IS an 'I' in 'I didn't get credit for this.' Just saying."
+  Narrator: In a different handwriting: "There is also an 'I' in 'individual performance review.' - Janet"
+  end
+
+# --- Break Room poster ---
+scene poster_br_1
+  Narrator: "RECHARGE. REFUEL. RETURN." — a smiling woman holding a coffee mug, looking rested and purposeful.
+  Narrator: The word RETURN is bolded. Underlined. Italicized. Someone added an asterisk. The asterisk says: "You have 14 minutes. The coffee takes 3."
+  Andrew: This poster is not about wellness. This poster is about compliance.
+  end
+
+# --- Reception posters ---
+scene poster_rec_1
+  Narrator: "FIRST IMPRESSIONS ARE PERMANENT" — a confident handshake silhouetted against a city skyline.
+  Narrator: Sub-heading: "Smile. Even if you don't mean it. Especially if you don't mean it. The client can tell the difference, and they prefer the lie."
+  Andrew: This is the most honest dishonest thing I have ever read.
+  end
+
+scene poster_rec_2
+  Narrator: "SERVICE IS OUR PROMISE" — a woman beaming into a headset.
+  Narrator: Fine print: "Our promise is subject to staffing levels, current hold times, and the emotional bandwidth of whoever happens to answer."
+  Narrator: A sticky note from Diane: "Average hold time is currently 38 minutes. The promise is aspirational."
+  end
+
+scene poster_rec_3
+  Narrator: "YOUR CLIENT IS NOT A NUMBER" — two people shaking hands warmly over a desk.
+  Narrator: Fine print: "They are, however, a revenue event with associated compliance obligations, AML screening requirements, and a billable relationship tier. But not a number."
+  Andrew: Client #4471 is waiting for me right now. I did not name them that. The system did.
+  end
+
+# --- Conference Room poster ---
+scene poster_conf_1
+  Narrator: "ALIGNMENT IS NOT A DESTINATION. IT IS A PROCESS." — silhouettes around a boardroom table, all leaning slightly forward.
+  Narrator: Sub-heading: "This process is estimated to take 4–6 working sessions, one sub-committee, a steering group debrief, and a retrospective on the debrief."
+  Andrew: I have been in alignment meetings about the alignment meeting schedule. This poster understands me.
+  end
+
+# --- Executive Floor posters ---
+scene poster_exec_1
+  Narrator: "LEADERSHIP IS NOT A TITLE. IT IS A RESPONSIBILITY." — a lone eagle on a cliff at dawn, chrome-framed, museum-quality lighting.
+  Narrator: Embossed gold text beneath: "Also a salary bracket. Primarily a salary bracket. The responsibility part is for the quarterly report."
+  Andrew: This frame costs more than my monthly rent.
+  end
+
+scene poster_exec_2
+  Narrator: "RESULTS SPEAK LOUDER THAN EFFORT" — a businessman standing triumphant at a summit, tie blowing in the wind.
+  Narrator: Fine print, in the smallest font legally possible: "Effort is noted and appreciated in lieu of compensation adjustments for the current fiscal cycle."
+  Andrew: There is a regional manager thirty feet from this poster. The irony is structural.
+  end
+
+scene poster_exec_3
+  Narrator: "WE DON'T HAVE EMPLOYEES. WE HAVE STAKEHOLDERS." — diverse hands around a boardroom table.
+  Narrator: In small script at the bottom: "Stakeholders are not entitled to equity. The terminology is aspirational. This distinction was clarified in the 2019 handbook revision, section 4, paragraph 11."
+  Andrew: I am a stakeholder with a frozen salary and a broken chair. I am staking nothing.
+  end
+
+scene poster_exec_4
+  Narrator: "EXCELLENCE IS THE STANDARD. NOT THE CEILING." — a rocket launching against a twilight sky. The frame is gold. Real gold, probably.
+  Narrator: The rocket in this photo cost $2.3 million to produce. It is a stock image. They paid $149 for the license.
+  Andrew: My last raise was 1.2%. Before inflation. The rocket mocks me.
+  end
+
+# --- Stairwell poster ---
+scene poster_stair_1
+  Narrator: "SUCCESS IS A STAIRCASE, NOT AN ELEVATOR" — a winding staircase ascending into light.
+  Narrator: Someone has added in permanent marker: "The elevator is also broken. This is not a metaphor. Maintenance has been notified since March. It is October."
+  Andrew: I am standing on the stairs. The poster is right here. The irony is load-bearing.
+  end
+
+# --- HR Department poster ---
+scene poster_hr_1
+  Narrator: "PEOPLE ARE OUR GREATEST ASSET" — a smiling, diverse team photo, soft lighting, everyone inexplicably happy to be at work.
+  Narrator: Sub-heading: "Assets are subject to annual review, reallocation, write-downs, and depreciation over a standard amortization schedule."
+  Andrew: This poster is hanging in the HR department. I don't know if that's a threat or an apology.
+  end
+
+scene skip_desk
+  Narrator: Skip's desk. Dual monitors, both displaying LinkedIn motivational posts.
+  Narrator: A "#1 Boss" mug sits front and center. The receipt is still in the mug. Skip bought it for himself.
+  Narrator: There's a framed photo of Skip shaking hands with someone important-looking. On closer inspection, the "important person" is just Skip in a different suit, from a different angle.
+  Narrator: A golf putter leans against the wall. A Post-it on it reads: "PRACTICE STROKES = PRACTICE LEADERSHIP"
+  end
+
+scene conference_whiteboard
+  Narrator: The whiteboard is covered in Skip's "strategic planning."
+  Narrator: It's a flowchart: "SYNERGY → DISRUPT → INNOVATE → LEVERAGE → SYNERGY (repeat)"
+  Narrator: Someone (Alex) wrote underneath: "This is just a circle." Skip responded: "Circles are the strongest shape. Like our TEAM."
+  Narrator: In the corner, barely visible: "I've been here 3 months and I still don't know what we do — The Intern"
+  end
+
+scene server_rack_inspect
+  Narrator: Row upon row of blinking servers. The hum is almost hypnotic.
+  Narrator: One server has a sticky note: "DO NOT UNPLUG — contains 73% of all trust account records. The other 27% is vibes."
+  Narrator: Another note: "This one runs Doom. For stress testing purposes. — Alex"
+  Narrator: A third note, much older: "admin_legacy — DO NOT DECOMMISSION — R.M."
+  Narrator: The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.
+  if server_secret_started -> n9
+  if met_alex_it -> n10 else -> n9
+
+  @n7
+  quest side_server_secret stage 1
+  set server_secret_started
+
+  @n9
+  end
+  # SERVER ROOM SECRETS STARTS WITH THE OTHER ALEX SIDE QUESTS, NOT BEFORE
+  # SKIP. Meeting Alex is enough to reach the server room in Act 1, so
+  # `met_alex_it` alone let a player start this before the briefing and
+  # before a single Henderson — reported from playtest 2026-08-15. Every
+  # other Alex side quest is already held behind `act2_complete`
+  # (`_getAlexSideQuestDialog`: "Side quests only available after Henderson
+  # Trust arc is resolved"); this one bypassed that rule because it is
+  # started by a room interactable rather than by his router. The four
+  # flavour lines above still read at any act — only the QUEST waits.
+  # Appended and routed to from node 6, per the never-insert-mid-array law.
+
+  @n10
+  if act2_complete -> n7 else -> n9
+
+scene alex_it_desk
+  if printer_quest_started -> n5
+  Narrator: Alex's desk is an archaeological dig of snack wrappers and energy drink cans. Stratigraphy suggests habitation since at least 2019.
+  Narrator: Three monitors: server logs, a Reddit thread about cryptography, and what is unmistakably Minecraft.
+  Narrator: A sticky note: "BROWSER HISTORY IS ENCRYPTED WITH AES-256. NICE TRY, SKIP."
+  Narrator: In a drawer (unlocked, because Alex fears nothing), a USB drive labeled "EVIDENCE (BACKUP)" next to a bag of Doritos.
+  goto n15
+  # --- Printer quest: Alex explains the toner situation ---
+
+  @n5
+  if printer_quest_done -> n16 else -> n17
+
+  @n6
+  Alex from IT: Oh. Oh no. It printed something for you, didn't it.
+  Alex from IT: Not a question. I've been watching that printer for three years. It's connected to a legacy subnet with read access to all document archives. Including the Henderson files.
+  Alex from IT: The toner runs out on purpose — firmware was modified to abort print jobs with certain keywords. Whoever did it didn't expect the printer to get opinions about that.
+  Alex from IT: I found old toner stock — pre-2016, before the firmware modification. I've already set it next to the printer. If you install it, the block won't apply and the full document will print.
+  Alex from IT: Just go install it. I want to know what it's been trying to say as much as you do.
+  quest side_printer stage 2
+  set printer_toner_quest
+  Narrator: Alex slides a dusty toner cartridge across his desk. It has a Post-it note: 'PRE-2016 STOCK. DO NOT USE FOR REGULAR PRINTING.'
+
+  @n14
+  Narrator: Alex's desk. The toner cartridge Alex set aside is near the printer in the cubicle farm.
+
+  @n15
+  end
+
+  @n16
+  Narrator: Alex's desk. He's not talking about the printer anymore. A new Post-it on the monitor reads: 'DO NOT REVIVE.'
+  goto n15
+
+  @n17
+  if printer_toner_quest -> n14 else -> n6
+
+scene elevator
+  if branch_chosen -> n5
+  Narrator: The elevator to the Executive Floor. A keycard reader blinks red.
+  Narrator: A sign: "AUTHORIZED PERSONNEL ONLY. If you have to ask, you're not authorized. If you ARE authorized, you already know."
+  Narrator: You don't have clearance yet. Maybe after the Henderson situation resolves...
+  end
+
+  @n5
+  Narrator: The elevator light blinks green. Someone upstairs is waiting for you.
+  end
+
+scene reception_desk
+  Narrator: Diane's reception desk. The only organized surface in the entire building.
+  Narrator: Color-coded files, alphabetized forms, a pen cup with EXACTLY twelve pens. One is missing. Diane knows which one.
+  Narrator: A small plaque reads: "You don't have to be crazy to work here, but your manager probably is."
+  Narrator: Below the plaque, a smaller note: "This is not a joke. — Diane"
+  end
+
+scene andrews_car
+  Narrator: Your car. A 2014 Honda Civic with a dent from the time you parallel parked "close enough."
+  Narrator: Bumper sticker: "MY OTHER CAR IS ALSO DEBT." It came with the car.
+  Narrator: For a moment you consider driving away. Starting a new life. Becoming a park ranger or something.
+  Narrator: But your student loans won't pay themselves. And also, your keys are inside the building. Classic.
+  end
+
+scene janitor_closet
+  Narrator: A janitor's supply closet that is... suspiciously well-appointed.
+  Narrator: Inside: a mop, industrial cleaner, and... a mahogany bookshelf with first-edition business books?
+  Narrator: There's a framed MBA from Wharton on the wall. Next to it, an "EMPLOYEE OF THE MONTH" certificate from every single month in 2003.
+  Narrator: A small plaque: "Sometimes the best office is the one nobody expects." — The Mysterious Janitor, Former SVP
+  # THE EARLY VAULT CLUE. TWO panels accept 47-19-82 from Act 1 onward
+  # regardless of story flags — the freight elevator down to the Archive and
+  # the Vault door itself — which is only fair if the numbers are genuinely
+  # in the world early. They are: here, in the first room of the game, and
+  # the second line below is what tells an attentive reader they are an
+  # override rather than three dead breakers. (Tunic model — see
+  # .claude/plans/research-gameplay-comps.md P3.3.) Do not move either line
+  # without moving the payoff with it.
+  Narrator: The circuit panel by the door covers the garage sublevel; breakers 47, 19, and 82 have been switched off since 2005.
+  Narrator: A maintenance tag on the panel housing reads: "47-19-82 is the building service override. Do not share with tenants. — Facilities, 2003."
+  end
+
+scene executive_desk
+  Narrator: A desk that costs more than your annual salary. Mahogany. Triple monitors. A paperweight shaped like a golden bull.
+  Narrator: The nameplate reads "REGIONAL MANAGER" in gold leaf. No actual name. Just the title. Titles are all that matter up here.
+  Narrator: A poster: "SYNERGY: Because 'We Need to Talk About the Quarterly Numbers' Sounded Too Honest."
+  Narrator: The desk drawers are locked. The lock is gold-plated. Of course it is.
+  end
+
+scene executive_water_cooler
+  Narrator: The executive water cooler dispenses sparkling mineral water. Imported from the Swiss Alps.
+  Narrator: A sign: "Cost: $47 per bottle. Expense code: EMPLOYEE WELLNESS." Notably, this benefit does not extend below the executive floor.
+  Narrator: Meanwhile, the break room cooler downstairs has had a "PLEASE REFILL" sign for three months. Nobody has refilled it.
+  end
+
+scene elevator_executive
+  Narrator: The executive elevator. It smells like leather, ambition, and a cologne that costs more than your rent.
+  Narrator: A motivational poster inside: "LEADERSHIP: It's Lonely at the Top. But the Parking is Excellent."
+  end
+
+# ==========================================================================
+# MISSING NPC INTRO DIALOGS
+# ==========================================================================
+scene karen_intro
+  Karen Henderson: Excuse me? Are YOU the trust officer handling my father's estate?
+  Karen Henderson: I've been waiting. I have a BINDER. And a SCHEDULE. And a very expensive lawyer on speed dial.
+  Andrew: We should discuss this in the conference room—
+  Karen Henderson: We'll discuss it WHERE I want to discuss it. Which is the conference room. I'm glad we agree.
+  Karen Henderson: Don't be late. I track tardiness. In the binder. Tab twelve.
+  end
+
+scene karen_return
+  Karen Henderson: I said conference room. Not here. Go.
+  end
+
+# Post-Act-5 break-room Grandma. Replaces the old grandma_intro, which was
+# only reachable here — four acts stale ("meet me in the conference room")
+# and with a free heal attached (#24). No reward: she has already given
+# Andrew everything she intends to.
+scene grandma_return
+  Grandma Henderson: Hello again, dear. I was just counting the exits. Old habit. There are four, if you count the window Skip believes is decorative.
+  Grandma Henderson: Don't let me keep you. *the knitting needles do not stop* I keep everyone else.
+  end
+
+scene grandma_exec_idle
+  Grandma Henderson: Oh, this isn't the conference room, dear.
+  Grandma Henderson: Go find the conference room. I'll be waiting with cookies.
+  end
+
+scene regional_intro
+  Regional Manager: Ah. The trust officer who's been causing all this... excitement.
+  Regional Manager: I am the Regional Manager. You don't need my name. Names are for people who haven't achieved title-based identity.
+  Regional Manager: We have matters to discuss. Serious matters. Quarterly-report-affecting matters.
+  end
+
+scene compliance_intro
+  Compliance Auditor: *adjusts sunglasses indoors*
+  Compliance Auditor: Section 17. Subsection 4. Paragraph 2.
+  Andrew: What does that—
+  Compliance Auditor: It means I'm watching. I'm always watching.
+  Compliance Auditor: Carry on. For now.
+  end
+
+# ==========================================================================
+# MISSING COMBAT PRE-DIALOG
+# ==========================================================================
+scene intern_combat_intro
+  The Intern: Okay so I MIGHT have accidentally shredded the Henderson pre-audit file.
+  Andrew: You WHAT?
+  The Intern: Skip said to "make the documents disappear"! I thought he meant disappear-disappear! Like a magic trick!
+  The Intern: But the budget didn't cover a magician so I used the next best thing: the industrial shredder.
+  The Intern: And then the shredder caught fire. And then I put the fire out with coffee. And then the coffee machine broke.
+  The Intern: Anyway, I panicked! And when I panic, I do paperwork! AGGRESSIVE paperwork!
+  Narrator: The Intern grabs a nearby stack of documents and begins hurling them with wild abandon.
+  The Intern: PAPER FIIIIGHT!!!
+  fight intern
+  end
+
+# ISAIAH — Helpful associate, always helps if asked politely
+scene isaiah_intro
+  Isaiah: Hey there! You must be the new trust officer. Welcome to the team.
+  Isaiah: I'm Isaiah. If you ever need help with anything around here, just ask. I mean it — anything.
+  ask Isaiah: What can I do for you?
+    -> n3: Could you help me understand how things work here?
+    -> n7: Get me a coffee.
+    -> n9: Nothing right now, thanks.
+
+  @n3
+  Isaiah: Of course! So the trust department handles estate administration, investment management, and fiduciary services.
+  Isaiah: Skip runs the show — well, he thinks he does. Janet handles the real paperwork. The Intern... tries.
+  Isaiah: If you need documents filed or client records pulled, I'm your guy. Just ask nicely and I'll make it happen.
+  set met_isaiah
+  goto n10
+
+  @n7
+  Isaiah: ...Sure. I'll get you a coffee. But you know, a 'please' goes a long way around here.
+  set met_isaiah
+  goto n10
+
+  @n9
+  set met_isaiah
+
+  @n10
+  Isaiah: Anytime you need something, come find me. I'm usually near the water cooler.
+  end
+
+scene isaiah_return
+  Isaiah: Hey! Need anything? You know I'm always happy to help.
+  end
+
+# ==========================================================================
+# RACHEL — trust officer, cubicle farm (NPC id `rachel`).
+# First one in every morning. Practical kindness that never announces itself
+# (Haruf register). No relation to Meredith Sterling below, whose internal
+# ids are `meredith` / `meredith_boss`.
+# ==========================================================================
+scene rachel_intro
+  Rachel: Oh. Hi.
+  Andrew: I didn't think anyone was here yet.
+  Rachel: I'm always here first.
+  Rachel: I'm Rachel. Trust officer.
+  set met_rachel
+  Rachel: Coffee maker's around the corner — sounds like it's dying, but it works.
+  end
+
+scene rachel_return_act1
+  if rachel_gift_act1 -> n5
+  give coffee_large x1
+  set rachel_gift_act1
+  Rachel: You looked like you needed one.
+  end
+
+  @n5
+  Rachel: How's the desk?
+  end
+
+scene rachel_return_act2
+  if rachel_gift_act2 -> n6
+  Rachel: You look tired.
+  give coffee_large x1
+  set rachel_gift_act2
+  Rachel mood=worried: It's the good roast. From downstairs.
+  end
+
+  @n6
+  Rachel: Hang in there.
+  end
+
+scene rachel_return_act3
+  if rachel_gift_act3 -> n6
+  Rachel: You've been here late.
+  give coffee_large x1
+  set rachel_gift_act3
+  Rachel: I made extra.
+  end
+
+  @n6
+  Rachel: Don't forget to eat something.
+  end
+
+# Act 4+ — her cubicle is empty. The interactable lives on her monitor tile.
+scene rachel_note
+  Narrator: Rachel's desk. Everything filed. Monitor off. A sticky note.
+  Narrator: 'Gone home. You should too. — R'
+  end
+
+# MEREDITH STERLING (internal ids `meredith` / `meredith_boss`) — SVP of
+# Strategic Operations, ice queen. Not the Rachel above.
+scene meredith_intro
+  Meredith Sterling: ...
+  Meredith Sterling: You're the new trust officer.
+  Meredith Sterling: I'm Meredith Sterling. SVP of Strategic Operations. I oversee... everything.
+  Meredith Sterling: I've read your file. Interesting background. Let's see if it translates to results.
+  ask Meredith Sterling: I trust Skip has briefed you on the Henderson situation?
+    -> n5: Yes, he was very... thorough.
+    -> n7: He mostly talked about synergy.
+
+  @n5
+  Meredith Sterling: Mm. 'Thorough' is not a word I'd associate with Skip. Your diplomacy is noted. It will be useful.
+  Meredith Sterling: I'll be watching your performance closely. This department has been... underperforming. That will change.
+
+  @n7
+  Meredith Sterling: Of course he did. Skip treats management theory like a religion. Unfortunately, he's a bad practitioner.
+  Meredith Sterling: Results, Andrew. That's what matters to me. Not synergy. Not paradigm shifts. Results.
+  set met_meredith
+  Meredith Sterling: We'll speak again. Soon.
+  end
+
+scene meredith_return
+  Meredith Sterling: I don't have time for small talk. Do you have results?
+  end

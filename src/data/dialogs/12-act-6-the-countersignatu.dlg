@@ -1,0 +1,411 @@
+# ==========================================================================
+# ACT 6½ — THE COUNTERSIGNATURE
+# The charter is real. The seal is not on it. One afternoon, one city.
+# ==========================================================================
+# The penthouse elevator rejects the charter; Skip calls; the Janitor
+# is suddenly there, the way he always is. Sets city_unlocked.
+scene charter_challenge
+  set read_charter_challenge
+  Narrator: The elevator panel scans the 1947 charter for the second time, with the air of a machine double-checking something it already enjoyed rejecting once.
+  Narrator: SEAL NOT RECOGNIZED. FILING CHALLENGE LODGED — OUTSIDE COUNSEL, 9:14 AM. RESPONSE WINDOW CLOSES 5:00 PM.
+  Andrew: It's the original charter. It's seventy-seven years old. What does it want, a receipt?
+  Narrator: Your phone rings. It is Skip. You can hear him sweating.
+  Skip Hartley mood=worried: Andrew! Great. Fantastic. Small thing. Tiny thing. Meredith's old lawyers filed a challenge this morning — the charter's missing its Recorder's seal. Article 9. I'm looking at it right now. There's a... circle where a seal should be.
+  Skip Hartley mood=worried: Legal says we need the Recorder or a living deputy to certify by five o'clock or the whole thing's decorative. Like a diploma. Or my title.
+  Andrew: Skip, the Recorder's office stopped sealing charters by hand decades ago. Where am I supposed to find a living deputy?
+  goto n18
+
+  @n8
+  Narrator: A mop, somewhere behind you, stops mopping.
+  if janitor_names_complete else -> n12
+  Andrew: ...Okafor. D. Okafor. Page in your ledger — 'eleven years, moved her desk fourteen times.' She was the Deputy Recorder, wasn't she.
+  Mysterious Janitor: Delia. 1981 to 2009. The building broke her. The city didn't. You'll find her where the city keeps its good ones.
+  goto n13
+
+  @n12
+  Mysterious Janitor: Delia Okafor. Deputy Recorder, 1981 to 2009. The building broke her. The city didn't.
+
+  @n13
+  Mysterious Janitor: Don't have her address. The Hall of Records would — they keep records of their own people same as everyone's. Ask the Clerk. Bring patience. Not the stat. The real kind.
+  Narrator: He produces a key you have never seen before and unlocks the garage's south door, which you have also never seen before. Daylight comes in like it's been waiting.
+  set city_unlocked
+  Mysterious Janitor: Fennimore Avenue. Hall of Records is north side. Watch out for parking enforcement — Reyes is having a good month.
+  goto n19
+
+  @n17
+  end
+  # ── STAGING (appended; routed to from 7 and 16) ─────────────────────────
+  # The Janitor speaks five lines here and had no body in the room. The
+  # scene fires in `board_room` — the only room with a penthouse exit — from
+  # `_changeRoom`'s uncertified-charter branch, and by then `act6_complete`
+  # has derived `board_meeting_closed`, so every staging NPC is gone and the
+  # room is empty. Same spawn pattern as the security guard and the Firm.
+  # Not one word of prose is touched.
+
+  @n18
+
+  stage
+    # "A mop, somewhere behind you, stops mopping." — he is already there.
+    janitor spawn spawnAt aisle_n face player hold 0.35
+    player face janitor nowait
+  goto n8
+  # He leaves the way he does everything: without explaining. West along the
+  # clear z=2 aisle (the table blocks x 4-12 / z 4-6 and the director walks
+  # straight lines, not paths) and gone — ~3 s at 1.6, non-blocking so it
+  # plays under the last line. A route all the way to the south door would be
+  # three legs and twelve seconds of strolling after the scene has ended.
+
+  @n19
+
+  stage
+    janitor exit 1.5,2 speed 1.6 nowait
+    player face janitor hold 0.2
+  goto n17
+
+# ── Hall of Records: the Form 11-C chain (Borges with a queue rope) ──
+# Janitor-riddle retry pattern: wrong form -> back of the queue, try again.
+scene records_clerk_form11c
+  if form_11c_done -> n16
+  if form_11c_attempted -> n5
+  set form_11c_attempted
+  The Clerk: Welcome to the Hall of Records. The Hall contains all records. This is not a boast. It is a burden. State your request in the form of a form.
+  Andrew: I'm looking for a person. Delia Okafor — she was the Deputy Recorder. I need her current filing address.
+
+  @n5
+  The Clerk: Personnel records of Recorder's-office personnel are themselves records, recorded by the recorded. To request the record of a recorder, you require...
+  ask: Which form?
+    -> n9: Form 11-C — Request for Records of Requests for Records
+    -> n7: Form 7-A — Request for Records
+    -> n8: Form 30-F — Freedom of Information (Local)
+
+  @n7
+  The Clerk: Form 7-A requests records. Mrs. Okafor is not a record. Mrs. Okafor MADE records. The distinction is the entire architecture of civilization. Back of the queue.
+  goto n15
+
+  @n8
+  The Clerk: Form 30-F liberates information. Information about Mrs. Okafor is not imprisoned. It is filed. These are opposites. Back of the queue.
+  goto n15
+
+  @n9
+  The Clerk: ...Form 11-C. Yes.
+  Narrator: The Clerk looks at you the way a librarian looks at someone returning a book early and undamaged. It is the warmest expression the Hall permits.
+  The Clerk mood=smug: Delia Okafor. Deputy Recorder, retired. No filing address on record — by her own request, filed correctly, which I respected enormously. However. Her lunch is a matter of public routine.
+  The Clerk: Lucky's, on Fennimore. Booth four. Twelve-ten to one-forty, daily, federal holidays included. She has the patty melt. The Hall does not record why.
+  set form_11c_done
+  xp 150
+  goto n17
+
+  @n15
+  Narrator: You go to the back of the queue. The queue is three feet long and entirely you. It still takes something out of you.
+  goto n17
+
+  @n16
+  The Clerk: Booth four. Twelve-ten to one-forty. If she has moved to the counter, something is wrong with the world, and the Hall will want a memo.
+
+  @n17
+  end
+
+# Optional: the deep stacks — the 1947 founding file
+scene deep_stacks_file
+  if deep_stacks_done -> n7
+  Narrator: The deep stacks. The light here is older. A drawer labeled 'CHARTERS — MUNICIPAL — 1947' slides open with the sound of a long exhale.
+  Narrator: Inside: the founding file of Vaults Fargo Branch No. 1. Architect's drawings. A loan ledger. A photograph of nine people on marble steps, squinting into a future they look entirely unprepared for.
+  Narrator: On the back of the photograph, in fountain pen: 'First day. Nobody knew where anything was. We decided that whoever stayed would learn.'
+  Andrew: Whoever stayed would learn. Seventy-seven years and the job description hasn't changed once.
+  set deep_stacks_done
+  stat def +2
+  goto n8
+
+  @n7
+  Narrator: The founding file rests. The nine people on the steps keep squinting at their future, which is now your present, which is somehow comforting and not.
+  goto n9
+
+  @n8
+  Narrator: Some perspective settles into your shoulders and decides to stay. Composure +2. (+150... no. The perspective is the reward. Fine: also some XP.)
+  goto n10
+
+  @n9
+  end
+
+  @n10
+  xp 150
+  goto n9
+
+# ── Lucky's: Delia, booth 4. The test. ──────────────────────────────
+scene delia_booth4
+  if delia_moved -> n20
+  if met_delia -> n6
+  set met_delia
+  Narrator: Booth four. A woman with silver locs and reading glasses on a beaded chain is finishing a patty melt with the unhurried precision of someone who has outlasted every deadline that ever mattered.
+  Delia Okafor: You're from the building.
+  Narrator: It is not a question. You have not said anything. You are not wearing a name tag. She knows the way weather knows.
+
+  @n6
+  Delia Okafor: Sit down, then. You walk like the elevator just told you no. They always send someone when the elevator says no.
+  Andrew: Mrs. Okafor — I have the 1947 charter. The original. Corporate counsel challenged the seal this morning, and Article 9 says—
+  Delia Okafor: I know what Article 9 says. I sealed four hundred and twelve documents under Article 9. I remember every one, which is not a gift, before you ask.
+  Delia Okafor: So here is my question, young man, and I'd take a breath before answering, because I'll know.
+  Delia Okafor mood=angry: Twenty-eight floors of that building came down on people like me for forty years. Moved our desks. Lost our forms. Called it modernizing. Where was everybody? Why didn't anyone come when it was us?
+  ask: Answer her.
+    -> n13: "I didn't know. I know now."
+    -> n12: "I'm here now — that has to count."
+    -> n12: "The charter protects everyone, including you."
+
+  @n12
+  Delia Okafor: Mm. That's an answer you practiced in the car. Come back when you can answer plain. The patty melt takes twenty minutes — you have time.
+  goto n19
+
+  @n13
+  Narrator: Delia sets down her fork. She takes off the reading glasses, which is, you understand somehow, a ceremony.
+  Delia Okafor: Didn't know. Knows now. That's the whole human condition in six words, and most people never get to the second half.
+  Delia Okafor: I kept my seal. Seventeen years I kept it, oiled, wrapped, in the one place that building never thought to look — the FIRST branch. Box 0001. My mother banked there when they wouldn't let her bank most places.
+  Delia Okafor: It's a coffee shop now. The Roastery. East end of Fennimore. The vault's still in the basement because marble doesn't take buyouts. I'll meet you there — I don't walk fast, but I walk certain.
+  set delia_moved
+  xp 200
+
+  @n19
+  end
+
+  @n20
+  Narrator: Booth four sits empty. The waitress has already cleared it, but nobody has taken it. Nobody will for a while. Some booths are load-bearing.
+  goto n19
+
+# Delia at the Roastery, pointing you down
+scene delia_roastery
+  Delia Okafor: Look at this place. They put an oat-milk menu where the notary window was. My mother would have laughed for a week.
+  Delia Okafor: Basement stairs are behind the bar. Jules knows — I showed them my old key once and they've treated me like the building's grandmother ever since. Which I suppose I am.
+  Delia Okafor: Box 0001. Low row, center. The key's been on my ring since 2009 — here. Don't drop it. It's older than your department.
+  Narrator: She hands you a brass key worn smooth as river stone. It is heavier than it looks. Most things down here are.
+  end
+
+# The barista guards the basement (until Delia vouches)
+scene barista_vault
+  if delia_moved -> n3
+  Narrator: The barista — JULES, per a name tag with a hand-drawn bee on it — clocks you looking at the basement door.
+  Narrator: "Staff only. It's mostly oat milk and a very old vault down there. Yes, a real one. No, you can't."
+  goto n5
+
+  @n3
+  Narrator: Jules nods you toward the basement door before you ask. "Miss Delia called ahead. Door's open. Mind the third step — it predates the concept of safety."
+  Narrator: "Also if you see the popcorn machine down there, that's ours, we're hiding it from the health inspector. You saw nothing."
+
+  @n5
+  end
+
+# Box 0001 — the seal, and the ambush. has_recorder_seal chains to the
+# Firm fight via the flag-set listener in ExplorationState.
+scene vault_box_0001
+  if has_recorder_seal -> n9
+  if delia_moved -> n3
+  Narrator: Deposit box 0001. The first box in the first vault. Whatever is in it has waited a long time and can keep waiting for someone with a key.
+  goto n10
+
+  @n3
+  Narrator: The brass key turns like it was oiled yesterday. Because, you realize, it effectively was — seventeen years of someone caring for a thing she never expected to use again.
+  Narrator: Inside: a bundle wrapped in newspaper dated March 2009. Within the newspaper, the Recorder's seal of the City — brass, embossing arm intact, heavy as a verdict.
+  Andrew: Seventeen years. She kept it working for seventeen years for a day she didn't believe would come.
+  set has_recorder_seal
+  Narrator: Behind you, three sets of identical footsteps descend the stairs in perfect synchronization, which is not a thing footsteps should be able to do.
+
+  @n8
+  end
+
+  @n9
+  Narrator: Box 0001 stands open and empty, except for the 2009 newspaper. The crossword is half-finished. In pen.
+  goto n8
+
+  @n10
+  end
+
+# The Firm — service of process, mid-cutscene (the rude part is the point)
+scene the_firm_ambush
+  Narrator: Three lawyers in three identical suits stand in formation at the foot of the stairs. They move like a school of fish that passed the bar.
+  goto n11
+
+  @n1
+  The Firm: Mr. Galle. We represent—
+  The Firm: —interests formerly aligned with—
+  The Firm: —a party you defenestrated. Professionally speaking.
+  Andrew: It's Andrew. And I'm mid-errand, so if you could just—
+  The Firm: You've been—
+  The Firm: —served.
+  Narrator: An envelope hits you mid-sentence. They served you DURING YOUR LINE. There is no lower thing a lawyer can do, and all three of them know it, and none of them care.
+  The Firm mood=smug: Surrender the seal. Our motion to quash your charter is calendared for five o'clock, and we bill travel time.
+  fight the_firm
+  end
+  # ── STAGING (appended; routed to from 0) ─────────────────────────────
+  # "Behind you, three sets of identical footsteps descend the stairs." The
+  # first ambush had NO bodies at all (only the retry keeps a `firm_partner`
+  # entry), so three of them come down the only door in the room and take
+  # formation while Andrew turns around.
+
+  @n11
+
+  stage
+    # `show: true` as well as `spawn` — old_vault carries a RETRY-only
+    # firm_partner entry (gated on has_recorder_seal), so on the first
+    # ambush a hidden body already exists and rule 4 would no-op the beat.
+    # And because that body EXISTS, `spawnAt` never applied to it —
+    # `_resolveActor` returns the room's NPC and `_spawn` is never called —
+    # so the leader started at his retry post (2,4) and walked TOWARD the
+    # stairs while his two colleagues walked away from them. `teleportTo`
+    # is the verb that makes an entrance work for a pre-placed actor.
+    firm_partner spawn show spawnAt stairs teleportTo stairs walkTo firm_a face player speed 1.9
+    firm_associate spawn spawnAt stairs walkTo firm_b face player speed 1.75
+    firm_paralegal spawn spawnAt stairs walkTo firm_c face player speed 1.6
+    player face stairs nowait
+  goto n1
+
+# Losing (or wandering off) doesn't dismiss process servers. They
+# wait. It's billable.
+scene the_firm_retry
+  The Firm: You came back. We never—
+  The Firm: —left. Waiting is—
+  The Firm: —billable.
+  Narrator: Three briefcases click open in unison. The seal isn't leaving this basement with anyone but you.
+  fight the_firm
+  end
+
+scene the_firm_defeated
+  Narrator: The Firm retreats up the stairs in formation, slightly less synchronized than they came down. One of them is billing this. You can tell.
+  The Firm: This will be—
+  The Firm: —reflected in—
+  The Firm: —our invoice.
+  Narrator: Unhurried footsteps on the stairs. Delia Okafor surveys the scattered exhibits, the dented envelope, you, and the seal in your hands.
+  Delia Okafor: Hm. They sent The Firm. You know you've filed something true when they send The Firm.
+  Narrator: She takes the charter. She takes the seal. She inks the die with a little circular motion, like stirring tea. She breathes on the brass once, for reasons that predate explanation.
+  Narrator: Stamp.
+  Narrator: Two seconds. After everything — the queue, the forms, the patty melt, the lawyers — it takes two seconds. Bureaucracy's final joke is that the right stamp was always this easy in the right hands.
+  Delia Okafor mood=smug: Witnessed and sealed, per Article 9, by the Recorder's living deputy. Let them calendar THAT.
+  Delia Okafor: Take it home, Andrew-who-knows-now. And tell the man with the mop... tell him Delia says the building doesn't win. It never did. It just takes the long way to lose.
+  set charter_certified
+  xp 400
+  Narrator: The charter is certified. The elevator is going to have to think of a new excuse.
+  end
+
+# Delia's epilogue at the Roastery (post-certification)
+scene delia_epilogue
+  Delia Okafor: I'm having them frame the newspaper. The 2009 one. Jules is going to hang it where the interest-rate board used to be.
+  Delia Okafor: Go on. Buildings don't fix themselves. Lord knows we let them try.
+  end
+
+# ── Side: Officer Reyes / the Meter War ─────────────────────────────
+scene parking_enforcer_intro
+  Narrator: Officer Reyes of Parking Enforcement looks at you. Then at the curb. Then at you. You are not parked. Somehow this makes it worse.
+  Narrator: "Pedestrians loitering in a loading zone," she says, already writing, "is a gray area. I specialize in gray areas."
+  ask: Contest the citation?
+    -> n4: Contest it. On the record. Right now.
+    -> n3: Walk away (you cannot win city hall)
+
+  @n3
+  Narrator: You walk away. The ticket follows you anyway, in spirit. Somewhere, a small fine accrues interest.
+  goto n6
+
+  @n4
+  Narrator: Reyes smiles for the first time in what the city's records would confirm is nine years.
+  fight parking_enforcer
+
+  @n6
+  end
+
+scene parking_enforcer_defeated
+  if meter_war_2 -> n4
+  if meter_war_1 -> n3
+  Narrator: Reyes tears up the citation — slowly, into even quarters, filing each piece in a different pocket. "Round one," she says. "Nobody takes round one."
+  goto n7
+
+  @n3
+  Narrator: Reyes consults her ledger. "Twice. Huh." She chalks a small, grudging mark on the curb. It might be respect. It is shaped like a tally.
+  goto n8
+
+  @n4
+  Narrator: Reyes holsters the chalk. "Three appeals upheld. You know what that makes you?" She hands you a laminated card: HONORARY GRAY AREA. "Park anywhere. I'll look away. Once."
+  set meter_war_done
+  stat spd +2
+  goto n10
+
+  @n7
+  set meter_war_1
+  goto n9
+
+  @n8
+  set meter_war_2
+
+  @n9
+  xp 90
+  goto n11
+
+  @n10
+  Narrator: Bureaucratic Efficiency +2. You have beaten city hall. Nobody beats city hall. Do not tell anyone, or everyone will want to.
+
+  @n11
+  end
+
+# ── Side: The Networking Guy ────────────────────────────────────────
+scene networking_guy_intro
+  Narrator: A man in a quarter-zip materializes beside you with the smooth inevitability of a calendar invite you never accepted.
+  Narrator: "Hey! Big fan of your space. Trust stuff, right? I'm actually building something adjacent to that. Do you have literally fifteen minutes?"
+  ask: Do you have literally fifteen minutes?
+    -> n3: "No." (combat)
+    -> n3: "...How adjacent?" (combat, but slower)
+
+  @n3
+  Narrator: It does not matter what you said. He heard 'tell me everything.' He is already sharing his screen. Outdoors. You must end this.
+  fight networking_guy
+  end
+
+scene networking_guy_defeated
+  Narrator: The Networking Guy concedes graciously. "This was great. I'm going to mention you on the pod." The threat lands harder than any of his attacks did.
+  Narrator: Three days from now, you will receive a LinkedIn connection request with no note. You already know you will accept it. Everyone does. This is how he wins.
+  xp 85
+  end
+
+# ── Side: The 5:15 Crosstown ────────────────────────────────────────
+scene bus_driver_515
+  if bus515_done -> n12
+  if bus515_started -> n10
+  Narrator: The driver — MARLENE, per twenty-two years of service pins arranged like campaign medals — is parked, engine off, staring at the middle distance.
+  Narrator: "Twenty-two years," she says, to you or the windshield, "this bus has never once been early. Late, sure. Early, never. Early is impossible. The 5:15 is a LAW."
+  Narrator: "Today? Four minutes early. Every light on Fennimore went green at once. All nine of them. I checked my mirrors like something was chasing me."
+  Andrew: ...Every light. At once. Toward the records hall, by any chance?
+  Narrator: "Toward the records hall." Marlene looks at you properly for the first time. "You're from that building, aren't you. The one downtown that's... you know." She makes a gesture that means 'alive' in every language.
+  Narrator: "Tell you what. My transfer ledger slid under seat 12 when I braked for the miracle. Fish it out for me and I'll consider the universe even."
+  set bus515_started
+
+  @n9
+  end
+
+  @n10
+  if bus515_ledger_found -> n13
+  Narrator: "Seat 12. It's the one with the gum that's older than the gum under the other seats."
+  goto n9
+
+  @n12
+  Narrator: Marlene taps two fingers on the fare box — transit blessing. "The 5:15 runs on time now. Exactly on time. I haven't decided how I feel about it."
+  goto n9
+
+  @n13
+  Narrator: You hand over the ledger. Marlene flips to today's page, where her own handwriting reads 4 MINUTES EARLY (?!), and underneath, in different ink she swears isn't hers: 'You're welcome. Go help him.'
+  Narrator: Neither of you says anything for a moment. The building has long arms. Marlene hands you two energy drinks from her cooler. "For the road. His road, apparently."
+  set bus515_done
+  give energy_drink x2
+  xp 150
+  goto n9
+
+scene bus_transfer_ledger
+  if bus515_ledger_found -> n4
+  Narrator: Under seat 12: one transfer ledger, one petrified glove, and gum from an administration nobody misses. You take the ledger. Only the ledger.
+  set bus515_ledger_found
+
+  @n3
+  end
+
+  @n4
+  Narrator: Just the glove and the gum now. They seem happy together.
+  goto n3
+
+# ── Diner color ─────────────────────────────────────────────────────
+scene diner_regular_chat
+  Narrator: Earl has been at this counter since before the counter. He nods at your suit. "Building's still standing, then." He says it like a score update for a game he stopped following on purpose.
+  Narrator: "You want advice? The patty melt. And whatever Delia tells you, do it in that order."
+  end

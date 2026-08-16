@@ -1,0 +1,165 @@
+# ==========================================================================
+# ACT 6: FIDUCIARY UPRISING — NPC Dialogs
+# ==========================================================================
+# SKIP, ACT 5 (B-list "skip_act5 neutral fallback"). He had no act-5 dialog,
+# and the act ladder in ExplorationState had no act-5 rung either, so for the
+# whole of Act 5 — the act where Meredith has locked the building down and
+# Andrew is fighting up through her team — Skip answered with the generic
+# `neutral_skip` line. Both halves are fixed: the rung exists now, and this is
+# what it reaches. A NEW TREE, so no existing tree is edited to hold it.
+# Four lines, no choices, no rewards, no flags: he is between his Act 4
+# resolve and the board meeting, rehearsing in an empty office while other
+# people carry the thing he says he built.
+scene skip_act5
+  Skip Hartley: Andrew. Good. Come in. Close the — actually, leave it open. Closed doors are a bad optic right now. I read that in a book called Radical Transparency and the Open-Plan Soul.
+  Skip Hartley: I'm writing something. For the board. I've been writing it for two hours and I have eleven words and four of them are "stakeholder." So that's going well.
+  Skip Hartley: You should get back out there. I'd come with you, but I think right now my job is to sit here and figure out what this department actually was, so I can stand up and say it to a room full of people who already decided it wasn't anything.
+  Skip Hartley: Eleven words, Andrew. I'll make them count. Or I'll get to twelve. Either way — go. I'll be here. That's what I'm good at.
+  end
+
+scene skip_act6
+  Skip Hartley: Andrew. Close the door.
+  Skip Hartley: I've been thinking about what you said. About fiduciary duty. About what this place is supposed to mean.
+  Skip Hartley: I spent twenty years climbing the ladder. Optimizing. Quick-syncing. Circling back. But I never asked... back to WHAT?
+  Skip Hartley: Meredith wants to dissolve us. The board meets tomorrow at 4 PM. If we don't have a case, we're done.
+  Skip Hartley: But I've been working on something. A speech. For the board.
+  Skip Hartley: It's... sincere. Which is terrifying. I haven't been sincere since 2003.
+  Andrew: Skip... that might be the most human thing you've ever said.
+  # Skip does not name the Rolex here. He has never seen it, it is not his
+  # mission, and this is the scene that CREATES the board meeting
+  # (`skip_speech_ready`) — pointing at a wristwatch told the player to skip
+  # the set-piece the same line had just opened.
+  Skip Hartley: Don't get used to it. Go find whoever still picks up their phone in this building. Board room, four o'clock sharp — I'll be the one at the podium with a speech that doesn't have a single bullet point in it.
+  set skip_speech_ready
+  end
+
+scene janet_act6
+  Janet: I heard about the board meeting. Meredith's making her move.
+  Janet: I've been at Vaults Fargo since before it was 'strategic.' Back when we just... helped people.
+  Janet: Tell the board our clients have names. I've been writing them on file folders since 1994. In pen.
+  Janet: I'll cover the phones. Go save our department.
+  set janet_act6_rallied
+  end
+
+scene diane_act6
+  Diane: The restructuring team took our coffee machine. OUR coffee machine, Andrew.
+  Diane: That was the last straw. They took the actual straws too, so I'm being precise.
+  Diane: I've been doing something I probably shouldn't have. I copied Meredith's restructuring proposal.
+  Diane: It shows she's been inflating her department's numbers while deflating ours. Textbook fiduciary breach.
+  Diane: I left the copy in the cabinet at the back of the room. Grab it. Save our jobs. And then maybe get us a new coffee machine.
+  set diane_act6_rallied
+  end
+
+scene diane_documents
+  if diane_act6_rallied else -> n5
+  if diane_evidence -> n4
+  Andrew: Tucked between the folders — Diane's copy of Meredith's restructuring proposal. Numbers don't lie.
+  set diane_evidence
+  goto n6
+
+  @n4
+  Andrew: You've already retrieved Diane's documents.
+  goto n6
+
+  @n5
+  Andrew: Just standard HR filing records. Nothing of interest.
+
+  @n6
+  end
+
+scene intern_act6
+  The Intern: I know I'm just an intern, but I want you to know: this is the best unpaid job I've ever had.
+  The Intern: I made a PowerPoint for the board meeting. It has 47 slides and each one has a different transition effect.
+  The Intern: Also I may have accidentally signed up for the company newsletter as 'Meredith Sucks' dot com. That might be a problem.
+  The Intern: But I believe in you, Andrew! Go get 'em! I'll be here, unpaidly cheering!
+  set intern_act6_rallied
+  end
+
+scene isaiah_act6
+  Isaiah: Andrew, I've been going through the original trust agreements. Every single one has the same clause.
+  Isaiah: 'The fiduciary shall act in the sole interest of the beneficiary, without regard to the interests of the institution.'
+  Isaiah: Meredith's restructuring violates that clause in 23 separate trust agreements. I have the list.
+  Isaiah: If the board sees this, they can't vote for dissolution without admitting they've breached fiduciary duty.
+  set isaiah_evidence
+  end
+
+scene alex_it_act6
+  Alex from IT: The building is awake. I've suspected for months. It's a relief to stop pretending otherwise.
+  Alex from IT: Every server is running at 347% capacity. The charter we put into the system — it's propagating.
+  Alex from IT: The trust documents are rewriting themselves. Not the content — the INTENT. Like the building is remembering what it was supposed to be.
+  Alex from IT: Whatever happens in that board room, the Fiduciary Force will be watching.
+  end
+
+# `has_rolex` still derives act6_complete → board_meeting_closed, but it is no
+# longer a silent point of no return for the SET-PIECE: this scene is now
+# gated behind `rolex_available` (= board_meeting_held), so the board meeting
+# is already behind the player when he gets here. The warning at node 3 was
+# re-pointed to match — it is about the elevator and unfinished side content,
+# not about a scene the player never knew existed. The WAIT branch still
+# writes nothing and the scene is still re-enterable.
+scene janitor_act6
+  The Janitor: The pipes got quiet about twenty minutes ago. That's how I know a room full of people just stopped arguing.
+  The Janitor: I've worn this watch since 1947. Year the charter was signed. Year this building looked a man in the eye and made a promise it meant to keep.
+  The Janitor: This watch doesn't tell time, Andrew. Tells trust. And right now it says the building remembers what it promised.
+  The Janitor: When this watch leaves my wrist, that elevator goes up one time. Anyone you meant to talk to down here — anything you left half-done — stays that way. You don't have to take it now.
+  ask The Janitor: The Janitor is holding out the Rolex.
+    -> n6: "I've done what I can down there."
+    -> n5: "I think there's still something I need to do first."
+
+  @n5
+  The Janitor: The watch has been here since 1947. It'll keep.
+  goto n11
+
+  @n6
+  Narrator: The Janitor removes the Rolex. The moment it leaves his wrist, the lights in the hallway pulse — warm, golden, deliberate.
+  The Janitor: Take it to the Penthouse. When The Algorithm asks you to justify your existence, show it this.
+  The Janitor: And Andrew? The building will protect those who protect others. That's not metaphor. That's architecture.
+  set has_rolex
+  Narrator: Received: The Janitor's Rolex. It hums faintly against your palm.
+
+  @n11
+  end
+
+# The Archive in Act 6 BEFORE the board has met (rooms/index.js:
+# `act5_complete && !rolex_available`). This is the signpost that makes the
+# new gate legible from the Janitor's side — he knows what is happening
+# upstairs at four, he is not going, and nothing changes hands until it is
+# over. Repeatable; writes no flags.
+scene janitor_waits_for_board
+  The Janitor: The fluorescents on six have been buzzing different since noon. Building knows there's a meeting at four.
+  Andrew: Shouldn't you be up there?
+  The Janitor: Been in this building since Truman. I know which floor I'm useful on.
+  The Janitor: Come find me after. When the chairs are pushed in and the room's quiet. Then we talk about what comes next.
+  end
+
+# Router: fires only when a hardcoded Janitor story beat AND an unanswered
+# riddle are both live (ExplorationState._getDialogId). Mirrors
+# `alex_it_router` node-for-node: the set_flag is picked up by the flag-set
+# listener, which queues `_pendingDialog` so the chosen scene plays
+# immediately on dialog-end — no second interaction.
+#
+# Why a router and not a choice node inside the story dialog: story beats are
+# one-shot, riddles retry forever. Merging them would let a wrong riddle
+# answer burn the story beat.
+scene janitor_router
+  The Janitor: Two kinds of business in a building this old. The kind with a clock on it, and the kind that was here before clocks.
+  ask The Janitor: Which one first?
+    -> n2: The reason I came down here.
+    -> n4: Actually — tell me the riddle.
+
+  @n2
+  set janitor_story_chosen
+  end
+
+  @n4
+  set janitor_riddle_chosen
+  end
+
+scene grandma_act6
+  Grandma Henderson: Andrew! I heard what's happening. Those corporate people trying to shut you down?
+  Grandma Henderson: I told them: 'My grandson Chad may be an idiot, but Andrew handles our trust with care and dignity.'
+  Grandma Henderson: I brought cookies for the board meeting. Nobody votes to dissolve anything on a full stomach.
+  Grandma Henderson: And I wrote a letter of support. Forty-seven years as a client. That carries weight.
+  Narrator: Grandma Henderson will attend the board meeting as a character witness!
+  set grandma_ally
+  end

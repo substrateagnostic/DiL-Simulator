@@ -1,0 +1,258 @@
+# ==========================================================================
+# F-REMAINDER — the rooms and the people who stopped existing
+# ==========================================================================
+# Every tree below is NEW and APPENDED. Nothing above this block was
+# renumbered, re-routed or edited — CLAUDE.md's law is that every
+# next / ifTrue / ifFalse / choice.next in this file is an ABSOLUTE index,
+# and the last drift cost 48 of 119 nodes their only path from node 0.
+# What reaches these trees is `condition`-gated NPC and interactable entries
+# in src/data/rooms/index.js, per A2's ruling that anything an actor must
+# HOLD after a scene lives in room data and never in persisted staging.
+#
+# All prose first-drafted by Claude Opus 4.6 against WRITING.md's voice
+# anchors and wired byte-identical (HANDOFF_PACKAGE §4.5).
+# ── F-4 · Chad's one sincere thing ────────────────────────────────────────
+# Chad had exactly ONE placement in the game (break room, notFlag
+# karen_defeated) and four dialogs, none of them after Act 2. Karen has
+# karen_return; Grandma has grandma_return; Chad had nothing. Anchor: Bret
+# Easton Ellis lite — "sincere about exactly one thing (eventually), which
+# should land like a brick." He gets 80 % of the way there in Chad-language,
+# says it plain once in eight words, then covers with a brand name.
+scene chad_return
+  Narrator: Chad Henderson is in the break room. Not at the Nespresso machine. Not looking at his phone. He appears to have been sitting here for some time. The protein shaker in front of him is full of water.
+  Chad Henderson: Oh. Hey. Trust guy. *He does not do the handshake.* I'm not here to fight about anything. Karen's handling all the fighting. She brought a binder to Grandpa's funeral. Tab-indexed. Color-coded tabs for who gets what percent of a man who used to make pancakes shaped like Wyoming.
+  Andrew: I didn't know he'd died.
+  Chad Henderson: Last month. You literally have his file on your desk. Everybody lawyered up the same week. Her estate attorney bills in six-minute increments and sends emails at 2 AM that open with *per our last correspondence*. And I keep thinking about the lake house.
+  Andrew: The one you wanted to put on the blockchain.
+  Chad Henderson: Yeah. No. I — *He picks up the shaker, puts it down.* I did a backflip off the dock when I was fourteen.
+  Andrew: How bad was the backflip?
+  Chad Henderson: Dude. Full scorpion. My knees hit the back of my head. Grandpa — the OG Chad, the actual Chad — he laughed at me for twenty minutes. Not polite laughing. Had to sit down on the dock because his legs stopped working.
+  Chad Henderson mood=defeated: I didn't want the money. I just wanted the dock.
+  Andrew: Yeah.
+  Chad Henderson: *He picks up the protein shaker and actually drinks from it.* Anyway. You tried the new Erewhon smoothie? Forty-two dollars and it kind of changed my week.
+  end
+
+# ── F-5 · Meredith's footnote ─────────────────────────────────────────────
+# After act5_complete the villain did not exist anywhere in the world: her
+# last placement is gated `act4_complete -> act5_complete` and her dialogs
+# stop at meredith_boss_defeated. One scene on the executive floor, one box,
+# and she is right about something Andrew will not enjoy. She does not
+# become a good person, does not raise her voice, and never says she will be
+# back. IDS NEVER CHANGE and the display name is always Meredith Sterling.
+#
+# The STAGE node walks her to the elevator instead of popping her out of
+# existence where she stood (A2-cutscene-audit: "an NPC leaves by having its
+# condition flip … the character pops out of existence standing exactly
+# where it was"). `meredith_left` is what her room entry's notFlag reads, so
+# the despawn happens after the walk and off-screen.
+scene meredith_footnote
+  Narrator: Meredith Sterling is at the secondary desk on the executive floor. She is packing a single cardboard box. It has already been labeled, in her handwriting, in block capitals. She is not rushed.
+  Meredith Sterling: Andrew. *She does not look up.* Close the door, please.
+  Andrew: I wasn't planning on staying.
+  Meredith Sterling: Then close it on your way out. But you should hear this first.
+  Meredith Sterling: What you did with the charter was structurally sound. I reviewed it twice. The filing was clean and the precedent was applicable. The board had no procedural basis for override. I would have done it differently, but I would not have done it better.
+  Andrew: Is that a compliment?
+  Meredith Sterling: It is an assessment. Compliments are retention tools. You need information. *She places a framed photograph into the box, face down.* What you did was not a victory. It was a deferral. The incentives that produced my proposal have not changed. Margin compression and regulatory consolidation are structural forces. I was the instrument. It does not require me.
+  Andrew: How long?
+  Meredith Sterling: Fourteen years. Eleven if they hire a comptroller from outside the trust division. I have a model. It was right about Lehman within two quarters.
+  Andrew: I don't know what to do with that number.
+  Meredith Sterling: No. *She closes the box.* You wouldn't.
+  Narrator: The label on the box reads STERLING, M. — NON-CORE ASSETS.
+
+  stage
+    # She carries the box out rather than vanishing at the desk.
+    @b0 meredith walkTo exec_center speed 1.4
+    meredith exit elevator speed 1.4 after b0
+    player face elevator nowait
+  set meredith_left
+  end
+
+# ── F-12 · The Janitor's name ─────────────────────────────────────────────
+# `ending_architect` node 3 has said "My name isn't 'the Janitor.' It never
+# was." since the game shipped, and he never says what it is. This is where
+# he does. Routed from `_getDialogId` AFTER janitor_pattern — exactly how
+# that scene is routed — so no existing tree is edited to carry it.
+#
+# DO NOT EXPLAIN THE WATCH. The 1947 / page 47 / twenty-two-years
+# contradictions are load-bearing; the missing name is not (proposals doc,
+# verbatim). He gives it as a correction, not a confession; Andrew uses it
+# once in an ordinary sentence; that is the whole payoff.
+scene janitor_the_name
+  Mysterious Janitor: You been calling me that this whole time. *He wrings the mop.* The Janitor. I can hear the capital letters.
+  Andrew: You never told me your name.
+  # F-12, the wired half. The SPEAKER LABEL changes on this line and only
+  # this line: the box has said "Mysterious Janitor" for the whole game and
+  # it stops on the beat he corrects it. `DialogBox` keys both the colour and
+  # the portrait on this exact string, so both got a `Curtis Briggs` row
+  # pointing at the same colour and the same `janitor` stem -- nothing about
+  # him changes except what he is called. He is "Mysterious Janitor" again in
+  # every other scene, because that is what the ROOM calls him.
+  Curtis Briggs: Curtis Briggs. It's on the boiler inspection card downstairs. Been on it since they put the boiler in.
+  Andrew: Floor's looking good, Curtis.
+  Narrator: He dunks the mop and starts on the east corridor. Same as yesterday. Same as 1947.
+  end
+
+# ── F-2 · conference_room stops being empty ───────────────────────────────
+# Five NPC entries, every one gated `notFlag: *_defeated`, so from Act 3
+# onward the room the whole of Act 1 builds toward held ZERO people.
+# Grandma holds it through Acts 3-5 on her existing grandma_return; the
+# Intern holds it from Act 5 on, rehearsing a client walkthrough nobody
+# assigned him to eight empty chairs.
+scene intern_rehearsal
+  Narrator: The conference room lights are on. This is noteworthy. Since the last Henderson left it, the room has held eight chairs around a table and the specific atmospheric weight of a place where people learned they were wrong about money. The Intern is standing at the head of it with index cards. He has been here for some time.
+  The Intern: Oh. Oh no. You weren't supposed to — I'm not — I was just — sorry about the lights. I can put the lights back.
+  Andrew: The lights are fine.
+  The Intern: I've been practicing. Client onboarding. Nobody assigned it. I just thought if someone ever asked and I hadn't prepared, that would be the kind of thing that happens to me specifically.
+  Narrator: He holds up his index cards the way a man holds up a parking ticket he knows he deserves. There are fourteen. Card nine has been rewritten so many times the eraser marks go through to the other side.
+  The Intern: So the key distinction — and I think people miss this — is that discretionary distributions aren't discretionary for the trustee. The beneficiary has discretion to request. The trustee has an obligation to evaluate prudently. Doing nothing is still a decision, and it gets reviewed like one.
+  Narrator: He stops. He looks at his own index card as though it has said that without his permission.
+  The Intern mood=worried: Was that right? That sounded right. I don't want that to be right. That is far too much responsibility for a word I learned on Tuesday.
+  Andrew: That was right.
+  The Intern: Sorry, chair six. You've been very patient about the whole thing.
+  end
+
+# ── F-2 · the vault remembers ─────────────────────────────────────────────
+# `vault` shipped with `npcs: []` and two interactables, one of which
+# (janitor_names_search) closes on a single line once the ledger is
+# returned. The hollow gets a real object afterwards, served by a SECOND
+# condition-gated interactable entry on the same tile — janitor_names_search
+# is not edited, so a save that is mid-quest still reads its node 8.
+scene vault_ledger_niche
+  Narrator: The hollow behind the safe-deposit frame is the same shape it has always been. Seventeen inches deep, nine wide. Without the ledger it looks like what it probably always was — a mason's error from 1947 that someone decided to keep.
+  Narrator: At the back, pressed flat against the mortar where the binding sat for decades, there is a brass coat button. The reverse is stamped DONOVAN & SONS, CHICAGO — a company that closed in 1971, which means the button was here before the ledger was.
+  Andrew: Huh.
+  Narrator: The air in the hollow still smelled faintly of binding glue. It would for years.
+  end
+
+# ── F-2 · the garage keeps working ────────────────────────────────────────
+# The supply locker's first reading carries the game's earliest vault clue
+# (the 47-19-82 breaker tag) and must never move. This is the SECOND
+# reading, served only after the ledger has changed hands — by which point
+# the override numbers are necessarily already spent, because returning the
+# ledger requires having been inside the vault.
+scene janitor_closet_after
+  Narrator: The Janitor's supply locker looks the same from outside. Mops by handle length, the patrol schedule in block capitals. But below the schedule, on a hook that was not there last week, there is a flashlight.
+  Narrator: A four-cell Maglite, recently oiled. A strip of masking tape on the handle reads FOURTH FLOOR — GRID 6 in the Janitor's handwriting. Below that, in smaller print: 214 HRS.
+  Narrator: Grid 6 is Andrew's desk.
+  Andrew: That's thorough.
+  end
+
+# ── F-6 · the trophy wing does something ──────────────────────────────────
+# renovation_penthouse costs 10,000,000 AUM — roughly ten post-game whales —
+# and bought three rooms that shipped with `npcs: []` AND `interactables: []`
+# in ALL THREE. The worst value-per-AUM in the game, and the first thing a
+# post-game playtester finds. One interaction per wing.
+scene penthouse_pool_table
+  Narrator: The pool table sits in the center of the west wing like a declaration of intent. The rug beneath it costs more than Andrew's car. Everyone is here, which for the first time in the building's history means the fourth-floor break room is completely empty.
+  Narrator: Andrew racks with the careful geometry of a man who last played pool in a dormitory basement and is entirely reliant on muscle memory.
+  Andrew: Right then.
+  The Intern: I need to disclose that I have two documented cue-sport incidents, both at family events. Details are restricted but I want everyone to have informed consent.
+  Janet: Fourteen years I assumed the top floor was storage and poor decisions. The pool table is a significant improvement.
+  Narrator: Diane takes a cue from the rack, chalks it once, and sinks the three ball into the far corner pocket without appearing to aim.
+  Diane: I learned on a table in the sub-basement. 1961. Mr. Fargo's secretary could clear a full rack in four minutes. She taught me on Tuesday lunches for two years, and I never did thank her the way she deserved.
+  Alex from IT: Every ball on this table is already in its pocket. The felt is just being polite about the sequence.
+  Isaiah: I brought a book, but I'm putting it down. This is better.
+  Narrator: Skip Hartley is standing by the bar with something in a glass he has not touched. He is watching the game the way a man watches a departure board when his flight has already landed.
+  Skip Hartley: I keep waiting for someone to hand out an agenda.
+  Narrator: Nobody does. The game continues until no one remembers the score.
+  end
+
+scene penthouse_reel
+  Narrator: The screen fills the north wall between the reef tanks. The play button is centered in a font that has never once doubted itself.
+  Narrator: *Welcome to the Vaults Fargo Year in Review. Advancing Trust. Securing Tomorrow.*
+  Narrator: *In a defining moment for institutional identity, foundational governance documentation was surfaced and presented to key stakeholders, driving alignment with the organization's original charter of values.*
+  Andrew: I read a piece of paper out loud because it was the only thing left to do.
+  Narrator: *Fiduciary stewardship was further demonstrated when a portfolio advisory engagement achieved the successful redirection of twelve million dollars from a volatile digital asset class, preserving intergenerational wealth across four beneficiary tiers.*
+  Andrew: He wanted to put a trust fund into a coin with a dog on it. The dog was wearing sunglasses.
+  Narrator: *A routine infrastructure audit revealed previously unrecognized data governance capabilities embedded within existing hardware, representing a paradigm shift in institutional archival methodology.*
+  Andrew: The printer was plugged into the wrong port. For years. It was just copying everything.
+  Narrator: The reel runs for another forty-one seconds. There is a pie chart with six segments and a legend that labels four. A stock photograph of two people shaking hands appears at the nine-second mark and again at the sixteen-second mark. They are the same hands.
+  Narrator: Andrew watches it to the end. He does not turn it off. It is not worth the argument with the remote.
+  end
+
+scene penthouse_analytics_console
+  Narrator: The north wall is a single screen. Five stations arc below it, each with a keyboard and a chair that remembers who sat in it last. Andrew takes the center seat. The chair adjusts to his height without being asked, which is either good design or proof the building has always known more about him than he is comfortable with.
+  Narrator: The previous user's presets are still loaded. The dashboard opens to a view labeled OVERHEAD OPTIMIZATION. Andrew does not recognize the name on the login.
+  Narrator: He clears the presets. The system offers seventeen categories. Category four is a live discretionary-distribution tracker — every pending trustee review, color-coded by filing deadline, with a rolling ninety-day lookback.
+  Andrew: Oh. That's actually useful.
+  Narrator: Category eleven is labeled STAFF MORALE INDEX. It estimates team sentiment from email punctuation and the average duration of voluntary door-holding. It updates every six hours. The current reading is 71, annotated WITHIN ACCEPTABLE PARAMETERS.
+  Andrew: Acceptable to whom.
+  Narrator: Category nine is INDIVIDUAL CONTRIBUTOR EFFICIENCY INDEX. A decimal score for every employee on the fourth floor, updated hourly. Janet is a 0.73. The Intern is a 0.44, marked in amber.
+  Narrator: Andrew holds the delete key on category nine until the screen asks if he is sure. He is sure.
+  Andrew: It has Janet at 0.73. Janet runs this floor.
+  end
+
+# ── F-9 · THE THREE PREDECESSORS ──────────────────────────────────────────
+# Diane, in Act 1: "I've seen three trust officers try to mediate this
+# family. The first one quit. The second one cried in the bathroom for forty
+# minutes and then quit. The third one is the one who had the 'parking
+# garage incident.'" The game then never mentioned them again.
+#
+# Three objects, three rooms, findable in ANY order. None of them names its
+# officer; Diane's line is the key. Each sets one flag, and the third one
+# found derives `predecessors_all_found` in _refreshStoryProgress, which
+# routes the Janitor's payoff.
+#
+# THE SECOND ONE — the bathroom. Forty minutes and a pen.
+scene bathroom_stall_door
+  Narrator: The inside of the middle stall door has a column of numbers in blue ballpoint. Twelve careful lines of arithmetic, working out to the quarter-hour exactly how much paid time off someone was owed.
+  Andrew: That is remarkably steady handwriting for a bathroom stall.
+  Narrator: The total at the bottom has been circled twice. One hundred and forty-seven point five.
+  Andrew: I hope they took them.
+  set pred_bathroom_found
+  end
+
+# THE THIRD ONE — the parking garage incident. Never described; what
+# survives is the pillar and the repair.
+scene garage_pillar
+  Narrator: The pillar nearest the space marked TRUST OFFICER has two concrete patches, both at bumper height. They are four inches apart.
+  Andrew: Someone had a parking error. And then reversed and had a second parking error.
+  Narrator: The work order was filed the same afternoon. The space has since been relocated nine feet from the nearest structural element.
+  Andrew: Nine feet seems like a very reasonable amount of distance.
+  set pred_garage_found
+  end
+
+# THE FIRST ONE — who simply quit. Bottom shelf of the supply alcove,
+# behind the toner.
+scene copy_room_shelf
+  Narrator: Behind the third row of toner boxes on the bottom shelf, there is an envelope. The dust on it is the same depth as the dust on the shelf.
+  Andrew: It is addressed to the Henderson Family Trust.
+  Narrator: The letter inside is two pages, single-spaced, on bank letterhead. One sentence near the bottom of the first page has been underlined: Your children will not benefit from this arrangement as currently structured.
+  Andrew: They never sent it.
+  Narrator: The stamp is unused. The flap was sealed with tape, not water. Someone intended to mail this and then put it behind toner boxes instead.
+  Andrew: That would have been a useful thing for someone to read.
+  set pred_copy_found
+  end
+
+# The payoff. Routed from `_getDialogId` on `predecessors_all_found`, the
+# same shape as janitor_pattern and janitor_the_name, so no existing tree is
+# edited to hold it. He does NOT tell Andrew he is different or better: the
+# ledger gives the three who left the same ink and the same space on the
+# page as the ones who stayed, and the new section on page 112 is not a
+# promotion.
+scene janitor_predecessors
+  Andrew: You knew them. The people who had this job before me.
+  Mysterious Janitor: You found the pillar.
+  Andrew: And a letter. And some arithmetic on a bathroom door.
+  Narrator: The Janitor opens the green ledger and turns to the older pages, where the ink has settled into the grain.
+  Mysterious Janitor: M. Vasquez. Two years. Wrote the Hendersons an honest letter they never read. Kept her desk clean enough to eat off. REMEMBERED. R. Chen. Fourteen months. Did the math and left knowing what she was owed to the half-hour. REMEMBERED.
+  Mysterious Janitor: T. Barlow. Eight months. Hit that pillar once for the job and once for the Hendersons. Good taste in ties. REMEMBERED.
+  Mysterious Janitor: Same ink. Same space on the page. The ones who left and the ones who stayed.
+  Andrew: Is the toner requisition form still in the copy room? I think we are running low.
+  end
+
+# ── F-9 · the copy room's two props ───────────────────────────────────────
+# Deliberately NOT the printer gag: this machine is mundane and awful in a
+# different way, and it is archiving nothing.
+scene copy_room_copier
+  Narrator: The copier is a Kyocera 4100, a model number that communicates nothing unless you have worked in a building where one has been running since before the current decade. It weighs more than Andrew and has fourteen buttons on its control panel, two of which are labeled.
+  Andrew: What do the other twelve do?
+  Narrator: Three of them are believed to collate. The rest are institutional folklore.
+  Andrew: It is warm. And it is making a noise even though nobody is printing anything.
+  end
+
+scene copy_room_supplies
+  Narrator: The shelves hold forty-two boxes of black toner, eleven boxes of cyan, no magenta, eight hundred sheets of letterhead from a rebranding that was reversed four months later, and a laminator that has been repurposed exclusively for preserving break-room lunch menus.
+  Andrew: There are nine rolls of packing tape. That seems like a lot for a department that does not ship anything.
+  Narrator: The top shelf holds a sealed box labeled THERMAL BINDING SUPPLIES - DO NOT OPEN - SEE DIANE. It has been on that shelf longer than anyone named Diane has worked in this building.
+  end

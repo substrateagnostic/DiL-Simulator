@@ -1,0 +1,586 @@
+# ==========================================================================
+# ACT 3 ENDINGS
+# ==========================================================================
+# --------------------------------------------------------------------------
+# LEGAL EAGLE ENDING -- Karen called corporate, Regional Manager appears
+# --------------------------------------------------------------------------
+scene legal_eagle_ending
+  Narrator: Three days after your recommendation. Your inbox has 247 unread emails. 243 of them are from Karen Henderson.
+  Narrator: The other four are from corporate.
+  Skip Hartley: Andrew. Executive floor. Now. And bring your... I don't know, bring whatever you bring to a meeting where corporate sends their top guy.
+  goto n22
+
+  @n3
+  Narrator: You look up. Standing at the conference table is a man in a power suit with a gold tie. He's holding a golf putter.
+  Regional Manager: Andrew. Please, sit down.
+  goto n23
+
+  @n5
+  Regional Manager: I'm the Regional Manager. You don't need to know my name. Nobody does. I answer to a title, not a name. It's more efficient.
+  Regional Manager: I've reviewed the Henderson situation. Your recommendation was... correct. Legally sound. Properly documented. By the book.
+  Andrew: Thank you--
+  Regional Manager: That wasn't a compliment. Being 'correct' in this industry is a liability. Being correct means someone has to be WRONG. And Karen Henderson does not enjoy being wrong.
+  Regional Manager: She's called corporate forty-seven times. She's left Yelp reviews for a bank. We don't have a Yelp page. She MADE one.
+  Regional Manager: I'm here to make this go away. In the corporate world, we call that 'strategic conflict resolution.' You might call it... synergy.
+  Narrator: The Regional Manager stands. He takes a practice putt with his golf club into an imaginary hole on the carpet.
+  goto n24
+
+  @n12
+  Regional Manager: Here's what's going to happen. You're going to revise your recommendation. Make Karen happy. Make this go away.
+  Andrew: That would violate our fiduciary obligation to the trust.
+  Regional Manager: Fiduciary obligation. Those are expensive words. Let me counter with some cheaper ones: quarterly earnings, shareholder value, your continued employment.
+  Regional Manager: This is the corporate world, Andrew. The truth is whatever the quarterly report says it is.
+  Andrew: I'm not changing my recommendation.
+  Regional Manager: Then I'm afraid we have a... synergy problem.
+  Narrator: The Regional Manager loosens his gold tie. His eyes narrow. The golf putter transforms from accessory to weapon.
+  goto n25
+
+  @n19
+  Regional Manager: Let me show you how we handle 'problems' at the corporate level.
+  fight regional
+  end
+  # ── STAGING (appended; routed to from 2/4/11/18) ──────────────────────
+  # The Regional Manager paces a desk 6.7 tiles from the conference table he
+  # is described as standing at; Skip is seated at the same table on this
+  # path and the script never acknowledges him, so he at least turns to
+  # watch. There is no golf-putter prop in the game — the putt is carried by
+  # the existing `attack_ally` gesture strip, not a mesh.
+
+  @n22
+
+  stage
+    regional walkTo table_stand_n face table_approach speed 1.7
+    player walkTo table_approach face regional speed 1.6
+    skip face table_stand_n nowait
+  goto n3
+
+  @n23
+
+  stage
+    player walkTo table_seat_sw sit speed 1.5
+    regional walkTo table_seat_ne sit speed 1.3
+  goto n5
+
+  @n24
+
+  stage
+    @b0 regional stand walkTo table_stand_n face table_seat_sw speed 1.2
+    regional gesture attack_ally hold 0.85 after b0
+  goto n12
+
+  @n25
+
+  stage
+    regional pose ready expression angry face player hold 0.9
+    skip face regional nowait
+  goto n19
+
+# --------------------------------------------------------------------------
+# BRO CODE ENDING -- Bent the rules, Compliance Auditor appears
+# --------------------------------------------------------------------------
+scene bro_code_ending
+  Narrator: A week after your 'creative' recommendation. Everyone's happy. Karen got the lake house. Chad got enough to buy PumpCoin (it crashed). Grandma got her stories.
+  Narrator: Skip has been promoted. He's now 'Senior Vice President of Synergistic Client Solutions.' The title didn't exist before. He made it up.
+  Narrator: Everything is perfect. Which is exactly when Compliance shows up.
+  goto n20
+
+  @n3
+  Narrator: A figure appears in your doorway. Black suit. Red tie. Clipboard. Sunglasses. Indoors.
+  Compliance Auditor: Andrew. I've been reviewing your Henderson Trust distribution.
+  Andrew: Oh, great. I think you'll find everything is--
+  Compliance Auditor: Non-compliant. With seventeen separate regulatory guidelines. Two federal statutes. And one internal policy that I didn't even know existed until you violated it.
+  Compliance Auditor: You somehow created a new type of regulatory violation. The legal department is going to name it after you.
+  Andrew: Look, Skip said it was--
+  Compliance Auditor: Skip. Yes. Skip told you to 'make it work.' Skip also once approved a loan application written in crayon because the applicant 'had good energy.'
+  Compliance Auditor: Skip is not a reliable source of compliance guidance. Skip is barely a reliable source of oxygen.
+  Compliance Auditor: Let me explain what happens next. I file a report. The report goes to the regulatory committee. The regulatory committee files a Form 27B/6 with FINRA.
+  Compliance Auditor: Have you ever seen a Form 27B/6, Andrew? It's forty-seven pages long. Double-sided. And every page is a different way of saying 'you're in trouble.'
+  Andrew: Isn't there something we can work out?
+  Compliance Auditor: 'Work out.' The most dangerous phrase in the English language, right after 'let me circle back on that' and 'per my last email.'
+  Compliance Auditor: No, Andrew. There is nothing to 'work out.' There is only compliance and non-compliance. You have chosen non-compliance.
+  Narrator: The Compliance Auditor removes their sunglasses. Their eyes are like two separate audit trails converging on your career.
+  goto n21
+
+  @n17
+  Compliance Auditor: And non-compliance... has consequences.
+  fight compliance
+  end
+  # ── STAGING (appended; routed to from 2/16) ───────────────────────────
+  # The Compliance Auditor has been pacing (13,6) on this floor since Act 1,
+  # in plain sight, so nothing "appears" — the least he can do is cross the
+  # room and stop in front of Andrew before he starts reading the citation.
+
+  @n20
+
+  stage
+    player walkTo exec_center face compliance speed 1.6
+    compliance walkTo confront_north face exec_center speed 1.6
+  goto n3
+
+  @n21
+
+  stage
+    compliance pose ready expression angry face player hold 0.9
+  goto n17
+
+# --------------------------------------------------------------------------
+# SECRET ENDING -- Grandma is Skip's mom
+# --------------------------------------------------------------------------
+scene secret_ending
+  # STAGED. The stage nodes live at 56+ (CLAUDE.md: never insert into the
+  # middle of a tree — every jump here is an absolute index). Routing only.
+  Narrator: You approach the executive floor conference table. Skip and Grandma Henderson are already seated, voices lowered.
+  goto n56
+
+  @n1
+  Skip Hartley: Mom, I told you not to come to the office--
+  Grandma Henderson: Skip, don't you 'Mom' me. I've been watching you run this trust department into the ground for three years.
+  Narrator: They notice you. Skip's face is a color you've never seen before. Something between 'caught' and 'catastrophe.'
+  goto n57
+
+  @n4
+  Skip Hartley: Andrew! Great timing. Great. Super great. Come in. You know my... uh... you know Mrs. Henderson.
+  Grandma Henderson: He knows me as a client. But I think it's time he knows the full picture. Don't you, Skip?
+  Andrew: Skip... Grandma Henderson is your MOTHER?
+  Skip Hartley: ADOPTIVE mother. Technically. Harold Henderson married my mom when I was ten. It's... complicated. Like all trust structures. Heh.
+  Andrew: You assigned me your own family's trust case?!
+  Skip Hartley: I had to! The conflict of interest was... okay yes, there was a MASSIVE conflict of interest. But I thought if I just... stayed at arm's length...
+  Grandma Henderson: He stayed at arm's length by hiding behind buzzwords and finger guns. Which is also how he handles everything else.
+  Skip Hartley: Mom!
+  goto n58
+
+  @n12
+  Grandma Henderson: Skip, sit down. Andrew, you too.
+  goto n59
+
+  @n13
+  Grandma Henderson: Here's what's really going on. Harold's trust was supposed to be simple. But someone -- someone inside this company -- has been siphoning fees from Henderson accounts since 2016.
+  if knows_server_secret else -> n17
+  Andrew: The encrypted partition. Alex found unauthorized modifications going back eight years.
+  Grandma Henderson: Smart boy. Yes. $2,000,000 in skimmed fees. And I know who did it.
+
+  @n17
+  Grandma Henderson: I came back to this office -- as a client, through the front door -- to find out who's been stealing from my family's trust.
+  Grandma Henderson: And now I have the evidence. The Janitor helped. He's very loyal. Also he has all the master access codes from when he was VP.
+  Grandma Henderson: The person responsible is someone in this room.
+  Narrator: You and Skip look at each other.
+  Skip Hartley: What?! Mom, I would NEVER--
+  Grandma Henderson: Of course not, Skip. You can barely operate the coffee machine. You think I'd suspect you of sophisticated financial fraud?
+  Grandma Henderson: No. The 'admin_legacy' account was created by the Regional Manager. The one who's been 'overseeing' this branch for eight years. The one who golfs every Thursday instead of reviewing audit reports.
+  Grandma Henderson: I was going to handle this myself. I've been handling everything myself since 1987.
+  Grandma Henderson: But Skip told me about you, Andrew. How you actually read the trust documents. How you didn't cry when Karen threw the binder. How you chose to look at page 47.
+  Grandma Henderson: So I'm going to give you a choice. Help me take down the Regional Manager. Or walk away.
+  Skip Hartley: Mom, this is a lot. Can we circle back on--
+  Grandma Henderson: Skip. If you say 'circle back' one more time, I will change the trust to leave everything to the cat.
+  Skip Hartley: ...We don't have a cat.
+  Grandma Henderson: I'll GET one.
+  Narrator: Skip slumps in his chair, defeated by his own mother for what is clearly not the first time.
+  Andrew: I'll help.
+  Grandma Henderson: Good. Then let's go have a word with this 'Regional Manager.'
+  Narrator: Grandma Henderson stands. She picks up her cane. It no longer looks like a walking aid. It looks like a weapon.
+  goto n60
+
+  @n35
+  Skip Hartley: Mom, you can't just--
+  Grandma Henderson: Skip. I'm seventy-four years old, I helped build this trust department, and someone has been stealing from my dead husband's accounts. Watch me.
+  Narrator: Grandma Henderson marches toward the Regional Manager's temporary office. Skip and Andrew follow, mostly because the alternative is being in front of her.
+  goto n61
+
+  @n38
+  Regional Manager: What-- Mrs. Henderson? What is the meaning of this?
+  Grandma Henderson: The meaning of this is: I know about the admin_legacy account. I know about the $2,000,000. And I know about the Cayman Islands P.O. box.
+  Grandma Henderson: I also baked cookies. Would you like one before we ruin your career?
+  Regional Manager: This is... you can't prove... I'll have you escorted out of this building!
+  Grandma Henderson: Try it. The Janitor has the keys. And the evidence. And a very good lawyer -- my granddaughter. Yes, Karen. She's aggressive. I know. I raised her.
+  Narrator: The Regional Manager's face cycles through the five stages of corporate grief: denial, anger, restructuring, golden parachute, and acceptance.
+  Regional Manager: Fine. FINE. You want to do this? Then we'll do this. I didn't spend twenty years climbing the corporate ladder to be taken down by a grandmother and a trust officer who's been here for A WEEK.
+  Skip Hartley: And me!
+  Regional Manager: Nobody was counting you, Skip.
+  Skip Hartley: Fair.
+  Narrator: Wait -- the Regional Manager flees! But Skip, overwhelmed by the situation, has a complete corporate meltdown.
+  goto n62
+
+  @n49
+  Skip Hartley: I CAN'T TAKE IT ANYMORE! All the synergies! All the paradigm shifts! ALL THE FINGER GUNS!
+  Skip Hartley: I just wanted to be a good boss, Andrew! I read SEVEN leadership books this month! SEVEN! And they ALL contradicted each other!
+  Grandma Henderson: Oh, Skip...
+  Skip Hartley: I DON'T EVEN KNOW WHAT SYNERGY MEANS, MOM!
+  set secret_path_complete
+  fight skip_boss
+  end
+  # ── STAGING (appended; routed to from 0/3/11/12/34/37/48) ──────────────
+  # Marks live in `executive_floor.marks`. Skip and Grandma START seated at
+  # the table (room data owns that); these beats only move what the prose
+  # says moves. Nothing here writes a flag.
+
+  @n56
+
+  stage
+    player walkTo table_approach face grandma speed 1.6
+  goto n1
+  # CONCURRENT — two heads turning is not worth blanking the screen for.
+  # The turn plays under the line it is a reaction to.
+
+  @n57
+
+  stage concurrent
+    skip face player
+    grandma face player hold 0.3
+  goto n4
+  # "Mom!" — Skip is out of his chair before he knows he stood up.
+
+  @n58
+
+  stage
+    skip stand walkTo 6.6,8.6 face grandma speed 1.9 hold 0.25
+  goto n12
+  # "Skip, sit down. Andrew, you too."
+
+  @n59
+
+  stage
+    skip walkTo table_seat_e sit speed 1.3
+    player walkTo table_seat_s sit speed 1.5
+  goto n13
+  # "Grandma Henderson stands. She picks up her cane." CONCURRENT — the
+  # narration has already said it; she should rise while the NEXT line reads,
+  # not in a black gap after it.
+
+  @n60
+
+  stage concurrent
+    grandma stand walkTo 4,6.4 face skip speed 1.1 hold 0.45
+  goto n35
+  # "…marches toward the Regional Manager's temporary office. Skip and
+  # Andrew follow." On path_grandma the Regional Manager has NO VISIBLE room
+  # entry (both his executive_floor entries gate on path_legal / path_bro),
+  # so six lines and a flight were performed by an empty floor. `show: true`
+  # reveals the body the room already built at his post; his condition
+  # re-hides him for free the moment exploration resumes.
+
+  @n61
+
+  stage
+    regional show face exec_center
+    @b1 grandma stand walkTo regional_confront face regional speed 2.3
+    skip stand walkTo regional_flank_s face regional speed 1.8
+    player stand walkTo regional_flank_n face regional speed 1.8
+    regional face grandma after b1
+  goto n38
+  # "Wait -- the Regional Manager flees!" CONCURRENT — a flight is only a
+  # flight if you see it happen while someone reacts to it. Scheduled, the
+  # box blanked and he jogged across an empty screen in silence.
+
+  @n62
+
+  stage concurrent
+    regional exit elevator speed 3
+    player face skip nowait
+    grandma face skip nowait
+  goto n49
+
+# ==========================================================================
+# COMBAT RETRY DIALOGS -- short quip, straight to battle on rematch
+# ==========================================================================
+scene karen_first_loss_tutorial
+  Narrator: Karen Henderson dismantles you. Not metaphorically. The binder alone causes structural damage to the conference table.
+  Skip Hartley: Hey. Hey! You okay? What happened in there?
+  Andrew: She had a binder.
+  Skip Hartley: Yeah, she always has the binder. Listen — Karen's been doing this for years. She knows every loophole, every pressure point, every trick.
+  Skip Hartley: You can't walk in there at your current level and expect to hold your ground. You need more experience. More Assertiveness. More Composure.
+  Andrew: How do I get that?
+  Skip Hartley: The reception desk. Prospective clients come in all day. Handle their cases, win the fights, build up your skills.
+  Narrator: TIP: Go to the Reception area and interact with the desk to take on clients. Each win earns XP and AUM currency.
+  Skip Hartley: Handle 3 clients. Get yourself to Level 3. Then head back to the conference room and face Karen again — at that level you'll actually have a fighting chance.
+  Skip Hartley: Oh — and check the motivational posters around the building. Sounds dumb, but they're actually worth reading. Trust me.
+  # B15 — THE ARCADE'S OLD NAME, AND A REWARD LADDER THAT WAS NEVER TRUE.
+  # The cabinet was rebuilt as SPRINT REVIEW and this line still called it
+  # Stagecoach Stampede; it also promised the full +5/+5 for "500 distance"
+  # when the ladder is +1/+1 per 40 FLOORS of personal best capped at 5
+  # (ArcadeState: floors/40, min(5)), i.e. 200 floors. This is the only
+  # place in the game that tells the player the ladder exists, so it has to
+  # be true. Redrafted through the prose law.
+  Skip Hartley: Also, there's an old Sprint Review cabinet in the break room. Don't laugh — every forty floors you clear, that thing gives you +1 Composure and +1 Assertiveness. Permanent. Caps at five each. Two hundred floors and you're basically a new hire.
+  Skip Hartley: One more thing. I've dealt with the Hendersons before. Let me save you some pain.
+  Skip Hartley: Karen? Don't try to schmooze her. She's immune to that stuff. But cite actual case law — legal arguments — and she folds like a cheap suit.
+  Skip Hartley: Chad's the opposite. He name-drops lawyers constantly but he's never read a legal document in his life. Legal tactics bounce right off him. But call him out publicly — social pressure — and he completely crumbles.
+  Skip Hartley: And Grandma... don't underestimate her. She ran this office for twenty years. Sweet talk won't work — she invented sweet talk. But she's never had her own books audited. An audit approach will catch her off guard.
+  Andrew: ...She's coming back, isn't she.
+  Skip Hartley: She never left. She's in the conference room right now writing a Yelp review about the parking situation.
+  end
+
+scene karen_retry
+  Karen Henderson: Oh, you're back. I still have the binder.
+  fight karen
+  end
+
+scene chad_retry
+  Chad Henderson: Bro. Round two? I respect the hustle. Not the strategy. But the hustle.
+  fight chad
+  end
+
+scene grandma_retry
+  Grandma Henderson: Back so soon, dear? I put away the cookies. You don't get cookies twice.
+  fight grandma
+  end
+
+scene skip_boss_retry
+  Skip Hartley: Andrew. Let's just skip to the part where I have a breakdown. We both know how this goes.
+  fight skip_boss
+  end
+
+scene compliance_retry
+  Compliance Auditor: Still here? I've already started a second file on you. It's thicker than the first.
+  fight compliance
+  end
+
+scene regional_retry
+  Regional Manager: You again. I'm billing this as a 'strategic re-engagement.' Don't test me.
+  fight regional
+  end
+
+scene intern_retry
+  The Intern: Oh no. I mean — oh, hey! You're back. I Googled some new techniques. I'm so sorry in advance.
+  fight intern
+  end
+
+# ==========================================================================
+# POST-COMBAT / RETURN DIALOGS
+# ==========================================================================
+scene janet_return
+  if lunch_thief_started -> n4
+  Janet: Oh — before I forget. Someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means.
+  quest side_lunch_thief stage 1
+  set lunch_thief_started
+  goto n6
+
+  @n4
+  Janet: Still alive? Good for you.
+  Janet: *sip*
+
+  @n6
+  end
+
+scene alex_it_return
+  Alex from IT: Can't talk. Running a packet trace. Also your printer is still possessed — that's not a ticket, that's a relationship.
+  end
+
+scene intern_return
+  The Intern: Hey Aiden! I mean -- whatever your name is!
+  The Intern: I would talk more but Skip has me reorganizing the filing cabinets by 'vibrational frequency.' I don't know what that means and I'm afraid to ask.
+  end
+
+scene diane_return
+  Diane: You've got that look. The Henderson look. I've seen it before.
+  Diane: Bottom drawer. Antacids. Seriously.
+  end
+
+scene janitor_return
+  if janitor_return_2 -> n6
+  if janitor_return_1 -> n4
+  Mysterious Janitor: Page 47. Don't forget.
+  set janitor_return_1
+  goto n9
+
+  @n4
+  Mysterious Janitor: The floors remember everything. So do I.
+  set janitor_return_2
+  goto n9
+
+  @n6
+  Mysterious Janitor: You're still standing. The building notices things like that.
+  Narrator: He gestures vaguely at the hallway with his mop.
+  end
+
+  @n9
+  Narrator: He resumes mopping. The Rolex catches the light.
+  end
+
+# --------------------------------------------------------------------------
+# Post-combat victory dialogs
+# --------------------------------------------------------------------------
+scene karen_defeated
+  Karen Henderson: I... fine. FINE. But I'm keeping the binder.
+  Karen Henderson: And I'm leaving a review. On EVERY platform. Yelp. Google. TripAdvisor. I don't care that this isn't a hotel.
+  Andrew: That's... fine, Mrs. Henderson.
+  Karen Henderson: It's MS. Henderson. And this isn't over. *picks up binder fragments and storms out*
+  goto n8
+
+  @n4
+  Narrator: The conference room is silent. Binder tabs litter the floor like confetti at the world's worst party. You exhale for what feels like the first time in an hour.
+  Narrator: Your phone buzzes. Text from Skip: 'Heard you survived Karen. Get up here when you can. We need to talk about Chad. Bring aspirin.'
+  set karen_defeated
+  end
+  # ── STAGING (appended; routed to from 3) ─────────────────────────────
+  # She "storms out" — which until now was an EntityManager conditionFn flip
+  # and a hide() on the next frame, i.e. she blinked out of existence
+  # standing exactly where she was. The conference table blocks x 5-7 at z=4,
+  # so the walk-out routes south of it first (the walker is a straight line
+  # with an axis slide, not a pathfinder).
+
+  @n8
+
+  stage
+    @b0 karen walkTo aisle_s speed 2.5
+    karen exit door_west speed 2.7 after b0
+  goto n4
+
+scene chad_defeated
+  Chad Henderson: Bro... that was... actually kind of sick? Like, you're really good at this trust stuff.
+  Chad Henderson: Okay I'll admit the crypto plan was... maybe not the move. My buddy Tyler said so too. From jail.
+  Chad Henderson: Can we just... do whatever the normal thing is? With the trust?
+  Andrew: That's called 'following the trust document,' Chad.
+  Chad Henderson: Sick. Let's do that. Also, you should check out PumpCoin. It's coming back. The dog on the logo just got sunglasses.
+  Narrator: Chad shuffles out, already typing on his phone. You hear him say 'yeah bro, he's actually legit' to someone before the door closes.
+  goto n9
+
+  @n6
+  Narrator: Your phone buzzes. Text from Skip: 'Two down. Get to my office before the next one. Trust me on this. TRUST. Me.' He added a fist bump emoji. Then deleted it. Then sent it again.
+  set chad_defeated
+  end
+  # ── STAGING (appended; routed to from 5) ─────────────────────────────
+  # "Shuffles" is a SPEED, not an adverb: 1.15 tiles/s against the 1.8
+  # default. Same table detour as Karen's exit.
+
+  @n9
+
+  stage
+    @b0 chad walkTo aisle_s speed 1.15
+    chad exit door_west speed 1.15 after b0
+  goto n6
+
+# --------------------------------------------------------------------------
+# ROSS POST-CHAD DEBRIEF -- Required conversation before Grandma fight
+# --------------------------------------------------------------------------
+scene skip_post_chad
+  Skip Hartley: Close the door. Both locks. Yes, there are two locks. I had them installed after the Henderson file came across my desk.
+  Andrew: Skip, it's just an elderly woman—
+  Skip Hartley: She is NOT 'just' anything, Andrew. Karen was a complaint form with legs. Chad was a protein shake with a LinkedIn. Grandma Henderson is a DIFFERENT CATEGORY.
+  Skip Hartley: I had a senior consultant go in there in 2019. He came out speaking only in passive-aggressive non-answers. He's currently our VP of Compliance.
+  Andrew: What does she actually want?
+  Skip Hartley: Everything. In writing. Notarized. With a follow-up call. She will offer you a cookie. Do NOT comment on the cookie.
+  Andrew: What's wrong with the cookie?
+  Skip Hartley: Nobody knows. Three people have asked. They all transferred to the Omaha office voluntarily. On the same day. We don't talk about it.
+  Skip Hartley: Your only move is to stay calm, keep your documentation airtight, and under no circumstances let her redirect you with a story about her late husband Gerald.
+  Andrew: Was Gerald—
+  Skip Hartley: She will redirect you with a story about Gerald. Just nod. Set a mental timer for four minutes. After four minutes it loops back around to the trust. That's your window.
+  goto n16
+
+  @n11
+  Skip Hartley: She's waiting in the conference room. I'll be monitoring the situation remotely.
+  Andrew: Monitoring how?
+  Skip Hartley: From home. With the door locked. Both locks.
+  set skip_post_chad
+  end
+  # The late husband is Harold — Andrew has actually read the Henderson
+  # file. Skip has not, and Loman never hears corrections (#29).
+
+  @n16
+  Andrew: ...Harold.
+  goto n11
+
+scene grandma_defeated
+  Grandma Henderson: Well. You held your own, dear. I had you down for tears by minute six. I so rarely lose a wager.
+  Grandma Henderson: Harold would have liked you. He always said the best trust officers were the ones who could take a guilt trip and keep standing.
+  Grandma Henderson: Have another cookie, dear. You've earned it.
+  heal
+  give stress_ball
+  Grandma Henderson: And take this stress ball. Lord knows you'll need it with this family.
+  set grandma_defeated
+  end
+
+# Ambient NPC dialogs — Henderson family in common areas before their meetings
+scene chad_breakroom_idle
+  Chad Henderson: Bro! You the new trust guy? I'm Chad. We'll talk later — I'm carb-loading right now.
+  Chad Henderson: Gotta keep the macros tight before a big meeting, you know? Protein shake o'clock.
+  Chad Henderson: *flexes unnecessarily* See you in the conference room, dude.
+  end
+
+scene grandma_reception_idle
+  Grandma Henderson: Oh, hello dear. I'm just waiting for my appointment. Don't mind me.
+  Grandma Henderson: I brought cookies for the office. There should be some left in the conference room. If Chad hasn't eaten them all.
+  Grandma Henderson: We'll talk when it's my turn, dear. No need to rush. *knits calmly*
+  end
+
+scene compliance_defeated
+  Compliance Auditor: Impressive. Your regulatory knowledge is... adequate. That's the highest compliment I give.
+  Compliance Auditor: I'll file the Form 27B/6 as a 'learning experience.' It's still forty-seven pages, but I'll mark it as 'resolved.'
+  Compliance Auditor: Don't let it happen again. I'll be watching. I'm always watching.
+  Narrator: The Compliance Auditor puts their sunglasses back on and walks away. You notice they leave no footprints.
+  goto n13
+
+  @n4
+  set compliance_defeated
+  Narrator: You exhale for the first time in what feels like hours.
+  Narrator: Then the lights flicker. Not the normal "this building is old" flicker. Something else.
+  Narrator: The printer in the corner starts up on its own. A single page emerges.
+  Printer: THE LEDGER REMEMBERS. FIND THE ARCHIVE.
+  Andrew: ...What the hell was that?
+  Narrator: Your phone buzzes. A text from Alex: "Dude. Server room. NOW. The 3:47 AM thing just happened at 2 PM. Something is very wrong."
+  set act2_complete
+  end
+  # ── STAGING (appended; routed to from 3) ─────────────────────────────
+  # NOT an `exit`. The Auditor has a SECOND executive_floor entry gated on
+  # `compliance_defeated && !compliance_crossword_done` — they are the only
+  # source of the Archive password — so walking them out of the building here
+  # put them back at (13,6) on the next room entry. "Walks away" is now a
+  # walk to the north end of the floor, still in the room, still findable.
+
+  @n13
+
+  stage
+    compliance walkTo board_door face player speed 1.7 hold 0.3
+    player face compliance nowait
+  goto n4
+
+scene regional_defeated
+  Regional Manager: This is... unprecedented. No one has ever... I need to call corporate.
+  Regional Manager: You realize this changes nothing, right? There will always be another Regional Manager. Another quarterly target. Another synergy.
+  Andrew: Maybe. But the Henderson Trust will be handled correctly.
+  Regional Manager: Correctly. How quaint. Enjoy your moral victory. I'll be on the golf course.
+  # ("deploys their golden parachute... You never see them again" deleted —
+  # it contradicted the very next line and the Act 5 SEC-arrest beat, #18)
+  set regional_defeated
+  Narrator: The Regional Manager straightens his tie. His golden parachute remains undeployed. For now.
+  goto n13
+
+  @n6
+  Narrator: Then something strange happens. The elevator behind you dings. Nobody pressed it.
+  Narrator: The doors open to an empty car. The floor indicator scrolls through numbers that this building doesn't have.
+  Narrator: A document slides out from under the elevator door. It's dated 1947. The letterhead reads "VAULTS FARGO TRUST CHARTER — ORIGINAL."
+  Andrew: 1947? This branch wasn't built until the '80s...
+  Narrator: Your phone buzzes. A text from Alex: "GET TO THE SERVER ROOM. The encrypted partition just decrypted ITSELF. I did NOT do this."
+  set act2_complete
+  end
+  # ── STAGING (appended; routed to from 5) ─────────────────────────────
+  # He straightens his tie and leaves for the golf course — but stays in the
+  # building (the Act 5 SEC-arrest beat needs him alive), so this is a walk
+  # to the elevator, not a vanish.
+
+  @n13
+
+  stage
+    regional exit elevator speed 1.6
+    player face elevator nowait
+  goto n6
+
+scene skip_boss_defeated
+  Skip Hartley: I... *panting* ...I don't even know what just happened.
+  Skip Hartley: Was I... did I just fight you? With corporate buzzwords?
+  Andrew: You tried to 'circle back' on me three times, Skip.
+  Skip Hartley: I know. I know. I'm... I'm sorry, man. I think I had a corporate break.
+  Grandma Henderson: Skip, honey, you need a vacation. And a therapist. And to stop reading leadership books.
+  Skip Hartley: You're right, Mom. You're always right. Can I have a cookie?
+  Grandma Henderson: Of course, dear.
+  Narrator: Skip eats a cookie. He starts to cry. It is somehow the most normal thing that has happened all week.
+  set skip_defeated
+  Grandma Henderson: Well. Now that Skip has gotten that out of his system...
+  Narrator: The overhead lights surge. Every screen in the office flickers to the same image: a trust document, dated 1947, scrolling endlessly.
+  Skip Hartley: Mom... what's happening to the building?
+  Grandma Henderson: It's waking up. I was afraid of this.
+  Grandma Henderson: The Henderson Trust isn't the only thing that's been mismanaged, Andrew. This building... has a longer memory than any of us.
+  Narrator: The Janitor appears in the doorway. His expression is grim. His Rolex is glowing.
+  Mysterious Janitor: It's started. I hoped we'd have more time.
+  Narrator: Your phone buzzes. A text from Alex: "DUDE. Every server just rebooted. The encrypted partition is BROADCASTING. Something is VERY wrong."
+  set act2_complete
+  end

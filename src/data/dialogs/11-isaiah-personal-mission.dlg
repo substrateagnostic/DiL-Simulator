@@ -1,0 +1,385 @@
+# ==========================================================================
+# ISAIAH — Personal Mission: "The Receipts"
+# Reward: free unlock of `paperwork_blizzard` + 250 XP
+# Pattern mirrors alex_badge_audit_* above.
+# ==========================================================================
+scene isaiah_receipts_offer
+  if isaiah_receipts_complete -> n13
+  if isaiah_receipts_started -> n11
+  Isaiah: I want to ask you something. Before we go upstairs.
+  Isaiah: Nine years ago I started keeping physical copies. Board minutes, expense reports — the things that usually disappear when a company 'modernizes.' Meredith's people swept the floor in 2019. I thought they were gone.
+  Isaiah: But I'd already moved them. There's a filing cabinet in the Archive basement section. It's been mislabeled 'HVAC MAINTENANCE LOG 2015–' for five years. Nobody's touched it.
+  Isaiah: If those records are still there, they would show a pattern. Not just this branch. Meredith's done this before. Other places. Other people.
+  ask: Help Isaiah find the buried records?
+    -> n7: "Tell me where to look."
+    -> n10: "Not right now. But I will."
+
+  @n7
+  Isaiah: Archive room. West bank, bottom row. The cabinet with the HVAC label. If someone moved it, look for anything taped on the back.
+  Isaiah: I wrote my initials on the inside of the drawer in pencil. I.W. You'll know it's the right one.
+  set isaiah_receipts_started
+  goto n12
+
+  @n10
+  Isaiah: Understood. I'll be here.
+  goto n12
+
+  @n11
+  Isaiah: Did you find the HVAC cabinet? West bank, Archive. My initials are inside the drawer.
+
+  @n12
+  end
+
+  @n13
+  Isaiah: The receipts. Seven acquisitions, one signature. I've been sitting with that for a week now.
+  goto n12
+
+scene isaiah_receipts_pull
+  if isaiah_receipts_complete -> n8
+  if isaiah_receipts_started else -> n7
+  Narrator: A filing cabinet on the bottom row. The label reads: 'HVAC MAINTENANCE LOG 2015–' in marker. The marker has faded. The tape holding the label has lifted at one corner.
+  Narrator: You open the bottom drawer. Inside the front face, in small pencil letters: I.W.
+  Narrator: The files are intact. Board minutes. Quarterly expense reports. Meredith's signature appears on seventeen consecutive pages. The pattern is identical to what Andrew found upstairs — only these records go back nine years.
+  Andrew: Seven branches. Same signature. Same timeline. She's been doing this since before anyone here was hired.
+  set isaiah_has_receipts
+  goto n9
+
+  @n7
+  Narrator: A filing cabinet labeled 'HVAC MAINTENANCE LOG 2015–.' The tape on the label has lifted. You don't have a reason to open it yet.
+  goto n9
+
+  @n8
+  Narrator: The cabinet Isaiah hid his records in. The files are gone now — you gave them to him.
+
+  @n9
+  end
+
+scene isaiah_receipts_return
+  if isaiah_receipts_complete -> n13
+  if isaiah_has_receipts else -> n12
+  Andrew: Found the cabinet. I.W. inside the drawer, like you said. Isaiah — these go back nine years. Seven acquisitions.
+  Isaiah: Seven. I counted them three times when I first put them together. I kept hoping I'd missed something. I hadn't.
+  Isaiah: She has a pattern. She comes in as an SVP, identifies the branch's most valuable compliance assets — the ones that make it hard to dissolve — and starts dismantling them. Paperwork first. Then people.
+  Isaiah: This branch is number eight. She's never made it this far before. There's always been someone who just — walked away.
+  Andrew: Well. We're not walking.
+  Isaiah: No. We're not.
+  Isaiah: I've been holding this for nine years. I didn't have anyone to give it to. Here.
+  Narrator: Isaiah shows you a stack of forms he's memorized filling out — a blizzard of paperwork, filed so fast and precisely that any counter-filing gets buried. He walks you through every step. In ten minutes you understand it completely.
+  set isaiah_receipts_complete
+  xp 250
+  goto n14
+
+  @n12
+  Isaiah: The HVAC cabinet. West bank, Archive. Bottom row. I.W. inside the drawer.
+
+  @n13
+  end
+
+  @n14
+  teach isaiah paperwork_blizzard
+  Narrator: Isaiah teaches you the Paperwork Blizzard. He is not smiling exactly. But something in his posture has settled.
+  goto n13
+
+# ==========================================================================
+# DIANE — Personal Mission: "The Original Handbook"
+# Reward: free unlock of `termination_letter` + 250 XP
+# ==========================================================================
+scene diane_handbook_offer
+  if diane_handbook_complete -> n14
+  if diane_handbook_started -> n12
+  Diane: I need to tell you something. Before I ask.
+  Diane: The reason I came to HR was a company I watched gut its own policy book. Line by line. Over four years. They called it 'streamlining.' By the time anyone noticed, there was nothing left to protect anyone.
+  Diane: I've been in HR for fourteen years. I know handbooks the way some people know scripture. And I know when one's been changed.
+  Diane: Vaults Fargo had an original employee handbook. 1947. Article 1 is different from what's in the current edition. I've compared them. The current version removed a sentence.
+  Diane: Meredith had the original boxed up eighteen months ago. 'For archival.' I need to know if it's been destroyed or if it's still there.
+  ask: Help Diane find the original handbook?
+    -> n8: "Where was it boxed up?"
+    -> n11: "I'll look when I can."
+
+  @n8
+  Diane: HR Records room. There should be a box labeled 'MISC ADMIN ARCHIVE' in the south filing section. That's how Meredith's people label things they want to disappear without destroying them. Plausible deniability.
+  Diane: If it's there, bring it back whole. Don't open it — I want to be the first one to read it in this context. That matters to me.
+  set diane_handbook_started
+  goto n13
+
+  @n11
+  Diane: Okay. When you can.
+  goto n13
+
+  @n12
+  Diane: HR Records — south filing section. Box labeled 'MISC ADMIN ARCHIVE.' That's where they put things they want forgotten without a paper trail.
+
+  @n13
+  end
+
+  @n14
+  Diane: 'An employee's first duty is to the truth, told plainly.' I've been thinking about that sentence all week.
+  goto n13
+
+scene diane_handbook_search
+  if diane_handbook_complete -> n8
+  if diane_handbook_started else -> n7
+  Narrator: A cardboard banker's box on the bottom shelf of the south wall cabinet. The label, in printed adhesive tape: 'MISC ADMIN ARCHIVE.'
+  Narrator: You open it. Inside: a leather-bound document, spine intact. The cover reads: 'VAULTS FARGO EMPLOYEE HANDBOOK — ORIGINAL EDITION, 1947. NOT FOR REPRODUCTION.'
+  Andrew: It's not destroyed. It's here. It's just been waiting.
+  Narrator: You close the box without reading further. Diane said to bring it back whole. That matters.
+  set diane_has_handbook
+  goto n9
+
+  @n7
+  Narrator: A cardboard box labeled 'MISC ADMIN ARCHIVE.' Nothing inside seems to need attention right now.
+  goto n9
+
+  @n8
+  Narrator: The box that held the original handbook. You gave it to Diane.
+
+  @n9
+  end
+
+scene diane_handbook_return
+  if diane_handbook_complete -> n14
+  if diane_has_handbook else -> n13
+  Andrew: Found it. MISC ADMIN ARCHIVE, south filing section. It's intact.
+  Diane: ...
+  Diane: Okay. Okay. Give me a second.
+  Narrator: Diane opens the box with both hands. She turns to Article 1. She reads it once, silently. Then she reads it aloud.
+  Diane: 'An employee's first duty is to the truth, told plainly.'
+  Diane: The current edition says: 'An employee's first duty is to the institution, maintained professionally.' They swapped six words. Six words in seventy-seven years.
+  Andrew: When was it changed?
+  Diane: Edition stamp says 2019. The year Meredith arrived.
+  Diane: I've been arguing from the wrong book for five years. I didn't know. I didn't know.
+  Andrew: Now you do.
+  Diane: Now I do. And I'm going to make very thorough use of that information. — Here. You should know how to do this.
+  goto n15
+
+  @n13
+  Diane: South filing section in HR Records. The box is labeled 'MISC ADMIN ARCHIVE.' That's their tell.
+  goto n16
+
+  @n14
+  Diane: 'An employee's first duty is to the truth, told plainly.' That sentence is doing a lot of work right now.
+  goto n16
+
+  @n15
+  set diane_handbook_complete
+  goto n17
+
+  @n16
+  end
+
+  @n17
+  xp 250
+  teach diane termination_letter
+  Narrator: Diane walks you through the Termination Letter — a formal compliance action that, when filed correctly, carries the full weight of the original charter. She knows every clause.
+  goto n16
+
+# ==========================================================================
+# JANET — Personal Mission: "The Vacancy"
+# Reward: free unlock of `binder_slam` + 250 XP
+# ==========================================================================
+scene janet_vacancy_offer
+  if janet_vacancy_complete -> n14
+  if janet_vacancy_started -> n12
+  Janet: You know what, since we're apparently doing honesty now: I need a favor. It's about Gary.
+  Andrew: I don't think I've met Gary.
+  Janet: You haven't. Gary left in March 2019. Transferred to the Scottsdale branch. There was a cake. Lemon. I remember because I bought it.
+  Janet: HR never processed his departure. The vacancy form needs his final timesheet attached, and his final timesheet was on his desk, and his desk became the supply nook, and the form has been 'pending documentation' for six years.
+  Janet: I have been doing Gary's accounts since 2019. Unofficially. On top of mine. Because the system thinks Gary still works here, so the work routes to his desk, and his desk routes to me.
+  ask: Help Janet close the Gary vacancy?
+    -> n8: "Six YEARS? Where's the timesheet?"
+    -> n11: "I'll dig it up when I can."
+
+  @n8
+  Janet: Northeast cubicle row — the one everyone calls the supply nook. Check under the printer paper. Nobody has moved that stack since the Obama administration.
+  Janet: If you find a coffee mug that says 'GARY', do not touch it. It has achieved structural integrity.
+  set janet_vacancy_started
+  goto n13
+
+  @n11
+  Janet: Sure. It's waited six years. It can wait for you specifically.
+  goto n13
+
+  @n12
+  Janet: Supply nook, northeast row. Under the printer paper. Avoid the mug.
+
+  @n13
+  end
+
+  @n14
+  Janet: One job. I have ONE job now. I keep opening my task queue just to look at it.
+  goto n13
+
+scene janet_vacancy_search
+  if janet_vacancy_complete -> n8
+  if janet_vacancy_started else -> n7
+  Narrator: The supply nook. Under a geological stratum of printer paper: a desk. On the desk: a timesheet, a 2019 desk calendar open to March, and a mug that says 'GARY'. The mug has contents. The contents have texture.
+  Narrator: The timesheet's final entry, in fading ballpoint: 'Friday — 4.5 hrs. Knocked off early. Cake thing. Bye everyone, it was fine.'
+  Andrew: 'It was fine.' Six years of Janet's life because nobody stapled this to a form.
+  Narrator: You take the timesheet. You do not touch the mug. The mug appears to notice.
+  set janet_has_timesheet
+  goto n9
+
+  @n7
+  Narrator: The supply nook. Reams of paper, a dead plant, and the faint sense of a workstation that gave up. Nothing you need right now.
+  goto n9
+
+  @n8
+  Narrator: Gary's old desk. The paper is still here. The mug is still here. The timesheet is filed and free.
+
+  @n9
+  end
+
+scene janet_vacancy_return
+  if janet_vacancy_complete -> n12
+  if janet_has_timesheet else -> n11
+  Andrew: One timesheet. Last entry March 2019: 'Bye everyone, it was fine.'
+  Janet: That is the most Gary sentence ever committed to paper.
+  Narrator: Janet pulls a six-year-old vacancy form from her cardigan pocket. It is folded into eighths. She has been carrying it.
+  Janet: Timesheet. Attached. Form. Complete. Vacancy. DECLARED.
+  Narrator: She staples it with the violence of six unpaid years. Somewhere in the payroll system, a ghost is finally laid to rest.
+  Janet: You know what I learned doing two jobs? Leverage. When you're holding everything, you learn exactly how much everything weighs. Let me show you something about binders.
+  set janet_vacancy_complete
+  xp 250
+  goto n13
+  Janet: (This node intentionally left blank, like Gary's chair.)
+  goto n14
+
+  @n11
+  Janet: Supply nook. Northeast row. Under the paper. The mug is load-bearing — leave it.
+  goto n14
+
+  @n12
+  Janet: One job. Still feels illegal.
+  goto n14
+
+  @n13
+  teach janet binder_slam
+  goto n15
+
+  @n14
+  end
+
+  @n15
+  Narrator: Janet demonstrates the Binder Slam on Gary's timesheet stack. The sound echoes. Somewhere upstairs, a consultant flinches without knowing why.
+  goto n14
+
+# ==========================================================================
+# JANITOR — Personal Mission: "The Names"
+# Post-Rolex. Reward: +15 max Coffee + 250 XP
+# ==========================================================================
+scene janitor_names_offer
+  if janitor_names_complete -> n13
+  if janitor_names_started -> n11
+  Mysterious Janitor: You still have the watch? Good. Watch was never the valuable thing I kept in this building anyway.
+  Mysterious Janitor: There's a ledger. Green cover, water stain shaped like Ohio. I started it in '81. Every name that came through this department — and what the building did to them.
+  Mysterious Janitor: When Meredith's people started sweeping floors, I hid it in the Vault. Behind the deposit boxes, low left. Then they pulled my Vault clearance. Said custodial staff didn't need 'asset-level access.'
+  Mysterious Janitor: Forty-five years of names sitting in the dark. I'd like them back.
+  ask: Retrieve the Janitor's ledger?
+    -> n7: "Behind the deposit boxes. On it."
+    -> n9: "Why keep a list like that?"
+
+  @n7
+  Mysterious Janitor: Low left. You'll need to reach behind the frame. Mind the dust — that dust is older than you.
+
+  @n8
+  set janitor_names_started
+  goto n12
+
+  @n9
+  Mysterious Janitor: Because the building forgets. That's its whole trick. It wears people down and then it forgets them, and the next one in the chair thinks they're the first. Somebody has to keep the receipts.
+  Mysterious Janitor: Low left, behind the deposit boxes. When you're ready.
+  goto n8
+
+  @n11
+  Mysterious Janitor: Vault. Deposit boxes. Low left, behind the frame. Green cover, Ohio-shaped stain.
+
+  @n12
+  end
+
+  @n13
+  Mysterious Janitor: Page one-twelve. Don't think I forgot. Nobody mops alone.
+  goto n12
+
+scene janitor_names_search
+  if janitor_names_complete -> n8
+  if janitor_names_started else -> n7
+  Narrator: Behind the deposit box frame, low left, wrapped in a 1998 plastic bag from a hardware store that no longer exists: a green ledger. The water stain is, in fact, shaped exactly like Ohio.
+  Narrator: You shouldn't read it. You read one page. 'D. OKAFOR — 11 yrs — they moved her desk 14 times until she quit. Good elbows. Fixed the ice machine once. REMEMBERED.'
+  Narrator: Every entry ends the same way. REMEMBERED. REMEMBERED. REMEMBERED. Hundreds of them.
+  Andrew: It's not a grudge list. It's a memorial.
+  set janitor_has_ledger
+  goto n9
+
+  @n7
+  Narrator: Deposit boxes, floor to ceiling. The dust behind the low-left frame is undisturbed. You have no reason to reach in there.
+  goto n9
+
+  @n8
+  Narrator: The space behind the frame is empty now. Just younger dust.
+
+  @n9
+  end
+
+scene janitor_names_return
+  if janitor_names_complete -> n13
+  if janitor_has_ledger else -> n12
+  Andrew: Green cover. Ohio stain. I read one page — I'm sorry. D. Okafor. Good elbows.
+  Mysterious Janitor: Delia. The ice machine never worked right again after she left. Neither did the fourth floor, but nobody writes that down except me.
+  Narrator: He takes the ledger like it weighs more than it does. Opens to a fresh page. Writes for a long moment, shielding the words with his hand like a kid taking a test.
+  Mysterious Janitor: There. Page one-twelve. First entry in the new section.
+  Andrew: What's the new section?
+  Mysterious Janitor: 'THE ONES WHO STAYED.' You're the first name in it. Don't make me move you to the old section.
+  Narrator: He hands you his spare thermos. Steel, dented, older than the lobby. 'Real capacity,' he says. 'Not that drip-tray stuff upstairs.' Your Coffee reserves permanently increase.
+  set janitor_names_complete
+  xp 250
+  stat maxMP +15
+  goto n14
+
+  @n12
+  Mysterious Janitor: Vault. Low left, behind the deposit box frame. Green cover. You'll know it by the Ohio.
+  goto n14
+
+  @n13
+  Mysterious Janitor: Nobody mops alone, kid.
+
+  @n14
+  end
+
+# NAME THE PATTERN (proposal 3). Five threads in this building express one
+# idea — the whisper monitors, the ledger where every entry ends REMEMBERED,
+# Process 7's unrequired logging, the printer's secret archive, the taped
+# label on Rack 7 — and nobody has ever pointed at the shape. The Janitor
+# does, once, without explaining it. Routed from _getDialogId when
+# janitor_names_complete is set and read_janitor_pattern is not.
+# Nodes 7-13 are optional inserts: they only play for a player who found
+# the printer's archive / met Process 7, so the scene never references
+# evidence Andrew hasn't seen.
+# Prose first-draft: Opus 4.6, art/drafts/carry_bundle_draft.md (wired verbatim).
+scene janitor_pattern
+  Narrator: He has the ledger under his arm, the way other men carry a newspaper. The water stain shaped like Ohio faces outward.
+  Andrew: Every entry in that ledger ends the same way. REMEMBERED. And the monitors — I've seen it on two different floors now. Just the word. Nothing else on the screen.
+  Mysterious Janitor: Which floors.
+  Andrew: Sixth. And one by the small conference room I can never find twice.
+  Mysterious Janitor: Corner office on eight. Lamp's been on since Marian Finch retired in '94. Bulb's never gone out.
+  Andrew: That's not the same thing.
+  Mysterious Janitor: Isn't it.
+  # Optional: the printer's 22-year archive
+  if printer_quest_done else -> n10
+  Andrew: The printer on five has been archiving every document this building printed since 2003. Twenty-two years. Nobody asked it to.
+  Mysterious Janitor: I mopped around that cable for nineteen of them.
+  # Optional: Process 7 (either decision — kept or shut down)
+
+  @n10
+  if daemon_kept -> n12
+  if daemon_killed else -> n14
+
+  @n12
+  Andrew: Rack 7 in the server room. A process that logged every officer who worked late. Sixteen thousand days. No requirement.
+  Mysterious Janitor: Forty-four years I kept the ledger. That machine kept a better one.
+
+  @n14
+  Narrator: He picks up his mop. Wrings it once, with the grip of a man who has finished a sentence.
+  Mysterious Janitor: Some buildings keep pigeons. This one keeps receipts.
+  Narrator: He goes back to work. He always goes back to work.
+  set read_janitor_pattern
+  end

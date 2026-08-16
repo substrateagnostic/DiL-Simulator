@@ -1,0 +1,577 @@
+# ==========================================================================
+# ACT 6: THE BOARD MEETING — the convergence set-piece.
+# Optional, but the scene five arcs have been building toward. Entry is
+# Skip Hartley in the Board Room (`skip_speech_ready` → `board_meeting_closed`).
+# The player feeds Skip his lines at three choice points; the count of
+# "true thing" picks (bm_true_open/push/close) scores four outcome tiers
+# via the condition ladder at 116-121. Ally/evidence contributions in the
+# BLOCK D menu (48) use the choice `requires` mechanism — every one of them
+# is optional and the spine runs with zero of them set.
+# Prose first-draft: Opus 4.6, art/drafts/board_meeting_draft.md (wired verbatim).
+# ==========================================================================
+scene board_meeting
+  # ── BLOCK A — ARRIVAL ───────────────────────────────────────────────
+  Narrator: The Board Room at 3:58 PM. Fourteen executive chairs, eleven of them occupied by people whose names appear on the building's tax filings. The twelfth belongs to a man who has not spoken in a board meeting since 1988. The other two are empty.
+  goto n178
+
+  @n1
+  Narrator: Dusk is arriving early through the west windows. The globe in the corner has never been spun. There is a carafe of water on the table that no one has poured from, and it is the most honest thing in the room.
+  Skip Hartley: Andrew. Good. You're here.
+  Narrator: Skip Hartley is standing at the far end of the table, holding a single sheet of paper the way a man holds a grenade he found in his garden.
+  Skip Hartley: The board called this meeting at Meredith's recommendation. Dissolution vote. Simple majority. I have — I wrote something.
+  Andrew: You look like you're about to throw up.
+  Skip Hartley: That is an accurate summary of my gastrointestinal situation, yes. Jim Barfield's "Leading Through Nausea" doesn't cover this.
+  Skip Hartley: I need your help up there. I keep trying to say what I mean and my mouth fills up with buzzwords. It's like a reflex. Twenty years of reflexes.
+  Skip Hartley: Will you stay?
+  # ── BLOCK A2 — THE DOOR ─────────────────────────────────────────────
+  # The informed-consent beat. The ally/evidence prep is optional now, so an
+  # under-prepared player must be told the roster is locked before the scene
+  # commits. The "I need a minute" branch (10 → 11) writes nothing and the
+  # scene is freely re-enterable, so backing out is free.
+  ask Skip Hartley: Skip is asking you to stay. Everyone who showed up is already in the room.
+    -> n179: "I'm here. Let's do this."
+    -> n10: "I need a minute."
+
+  @n10
+  Skip Hartley: A minute. Sure. Take a minute. I'll just stand here, holding my entire career in one hand, with eleven board members watching me sweat through a shirt I ironed this morning for the first time in four years. Take your time.
+  end
+  # ── BLOCK B — CHOICE 1: THE OPENING ─────────────────────────────────
+
+  @n12
+  Narrator: The board chair glances at the clock. 4:00 PM. She taps a pen twice, which is apparently how a dissolution hearing begins.
+  Skip Hartley: Right. Opening statement. Andrew — how do I start? What do I tell them about what this department does?
+  ask Skip Hartley: How should Skip open?
+    -> n15: "Tell them about the Henderson trust. Forty-seven years, three generations, one file folder."
+    -> n19: "Lead with the numbers. Revenue per trust officer, retention metrics, cost-per-client."
+    -> n22: "Tell them you ironed your shirt."
+  # B-TRUE
+
+  @n15
+  set bm_true_open
+  # CONTINUITY: the 1994 pen-on-folders detail is JANET's (janet_act6), and
+  # she reclaims it verbatim at node 51 of this same scene. Diane's stated
+  # tenure is nineteen years (node 55) — she cannot have labeled anything in
+  # 1994. Draft-inherited error, corrected in the F1 pre-gate.
+  Skip Hartley: I, uh. Thank you for — look. I want to talk about one client. The Henderson family. They've been with us for forty-seven years. Three generations. We keep their file in a folder that a woman named Janet labeled in pen in 1994.
+  Skip Hartley: That folder is the entire argument.
+  Narrator: Two board members look at the table. One writes something down. The board chair stops tapping her pen.
+  goto n25
+  # B-BUZZ
+
+  @n19
+  Skip Hartley: Ladies and gentlemen of the board: our department manages $412 million in assets under management with a client retention rate of 94.6%, representing a cost-per-trust-officer metric that outperforms regional benchmarks by —
+  Narrator: A board member in the back checks his phone. Another one was already checking her phone. The chair's pen resumes tapping.
+  Skip Hartley: — by a significant... margin. I have a chart. Somewhere.
+  goto n25
+  # B-THIRD
+
+  @n22
+  Skip Hartley: I want to start by saying that I ironed my shirt today. For the first time in four years. That's — that's how much this matters to me.
+  Narrator: A pause. The kind of pause that happens in a room when someone accidentally says something real. It passes.
+  Skip Hartley: I mention this because. Well. I don't know why I mentioned it. Andrew, that was terrible advice.
+  # ── BLOCK C — CHOICE 2: THE PUSHBACK ────────────────────────────────
+
+  @n25
+  Narrator: A board member in a grey suit — the one with the phone — leans forward.
+  Narrator: He reads from a memo. The memo has Meredith Sterling's letterhead.
+  Narrator: "The trust department has failed to meet its restructuring targets for eleven consecutive quarters. The compliance overhead alone exceeds the revenue of four comparable branches. Continued operation is, quote, 'fiduciarily untenable.'"
+  Skip Hartley: That's — those numbers aren't —
+  Narrator: He has stopped mid-sentence. His mouth is open. The buzzwords are in there somewhere, trying to assemble themselves into a rebuttal, and they are not coming.
+  Andrew: Skip.
+  Skip Hartley: I know what I want to say. I just — give me something. What do I say to that?
+  ask Skip Hartley: Skip is freezing. What do you hand him?
+    -> n33: "'Fiduciarily untenable.' That word means something. Ask him what a fiduciary IS."
+    -> n38: "Cite the restructuring proposal. Meredith inflated her numbers. We have the documents."
+    -> n42: "Just breathe. You're doing fine."
+  # C-TRUE
+
+  @n33
+  set bm_true_push
+  Andrew: Ask him what a fiduciary is.
+  Skip Hartley: I'm sorry, could you — could you define that term? "Fiduciarily." I'd like to know what you think it means.
+  Narrator: The board member blinks. He looks at the memo. He looks at Skip. The question is simple enough that it's embarrassing.
+  Skip Hartley: Because a fiduciary is someone who puts someone else's interests above their own. That's not a metric. That's an oath. And this memo is recommending we break it.
+  goto n46
+  # C-BUZZ
+
+  @n38
+  Andrew: The restructuring numbers. Meredith cooked them.
+  Skip Hartley: Our analysis shows that the dissolution recommendation is based on projections that fail to account for — for the qualitative dimensions of trust-based asset —
+  Narrator: He's reading from his sheet now. His voice has gone flat. The room has gone flat with it. One board member is actively falling asleep.
+  Skip Hartley: — management. Going forward. Strategically.
+  goto n46
+  # C-THIRD
+
+  @n42
+  Andrew: Just breathe. You're doing fine.
+  Skip Hartley: I'm not doing fine, Andrew. I'm standing in front of eleven people who control my mortgage and I've forgotten every word I rehearsed.
+  Narrator: He looks at his sheet. He folds it in half. He puts it in his pocket.
+  Skip Hartley: Can I just — can we skip to the part where people talk? The actual people? The ones who work here?
+  # ── BLOCK D — THE FLOOR ─────────────────────────────────────────────
+
+  @n46
+  Narrator: The board chair checks the agenda. "Public comment period." She says it the way someone says "dental appointment."
+  Andrew: Right. We have — let me see what we brought.
+
+  @n48
+  ask Andrew: Who speaks next?
+    -> n49 requires janet_act6_rallied unless bm_janet_done: Janet has something to say.
+    -> n54 requires diane_act6_rallied unless bm_diane_done: Diane has something to say.
+    -> n59 requires diane_evidence unless bm_proposal_done: Put Diane's evidence on the screen.
+    -> n64 requires diane_handbook_complete unless bm_sixwords_done: Read from the 1947 employee handbook.
+    -> n70 requires isaiah_evidence unless bm_isaiah_done: Isaiah has the trust agreements.
+    -> n75 requires isaiah_receipts_complete unless bm_pattern_done: Show them the pattern. Seven branches.
+    -> n81 requires intern_act6_rallied unless bm_intern_done: Let the Intern present his deck.
+    -> n87 requires grandma_ally unless bm_grandma_done: Grandma Henderson has a letter.
+    -> n93 requires has_charter unless bm_charter_done: Read from the charter.
+    -> n98: That's everything. Let Skip finish.
+  # D-JANET
+
+  @n49
+  set bm_janet_done
+  goto n180
+
+  @n50
+  Janet: I'm not going to quote fiduciary law at you. You have lawyers for that.
+  # "Neither does trust." cut in the F1 pre-gate — Parker never annotates
+  # (WRITING.md rules 3/6). The thirty-one-pound drawer at node 53 carries it.
+  Janet: Our clients have names. I've been writing them on file folders since 1994. In pen. Pen doesn't have an undo button.
+  Janet: Mrs. Calloway. Mr. and Mrs. Park. David Osei. The Lakeview Hospice endowment. I could keep going. I brought the drawer.
+  Narrator: She did, in fact, bring a file drawer. It is sitting next to her chair. Several board members stare at it as though it might contain a bomb, which, in a way, it does.
+  goto n181
+  # D-DIANE
+
+  @n54
+  set bm_diane_done
+  goto n182
+
+  @n55
+  Diane: I process every person who enters this building. I have done that for nineteen years. I know their children's names, and which ones bring donuts on Fridays.
+  Diane: Last month, they took our coffee machine. And the straws. I am being precise because precision is what I have instead of a corner office.
+  Diane: You are voting on whether those people — the ones I buzz in every morning — still have someone in this building who is required by law to put them first. That's what a trust officer is. That's the whole job.
+  Narrator: She sits down. She does not look at the board. She looks at the clock, because Diane has never been late for anything and she isn't starting now.
+  goto n183
+  # D-PROPOSAL
+
+  @n59
+  set bm_proposal_done
+  Andrew: I'd like to submit Exhibit — I don't know, whatever letter we're on. Meredith Sterling's restructuring proposal. Diane copied it before it was shredded.
+  Narrator: The screen behind Skip — the one that said DISSOLVE six weeks ago — now shows two columns of numbers. One column is labeled "Strategic Operations (Sterling)." The other is labeled "Trust Department."
+  Narrator: The Strategic Operations column has been inflated. The Trust Department column has been deflated. The math is not subtle. A board member who was checking her phone puts it down.
+  Andrew: Her numbers. Our numbers. Same quarter. Spot the difference.
+  goto n48
+  # D-SIXWORDS
+
+  @n64
+  set bm_sixwords_done
+  Andrew: I have the original 1947 employee handbook. Article 1. And I have the current edition.
+  Andrew: The original says: "An employee's first duty is to the truth, told plainly."
+  Andrew: The current edition says: "An employee's first duty is to the institution, maintained professionally."
+  Andrew: Six words changed. Edition stamp: 2019. The year Meredith Sterling arrived at this branch.
+  Narrator: The room is very quiet. The kind of quiet that happens when eleven people realize they've been reading from the wrong book.
+  goto n48
+  # D-ISAIAH
+
+  @n70
+  set bm_isaiah_done
+  goto n184
+
+  @n71
+  Isaiah: I've reviewed the original trust agreements for every active account. All 23 of them contain the same fiduciary clause.
+  Isaiah: "The fiduciary shall act in the sole interest of the beneficiary, without regard to the interests of the institution."
+  Isaiah: The dissolution recommendation violates that clause in every single agreement. If you vote yes, you are voting to breach twenty-three separate fiduciary obligations. Simultaneously.
+  Narrator: Isaiah places a stack of highlighted documents on the table. It lands with the kind of weight that makes a board member move his water glass.
+  goto n185
+  # D-PATTERN
+
+  @n75
+  set bm_pattern_done
+  goto n186
+
+  @n76
+  Isaiah: I have one more thing. Nine years of records. Seven branches, not including ours. Every one acquired by strategic operations. Every one "restructured." Every one dissolved within eighteen months.
+  Isaiah: Meredith Sterling was the SVP of record for all seven. This branch is number eight.
+  Isaiah: She has a method. Paperwork first. Then people. She's never made it past the board vote. There has always been someone who walked away.
+  Narrator: He does not raise his voice. He doesn't need to. The pattern is its own volume.
+  Isaiah: We're not walking.
+  goto n187
+  # D-INTERN
+
+  @n81
+  set bm_intern_done
+  goto n188
+
+  @n82
+  The Intern: Hi! Hello. I made a PowerPoint. It has 47 slides. Each one has a different transition effect. I'm very sorry about that in advance.
+  Narrator: Slide 1 dissolves into Slide 2, which wipes left into Slide 3, which spirals into Slide 4. The content is, against all odds, meticulously sourced.
+  The Intern: Slide 12 is the one about Meredith's travel expenses. Slide 23 is the client satisfaction survey I conducted. I surveyed 141 clients. By phone. It took me two weeks and I forgot to eat several lunches.
+  Narrator: The board watches a slide checkerboard-fade into another slide. The data on it is devastating. The transition effect is "Newsflash." A board member covers her mouth. It is unclear whether she is horrified or laughing.
+  The Intern: Sorry about the sound effects. I don't know how to turn them off.
+  goto n189
+  # D-GRANDMA
+
+  @n87
+  set bm_grandma_done
+  goto n190
+
+  @n88
+  Grandma Henderson: Good afternoon. My name is Eleanor Henderson. I've been a client of this trust department for forty-seven years. Since before some of you were born, and I say that with the kindness it deserves.
+  Grandma Henderson: I wrote a letter. It's four pages. I'll read the short version.
+  Grandma Henderson: "My late husband Walter and I entrusted this institution with our family's future in 1979. We chose it because a man named Harold Okafor looked us in the eye and said, 'I will put your interests above my own.' He did. Every person in that department since has done the same."
+  Grandma Henderson: I also brought cookies. Snickerdoodle. Nobody votes to dissolve anything on a full stomach.
+  Narrator: She passes the tin down the table. Every board member takes a cookie. This is not optional. Grandma Henderson has made it structurally impossible to refuse.
+  goto n191
+  # D-CHARTER
+
+  @n93
+  set bm_charter_done
+  Andrew: I have the original 1947 trust charter. Section 1, Paragraph B.
+  Andrew: "No reorganization, restructuring, or rebranding of the institution shall release the trustee from this duty. The duty survives the institution."
+  Andrew: The people who built this place knew someone would try this. They wrote a sentence that outlasts every person in this room. Including Meredith. Including us.
+  Narrator: The charter sits on the table between the water carafe and Grandma Henderson's cookie tin. It is the second-oldest thing in the room. The first is the Board Member in seat twelve, who has not moved.
+  goto n48
+  # D-DONE
+
+  @n98
+  Andrew: That's what we have. Skip — it's yours.
+  # ── BLOCK E — CHOICE 3: THE CLOSE ───────────────────────────────────
+  Skip Hartley: Right. Closing. This is the — this is the part where I'm supposed to —
+  Narrator: He takes the sheet out of his pocket. It is now folded into quarters. He unfolds it. He reads the first line silently. His jaw works once.
+  Skip Hartley: Andrew. How do I end this? What's the last thing they should hear?
+  ask Skip Hartley: What does Skip say to close?
+    -> n103: "Tell them why YOU stayed. Not the department. You."
+    -> n108: "Summarize the evidence. Close with the fiduciary clause. Make it airtight."
+    -> n112: "Quote one of your management books. The real ones don't exist anyway."
+  # E-TRUE
+
+  @n103
+  set bm_true_close
+  Skip Hartley: I've been at this company for twenty years. I could have left. God knows I thought about it. But I stayed because —
+  Narrator: He stops. He folds the paper again. He puts it back in his pocket.
+  Skip Hartley: I stayed because there are 23 families in this building's filing cabinets who trust us to be the last honest room in the building. I don't know if we are. But I know we're supposed to try.
+  Narrator: Skip Hartley sits down. It is the first sincere sentence he has delivered in a conference room since 2003, and he looks like a man who has just set down something very heavy.
+  goto n192
+  # E-BUZZ
+
+  @n108
+  Skip Hartley: In summary, the evidence demonstrates a clear pattern of fiduciary breach, systematic misrepresentation of departmental metrics, and a restructuring methodology inconsistent with — with —
+  Narrator: He is reading from the paper now. Word for word. The paper is shaking slightly.
+  Skip Hartley: — with our core institutional values and stakeholder commitments going forward in perpetuity.
+  Narrator: He sits down. The statement is airtight. It is also the loneliest sentence anyone has said in this room today.
+  goto n192
+  # E-THIRD
+
+  @n112
+  Skip Hartley: I'd like to close with a quote from Gerald Fink's "The Audacity of Adequate Management": "The measure of an institution is not what it produces, but what it refuses to destroy."
+  Narrator: That book does not exist. Gerald Fink does not exist. But the sentence is true anyway, which is the most Skip Hartley thing that has ever happened.
+  Skip Hartley: I think Gerald would have liked this department. He also would have liked the cookies.
+  Narrator: He sits. The board chair writes something down. It is unclear whether she is noting the quote or noting that the book is fictional.
+  goto n192
+  # ── SCORING LADDER — counts bm_true_open / _push / _close → 4 tiers ──
+
+  @n116
+  if bm_true_open else -> n118
+  if bm_true_push -> n119 else -> n120
+
+  @n118
+  if bm_true_push -> n120 else -> n121
+
+  @n119
+  if bm_true_close -> n122 else -> n136
+
+  @n120
+  if bm_true_close -> n136 else -> n146
+
+  @n121
+  if bm_true_close -> n146 else -> n153
+  # ── F-TIER-3 — all three true things ────────────────────────────────
+
+  @n122
+  set board_meeting_won
+  set board_member_spoke
+  Narrator: The room is quiet for eleven seconds. The Board Member in seat twelve — the one who has not spoken since 1988 — pushes his chair back.
+  Narrator: He stands. He walks to the carafe. He pours a glass of water. He walks back to his seat.
+  Narrator: Then he keeps walking. Past his seat. Past the board chair. He stops at the end of the table, next to Skip.
+  Narrator: He sits down in the empty chair on Andrew's side.
+  The Board Member: I signed the charter amendment in '88. The one that let them restructure without board oversight. I've been sitting in that chair for thirty-eight years because I didn't know how to undo it.
+  Narrator: The board chair clears her throat. She looks at the other ten members. Several of them are looking at their hands.
+  Narrator: "The dissolution recommendation," she says. She pauses. "Did not originate with this board."
+  Skip Hartley: I'm sorry — what?
+  Narrator: "It was sent to us. Pre-drafted. With the vote counts already filled in. We were asked to ratify it."
+  Andrew: Sent from where?
+  Narrator: She looks at the ceiling. Then at Andrew. Then at the ceiling again.
+  Narrator: "Upstairs," she says. As though the word itself costs her something.
+  goto n162
+  # ── F-TIER-2 — two true things ──────────────────────────────────────
+
+  @n136
+  set board_meeting_won
+  Narrator: The room is quiet. The board chair taps her pen four times — two more than usual.
+  Narrator: The Board Member in seat twelve shifts in his chair. He looks at the carafe. He does not stand.
+  Narrator: But he moves his notepad from the left side of his folder to the right. The side closer to Andrew. Nobody notices except Andrew.
+  Narrator: "The board appreciates the — the testimony," the chair says. She is choosing words like someone walking through a room where the furniture has moved.
+  Narrator: "However. The dissolution recommendation was not drafted by this body. We were asked to vote on it. The recommendation came from the executive level."
+  Skip Hartley: You were asked to vote on a recommendation you didn't write?
+  Narrator: "We were asked to ratify a decision that had already been made." She says it quickly, as though speed might make it less damning.
+  Andrew: Made by whom?
+  Narrator: "That is above this board's authority to disclose." She looks at the ceiling. Everyone in the room understands what she means by "above."
+  goto n162
+  # ── F-TIER-1 — one true thing ───────────────────────────────────────
+
+  @n146
+  Narrator: The room is quiet, but it's the wrong kind of quiet. The kind that comes before someone says "motion to table."
+  Narrator: "The board thanks the department for its — for its presentation," the chair says. She does not look at Skip.
+  Narrator: "We should note, for the record, that the dissolution recommendation was received by this board. Not authored by it. Our role today is advisory."
+  Skip Hartley: Advisory. You're telling me this whole meeting was advisory.
+  Narrator: "The decision regarding the trust department's future has been escalated. To the executive level." She says "escalated" the way someone says "inherited" when they mean "abandoned."
+  Andrew: So who's deciding?
+  Narrator: The chair looks at the ceiling. She does not answer. She doesn't need to.
+  goto n162
+  # ── F-TIER-0 — no true things ───────────────────────────────────────
+
+  @n153
+  Narrator: The room empties the way rooms do when no one wants to be the last to leave. Board members collect their phones, their pens, their untouched water glasses.
+  goto n193
+
+  @n154
+  Narrator: Skip is still standing at the end of the table. His sheet of paper is on the table in front of him, still folded into quarters, still unread. The sincere version. The one he couldn't get to.
+  Narrator: The board chair pauses at the door.
+  Narrator: "Skip. For what it's worth — this wasn't our recommendation. It was sent to us. The decision was made before the meeting was called."
+  Skip Hartley: Then why did you let me stand up here?
+  Narrator: She looks at him for a long time. "Because someone should have." She leaves.
+  Andrew: Skip.
+  Skip Hartley: I had it, Andrew. I had the whole thing written down. I just — I couldn't get my mouth around it.
+  Narrator: He picks up the paper. He doesn't unfold it. He puts it in his jacket, over his heart, which is either poetic or practical, and he would never admit to the first.
+  # ── BLOCK G — VOICE PROFILE CODA ────────────────────────────────────
+
+  @n162
+  if andrew_steadied else -> n164
+  Narrator: Andrew stood in that room the way someone stands when they've remembered they have a spine — not because they grew one, but because someone reminded them it was already there.
+  goto n166
+
+  @n164
+  if andrew_hardened else -> n166
+  Narrator: Andrew handed Skip every tool he needed with the efficiency of a man who has stopped asking whether the tools are kind. They worked. That was the criterion.
+  # ── BLOCK H — AFTER ─────────────────────────────────────────────────
+
+  @n166
+  Narrator: The Board Room empties. The cookies are gone. The charter is still on the table. The carafe is still full.
+  goto n194
+
+  @n167
+  Skip Hartley: "Above." She said "above." What's above the board, Andrew?
+  Andrew: The executive floor. And above that —
+  Skip Hartley: The penthouse. The one floor nobody goes to. The one with the elevator that dings on its own.
+  Narrator: The dusk through the west windows has turned to something darker. The building hums — not with electricity. With something older than the wiring.
+  Skip Hartley: Whatever's deciding this, it isn't in this room. It was never in this room.
+  Andrew: Then I'll go find the room it's in.
+  Skip Hartley: Andrew. Whatever's up there — it's not a person. Meredith was a person. This is the thing that sent Meredith.
+  # The handoff to the Archive. `board_meeting_held` derives `rolex_available`
+  # (ExplorationState._refreshStoryProgress), so this line is the in-fiction
+  # reason the Janitor's door opens — the gate reads as authored rather than
+  # mechanical. Skip does not know what the old man has; he half-remembers a
+  # rumour and repeats it slightly wrong, which is exactly his register.
+  Skip Hartley: Someone told me once — or I dreamed it, who knows — the old man down in the Archive has been in this building since before the elevators. Go see him. I think he's been waiting for someone and I think it might be you.
+  set board_meeting_held
+  xp 300
+  end
+  # ══ STAGING (appended; routed to from 0/9/49/53/54/58/70/74/75/80/81/86/
+  #    87/92/107/111/115/153/166) ═══════════════════════════════════════════
+  # CLAUDE.md law: never insert into the middle — every jump above is an
+  # absolute index. Stage nodes are APPENDED and routed into, and
+  # `tools/_g-stage-verify.mjs` reads through them, so the tree is
+  # structurally identical to the one before this block existed.
+  #
+  # GEOMETRY. The boardroom table blocks x 4-12 / z 4-6 and StageDirector
+  # walks a STRAIGHT LINE with an axis slide, not a path. Every leg below was
+  # simulated against the room's real built TileMap before it was written;
+  # the two-leg crossings exist because the one-leg version scrapes the table
+  # for five seconds and then times out into a teleport.
+  #
+  # NOT STAGED, deliberately: the Board Member's crossing at 124-127
+  # (`board_member_spoke`, tier 3 only). That beat needs a cast body with a
+  # face and a name, which is a producer call, not a builder's.
+  # MODE NOTE — this scene is deliberately mixed (see DialogState._processStage).
+  # The six ally step-OUTs (180/182/184/186/188/190) stay SCHEDULED, because
+  # stepping forward to address a board IS the beat and the line lands on
+  # arrival. Everything else here is CONCURRENT: `wait: false` alone was not
+  # enough, because it only tells the gate not to wait — the node still hid the
+  # box. Eleven hides across a two-minute scene is the flicker the producer
+  # called "the dialog boxes are blocking movement".
+  #
+  # Node 0 — Skip is the NPC you talk to, so he starts at (7,9) in the ally
+  # line. He has to be at the head of the table before node 3 describes him
+  # there. Concurrent: the crossing plays under the two narration
+  # paragraphs that open the scene instead of freezing them for five seconds.
+
+  @n178
+
+  stage concurrent
+    # 2.6, not 1.7: node 3 says Skip "IS STANDING at the far end of the
+    # table" and in concurrent mode that line lands while he walks. Prose is
+    # canon, so the number moves, not the sentence — at 2.6 he is planted
+    # before the narration describes him planted.
+    @b0 skip walkTo head_approach speed 2.6 nowait
+    skip walkTo head_stand face player speed 2.6 after b0 hold 0.3 nowait
+    player face skip hold 0.25
+  goto n1
+  # Node 9 -> 12, "I'm here. Let's do this." — the meeting is called to
+  # order and Andrew steps out of the line to the table.
+
+  @n179
+
+  stage concurrent
+    player walkTo table_edge_s face skip speed 1.6
+    board_chair face skip hold 0.3 nowait
+  goto n12
+  # BLOCK D — one step-out + one step-back per contribution. The step-back
+  # is `wait: false` so it plays under the next line rather than holding the
+  # conversation. Every ally returns to the exact tile room data put them on.
+
+  @n180
+
+  stage
+    janet walkTo speak_east face board_chair speed 1.7 hold 0.25
+  goto n50
+
+  @n181
+
+  stage concurrent
+    janet walkTo 11,9 face player speed 1.6 nowait
+  goto n48
+
+  @n182
+
+  stage
+    diane walkTo speak_west face board_chair speed 1.7 hold 0.25
+  goto n55
+
+  @n183
+
+  stage concurrent
+    diane walkTo 4,8 face player speed 1.6 nowait
+  goto n48
+
+  @n184
+
+  stage
+    isaiah walkTo speak_east face board_chair speed 1.6 hold 0.3
+  goto n71
+
+  @n185
+
+  stage concurrent
+    isaiah walkTo 10,8 face player speed 1.6 nowait
+  goto n48
+  # Isaiah speaks twice — the agreements, then the seven-branch pattern.
+
+  @n186
+
+  stage
+    isaiah walkTo speak_east face board_chair speed 1.6 hold 0.3
+  goto n76
+
+  @n187
+
+  stage concurrent
+    isaiah walkTo 10,8 face player speed 1.6 nowait
+  goto n48
+
+  @n188
+
+  stage
+    intern walkTo speak_west face board_chair speed 2.1 hold 0.2
+  goto n82
+
+  @n189
+
+  stage concurrent
+    intern walkTo 5,9 face player speed 2 nowait
+  goto n48
+
+  @n190
+
+  stage
+    grandma walkTo speak_east face board_chair speed 1.1 hold 0.4
+  goto n88
+
+  @n191
+
+  stage concurrent
+    grandma walkTo 13,8 face player speed 1.1 nowait
+  goto n48
+  # BLOCK E close — all three endings say Skip sits down. The head chair at
+  # (3,5) is the only seat one step from where he speaks, which is why room
+  # data leaves it empty and seats the board chair on the north side.
+
+  @n192
+
+  stage concurrent
+    skip walkTo head_chair sit speed 1.2 hold 0.3
+  goto n116
+  # TIER 0 only — node 154 says Skip is "still standing at the end of the
+  # table", so he is back on his feet before that line lands.
+
+  @n193
+
+  stage concurrent
+    skip stand walkTo head_stand face player speed 1.2 hold 0.25
+  goto n154
+  # BLOCK H — the room empties and Skip crosses back to Andrew for the
+  # handoff to the Archive. Non-blocking, so the walk plays under his lines.
+
+  @n194
+
+  stage concurrent
+    @b0 skip stand walkTo aisle_w speed 1.5 nowait
+    skip walkTo skip_after face player speed 1.5 after b0 hold 0.3 nowait
+    player face skip hold 0.2
+  goto n167
+
+# ── BLOCK W — waiting-room lines. Allies staged in the Board Room before
+# Andrew convenes. Repeatable, no state changes.
+scene board_meeting_janet
+  Janet: I brought the file drawer. It weighs thirty-one pounds. I weighed it. In case anyone asks for a number.
+  Andrew: Is that a metaphor?
+  Janet: It's a drawer, Andrew. I don't do metaphors before 5 PM.
+  end
+
+scene board_meeting_diane
+  Diane: I've never spoken to a board before. I've buzzed them all in. I know their coffee orders. I know which ones say good morning and which ones don't.
+  Andrew: Nervous?
+  Diane: Prepared. There's a difference, and I've had nineteen years to learn it.
+  end
+
+scene board_meeting_isaiah
+  Isaiah: I've been holding these documents for nine years. Nine years in an HVAC cabinet. Today they sit on a conference table made of actual mahogany.
+  Isaiah: I think the documents are doing better than I am.
+  end
+
+scene board_meeting_intern
+  The Intern: I tested every slide transition. Twice. The "Vortex" on slide 31 made me slightly nauseous but I left it in because the data on that slide is about Meredith's expense reports and I felt the nausea was thematically appropriate.
+  Andrew: That's... actually a good instinct.
+  The Intern: Please don't compliment me, I'll start crying and I wore my only good tie.
+  end
+
+scene board_meeting_grandma
+  Grandma Henderson: I made two batches of snickerdoodle. One for the board. One for afterward, in case the first batch doesn't work.
+  Andrew: Doesn't work?
+  Grandma Henderson: Sugar is a negotiation tool, Andrew. My late husband Walter knew that. You give them the first cookie for free. The second one, they owe you.
+  end
+
+# Skip, AFTER the meeting — the dead prompt that became a beat.
+# Skip stays bodily in the Board Room after `board_meeting_held` (nobody may
+# vanish on camera; `board_meeting_closed` is deliberately deferred until the
+# player walks out — see ExplorationState._refreshStoryProgress). His room
+# entry still carries `dialogId: 'board_meeting'`, so pressing E on him
+# re-opened the entire 177-node set-piece, rewards and all. `_getDialogId`
+# now routes him here instead while he is standing in that room.
+# ZERO reward actions and ZERO flags by design: this is re-enterable forever,
+# so anything it granted would be a farm. Nothing in it reacts to being heard
+# twice, for the same reason.
+# Prose first-draft: Opus 4.6 (claude -p --model claude-opus-4-6), wired verbatim.
+scene board_meeting_after
+  Skip Hartley: I've got a 5:15 with myself in my office. Blocked it off on the calendar and everything.
+  Narrator: He has loosened his tie by exactly one inch, which is as close to disheveled as Skip Hartley has been on company property since 2019.
+  Skip Hartley: The Archive's downstairs. I'll be in my office when you get back.
+  end

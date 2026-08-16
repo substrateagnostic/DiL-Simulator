@@ -66,6 +66,9 @@ function printBeat(beat) {
 export function printScenes(scenes, comments = []) {
   const lines = [];
   const emittedComments = new Set();
+  const ensureBlank = () => {
+    if (lines.length && lines[lines.length - 1] !== '') lines.push('');
+  };
 
   for (let sceneIndex = 0; sceneIndex < scenes.length; sceneIndex += 1) {
     const scene = scenes[sceneIndex];
@@ -87,7 +90,8 @@ export function printScenes(scenes, comments = []) {
       lines.push(`  mode ${scene.modes[modeIndex]}`);
     }
 
-    for (const stmt of scene.stmts) {
+    for (let stmtIndex = 0; stmtIndex < scene.stmts.length; stmtIndex += 1) {
+      const stmt = scene.stmts[stmtIndex];
       for (let labelPosition = 0; labelPosition <= stmt.labels.length; labelPosition += 1) {
         lines.push(...commentsFor(
           comments,
@@ -96,7 +100,12 @@ export function printScenes(scenes, comments = []) {
           stmt,
           (anchor) => anchor.labelPosition === labelPosition,
         ));
-        if (labelPosition < stmt.labels.length) lines.push(`  @${stmt.labels[labelPosition]}`);
+        if (labelPosition < stmt.labels.length) {
+          const firstThingInScene = stmtIndex === 0 && labelPosition === 0;
+          const previousIsLabel = /^  @[A-Za-z0-9_]+$/.test(lines[lines.length - 1] ?? '');
+          if (!firstThingInScene && !previousIsLabel) ensureBlank();
+          lines.push(`  @${stmt.labels[labelPosition]}`);
+        }
       }
 
       if (stmt.kind === 'text') {
@@ -123,6 +132,7 @@ export function printScenes(scenes, comments = []) {
       } else if (stmt.kind === 'action') {
         lines.push(`  ${printAction(stmt)}`);
       } else if (stmt.kind === 'stage') {
+        ensureBlank();
         lines.push(`  stage${stmt.concurrent ? ' concurrent' : ''}`);
         for (const beat of stmt.beats) {
           lines.push(...commentsFor(comments, emittedComments, 'beat', beat));
@@ -139,6 +149,8 @@ export function printScenes(scenes, comments = []) {
         lines.push(`  goto ${stmt.next}`);
       }
     }
+
+    lines.push(...commentsFor(comments, emittedComments, 'scene-end', scene));
   }
 
   for (const comment of comments) {
