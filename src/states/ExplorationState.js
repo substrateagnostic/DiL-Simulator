@@ -36,7 +36,7 @@ import { ROOM_THOUGHTS, ROOM_THOUGHTS_BY_ACT, STORY_THOUGHTS } from '../data/tho
 import { SaveManager } from '../core/SaveManager.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
-import { DEV_MODE, MESHY_MODE } from '../utils/constants.js';
+import { DEV_MODE, LEGACY_DIALOG_ROUTES, MESHY_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
 import { SHOP_ITEMS } from '../data/shop.js';
 import { ROOM_AMBIENCE, pickAmbientCue, nextAmbientDelay } from '../data/ambience.js';
@@ -46,6 +46,7 @@ import { VaultKeypad } from '../ui/VaultKeypad.js';
 import { applyReviewPurchases } from '../data/review.js';
 import { GATES } from '../data/story/graph.js';
 import { actIndexFor, deriveFlags, questIdFor } from '../data/story/evaluator.js';
+import { resolveRoute } from '../data/story/route-eval.js';
 
 // Every renovation the shop sells, by the flag it sets on purchase. Derived
 // from SHOP_ITEMS rather than hand-listed so a new renovation joins the
@@ -195,6 +196,7 @@ export class ExplorationState {
     // `_getDialogId` and consumed by the `janitor_*_chosen` flag-set handlers.
     this._janitorBeatDialog = null;
     this._janitorRiddleDialog = null;
+    this._lastDialogRouteId = null;
     this._lastPromptHTML = null;
     this._nearbyExitTarget = { x: 0, z: 0, data: null };
     this._nearbyInteractableTarget = { x: 0, z: 0, data: null };
@@ -2781,6 +2783,121 @@ export class ExplorationState {
   }
 
   _getDialogId(npc, commit = false) {
+    if (LEGACY_DIALOG_ROUTES) {
+      this._lastDialogRouteId = 'legacy';
+      return this._getDialogIdLegacy(npc, commit);
+    }
+    return this._getDialogIdFromRoutes(npc, commit);
+  }
+
+  _getDialogIdFromRoutes(npc, commit = false) {
+    return resolveRoute(this._getDialogRouteContext(npc, commit));
+  }
+
+  _getDialogRouteContext(npc, commit) {
+    const id = npc.id;
+    const act = this.player.actIndex;
+    const f = (key) => this.player.getFlag(key);
+    let cachedAlexSideQuest;
+    const alexSideQuest = () => {
+      if (cachedAlexSideQuest === undefined) cachedAlexSideQuest = this._getAlexSideQuestDialog();
+      return cachedAlexSideQuest;
+    };
+    const stashJanitorRoutes = () => {
+      let riddle = null;
+      if (id === 'janitor' && act >= 3 && f('met_janitor') && f('read_janitor_act3')) {
+        if (!f('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) riddle = 'janitor_riddle_1';
+        else if (!f('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) riddle = 'janitor_riddle_2';
+        else if (!f('janitor_riddle_3_done') && DIALOGS.janitor_riddle_3) riddle = 'janitor_riddle_3';
+      }
+      this._janitorBeatDialog = npc.dialogId;
+      this._janitorRiddleDialog = riddle;
+      return true;
+    };
+
+    return {
+      npc, room: this.player.currentRoom, act, flags: this.player.flags,
+      dialogs: DIALOGS, commit,
+      predicates: {
+        npcHasDialogId: Boolean(npc.dialogId && npc.dialogId !== id && DIALOGS[npc.dialogId]),
+        stashJanitorRoutes,
+        alexMainPathPending: () => this._alexMainPathPending(),
+        sideQuestInProgress: () => (
+          (f('anomaly_started') && !f('quest_anomaly_347_complete'))
+          || (f('legacy_started') && !f('quest_legacy_admin_complete'))
+          || (f('network_started') && !f('quest_network_ghost_complete'))
+          || (f('dave_started') && !f('quest_daves_legacy_complete'))
+          || (f('printer_soul_started') && !f('quest_printer_soul_complete'))
+          || (f('final_patch_started') && !f('quest_final_patch_complete'))
+        ),
+        alexBadgeMissionWindow: !f('alex_badge_audit_complete') || !f(`read_alex_it_act${act}`),
+        alexSideAnomaly: () => alexSideQuest() === 'alex_it_quest_anomaly',
+        alexSideLegacy: () => alexSideQuest() === 'alex_it_quest_legacy',
+        alexSideNetwork: () => alexSideQuest() === 'alex_it_quest_network',
+        alexSideDave: () => alexSideQuest() === 'alex_it_quest_dave',
+        alexSidePrinter: () => alexSideQuest() === 'alex_it_quest_printer',
+        alexSideFinal: () => alexSideQuest() === 'alex_it_quest_final',
+      },
+      setFlag: (key, value) => this.player.setFlag(key, value),
+      ladder: () => this._resolveDialogLadder(npc),
+      onMatch: (rule) => { this._lastDialogRouteId = rule.id; },
+    };
+  }
+
+  _resolveDialogLadder(npc) {
+    const id = npc.id;
+    const act = this.player.actIndex;
+
+    // AN OUT-OF-BAND ACT ROW MUST FALL THROUGH, NOT BE NEUTRAL-SWAPPED.
+    // These rows are `act >= N`, but `dialogGating` caps an `_actN` dialog at
+    // quest stage N00-N99 — so `act >= 3 && !read_<id>_act3` kept returning
+    // `<id>_act3` at act 4, 5, 6 and 7, and `_getValidNpcDialogId` then
+    // silently substituted `neutral_<id>`. The `<id>_return` line four rows
+    // below was unreachable for the rest of the game, and the character read as
+    // broken: Alex from IT answered "Not a great time. Something is blinking
+    // that should not be blinking" forever if the 100%-missable Act-2 partition
+    // scene was skipped. `actRow` makes the row agree with the gate that judges
+    // it, so a stale act dialog falls through to `<id>_return` instead.
+    const actRow = (n) => DIALOGS[`${id}_act${n}`]
+      && isDialogValidForQuestStage(this.player, `${id}_act${n}`);
+    if (act >= 7 && actRow(7) && !this.player.getFlag(`read_${id}_act7`)) return `${id}_act7`;
+    if (act >= 6 && actRow(6) && !this.player.getFlag(`read_${id}_act6`)) return `${id}_act6`;
+    // THE MISSING RUNG (B-list). This ladder had rows for acts 7, 6, 4, 3 and 2
+    // and none for 5, so any dialog named `<npc>_act5` was structurally
+    // unreachable — a trap rather than a bug while no such dialog existed, and
+    // the reason Skip answers with `neutral_skip` through the whole of Act 5.
+    // Adding the rung costs nothing for a character with no act-5 scene
+    // (`actRow` returns falsy and it falls straight through) and makes the
+    // ladder continuous, so the next author to write one does not have to
+    // rediscover this the way the orphan-scenes dig did.
+    if (act >= 5 && actRow(5) && !this.player.getFlag(`read_${id}_act5`)) return `${id}_act5`;
+    if (act >= 4 && actRow(4) && !this.player.getFlag(`read_${id}_act4`)) return `${id}_act4`;
+    if (act >= 3 && actRow(3) && !this.player.getFlag(`read_${id}_act3`)) return `${id}_act3`;
+    // skip_act2 and janet_act2 both reference the Karen binder incident — hold them until Karen is defeated
+    if (act >= 1 && (id === 'skip' || id === 'janet') && !this.player.getFlag('karen_defeated') && !this.player.getFlag(`read_${id}_act2`)) {
+      if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
+      if (DIALOGS[`${id}_return`]) return `${id}_return`;
+    }
+    if (act >= 1 && actRow(2) && !this.player.getFlag(`read_${id}_act2`)) return `${id}_act2`;
+    // Gate team intros until the player has checked their desk
+    if (PRE_DESK_TEAM.includes(id) && !this.player.getFlag('checked_desk') && !this.player.getFlag(`read_${id}_intro`)) {
+      return 'team_pre_intro';
+    }
+    if (DIALOGS[`${id}_intro`] && !this.player.getFlag(`read_${id}_intro`)) return `${id}_intro`;
+    if (DIALOGS[`${id}_return`]) return `${id}_return`;
+    if (act >= 7 && actRow(7)) return `${id}_act7`;
+    if (act >= 6 && actRow(6)) return `${id}_act6`;
+    if (act >= 5 && actRow(5)) return `${id}_act5`;
+    if (act >= 4 && actRow(4)) return `${id}_act4`;
+    if (act >= 3 && actRow(3)) return `${id}_act3`;
+    if (act >= 1 && actRow(2)) return `${id}_act2`;
+    if (DIALOGS[`${id}_intro`]) return `${id}_intro`;
+    if (DIALOGS[id]) return id;
+
+    return id;
+  }
+
+  _getDialogIdLegacy(npc, commit = false) {
     const id = npc.id;
     const act = this.player.actIndex;
 

@@ -151,6 +151,12 @@ export const DEV_MODE = typeof window !== 'undefined'
   ? new URLSearchParams(window.location.search).has('dev')
   : false;
 
+// One-release A/B escape hatch for the P7 routing-table extraction.
+// Append ?routes=legacy to use ExplorationState._getDialogIdLegacy.
+export const LEGACY_DIALOG_ROUTES = typeof window !== 'undefined'
+  ? new URLSearchParams(window.location.search).get('routes') === 'legacy'
+  : false;
+
 // Meshy combat cast — ON BY DEFAULT (producer ruling, 08-01): the rigged
 // Meshy GLBs in public/meshy/ replace the procedural builds ON THE COMBAT
 // STAGE ONLY. Exploration is 100% procedural and is not affected by this flag.

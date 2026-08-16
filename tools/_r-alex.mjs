@@ -180,7 +180,14 @@ try {
         const n = nodes[i];
         if (n.type === 'end') break;
         if (n.type === 'action' && n.action === 'set_flag' && n.flag === 'server_secret_started') set = true;
-        if (n.type === 'condition') { i = flags[n.flag] ? n.ifTrue : n.ifFalse; continue; }
+        // `?? i + 1` is MANDATORY and this walker did not have it. DialogState
+        // resolves a missing ifTrue/ifFalse/next as fall-through (DialogState.js
+        // :303, :305, :193), and the P1 normalisation deleted every one of those
+        // fields that equalled index+1 — 513 of them. server_rack_inspect[5]
+        // lost `ifFalse: 6`, so this walk fell off the end at node 5 and check 6b
+        // has reported a failure that is not in the game since commit 333d306.
+        // Any harness that resolves an edge by hand must apply the same default.
+        if (n.type === 'condition') { i = (flags[n.flag] ? n.ifTrue : n.ifFalse) ?? i + 1; continue; }
         i = n.next !== undefined ? n.next : i + 1;
       }
       return set;

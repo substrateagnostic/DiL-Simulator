@@ -112,11 +112,16 @@ function evalExpr(expr, flags, ctx = {}) {
   }
 }
 
+// P7 added two route operators whose operands are NOT FLAGS: `dialogExists`
+// takes a scene id and `act` takes a comparator and a number. Without them in
+// this skip list check B reported 40+ phantom findings the first time
+// routes.js existed — scene ids, and the literal strings ">=", "==" and "<",
+// all reported as flags that nothing writes.
 function flagsReadByExpr(expr, out = new Set()) {
   if (typeof expr === 'string') out.add(expr);
   else if (Array.isArray(expr) && expr.length) {
     const [op, ...rest] = expr;
-    if (op === 'room' || op === 'npc' || op === 'npcDialogId') {
+    if (op === 'room' || op === 'npc' || op === 'npcDialogId' || op === 'dialogExists' || op === 'act') {
       return out;
     } else if (op === 'set' && rest[0] === 'RENOVATION_FLAGS') {
       for (const flag of ALL_RENOVATION_FLAGS) out.add(flag);
@@ -137,6 +142,9 @@ function negativeFlags(expr, negated = false, out = new Set()) {
   if (!Array.isArray(expr) || !expr.length) return out;
   const [op, ...rest] = expr;
   if (op === 'not') return negativeFlags(rest[0], !negated, out);
+  // Same non-flag operand rule as flagsReadByExpr: a scene id, an npc id, a
+  // room id and an act comparator are not flags and must not become findings.
+  if (op === 'room' || op === 'npc' || op === 'npcDialogId' || op === 'dialogExists' || op === 'act') return out;
   for (const term of rest) negativeFlags(term, negated, out);
   return out;
 }
@@ -894,6 +902,19 @@ function triExpr(expr, assignment, ctx) {
   if (op === 'room') return ctx.room === rest[0];
   if (op === 'npc') return ctx.npc === rest[0];
   if (op === 'npcDialogId') return ctx.npcDialogId === rest[0];
+  // `dialogExists` and `act` are CONCRETE in this model, not free variables:
+  // the compiled corpus is fixed, and the act index is enumerated 0-7 by the
+  // caller's context loop. Modelling them as free booleans instead would let
+  // the solver satisfy `act >= 6` and `act < 6` at once and quietly under-report
+  // shadowing, which is the failure mode a shadow check exists to avoid.
+  if (op === 'dialogExists') return Boolean(ctx.dialogs?.[rest[0]]);
+  if (op === 'act') {
+    const value = Number(ctx.act ?? 0);
+    if (rest[0] === '>=') return value >= rest[1];
+    if (rest[0] === '==') return value === rest[1];
+    if (rest[0] === '<') return value < rest[1];
+    return undefined;
+  }
   if (op === 'pred') {
     const key = `@pred:${rest[0]}`;
     return assignment.has(key) ? assignment.get(key) : undefined;
@@ -907,7 +928,10 @@ function triExpr(expr, assignment, ctx) {
 function satAtoms(expr, out = new Set()) {
   if (typeof expr === 'string') out.add(expr);
   else if (Array.isArray(expr) && expr.length) {
-    if (expr[0] === 'pred') out.add(`@pred:${expr[1]}`);
+    const op = expr[0];
+    // Everything triExpr resolves from the CONTEXT is not a search variable.
+    if (op === 'room' || op === 'npc' || op === 'npcDialogId' || op === 'dialogExists' || op === 'act') return out;
+    if (op === 'pred') out.add(`@pred:${expr[1]}`);
     else for (const term of expr.slice(1)) satAtoms(term, out);
   }
   return out;
@@ -919,48 +943,109 @@ function filtersCompatible(earlier, target, ctx) {
   return true;
 }
 
-function ruleHasUnshadowedAssignment(routes, index) {
+// CHECK G IS A SAT PROBLEM AND MUST NOT BE BRANCHED IN A FIXED VARIABLE ORDER.
+// Measured on the shipped 65-row table the moment P7 landed: the terminal
+// `act-ladder` row has 64 earlier compatible rules and 151 distinct atoms
+// between them, so a fixed order is a 2^151 search — the tool ran for over ten
+// minutes without finishing, on a check that had been wired into `npm run
+// check`. A gate that does not terminate is worse than no gate.
+//
+// The fix is variable RELEVANCE: only ever branch on an atom belonging to a
+// constraint that is currently undecided — the target while its value is
+// unknown, otherwise the first competitor still unknown — so every decision
+// resolves something instead of wandering through irrelevant flags. A decision
+// budget backstops it, and exhausting it is reported as a FAILURE that says
+// "could not decide", never as a silent pass.
+const G_DECISION_BUDGET = 200000;
+
+function firstUndeterminedAtom(expr, assignment) {
+  for (const atom of satAtoms(expr)) if (!assignment.has(atom)) return atom;
+  return null;
+}
+
+const G_ACT_CONTEXTS = [0, 1, 2, 3, 4, 5, 6, 7];
+
+// Every `['npcDialogId', X]` literal anywhere in the table, plus "no hardcoded
+// dialogId". Pinning this to null instead — which is what the first cut did —
+// makes every rule that reads a room entry's hardcoded dialogId permanently
+// unsatisfiable, and check G then reports the three Janitor rows and the
+// intro bypass as shadowed when they are nothing of the kind.
+function npcDialogIdContexts(routes) {
+  const out = new Set([null]);
+  const walk = expr => {
+    if (!Array.isArray(expr) || !expr.length) return;
+    if (expr[0] === 'npcDialogId') { out.add(expr[1]); return; }
+    for (const term of expr.slice(1)) walk(term);
+  };
+  for (const route of routes) walk(route.when);
+  return [...out];
+}
+
+function ruleHasUnshadowedAssignment(routes, index, dialogs) {
   const target = routes[index];
   const earlier = routes.slice(0, index);
   const npcContexts = target.npc ? [target.npc] : [...new Set([null, '__other__', ...routes.map(route => route.npc).filter(Boolean)])];
   const roomContexts = target.room ? [target.room] : [...new Set([null, '__other__', ...routes.map(route => route.room).filter(Boolean)])];
+  const dialogIdContexts = npcDialogIdContexts(routes);
+  let budget = G_DECISION_BUDGET;
+  let exhausted = false;
 
-  for (const npc of npcContexts) for (const room of roomContexts) {
-    const ctx = { npc, room, npcDialogId: null };
+  for (const npc of npcContexts) for (const room of roomContexts) for (const act of G_ACT_CONTEXTS) for (const npcDialogId of dialogIdContexts) {
+    const ctx = { npc, room, act, dialogs, npcDialogId };
     const competitors = earlier.filter(rule => filtersCompatible(rule, target, ctx));
-    const atoms = new Set(satAtoms(target.when ?? true));
-    for (const rule of competitors) for (const atom of satAtoms(rule.when ?? true)) atoms.add(atom);
-    const vars = [...atoms];
     const assignment = new Map();
-    const search = position => {
+    const search = () => {
+      if (budget <= 0) { exhausted = true; return false; }
+      budget -= 1;
       const targetValue = triExpr(target.when ?? true, assignment, ctx);
       if (targetValue === false) return false;
-      if (competitors.some(rule => triExpr(rule.when ?? true, assignment, ctx) === true)) return false;
-      if (targetValue === true && competitors.every(rule => triExpr(rule.when ?? true, assignment, ctx) === false)) return true;
-      if (position >= vars.length) return false;
-      const variable = vars[position];
+      let pending = null;
+      for (const rule of competitors) {
+        const value = triExpr(rule.when ?? true, assignment, ctx);
+        if (value === true) return false;
+        if (value === undefined && pending === null) pending = rule;
+      }
+      if (targetValue === true && pending === null) return true;
+      const source = targetValue === undefined ? (target.when ?? true) : (pending.when ?? true);
+      const variable = firstUndeterminedAtom(source, assignment);
+      if (variable === null) return false;
       assignment.set(variable, false);
-      if (search(position + 1)) return true;
+      if (search()) return true;
       assignment.set(variable, true);
-      if (search(position + 1)) return true;
+      if (search()) return true;
       assignment.delete(variable);
       return false;
     };
-    if (search(0)) return true;
+    if (search()) return { ok: true, exhausted: false };
   }
-  return false;
+  return { ok: false, exhausted };
 }
 
 function checkG(model) {
-  if (!model.dialogRoutes) return { findings: [], notice: 'NOT IMPLEMENTED / NO-OP: src/data/story/routes.js is absent (P7); legacy route reads/scenes are still harvested for Checks B/C.' };
+  if (!model.dialogRoutes) return { findings: [], waivers: [], notice: 'NOT IMPLEMENTED / NO-OP: src/data/story/routes.js is absent (P7); legacy route reads/scenes are still harvested for Checks B/C.' };
   const findings = [];
+  const waivers = [];
   for (let index = 0; index < model.dialogRoutes.length; index += 1) {
     const route = model.dialogRoutes[index];
-    if (!ruleHasUnshadowedAssignment(model.dialogRoutes, index)) {
-      findings.push(finding('G', route.id || `route-${index}`, `Route ${route.id || index} is shadowed: no satisfying assignment lets it fire before all earlier compatible rules.`, route.src || 'src/data/story/routes.js'));
+    const verdict = ruleHasUnshadowedAssignment(model.dialogRoutes, index, model.dialogs);
+    if (verdict.ok) continue;
+    const where = route.src || 'src/data/story/routes.js';
+    // A row may carry `shadowed: '<reason>'` when it is a FAITHFUL transcription
+    // of a branch that is already dead in the shipped function. It is reported
+    // by name on every run, exactly like a trigger waiver, so the count can only
+    // go down — it is never silently swallowed, and it never applies to a row
+    // whose deadness the exhaustion path could not decide.
+    if (route.shadowed && !verdict.exhausted) {
+      waivers.push(`WAIVER G SHADOWED ${route.id || `route-${index}`} (${where}): ${route.shadowed}`);
+      continue;
+    }
+    if (verdict.exhausted) {
+      findings.push(finding('G', route.id || `route-${index}`, `Route ${route.id || index} could not be decided within ${G_DECISION_BUDGET} decisions. This is NOT a pass — raise the budget or simplify the rule.`, where));
+    } else {
+      findings.push(finding('G', route.id || `route-${index}`, `Route ${route.id || index} is shadowed: no satisfying assignment lets it fire before all earlier compatible rules.`, where));
     }
   }
-  return { findings, notice: null };
+  return { findings, waivers, notice: null };
 }
 
 function runChecks(model, startFlags = []) {
@@ -976,7 +1061,7 @@ function runChecks(model, startFlags = []) {
     F: checkF(model, closure),
     G: g.findings,
   };
-  return { closure, checks, notices: g.notice ? [g.notice] : [] };
+  return { closure, checks, notices: g.notice ? [g.notice] : [], routeWaivers: g.waivers || [] };
 }
 
 function reportFor(model, result) {
@@ -1002,6 +1087,7 @@ function reportFor(model, result) {
       name: CHECK_NAMES[id], status: id === 'G' && result.notices.length ? 'NOT IMPLEMENTED' : rows.length ? 'FAIL' : 'PASS', findings: rows,
     }])),
     notices: result.notices,
+    routeWaivers: result.routeWaivers || [],
     exceptions: {
       triggerWaivers: waiverRows.map(trigger => ({ id: trigger.id, waiver: trigger.waiver, once: trigger.once, src: trigger.src, note: trigger.note })),
       neverSet: neverRows,
@@ -1047,7 +1133,8 @@ function formatReport(report) {
   for (const row of report.exceptions.triggerWaivers) {
     lines.push(`WAIVER E ${row.waiver} [${row.id}, ${row.once}] ${row.src}: ${row.note}`);
   }
-  lines.push(`SUMMARY: ${report.counts.failures} failure(s); ${report.counts.triggerWaivers} trigger waiver row(s); ${report.counts.neverSet} NEVER_SET row(s); ${report.counts.sceneCut} CUT disposition(s); ${report.counts.sceneRestore} RESTORE disposition(s).`);
+  for (const row of report.routeWaivers || []) lines.push(row);
+  lines.push(`SUMMARY: ${report.counts.failures} failure(s); ${report.counts.triggerWaivers} trigger waiver row(s); ${(report.routeWaivers || []).length} shadowed-route waiver row(s); ${report.counts.neverSet} NEVER_SET row(s); ${report.counts.sceneCut} CUT disposition(s); ${report.counts.sceneRestore} RESTORE disposition(s).`);
   lines.push(`HONEST LIMIT: ${report.limitation}`);
   lines.push(report.ok ? 'RESULT: GREEN' : 'RESULT: RED');
   return lines.join('\n');
