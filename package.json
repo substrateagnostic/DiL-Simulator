@@ -10,8 +10,10 @@
     "editor": "node scripts/editor.js",
     "shoot": "node tools/shoot.mjs",
     "perf": "node tools/perf-harness.mjs",
+    "dialogs:build": "node tools/dlg/generate.mjs",
+    "dialogs:check": "node tools/dlg/generate.mjs --check",
     "validate:data": "node scripts/validate-data.mjs",
-    "check": "npm run validate:data && npm run build",
+    "check": "npm run dialogs:check && npm run validate:data && npm run build",
     "package:itch": "node scripts/package-itch.mjs"
   },
   "keywords": [],

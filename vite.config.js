@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
+import dlgPlugin from './tools/dlg/vite-plugin-dlg.mjs';
 
 export default defineConfig({
   root: '.',
   publicDir: 'public',
+  plugins: [dlgPlugin()],
   server: {
     port: 5173,
     open: true

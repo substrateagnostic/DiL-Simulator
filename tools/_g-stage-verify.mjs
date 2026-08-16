@@ -24,11 +24,30 @@ const REPO = path.resolve(import.meta.dirname, '..');
 const REF = process.argv[2] || 'HEAD';
 const TMP = path.join(REPO, '.stage-verify-tmp');
 
+// A node signature must not depend on JSON KEY ORDER. `src/data/dialogs/index.js`
+// is a generated artifact as of the P4 build cutover, and a canonical emitter
+// writes `{type,speaker,text,mood}` where a hand-written line happened to write
+// `{type,speaker,mood,text}`. Measured across the cutover: 58 of 3,392 nodes
+// changed key order and NOTHING else — 56 stage nodes (`next` after `beats`) and
+// 2 text nodes (`mood` after `text`) — with an independent order-insensitive
+// deep-equal returning true for all 292 trees. Sorting here removes a false
+// positive and removes no teeth: a node with a different key SET or a different
+// VALUE still differs.
+const stable = (v) => {
+  if (Array.isArray(v)) return v.map(stable);
+  if (v && typeof v === 'object') {
+    const out = {};
+    for (const k of Object.keys(v).sort()) out[k] = stable(v[k]);
+    return out;
+  }
+  return v;
+};
+
 function sig(n) {
   const c = { ...n };
   delete c.next; delete c.ifTrue; delete c.ifFalse; delete c.fallback;
   if (Array.isArray(c.choices)) c.choices = c.choices.map(ch => { const d = { ...ch }; delete d.next; return d; });
-  return JSON.stringify(c);
+  return JSON.stringify(stable(c));
 }
 
 // Every index a node can jump to, in declaration order.

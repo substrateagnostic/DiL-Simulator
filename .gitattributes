@@ -9,3 +9,10 @@
 *.jpg binary
 *.webm binary
 *.mp4 binary
+
+# The dialog corpus and its generated artifact are byte-compared by
+# `npm run dialogs:check`. With core.autocrlf=true a fresh checkout would
+# rewrite them to CRLF and the byte comparison would fail on a clean tree.
+src/data/dialogs/index.js text eol=lf
+src/data/dialogs/dialogs.lock.json text eol=lf
+*.dlg text eol=lf
