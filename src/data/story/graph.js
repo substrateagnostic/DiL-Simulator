@@ -188,9 +188,10 @@ export const GATES = [
   },
 ];
 
-// Declaration-only in P6. ExplorationState remains authoritative until P8.
-// `once` records what the code does today; every legacy persisted latch carries
-// a named waiver so the simulator can keep the debt visible.
+// Trigger timing and routing remain beside their shipping call sites in
+// ExplorationState, but this table owns every once-predicate. `once: 'scene'`
+// means the runtime reads `read_<scene>`; DialogState writes that flag only
+// after the scene has actually shown a node.
 export const TRIGGERS = [
   {
     id: 'legal-ending-first-entry', on: 'room-entered', room: 'executive_floor',
@@ -243,25 +244,24 @@ export const TRIGGERS = [
   },
   {
     id: 'archive-security-entry', on: 'room-entered', room: 'archive',
-    when: true, once: 'flag:visited_archive', scene: 'security_guard_combat', delayMs: 800,
+    when: true, once: 'scene', scene: 'security_guard_combat', delayMs: 800,
     grants: ['security_guard_info'], src: 'ExplorationState.js:776',
-    waiver: 'archive-security-npc-fallback',
-    note: 'Legacy first-visit latch is spent before the delayed push, but an undefeated Security Guard remains a direct NPC route in the Archive.',
+    note: 'visited_archive and archive_found are still written as records; read_security_guard_combat is the once-guard.',
   },
   {
     id: 'data-analytics-duo-entry', on: 'room-entered', room: 'executive_floor',
     when: ['all', 'corporate_lawyer_defeated', ['not', 'act5_complete']],
-    once: 'flag:data_lead_fight_started', scene: 'data_analytics_duo_intro', delayMs: 800,
+    once: 'scene', scene: 'data_analytics_duo_intro', delayMs: 800,
     grants: ['data_lead_defeated', 'cfos_assistant_duo_defeated'],
-    src: 'ExplorationState.js:795', waiver: 'unfinished-scene-runtime-reconciler',
-    note: 'Persisted pre-push latch; UNFINISHED_SCENE_LATCHES clears it on load and defeat until P8 converts the trigger.',
+    src: 'ExplorationState.js:795',
+    note: 'data_lead_fight_started is still written as a record; read_data_analytics_duo_intro is the once-guard.',
   },
   {
     id: 'alex-it-recruit-entry', on: 'room-entered', room: 'server_room',
-    when: 'restructuring_trio_defeated', once: 'flag:alex_it_recruit_offered',
+    when: 'restructuring_trio_defeated', once: 'scene',
     scene: 'alex_it_recruit', delayMs: 800, grants: ['alex_it_recruited'],
-    src: 'ExplorationState.js:805', waiver: 'alex-it-remains-an-npc',
-    note: 'The offer latch is spent before the delayed push; Alex remains directly interactable and the latch grants no critical-path flag.',
+    src: 'ExplorationState.js:805',
+    note: 'alex_it_recruit_offered is still written as a record; read_alex_it_recruit is the once-guard.',
   },
   {
     id: 'meredith-board-entry', on: 'room-entered', room: 'board_room',
@@ -272,34 +272,33 @@ export const TRIGGERS = [
   },
   {
     id: 'penthouse-arrival', on: 'room-entered', room: 'penthouse',
-    when: 'act6_complete', once: 'flag:penthouse_entered', scene: 'penthouse_arrival',
+    when: 'act6_complete', once: 'scene', scene: 'penthouse_arrival',
     delayMs: 800, grants: [], src: 'ExplorationState.js:831',
-    waiver: 'arrival-is-flavour-and-combat-has-room-routes',
-    note: 'Legacy pre-push latch can lose the arrival card, but it grants no progression and both penthouse combatants have direct NPC routes.',
+    note: 'penthouse_entered is still written as a record and chains the CFO encounter; read_penthouse_arrival is the once-guard.',
   },
   {
     id: 'act5-restructuring', on: 'update', room: 'cubicle_farm',
     when: ['all', 'has_charter', 'act3_complete', ['not', 'act4_complete']],
     once: 'scene', scene: 'act5_trigger', delayMs: 800,
     grants: ['act4_complete', 'janet_recruited'], src: 'ExplorationState.js:3483',
-    note: 'CURRENT FIXED SHAPE: !act4_complete is the persisted guard and _act5Pushed is session-only/re-armed on room exit. act5_triggered is still written but never read in normal play; this is scene-equivalent and is not a live waiver.',
+    note: 'read_act5_trigger is the persisted once-guard and _act5Pushed is session-only/re-armed on room exit. act5_triggered is still written as a record but never read in normal play.',
   },
   {
     id: 'restructuring-trio-update', on: 'update', room: 'cubicle_farm',
     when: ['all', 'act4_complete', ['not', 'act5_complete'], ['not', 'restructuring_trio_defeated']],
-    once: 'flag:restructuring_trio_started', scene: 'restructuring_trio_intro', delayMs: 1200,
+    once: 'scene', scene: 'restructuring_trio_intro', delayMs: 1200,
     grants: ['restructuring_trio_defeated', 'brand_consultant_defeated',
       'restructuring_defeated', 'corporate_lawyer_defeated'],
-    src: 'ExplorationState.js:4319', waiver: 'unfinished-scene-runtime-reconciler',
-    note: 'Persisted pre-push latch; UNFINISHED_SCENE_LATCHES clears it on load and defeat until P8 converts the trigger.',
+    src: 'ExplorationState.js:4319',
+    note: 'restructuring_trio_started is still written as a record; read_restructuring_trio_intro is the once-guard.',
   },
   {
     id: 'chief-restructuring-update', on: 'update', room: 'executive_floor',
-    when: 'data_lead_defeated', once: 'flag:chief_fight_started',
+    when: 'data_lead_defeated', once: 'scene',
     scene: 'chief_restructuring_combat', delayMs: 2000,
     grants: ['chief_restructuring_defeated', 'board_room_accessible'],
-    src: 'ExplorationState.js:4331', waiver: 'unfinished-scene-runtime-reconciler',
-    note: 'Persisted pre-push latch; UNFINISHED_SCENE_LATCHES clears it on load and defeat until P8 converts the trigger.',
+    src: 'ExplorationState.js:4331',
+    note: 'chief_fight_started is still written as a record; read_chief_restructuring_combat is the once-guard.',
   },
   {
     id: 'charter-certification-block', on: 'room-blocked', room: 'penthouse',
@@ -316,50 +315,45 @@ export const TRIGGERS = [
   },
   {
     id: 'karen-first-loss', on: 'flag-set', flag: 'retry_karen',
-    when: ['not', 'defeated_karen'], once: 'flag:retry_karen',
+    when: ['not', 'defeated_karen'], once: 'scene',
     scene: 'karen_first_loss_tutorial', delayMs: 1200, grants: [],
-    src: 'ExplorationState.js:1526', waiver: 'scripted-loss-callback',
-    note: 'The push is in the scripted first-loss callback immediately after retry_karen is written; it is not replayed from a persisted flag, but the tutorial grants no progression and Karen remains routed.',
+    src: 'ExplorationState.js:1526',
+    note: 'retry_karen remains the loss record and event source; read_karen_first_loss_tutorial is the once-guard.',
   },
   {
     id: 'firm-ambush-chain', on: 'flag-set', flag: 'has_recorder_seal',
-    when: true, once: 'flag:has_recorder_seal', scene: 'the_firm_ambush', delayMs: 500,
+    when: true, once: 'scene', scene: 'the_firm_ambush', delayMs: 500,
     grants: ['charter_certified'], src: 'ExplorationState.js:523',
-    waiver: 'legacy-flag-event-chain',
-    note: 'The persisted seal flag is also the event latch; a reload does not replay the event. P6 records this live debt for P8.',
+    note: 'has_recorder_seal remains the event source; read_the_firm_ambush is the once-guard and permits interrupted-event replay.',
   },
   {
     id: 'cfos-assistant-chain', on: 'flag-set', flag: 'penthouse_entered',
-    when: true, once: 'flag:penthouse_entered', scene: 'cfos_assistant_combat', delayMs: 500,
+    when: true, once: 'scene', scene: 'cfos_assistant_combat', delayMs: 500,
     grants: ['cfos_defeated'], src: 'ExplorationState.js:527',
-    waiver: 'penthouse-npc-fallback',
-    note: 'The flag event queues the fight, while the CFO assistant also remains a direct NPC route in both penthouse layouts.',
+    note: 'penthouse_entered remains the event source; read_cfos_assistant_combat is the once-guard.',
   },
   {
     id: 'regional-director-chain', on: 'flag-set', flag: 'cfos_defeated',
-    when: true, once: 'flag:cfos_defeated', scene: 'regional_director_combat', delayMs: 500,
+    when: true, once: 'scene', scene: 'regional_director_combat', delayMs: 500,
     grants: ['regional_director_defeated'], src: 'ExplorationState.js:531',
-    waiver: 'penthouse-npc-fallback',
-    note: 'The flag event queues the fight, while the Regional Director also remains a direct NPC route in both penthouse layouts.',
+    note: 'cfos_defeated remains the event source; read_regional_director_combat is the once-guard.',
   },
   {
     id: 'algorithm-chain', on: 'flag-set', flag: 'regional_director_defeated',
-    when: true, once: 'flag:regional_director_defeated', scene: 'algorithm_combat', delayMs: 500,
+    when: true, once: 'scene', scene: 'algorithm_combat', delayMs: 500,
     grants: ['algorithm_defeated'], src: 'ExplorationState.js:534',
-    waiver: 'algorithm-terminal-fallback',
-    note: 'The flag event queues the fight; algorithm_terminal independently routes the same combat while the Algorithm is undefeated.',
+    note: 'regional_director_defeated remains the event source; read_algorithm_combat is the once-guard.',
   },
   ...['cooperative', 'compromise', 'dissolution', 'architect'].map((ending, index) => ({
     id: `ending-${ending}-chain`, on: 'flag-set', flag: `ending_${ending}`,
-    when: true, once: `flag:ending_${ending}`, scene: `ending_${ending}`, delayMs: 500,
+    when: true, once: 'scene', scene: `ending_${ending}`, delayMs: 500,
     grants: [], src: `ExplorationState.js:${465 + index * 6}`,
-    waiver: 'legacy-ending-flag-event',
-    note: 'The Algorithm post-dialog writes the ending choice before this delayed push; persisted flags are not replayed after interruption. P6 records the live debt for P8.',
+    note: `The ending choice remains the event source; the ending scene's read flag is the once-guard.`,
   })),
   ...['cooperative', 'compromise', 'dissolution', 'architect'].map(ending => ({
     id: `post-credits-after-${ending}`, on: 'flag-set', flag: `read_ending_${ending}`,
-    when: true, once: `flag:read_ending_${ending}`, scene: 'post_credits', delayMs: 2000,
-    grants: [], src: 'ExplorationState.js:489', waiver: 'legacy-post-credits-flag-event',
-    note: 'Completion of any ending schedules post_credits from a persisted read flag event; a reload does not replay the event.',
+    when: true, once: 'scene', scene: 'post_credits', delayMs: 2000,
+    grants: [], src: 'ExplorationState.js:489',
+    note: 'The ending read remains the event source; read_post_credits is the shared once-guard.',
   })),
 ];

@@ -57,6 +57,14 @@ const arm = () => page.evaluate(async () => {
   ex.player.flags.archive_found = true;
   ex.player.flags.security_guard_info = true;
   ex.player.flags.defeated_security_guard = true;
+  // P8 moved the archive-security trigger's once-guard off `visited_archive`
+  // and onto the scene's own `read_security_guard_combat`, so a fixture that
+  // suppressed it with the old record flag stopped suppressing it and the
+  // guard fight landed on top of the leg under test. Real saves are unaffected:
+  // DialogState._endDialog has written read_<dialogId> for every dialog that
+  // showed a node since the game shipped, so any save that actually saw this
+  // scene carries the flag. A fixture that skips a scene must set its read flag.
+  ex.player.flags.read_security_guard_combat = true;
   delete ex.player.flags.act4_complete;
   delete ex.player.flags.act5_triggered;
   ex._act5Pushed = false;

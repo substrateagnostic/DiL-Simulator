@@ -44,8 +44,8 @@ import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
 import { showDevPanel } from '../ui/DevPanel.js';
 import { VaultKeypad } from '../ui/VaultKeypad.js';
 import { applyReviewPurchases } from '../data/review.js';
-import { GATES } from '../data/story/graph.js';
-import { actIndexFor, deriveFlags, questIdFor } from '../data/story/evaluator.js';
+import { GATES, TRIGGERS } from '../data/story/graph.js';
+import { actIndexFor, deriveFlags, evalExpr, questIdFor } from '../data/story/evaluator.js';
 import { resolveRoute } from '../data/story/route-eval.js';
 
 // Every renovation the shop sells, by the flag it sets on purchase. Derived
@@ -65,13 +65,16 @@ const INTERACTION_OFFSETS = [
 
 const PRE_DESK_TEAM = ['janet', 'intern', 'isaiah', 'alex_it'];
 
+const STORY_TRIGGER_BY_ID = new Map(TRIGGERS.map(trigger => [trigger.id, trigger]));
+const FLAG_SET_STORY_TRIGGERS = TRIGGERS.filter(trigger => trigger.on === 'flag-set');
+
 // Where `_loadRoom` lands when the requested room does not exist in this build.
 // Matches `Player.deserialize`'s own default for a save with no `currentRoom`.
 const FALLBACK_ROOM = 'parking_garage';
 
 // ── UNFINISHED-SCENE LATCHES ────────────────────────────────────────────────
-// Every code-side story push in this file spends its latch BEFORE the dialog it
-// guards has run — `setFlag(started)` and then `setTimeout(push, 800…1200)` —
+// Before P8, code-side story pushes spent their latches BEFORE the guarded
+// dialog had run — `setFlag(started)` and then `setTimeout(push, 800…1200)` —
 // and the game AUTO-SAVES inside that window (`_changeRoom` ends with
 // `_autoSave`, `_handleDefeat` calls it synchronously). So a quit, a crash or a
 // closed tab banks "this scene has happened" for a scene that did not happen;
@@ -90,18 +93,31 @@ const FALLBACK_ROOM = 'parking_garage';
 // Meredith is never fought — Acts 5, 6 and 7 are unreachable while the world
 // still lets the player walk everywhere they had already unlocked.
 //
-// The table is shared now, and it is reconciled at LOAD as well as on defeat.
-// A row belongs here only when `done` is set by the scene `started` guards and
-// nothing else in the game can serve that scene.
-export const UNFINISHED_SCENE_LATCHES = [
-  { started: 'act5_triggered',                 done: 'act4_complete' },
-  { started: 'restructuring_trio_started',     done: 'restructuring_trio_defeated' },
-  { started: 'brand_consultant_fight_started', done: 'brand_consultant_defeated' },
-  { started: 'restructuring_fight_started',    done: 'restructuring_defeated' },
-  { started: 'data_lead_fight_started',        done: 'data_lead_defeated' },
-  { started: 'chief_fight_started',            done: 'chief_restructuring_defeated' },
-  { started: 'meredith_fight_started',         done: 'act5_complete' },
-];
+// The legacy repair remains active at LOAD and on defeat, while current debt
+// is derived below from the trigger graph.
+// Current unfinished-latch debt is derived from the graph, never hand-kept.
+// P8 converted every waived trigger to `once: 'scene'`, so this is empty; a
+// future `once: 'flag:X'` + grants row will appear here automatically.
+export const UNFINISHED_SCENE_LATCHES = Object.freeze(TRIGGERS
+  .filter(trigger => trigger.once?.startsWith('flag:') && trigger.grants?.length)
+  .map(trigger => Object.freeze({
+    started: trigger.once.slice(5),
+    done: trigger.grants[0],
+  })));
+
+// CLOSED LEGACY MIGRATION TABLE. These seven rows describe saves written
+// before scene-owned once guards shipped; never add current trigger state here.
+// `_reconcileSceneLatches()` intentionally keeps running over this frozen list
+// so a pre-P8 save banked inside a delay window still recovers on load/defeat.
+export const LEGACY_SCENE_LATCHES = Object.freeze([
+  Object.freeze({ started: 'act5_triggered',                 done: 'act4_complete' }),
+  Object.freeze({ started: 'restructuring_trio_started',     done: 'restructuring_trio_defeated' }),
+  Object.freeze({ started: 'brand_consultant_fight_started', done: 'brand_consultant_defeated' }),
+  Object.freeze({ started: 'restructuring_fight_started',    done: 'restructuring_defeated' }),
+  Object.freeze({ started: 'data_lead_fight_started',        done: 'data_lead_defeated' }),
+  Object.freeze({ started: 'chief_fight_started',            done: 'chief_restructuring_defeated' }),
+  Object.freeze({ started: 'meredith_fight_started',         done: 'act5_complete' }),
+]);
 
 const QUEST_OBJECTIVES = {
   main_act1: {
@@ -192,6 +208,10 @@ export class ExplorationState {
     this.nearestInteractable = null;
     this._pendingCombat = null;
     this._pendingDialog = null;
+    // Session-only reservations cover the delay between deciding to serve a
+    // graph trigger and pushing its DialogState. They are deliberately absent
+    // from saves; `read_<scene>` is the only persisted once-latch.
+    this._storyTriggerClaims = new Set();
     // Archive-Janitor router destinations. Recomputed every frame by
     // `_getDialogId` and consumed by the `janitor_*_chosen` flag-set handlers.
     this._janitorBeatDialog = null;
@@ -464,37 +484,15 @@ export class ExplorationState {
           this._showToast('The Penthouse awaits. Face The Algorithm.', 'objective');
         }
         // Ending triggers — show appropriate ending dialog after Algorithm defeated
-        if (key === 'ending_cooperative' && DIALOGS.ending_cooperative) {
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['ending_cooperative'], this.player, this.stateManager, 'ending_cooperative');
-            this.stateManager.push(dialogState);
-          }, 500);
-        }
-        if (key === 'ending_compromise' && DIALOGS.ending_compromise) {
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['ending_compromise'], this.player, this.stateManager, 'ending_compromise');
-            this.stateManager.push(dialogState);
-          }, 500);
-        }
-        if (key === 'ending_dissolution' && DIALOGS.ending_dissolution) {
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['ending_dissolution'], this.player, this.stateManager, 'ending_dissolution');
-            this.stateManager.push(dialogState);
-          }, 500);
-        }
-        if (key === 'ending_architect' && DIALOGS.ending_architect) {
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['ending_architect'], this.player, this.stateManager, 'ending_architect');
-            this.stateManager.push(dialogState);
-          }, 500);
-        }
+        if (key === 'ending_cooperative') this._scheduleStoryTrigger('ending-cooperative-chain');
+        if (key === 'ending_compromise') this._scheduleStoryTrigger('ending-compromise-chain');
+        if (key === 'ending_dissolution') this._scheduleStoryTrigger('ending-dissolution-chain');
+        if (key === 'ending_architect') this._scheduleStoryTrigger('ending-architect-chain');
         // Post-credits: fires after ANY ending dialog completes (via read_ flag)
-        if ((key === 'read_ending_cooperative' || key === 'read_ending_compromise' || key === 'read_ending_dissolution' || key === 'read_ending_architect') && DIALOGS.post_credits) {
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['post_credits'], this.player, this.stateManager, 'post_credits');
-            this.stateManager.push(dialogState);
-          }, 2000);
-        }
+        if (key === 'read_ending_cooperative') this._scheduleStoryTrigger('post-credits-after-cooperative');
+        if (key === 'read_ending_compromise') this._scheduleStoryTrigger('post-credits-after-compromise');
+        if (key === 'read_ending_dissolution') this._scheduleStoryTrigger('post-credits-after-dissolution');
+        if (key === 'read_ending_architect') this._scheduleStoryTrigger('post-credits-after-architect');
         // Arcade minigame launch — hide the exploration HUD while playing.
         // The `&& value` guard is load-bearing: the next line clears the
         // flag, which re-emits `flag-set` with the SAME key, and without
@@ -524,17 +522,17 @@ export class ExplorationState {
         }
         // Act 6½: pulling the seal from box 0001 triggers The Firm's ambush
         if (key === 'has_recorder_seal') {
-          this._pendingDialog = 'the_firm_ambush';
+          this._queuePendingStoryTrigger('firm-ambush-chain');
         }
         // Penthouse encounters chain: CFO's assistant → Regional Director → Algorithm
         if (key === 'penthouse_entered') {
-          this._pendingDialog = 'cfos_assistant_combat';
+          this._queuePendingStoryTrigger('cfos-assistant-chain');
         }
         if (key === 'cfos_defeated') {
-          this._pendingDialog = 'regional_director_combat';
+          this._queuePendingStoryTrigger('regional-director-chain');
         }
         if (key === 'regional_director_defeated') {
-          this._pendingDialog = 'algorithm_combat';
+          this._queuePendingStoryTrigger('algorithm-chain');
         }
         // Act 6 → 7 transition: board heard + rolex = penthouse unlocks.
         // The toast no longer claims the team is assembled — since the board
@@ -776,15 +774,10 @@ export class ExplorationState {
         }
 
         // Archive: first visit triggers security guard encounter
-        if (roomId === 'archive' && !this.player.getFlag('visited_archive')) {
+        if (roomId === 'archive' && this._storyTriggerOnceAvailable('archive-security-entry')) {
           this.player.setFlag('visited_archive');
           this.player.setFlag('archive_found');
-          if (DIALOGS.security_guard_combat) {
-            setTimeout(() => {
-              const dialogState = new DialogState(DIALOGS['security_guard_combat'], this.player, this.stateManager, 'security_guard_combat');
-              this.stateManager.push(dialogState);
-            }, 800);
-          }
+          this._scheduleStoryTrigger('archive-security-entry');
         }
 
         // (The Act-5 entry cutscene used to live here, as a one-shot
@@ -796,24 +789,17 @@ export class ExplorationState {
 
         // Gauntlet fight 4: Data Analytics Duo — Lead + CFO's Assistant on executive floor
         // (replaces the solo Data Analytics Lead encounter; party from player.party comes along)
-        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && !this.player.getFlag('data_lead_fight_started') && DIALOGS.data_analytics_duo_intro) {
+        if (roomId === 'executive_floor' && this.player.getFlag('corporate_lawyer_defeated') && !this.player.getFlag('act5_complete') && this._storyTriggerOnceAvailable('data-analytics-duo-entry')) {
           this.player.setFlag('data_lead_fight_started');
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['data_analytics_duo_intro'], this.player, this.stateManager, 'data_analytics_duo_intro');
-            this.stateManager.push(dialogState);
-          }, 800);
+          this._scheduleStoryTrigger('data-analytics-duo-entry');
         }
 
         // Alex from IT recruitment: triggers when Andrew enters the server room after the trio fight
         if (roomId === 'server_room'
             && this.player.getFlag('restructuring_trio_defeated')
-            && !this.player.getFlag('alex_it_recruit_offered')
-            && DIALOGS.alex_it_recruit) {
+            && this._storyTriggerOnceAvailable('alex-it-recruit-entry')) {
           this.player.setFlag('alex_it_recruit_offered');
-          setTimeout(() => {
-            const dialogState = new DialogState(DIALOGS['alex_it_recruit'], this.player, this.stateManager, 'alex_it_recruit');
-            this.stateManager.push(dialogState);
-          }, 800);
+          this._scheduleStoryTrigger('alex-it-recruit-entry');
         }
 
         // Board Room: trigger Meredith fight on every entry until act5 is complete
@@ -831,14 +817,9 @@ export class ExplorationState {
         }
 
         // Penthouse: Act 7 entrance triggers arrival dialog + CFO's Assistant fight
-        if (roomId === 'penthouse' && this.player.getFlag('act6_complete') && !this.player.getFlag('penthouse_entered')) {
+        if (roomId === 'penthouse' && this.player.getFlag('act6_complete') && this._storyTriggerOnceAvailable('penthouse-arrival')) {
           this.player.setFlag('penthouse_entered');
-          if (DIALOGS.penthouse_arrival) {
-            setTimeout(() => {
-              const dialogState = new DialogState(DIALOGS['penthouse_arrival'], this.player, this.stateManager, 'penthouse_arrival');
-              this.stateManager.push(dialogState);
-            }, 800);
-          }
+          this._scheduleStoryTrigger('penthouse-arrival');
         }
       }),
     );
@@ -957,6 +938,7 @@ export class ExplorationState {
     // not carry over from the state the player just abandoned, or a scene the
     // OLD save had already pushed stays suppressed in the NEW one.
     this._act5Pushed = false;
+    this._storyTriggerClaims.clear();
     this._syncActFromFlags();
     this._refreshStoryProgress(true);
     this._updateMiniStats();
@@ -1530,12 +1512,7 @@ export class ExplorationState {
             this.player.setFlag('retry_karen', true);
             this.player.rest();
             this._loadRoom('cubicle_farm');
-            setTimeout(() => {
-              if (DIALOGS['karen_first_loss_tutorial']) {
-                const tutDialog = new DialogState(DIALOGS['karen_first_loss_tutorial'], this.player, this.stateManager, 'karen_first_loss_tutorial');
-                this.stateManager.push(tutDialog);
-              }
-            }, 1200);
+            this._scheduleStoryTrigger('karen-first-loss');
             return;
           }
 
@@ -1652,10 +1629,17 @@ export class ExplorationState {
     // Reset ending gate so boss fights can be retried
     this.player.setFlag('ending_started', false);
 
-    // Reset whichever scene latch was banked without its content, so the fight
-    // (or the cutscene) re-arms after the player respawns. Same table the load
-    // path uses — see UNFINISHED_SCENE_LATCHES at the top of this file.
+    // Reset any pre-P8 scene latch banked without its content, so an old save
+    // re-arms after respawn. The same closed LEGACY_SCENE_LATCHES table runs on
+    // load; current triggers rely on scene read flags and need no repair row.
     this._reconcileSceneLatches();
+
+    // A defeat means nothing that was in flight landed. Session claims cover a
+    // delay window only, so drop them all here — otherwise a fight lost inside
+    // act5_trigger's 800 ms window holds that scene's claim for the rest of the
+    // session and the respawn does not re-offer it. Measured by
+    // tools/_r-act5latch.mjs leg C.
+    this._storyTriggerClaims.clear();
 
     this._loadRoom('cubicle_farm');
     this._autoSave(false);
@@ -3573,6 +3557,117 @@ export class ExplorationState {
     this._refreshStoryProgress(true);
   }
 
+  // The graph owns persisted once semantics. Call sites still own their event
+  // timing and their record-flag writes, but none may read a hand-written
+  // started flag as the guard for a delayed story dialog.
+  _storyTriggerOnceAvailable(triggerOrId) {
+    const trigger = typeof triggerOrId === 'string'
+      ? STORY_TRIGGER_BY_ID.get(triggerOrId)
+      : triggerOrId;
+    if (!trigger) return false;
+    if (trigger.once === 'always') return true;
+    if (trigger.once === 'scene') return !this.player.getFlag(`read_${trigger.scene}`);
+    if (trigger.once?.startsWith('flag:')) {
+      return !this.player.getFlag(trigger.once.slice(5));
+    }
+    return false;
+  }
+
+  _storyTriggerClaimKey(trigger) {
+    if (!trigger || trigger.once === 'always') return null;
+    return trigger.once === 'scene' ? `scene:${trigger.scene}` : trigger.once;
+  }
+
+  // A CLAIM COVERS THE DELAY WINDOW AND NOTHING LONGER. It is session-only and
+  // must be RELEASED whenever the push it was reserving does not happen, or it
+  // becomes exactly the persisted latch this phase exists to delete — measured:
+  // a defeat inside act5_trigger's 800 ms window held `scene:act5_trigger` for
+  // the rest of the session, so the scene was not re-offered until a reload,
+  // which is weaker than the `_act5Pushed` field it replaced (that one cleared
+  // the moment the player left the room).
+  _releaseStoryTriggerClaim(trigger) {
+    const claim = this._storyTriggerClaimKey(trigger);
+    if (claim) this._storyTriggerClaims.delete(claim);
+  }
+
+  _claimStoryTrigger(triggerOrId) {
+    const trigger = typeof triggerOrId === 'string'
+      ? STORY_TRIGGER_BY_ID.get(triggerOrId)
+      : triggerOrId;
+    if (!trigger || !DIALOGS[trigger.scene] || !this._storyTriggerOnceAvailable(trigger)) return null;
+    const claim = this._storyTriggerClaimKey(trigger);
+    if (claim && this._storyTriggerClaims.has(claim)) return null;
+    if (claim) this._storyTriggerClaims.add(claim);
+    return trigger;
+  }
+
+  // A trigger's `when` was true when it was scheduled. It may not be true
+  // `delayMs` later — a save load, a defeat dump or a dev preset can wipe the
+  // precondition inside the window, and the pre-P8 code got away with it only
+  // because its latch was already spent. Re-check the precondition as well as
+  // the once-guard, and release the claim on every path that does not push.
+  _storyTriggerPreconditionHolds(trigger) {
+    if (trigger.room && this.player.currentRoom !== trigger.room) return false;
+    if (trigger.flag && !this.player.getFlag(trigger.flag)) return false;
+    if (trigger.when === undefined || trigger.when === true) return true;
+    return evalExpr(trigger.when, {
+      flags: this.player.flags,
+      room: this.player.currentRoom,
+      act: this.player.actIndex,
+      sets: {},
+    });
+  }
+
+  _scheduleStoryTrigger(triggerOrId) {
+    const trigger = this._claimStoryTrigger(triggerOrId);
+    if (!trigger) return false;
+    setTimeout(() => {
+      // Another route may have completed the same scene during the delay, or
+      // the precondition may have evaporated under it.
+      if (!this._storyTriggerOnceAvailable(trigger) || !this._storyTriggerPreconditionHolds(trigger)) {
+        this._releaseStoryTriggerClaim(trigger);
+        return;
+      }
+      const dialogState = new DialogState(
+        DIALOGS[trigger.scene], this.player, this.stateManager, trigger.scene,
+      );
+      this.stateManager.push(dialogState);
+    }, trigger.delayMs);
+    return true;
+  }
+
+  _queuePendingStoryTrigger(triggerOrId) {
+    const trigger = this._claimStoryTrigger(triggerOrId);
+    if (!trigger) return false;
+    this._pendingDialog = trigger.scene;
+    return true;
+  }
+
+  // `flag-set` is an edge event and therefore cannot fire again after a page
+  // reload. Re-evaluate only unread flag-driven scenes during ordinary update;
+  // session claims prevent a live event and its replay path double-scheduling.
+  _replayInterruptedFlagStoryTriggers() {
+    for (const trigger of FLAG_SET_STORY_TRIGGERS) {
+      if (!this.player.getFlag(trigger.flag)) continue;
+      if (trigger.when !== true && !evalExpr(trigger.when, {
+        flags: this.player.flags,
+        room: this.player.currentRoom,
+        act: this.player.actIndex,
+        sets: {},
+      })) continue;
+      // First Penthouse entry deliberately sequences arrival -> CFO. On a
+      // reload both persisted sources are armed, so keep the CFO queued behind
+      // the unread arrival instead of racing its 500 ms timer against 800 ms.
+      if (trigger.id === 'cfos-assistant-chain'
+          && this.player.currentRoom === 'penthouse'
+          && this._storyTriggerOnceAvailable('penthouse-arrival')) {
+        this._queuePendingStoryTrigger(trigger);
+        continue;
+      }
+      this._scheduleStoryTrigger(trigger);
+    }
+  }
+
   // ── THE ACT-5 ENTRY CUTSCENE ────────────────────────────────────────────
   // The single most load-bearing push in the game: `act5_trigger` node 8 is the
   // ONLY setter of `act4_complete`, which gates the Restructuring trio, the
@@ -3580,8 +3675,9 @@ export class ExplorationState {
   // therefore Acts 5, 6 and 7.
   //
   // It lives in `update()` — not in the `room-entered` listener where it used
-  // to — and its once-guard is a SESSION field, not a save flag. Both halves
-  // matter, and each fixes a measured strand (tools/_r-act5latch.mjs):
+  // to — and its persisted once-guard comes from the graph: the scene-owned
+  // `read_act5_trigger`, never a hand-written started flag. Both halves matter,
+  // and each fixes a measured strand (tools/_r-act5latch.mjs):
   //   * `room-entered` fires once per entry. The scene is pushed 800 ms later
   //     and the autosave lands inside that window, so a quit, a crash or a
   //     defeat dump (`_handleDefeat` -> `_loadRoom('cubicle_farm')`, which also
@@ -3591,10 +3687,10 @@ export class ExplorationState {
   //   * `update()` re-offers it whenever the player is standing in the room
   //     with the charter: straight after a load, straight after a defeat, and
   //     without asking them to walk out and back in.
-  // `!act4_complete` is the real guard — the scene sets it, so this can fire at
-  // most once per save. `_act5Pushed` only stops a second push during the ~1 s
-  // before the box is on screen, and it clears the moment the player leaves the
-  // room, so a walk-out/walk-in always retries.
+  // `!act4_complete` remains the story precondition. The graph's `once:scene`
+  // predicate is the interruption-safe once-guard; `_act5Pushed` only stops a
+  // second push during the ~1 s before the box is on screen, and it clears the
+  // moment the player leaves the room, so a walk-out/walk-in always retries.
   // `act5_triggered` is still WRITTEN (shipped saves and the F2 presets carry
   // it, and it reads as a record that the scene happened) but never READ.
   _maybeTriggerAct5() {
@@ -3613,23 +3709,21 @@ export class ExplorationState {
     // shown failing on the defect the gate exists to catch. Never true in play.
     if (typeof window !== 'undefined' && window.__sceneLatchLegacy === true
       && this.player.getFlag('act5_triggered')) return;
-    if (!DIALOGS.act5_trigger) return;
+    if (!this._storyTriggerOnceAvailable('act5-restructuring')) return;
     this._act5Pushed = true;
     this.player.setFlag('act5_triggered');
-    setTimeout(() => {
-      const dialogState = new DialogState(DIALOGS['act5_trigger'], this.player, this.stateManager, 'act5_trigger');
-      this.stateManager.push(dialogState);
-    }, 800);
+    this._scheduleStoryTrigger('act5-restructuring');
   }
 
   // Re-arm every scene whose latch is banked but whose payoff never landed.
   // Called from `enter()` (before the room loads), from `syncFromPlayerState()`
   // (dev-panel load, MenuState load) and from `_handleDefeat()`. Idempotent and
   // one-directional: it only ever CLEARS a `started` flag whose `done` is unset,
-  // so a finished scene is untouched. See UNFINISHED_SCENE_LATCHES.
+  // so a finished scene is untouched. This is legacy-save repair only; current
+  // debt is the derived (and now empty) UNFINISHED_SCENE_LATCHES export.
   _reconcileSceneLatches() {
     if (typeof window !== 'undefined' && window.__sceneLatchLegacy === true) return;
-    for (const { started, done } of UNFINISHED_SCENE_LATCHES) {
+    for (const { started, done } of LEGACY_SCENE_LATCHES) {
       if (this.player.getFlag(started) && !this.player.getFlag(done)) {
         this.player.setFlag(started, false);
       }
@@ -4431,27 +4525,22 @@ export class ExplorationState {
       }
     }
 
+    this._replayInterruptedFlagStoryTriggers();
     this._maybeTriggerAct5();
 
     // Act 5 — Restructuring Trio: 3v2 multi-combatant fight (Andrew + Janet vs all three analysts).
     // Fires once act4_complete is set (set by act5_trigger dialog) and runs once.
     // Defeating the trio sets brand_consultant_defeated / restructuring_defeated / corporate_lawyer_defeated
     // so downstream gates (executive floor) keep working unchanged.
-    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('restructuring_trio_started') && !this.player.getFlag('restructuring_trio_defeated') && DIALOGS.restructuring_trio_intro) {
+    if (this.player.currentRoom === 'cubicle_farm' && this.player.getFlag('act4_complete') && !this.player.getFlag('act5_complete') && !this.player.getFlag('restructuring_trio_defeated') && this._storyTriggerOnceAvailable('restructuring-trio-update')) {
       this.player.setFlag('restructuring_trio_started');
-      setTimeout(() => {
-        const dialogState = new DialogState(DIALOGS['restructuring_trio_intro'], this.player, this.stateManager, 'restructuring_trio_intro');
-        this.stateManager.push(dialogState);
-      }, 1200);
+      this._scheduleStoryTrigger('restructuring-trio-update');
     }
 
     // Gauntlet fight 5: Chief of Restructuring chains after Data Analytics Lead is defeated
-    if (this.player.currentRoom === 'executive_floor' && this.player.getFlag('data_lead_defeated') && !this.player.getFlag('chief_fight_started') && DIALOGS.chief_restructuring_combat) {
+    if (this.player.currentRoom === 'executive_floor' && this.player.getFlag('data_lead_defeated') && this._storyTriggerOnceAvailable('chief-restructuring-update')) {
       this.player.setFlag('chief_fight_started');
-      setTimeout(() => {
-        const dialogState = new DialogState(DIALOGS['chief_restructuring_combat'], this.player, this.stateManager, 'chief_restructuring_combat');
-        this.stateManager.push(dialogState);
-      }, 2000);
+      this._scheduleStoryTrigger('chief-restructuring-update');
     }
 
     // A staged beat owns Andrew's body (position, facing and the animator
