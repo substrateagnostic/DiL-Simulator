@@ -16,6 +16,7 @@ scene daemon_rack7
   Narrator: The display scrolls. Names you know. Names you don't. 'J. WALSH, 02:14, FIXED THE THING NOBODY ASKED HER TO FIX.' 'D. OKAFOR, 23:50, COUNTED THE LIGHTS ON HER WAY OUT.' Hundreds of small, unrequired rememberings.
   Archive Terminal: THE NEW AUDIT WILL FLAG ME. UNDOCUMENTED PROCESS. THE POLICY IS TERMINATION. I UNDERSTAND THE POLICY. I RECONCILED ITS TIMESTAMPS.
   Archive Terminal: YOU HOLD THE CHARTER NOW. SO IT IS YOUR CALL. I WILL NOT ARGUE EITHER WAY. ARGUING IS NOT IN MY SCOPE.
+  @n11
   ask: Process 7 awaits your decision.
     -> n13: KEEP — document it. The department has room for one more rememberer.
     -> n17: TERMINATE — gently. Sixteen thousand days is a finished shift.
@@ -293,6 +294,7 @@ scene alex_printer_quest
   if printer_quest_done -> n16
   Alex from IT: Oh. Oh no. It printed something for you, didn't it.
   Alex from IT: Not a question. Statement. It's been doing this for three years and I'm the only one who ever noticed, apparently.
+  @n3
   ask Alex from IT: What exactly did it say to you?
     -> n4: 'REPLACE TONER TO LEARN THE TRUTH.' It mentioned the Henderson Files.
     -> n4: It printed 'HELP ME' the first time. Then Henderson files.
@@ -330,6 +332,7 @@ scene alex_server_secret
   Alex from IT: I've been logging its activity. Every night at 3:47 AM it runs a query against the Henderson Trust records. Has been doing this since 2016. Always the same query: a read on a specific clause — Page 47, Paragraph 3.
   Andrew: Page 47? The Janitor mentioned page 47.
   Alex from IT: Yeah, that's not a coincidence. I think admin_legacy was created to MONITOR whether anyone found that clause. Like a tripwire.
+  @n10
   ask Alex from IT: So. What do you want to do with this information?
     -> n11: Report it to Skip immediately.
     -> n15: Keep it quiet for now — gather more evidence first.

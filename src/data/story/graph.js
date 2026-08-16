@@ -339,8 +339,13 @@ export const TRIGGERS = [
     grants: ['charter_certified'], src: 'ExplorationState.js:523',
     reArmOnDefeat: true,
     note: 'has_recorder_seal remains the event source; read_the_firm_ambush is the once-guard and permits '
-      + 'interrupted-event replay. reArmOnDefeat is MANDATORY: the_firm has no NPC and no interactable, '
-      + 'and this fight is the sole writer of charter_certified, which the penthouse elevator demands.',
+      + 'interrupted-event replay. reArmOnDefeat here is BELT-AND-BRACES, not the primary recovery, and '
+      + 'the distinction matters because the first version of this note claimed the opposite. The Firm '
+      + 'DOES have a player-initiable route: the old_vault firm_partner NPC (rooms/index.js:2878) serves '
+      + 'the_firm_retry, whose condition (has_recorder_seal && !defeated_the_firm) is live in exactly the '
+      + 'post-defeat state, and the shared the_firm_defeated post-dialog writes charter_certified either '
+      + 'way. The three Act-5 gauntlet rows are the ones with no route at all. This row re-arms the ambush '
+      + 'so a lost fight is re-offered where it happened rather than only at the partner.',
   },
   {
     id: 'cfos-assistant-chain', on: 'flag-set', flag: 'penthouse_entered',

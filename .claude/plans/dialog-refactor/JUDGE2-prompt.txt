@@ -1,0 +1,63 @@
+RE-JUDGE. You are verifying that two BLOCKERS and five findings from a previous FAIL verdict
+are genuinely closed, and hunting for anything the fixes broke.
+
+REPO: C:\Users\agall\projects\DiL_Simulator   BRANCH: display-case (do NOT touch main)
+A dev server is running on http://localhost:5173. Use it; do not start another; do not kill node.
+The fix commit is 7154a55. The block under judgement is 6b99b4e..7154a55.
+Read .claude/plans/dialog-refactor/DESIGN.md sections 3, 4 and 6 for context.
+
+=== THE TWO BLOCKERS. VERIFY EACH BY DOING, NOT BY READING THE COMMIT. ===
+
+B1 — "a lost fight permanently soft-locks Acts 5-7". The claim is that four triggers
+(restructuring-trio-update, data-analytics-duo-entry, chief-restructuring-update,
+firm-ambush-chain) now declare `reArmOnDefeat` and that `_reconcileSceneLatches` clears
+`read_<scene>` at LOAD and on DEFEAT when the payoff has not landed.
+  a) Reproduce your original measurement. Drive a real state where the scene has been read
+     and the grant has not landed, run the SHIPPING defeat path, and check whether the scene
+     is re-offered. Do it for all four.
+  b) Then attack the fix: is there a state where `reArmOnDefeat` clears a read flag it should
+     NOT — i.e. a scene the player legitimately finished and won, whose grant is set by
+     something other than the fight, or a partial-grant state? Read the four `grants` arrays
+     and the post-dialogs that write them. The check is `grants.some(set)`; is `some` right,
+     or should it be `every`?
+  c) Is the set of four COMPLETE? Re-derive it yourself: every `once:'scene'` trigger whose
+     scene contains a `start_combat`, crossed with whether that encounter has any NPC or
+     interactable route in `src/data/rooms/index.js`. Name any fifth.
+  d) Does `node tools/story-sim.mjs` go RED if you remove `reArmOnDefeat` from a row?
+
+B2 — "the lock cannot append". Verify BOTH directions yourself, restoring after each:
+  a) add a new labelled statement to a `.dlg`; `npm run dialogs:check` must report a stale
+     lock, `npm run dialogs:build` must append it and print the addition, and the resulting
+     `git diff` of dialogs.lock.json must be additions only.
+  b) force a locked label to MOVE; the build must fail hard, write nothing, and name the
+     `_chose_` save-key consequence.
+  c) Attack it: can you construct a change that is accepted as "additive" but actually
+     changes an existing node's index or a `_chose_` key? Try renaming a label, deleting a
+     label, and reordering two unlabelled statements around a locked one.
+
+=== THE FIVE SMALLER FINDINGS — confirm each ===
+1. selftest row A now asserts the CHECK fired: stub `checkA` to `return []` and confirm
+   `--selftest` exits 1 (it exited 0 before). Restore.
+2. the HONEST LIMIT footer now names combat outcome.
+3. check D's second half is a real computation (closure with the gate's own room blocked),
+   not a no-op. Make it fire if you can.
+4. receptionist-first-entry and charter-certification-block now route through
+   `_scheduleStoryTrigger`. **Verify the charter one actually still fires** — its trigger row
+   says `room: 'penthouse'` but the player is NOT in the penthouse when it plays (they were
+   refused). Drive it live.
+5. the predicates.js gap is documented rather than silent.
+
+=== THEN HUNT FOR REGRESSIONS THE FIXES COULD HAVE CAUSED ===
+Run and report: `npm run check`, `node tools/story-sim.mjs --selftest`, and ONE browser
+differential of your choosing. Pay special attention to:
+  - `_reconcileSceneLatches` now runs on LOAD as well as defeat and can CLEAR a flag. Can it
+    clear one at a moment that loses content, e.g. immediately after a legitimate win but
+    before the post-dialog writes the grant?
+  - the receptionist intro: its guard moved from `reception_intro_done` to
+    `read_receptionist_intro`. Is there a save state where it now replays?
+
+=== OUTPUT ===
+Verdict: PASS, PASS WITH FINDINGS, or FAIL. For each of B1 and B2 state CLOSED or NOT CLOSED
+with the command output you relied on. Rank any new findings by cost, and distinguish
+(i) shipped-game defect, (ii) gate defect, (iii) documentation error, (iv) preference.
+If you cannot break it, say so plainly.

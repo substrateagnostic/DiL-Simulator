@@ -1,0 +1,78 @@
+P8 — ONE-SHOT LATCH REPAIR for the TRUST ISSUES dialog refactor.
+
+REPO: C:\Users\agall\projects\DiL_Simulator   BRANCH: display-case  (never touch main)
+GOVERNING SPEC: .claude/plans/dialog-refactor/DESIGN.md sections 4.4 and 1.2(b). Read both.
+P0-P7 are DONE. src/data/story/graph.js holds ACTS, DERIVE, GATES and TRIGGERS;
+tools/story-sim.mjs runs checks A-G in `npm run check`.
+
+=== THE BUG CLASS, STATED ONCE ===
+Every code-side story push in ExplorationState spends its once-latch BEFORE the dialog it
+guards has run — `setFlag(started)` and then `setTimeout(push, 800-2000 ms)` — and the game
+AUTO-SAVES inside that window. A quit, a crash or a closed tab banks "this scene has
+happened" for a scene that did not happen, and because none of these enemies has an NPC
+entry anywhere in the game, nothing can ever push that dialog again. Measured 2026-08-15 by
+tools/_r-act5latch.mjs on the worst case: an interrupted cubicle-farm entry banks
+act5_triggered:true / act4_complete:false, and Acts 5, 6 and 7 become unreachable for the
+life of the save.
+
+The PREVENTION (DESIGN 4.4): the once-predicate stops being a hand-written flag and becomes
+the scene's own `read_<sceneId>`, which DialogState._endDialog writes ONLY after a node has
+actually been shown (DialogState.js:~466-473). An interrupted scene is then re-servable by
+construction.
+
+=== THE JOB ===
+1. Convert every trigger currently carrying `once: 'flag:<name>'` to `once: 'scene'` in
+   src/data/story/graph.js, and make ExplorationState's push sites use the graph's once
+   predicate instead of their own hand-written latch. The hand-written `started` flags must
+   still be WRITTEN (shipped saves carry them and they read as a record that the scene
+   happened) but must no longer be READ as the guard — that is exactly the shape
+   _maybeTriggerAct5 already ships with, and it is the pattern to copy. Read that function
+   and its comment block before writing anything.
+   EXCEPTIONS you must keep as-is unless you can show they are safe:
+     - any trigger whose real guard is already a payoff flag rather than a started flag
+       (the board_room Meredith push guards on `act4_complete && !act5_complete` and
+       deliberately re-fires on every entry — that is once:'always', leave it)
+     - anything the simulator's check E already accepts without a waiver
+2. UNFINISHED_SCENE_LATCHES (ExplorationState.js:~93-101, 7 rows) stops being hand-kept.
+   DERIVE it from TRIGGERS: every trigger with `once: 'flag:X'` and a non-empty `grants`
+   yields a row { started: X, done: grants[0] }. After step 1 that derivation yields an
+   EMPTY list going forward — so keep the runtime reconciler `_reconcileSceneLatches()`
+   running against a FROZEN LEGACY table for saves made before this change, and say so in
+   the comment. Do not delete the reconciler. Do not leave two sources of truth: the frozen
+   legacy list gets its own name (LEGACY_SCENE_LATCHES) and a comment saying it is closed.
+3. The simulator's check E waiver count must go 7 -> 0 (or to whatever number the exceptions
+   in step 1 legitimately justify — if it is not 0, every remaining waiver is named in the
+   report with its reason and you say so loudly).
+
+=== THE PROOF ===
+tools/_dr-latch-interrupt.mjs — a Playwright harness (headed or headless, your call; it must
+drive the SHIPPING path). For each converted trigger:
+  a) set up the exact flag state that arms it
+  b) let the trigger fire and INTERRUPT inside the delay window before the dialog is shown
+     (reload the page, which is what a crash or a closed tab looks like to the save file)
+  c) reload and assert the scene IS RE-SERVED — the dialog appears again
+  d) then play it to the end and assert it does NOT serve a third time
+Print one line per trigger with the observed outcome. Exit 1 on any trigger that fails (b)-(d).
+ALSO re-run the historical case explicitly and label it: the act5_trigger interrupt, which
+is the bug this whole phase exists for. tools/_r-act5latch.mjs already models it — read it
+and reuse its fixture setup rather than inventing a new one.
+
+=== HARD CONSTRAINTS ===
+- Do NOT touch src/data/dialogs/**, DialogState.js, DialogBox.js.
+- Do NOT stop writing any `started` flag. Saves in the wild read them; the change is which
+  flag is the GUARD, not which flags exist.
+- Do NOT change any scene id or any dialog content.
+- Behaviour change is EXPECTED and is the point of this phase — but it must be exactly one
+  behaviour change: an interrupted scene becomes re-servable. Nothing else may move.
+- The full standing gate suite must stay green: npm run check, tools/_ux-smoke.mjs,
+  tools/_ux-dev.mjs, tools/_g-stage-verify.mjs, tools/_r-actchain.mjs, tools/story-sim.mjs.
+- Windows repo, LF endings.
+
+=== VERIFY (you cannot run vite or Playwright; the overseeing agent does) ===
+  node tools/story-sim.mjs            -> check E waiver count, before and after
+  node scripts/validate-data.mjs
+
+=== REPORT BACK ===
+A table of every trigger: id, old `once`, new `once`, the flag that is still written, the
+flag that is now the guard. The simulator's check E line before and after. Every exception
+kept, with its reason. And an explicit list of anything you could not verify.

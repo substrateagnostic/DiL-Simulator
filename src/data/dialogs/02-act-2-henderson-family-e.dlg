@@ -30,6 +30,7 @@ scene karen_meeting
   Karen Henderson: My father PROMISED me the lake house. Page 34 of my binder. I have the Christmas card where he said, and I quote, 'Karen, the lake house is yours someday, now please stop asking.'
   Andrew: A Christmas card isn't legally--
   Karen Henderson: IT'S IN THE BINDER.
+  @n9
   ask Karen Henderson: Now. Are you going to HELP me, or do I need to speak to your manager?
     -> n10: Let's review the trust documents together.
     -> n14: The trust language is very clear, Mrs. Henderson.
@@ -64,6 +65,7 @@ scene chad_meeting
   Chad Henderson: Call me Chad, bro. Mr. Henderson was my grandpa. Well, I guess that's why we're here. RIP to the GOAT.
   Chad Henderson: So anyway, Grandpa Chad -- yeah, he was also Chad, family tradition -- he totally told me the portfolio was mine.
   Chad Henderson: I've got BIG plans for it, bro. I'm gonna put it all into crypto. Well, not Bitcoin, that's for boomers. I'm talking about PumpCoin. It's got a dog on it.
+  @n6
   ask Chad Henderson: You a crypto bro? You look like a crypto bro.
     -> n7: The trust has a prudent investor standard, Chad.
     -> n12: Tell me more about these plans.
@@ -105,6 +107,7 @@ scene grandma_meeting
   Narrator: Grandma Henderson places a plate of homemade chocolate chip cookies on the desk. They smell incredible.
   Grandma Henderson: Now, before we start, I want you to know that I understand how difficult these family matters can be.
   Grandma Henderson: My Harold -- God rest his soul -- he was a good man but a terrible communicator. He told everyone what they wanted to hear. Which is how we ended up here.
+  @n4
   ask Grandma Henderson: Cookie, dear?
     -> n5: Thank you, Mrs. Henderson. (Take a cookie)
     -> n10: Let's talk about the trust distribution.
@@ -155,6 +158,7 @@ scene grandma_meeting
 # --------------------------------------------------------------------------
 scene skip_act2
   Skip Hartley: Andrew! Buddy! Quick sync. How's the Henderson thing going?
+  @n1
   ask Skip Hartley: Give me the thirty-thousand-foot view.
     -> n2: It's a complete disaster, Skip.
     -> n6: Karen has a binder. Chad has a crypto plan. Grandma has the will.
@@ -192,6 +196,7 @@ scene skip_post_karen
   Andrew: What did you tell him?
   Skip Hartley: I said we'd 'explore the synergies.' That bought about four days. His attention span is roughly that of a golden retriever who just heard a plastic bag.
   Skip Hartley: Chapter two of 'Selling to the Unsellable': Chad WANTS to be talked out of his bad ideas. He just needs someone with the confidence to do it. You speak Chad?
+  @n9
   ask Andrew: Do I speak Chad?
     -> n10: I'll figure it out.
     -> n11: I barely survived Karen.
@@ -235,6 +240,7 @@ scene janet_act2
 # --------------------------------------------------------------------------
 scene alex_it_side_router
   Alex from IT: Hey. What's up?
+  @n1
   ask Alex from IT: What do you need?
     -> n2: What about that IT project you mentioned?
     -> n5: What's going on with the main investigation?
@@ -261,6 +267,7 @@ scene alex_it_side_router
 # --------------------------------------------------------------------------
 scene alex_it_router
   Alex from IT: Hey. I've got a couple things going on. What do you want to talk about?
+  @n1
   ask Alex from IT: What's on your mind?
     # B-list "router self-contradiction". Node 0 has Alex calm and offering a
     # menu ("I've got a couple things going on"), and the story option had
@@ -292,6 +299,7 @@ scene alex_it_act2
   Alex from IT: Yeah. I cracked the first layer of encryption. Took me three Red Bulls and a flashback to my CompTIA cert exam, but I got through.
   Alex from IT: It's a database. Of trust account modifications. Going back to 2016. None of them are in our official records.
   Alex from IT: And once you see the pattern you can't unsee it -- every single modification is on Henderson family accounts.
+  @n6
   ask Alex from IT: Someone's been making unauthorized changes to the Henderson Trust for EIGHT YEARS, bro.
     -> n7: Who has access?
     -> n10: What kind of modifications?
@@ -321,6 +329,7 @@ scene branch_decision
   Narrator: Your phone rings. It's Skip.
   Skip Hartley: Andrew! Quick download. I need your Henderson recommendation by EOD. Corporate is breathing down my neck. Also my mother keeps calling. Unrelated.
   Skip Hartley: So what's the play? How do we... resolve this trust situation?
+  @n6
   ask Narrator: This is it. The decision that defines the rest of Andrew's career at Vaults Fargo.
     -> n7 sets path_legal: Follow the letter of the law. Honor the trust document exactly.
     -> n12 sets path_bro: Bend the rules. Find a creative interpretation that keeps everyone happy.

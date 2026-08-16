@@ -28,6 +28,7 @@ scene board_meeting
   # under-prepared player must be told the roster is locked before the scene
   # commits. The "I need a minute" branch (10 → 11) writes nothing and the
   # scene is freely re-enterable, so backing out is free.
+  @n9
   ask Skip Hartley: Skip is asking you to stay. Everyone who showed up is already in the room.
     -> n179: "I'm here. Let's do this."
     -> n10: "I need a minute."
@@ -40,6 +41,7 @@ scene board_meeting
   @n12
   Narrator: The board chair glances at the clock. 4:00 PM. She taps a pen twice, which is apparently how a dissolution hearing begins.
   Skip Hartley: Right. Opening statement. Andrew — how do I start? What do I tell them about what this department does?
+  @n14
   ask Skip Hartley: How should Skip open?
     -> n15: "Tell them about the Henderson trust. Forty-seven years, three generations, one file folder."
     -> n19: "Lead with the numbers. Revenue per trust officer, retention metrics, cost-per-client."
@@ -79,6 +81,7 @@ scene board_meeting
   Narrator: He has stopped mid-sentence. His mouth is open. The buzzwords are in there somewhere, trying to assemble themselves into a rebuttal, and they are not coming.
   Andrew: Skip.
   Skip Hartley: I know what I want to say. I just — give me something. What do I say to that?
+  @n32
   ask Skip Hartley: Skip is freezing. What do you hand him?
     -> n33: "'Fiduciarily untenable.' That word means something. Ask him what a fiduciary IS."
     -> n38: "Cite the restructuring proposal. Meredith inflated her numbers. We have the documents."
@@ -238,6 +241,7 @@ scene board_meeting
   Skip Hartley: Right. Closing. This is the — this is the part where I'm supposed to —
   Narrator: He takes the sheet out of his pocket. It is now folded into quarters. He unfolds it. He reads the first line silently. His jaw works once.
   Skip Hartley: Andrew. How do I end this? What's the last thing they should hear?
+  @n102
   ask Skip Hartley: What does Skip say to close?
     -> n103: "Tell them why YOU stayed. Not the department. You."
     -> n108: "Summarize the evidence. Close with the fiduciary clause. Make it airtight."

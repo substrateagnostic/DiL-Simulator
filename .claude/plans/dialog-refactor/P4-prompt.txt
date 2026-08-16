@@ -1,0 +1,95 @@
+P4 — BUILD CUTOVER for the TRUST ISSUES dialog refactor.
+
+REPO: C:\Users\agall\projects\DiL_Simulator   BRANCH: display-case  (never touch main)
+GOVERNING SPEC: .claude/plans/dialog-refactor/DESIGN.md  (read section 3.1 and 2.6 in full)
+
+=== WHERE THINGS STAND (P0-P3 are DONE and committed) ===
+- src/data/dialogs/*.dlg  — 13 files, 292 scenes, the AUTHORING SOURCE OF TRUTH.
+- src/data/dialogs/dialogs.lock.json — the append-only label->index ledger.
+- src/data/dialogs/index.js — 548 KB, hand-written, STILL the thing the game imports.
+- tools/dlg/compile.mjs — exports compileCorpus(): reads the .dlg files + lock, returns
+  { dialogs, files, named, infrastructure, warnings, warningCount, errorCount, nodeCount, ... }.
+  Runs in 0.27 s. `node tools/dlg/compile.mjs --check` prints a summary and exits 0.
+- tools/dlg/prove-identity.mjs — compiles and deep-equals against tools/dlg/baseline.json
+  (the frozen post-normalisation snapshot). It reports 292/292 identical TODAY. It must
+  still report 292/292 when you are finished.
+
+Nothing imports a .dlg yet. index.js is not generated yet. YOUR JOB IS THAT CUTOVER.
+
+=== WHAT YOU MUST BUILD ===
+
+(1) tools/dlg/generate.mjs
+    Writes src/data/dialogs/index.js from compileCorpus().
+      node tools/dlg/generate.mjs           -> write the file, print a one-line summary
+      node tools/dlg/generate.mjs --check   -> render in memory, compare against the file
+                                               on disk, exit 1 with a diff summary if they
+                                               differ, exit 0 if identical.
+    Requirements:
+      * The emitted file is a REAL ES MODULE exporting exactly `export const DIALOGS = {...}`
+        — same export name, same shape, nothing else exported. Six tools and the game import
+        it by that name; scripts/validate-data.mjs and tools/_g-stage-verify.mjs both import
+        it, and they MUST keep working with zero edits.
+      * A DO NOT EDIT banner at the top: this file is generated from src/data/dialogs/*.dlg
+        by `npm run dialogs:build`; edit the .dlg files, not this one; the 943 authoring
+        comments live in the .dlg files.
+      * DETERMINISTIC serialisation. Byte-identical output for the same input, every run, on
+        any platform. Scene order = compileCorpus() order. Key order within a node = insertion
+        order of the compiled object (do not sort keys — the identity proof is deep-equal but
+        the file check is byte-equal, so it only has to be STABLE).
+      * LF line endings, UTF-8 no BOM, exactly one trailing newline. Windows machine: write
+        with an explicit encoding, do not let anything convert to CRLF.
+      * Prose is UTF-8 and contains apostrophes, quotes, asterisks, em-dashes and Cyrillic
+        in at least one place. Serialise strings safely (JSON.stringify per value is fine).
+      * If compileCorpus() reports errorCount > 0, print the summary and exit 1 WITHOUT
+        writing anything.
+
+(2) package.json scripts
+      "dialogs:build": "node tools/dlg/generate.mjs"
+      "dialogs:check": "node tools/dlg/generate.mjs --check"
+      "check": "npm run dialogs:check && npm run validate:data && npm run build"
+    dialogs:check goes FIRST, ahead of validate:data, per DESIGN.md 3.1.
+
+(3) The regenerated src/data/dialogs/index.js
+    Run `npm run dialogs:build` and commit the result. The file WILL change textually — that
+    is expected and is the whole point of the phase. What must NOT change is the VALUE:
+    `node tools/dlg/prove-identity.mjs` must still print 292/292 identical, and a fresh
+    import of src/data/dialogs/index.js must deep-equal tools/dlg/baseline.json.
+
+(4) vite-plugin-dlg.mjs (put it at tools/dlg/vite-plugin-dlg.mjs) wired into vite.config.js
+    Dev-only (`apply: 'serve'`).
+      * load() hook: when the resolved id is src/data/dialogs/index.js, return the freshly
+        compiled module source instead of the file on disk, so an edit to a .dlg is live in
+        the running game without regenerating the artifact.
+      * configureServer: watch src/data/dialogs/*.dlg and dialogs.lock.json; on change,
+        invalidate that module and trigger an HMR update (a full-reload is acceptable —
+        DIALOGS is imported at module scope in several places).
+      * On a compile error during dev: log the diagnostics to the terminal and KEEP SERVING
+        THE LAST GOOD MODULE. A typo in a .dlg must not white-screen the game.
+      * `vite build` must NOT use the plugin's load hook — production reads the committed
+        artifact. Confirm this by grepping dist/ for a marker after a build.
+      * vite.config.js has a manualChunks rule keyed on '/src/data/dialogs/' — do not break it.
+
+=== HARD CONSTRAINTS ===
+- Do NOT edit src/states/DialogState.js, src/ui/DialogBox.js, or any .dlg file.
+- Do NOT edit dialogs.lock.json. compileCorpus() already fails if a compile would change it.
+- Do NOT change any scene id, any node value, or any prose.
+- Do NOT delete or rename any existing tool.
+- Windows/PowerShell repo. Use forward slashes in JS. No CRLF anywhere in generated output.
+
+=== HOW TO VERIFY (run everything you can; you CANNOT run `npm run build` — vite is not
+available to your sandbox. The overseeing agent runs the build and the browser gates.) ===
+  node tools/dlg/compile.mjs --check           -> PASS, 0 errors, 42 warnings
+  node tools/dlg/generate.mjs                  -> writes index.js
+  node tools/dlg/generate.mjs --check          -> exit 0 (idempotent)
+  node tools/dlg/prove-identity.mjs            -> 292/292 identical
+  node tools/_dr-semantic-equal.mjs (if it takes a baseline arg, use tools/dlg/baseline.json)
+  node scripts/validate-data.mjs               -> must pass
+  node -e "import('./src/data/dialogs/index.js').then(m=>console.log(Object.keys(m.DIALOGS).length))"  -> 292
+Also PROVE the check has teeth: append a junk character to the generated index.js, run
+`node tools/dlg/generate.mjs --check`, confirm it exits 1 and says something useful, then
+restore the file. Report that transcript.
+
+=== REPORT BACK ===
+A short report: files added/changed with line counts, the exact output of each verification
+command above, the teeth demonstration, and an explicit list of anything you could not verify
+or any place you deviated from this brief. Do not claim a command passed that you did not run.

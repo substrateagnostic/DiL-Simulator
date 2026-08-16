@@ -1,0 +1,171 @@
+P6 — THE STORY SIMULATOR for the TRUST ISSUES dialog refactor. This is the crown of the
+campaign: after this phase a broken story chain is a RED BUILD, not a bug found by playing.
+
+REPO: C:\Users\agall\projects\DiL_Simulator   BRANCH: display-case  (never touch main)
+GOVERNING SPEC: .claude/plans/dialog-refactor/DESIGN.md section 4.5 and 4.6 (read both in
+full, plus 7.3's honest limits). P0-P5 are DONE:
+  - src/data/dialogs/*.dlg compile to src/data/dialogs/index.js (npm run dialogs:build)
+  - src/data/story/{graph,predicates,evaluator}.js hold ACTS, DERIVE, GATES and the evaluator
+  - .claude/plans/dialog-refactor/orphan-scenes.md holds the SIX ORPHAN-SCENE RULINGS
+
+=== WHAT TO BUILD ===
+
+tools/story-sim.mjs  — a pure Node tool (NO browser, NO Playwright). It imports the data
+modules directly. Runs in well under 10 s. Joins `npm run check`:
+    "check": "npm run dialogs:check && npm run story:sim && npm run validate:data && npm run build"
+    "story:sim": "node tools/story-sim.mjs"
+
+src/data/story/graph.js — ADD `export const TRIGGERS` (DESIGN 4.3). P5 built ACTS, DERIVE
+  and GATES; the trigger block is yours. One row per CODE-SIDE SCENE PUSH in
+  ExplorationState.js — the `room-entered` listener block (~:640-840), the two pushes in
+  update() (~:4271-4292), _maybeTriggerAct5 (~:3466), the _changeRoom charter_challenge push,
+  and the `flag-set` -> _pendingDialog chains (the_firm_ambush, cfos_assistant_combat,
+  regional_director_combat, algorithm_combat, the four ending dialogs, post_credits).
+  Row shape: { id, on:'room-entered'|'update'|'flag-set'|'room-blocked', room?, flag?,
+  when, once, scene, delayMs, grants:[...], src:'ExplorationState.js:NNN', note }.
+  `once` is 'scene' | 'flag:<name>' | 'always' exactly as DESIGN 4.4 defines it. Record what
+  the code ACTUALLY DOES today, waivers and all — P6 REPORTS, P8 REPAIRS. In particular
+  _maybeTriggerAct5 has ALREADY been repaired in the tree (its guard is `!act4_complete`
+  plus a session field; `act5_triggered` is still written but never read) — record that
+  honestly as once:'scene'-equivalent with a note, and do NOT report it as a live waiver.
+  TRIGGERS IS DECLARATION-ONLY IN P6. Do not make ExplorationState consume it; that is P8.
+
+src/data/story/grants.js — the declared side of the grant model (DESIGN 4.5):
+  export const CODE_GRANTS  — every flag written by JS rather than by a dialog, each row
+      { flag, when, src: 'File.js:NNN', note }. Seed it by GREPPING for setFlag( across
+      src/ and listing what you find; do not guess. At minimum it must cover the 11
+      one-shot latches in ExplorationState, portfolio_strong, andrew_invoked_charter
+      (CombatState.js), the shop's bought_category_* and renovation flags, floor_13_found,
+      act7_complete, epilogue_seen, the ng_* NG+ reads, penthouse_entered,
+      alex_it_recruit_offered, executive_floor_visited, ending_started, visited_archive,
+      archive_found, whisper_monitor_seen, and the vault/archive keypad grants
+      (vault_code_1/2/3, vault_accessible, archive_accessible, vault_cracked_early).
+  export const AUTO_GRANTS  — the pattern rules: defeated_<enc> and bestiary_<enc> on
+      victory, retry_<enc> on defeat, read_<dialogId> on completion, _chose_<...> on any
+      choice. Declared once as patterns, not enumerated.
+  export const NEVER_SET    — flags that are READ somewhere and written nowhere, each with a
+      REASON string. Every row is a finding that was triaged, not a suppression: write the
+      real reason (dead branch / legacy save shim / reserved for C2 / etc). If you cannot
+      find an honest reason for one, LEAVE IT OUT so the check goes red and report it.
+  export const SCENE_DISPOSITION — one row per scene that has no route, from
+      orphan-scenes.md. Three kinds:
+        { scene, kind:'cut',   reason }          — permanently dead, ratified
+        { scene, kind:'restore', reason, wiring } — ruled RESTORE, wiring not yet applied
+      The rulings are: CUT vault_entrance, vault_charter, penthouse_terminal;
+      RESTORE dying_plant, board_room_table (needs 3 prose edits first), penthouse_window.
+      Copy each reason from orphan-scenes.md substantively — the git evidence is the point.
+      A 'restore' row PRINTS EVERY RUN with its wiring line so the count can only go down.
+      A scene with NO row and NO route is a HARD FAILURE.
+
+      MEASURED 2026-08-16, AFTER orphan-scenes.md WAS WRITTEN — CHECK THIS YOURSELF, DO NOT
+      TAKE IT ON TRUST: the three RESTORE scenes have SINCE BEEN WIRED in
+      src/data/rooms/index.js (dying_plant appears in 2 room entries, board_room_table in 1,
+      penthouse_window in 2). If that still holds when you run, they need NO disposition row
+      at all — they are routed, and the SCENE_DISPOSITION table is the three CUTs only. Say
+      which it is in your report, with the grep you ran.
+      Also: tools/_dr-graph.mjs (a P0 measurement throwaway) reports `skip_act5` as an
+      orphan. It is a FALSE POSITIVE OF THAT TOOL — it models the ladder's template forms as
+      <npc>_act{2,3,4,6,7} and predates "THE MISSING RUNG" (the act-5 row added at
+      ExplorationState.js:~3190). Your check C must model act2 THROUGH act7. Do not copy the
+      old tool's template list.
+
+=== THE MODEL ===
+State = a flag set. Core = a monotone forward closure: repeat { apply DERIVE to fixpoint;
+collect every grant whose precondition holds; add them } until nothing changes. NOTE: the
+simulator's closure IS a fixpoint — that is correct here and is deliberately different from
+the runtime evaluator's single ordered pass (which P5 preserved for behaviour identity).
+Say so in the tool's header so nobody "fixes" one to match the other.
+
+Harvest grants from three sources and union them (DESIGN 4.5):
+ 1. the compiled dialog corpus — every set_flag node and every choice `flag`, with the
+    IN-TREE PATH CONDITION that reaches it (walk the tree from node 0; a set_flag behind a
+    condition node inherits that condition; a set_flag behind a choice arm is unconditional
+    from the player's point of view because the player can pick any visible arm)
+ 2. AUTO_GRANTS patterns
+ 3. CODE_GRANTS
+A scene's grants only count once the scene is REACHABLE (its route/trigger precondition
+holds), so scene reachability and flag reachability are computed together in the same
+closure. That coupling is the whole value of the tool.
+
+=== THE SEVEN CHECKS ===
+A  ACT COMPLETABILITY — every ACTS[].when flag is in the closure from a genuinely fresh
+   save (empty flag set). This is the check the act5_trigger bug turned red.
+B  FLAG REACHABILITY — every flag READ anywhere (dialog condition nodes and choice
+   requires/requiresNot; room NPC `condition`; furniture `condition`; GATES.requires; every
+   route's `when`; every DERIVE `when`; the objective strings) is in the closure, or in
+   CODE_GRANTS, or has a NEVER_SET row with a reason.
+C  SCENE REACHABILITY — every scene id in the compiled corpus is the `then` of some route,
+   the `scene` of some trigger, an NPC `dialogId` in rooms, an interactable `dialogId`, an
+   encounter pre/postDialogId, reachable through the ['ladder'] resolver's template forms
+   (neutral_<npc>, <enc>_retry, <npc>_intro, <npc>_return, <npc>_act2..7), or carries a
+   SCENE_DISPOSITION row. Report never-wired and severed SEPARATELY (orphan-scenes.md §3
+   says why: one is a scope question, the other is a regression).
+D  GATE CLOSABILITY — every GATES[].requires flag is in the closure, and is reached BEFORE
+   the first trigger or route that needs the room behind it.
+E  NO SPEND-BEFORE-GRANT — for every trigger, either once:'scene', once:'always', or a
+   named `waiver`. Print every waiver by name in the summary so the count only goes down.
+F  THE EXPIRY CHECK (ordering, not just closure) — for every grant G whose precondition
+   contains a negative term NOT f where f is itself in the closure, assert a topological
+   order exists placing G before f. This is the check that catches "four ally missions
+   expired at act6_complete" (the bug the comment at ExplorationState.js:~3044 records).
+G  ROUTE SHADOWING — for every row in DIALOG_ROUTES (it may not exist yet — P7 builds it;
+   if src/data/story/routes.js is absent, implement check G against the rule set you CAN
+   see and make it a no-op-with-a-notice rather than a crash), assert there exists a
+   satisfying assignment of the flags it reads under which no EARLIER rule fires. A rule
+   with no such assignment is dead and is reported by id.
+
+Output contract: human-readable, one line per finding, file:line where known; exit 1 on any
+failure; `--report=<file>` writes machine-readable JSON.
+
+=== --selftest : SEVEN MUTATIONS, SEVEN REDS ===
+`node tools/story-sim.mjs --selftest` mutates the loaded model in memory seven ways — one
+per check — and asserts THAT CHECK goes red. It must print a table: check, mutation applied,
+expected RED, observed. Exit 1 if any mutation fails to turn its check red. A gate that has
+never been seen to fail is not a gate. Suggested mutations (use your judgement, but each
+must be a REALISTIC defect, not a syntactic wrecking ball):
+ A  delete the single grant of act4_complete (act5_trigger's set node)
+ B  add a route that reads a flag nothing writes
+ C  delete a route so a live scene loses its only entry point
+ D  raise a GATES requires to a flag granted only behind the gated room
+ E  turn a once:'scene' trigger into once:'flag:x' with no waiver
+ F  add a negative precondition that expires a grant it needs
+ G  insert a broader duplicate rule ABOVE an existing route so the lower one is shadowed
+
+=== REGRESSION TEST #1 — THE act5_trigger LATCH ===
+Add `--regress` (or fold it into --selftest as an eighth, clearly-labelled row): reconstruct
+the PRE-FIX shape of the act5 trigger — a persisted one-shot latch `act5_triggered` spent
+BEFORE the scene runs, with the scene as the sole grantor of act4_complete — and assert the
+simulator reports it. Check E should catch it (a hand-written latch with no waiver) AND
+check A should catch the interrupted-state variant (feed a start state with
+act5_triggered:true / act4_complete:false and assert act4_complete is NOT in the closure).
+Print both, labelled as REGRESSION #1, with a one-line statement of the historical bug
+(measured 2026-08-15 by tools/_r-act5latch.mjs: an interrupted entry banks
+act5_triggered:true / act4_complete:false and Acts 5, 6, 7 become unreachable forever).
+The trigger's CURRENT shape must of course NOT be reported — the bug is fixed in the tree.
+
+=== HONESTY REQUIREMENTS ===
+- The real run will find things. DO NOT SUPPRESS ANYTHING to make it green. Every exception
+  is a named row with a reason, and the report prints all of them with counts.
+- If a check cannot be implemented honestly against the data that exists, say so in the
+  report and leave it reporting NOT IMPLEMENTED rather than faking a pass.
+- DESIGN 7.3 names the honest limit of monotone closure (it does not model resource
+  ordering — AUM, level gates). Put that limit in the tool's header and in its output
+  footer so nobody believes the gate is stronger than it is.
+
+=== HARD CONSTRAINTS ===
+- Do NOT touch src/data/dialogs/**, DialogState.js, DialogBox.js.
+- Do NOT edit ExplorationState.js in this phase except to export data the simulator needs
+  (and prefer moving that data into src/data/story/ over exporting from a state class).
+- Pure Node, no browser. Must run offline, no dev server.
+- Windows repo, LF endings.
+
+=== VERIFY ===
+  node tools/story-sim.mjs                 -> the real report
+  node tools/story-sim.mjs --selftest      -> 7 (or 8) rows, all RED as expected, exit 0
+  node tools/story-sim.mjs --report=<tmp>  -> JSON written
+  node scripts/validate-data.mjs           -> still passes
+
+=== REPORT BACK ===
+The full real-run report verbatim; the selftest table verbatim; the SCENE_DISPOSITION and
+NEVER_SET row counts with a sample of each; every finding you triaged and WHY; and an
+explicit list of anything you could not verify or implement honestly.

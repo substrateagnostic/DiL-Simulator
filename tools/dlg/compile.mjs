@@ -252,6 +252,23 @@ export async function compileCorpus() {
   }
   const unreachableCount = unreachable.reduce((total, entry) => total + entry.indices.length, 0);
 
+  // EVERY CHOICE NODE MUST CARRY A LABEL, and this is a save-key rule, not a
+  // style rule. `_chose___` is persisted, and
+  // the lock only pins an index that a LABEL claims. An unlabelled `ask` therefore
+  // slides whenever a line is inserted above it, silently changing that key for
+  // every save in the wild - measured on the shipped corpus: one prose line added
+  // above branch_decision's ask moved it 6 -> 8, and the whole reviewable lock diff
+  // was "length": 36 -> 37. 49 of the 61 choice nodes were unpinned; all 61 are
+  // pinned now, and this keeps it that way. A label costs nothing: it consumes no
+  // index, and adding all 49 left index.js byte-identical.
+  const unpinnedChoices = [];
+  for (const { scene, file } of uniqueRecords) {
+    for (const stmt of scene.stmts) {
+      if (stmt.kind !== 'choice' || (stmt.labels ?? []).length) continue;
+      unpinnedChoices.push(`${file} / ${scene.id}: an  with no @label. Give it one so the lock pins its index and its _chose_ save keys cannot move.`);
+    }
+  }
+
   const modes = modeIssues(sceneRecords, quizExpected, evergreenExpected);
   const encounterIssues = [];
   const itemIssues = [];
@@ -326,6 +343,7 @@ export async function compileCorpus() {
     { name: 'duplicate label within a scene', count: byKind.duplicateLabel.length, checked: `${sceneRecords.length} scenes`, diagnostics: byKind.duplicateLabel },
     { name: 'duplicate scene id across files', count: duplicates.length, checked: `${sceneRecords.length} declarations`, details: duplicates },
     { name: 'scene with no reachable end', count: noEnd.length, checked: `${Object.keys(dialogs).length} scenes`, details: noEnd },
+    { name: 'choice node pinned by a label', count: unpinnedChoices.length, checked: `${sceneRecords.length} scenes`, details: unpinnedChoices },
     { name: 'mode declaration agreement', count: modes.length, checked: `${quizExpected.size + evergreenExpected.size} DialogState entries`, details: modes },
     { name: 'fight encounter resolution', count: encounterIssues.length, checked: `${fights} fight statements`, details: encounterIssues },
     { name: 'give item resolution', count: itemIssues.length, checked: `${gives} give statements`, details: itemIssues },

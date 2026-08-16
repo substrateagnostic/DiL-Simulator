@@ -569,6 +569,15 @@ function makeModel(overrides = {}) {
   // interactable in room data points at, that contains a start_combat. An
   // encounter's own preDialogId does NOT count — that is the push the fight
   // already came from, so it is no recovery route at all.
+  //
+  // KNOWN LIMIT, stated so the next reader does not assume otherwise: an entry's
+  // `condition` is NOT evaluated here. A vestigial NPC — rooms/index.js's
+  // corporate_lawyer is a live example, gated on a pair that can never both
+  // hold — counts as a route it cannot actually offer. Nothing depends on such a
+  // route today (checked by hand), but that is one vestigial entry away from
+  // silencing check E's second half. Evaluating the condition needs a flag
+  // context this census does not have; the honest fix is to compute it inside
+  // the closure, where the flags exist.
   const playerInitiableEncounters = overrides.playerInitiableEncounters ?? (() => {
     const out = new Set();
     for (const room of Object.values(ROOMS)) {
@@ -590,14 +599,14 @@ function makeModel(overrides = {}) {
   };
 }
 
-function reachableRooms(model, flags, blockedRooms) {
+function reachableRooms(model, flags) {
   const reachable = new Set(['parking_garage']);
   let changed = true;
   while (changed) {
     changed = false;
     for (const room of [...reachable]) {
       for (const target of model.roomEdges.get(room) || []) {
-        if (reachable.has(target) || blockedRooms?.has(target)) continue;
+        if (reachable.has(target)) continue;
         if (!evalExpr(gateAccessExpr(target, model.gates), flags, { room: target })) continue;
         reachable.add(target);
         changed = true;
@@ -719,7 +728,7 @@ function runClosure(model, startFlags = [], options = {}) {
         }
       }
     }
-    const rooms = reachableRooms(model, activeFlags, options.blockedRooms);
+    const rooms = reachableRooms(model, activeFlags);
 
     for (const route of model.sceneRoutes) {
       if (routeIsOpen(route, model, activeFlags, rooms) && addScene(route.scene, route.src)) changed = true;
@@ -851,33 +860,30 @@ function checkC(model) {
   return findings;
 }
 
-// D HAS TWO HALVES AND THIS USED TO IMPLEMENT ONE.
-// Closure membership proves the key EXISTS. The ordering half — DESIGN 4.6's
-// "and reached BEFORE the room behind it is needed" — is the property that
-// actually matters, and the old comment argued it was implied. It is not, quite:
-// some sceneRoutes (the legacy-route fallbacks and the ladder-retry rows) are
-// built with `room: null`, so `routeIsOpen` applies no gate to them and a scene
-// behind a locked door can be counted reachable through one of those.
-//
-// The direct test, and the one a player would recognise: THE KEY MUST NOT BE
-// INSIDE THE LOCKED ROOM. Re-run the closure with the gate's own flag blocked;
-// if the room's contents can still grant it, the gate is circular. Blocking the
-// flag is stronger than blocking the room and needs no new machinery — a flag
-// that is only obtainable behind its own gate cannot appear in a closure that
-// refuses to add it, and one that has an outside source is unaffected.
+// D IS ONE CHECK, NOT TWO, AND THAT IS A PROOF RATHER THAN A SHORTCUT.
+// DESIGN 4.6 words it as two clauses — the gate flag is in the closure, "and
+// reached BEFORE the room behind it is needed". A round of this was written as
+// a literal second pass (re-run the closure with the gate's own room blocked
+// and fail if the flag vanished). That pass was DEAD CODE: measured across all
+// nine flag gates it executed nine times and fired zero, and it cannot fire.
+// The argument: `gate.requires` is by definition the flag needed to ENTER
+// `gate.room`, so `reachableRooms` never adds that room until the flag is in
+// the set — every grant that fires in the unblocked closure is therefore one
+// that did not need the room, and blocking the room cannot remove it. A key
+// that is genuinely behind its own door fails the MEMBERSHIP clause instead,
+// which was verified by pointing hr_department at diane_evidence (whose only
+// writer is an interactable inside hr_department): the message is "absent from
+// fresh-save closure", not a separate circularity finding.
+// It was also subtly unsafe — it compared an ordering-augmented `closure`
+// against an un-augmented re-run, so an ordering-recovered gate key would have
+// produced a SPURIOUS failure.
+// So the second pass is gone and the ordering clause is discharged by the
+// argument above. If you re-add one, make it fire on a real defect first.
 function checkD(model, closure) {
   const findings = [];
   for (const gate of model.gates.filter(item => item.requires)) {
     if (!closure.flags.has(gate.requires)) {
-      findings.push(finding('D', `${gate.room}:${gate.requires}`, `Gate for ${gate.room} cannot close: ${gate.requires} is absent from fresh-save closure (including room-order constraints).`, 'src/data/story/graph.js'));
-      continue;
-    }
-    const withoutRoom = runClosure(model, [], { blockedRooms: new Set([gate.room]) });
-    if (!withoutRoom.flags.has(gate.requires)) {
-      findings.push(finding('D', `${gate.room}:${gate.requires}`,
-        `Gate for ${gate.room} is CIRCULAR: ${gate.requires} is only grantable from inside ${gate.room}, the room it unlocks. `
-        + `The key is behind its own door.`,
-        'src/data/story/graph.js'));
+      findings.push(finding('D', `${gate.room}:${gate.requires}`, `Gate for ${gate.room} cannot close: ${gate.requires} is absent from fresh-save closure — which also covers the circular case, because a flag only grantable from inside ${gate.room} can never enter a closure that cannot open ${gate.room}.`, 'src/data/story/graph.js'));
     }
   }
   return findings;

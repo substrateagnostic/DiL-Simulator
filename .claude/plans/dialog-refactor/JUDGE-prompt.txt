@@ -1,0 +1,78 @@
+You are the FINAL JUDGE of a six-phase refactor. You did not build it. Your job is to try
+to break it, and to say plainly where it is weaker than its own commit messages claim.
+
+REPO: C:\Users\agall\projects\DiL_Simulator   BRANCH: display-case (do NOT touch main)
+A dev server is running on http://localhost:5173 (`npm run dev`). Use it; do not start another.
+
+THE WORK UNDER JUDGEMENT: commits 6b99b4e..f3f2782 (P4 through P9) of a dialog/story/routing
+refactor. P0-P3 (aafa1e4, 333d306, 8181a7c, 6587f27) are context, already signed off.
+
+GOVERNING SPEC: .claude/plans/dialog-refactor/DESIGN.md — read sections 3, 4, 5, 6, 7 and 8
+IN FULL before judging anything. Section 8 lists eight proof obligations; the last five are
+this block's.
+
+=== YOU MUST RE-RUN THESE YOURSELF. Do not accept a commit message as evidence. ===
+1. `node tools/story-sim.mjs --selftest` — read the table. Seven checks plus REGRESSION #1.
+   Then go further than running it: pick TWO of the seven mutations, read the code that
+   applies them, and satisfy yourself the mutation is a REALISTIC defect and not a syntactic
+   wrecking ball that any check would trip over. Say which two you audited.
+2. ONE differential replay of your own choosing: `node tools/_dr-route-diff.mjs --port=5173`
+   or `node tools/_dr-graph-diff.mjs --port=5173`. Then INJECT A DEFECT of your own devising
+   into the table or graph it checks, re-run, confirm it goes red, and RESTORE. Report the
+   defect you chose and the output you got. A harness you have not seen fail is not evidence.
+3. `npm run check` — confirm exit 0 and that it really runs four things.
+
+=== FIVE QUESTIONS, ANSWER EACH DIRECTLY ===
+
+A. FIDELITY TO THE DESIGN. Where does the implementation depart from DESIGN.md, and is each
+   departure documented or silent? The overseer claims these are the known deviations —
+   verify each and hunt for ones not on the list:
+     - index.js is generated as a data module WITHOUT the 943 `//` comments (they live in
+       the .dlg files); the design said "generated artifact" but did not rule on comments.
+     - 58 of 3,392 nodes changed JSON KEY ORDER at the cutover; `_g-stage-verify`'s node
+       signature was changed to sort keys so it stops reporting that as structural change.
+     - the gate table has 9 flag rows, not the 11 the brief guessed.
+     - check G was NOT implemented in P6 (routes.js did not exist yet) and reported itself
+       NOT IMPLEMENTED for one phase.
+     - three routing rows carry a `shadowed:` waiver instead of being deleted.
+     - the design expected 7 trigger waivers; the real count was 19, all now 0.
+     - the design's §1 numbers (291 trees / 3,384 nodes / 1,076 jump targets) are stale
+       against the tree; the real figures are 292 / 3,392 / 631.
+
+B. PROOF COMPLETENESS. For each of DESIGN.md §8's obligations 3-8, is the proof actually
+   run, and does it prove what it claims? Name any obligation that is asserted but not
+   demonstrated. Pay particular attention to obligation 5 (the graph A/B) and 8 (the route
+   differential): are the state spaces they sweep genuinely representative, or do they sweep
+   a lot of unreachable noise while missing a reachable state?
+
+C. GATE TEETH. For each gate in `npm run check`, answer: what defect would slip past it?
+   Specifically probe:
+     - can a `.dlg` edit change what a player sees while `dialogs:check` stays green?
+     - the simulator's closure is OPTIMISTIC and monotone. Name a class of real story bug it
+       cannot see, and check whether the tool admits that limit in its own output.
+     - check G's decision budget (200,000) reports COULD NOT DECIDE as a failure. Is that
+       reachable on the current table, and would raising the table's size trip it?
+     - the three `shadowed:` waivers: are they honestly dead, or is one of them a live rule
+       being suppressed? Verify at least one by reading `_getDialogIdLegacy`.
+
+D. CLAUDE.MD ACCURACY. Every number in the new sections is claimed to be re-derived. Spot
+   check at least SIX of them against the code. Then read the two rewritten laws (the
+   never-insert law and the persisted-latch law) and answer: would an agent who read ONLY
+   CLAUDE.md make the mistake each law exists to prevent? Is anything in CLAUDE.md now FALSE
+   because the code moved under it?
+
+E. THE ONE THING THAT WOULD MOST LIKELY BITE A PLAYER. P8 is the only phase that
+   deliberately changes runtime behaviour: nineteen code-pushed scenes now use the scene's
+   own `read_<sceneId>` as the once-guard instead of a hand-written started flag. Reason
+   about SAVE COMPATIBILITY specifically. Is there a reachable pre-P8 save state in which a
+   scene the player already completed is served to them AGAIN? Check whether
+   `DialogState._endDialog` really writes `read_<dialogId>` on every path a completed scene
+   can take — including a scene whose last action is `start_combat`, and a scene the player
+   exits via the Escape key. If you find a hole, say exactly which scene and which state.
+
+=== OUTPUT ===
+A verdict: PASS, PASS WITH FINDINGS, or FAIL, with the findings ranked by what they would
+cost. Quote the command output you relied on. Distinguish clearly between (i) a defect in
+the shipped game, (ii) a defect in a gate, (iii) a documentation error, and (iv) a stylistic
+preference — and do not pad the list with (iv). If you cannot break something, say so; a
+judge that manufactures objections to look useful is failing its job.

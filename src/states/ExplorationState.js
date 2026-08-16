@@ -3731,16 +3731,20 @@ export class ExplorationState {
   // `read_<sceneId>` is written when the dialog ends — which for a scene whose
   // last action is `fight` is BEFORE the fight is entered, and it is never
   // cleared. That is exactly right for an interrupted scene and exactly wrong
-  // for a lost one: four trigger scenes start a fight that has NO
-  // player-initiable route anywhere in `rooms/index.js` (no NPC, no
-  // interactable), so a single defeat would strand the flags they grant. Three
-  // of them are the Act-5 gauntlet and between them they are the sole writers
-  // of `corporate_lawyer_defeated`, `data_lead_defeated` and
-  // `board_room_accessible`; the fourth is The Firm, sole writer of
-  // `charter_certified`. Stranding any one of them takes Acts 5, 6 and 7 with
-  // it — the exact failure this whole refactor exists to make impossible, which
-  // the pre-P8 code avoided only because `_reconcileSceneLatches` cleared its
-  // started flag on defeat.
+  // for a lost one: THREE trigger scenes start a fight that has NO
+  // player-initiable route anywhere in `rooms/index.js` — no NPC, no
+  // interactable — so a single defeat would strand the flags they grant. They
+  // are the Act-5 gauntlet, and between them they are the sole writers of
+  // `corporate_lawyer_defeated`, `data_lead_defeated` and
+  // `board_room_accessible`. Stranding any one takes Acts 5, 6 and 7 with it —
+  // the exact failure this whole refactor exists to make impossible, which the
+  // pre-P8 code avoided only because `_reconcileSceneLatches` cleared its
+  // started flag on defeat. A FOURTH row, The Firm's ambush, carries the same
+  // declaration as belt-and-braces rather than necessity: it DOES have a route
+  // (the `old_vault` `firm_partner` NPC serves `the_firm_retry`, live in
+  // exactly the post-defeat state), and an earlier version of this comment said
+  // otherwise. Say which is which; the difference is the recovery a player gets
+  // if this mechanism is ever removed.
   //
   // So the reconciler now does both halves, from the graph rather than a
   // hand-kept list: it clears the closed LEGACY_SCENE_LATCHES rows for saves
@@ -3757,10 +3761,20 @@ export class ExplorationState {
         this.player.setFlag(started, false);
       }
     }
+    // `every`, NOT `some`, and the direction is the whole point. The two
+    // predicates fail opposite ways: `some` suppresses the re-arm as soon as ONE
+    // grant is set by anything, which puts the soft-lock back; `every` at worst
+    // re-offers a fight that was already won, which costs a duplicate scene and
+    // strands nothing. They are equivalent on the shipped corpus — each row's
+    // grants are written by exactly one reachable post-dialog, as a contiguous
+    // run of `set` statements — but rooms/index.js:1113 says in terms that the
+    // Act-5 gauntlet may be "re-split into solo fights", which is precisely the
+    // change that gives three of these flags a second writer. Choose the
+    // predicate that is wrong in the cheap direction.
     for (const trigger of REARM_ON_DEFEAT_TRIGGERS) {
       const readFlag = `read_${trigger.scene}`;
       if (!this.player.getFlag(readFlag)) continue;
-      if (trigger.grants.some(flag => this.player.getFlag(flag))) continue;
+      if (trigger.grants.every(flag => this.player.getFlag(flag))) continue;
       this.player.setFlag(readFlag, false);
     }
   }

@@ -102,6 +102,7 @@ scene janitor_act6
   The Janitor: I've worn this watch since 1947. Year the charter was signed. Year this building looked a man in the eye and made a promise it meant to keep.
   The Janitor: This watch doesn't tell time, Andrew. Tells trust. And right now it says the building remembers what it promised.
   The Janitor: When this watch leaves my wrist, that elevator goes up one time. Anyone you meant to talk to down here — anything you left half-done — stays that way. You don't have to take it now.
+  @n4
   ask The Janitor: The Janitor is holding out the Rolex.
     -> n6: "I've done what I can down there."
     -> n5: "I think there's still something I need to do first."
@@ -143,6 +144,7 @@ scene janitor_waits_for_board
 # answer burn the story beat.
 scene janitor_router
   The Janitor: Two kinds of business in a building this old. The kind with a clock on it, and the kind that was here before clocks.
+  @n1
   ask The Janitor: Which one first?
     -> n2: The reason I came down here.
     -> n4: Actually — tell me the riddle.

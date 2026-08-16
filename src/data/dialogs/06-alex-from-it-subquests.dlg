@@ -387,6 +387,7 @@ scene compliance_crossword
   Compliance Auditor: You want access to the secure terminal in the Archive. I know because I monitor all access requests. Even the ones that haven't been made yet.
   Compliance Auditor: The password is regulatory knowledge. Prove to me that you understand compliance, and I'll give you the key.
   Compliance Auditor: Five questions. Five correct answers. No partial credit. This is compliance, not a poetry class.
+  @n5
   ask Compliance Auditor: Question 1: Under the prudent investor rule, a fiduciary must invest trust assets as what?
     -> n6 sets crossword_1=true: A reasonable person would.
     -> n8: A maximum-return optimizer.
@@ -474,6 +475,7 @@ scene janitor_riddle_1
 
   @n3
   Mysterious Janitor: I am owed by many but owned by none. I am earned by actions, not by transactions. What am I?
+  @n4
   ask Mysterious Janitor: Take your time.
     -> n5: Trust.
     -> n8: Money.
@@ -500,6 +502,7 @@ scene janitor_riddle_2
 
   @n3
   Mysterious Janitor: I grow stronger when tested, weaker when assumed. I am the foundation of every contract but written in no clause. What am I?
+  @n4
   ask Mysterious Janitor: Think carefully.
     -> n5: Good faith.
     -> n8: Power.
@@ -526,6 +529,7 @@ scene janitor_riddle_3
 
   @n3
   Mysterious Janitor: I was here before the building. I will be here after it falls. I am not in the charter, but the charter is in me. What am I?
+  @n4
   ask Mysterious Janitor: Last chance.
     -> n5: Duty.
     -> n9: The building.

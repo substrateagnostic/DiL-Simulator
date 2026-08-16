@@ -124,7 +124,16 @@ const converted = [
 const historicalAct5 = {
   id: 'HISTORICAL act5-trigger interrupt', oldOnce: 'flag:act5_triggered',
   record: 'act5_triggered', scene: 'act5_trigger', startRoom: 'archive',
-  targetRoom: 'cubicle_farm', action: 'historical-act5', flags: {},
+  targetRoom: 'cubicle_farm', action: 'historical-act5',
+  // This is the ONE case that boots in the archive, so it is the one that has to
+  // suppress the archive security fight — and P8 moved that trigger's once-guard
+  // off the pre-P8 records and onto `read_security_guard_combat`. Without this
+  // flag the 800 ms security push RACES the fixture's stack-clear and lands on
+  // top of the leg under test, which makes the whole run non-deterministic: it
+  // went green for its author and red here. Exactly the CAPTURE-LAW error this
+  // file's own comment at the penthouse rows warns about, missed on the one row
+  // that starts somewhere else.
+  flags: { read_security_guard_combat: true },
 };
 
 const triggerById = new Map(TRIGGERS.map(trigger => [trigger.id, trigger]));
@@ -270,13 +279,17 @@ async function reloadThroughLoadGame(test) {
   });
   await page.reload({ waitUntil: 'domcontentloaded' });
   const load = page.locator('.title-menu-item', { hasText: 'Load Game' });
-  await load.waitFor({ timeout: 30000 });
+  // 30 s was marginal: the Load Game route through TitleState timed out
+  // non-deterministically on one post-credits row while the game itself was fine
+  // (the same flag image reloaded cleanly on a re-run). A gate that fails at random
+  // teaches people to ignore it, so give the slow path room.
+  await load.waitFor({ timeout: 60000 });
   await load.click();
   const slot = page.locator('.save-slot-card', { hasText: 'SLOT 3' });
   await slot.waitFor({ timeout: 10000 });
   await slot.click();
   await page.waitForFunction(caseId => window.__explore?.player?.flags?.__dr_latch_case === caseId,
-    test.id, { timeout: 30000 });
+    test.id, { timeout: 60000 });
 }
 
 async function waitForDialog(scene, timeout) {

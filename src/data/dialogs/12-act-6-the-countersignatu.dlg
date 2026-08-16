@@ -73,6 +73,7 @@ scene records_clerk_form11c
 
   @n5
   The Clerk: Personnel records of Recorder's-office personnel are themselves records, recorded by the recorded. To request the record of a recorder, you require...
+  @n6
   ask: Which form?
     -> n9: Form 11-C — Request for Records of Requests for Records
     -> n7: Form 7-A — Request for Records
@@ -146,6 +147,7 @@ scene delia_booth4
   Delia Okafor: I know what Article 9 says. I sealed four hundred and twelve documents under Article 9. I remember every one, which is not a gift, before you ask.
   Delia Okafor: So here is my question, young man, and I'd take a breath before answering, because I'll know.
   Delia Okafor mood=angry: Twenty-eight floors of that building came down on people like me for forty years. Moved our desks. Lost our forms. Called it modernizing. Where was everybody? Why didn't anyone come when it was us?
+  @n11
   ask: Answer her.
     -> n13: "I didn't know. I know now."
     -> n12: "I'm here now — that has to count."
@@ -293,6 +295,7 @@ scene delia_epilogue
 scene parking_enforcer_intro
   Narrator: Officer Reyes of Parking Enforcement looks at you. Then at the curb. Then at you. You are not parked. Somehow this makes it worse.
   Narrator: "Pedestrians loitering in a loading zone," she says, already writing, "is a gray area. I specialize in gray areas."
+  @n2
   ask: Contest the citation?
     -> n4: Contest it. On the record. Right now.
     -> n3: Walk away (you cannot win city hall)
@@ -345,6 +348,7 @@ scene parking_enforcer_defeated
 scene networking_guy_intro
   Narrator: A man in a quarter-zip materializes beside you with the smooth inevitability of a calendar invite you never accepted.
   Narrator: "Hey! Big fan of your space. Trust stuff, right? I'm actually building something adjacent to that. Do you have literally fifteen minutes?"
+  @n2
   ask: Do you have literally fifteen minutes?
     -> n3: "No." (combat)
     -> n3: "...How adjacent?" (combat, but slower)

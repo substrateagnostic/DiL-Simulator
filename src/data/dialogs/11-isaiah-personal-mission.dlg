@@ -10,6 +10,7 @@ scene isaiah_receipts_offer
   Isaiah: Nine years ago I started keeping physical copies. Board minutes, expense reports — the things that usually disappear when a company 'modernizes.' Meredith's people swept the floor in 2019. I thought they were gone.
   Isaiah: But I'd already moved them. There's a filing cabinet in the Archive basement section. It's been mislabeled 'HVAC MAINTENANCE LOG 2015–' for five years. Nobody's touched it.
   Isaiah: If those records are still there, they would show a pattern. Not just this branch. Meredith's done this before. Other places. Other people.
+  @n6
   ask: Help Isaiah find the buried records?
     -> n7: "Tell me where to look."
     -> n10: "Not right now. But I will."
@@ -92,6 +93,7 @@ scene diane_handbook_offer
   Diane: I've been in HR for fourteen years. I know handbooks the way some people know scripture. And I know when one's been changed.
   Diane: Vaults Fargo had an original employee handbook. 1947. Article 1 is different from what's in the current edition. I've compared them. The current version removed a sentence.
   Diane: Meredith had the original boxed up eighteen months ago. 'For archival.' I need to know if it's been destroyed or if it's still there.
+  @n7
   ask: Help Diane find the original handbook?
     -> n8: "Where was it boxed up?"
     -> n11: "I'll look when I can."
@@ -185,6 +187,7 @@ scene janet_vacancy_offer
   Janet: You haven't. Gary left in March 2019. Transferred to the Scottsdale branch. There was a cake. Lemon. I remember because I bought it.
   Janet: HR never processed his departure. The vacancy form needs his final timesheet attached, and his final timesheet was on his desk, and his desk became the supply nook, and the form has been 'pending documentation' for six years.
   Janet: I have been doing Gary's accounts since 2019. Unofficially. On top of mine. Because the system thinks Gary still works here, so the work routes to his desk, and his desk routes to me.
+  @n7
   ask: Help Janet close the Gary vacancy?
     -> n8: "Six YEARS? Where's the timesheet?"
     -> n11: "I'll dig it up when I can."
@@ -274,6 +277,7 @@ scene janitor_names_offer
   Mysterious Janitor: There's a ledger. Green cover, water stain shaped like Ohio. I started it in '81. Every name that came through this department — and what the building did to them.
   Mysterious Janitor: When Meredith's people started sweeping floors, I hid it in the Vault. Behind the deposit boxes, low left. Then they pulled my Vault clearance. Said custodial staff didn't need 'asset-level access.'
   Mysterious Janitor: Forty-five years of names sitting in the dark. I'd like them back.
+  @n6
   ask: Retrieve the Janitor's ledger?
     -> n7: "Behind the deposit boxes. On it."
     -> n9: "Why keep a list like that?"

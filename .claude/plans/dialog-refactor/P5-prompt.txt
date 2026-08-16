@@ -1,0 +1,155 @@
+P5 — THE STORY GRAPH for the TRUST ISSUES dialog refactor.
+
+REPO: C:\Users\agall\projects\DiL_Simulator   BRANCH: display-case  (never touch main)
+GOVERNING SPEC: .claude/plans/dialog-refactor/DESIGN.md section 4 (read 4.1, 4.2, 4.3 in full)
+P0-P4 are DONE: the dialog corpus is compiled from src/data/dialogs/*.dlg into
+src/data/dialogs/index.js by `npm run dialogs:build`. THIS PHASE DOES NOT TOUCH DIALOGS.
+
+=== THE JOB ===
+The act ladder and the derived-flag latches in src/states/ExplorationState.js are
+hand-written conditionals. Turn them into DECLARATIVE DATA plus a small evaluator, with
+ZERO behaviour change. This is an extraction, not a redesign.
+
+=== WHAT TO CREATE ===
+
+src/data/story/graph.js
+  export const ACTS   — 7 rows, ordered low->high index. Each row: { index, id, when, quest }.
+  export const DERIVE — the ordered list of derived-flag rules (see THE RULES below).
+  export const GATES  — the room-access table (see THE GATES below).
+  Expression language, exactly as DESIGN.md 4.2:
+      'flag_name'                     truthy
+      ['not', X]  ['all', X, ...]  ['any', X, ...]
+      ['room', 'board_room']          player.currentRoom === that
+      ['set', 'RENOVATION_FLAGS']     every flag in a named set (derived from SHOP_ITEMS,
+                                      NOT copied — import ALL_RENOVATION_FLAGS the same way
+                                      ExplorationState does today)
+      ['pred', 'name']                a named predicate from predicates.js
+  Every rule carries a `note:` string. THE EXISTING COMMENTS IN ExplorationState.js ARE THE
+  ONLY RECORD OF WHY SEVERAL OF THESE RULES EXIST. Carry each one across into its rule's
+  `note`, in substance — do not shorten them to a phrase. Specifically preserve, in full
+  substance: why board_meeting_closed defers while the player stands in board_room (18 bodies
+  deleting themselves in one visible frame); why rolex_available carries `|| has_rolex` (a
+  legacy save otherwise puts TWO Janitors in the Archive); why the five intern flags are
+  five and not one (an NPC condition holds ONE flag/notFlag pair and three states need two
+  positives); why karen_first_meeting_over exists (needs BOTH terms); why meredith_era_over
+  exists (a straddling save reached act 5+ with act4_complete unset); why act6_ready is named
+  "prepared" and not "meeting held"; why ready_for_skip lists FIVE coworkers including rachel.
+
+src/data/story/predicates.js
+  A WHITELIST of named predicates, each with a one-line docstring and a `reads: [...flags]`
+  array so a later reachability analysis can see through it. P5 needs at most one or two;
+  do not invent predicates that no rule uses.
+
+src/data/story/evaluator.js
+  export function evalExpr(expr, ctx)  — ctx is { flags, room, act, sets }.
+  export function deriveFlags(player, opts) — applies DERIVE and returns what changed.
+  export function actIndexFor(flags) / questIdFor(flags) — the ACTS ladder.
+
+=== THE ONE THING THAT WILL BREAK IT IF YOU GET IT WRONG ===
+**DERIVE IS AN ORDERED SINGLE PASS, NOT A FIXPOINT.** The current code is one top-to-bottom
+pass through _refreshStoryProgress. `intern_at_desk` is computed at line ~3844 and READS
+`board_meeting_closed`, which is not derived until line ~3918. So within a single call the
+intern flags deliberately lag one call behind. If your evaluator runs to a fixpoint, the
+intern flags change value one call earlier than the shipping game and the A/B harness will
+diverge. Evaluate DERIVE ONCE, IN ARRAY ORDER, and keep the array in the same order the
+source computes them. Then run the act ladder, then the quest-id ladder — that is also the
+current order (_syncActFromFlags is called AFTER the derives, at line ~3935).
+
+Two more order facts to preserve exactly:
+ - A `latch` rule only ever writes true, and only when the flag is currently false.
+ - A `live` rule writes its boolean EVERY call, both polarities. There are exactly five
+   (intern_at_desk, intern_confronting, intern_desk_idle, intern_rehearsing,
+   intern_rally_ready) and they are the only two-way flags in the block.
+
+=== THE RULES (read them off src/states/ExplorationState.js:3759-3947 yourself and check
+this list against the file — if the file disagrees with this list, THE FILE WINS and say so) ===
+ 1 ready_for_skip        latch  all(met_janet, met_intern, met_isaiah, met_alex_it, met_rachel)
+ 2 act6_ready            latch  all(act5_complete, janet_act6_rallied, diane_act6_rallied,
+                                    intern_act6_rallied, skip_speech_ready, grandma_ally,
+                                    diane_evidence, isaiah_evidence)
+ 3 karen_first_meeting_over latch any(karen_defeated, retry_karen)
+ 4 meredith_era_over     latch  any(act4_complete, act5_complete)
+ 5 intern_at_desk        live   any(not act5_complete, board_meeting_closed)
+ 6 intern_confronting    live   all(intern_at_desk, lunch_thief_culprit_revealed,
+                                    not lunch_thief_complete)
+ 7 intern_desk_idle      live   all(intern_at_desk, lunch_thief_complete)
+ 8 intern_rehearsing     live   all(not intern_at_desk, not read_intern_rehearsal)
+ 9 intern_rally_ready    live   all(not intern_at_desk, read_intern_rehearsal,
+                                    not intern_act6_rallied)
+10 predecessors_all_found latch all(pred_bathroom_found, pred_garage_found, pred_copy_found)
+11 renovations_all       latch  ['set','RENOVATION_FLAGS']
+12 rolex_available       latch  all(act5_complete, any(board_meeting_held, has_rolex))
+13 board_meeting_closed  latch  any(board_meeting_held, act6_complete)
+                                deferWhile: ['room','board_room']
+NOTE on 5-9: rules 6-9 read the value rule 5 JUST WROTE in the same pass (the source uses a
+local `internAtDesk` const). That is intra-pass, and it is different from the inter-pass lag
+described above. Reproduce both faithfully.
+
+board_meeting_closed's deferral sets this._boardCloseDeferred instead of the flag, and it is
+flushed at the end of _changeRoom(). Keep that machinery in ExplorationState; the graph only
+declares the deferWhile condition. `window.__boardDeferOff === true` must still bypass the
+deferral (tools/_g-board-close.mjs --nodefer depends on it) — express it as an evaluator
+option `ignoreDefers`.
+
+=== THE GATES ===
+Extract the `gatedRooms` table inside _changeRoom() (11 rows: executive_floor, hr_department,
+board_room, penthouse, city_street, old_vault, penthouse_aquarium, penthouse_analytics,
+penthouse_bar — plus whatever else is actually there; READ IT) into GATES rows
+{ room, requires, message }. ALSO add declaration-only rows for the three special gates that
+are NOT in that table and must NOT become table rows, each with the comment explaining why:
+  - archive  { kind:'knowledge', code:'47-19-82' }  intercepted by _openArchiveKeypad BEFORE
+             the table lookup; a flag row here would be unreachable
+  - vault    { kind:'knowledge', code:'47-19-82' }  same, _openVaultKeypad
+  - executive_floor lawyer gate and the penthouse charter_certified gate: both are explicit
+    conditionals ahead of the table. Record them as kind:'special' rows with their note.
+The evaluator may CONSUME the flag rows; the special/knowledge rows are DATA ONLY in P5 —
+_changeRoom keeps its own explicit conditionals for them. Do not "simplify" them into the
+table; the comments in the file say in terms why that breaks.
+
+=== WHAT TO CHANGE IN ExplorationState.js ===
+ - _syncActFromFlags() becomes a call into actIndexFor(). Same result, same field written.
+ - The derived block of _refreshStoryProgress() (rules 1-13) becomes one call into
+   deriveFlags(). Everything else in that function (the toasts, _setQuest, the
+   _boardCloseDeferred bookkeeping) stays exactly where it is.
+ - The questId ladder becomes questIdFor().
+ - The gatedRooms object literal becomes a lookup over GATES.
+ - KEEP THE OLD CODE, verbatim, behind `window.__graphOff === true`. Name the preserved
+   functions _refreshStoryProgressLegacyDerive() / _syncActFromFlagsLegacy() /
+   _gatedRoomsLegacy(). This is required for the A/B harness and it ships for one release.
+ - Do not change any other behaviour, any toast string, or any call order.
+
+=== THE PROOF YOU MUST BUILD ===
+tools/_dr-graph-diff.mjs — a Playwright harness (headless is fine; nothing is judged
+visually). `npm run dev` will already be running on port 5173 when the overseeing agent runs
+it; accept --port=. For each of the 8 DevPanel states (the 7 act presets in
+src/ui/DevPanel.js plus the synthetic post-game state tools/_ux-dev.mjs builds:
+act7 + algorithm_defeated + renovation_penthouse) AND 200 pseudo-random flag assignments
+(seeded, so a failure reproduces) over every flag any DERIVE rule or the ACTS ladder reads:
+   run the LEGACY path (window.__graphOff = true) and the GRAPH path on the SAME input state
+   and assert the resulting flag set and player.actIndex and the questId are IDENTICAL.
+   Also vary player.currentRoom over ['board_room', 'cubicle_farm'] so the deferWhile is
+   exercised in both polarities, and run each state through TWO consecutive refreshes so the
+   inter-pass lag described above is actually observed.
+Print one line per state; print every mismatch with the flag name, both values, and the
+input state; exit 1 on any mismatch.
+
+=== HARD CONSTRAINTS ===
+- Do NOT touch src/data/dialogs/** , src/states/DialogState.js, src/ui/DialogBox.js.
+- Do NOT rename or remove any flag.
+- Do NOT change the save format.
+- src/data/story/*.js must be importable by the browser (plain ES modules, no node builtins).
+- Windows repo, LF endings, no CRLF.
+
+=== VERIFY (you cannot run `npm run build` or Playwright; the overseeing agent does) ===
+  node scripts/validate-data.mjs        -> must pass
+  node -e "import('./src/data/story/graph.js').then(m=>console.log(m.ACTS.length, m.DERIVE.length, m.GATES.length))"
+  node -e "import('./src/data/story/evaluator.js').then(m=>console.log(typeof m.deriveFlags))"
+  Write a tiny node self-check that runs deriveFlags over a handful of hand-built flag sets
+  and prints the results, so the shape is proved outside a browser. Leave it as
+  tools/dlg/../_dr-graph-selfcheck.mjs (put it at tools/_dr-graph-selfcheck.mjs).
+
+=== REPORT BACK ===
+Files added/changed with line counts; the DERIVE table as you actually built it (13 rows,
+mode, expression) and any place the FILE disagreed with the list above; the exact output of
+each command you ran; and an explicit list of anything you could not verify. Do not claim a
+command passed that you did not run.

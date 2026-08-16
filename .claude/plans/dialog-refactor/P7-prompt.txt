@@ -1,0 +1,121 @@
+P7 — THE ROUTING TABLE for the TRUST ISSUES dialog refactor.
+
+REPO: C:\Users\agall\projects\DiL_Simulator   BRANCH: display-case  (never touch main)
+GOVERNING SPEC: .claude/plans/dialog-refactor/DESIGN.md section 5 (read 5.1, 5.2, 5.3 in full)
+P0-P6 are DONE. src/data/story/{graph,predicates,evaluator}.js exist and define the
+expression language. THIS PHASE DOES NOT TOUCH DIALOGS OR THE GRAPH.
+
+=== THE JOB ===
+`ExplorationState._getDialogId(npc, commit)` is 450 lines of nested conditionals. Turn it
+into an ORDERED RULES TABLE plus a small evaluator, with ZERO behaviour change. Array order
+IS priority. The extraction must be exact: a differential harness will replay the old
+function against the new table over every reachable state and every rule must agree 100%.
+
+=== WHAT TO CREATE ===
+
+src/data/story/routes.js
+  export const DIALOG_ROUTES = [ ...rows... ];
+  Row fields:
+    id      unique, kebab-case, used by diagnostics and the shadow check
+    npc     optional cheap pre-filter (a string or array of npc ids)
+    room    optional cheap pre-filter
+    when    the graph's expression language, extended for routing with:
+              ['npc','alex_it']              npc.id equality
+              ['npcDialogId','alex_server_secret']  npc.dialogId equality
+              ['dialogExists','alex_it_act2']       DIALOGS[id] is truthy
+              ['act','>=',3]  ['act','==',4]  ['act','<',6]
+              ['pred','name']               a whitelisted predicate
+    then    a scene id string, OR ['npcDialogId'], OR ['ladder'], OR
+            ['first', 'a', 'b', ...] where the first EXISTING dialog wins
+    effect  optional, ONLY for the three commit-time flag writes (see below)
+    why     MANDATORY one-or-more sentence explanation
+    src     'ExplorationState.js:NNNN-NNNN', the lines it was extracted from
+
+src/data/story/route-eval.js
+  export function resolveRoute(ctx) — pre-filter by npc/room, evaluate `when` in array
+  order, first match wins, apply `effect` only when ctx.commit is true, return the scene id.
+  Target ~40-60 lines. It must NOT know any story facts.
+
+=== THE RULES, IN ORDER (this is a MAP, not the spec — READ _getDialogId YOURSELF and if the
+file disagrees with this list, THE FILE WINS and you say so in the report) ===
+ 1  combat retry (with the karen_retry_ready carve-out returning 'karen_not_ready')
+ 2  karen blocked until the intern spar (karen_intern_first)
+ 3  the JANITOR chain: JANITOR_STORY_BEATS beat + riddle -> janitor_router (with the
+    _janitorBeatDialog/_janitorRiddleDialog stash), beat alone, riddle alone
+ 4  janitor_intro bypass -> janitor_return
+ 5  janet_act4 (act>=4 && act<6)
+ 6  skip_act4 (act===4 exactly)
+ 7  rachel_intro (first meeting, any act)
+ 8  skip board_meeting_after (room board_room && board_meeting_held)   <- DESIGN 5.2
+ 9  the hardcoded npc.dialogId rule WITH the alex_server_secret carve-out  <- DESIGN 5.2
+10  meredith_intro with its four-negative ceiling                        <- DESIGN 5.2
+11  alex printer quest (with the _alexMainPathPending exemption)
+12  act4_trigger (with the sideQuestInProgress predicate)
+13  phantom approver shortcut
+14  alex story router / alex_story_chosen / alex_story_deferred   (COMMIT-TIME WRITES)
+15  alex side router / alex_side_deferred                          (COMMIT-TIME WRITE)
+16  alex_it_return guard before karen_defeated
+17  intern combat intro / intern_retry
+18  compliance crossword
+19  skip_post_karen, skip_post_chad
+20  social engineering chain (act>=4 && act<6): isaiah, diane, intern
+21  ally recruitment: isaiah_recruit, diane_recruit
+22  the five personal missions: alex badge audit, isaiah receipts, diane handbook,
+    janet vacancy, janitor names
+23  janitor_dave, janitor_predecessors, janitor_pattern, janitor_the_name
+24  the janitor terminal fallback (janitor_intro / janitor_return, never falls to the ladder)
+25  ['ladder'] — the act/intro/return suffix resolver at the end. LEAVE IT AS ONE NAMED
+    RESOLVER FUNCTION, do not expand it into 40 rows (DESIGN 5.1 says so explicitly).
+    It includes the actRow() quest-stage agreement check, the act-5 rung, the
+    skip/janet act2-hold-until-karen carve-out, PRE_DESK_TEAM -> team_pre_intro, and the
+    intro/return/actN fallback cascade. Move it VERBATIM into route-eval.js (or keep it as
+    a method ExplorationState passes in) — its logic must not be retyped by hand.
+
+=== THREE THINGS THAT WILL SILENTLY BREAK THE EXTRACTION ===
+1. **_getDialogId HAS SIDE EFFECTS, and only when `commit` is true.** Three writes:
+   `alex_story_chosen -> false`, `alex_story_deferred -> false`, `alex_side_deferred -> false`.
+   Plus TWO non-flag stashes that are NOT gated on commit today: `this._janitorBeatDialog`
+   and `this._janitorRiddleDialog`. Reproduce all five EXACTLY as they are, including which
+   ones ignore `commit`. A query must not have side effects — that bug is already documented
+   in the comment above _getNpcDialogId; do not re-introduce it and do not "fix" the two
+   stashes either, because the flag-set listener reads them.
+2. **`DIALOGS[x]` existence tests are load-bearing everywhere.** Almost every rule is
+   `&& DIALOGS.some_id`. Keep every one as ['dialogExists', ...]; dropping them changes
+   behaviour for any state where the tree is missing.
+3. **_getValidNpcDialogId is NOT part of this.** It stays exactly where it is and still
+   wraps the result (the neutral_<npc> quest-stage swap). Do not fold it into the table.
+
+=== THE PROOF (this is the deliverable that matters) ===
+tools/_dr-route-diff.mjs — Playwright, headless. `npm run dev` will be running on 5173.
+  a) Enumerate every NPC id that appears in any room in src/data/rooms/index.js, crossed
+     with every room id.
+  b) For each of the 8 DevPanel states (7 act presets in src/ui/DevPanel.js + the synthetic
+     post-game state tools/_ux-dev.mjs builds), evaluate the LEGACY _getDialogId and the new
+     table for every (npc, room) pair with commit=false, and assert equality.
+  c) Then fuzz: at least 20,000 seeded-random flag assignments over every flag any route
+     reads, same assertion. Print the flag count you swept over.
+  d) On any mismatch print: the npc, the room, the flag set (only the flags that differ from
+     empty), both answers, and the rule id the new table fired. Exit 1.
+  e) ALSO run a commit=true pass over the states where rules 14/15 can fire, asserting the
+     three commit-time flag writes land identically.
+Keep the legacy function in the file behind `?routes=legacy` (a URLSearchParams read like
+DEV_MODE in src/utils/constants.js) so a live disagreement can be A/B'd for one release.
+Name the preserved function `_getDialogIdLegacy`.
+
+=== HARD CONSTRAINTS ===
+- Do NOT touch src/data/dialogs/**, DialogState.js, DialogBox.js, or the graph files.
+- Do NOT change any returned dialog id for any state.
+- Do NOT reorder rules "for clarity" — array order is behaviour.
+- src/data/story/*.js must be browser-importable plain ES modules.
+- Windows repo, LF endings, no CRLF, no BOM.
+
+=== VERIFY (you cannot run vite or Playwright; the overseeing agent does) ===
+  node scripts/validate-data.mjs
+  node -e "import('./src/data/story/routes.js').then(m=>console.log(m.DIALOG_ROUTES.length))"
+  Confirm every row has a unique id, a `why`, and a `src`; write that as a node self-check
+  and run it. Report the row count.
+
+=== REPORT BACK ===
+The full row list (id, npc, then, one-line why) as a table; every place the FILE disagreed
+with the map above; the exact output of each command you ran; and an explicit list of
+anything you could not verify.

@@ -10,6 +10,7 @@ scene alex_it_act3
   Alex from IT: It just decrypted itself. Not 'I cracked it' decrypted. ITSELF. Like it WANTED to be found.
   Alex from IT: And what's inside is... it's a shadow ledger. Every trust account this branch has ever managed. Parallel books.
   Alex from IT: Not just the Hendersons. Dozens of accounts. Hundreds of small adjustments. Basis point skims. Fee reallocations. All traced back to one account: admin_legacy.
+  @n5
   ask Alex from IT: Someone's been running a shadow trust system for EIGHT YEARS. And the building's servers just... revealed it. On purpose.
     -> n6: Who created admin_legacy?
     -> n10: What do you mean the building revealed it on purpose?
@@ -72,6 +73,7 @@ scene skip_act3
   Skip Hartley: A 'comprehensive operational assessment.' That's corporate for 'finding reasons to fire people.'
   Skip Hartley: She asked me about the Henderson Trust. About our procedures. About our... 'fiduciary controls.'
   Skip Hartley: I tried to use buzzwords. They bounced off her like... like buzzwords bouncing off a wall. She's immune. Nobody's ever been immune before.
+  @n5
   ask Skip Hartley: Andrew, I'm scared. Is it okay to say that? Leadership books say you're never supposed to say that.
     -> n6: It's okay to be scared, Skip.
     -> n8: What does Meredith actually want?
@@ -115,6 +117,7 @@ scene janitor_act3
   Mysterious Janitor: When this branch was chartered in 1947, the founders wrote something into the original trust charter. Not a legal clause. Something... older.
   Mysterious Janitor: A declaration that the fiduciary duty of this institution was not just to its clients but to the concept of trust itself. The actual, philosophical concept.
   Mysterious Janitor: Decades of promises. Decades of people putting their faith in this building. Their estates. Their families' futures. All of that faith... accumulated.
+  @n6
   ask Mysterious Janitor: This building is alive, Andrew. It has been for a very long time.
     -> n7: That's impossible.
     -> n11: The Fiduciary Force.
@@ -142,6 +145,7 @@ scene isaiah_act3
   Isaiah: Andrew. Interesting morning. I've been practicing not reacting to it.
   Isaiah: The woman from corporate — Meredith — she asked me to compile a list of everyone in the trust department and their 'redundancy potential.'
   Isaiah: I told her I'd get right on it. Politely. Then I immediately came to find you.
+  @n3
   ask Isaiah: What's going on? Can I help?
     -> n4 sets isaiah_friendly=2: We're investigating something big. Could use your help.
     -> n7: Stay out of it. It's safer for you.
@@ -165,6 +169,7 @@ scene meredith_act3
   Meredith Sterling: Interesting approach. Some would say reckless. I say it produced a measurable outcome, which in this department qualifies as exotic.
   Meredith Sterling: I'm here to ensure this department meets corporate standards. Standards that, frankly, it has not been meeting.
   Meredith Sterling: Skip is a competent motivational speaker. As a department head, however, he leaves much to be desired.
+  @n4
   ask Meredith Sterling: I have plans for this department. Big plans. You could be part of them.
     -> n5: What kind of plans?
     -> n8: I'm happy with how things are.
@@ -327,6 +332,7 @@ scene skip_act4
   Skip Hartley: Andrew. I... I've been thinking. Which is new for me, but I'm trying it.
   Skip Hartley: Meredith wants to dissolve the department. MY department. The one I built from... okay, I didn't build it. The Janitor built it. But I've been MANAGING it.
   Skip Hartley: The thing is... she's not wrong about everything. I haven't been a great leader. I've been a great TALKER. Those are different things.
+  @n3
   ask Skip Hartley: So tell me, Andrew. Why should I fight for this department?
     -> n4 sets skip_convince_1=true: Because this department leverages core competencies that can't be outsourced.
     -> n6: Because you care about your team, Skip.
@@ -337,6 +343,7 @@ scene skip_act4
 
   @n6
   Skip Hartley: I DO care about the team. Janet. The Intern. Even Alex, who definitely runs Minecraft on company servers.
+  @n7
   ask Skip Hartley: But caring isn't a strategy. What's the strategy?
     -> n8 sets skip_convince_2=true: We disrupt Meredith's narrative by pivoting to a transparency-first paradigm.
     -> n10: We tell the truth about what's been happening.
@@ -347,6 +354,7 @@ scene skip_act4
 
   @n10
   Skip Hartley: The truth? The TRUTH? Andrew, the truth is terrifying. The truth is that someone has been stealing from our clients and I didn't notice because I was too busy reading leadership books.
+  @n11
   ask Skip Hartley: How do we actually win this?
     -> n12 sets skip_convince_3=true: We need to synergize our stakeholder alignment across all trust verticals.
     -> n14: We show the board that Meredith is part of the cover-up.
@@ -357,6 +365,7 @@ scene skip_act4
 
   @n14
   Skip Hartley: Meredith is part of it? She's not just reviewing us, she's PROTECTING the person who—
+  @n15
   ask Skip Hartley: If that's true, we need to move fast. What's the endgame?
     -> n16 sets skip_convince_4=true: We circle back to the original charter and leverage our fiduciary moat.
     -> n18: We go to the board with the evidence. All of it.
@@ -600,6 +609,7 @@ scene alex_it_recruit
   Alex from IT: A consultant tried to reimage every workstation on this floor. I unplugged the rack. Then I unplugged HIM.
   Alex from IT: He's going to come back with reinforcements. And a manager. I need to come with you.
   Alex from IT: Look — I'm not a fighter. But I have root on every box in this building. That counts.
+  @n6
   ask: Bring Alex along?
     -> n7: "Glad to have you. Welcome to the team."
     -> n12: "I work better alone."
@@ -623,6 +633,7 @@ scene isaiah_recruit
   Isaiah: I have nine years of receipts on Meredith. NINE.
   Andrew: Why didn't you say anything before?
   Isaiah: Because I didn't think anyone would do anything with it. I was wrong. I want in.
+  @n5
   ask: Recruit Isaiah?
     -> n6: "We need everything you have. You're in."
     -> n11: "Just send me the documents. Stay safe down here."
@@ -708,6 +719,7 @@ scene alex_badge_audit_offer
   Alex from IT: Hey. Got a minute? I've been pulling badge logs since the trio went down.
   Alex from IT: Every Restructuring goon who came in this week was issued from a single workstation. Not HR. Not Reception. Somewhere upstairs.
   Alex from IT: I can't get the source from a remote query — Meredith's office IP is air-gapped. But if YOU could pull the physical patch panel logs off rack PATCH-3, I can correlate them.
+  @n5
   ask: Help Alex trace the badges?
     -> n6: "On it. Where do I look?"
     -> n9: "Later. Big stuff happening upstairs."
@@ -857,6 +869,7 @@ scene team_chat_hub
   Janet: You've been... clinical. In the last few. The way you talked down the analyst — that wasn't argument, that was a closing.
   Janet: I know what that sounds like. I did three years of corporate before I came back to trust. There's a version of you who can win this fight by becoming exactly the thing we're fighting.
   Janet: Don't do that. We can win and stay people. Both. I refuse to let you forget that.
+  @n25
   ask: ...
     -> n26: "You're right. Thank you."
     -> n27: "It works. That's what matters."

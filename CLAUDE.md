@@ -226,6 +226,16 @@ lowercase directives are `ask if goto end set fight give xp stat heal quest recr
 a speaker name must begin with a capital letter, which is how the two are told apart.
 **The one-page grammar card is `tools/dlg/grammar-card.md`. Read it before authoring.**
 
+**EVERY `ask` MUST CARRY AN `@label`, and it is a save-key rule.** `_chose_<dialogId>_<nodeIndex>_<choiceIndex>`
+is persisted, and the lock only pins an index that a LABEL claims — so an *unlabelled* choice
+node slides whenever a line is inserted above it, silently changing that key for every save in
+the wild. Measured on the shipped corpus: one prose line added above `branch_decision`'s `ask`
+moved it from index 6 to 8, and the entire reviewable lock diff was `"length": 36 → 37`.
+49 of the 61 choice nodes were unpinned; all 61 are pinned now, `npm run check` fails on an
+unlabelled `ask`, and adding all 49 labels left `index.js` **byte-identical** because a label
+consumes no index. This is the half of the never-insert law the labels-and-`goto` design does
+*not* close on its own: jumps became names, but choice indices are still positional.
+
 `dialogs.lock.json` is the **append-only label→index ledger** — *append-only*, not frozen.
 `npm run dialogs:build` writes it when the change is purely additive (a new label, a new
 scene, a grown length) and prints each addition; `dialogs:check` reports a stale lock exactly
@@ -237,10 +247,14 @@ whole thing safe. A label keeps its index forever; a new label takes the next fr
 removed label leaves its index RESERVED and the compiler emits an `{ type: 'end' }` pad
 into the hole (the padding convention this corpus already used — 41 unreferenced pads
 shipped). No index is ever reused. That is not tidiness: `_chose_${dialogId}_${nodeIndex}_${choiceIndex}`
-(`DialogState.js:271` reads it, `:310` writes it) is a persisted save key, and the lock is what keeps it stable
-for every save in the wild. The lock is committed and its diff is the human-readable proof
-that a content change added nodes and moved none. `--reseed` is refused without
-`DIALOGS_LOCK_RESEED=i-know` in the environment; it has been used exactly once.
+(`DialogState.js:271` reads it, `:310` writes it) is a persisted save key, and the lock is
+what keeps it stable — **for every LABELLED index**, which, since the choice-pin rule above,
+is every index a save key can name. The lock is committed and its diff is the human-readable
+proof that a content change moved no labelled node. Be precise about what that diff shows:
+it is *semantically* additive (no label moved, none dropped, no scene shrank), not literally
+addition-only — appending a label to a scene rewrites that scene's `labels` object and its
+`length`. `--reseed` is refused without `DIALOGS_LOCK_RESEED=i-know` in the environment; it
+has been used exactly once.
 
 **Dev loop:** `npm run dev` serves the freshly compiled module in place of the file
 (`tools/dlg/vite-plugin-dlg.mjs`, `apply: 'serve'`). Edit a `.dlg`, save, the running game
@@ -316,7 +330,7 @@ a thing you find by playing.** Seven checks:
 | **A** | every `ACTS[].when` flag is in the closure from a fresh save |
 | **B** | every flag READ anywhere is in the closure, in `CODE_GRANTS`, or has a `NEVER_SET` reason |
 | **C** | every scene in the corpus is routed, triggered, or carries a `SCENE_DISPOSITION` row |
-| **D** | every gate flag is reachable, **and** still reachable with its own room blocked (the key is not behind its own door) |
+| **D** | every gate flag is reachable from a fresh save — which also covers the circular case, since a key only obtainable behind its own door can never enter the closure |
 | **E** | no spend-before-grant: every trigger is `scene`, `always`, or a named waiver — **and** a fight-bearing `once:'scene'` trigger whose encounter has no player-initiable route must declare `reArmOnDefeat` |
 | **F** | the expiry check — a grant behind `¬f` must be orderable before `f` |
 | **G** | route shadowing: every route row has a satisfying assignment where no earlier row fires |
@@ -339,13 +353,17 @@ null falsely called three Janitor rows shadowed).
 **A READ FLAG IS MONOTONE, AND A LOST FIGHT IS NOT A FINISHED SCENE.** `read_<sceneId>` is
 written when the dialog ENDS — which for a scene whose last action is `fight` is *before*
 the fight is entered — and nothing clears it. That is right for an interrupted scene and
-wrong for a lost one. Four trigger scenes start an encounter with **no player-initiable
-route anywhere in `rooms/index.js`** (no NPC, no interactable), and between them they are
-the sole writers of `corporate_lawyer_defeated`, `data_lead_defeated`,
-`board_room_accessible` and `charter_certified` — so one defeat would have taken Acts 5, 6
-and 7 with it, which is the exact bug the refactor exists to kill. Those rows declare
-**`reArmOnDefeat: true`**, and `_reconcileSceneLatches` clears `read_<scene>` at LOAD and on
-DEFEAT whenever the payoff has not landed. **Check E fails the build if a fight-bearing
+wrong for a lost one. **Three** trigger scenes — the Act-5 gauntlet — start an encounter with
+**no player-initiable route anywhere in `rooms/index.js`**, no NPC and no interactable, and
+between them they are the sole writers of `corporate_lawyer_defeated`, `data_lead_defeated`
+and `board_room_accessible`, so one defeat would have taken Acts 5, 6 and 7 with it. A
+fourth row, The Firm's ambush, carries the same declaration as **belt-and-braces**: it does
+have a route (the `old_vault` `firm_partner` NPC serves `the_firm_retry`, live in exactly the
+post-defeat state), and re-arming it only means the lost fight is re-offered where it
+happened rather than only at the partner. Those rows declare **`reArmOnDefeat: true`**, and
+`_reconcileSceneLatches` clears `read_<scene>` at LOAD and on DEFEAT unless **every** grant
+has landed — `every` and not `some`, because `some` fails toward the soft-lock and `every`
+fails toward a duplicate scene. **Check E fails the build if a fight-bearing
 `once: 'scene'` trigger with grants has neither `reArmOnDefeat` nor a player-initiable
 fallback**, so the next one cannot be authored silently. `tools/_dr-latch-interrupt.mjs`
 carries the matching leg: lose the fight, assert the scene IS re-served.

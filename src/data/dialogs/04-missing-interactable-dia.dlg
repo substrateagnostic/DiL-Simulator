@@ -363,6 +363,7 @@ scene intern_combat_intro
 scene isaiah_intro
   Isaiah: Hey there! You must be the new trust officer. Welcome to the team.
   Isaiah: I'm Isaiah. If you ever need help with anything around here, just ask. I mean it — anything.
+  @n2
   ask Isaiah: What can I do for you?
     -> n3: Could you help me understand how things work here?
     -> n7: Get me a coffee.
@@ -454,6 +455,7 @@ scene meredith_intro
   Meredith Sterling: You're the new trust officer.
   Meredith Sterling: I'm Meredith Sterling. SVP of Strategic Operations. I oversee... everything.
   Meredith Sterling: I've read your file. Interesting background. Let's see if it translates to results.
+  @n4
   ask Meredith Sterling: I trust Skip has briefed you on the Henderson situation?
     -> n5: Yes, he was very... thorough.
     -> n7: He mostly talked about synergy.

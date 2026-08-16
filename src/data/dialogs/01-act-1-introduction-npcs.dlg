@@ -176,6 +176,7 @@ scene intern_intro
   The Intern: Right, right, Arnold. Sorry, I'm terrible with names.
   The Intern: I'm the intern! Well, I was the intern. Now I'm the 'Trust Operations Support Specialist.' Same pay though.
   The Intern: Which is zero. The pay is zero.
+  @n5
   ask The Intern: Hey, you're not with Compliance, are you?
     -> n6: No, why?
     -> n11: What if I am?
@@ -328,6 +329,7 @@ scene water_cooler
 scene vending_machine
   Narrator: You approach the vending machine. It hums menacingly.
   Narrator: The selection buttons are labeled with numbers that don't correspond to any visible products.
+  @n2
   ask Vending Machine: INSERT COIN FOR WISDOM
     -> n16: Press B7
     -> n17: Press C3

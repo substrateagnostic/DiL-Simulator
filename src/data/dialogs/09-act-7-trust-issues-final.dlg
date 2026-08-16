@@ -145,6 +145,7 @@ scene algorithm_defeated
   if quest_final_patch_complete else -> n14
   The Janitor: There is a fourth option, son. One that only appears for those who truly listened.
   The Janitor: The building doesn't need a department. It needs a guardian.
+  @n13
   ask: What do you do with the charter's power?
     -> n18: Invoke full autonomy — free the department completely
     -> n19: Negotiate a compromise — partial autonomy
@@ -412,6 +413,7 @@ scene ending_architect
 scene arcade_intro
   Narrator: An old arcade cabinet sits in the corner. The screen flickers with a pixel man in a pixel suit, running flat out down a pixel hallway. "SPRINT REVIEW" blinks in gold letters.
   Narrator: "Insert Quarter" it says. Someone has taped a note over the coin slot: "FREE PLAY — Management"
+  @n2
   ask: Play Sprint Review?
     -> n3: Yes! (This is definitely a productive use of company time)
     -> n4: No (You have actual work to do)
