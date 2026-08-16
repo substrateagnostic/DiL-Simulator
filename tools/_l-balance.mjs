@@ -433,9 +433,16 @@ export const CANDIDATES = {
   // Objections and just presses the printed weakness — i.e. B2 buys turn count
   // by raising MONOTONY, which is the exact number the J-run's Pivot was built
   // to lower. Measured on P6: Grandma's top-tag went 47.9% -> 60.8%.
+  // *** THE PROPOSAL *** — what `tools/_l-apply.mjs --on` writes.
+  // B2 is OUT. It bought ~5pp of HP-left on Grandma and cost ~11pp of
+  // MONOTONY there (top-tag 49.7% -> 60.8%), because a haymaker that demands
+  // two tags is unclearable by a solo Andrew, so the policy stops spending
+  // tagged hits on Objections and just presses the printed weakness. That is
+  // the exact number the J-run's Pivot was built to lower, and it is not for
+  // sale at this price.
   P8: {
-    label: 'P8  P6 WITHOUT B2  = E3 + B3 + F1(52) + C1',
-    note: 'Does dropping the two-lock haymakers give the diversity band back?',
+    label: 'P8  *** THE PROPOSAL ***  = E3 + B3 + F1(52) + C1',
+    note: 'Escalation Response + DENIAL_LIMIT 1 + Press Advantage 52 + Coffee 60.',
     apply: (c) => {
       CANDIDATES.E3.apply(c);
       CANDIDATES.B3.apply(c);

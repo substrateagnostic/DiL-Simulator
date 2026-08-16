@@ -76,17 +76,28 @@ await page.evaluate(({ lv }) => {
 }, { lv: LEVEL });
 
 const probe = async () => page.evaluate(() => {
-  const c = window.__combat; const eng = c.engine; const e = eng.enemies[0];
   const en = window.__engine;
-  const grp = (n) => {
-    let found = null;
-    en?.scene?.traverse?.(o => { if (o.name === n) found = o; });
-    return found ? found.visible : null;
-  };
-  return {
+  // The two groups the degrade ladder hides at `low`: the city backdrop and
+  // the room-FX light pools (`g.name = 'room_fx'`). Both are gated on
+  // `_atmosVisible`, so that flag is the pin — a capture that lost them is a
+  // capture of a black void, which is how a wave-G board-meeting video was
+  // delivered to the producer as a picture of the game.
+  let pools = null;
+  en?.scene?.traverse?.(o => { if (o.name === 'room_fx') pools = o.visible; });
+  const base = {
     tier: en?.qualityTier ?? null,
     adaptive: en?._adaptiveQuality ?? null,
-    city: grp('CityBackdrop'), pools: grp('RoomFXPools'),
+    atmos: en?._atmosVisible ?? null,
+    city: en?.cityBackdrop?.group?.visible ?? null,
+    pools,
+  };
+  // CombatState.exit() nulls `window.__combat`, so the frame after a victory
+  // has no engine to read. That is the END of the fight, not a fault.
+  const c = window.__combat;
+  if (!c || !c.engine) return { ...base, over: true, result: 'ended', gone: true };
+  const eng = c.engine; const e = eng.enemies[0];
+  return {
+    ...base,
     enemyId: e?.enemyId ?? null, enemyName: e?.name ?? null,
     enemyHP: e?.hp, enemyMax: e?.maxHP,
     composure: e?.composure, maxComposure: e?.maxComposure,
@@ -106,19 +117,40 @@ const snap = async (label) => {
   if (s.tier !== 'high') tierMoved = tierMoved || `${label}: qualityTier=${s.tier}`;
   if (s.adaptive === true) tierMoved = tierMoved || `${label}: adaptive governor is ON`;
   ledger.push({ label, ...s });
+  if (!s.gone) lastLive = s;
   console.log(label.padEnd(12), JSON.stringify(s));
   await page.screenshot({ path: join(OUT, `${String(ledger.length).padStart(2, '0')}-${label}.png`) });
   return s;
 };
 
+let lastLive = {};
 const first = await snap('boot');
 if (first.enemyId !== FIGHT) {
   console.error(`IDENTITY FAIL: expected ${FIGHT}, stage holds ${first.enemyId}`);
   await ctx.close(); await browser.close(); process.exit(1);
 }
+// BUILD IDENTITY. A capture is a claim about WHICH BUILD it is, and a preview
+// server serves whatever `dist/` happens to hold. Two runs were once tagged
+// `before` against an `after` bundle because the tree had been reverted but
+// `dist/` had not been rebuilt. Press Advantage's live cost is the cheapest
+// observable that separates them: base 40 vs 52, so at level 7 (spd 14) it
+// reads 37 on the baseline and 49 with the proposal applied.
+const paCost = await page.evaluate(() => window.__combat.engine.getPressAdvantageCost());
+const expectOn = TAG.startsWith('after');
+const looksOn = paCost >= 45;
+if (looksOn !== expectOn) {
+  console.error(`BUILD IDENTITY FAIL: tag=${TAG} expects proposal ${expectOn ? 'ON' : 'OFF'}, `
+    + `but the served bundle reports Press Advantage cost ${paCost} (>=45 means ON). `
+    + 'Rebuild dist/ for the state you are shooting.');
+  await ctx.close(); await browser.close(); process.exit(1);
+}
+console.log(`build identity OK: PressAdvantage=${paCost}, proposal ${looksOn ? 'ON' : 'OFF'}`);
 
 const waitTurn = async () => {
-  await page.waitForFunction(() => window.__combat?.inputEnabled === true || window.__combat?.engine?.isOver,
+  // `!window.__combat` is the victory case: CombatState.exit() nulls it, and
+  // without this term the loop waits out its full timeout on a won fight.
+  await page.waitForFunction(
+    () => !window.__combat || window.__combat.inputEnabled === true || window.__combat.engine?.isOver,
     { timeout: 40000 });
   await page.waitForTimeout(300);
 };
@@ -143,7 +175,25 @@ for (let t = 1; t <= MAX_TURNS; t++) {
   // A competent line: brace a telegraphed haymaker when hurt, heal when low,
   // otherwise swing at the printed weakness.
   const lowHP = pre.playerHP / pre.playerMax < 0.38;
-  if (lowHP) {
+  // Brace a telegraphed haymaker. Without this the scripted line is not the
+  // COMPETENT policy the tables describe — it is a player who eats every
+  // Guilt Trip at full price, and the first baseline capture lost the fight
+  // at level 7 while the table says 100% win. The A/B is only honest if both
+  // arms run the SAME line and that line is the one being modelled.
+  const bigIncoming = await page.evaluate(() => {
+    const e = window.__combat?.engine?.enemies?.[0];
+    return !!(e && e.telegraphedAbility && !window.__combat.engine.player.bracing);
+  });
+  const heavy = bigIncoming && ['guilt_trip', 'gerald_incident', 'hostile_takeover',
+    'final_assessment', 'market_correction', 'father_wanted', 'live_tweet_rampage',
+    'rage_quit_attack', 'total_optimization', 'algorithmic_trading', 'passive_aggression',
+  ].includes(pre.telegraph);
+  if (heavy && !lowHP) {
+    const b = await page.click('.combat-action-btn:text-is("Brace")', { timeout: 3000 })
+      .then(() => true).catch(() => false);
+    if (b) { await page.waitForTimeout(650); await page.keyboard.down('Enter'); await page.waitForTimeout(120); await page.keyboard.up('Enter'); }
+    else await page.click('.combat-action-btn:text-is("Attack")').catch(() => {});
+  } else if (lowHP) {
     const healed = await special('Coffee Break');
     if (!healed) await page.click('.combat-action-btn:text-is("Attack")').catch(() => {});
   } else {
@@ -161,17 +211,20 @@ for (let t = 1; t <= MAX_TURNS; t++) {
   }
   await page.waitForTimeout(3600);
   const post = await snap(`t${t}-post`);
+  if (post.gone) { ledger[ledger.length - 1].result = lastLive.result || 'defeat-or-victory'; }
   if (post.over) break;
 }
 
 const last = await probe();
-const lowWater = Math.min(...ledger.map(r => r.playerHP / r.playerMax));
+const live = ledger.filter(r => !r.gone && typeof r.playerHP === 'number');
+const lowWater = live.length ? Math.min(...live.map(r => r.playerHP / r.playerMax)) : 1;
+const end = live[live.length - 1] || {};
 const summary = {
   tag: TAG, fight: FIGHT, level: LEVEL, turns: ledger.filter(r => r.label.endsWith('-post')).length,
-  result: last.result, playerHPend: last.playerHP, playerMax: last.playerMax,
-  hpLeftPct: +(last.playerHP / last.playerMax * 100).toFixed(1),
+  result: last.result || end.result, playerHPend: end.playerHP, playerMax: end.playerMax,
+  hpLeftPct: +(end.playerHP / end.playerMax * 100).toFixed(1),
   lowWaterPct: +(lowWater * 100).toFixed(1),
-  enemyHPend: last.enemyHP, enemyMax: last.enemyMax,
+  enemyHPend: end.enemyHP, enemyMax: end.enemyMax,
   qualityTierHeld: !tierMoved, tierFault: tierMoved, pageErrors: errors,
 };
 writeFileSync(join(OUT, 'ledger.json'), JSON.stringify({ summary, ledger }, null, 1));

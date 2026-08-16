@@ -1,17 +1,17 @@
-// _l-apply.mjs — apply / revert the balance proposal (P6) as a whole.
+// _l-apply.mjs — apply / revert the balance proposal (P8) as a whole.
 //
 // The proposal is DARK: nothing in `src/` carries it at rest. This script is
 // the only thing that writes it, it is idempotent in both directions, and it
 // is what generates `.claude/plans/l-run/PROPOSAL.diff`:
 //
-//   node tools/_l-apply.mjs --on          # write P6 into the tree
+//   node tools/_l-apply.mjs --on          # write P8 into the tree
 //   git --no-pager diff > .claude/plans/l-run/PROPOSAL.diff
 //   node tools/_l-apply.mjs --off         # put the tree back
 //   node tools/_l-apply.mjs --check       # report which state the tree is in
 //
 // It is also the A/B rig for `tools/_l-fight-ab.mjs`: apply, shoot, revert,
 // shoot. Every number in `BALANCE-PROPOSAL.md` was measured through
-// `tools/_l-balance.mjs --cand P6`, which applies the SAME five component
+// `tools/_l-balance.mjs --cand P8`, which applies the SAME four component
 // definitions to the SAME live objects — so the capture and the table cannot
 // describe different builds.
 import { readFileSync, writeFileSync } from 'fs';
@@ -24,19 +24,19 @@ const BAL = 'src/data/balance.json';
 const AI = 'src/combat/EnemyAI.js';
 const ENG = 'src/combat/CombatEngine.js';
 
-// ── THE PROPOSAL, as five named components ──────────────────────────────
+// ── THE PROPOSAL, as four named components ──────────────────────────────
+// It is `tools/_l-balance.mjs --cand P8`. A fifth component, B2 (two-tag
+// haymakers), was measured, worked, and was CUT: it bought ~5pp of HP-left on
+// Grandma and cost ~11pp of monotony there, because a haymaker demanding two
+// tags is unclearable by a solo Andrew, so the policy stops spending tagged
+// hits on Objections and just presses the printed weakness. That is the number
+// the J-run's Pivot exists to lower.
+//
 // C1 (B24)  player.maxMP 75 -> 60
 const MP_ON = 60, MP_OFF = 75;
-// B2  the five boss haymakers in the 26-33 power band demand TWO tags.
-//     Andrew gets one tagged hit a turn solo, so these stop being free
-//     fizzles and start being a reason to bring a party or eat 30% less.
-const LOCK2 = {
-  guilt_trip: 2,            // grandma      30
-  hostile_takeover: 2,      // meredith     30
-  market_correction: 2,     // director     30
-  rage_quit_attack: 2,      // chad         28
-  algorithmic_trading: 2,   // algorithm    28
-};
+const LOCK2_CLEANUP = ['guilt_trip', 'hostile_takeover', 'market_correction',
+  'rage_quit_attack', 'algorithmic_trading'];   // B2, CUT — see above. Listed
+  // only so `--off` still removes an older application rather than stranding it.
 // E3  THE ESCALATION RESPONSE. Every enemy that already HAS an AI pattern row
 //     gets it; the four enemies with no row (chief_of_restructuring,
 //     data_analytics_lead, reception_client, networking_guy) deliberately do
@@ -56,13 +56,8 @@ function patchBalance(on) {
   const { s, nl } = readNL(BAL);
   const j = JSON.parse(s);
   j.player.maxMP = on ? MP_ON : MP_OFF;
-  if (on) {
-    j.enemyAbilities = j.enemyAbilities || {};
-    for (const id of Object.keys(LOCK2)) {
-      j.enemyAbilities[id] = { ...(j.enemyAbilities[id] || {}), lockCount: LOCK2[id] };
-    }
-  } else if (j.enemyAbilities) {
-    for (const id of Object.keys(LOCK2)) {
+  if (j.enemyAbilities) {
+    for (const id of LOCK2_CLEANUP) {
       if (!j.enemyAbilities[id]) continue;
       delete j.enemyAbilities[id].lockCount;
       if (Object.keys(j.enemyAbilities[id]).length === 0) delete j.enemyAbilities[id];
@@ -112,7 +107,6 @@ function state() {
   const eng = readFileSync(ENG, 'utf8');
   return {
     'C1 player.maxMP': bal.player.maxMP,
-    'B2 lockCount rows': Object.keys(bal.enemyAbilities || {}).length,
     'E3 escalateAfterDenial rows': (ai.match(/escalateAfterDenial/g) || []).length,
     'B3 DENIAL_LIMIT': (eng.match(/DENIAL_LIMIT: (\d+),/) || [])[1],
     'F1 PRESS_ADVANTAGE_BASE': (eng.match(/PRESS_ADVANTAGE_BASE: (\d+),/) || [])[1],

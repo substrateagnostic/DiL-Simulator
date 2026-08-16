@@ -1856,20 +1856,39 @@ export class CombatEngine {
   // Called from `_pickEnemyAbility`, which runs inside `telegraph()` on the
   // PLAYER'S turn — i.e. after the denial has been recorded and before
   // `_clearDenial` runs, which happens only when the enemy actually acts.
-  _attackFallback(abilities, pattern, enemy) {
-    if (!pattern) return null;
-    const owed = !!(enemy && ((enemy.denialStreak || 0) > 0 || enemy.sealed));
-    const pref = Math.max(
-      pattern.preferAttack || 0,
-      owed ? (pattern.escalateAfterDenial || 0) : 0,
-    );
-    if (!pref || Math.random() >= pref) return null;
+  _damagingPick(abilities, chance) {
+    if (!chance || Math.random() >= chance) return null;
     const atks = abilities.filter((id) => {
       const a = ENEMY_ABILITIES[id];
       return a && (a.type === 'attack' || a.type === 'dot' || a.type === 'summon');
     });
     if (atks.length === 0) return null;
     return atks[Math.floor(Math.random() * atks.length)];
+  }
+
+  /** Unconditional `preferAttack`. Called from inside each pattern branch, in
+   *  the position that branch would otherwise have drawn uniformly at random. */
+  _attackFallback(abilities, pattern) {
+    return pattern ? this._damagingPick(abilities, pattern.preferAttack) : null;
+  }
+
+  /** THE ESCALATION RESPONSE. Checked BEFORE the pattern, not inside it.
+   *
+   *  Ordering is the whole mechanic. The first version of this sat where the
+   *  pattern would otherwise have rolled at random — i.e. AFTER `tactical`'s
+   *  heal branch and AFTER its `debuffChance` branch, both of which return
+   *  early. Measured on Grandma, only 50.0 per cent of the picks she made while
+   *  owed a turn ever reached it, so an 0.85 dial delivered about 0.42 and the
+   *  ladder barely moved. It also read wrong: a boss whose move you just
+   *  objected away should not answer by baking cookies.
+   *
+   *  It outranks the pattern for every enemy, which is why it lives here and
+   *  not in five branches. Everything downstream is unchanged. */
+  _escalationPick(abilities, pattern, enemy) {
+    if (!pattern || !pattern.escalateAfterDenial) return null;
+    const owed = !!(enemy && ((enemy.denialStreak || 0) > 0 || enemy.sealed));
+    if (!owed) return null;
+    return this._damagingPick(abilities, pattern.escalateAfterDenial);
   }
 
   _pickEnemyAbility(enemy) {
@@ -1892,11 +1911,15 @@ export class CombatEngine {
     if (!abilities || abilities.length === 0) return null;
 
     const pattern = ENEMY_AI_PATTERNS[enemy.enemyId];
+    // THE ESCALATION RESPONSE outranks the pattern entirely — see
+    // `_escalationPick` for why the ordering is the mechanic and not a detail.
+    const escalated = this._escalationPick(abilities, pattern, enemy);
+    if (escalated) return escalated;
     if (!pattern) return this._pickRandom(abilities, true, enemy);
 
     switch (pattern.pattern) {
       case 'random':
-        return this._attackFallback(abilities, pattern, enemy) || this._pickRandom(abilities, true, enemy);
+        return this._attackFallback(abilities, pattern) || this._pickRandom(abilities, true, enemy);
 
       case 'escalating': {
         const seq = pattern.sequence || [];
@@ -1906,7 +1929,7 @@ export class CombatEngine {
           if (abilities.includes(pick)) return pick;
         }
         if (pattern.randomAfter) {
-          return this._attackFallback(abilities, pattern, enemy)
+          return this._attackFallback(abilities, pattern)
             || abilities[Math.floor(Math.random() * abilities.length)];
         }
         const last = seq[seq.length - 1];
@@ -1943,7 +1966,7 @@ export class CombatEngine {
           });
           if (debuffAbilities.length > 0) return debuffAbilities[Math.floor(Math.random() * debuffAbilities.length)];
         }
-        return this._attackFallback(abilities, pattern, enemy)
+        return this._attackFallback(abilities, pattern)
           || abilities[Math.floor(Math.random() * abilities.length)];
       }
 
@@ -1960,14 +1983,14 @@ export class CombatEngine {
           const pick = p1[enemy.abilityIndex];
           enemy.abilityIndex++;
           if (abilities.includes(pick)) return pick;
-          return this._attackFallback(abilities, pattern, enemy)
+          return this._attackFallback(abilities, pattern)
             || abilities[Math.floor(Math.random() * abilities.length)];
         }
         const p2Index = (enemy.abilityIndex - p1.length) % p2.length;
         enemy.abilityIndex++;
         const pick = p2[p2Index];
         if (abilities.includes(pick)) return pick;
-        return this._attackFallback(abilities, pattern, enemy)
+        return this._attackFallback(abilities, pattern)
           || abilities[Math.floor(Math.random() * abilities.length)];
       }
 
@@ -1980,12 +2003,12 @@ export class CombatEngine {
           if (noRepeat.length > 0) pool = noRepeat;
         }
         if (pool.length === 0) pool = abilities;
-        return this._attackFallback(pool, pattern, enemy)
+        return this._attackFallback(pool, pattern)
           || pool[Math.floor(Math.random() * pool.length)];
       }
 
       default:
-        return this._attackFallback(abilities, pattern, enemy) || this._pickRandom(abilities, true, enemy);
+        return this._attackFallback(abilities, pattern) || this._pickRandom(abilities, true, enemy);
     }
   }
 
