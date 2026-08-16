@@ -1,0 +1,5 @@
+scene stat_actions
+  stat maxMP +5
+  stat atk 2
+  stat def -1
+  end

@@ -1,0 +1,5 @@
+scene arm_sets_true
+  ask: Mark the choice.
+    -> done sets remembered=true: This one.
+  @done
+  end

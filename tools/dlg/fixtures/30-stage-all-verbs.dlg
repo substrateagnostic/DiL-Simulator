@@ -1,0 +1,7 @@
+scene stage_all_verbs
+  stage
+    @arrival regional spawn spawnAt 8.4, 13.4 walkTo table_stand_n stand face player speed 1.2 gesture wave pose ready expression stern hold 0.5 show nowait
+    player teleportTo chair_n_mid sit face regional speed 1.5 after arrival
+    regional walkTo 1,2 exit -3.5, 4 after arrival
+    janet spawnAt lobby exit elevator
+  end

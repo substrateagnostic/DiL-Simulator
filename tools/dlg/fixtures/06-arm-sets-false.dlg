@@ -1,0 +1,5 @@
+scene arm_sets_false
+  ask: Clear the choice.
+    -> done sets remembered = false: Clear it.
+  @done
+  end

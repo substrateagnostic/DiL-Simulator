@@ -1,0 +1,4 @@
+scene if_fallthrough
+  if ready
+  Narrator: Either branch falls through.
+  end

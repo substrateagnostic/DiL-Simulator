@@ -1,0 +1,7 @@
+scene reward_paying
+  Andrew: The audit is complete.
+  xp 100
+  give trust_badge x1
+  stat spd +1
+  set audit_paid
+  end

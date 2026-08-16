@@ -1,0 +1,5 @@
+scene arm_sets_bare
+  ask: Mark the choice.
+    -> done sets remembered: This one.
+  @done
+  end

@@ -1,0 +1,3 @@
+scene give_compact
+  give coffee_large x2
+  end

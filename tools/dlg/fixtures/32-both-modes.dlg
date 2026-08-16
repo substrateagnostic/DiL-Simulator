@@ -1,0 +1,5 @@
+scene both_modes
+  mode quiz
+  mode evergreen-hub
+  Narrator: Both declarations are visible.
+  end

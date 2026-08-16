@@ -1,0 +1,3 @@
+scene quest_objective
+  quest audit_trail objective 2
+  end

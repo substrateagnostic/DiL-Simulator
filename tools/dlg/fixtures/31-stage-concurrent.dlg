@@ -1,0 +1,5 @@
+scene stage_concurrent
+  stage concurrent
+    player face regional nowait
+    regional stand
+  end

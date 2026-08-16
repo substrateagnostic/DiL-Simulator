@@ -1,0 +1,25 @@
+# before scene
+scene comments_everywhere
+  # before mode
+  mode quiz
+  # before first label
+  @start
+    # between label and statement
+  ask: Comments can sit around a choice.
+    # before arm
+    -> staged: Continue.
+  # before choice goto
+  goto staged
+  # before stage label
+  @staged
+  # before stage
+  stage
+    # before beat
+    @ready player stand
+  # before stage goto
+  goto done
+  # before end label
+  @done
+  # before end
+  end
+# at eof

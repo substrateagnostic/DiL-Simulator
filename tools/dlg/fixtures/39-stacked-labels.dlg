@@ -1,0 +1,6 @@
+scene stacked_labels
+  Goto Target: This is a speaker, not a directive.
+  @first
+  @alias
+  Narrator: Two labels name this statement.
+  end

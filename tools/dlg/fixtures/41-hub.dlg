@@ -1,0 +1,11 @@
+scene compact_hub
+  mode evergreen-hub
+  @hub
+  ask Janet: What next?
+    -> story: Tell me a story.
+    -> done: Leave.
+  @story
+  Janet: Once there was a very patient auditor.
+  goto hub
+  @done
+  end

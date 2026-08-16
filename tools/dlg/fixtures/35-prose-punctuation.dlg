@@ -1,0 +1,6 @@
+scene prose_punctuation
+  Meredith Sterling: Here's the note: "Trust" isn't *simple*—and that's the point # keep this prose.
+  ask Andrew: Which answer: the first, or the "second"?
+    -> done: It's the second—*obviously*: yes # still prose.
+  @done
+  end

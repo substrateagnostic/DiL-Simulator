@@ -1,0 +1,3 @@
+scene quest_status
+  quest audit_trail objective 3 status done
+  end

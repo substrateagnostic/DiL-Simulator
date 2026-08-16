@@ -1,0 +1,6 @@
+scene goto_text
+  Narrator: Skip the hidden line.
+  goto done
+  Narrator: Hidden.
+  @done
+  end

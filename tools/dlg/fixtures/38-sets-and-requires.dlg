@@ -1,0 +1,6 @@
+scene sets_and_requires
+  ask Janet: Choose carefully.
+    -> done sets chosen="investigate" requires access: Investigate.
+    -> done sets chosen unless blocked: Ignore.
+  @done
+  end

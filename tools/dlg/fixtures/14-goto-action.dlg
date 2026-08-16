@@ -1,0 +1,6 @@
+scene goto_action
+  set routed
+  goto done
+  Narrator: Hidden.
+  @done
+  end

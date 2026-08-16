@@ -1,0 +1,8 @@
+scene if_false
+  if ready else -> no
+  Narrator: Ready.
+  goto done
+  @no
+  Narrator: Not yet.
+  @done
+  end

@@ -1,0 +1,7 @@
+scene goto_stage
+  stage
+    player stand
+  goto done
+  Narrator: Hidden.
+  @done
+  end

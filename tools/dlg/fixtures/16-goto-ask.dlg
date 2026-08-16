@@ -1,0 +1,6 @@
+scene goto_ask
+  ask: Pick.
+    -> done: Done.
+  goto done
+  @done
+  end

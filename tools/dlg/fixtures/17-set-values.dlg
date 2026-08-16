@@ -1,0 +1,7 @@
+scene set_values
+  set accepted
+  set explicit_true = true
+  set rejected = false
+  set score = 2
+  set route = "report"
+  end

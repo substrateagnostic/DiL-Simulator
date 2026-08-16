@@ -1,0 +1,5 @@
+scene no_speaker_ask
+  ask: There is no named speaker.
+    -> done: Continue.
+  @done
+  end

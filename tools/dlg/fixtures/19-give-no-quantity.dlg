@@ -1,0 +1,3 @@
+scene give_no_quantity
+  give coffee_large
+  end
