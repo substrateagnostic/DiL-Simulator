@@ -117,6 +117,25 @@ class Game {
     }
 
     const shot = params.get('shot');
+    // ?fxevery=N / ?fxhousing=x,y,z -- CEILING-HARDWARE A/B for the shot room.
+    // These write the two per-room `fx` keys Engine.applyRoomFX already reads
+    // (see cubicle_farm in rooms/index.js) into the ROOM DATA, before the room
+    // is built. The capture therefore goes through the shipping fixture path
+    // with nothing patched in the scene graph afterwards -- which is the whole
+    // point: an overlay applied to a built room is a picture of the overlay,
+    // not of the option. Dev-only, and only ever touches the shot room.
+    if (shot && (params.has('fxevery') || params.has('fxhousing'))) {
+      const { ROOMS } = await import('./data/rooms/index.js');
+      const room = ROOMS[shot];
+      if (room) {
+        room.fx = { ...(room.fx || {}) };
+        if (params.has('fxevery')) room.fx.fixtureEvery = Number(params.get('fxevery'));
+        if (params.has('fxhousing')) {
+          const v = String(params.get('fxhousing')).split(',').map(Number);
+          room.fx.housingScale = v.length === 3 && v.every(Number.isFinite) ? v : null;
+        }
+      }
+    }
     if (shot) {
       ex._loadRoom(shot);
       ex._updateLocationDisplay(shot);

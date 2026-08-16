@@ -32,7 +32,20 @@ export const ROOMS = {
     // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
     // The Wave-2 reference room. Named explicitly so the rig it defines
     // stops being an accident of dirIntensity >= 0.9.
-    fx: { fixtures: 'office' },
+    //
+    // CEILING-HARDWARE VARIANT, COMMITTED DARK (playtest 2026-08-15).
+    // The playtester reads this room as cluttered; the producer narrowed it to
+    // the nine troffer HOUSINGS and froze the light. Two knobs, both read by
+    // Engine.applyRoomFX and both scoped to THIS room so the `office` profile
+    // its other seven rooms share does not move. Values below are the shipped
+    // incumbent, so this block currently changes nothing.
+    //
+    //   V1-LAWFUL  fixtureEvery: 2                        (9 fixtures -> 5)
+    //   COMBO      fixtureEvery: 2, housingScale: [1, 0.6, 0.6]
+    //
+    // Contact strip: screenshots/fix-round-2/b25-fixtures/contact_*.png
+    // Full option study: .claude/plans/playtest-notes/lighting-options.md
+    fx: { fixtures: 'office', fixtureEvery: 1, housingScale: null },
     name: 'Cubicle Farm',
     width: 20,
     height: 16,

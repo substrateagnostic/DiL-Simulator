@@ -943,6 +943,38 @@ class EngineClass {
     // additive light-shaft joining housing to pool, and a slim specular streak.
     // Pool width is kept close to the fixture and opacity capped so neighbouring
     // washes don't additively stack into blown paper BETWEEN the fixtures.
+    //
+    // FIXTURE DENSITY AND HOUSING SIZE ARE PER-ROOM, NOT PER-PROFILE.
+    // (Playtest 2026-08-15: the cubicle farm reads cluttered at the desk
+    // framings -- its nine 4.8 m bars own a third of the frame at F3. The
+    // `office` profile is shared by EIGHT rooms and must not move, so both
+    // knobs below live on the ROOM's own `fx` block and default to the
+    // incumbent. A room that says nothing is bit-identical to before.)
+    //
+    //   fixtureEvery: 2   keep a fixture only where (row + segment) is even --
+    //                     a quincunx on a 3x3 grid: four corners plus the
+    //                     centre, 9 -> 5. The `continue` below drops the WHOLE
+    //                     fixture, housing AND pool AND shaft AND streak, so a
+    //                     survivor is fully sourced and there is never a floor
+    //                     pool with nothing above it. That orphan-pool state is
+    //                     the documented round-1 critic defect ("a floor that is
+    //                     somehow lit anyway") this whole rig exists to prevent,
+    //                     and hiding housings alone would re-create it exactly.
+    //   housingScale: [x, y, z]   scale the troffer BODY only (the pool, shaft
+    //                     and streak are separate meshes added to `g`, so the
+    //                     illumination is untouched by construction). [1, 0.6,
+    //                     0.6] is the measured "slimmer housing" variant: depth
+    //                     across the bar 0.52 -> 0.312 m, thickness 0.13 ->
+    //                     0.078 m, pendant stems shortened with it, RUN LENGTH
+    //                     HELD AT 100% because the bar's run is what ties it to
+    //                     its floor pool.
+    //
+    // Both are committed dark: see `cubicle_farm` in rooms/index.js, where the
+    // keys are present at their incumbent values so choosing a variant is a
+    // one-line edit. Evidence: .claude/plans/playtest-notes/lighting-options.md
+    // and screenshots/fix-round-2/b25-fixtures/.
+    const fixtureEvery = Math.max(1, Math.round(roomData.fx?.fixtureEvery ?? 1));
+    const housingScale = roomData.fx?.housingScale || null;
     if (rig) {
       const nz = Math.max(1, Math.round((h - 3) / 4.5));
       const nSeg = rig.perRow <= 1 ? 1
@@ -965,9 +997,18 @@ class EngineClass {
       for (let j = 0; j < nz; j++) {
         const pz = 1.0 + (h - 2) * ((j + 0.5) / nz) - 0.5;
         for (let s = 0; s < nSeg; s++) {
+          // Density cut. Everything below this line -- housing, pool, shaft,
+          // streak -- belongs to ONE fixture, so skipping here removes a
+          // complete sourced pair and never leaves a pool orphaned.
+          if ((j + s) % fixtureEvery !== 0) continue;
           const sx = cxm + (s - (nSeg - 1) / 2) * (segLen + gap);
           const fixture = Furniture.ceilingFixture(segLen, rig.tint);
+          // Named so a census can count troffers exactly. Without it the only
+          // handle is "Group child of room_fx", which also catches every light
+          // shaft -- a harness counting those reported 18 housings for 9.
+          fixture.name = 'ceiling_fixture';
           fixture.position.set(sx, 2.44, pz);
+          if (housingScale) fixture.scale.set(housingScale[0], housingScale[1], housingScale[2]);
           g.add(fixture);
           // Warm pool on the floor directly beneath the troffer — width held
           // near the fixture so adjacent pools kiss but don't stack hot.
