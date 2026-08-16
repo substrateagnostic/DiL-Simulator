@@ -1,3 +1,42 @@
+## [RESUME HERE - state as of 08-05 late (Fable, remote-control session)]
+
+MAIN == display-case == 66c3a88. Everything below is LIVE for playtesters.
+
+TONIGHT'S ARC: Andrew's fresh-save playtest -> 3 live hotfixes (chair
+jail, embed escape, Meredith haunting) -> act-chain root cause (the
+800ms act5_trigger latch race, ORIGINAL SIN not regression; saves
+self-heal at load now) -> alex_it 8 defects incl. reproducible
+soft-lock -> Meshy staging race (enemies A-posed because bodies lost a
+2.5s warm-up race on every FIRST encounter; staging now upgrades
+mid-fight) -> full 30-item fix round -> defeat collapses (a58/a359,
+BUT they sit on an invisible CHAIR - floor-grounding lane in flight)
+-> fixtures letter B live (cubicle quincunx, room-scoped) -> runner
+olive 0x6d8a78 -> IT room double-lit fixed -> BALANCE Tier 1 live
+(Escalation Response: a boss owed turns throws its real attacks;
+Tier 2 DECLINED - the 13-round-Meredith bill) -> DIALOG REFACTOR
+P0-P3 DONE: 292/292 byte-identity, .dlg corpus committed, runtime
+untouched, Alex calls it "so much more legible."
+
+IN FLIGHT: floor-sit grounding lane (invisible chair fix).
+
+COMMISSIONED NEXT (Alex-signed, not started):
+1. PHASE-LIST SURGERY round - redraw boss phase ability lists toward
+   damage kits (the "quiet turns" thief: 30-74% of surviving boss
+   turns deal zero). Targets: chad@6, regional_director, the Tier-2
+   rungs, WITHOUT economy nerfs.
+2. DIFFICULTY SETTING (Alex's insight, endorsed): one-knob balance vs
+   a casual floor is MEASURED impossible (70-85 band unpurchasable,
+   floor -12pp minimum). Formalize modes - Casual (PIP-style assist) /
+   Standard / hard mode that CAN take economy screws. Frees all
+   future tuning. Design both together - the difficulty setting is
+   the frame phase-surgery tunes within.
+3. REFACTOR P4-P7 (cutover, story graph, SIMULATOR, routing table) -
+   gated on coordinator review; checkpoint 2 passed 292/292.
+4. Persona attack-feel re-judge (H) - after phase surgery lands.
+OPEN LETTERS: none. Alex's board is clear.
+LAWS: HANDOFF_PACKAGE.md section 4. Fleet: builders opus-high/codex-
+xhigh, judge pair opus-xhigh+fable-high, single judge for fix rounds.
+NO Set-Content on source files (line-ending trap, hit again tonight).
 ## [THE FIVE-MERGE DAY (08-04 -> 08-05 overnight) - the whole queue landed]
 
 All five lanes built, judged, merged, LIVE on main. Shift report:
