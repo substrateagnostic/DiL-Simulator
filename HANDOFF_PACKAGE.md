@@ -311,9 +311,13 @@ verification had missed.
   accident: portraits for dialog, procedural for the world, Meshy for the fight.
 - Reaction roles are **gender-paired** on the sculpt's build:
   `guard {m:a138, f:a420}`, `hurt {m:a174, f:a178}`, `stagger {m:a176, f:a391}`,
-  `victory {m:a49, f:a59}`, `attack {m:a191, f:a214}`. Idles are per-character (33-row
+  `victory {m:a49, f:a59}`, `attack {m:a191, f:a214}`, `cast {m:a17, f:a318}`,
+  `defeat {m:a58, f:a359}`. Idles are per-character (33-row
   table in `art/MESHY_SLATE.md`). Gendered motion signature survives retargeting and
   is **lower-body only** (stance width, pelvic height); arm carriage carries none.
+  `defeat` is the only role played with `{ stay: true }` — it stops on its final
+  frame and latches `_down`, because a defeated body that returns to its
+  breathing stance has stood up again.
 - The male idle pool is at **exactly zero slack** — 16 clips for 16 male characters.
   One more male character breaks it; roguelite client bodies may share (Alex's ruling).
 - **Chad turning his back during a Composure Break is intentional** (Alex, 2026-08-01):

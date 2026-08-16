@@ -44,6 +44,27 @@ export const CLIP_IDS = {
   // pair law from the slate holds: a distinct male cast with an aliased female
   // one would re-introduce the exact asymmetry the slate exists to remove.
   cast:    { m: 17,  f: 318 },  // "Skill 1" / "Scheming Hand Rub"
+  // THE DEFEAT. Producer ruling C3: a defeated enemy should collapse or sit
+  // down rather than vanish. The old beat sank the whole group 2 world units
+  // through the floor while spinning it 1.5 rad and shrinking it to half size,
+  // which is a vanish with extra steps.
+  //
+  // Casting was a 255-clip sweep of every non-combat band (the full catalog
+  // measurement is in art/char_refs/meshy_pilot/_clips/defeat_sweep/sweep.json).
+  // Two things it settled that a name search would have got wrong:
+  //   * The automated "descends furthest and stays down" ranking is topped by
+  //     ten Fighting/Dying clips - knockdown, strangulation, gunshot - because a
+  //     body going flat and dead is the biggest silhouette collapse there is.
+  //     None is usable in an office satire, and picking by score would have
+  //     shipped a gunshot death as a defeat pose.
+  //   * Four clips NAMED for sitting - "Stand Clap and Sit Down" (299), "Stand
+  //     Wave and Sit Down" (302), "Stand Cheer and Sit Down" (305) and, most
+  //     painfully, "Angry to Tantrum Sit" (368), which has the best tantrum-sit
+  //     pose in the catalog - all STAND THE PERFORMER BACK UP before their last
+  //     frame. Only reading the actual final frame catches that.
+  // a58 and a359 are the only two genuine standing->floor-sit transitions in the
+  // right register that are still down at the true end, one per performed build.
+  defeat:  { m: 58,  f: 359 },  // "Step to Sit Transition" / "Look Back and Sit"
 };
 const REACTION_ROLES = Object.keys(CLIP_IDS);
 
@@ -105,6 +126,18 @@ export const CLIP_BEATS = {
   // is a held scheming pose rather than a committed beat — still stands, and is
   // why this is the CAST clip and not an attack.
   318: { trim: [2.100, 3.200], contact: 2.580 },  // f cast  — the rub itself, not the 2.1s walk-up to it
+  // DEFEAT PAIR. Untrimmed these are 2.300 s and 5.700 s — a 2.5x spread, which
+  // is exactly the "the women fall in fast-forward" artefact the gender slate
+  // exists to remove. Both windows are cut to the same shape: a beat of standing,
+  // the whole descent, and a held tail on the settled pose so the clamp lands on
+  // a still frame rather than a moving one. Hips-Y measured off the shipped GLBs
+  // (tools/_h-clip-keyframe.mjs' method, 25-channel armature-only clips):
+  //   a359  103.8 -> 57.7, descends 0.83-1.63 s, settled from 1.63
+  //   a58   111.8 -> 70.1, descends 2.83-4.43 s, settled from 4.43
+  // 1.75 s against 1.90 s, 8% apart — inside BEAT_TOLERANCE, so beatTimeScales
+  // leaves both at 1.000x and neither performance is sped up.
+  359: { trim: [0.350, 2.100] },  // f defeat — keeps the look-back, the sink, 0.47s seated
+  58:  { trim: [2.900, 4.800] },  // m defeat — drops 2.9s of standing before the step down
 };
 
 // THE BEAT REFERENCE. For each role, the clip the fight pacing was already

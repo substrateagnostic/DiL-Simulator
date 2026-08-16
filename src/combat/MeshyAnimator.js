@@ -45,6 +45,7 @@ export class MeshyAnimator {
     this._current = null;
     this._returnTimer = 0;
     this._oneShot = null;
+    this._down = false;          // set by play(role, { stay: true }); see below
     this._propTicks = opts.props || [];
     this._groundNode = opts.ground?.node || null;
     this._groundOffsets = opts.ground?.offsets || {};
@@ -78,6 +79,7 @@ export class MeshyAnimator {
 
   _toIdle() {
     this._oneShot = null;
+    if (this._down) return;      // a body on the floor does not go back to breathing
     this._releaseHold();
     const idle = this.actions.idle;
     if (!idle) return;
@@ -131,7 +133,15 @@ export class MeshyAnimator {
   // `timeScale` defaults to the role's beat multiplier so every call site fires
   // the normalized length without knowing the clip; pass an explicit number
   // only to deliberately override the beat window.
-  play(role, { hold = false, timeScale } = {}) {
+  // `hold`  loop the role forever (guard).
+  // `stay`  play ONCE and stop on the final frame — no return to the stance.
+  //         `clampWhenFinished` is already true on every action, so the pose
+  //         freezes; what `stay` actually does is keep the action OUT of
+  //         `_oneShot`, because the mixer's `finished` listener calls
+  //         `_toIdle()` on whatever is in there. A defeated body that goes back
+  //         to its breathing stance has stood up again.
+  play(role, { hold = false, stay = false, timeScale } = {}) {
+    if (this._down && !stay) return false;
     const action = this.actions[role];
     if (!action || role === this._current) {
       if (!action) return false;
@@ -148,7 +158,12 @@ export class MeshyAnimator {
     if (prev && prev !== action) prev.fadeOut(FADE);
     this._current = role;
     this._groundTarget = this._groundOffsets[role] ?? this._groundOffsets.idle ?? 0;
-    this._oneShot = hold ? null : action;
+    this._oneShot = (hold || stay) ? null : action;
+    // A body on the floor must not be interrupted back onto its feet by a
+    // late-arriving hurt/taunt beat, and CombatState fires several in the
+    // ~620 ms after the killing blow. This latch is one-way for the life of
+    // the animator, which is the life of the fight.
+    if (stay) this._down = true;
     return true;
   }
 
@@ -166,6 +181,9 @@ export class MeshyAnimator {
       case 'guard': case 'brace': return this.play('guard', { hold: true });
       case 'stagger': case 'break': return this.play('stagger');
       case 'victory': case 'cheer': return this.play('victory');
+      // The collapse. `stay` is what makes it a defeat rather than a stumble:
+      // the body goes down and the fight ends with it still there.
+      case 'defeat': case 'collapse': return this.play('defeat', { stay: true });
       default: return this.play('attack');
     }
   }
@@ -181,9 +199,11 @@ export class MeshyAnimator {
     // the broken enemy (CombatState.js, result.type === 'broken'), so the
     // stagger needs no new call site — hands to the head, doubling over.
     if (name === 'defeated') return this.play('stagger');
-    // A defeat call comes in as setExpression('hurt', 999) — the group-level
-    // topple in enemyDefeatAnim is the real beat; a looping flinch under it
-    // fights the spin, so the stance simply holds.
+    // A defeat call comes in as setExpression('hurt', 999). The real beat is
+    // now the `defeat` clip enemyDefeatAnim plays through playGesture, and a
+    // looping flinch on top of it would fight the collapse — so this stays a
+    // no-op. (`_down` already refuses it; this is the older, narrower guard and
+    // is kept because it also covers the procedural-degrade path.)
     if (name === 'hurt' && duration !== undefined && duration > 10) return false;
     // 'hurt' is a NO-OP on this path, deliberately. Every site in CombatScene
     // that calls setExpression('hurt', 0.9) — enemyHurtAnim:941, allyHurtAnim:

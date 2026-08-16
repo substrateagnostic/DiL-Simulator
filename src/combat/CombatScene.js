@@ -1082,22 +1082,44 @@ export class CombatScene {
     }, 100);
   }
 
+  // DEFEAT. Producer ruling C3: a defeated enemy COLLAPSES and stays on the
+  // stage; it does not vanish. The shipped beat sank the group 2 world units
+  // straight down through the floor while spinning it 1.5 rad and shrinking it
+  // to half size over ~50 frames — a vanish with extra steps, and the one thing
+  // the ruling named.
+  //
+  // On the Meshy cast the collapse is now a real clip: a gender-paired
+  // stand-to-floor-sit (MeshyClips.CLIP_IDS.defeat), played through the same
+  // playGesture surface as every other beat and held on its final frame by
+  // `stay`. The body remains seated where it fell until CombatState tears the
+  // scene down at the end of the victory sequence.
+  //
+  // The procedural cast has no such clip, so it keeps the topple — but WITHOUT
+  // the sink and the shrink, which were the vanish. It tips over and stays
+  // tipped, at full size, on the floor.
   enemyDefeatAnim(idx = 0) {
     const entry = this.enemyGroups[idx];
     if (!entry) return;
     entry.animator?.setExpression('hurt', 999);
     // If that was the last one standing, the party celebrates
     for (const a of this.allyGroups) a.animator?.setExpression('victory', 3.5);
+
+    // playGesture returns false when the role has no clip on this body (the
+    // procedural rig, or a Meshy body whose defeat clip failed to load), which
+    // is exactly the condition the fallback below exists for.
+    if (entry.animator?.playGesture('defeat')) return;
+
     const startY = entry.group.position.y;
     const startRot = entry.group.rotation.z;
-    const startScale = entry.baseScale;
     let t = 0;
     const animate = () => {
       t += 0.02;
       if (t > 1 || !entry.group.parent) return;
-      entry.group.position.y = startY - t * 2;
-      entry.group.rotation.z = startRot + t * 1.5;
-      entry.group.scale.setScalar(startScale * (1 - t * 0.5));
+      // Ease out so it lands rather than snapping, and stop at 1.5 rad — face
+      // down on the floor, still full size, still there.
+      const e = 1 - (1 - t) * (1 - t);
+      entry.group.position.y = startY;
+      entry.group.rotation.z = startRot + e * 1.5;
       requestAnimationFrame(animate);
     };
     animate();

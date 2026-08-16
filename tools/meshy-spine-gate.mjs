@@ -427,7 +427,12 @@ if (args.try) {
 
 // ── CAST GATE ───────────────────────────────────────────────────────────────
 console.log('clips:', (await page.evaluate(i => window.__initClips(i), ids)).join(','));
-const REACTION_ROLES = ['guard', 'hurt', 'stagger', 'victory', 'attack'];
+// Every role in MeshyClips.CLIP_IDS. 'cast' and 'defeat' were both absent -
+// 'cast' since the cast/attack split, 'defeat' because it is new - which meant
+// the retarget witness (Hips>Spine02 <= 60 deg) and the floor band were never
+// read on them. A role the gate does not sweep is a role that can ship bound
+// raw onto a foreign pelvis frame with nothing saying so.
+const REACTION_ROLES = ['guard', 'hurt', 'stagger', 'victory', 'attack', 'cast', 'defeat'];
 const data = [];
 let fails = 0;
 for (const id of ids) {
