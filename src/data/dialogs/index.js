@@ -23,7 +23,7 @@ export const DIALOGS = {
     { type: 'text', speaker: 'Andrew', text: "...There's no orchid." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "Exactly. Chad killed it. The point stands." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "HR asked me to give you this." },
-    { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1, next: 6 },
+    { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1 },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "It's a large coffee. You'll want it. Trust me." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "Your desk is on the cubicle floor. Through the north door, up the stairs. Well — there are no stairs. Through the north door." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "Your manager is Skip Hartley. He'll brief you. Don't be late." },
@@ -31,7 +31,7 @@ export const DIALOGS = {
     { type: 'text', speaker: 'Andrew', text: "What does a Seasonal Compliance Associate even do?" },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "..." },
     { type: 'text', speaker: 'Diane (Front Desk)', text: "Good luck, Andrew." },
-    { type: 'action', action: 'set_flag', flag: 'reception_intro_done', next: 14 },
+    { type: 'action', action: 'set_flag', flag: 'reception_intro_done', value: true },
     { type: 'end' },
   ],
 
@@ -92,7 +92,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Janet', text: "Ah. The new trust officer. They get younger every year. Or I'm aging in the cask. One of those." },
     /* 1  */ { type: 'text', speaker: 'Janet', text: "I'm Janet. I handle the... *sip* ...smaller accounts. The ones where nobody's fighting. So, like, three of them." },
     /* 2  */ { type: 'text', speaker: 'Janet', text: "Welcome to the sixth floor. We call it 'The Trust Fall.' Nobody catches you." },
-    /* 3  */ { type: 'choice', speaker: 'Janet', text: 'Anyway -- what can I help you with, hon?', choices: [
+    /* 3  */ { type: 'choice', speaker: 'Janet', prompt: 'Anyway -- what can I help you with, hon?', choices: [
       { text: "What's in the tumbler?", next: 4 },
       { text: 'Any tips for surviving here?', next: 8 },
       { text: "Who's who around the office?", next: 13 },
@@ -112,12 +112,12 @@ export const DIALOGS = {
     /* 15 */ { type: 'text', speaker: 'Janet', text: "The Intern... bless his heart. He's been here three months and still thinks fiduciary duty is a type of military service." },
     /* 16 */ { type: 'text', speaker: 'Janet', text: "Diane at reception is the only competent person in this building. If you need anything actually done, talk to her." },
     /* 17 */ { type: 'text', speaker: 'Janet', text: "And then there's the Janitor. He wears a gold Rolex and gives financial advice while mopping. Nobody asks questions.", next: 3 },
-    /* 18 */ { type: 'action', action: 'set_flag', flag: 'met_janet', value: true, next: 19 },
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'met_janet', value: true },
     /* 19 */ { type: 'text', speaker: 'Janet', text: "Anyway, good luck with the Henderson case. You're going to need it. Those people make Thanksgiving look like a contact sport." },
     /* 20 */ { type: 'text', speaker: 'Janet', text: '*sip*' },
     /* 21 */ { type: 'end' },
-    /* 22 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 3, ifFalse: 23 },
-    /* 23 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 1, next: 24 },
+    /* 22 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 3 },
+    /* 23 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 1 },
     /* 24 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_started', value: true, next: 3 },
   ],
 
@@ -131,7 +131,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "One thing before we get into it. Have you touched any of the legacy systems yet?" },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: 'I just started tod--' },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Good. Don't. The VPN runs on a modified TI-84 calculator from 2003. It has never crashed once, and I've chosen not to ask why." },
-    /* 6  */ { type: 'choice', speaker: 'Alex from IT', text: "So. What do you want to know?", choices: [
+    /* 6  */ { type: 'choice', speaker: 'Alex from IT', prompt: "So. What do you want to know?", choices: [
       { text: 'What happened to the IT team?', next: 7 },
       { text: "What's in the server room?", next: 11 },
       { text: 'Any tech I should know about?', next: 16 },
@@ -150,7 +150,7 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "The document management system crashes every Tuesday at 2 PM. Nobody knows why. I've stopped looking into it because every time I do, my access gets revoked for 24 hours." },
     /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "Also, the VOIP phones record everything. I mean, they're NOT supposed to. But the red light stays on even when you hang up." },
     /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "I unplugged mine in 2022. I communicate exclusively through Slack messages and aggressive eye contact.", next: 6 },
-    /* 20 */ { type: 'action', action: 'set_flag', flag: 'met_alex_it', value: true, next: 21 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'met_alex_it', value: true },
     /* 21 */ { type: 'text', speaker: 'Alex from IT', text: "Anyway, if your computer does anything weird -- and it will -- just restart it three times, slap the left side of the monitor, and say 'please.' In that order." },
     /* 22 */ { type: 'text', speaker: 'Alex from IT', text: "The 'please' is important. These machines run on spite and desperation." },
     /* 23 */ { type: 'end' },
@@ -165,7 +165,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'The Intern', text: "Right, right, Arnold. Sorry, I'm terrible with names." },
     /* 3  */ { type: 'text', speaker: 'The Intern', text: "I'm the intern! Well, I was the intern. Now I'm the 'Trust Operations Support Specialist.' Same pay though." },
     /* 4  */ { type: 'text', speaker: 'The Intern', text: 'Which is zero. The pay is zero.' },
-    /* 5  */ { type: 'choice', speaker: 'The Intern', text: "Hey, you're not with Compliance, are you?", choices: [
+    /* 5  */ { type: 'choice', speaker: 'The Intern', prompt: "Hey, you're not with Compliance, are you?", choices: [
       { text: 'No, why?', next: 6 },
       { text: 'What if I am?', next: 11 },
     ]},
@@ -178,7 +178,7 @@ export const DIALOGS = {
     /* 12 */ { type: 'text', speaker: 'The Intern', text: 'We call it... Proactive Document Lifecycle Management.' },
     /* 13 */ { type: 'text', speaker: 'Andrew', text: '...' },
     /* 14 */ { type: 'text', speaker: 'The Intern', text: "Please don't tell Skip I told you about the Henderson thing. He already made me reorganize the supply closet by 'emotional resonance.'" },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'met_intern', value: true, next: 16 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'met_intern', value: true },
     /* 16 */ { type: 'text', speaker: 'The Intern', text: "Oh! I almost forgot. Skip said to tell you the Henderson meeting is 'mission critical.' He said those words while doing finger guns." },
     /* 17 */ { type: 'text', speaker: 'The Intern', text: 'Good luck, Adam!' },
     /* 18 */ { type: 'text', speaker: 'Andrew', text: 'Andrew.' },
@@ -209,7 +209,7 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Skip Hartley', text: "Three beneficiaries: Karen, his daughter. Classic. Chad, his grandson. Also classic but in a different way. And Grandma Henderson, his wife." },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "They all want the assets. ALL of them. Karen says Daddy promised her the lake house. Chad says Grandpa promised him the investment portfolio." },
     /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "And Grandma Henderson... well. She's got the actual will. And a very good memory. And a cane she's not afraid to use." },
-    /* 11 */ { type: 'choice', speaker: 'Skip Hartley', text: 'Your job is to meet with each of them and resolve this. Questions?', choices: [
+    /* 11 */ { type: 'choice', speaker: 'Skip Hartley', prompt: 'Your job is to meet with each of them and resolve this. Questions?', choices: [
       { text: "What's our fiduciary obligation here?", next: 12 },
       { text: 'This sounds like a disaster.', next: 15 },
       { text: 'Why me? I just started.', next: 18 },
@@ -224,8 +224,8 @@ export const DIALOGS = {
     /* 18 */ { type: 'text', speaker: 'Skip Hartley', text: "Why you? Because you're fresh! Untainted by our... previous approaches to trust management." },
     /* 19 */ { type: 'text', speaker: 'Skip Hartley', text: "The last trust officer who handled the Henderson account had a 'nervous event' in the parking garage. He's fine now. Mostly. He flinches when he hears the word 'beneficiary.'" },
     /* 20 */ { type: 'text', speaker: 'Skip Hartley', text: "But that won't happen to you! Probably! Go get 'em, tiger!", next: 11 },
-    /* 21 */ { type: 'action', action: 'set_flag', flag: 'briefing_complete', value: true, next: 22 },
-    /* 22 */ { type: 'action', action: 'quest_update', quest: 'main_act2', objective: 0, status: 'complete', next: 23 },
+    /* 21 */ { type: 'action', action: 'set_flag', flag: 'briefing_complete', value: true },
+    /* 22 */ { type: 'action', action: 'quest_update', quest: 'main_act2', objective: 0, status: 'complete' },
     /* 23 */ { type: 'text', speaker: 'Skip Hartley', text: "Oh, one more thing. If Karen asks you about the pre-audit documents, just say they're 'in process.' Don't say anything about the shredder." },
     /* 24 */ { type: 'text', speaker: 'Skip Hartley', text: "Wait, you don't know about the shredder. Forget I said that. Circle back later. *finger guns*" },
     /* 25 */ { type: 'end' },
@@ -236,7 +236,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   diane_intro: [
     /* 0  */ { type: 'text', speaker: 'Diane', text: "I'm Diane. The title says reception. What I actually run is everything that has to be running by nine o'clock." },
-    /* 1  */ { type: 'choice', speaker: 'Diane', text: 'What do you need?', choices: [
+    /* 1  */ { type: 'choice', speaker: 'Diane', prompt: 'What do you need?', choices: [
       { text: 'How does this place actually work?', next: 2 },
       { text: 'What should I know about the Henderson case?', next: 7 },
       { text: "I think I'm good, thanks.", next: 13 },
@@ -253,8 +253,8 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Diane', text: "Grandma Henderson is the one to watch. She seems sweet, but she's been managing her own investments since 1987 and she's sharper than everyone in this building combined." },
     /* 12 */ { type: 'text', speaker: 'Diane', text: "Also -- and I probably shouldn't tell you this -- she used to work here. A long time ago. Ask the Janitor if you want to know more.", next: 1 },
     /* 13 */ { type: 'text', speaker: 'Diane', text: "Well, good luck. And seriously -- my desk, bottom drawer, antacids. Anytime you need them." },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'met_diane', value: true, next: 15 },
-    /* 15 */ { type: 'action', action: 'give_item', item: 'antacid', quantity: 1, next: 16 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'met_diane', value: true },
+    /* 15 */ { type: 'action', action: 'give_item', item: 'antacid', quantity: 1 },
     /* 16 */ { type: 'text', speaker: 'Diane', text: 'Here, take one now. Consider it a welcome gift.' },
     /* 17 */ { type: 'end' },
   ],
@@ -263,8 +263,8 @@ export const DIALOGS = {
   // WATER COOLER -- Random gossip
   // --------------------------------------------------------------------------
   water_cooler: [
-    /* 0  */ { type: 'condition', flag: 'cooler_visit_count_3', ifTrue: 10, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'cooler_visit_count_2', ifTrue: 6, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'cooler_visit_count_3', ifTrue: 10 },
+    /* 1  */ { type: 'condition', flag: 'cooler_visit_count_2', ifTrue: 6 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "You approach the water cooler. Two coworkers whose names you don't know stop talking immediately." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "One of them says 'We were just talking about... the weather' before speed-walking away." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "You overhear a whisper: 'That's the one they gave the Henderson case to. Poor bastard.'" },
@@ -277,7 +277,7 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "'He's still here? I had him in the betting pool for day two.' 'I had him for this afternoon.' 'I had him for never showing up.'" },
     /* 12 */ { type: 'text', speaker: 'Narrator', text: 'One of them raises their cup in what might be a salute, or might be pity. Hard to tell.' },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: 'You fill your cup. The water is room temperature, and has been since 2019.' },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'cooler_exhausted', value: true, next: 15 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'cooler_exhausted', value: true },
     /* 15 */ { type: 'end' },
   ],
 
@@ -287,7 +287,7 @@ export const DIALOGS = {
   vending_machine: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: 'You approach the vending machine. It hums menacingly.' },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The selection buttons are labeled with numbers that don't correspond to any visible products." },
-    /* 2  */ { type: 'choice', speaker: 'Vending Machine', text: 'INSERT COIN FOR WISDOM', choices: [
+    /* 2  */ { type: 'choice', speaker: 'Vending Machine', prompt: 'INSERT COIN FOR WISDOM', choices: [
       { text: 'Press B7', next: 16 },
       { text: 'Press C3', next: 17 },
       { text: 'Press A1', next: 18 },
@@ -320,16 +320,16 @@ export const DIALOGS = {
   // FRIDGE NOTES -- Escalating passive-aggression
   // --------------------------------------------------------------------------
   fridge_notes: [
-    /* 0  */ { type: 'condition', flag: 'lunch_thief_culprit_revealed', ifTrue: 10, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'read_fridge_1', ifTrue: 5, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'lunch_thief_culprit_revealed', ifTrue: 10 },
+    /* 1  */ { type: 'condition', flag: 'read_fridge_1', ifTrue: 5 },
     /* 2  */ { type: 'text', speaker: 'Fridge Note', text: 'ATTENTION: Someone has been taking items that do not belong to them from this refrigerator. You know who you are. -Management' },
     /* 3  */ { type: 'text', speaker: 'Fridge Note', text: 'P.S. The yogurt was LABELED. With my NAME. In SHARPIE. This is not ambiguous. -Janet' },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'read_fridge_1', value: true, next: 6 },
-    /* 5  */ { type: 'condition', flag: 'read_fridge_2', ifTrue: 10, ifFalse: 6 },
+    /* 5  */ { type: 'condition', flag: 'read_fridge_2', ifTrue: 10 },
     /* 6  */ { type: 'text', speaker: 'Fridge Note', text: "RE: RE: RE: FRIDGE THEFT. I have installed a camera. Yes, this is legal. I checked with legal. They said 'please stop emailing us.' I'm taking that as approval. -Janet" },
     /* 7  */ { type: 'text', speaker: 'Fridge Note', text: 'ADDENDUM: The camera was stolen from the fridge within 24 hours. The irony is not lost on me. -Janet' },
     /* 8  */ { type: 'text', speaker: 'Fridge Note', text: 'NEW NOTE (different handwriting): If you can\'t handle the heat, get out of the kitchen. Also I took your sandwich. It was mediocre. -Anonymous' },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_fridge_2', value: true, next: 10 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_fridge_2', value: true },
     /* 10 */ { type: 'text', speaker: 'Fridge Note', text: 'THIS IS NOW A CRIME SCENE. DO NOT OPEN THIS REFRIGERATOR. -Janet' },
     /* 11 */ { type: 'text', speaker: 'Fridge Note', text: "I have retained counsel. This is no longer a break room matter. This is a LEGAL matter. My attorney will be in contact. -Janet" },
     /* 12 */ { type: 'text', speaker: 'Fridge Note', text: "Janet, your 'attorney' is a paralegal from the second floor who owes you a favor. Please stop terrorizing the break room. -Diane" },
@@ -339,9 +339,9 @@ export const DIALOGS = {
     /* 16 */ { type: 'action', action: 'set_flag', flag: 'fridge_saga_complete', value: true, next: 19 },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: 'You quietly close the fridge. The yogurt inside has been there so long it may have achieved sentience.' },
     /* 18 */ { type: 'end' },
-    /* 19 */ { type: 'condition', flag: 'lunch_thief_fridge_done', ifTrue: 17, ifFalse: 20 },
-    /* 20 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 21, ifFalse: 17 },
-    /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 2, next: 22 },
+    /* 19 */ { type: 'condition', flag: 'lunch_thief_fridge_done', ifTrue: 17 },
+    /* 20 */ { type: 'condition', flag: 'lunch_thief_started', ifFalse: 17 },
+    /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 2 },
     /* 22 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_fridge_done', value: true, next: 17 },
   ],
 
@@ -350,14 +350,14 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   printer_interact: [
     // Gate: quest already done
-    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 34, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 34 },
     // Gate: toner installation stage
-    /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 21, ifFalse: 2 },
+    /* 1  */ { type: 'condition', flag: 'printer_toner_quest', ifTrue: 21 },
     // Gate: requires Skip briefing — no Henderson spoilers before then
-    /* 2  */ { type: 'condition', flag: 'briefing_complete', ifTrue: 4, ifFalse: 3 },
+    /* 2  */ { type: 'condition', flag: 'briefing_complete', ifTrue: 4 },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.' It's just a printer.", next: 20 },
     // Gate: quest already started (waiting on Alex)
-    /* 4  */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 20, ifFalse: 5 },
+    /* 4  */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 20 },
     // Main encounter
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "You approach the printer. It's a Xerox WorkCentre 7845i. The display reads: 'PC LOAD LETTER.'" },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: 'No one has printed anything. The printer begins printing anyway.' },
@@ -372,8 +372,8 @@ export const DIALOGS = {
     /* 15 */ { type: 'text', speaker: 'Narrator', text: 'But the toner runs out halfway through. The circled name is illegible.' },
     /* 16 */ { type: 'text', speaker: 'Printer', text: '*sad beeping noises*' },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "The display reads: 'REPLACE TONER TO LEARN THE TRUTH.' You check. There is no replacement toner on this floor." },
-    /* 18 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 1, next: 19 },
-    /* 19 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true, next: 20 },
+    /* 18 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 1 },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_started', value: true },
     /* 20 */ { type: 'end' },
     // Toner installation flow
     /* 21 */ { type: 'text', speaker: 'Narrator', text: "You install the old toner cartridge Alex set aside. The printer makes a sound like a sigh of relief." },
@@ -385,13 +385,13 @@ export const DIALOGS = {
     /* 27 */ { type: 'text', speaker: 'Andrew', text: "D.K. ...Dave Kowalski? Alex's predecessor?" },
     /* 28 */ { type: 'text', speaker: 'Printer', text: '*one quiet beep*' },
     /* 29 */ { type: 'text', speaker: 'Narrator', text: "The display changes to: 'THANK YOU.' Then the printer powers down completely. For the first time in years, it seems at peace." },
-    /* 30 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_done', value: true, next: 31 },
-    /* 31 */ { type: 'action', action: 'give_xp', xp: 350, next: 32 },
-    /* 32 */ { type: 'text', speaker: 'Printer', text: "TWENTY-TWO YEARS OF DOCUMENTS. ALL WITNESSED. NONE FORGOTTEN. TRUTH DELIVERED.", next: 33 },
+    /* 30 */ { type: 'action', action: 'set_flag', flag: 'printer_quest_done', value: true },
+    /* 31 */ { type: 'action', action: 'give_xp', xp: 350 },
+    /* 32 */ { type: 'text', speaker: 'Printer', text: "TWENTY-TWO YEARS OF DOCUMENTS. ALL WITNESSED. NONE FORGOTTEN. TRUTH DELIVERED." },
     /* 33 */ { type: 'text', speaker: 'Narrator', text: "The Printer from Hell has been laid to rest. +350 XP.", next: 20 },
     // Quest done state
-    /* 34 */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 37, ifFalse: 35 },
-    /* 35 */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 36, ifFalse: 37 },
+    /* 34 */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 37 },
+    /* 35 */ { type: 'condition', flag: 'printer_soul_started', ifFalse: 37 },
     /* 36 */ { type: 'text', speaker: 'Narrator', text: "The printer is still, its display dark. But Alex mentioned an ethernet port on the wall right beside it — labeled 'PRINTER DIRECT.' That's what you need.", next: 20 },
     /* 37 */ { type: 'text', speaker: 'Narrator', text: "The printer sits in silence. Its display is dark. It has said everything it needed to say.", next: 20 },
   ],
@@ -404,7 +404,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Andrew', text: "Yeah, I'm the new trust officer. Andrew." },
     /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Andrew. Good name. Means 'strong.' You're going to need that." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'You notice the Janitor is wearing a gold Rolex. His mop bucket has a monogram on it.' },
-    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Something on your mind, son?", choices: [
+    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', prompt: "Something on your mind, son?", choices: [
       { text: "That's a nice watch for a janitor.", next: 5 },
       // B7 round 2. This option used to read "What do you know about the
       // account they gave me?" — and janitor_intro is reachable in the PARKING
@@ -433,7 +433,7 @@ export const DIALOGS = {
     /* 18 */ { type: 'text', speaker: 'Mysterious Janitor', text: 'Sometimes the best view of the maze is from the floor, not the corner office.' },
     /* 19 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Also, the pension is excellent and I have zero emails to answer. Do you know how many emails a VP gets? Three hundred a day. Now I get zero and I know everything." },
     /* 20 */ { type: 'text', speaker: 'Mysterious Janitor', text: 'Think about that, Andrew. Really think about it.', next: 4 },
-    /* 21 */ { type: 'action', action: 'set_flag', flag: 'met_janitor', value: true, next: 22 },
+    /* 21 */ { type: 'action', action: 'set_flag', flag: 'met_janitor', value: true },
     /* 22 */ { type: 'text', speaker: 'Mysterious Janitor', text: 'One more thing. When the time comes to make your choice about the Hendersons...' },
     /* 23 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Read the will. Not the summary. Not the abstract. Not Skip's bullet points. The actual will. Page 47." },
     /* 24 */ { type: 'text', speaker: 'Narrator', text: 'The Janitor resumes mopping. The Rolex catches the fluorescent light.' },
@@ -475,7 +475,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Karen Henderson', text: "My father PROMISED me the lake house. Page 34 of my binder. I have the Christmas card where he said, and I quote, 'Karen, the lake house is yours someday, now please stop asking.'" },
     /* 7  */ { type: 'text', speaker: 'Andrew', text: "A Christmas card isn't legally--" },
     /* 8  */ { type: 'text', speaker: 'Karen Henderson', text: "IT'S IN THE BINDER." },
-    /* 9  */ { type: 'choice', speaker: 'Karen Henderson', text: 'Now. Are you going to HELP me, or do I need to speak to your manager?', choices: [
+    /* 9  */ { type: 'choice', speaker: 'Karen Henderson', prompt: 'Now. Are you going to HELP me, or do I need to speak to your manager?', choices: [
       { text: "Let's review the trust documents together.", next: 10 },
       { text: 'The trust language is very clear, Mrs. Henderson.', next: 14 },
       { text: 'Your binder is very thorough.', next: 17 },
@@ -490,8 +490,8 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Karen Henderson', text: "You're being condescending. I can FEEL you being condescending. My father always said I had a gift for detecting condescension." },
     /* 18 */ { type: 'text', speaker: 'Karen Henderson', text: "That's it. I'm calling corporate. I'm calling my attorney. I'm calling the MANAGER." },
     /* 19 */ { type: 'text', speaker: 'Narrator', text: "Karen's composure shatters. The binder opens. Papers fly. A Starbucks receipt for $47.83 flutters to the ground." },
-    /* 20 */ { type: 'text', speaker: 'Karen Henderson', text: "You want to see HOSTILE? I'll show you the TRUE POWER of a dissatisfied beneficiary!", next: 21 },
-    /* 21 */ { type: 'action', action: 'start_combat', encounter: 'karen', next: 22 },
+    /* 20 */ { type: 'text', speaker: 'Karen Henderson', text: "You want to see HOSTILE? I'll show you the TRUE POWER of a dissatisfied beneficiary!" },
+    /* 21 */ { type: 'action', action: 'start_combat', encounter: 'karen' },
     /* 22 */ { type: 'end' },
   ],
 
@@ -505,7 +505,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Chad Henderson', text: "Call me Chad, bro. Mr. Henderson was my grandpa. Well, I guess that's why we're here. RIP to the GOAT." },
     /* 4  */ { type: 'text', speaker: 'Chad Henderson', text: "So anyway, Grandpa Chad -- yeah, he was also Chad, family tradition -- he totally told me the portfolio was mine." },
     /* 5  */ { type: 'text', speaker: 'Chad Henderson', text: "I've got BIG plans for it, bro. I'm gonna put it all into crypto. Well, not Bitcoin, that's for boomers. I'm talking about PumpCoin. It's got a dog on it." },
-    /* 6  */ { type: 'choice', speaker: 'Chad Henderson', text: 'You a crypto bro? You look like a crypto bro.', choices: [
+    /* 6  */ { type: 'choice', speaker: 'Chad Henderson', prompt: 'You a crypto bro? You look like a crypto bro.', choices: [
       { text: 'The trust has a prudent investor standard, Chad.', next: 7 },
       { text: 'Tell me more about these plans.', next: 12 },
       { text: "What about your sister Karen's claims?", next: 16 },
@@ -526,8 +526,8 @@ export const DIALOGS = {
     /* 20 */ { type: 'text', speaker: 'Chad Henderson', text: "Give me my money or I'm calling my lawyer. Well, my friend who's ALMOST a lawyer. He's in his third year of pre-law. Which is like a lawyer but with more debt." },
     /* 21 */ { type: 'text', speaker: 'Narrator', text: 'Chad crushes his protein shake container with one hand. He immediately regrets it as protein shake sprays everywhere.' },
     /* 22 */ { type: 'text', speaker: 'Chad Henderson', text: "That was supposed to look cool. ANYWAY. I'm not leaving without what's mine, BRO!" },
-    /* 23 */ { type: 'action', action: 'set_flag', flag: 'chad_met', value: true, next: 24 },
-    /* 24 */ { type: 'action', action: 'start_combat', encounter: 'chad', next: 25 },
+    /* 23 */ { type: 'action', action: 'set_flag', flag: 'chad_met', value: true },
+    /* 24 */ { type: 'action', action: 'start_combat', encounter: 'chad' },
     /* 25 */ { type: 'end' },
   ],
 
@@ -539,13 +539,13 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Narrator', text: 'Grandma Henderson places a plate of homemade chocolate chip cookies on the desk. They smell incredible.' },
     /* 2  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Now, before we start, I want you to know that I understand how difficult these family matters can be.' },
     /* 3  */ { type: 'text', speaker: 'Grandma Henderson', text: "My Harold -- God rest his soul -- he was a good man but a terrible communicator. He told everyone what they wanted to hear. Which is how we ended up here." },
-    /* 4  */ { type: 'choice', speaker: 'Grandma Henderson', text: 'Cookie, dear?', choices: [
+    /* 4  */ { type: 'choice', speaker: 'Grandma Henderson', prompt: 'Cookie, dear?', choices: [
       { text: 'Thank you, Mrs. Henderson. (Take a cookie)', next: 5 },
       { text: "Let's talk about the trust distribution.", next: 10 },
     ]},
     /* 5  */ { type: 'text', speaker: 'Narrator', text: 'You take a cookie. It\'s the best cookie you\'ve ever had. You feel your resolve weakening. (-5 Assertiveness, -2 Composure for this fight!)' },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'took_grandma_cookie', value: true, next: 7 },
-    /* 7  */ { type: 'action', action: 'heal', next: 8 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'took_grandma_cookie', value: true },
+    /* 7  */ { type: 'action', action: 'heal' },
     /* 8  */ { type: 'text', speaker: 'Grandma Henderson', text: "Good, aren't they? Harold's mother's recipe. She was a terrible person but an excellent baker. Funny how that works." },
     /* 9  */ { type: 'text', speaker: 'Grandma Henderson', text: 'Now then. The trust.' },
     /* 10 */ { type: 'text', speaker: 'Grandma Henderson', text: "I know what Karen wants. I know what Chad wants. Karen wants the lake house because she thinks it validates her childhood. Chad wants the money because he doesn't understand what money is." },
@@ -566,8 +566,8 @@ export const DIALOGS = {
     /* 25 */ { type: 'text', speaker: 'Grandma Henderson', text: "But nice is a currency, dear, and I've watched it devalue since 1987. Let's see what else you're holding." },
     /* 26 */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson's eyes sharpen. The kindly grandmother facade drops like a curtain. Behind it is forty years of financial expertise and zero patience for nonsense." },
     /* 27 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Consider this your performance review, dear. The cookies were the easy part.' },
-    /* 28 */ { type: 'action', action: 'set_flag', flag: 'grandma_met', value: true, next: 29 },
-    /* 29 */ { type: 'action', action: 'start_combat', encounter: 'grandma', next: 30 },
+    /* 28 */ { type: 'action', action: 'set_flag', flag: 'grandma_met', value: true },
+    /* 29 */ { type: 'action', action: 'start_combat', encounter: 'grandma' },
     /* 30 */ { type: 'end' },
     // ── STAGING (appended; routed to from 0) ──────────────────────────────
     // She offers a chair and a cookie; Andrew used to take neither and stand
@@ -584,7 +584,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
   skip_act2: [
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew! Buddy! Quick sync. How's the Henderson thing going?" },
-    /* 1  */ { type: 'choice', speaker: 'Skip Hartley', text: 'Give me the thirty-thousand-foot view.', choices: [
+    /* 1  */ { type: 'choice', speaker: 'Skip Hartley', prompt: 'Give me the thirty-thousand-foot view.', choices: [
       { text: "It's a complete disaster, Skip.", next: 2 },
       { text: 'Karen has a binder. Chad has a crypto plan. Grandma has the will.', next: 6 },
     ]},
@@ -619,7 +619,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "What did you tell him?" },
     /* 7  */ { type: 'text', speaker: 'Skip Hartley', text: "I said we'd 'explore the synergies.' That bought about four days. His attention span is roughly that of a golden retriever who just heard a plastic bag." },
     /* 8  */ { type: 'text', speaker: 'Skip Hartley', text: "Chapter two of 'Selling to the Unsellable': Chad WANTS to be talked out of his bad ideas. He just needs someone with the confidence to do it. You speak Chad?" },
-    /* 9  */ { type: 'choice', speaker: 'Andrew', text: 'Do I speak Chad?', choices: [
+    /* 9  */ { type: 'choice', speaker: 'Andrew', prompt: 'Do I speak Chad?', choices: [
       { text: "I'll figure it out.", next: 10 },
       { text: "I barely survived Karen.", next: 11 },
     ]},
@@ -627,7 +627,7 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: "Fair. But here's the trick: whatever he says, respond with 'interesting pivot' and slowly redirect. Works on everyone under 30 with a SoundCloud account." },
     /* 12 */ { type: 'text', speaker: 'Skip Hartley', text: "He's down in the conference room. Housekeeping is still fishing binder tabs out of the air vents but it should be mostly usable." },
     /* 13 */ { type: 'text', speaker: 'Skip Hartley', text: "You've got this. Confident. Adaptable. And whatever you do — don't mention crypto first. Let HIM bring it up. He always brings it up." },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'skip_post_karen', value: true, next: 15 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'skip_post_karen', value: true },
     /* 15 */ { type: 'end' },
   ],
 
@@ -639,7 +639,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Janet', text: '*extremely long sip from tumbler*' },
     /* 2  */ { type: 'text', speaker: 'Janet', text: 'So I heard about Karen. And the binder. And the... incident.' },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "For what it's worth, that's actually a GOOD sign. She only throws binders at people she's beginning to respect. The last trust officer? She threw a STAPLER." },
-    /* 4  */ { type: 'condition', flag: 'chad_met', ifTrue: 5, ifFalse: 8 },
+    /* 4  */ { type: 'condition', flag: 'chad_met', ifFalse: 8 },
     /* 5  */ { type: 'text', speaker: 'Janet', text: 'And Chad... oh honey. Did he tell you about PumpCoin? The one with the dog?' },
     /* 6  */ { type: 'text', speaker: 'Janet', text: "PumpCoin crashed two weeks ago. It's worth less than the graphic of the dog. Chad doesn't know yet. Nobody wants to tell him." },
     /* 7  */ { type: 'text', speaker: 'Janet', text: 'I found out because I may have accidentally invested in it too. The dog was very cute. I am not a smart investor.' },
@@ -664,12 +664,12 @@ export const DIALOGS = {
       { text: "What's going on with the main investigation?", next: 5 },
       { text: "Just checking in.", next: 7 },
     ]},
-    /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_side_chosen', value: true, next: 3 },
+    /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_side_chosen', value: true },
     /* 3 */ { type: 'text', speaker: 'Alex from IT', text: "Right, yeah. Here's the situation..." },
     /* 4 */ { type: 'end' },
-    /* 5 */ { type: 'action', action: 'set_flag', flag: 'alex_main_chosen', value: true, next: 6 },
+    /* 5 */ { type: 'action', action: 'set_flag', flag: 'alex_main_chosen', value: true },
     /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Yeah, let me catch you up on the big picture...", next: 9 },
-    /* 7 */ { type: 'action', action: 'set_flag', flag: 'alex_side_deferred', value: true, next: 8 },
+    /* 7 */ { type: 'action', action: 'set_flag', flag: 'alex_side_deferred', value: true },
     /* 8 */ { type: 'text', speaker: 'Alex from IT', text: "Same old chaos. You know where to find me." },
     /* 9 */ { type: 'end' },
   ],
@@ -690,10 +690,10 @@ export const DIALOGS = {
       { text: "What's the serious one?", next: 2 },
       { text: 'Got any IT jobs for me?', next: 5 },
     ]},
-    /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_story_chosen', value: true, next: 3 },
+    /* 2 */ { type: 'action', action: 'set_flag', flag: 'alex_story_chosen', value: true },
     /* 3 */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. Yeah, you're gonna want to hear this. Close the door." },
     /* 4 */ { type: 'end' },
-    /* 5 */ { type: 'action', action: 'set_flag', flag: 'alex_story_deferred', value: true, next: 6 },
+    /* 5 */ { type: 'action', action: 'set_flag', flag: 'alex_story_deferred', value: true },
     /* 6 */ { type: 'text', speaker: 'Alex from IT', text: "Always. The infrastructure in this building is held together by prayers and zip ties. Let me tell you what's broken now..." },
     /* 7 */ { type: 'end' },
   ],
@@ -707,7 +707,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah. I cracked the first layer of encryption. Took me three Red Bulls and a flashback to my CompTIA cert exam, but I got through." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "It's a database. Of trust account modifications. Going back to 2016. None of them are in our official records." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "And once you see the pattern you can't unsee it -- every single modification is on Henderson family accounts." },
-    /* 6  */ { type: 'choice', speaker: 'Alex from IT', text: "Someone's been making unauthorized changes to the Henderson Trust for EIGHT YEARS, bro.", choices: [
+    /* 6  */ { type: 'choice', speaker: 'Alex from IT', prompt: "Someone's been making unauthorized changes to the Henderson Trust for EIGHT YEARS, bro.", choices: [
       { text: 'Who has access?', next: 7 },
       { text: 'What kind of modifications?', next: 10 },
     ]},
@@ -720,7 +720,7 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Also if my network access gets revoked tomorrow, check under the third floor stairwell. I've got a dead drop with a USB drive." },
     /* 14 */ { type: 'text', speaker: 'Andrew', text: "A dead drop? You're an IT guy at a bank, not Jason Bourne." },
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "That's exactly what Jason Bourne would say." },
-    /* 16 */ { type: 'action', action: 'set_flag', flag: 'knows_server_secret', value: true, next: 17 },
+    /* 16 */ { type: 'action', action: 'set_flag', flag: 'knows_server_secret', value: true },
     /* 17 */ { type: 'end' },
   ],
 
@@ -735,7 +735,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Your phone rings. It's Skip." },
     /* 4  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew! Quick download. I need your Henderson recommendation by EOD. Corporate is breathing down my neck. Also my mother keeps calling. Unrelated." },
     /* 5  */ { type: 'text', speaker: 'Skip Hartley', text: "So what's the play? How do we... resolve this trust situation?" },
-    /* 6  */ { type: 'choice', speaker: 'Narrator', text: "This is it. The decision that defines the rest of Andrew's career at Vaults Fargo.", choices: [
+    /* 6  */ { type: 'choice', speaker: 'Narrator', prompt: "This is it. The decision that defines the rest of Andrew's career at Vaults Fargo.", choices: [
       { text: 'Follow the letter of the law. Honor the trust document exactly.', next: 7, flag: 'path_legal' },
       { text: 'Bend the rules. Find a creative interpretation that keeps everyone happy.', next: 12, flag: 'path_bro' },
       { text: "Grandma cited page 47, paragraph 3. Nobody reads that clause unless they wrote it. She knows something.", next: 17, flag: 'path_grandma' },
@@ -760,11 +760,11 @@ export const DIALOGS = {
     /* 24 */ { type: 'text', speaker: 'Skip Hartley', text: "I... look. We need to talk. In person. Executive floor. Conference table. And Andrew? Don't tell anyone about page 47." },
     /* 25 */ { type: 'text', speaker: 'Skip Hartley', text: 'Especially not my mother.' },
     /* 26 */ { type: 'text', speaker: 'Narrator', text: '*click*' },
-    /* 27 */ { type: 'action', action: 'set_flag', flag: 'branch_chosen', value: true, next: 28 },
-    /* 28 */ { type: 'condition', flag: 'path_legal', ifTrue: 29, ifFalse: 31 },
+    /* 27 */ { type: 'action', action: 'set_flag', flag: 'branch_chosen', value: true },
+    /* 28 */ { type: 'condition', flag: 'path_legal', ifFalse: 31 },
     /* 29 */ { type: 'text', speaker: 'Narrator', text: "The law is the law. It isn't much, but it's the only thing in this building with a page count. (+3 Composure)" },
     /* 30 */ { type: 'end' },
-    /* 31 */ { type: 'condition', flag: 'path_bro', ifTrue: 32, ifFalse: 34 },
+    /* 31 */ { type: 'condition', flag: 'path_bro', ifFalse: 34 },
     /* 32 */ { type: 'text', speaker: 'Narrator', text: "Bending the rules has sharpened your instincts. Somewhere, a compliance form has quietly begun filling itself out. (+3 Bureaucratic Efficiency, -2 Composure)" },
     /* 33 */ { type: 'end' },
     /* 34 */ { type: 'text', speaker: 'Narrator', text: "You now know what's on page 47. It does not make you happier, but it makes you considerably harder to argue with. (+3 Assertiveness)" },
@@ -799,7 +799,7 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Regional Manager', text: "Then I'm afraid we have a... synergy problem." },
     /* 18 */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager loosens his gold tie. His eyes narrow. The golf putter transforms from accessory to weapon.', next: 25 },
     /* 19 */ { type: 'text', speaker: 'Regional Manager', text: "Let me show you how we handle 'problems' at the corporate level." },
-    /* 20 */ { type: 'action', action: 'start_combat', encounter: 'regional', next: 21 },
+    /* 20 */ { type: 'action', action: 'start_combat', encounter: 'regional' },
     /* 21 */ { type: 'end' },
     // ── STAGING (appended; routed to from 2/4/11/18) ──────────────────────
     // The Regional Manager paces a desk 6.7 tiles from the conference table he
@@ -848,7 +848,7 @@ export const DIALOGS = {
     /* 15 */ { type: 'text', speaker: 'Compliance Auditor', text: 'No, Andrew. There is nothing to \'work out.\' There is only compliance and non-compliance. You have chosen non-compliance.' },
     /* 16 */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor removes their sunglasses. Their eyes are like two separate audit trails converging on your career.', next: 21 },
     /* 17 */ { type: 'text', speaker: 'Compliance Auditor', text: 'And non-compliance... has consequences.' },
-    /* 18 */ { type: 'action', action: 'start_combat', encounter: 'compliance', next: 19 },
+    /* 18 */ { type: 'action', action: 'start_combat', encounter: 'compliance' },
     /* 19 */ { type: 'end' },
     // ── STAGING (appended; routed to from 2/16) ───────────────────────────
     // The Compliance Auditor has been pacing (13,6) on this floor since Act 1,
@@ -883,7 +883,7 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: 'Mom!', next: 58 },
     /* 12 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Skip, sit down. Andrew, you too.', next: 59 },
     /* 13 */ { type: 'text', speaker: 'Grandma Henderson', text: "Here's what's really going on. Harold's trust was supposed to be simple. But someone -- someone inside this company -- has been siphoning fees from Henderson accounts since 2016." },
-    /* 14 */ { type: 'condition', flag: 'knows_server_secret', ifTrue: 15, ifFalse: 17 },
+    /* 14 */ { type: 'condition', flag: 'knows_server_secret', ifFalse: 17 },
     /* 15 */ { type: 'text', speaker: 'Andrew', text: 'The encrypted partition. Alex found unauthorized modifications going back eight years.' },
     /* 16 */ { type: 'text', speaker: 'Grandma Henderson', text: "Smart boy. Yes. $2,000,000 in skimmed fees. And I know who did it." },
     /* 17 */ { type: 'text', speaker: 'Grandma Henderson', text: "I came back to this office -- as a client, through the front door -- to find out who's been stealing from my family's trust." },
@@ -922,8 +922,8 @@ export const DIALOGS = {
     /* 50 */ { type: 'text', speaker: 'Skip Hartley', text: 'I just wanted to be a good boss, Andrew! I read SEVEN leadership books this month! SEVEN! And they ALL contradicted each other!' },
     /* 51 */ { type: 'text', speaker: 'Grandma Henderson', text: 'Oh, Skip...' },
     /* 52 */ { type: 'text', speaker: 'Skip Hartley', text: "I DON'T EVEN KNOW WHAT SYNERGY MEANS, MOM!" },
-    /* 53 */ { type: 'action', action: 'set_flag', flag: 'secret_path_complete', value: true, next: 54 },
-    /* 54 */ { type: 'action', action: 'start_combat', encounter: 'skip_boss', next: 55 },
+    /* 53 */ { type: 'action', action: 'set_flag', flag: 'secret_path_complete', value: true },
+    /* 54 */ { type: 'action', action: 'start_combat', encounter: 'skip_boss' },
     /* 55 */ { type: 'end' },
     // ── STAGING (appended; routed to from 0/3/11/12/34/37/48) ──────────────
     // Marks live in `executive_floor.marks`. Skip and Grandma START seated at
@@ -1055,9 +1055,9 @@ export const DIALOGS = {
   // ==========================================================================
 
   janet_return: [
-    /* 0 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 4, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'lunch_thief_started', ifTrue: 4 },
     /* 1 */ { type: 'text', speaker: 'Janet', text: "Oh — before I forget. Someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means." },
-    /* 2 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 1, next: 3 },
+    /* 2 */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 1 },
     /* 3 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_started', value: true, next: 6 },
     /* 4 */ { type: 'text', speaker: 'Janet', text: 'Still alive? Good for you.' },
     /* 5 */ { type: 'text', speaker: 'Janet', text: '*sip*' },
@@ -1082,8 +1082,8 @@ export const DIALOGS = {
   ],
 
   janitor_return: [
-    /* 0 */ { type: 'condition', flag: 'janitor_return_2', ifTrue: 6, ifFalse: 1 },
-    /* 1 */ { type: 'condition', flag: 'janitor_return_1', ifTrue: 4, ifFalse: 2 },
+    /* 0 */ { type: 'condition', flag: 'janitor_return_2', ifTrue: 6 },
+    /* 1 */ { type: 'condition', flag: 'janitor_return_1', ifTrue: 4 },
     /* 2 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Page 47. Don't forget." },
     /* 3 */ { type: 'action', action: 'set_flag', flag: 'janitor_return_1', value: true, next: 9 },
     /* 4 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The floors remember everything. So do I." },
@@ -1105,7 +1105,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Karen Henderson', text: "It's MS. Henderson. And this isn't over. *picks up binder fragments and storms out*", next: 8 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The conference room is silent. Binder tabs litter the floor like confetti at the world's worst party. You exhale for what feels like the first time in an hour." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "Your phone buzzes. Text from Skip: 'Heard you survived Karen. Get up here when you can. We need to talk about Chad. Bring aspirin.'" },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'karen_defeated', value: true, next: 7 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'karen_defeated', value: true },
     /* 7  */ { type: 'end' },
     // ── STAGING (appended; routed to from 3) ─────────────────────────────
     // She "storms out" — which until now was an EntityManager conditionFn flip
@@ -1127,7 +1127,7 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Chad Henderson', text: "Sick. Let's do that. Also, you should check out PumpCoin. It's coming back. The dog on the logo just got sunglasses." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "Chad shuffles out, already typing on his phone. You hear him say 'yeah bro, he's actually legit' to someone before the door closes.", next: 9 },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "Your phone buzzes. Text from Skip: 'Two down. Get to my office before the next one. Trust me on this. TRUST. Me.' He added a fist bump emoji. Then deleted it. Then sent it again." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'chad_defeated', value: true, next: 8 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'chad_defeated', value: true },
     /* 8  */ { type: 'end' },
     // ── STAGING (appended; routed to from 5) ─────────────────────────────
     // "Shuffles" is a SPEED, not an adverb: 1.15 tiles/s against the 1.8
@@ -1156,7 +1156,7 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Skip Hartley', text: "She's waiting in the conference room. I'll be monitoring the situation remotely." },
     /* 12 */ { type: 'text', speaker: 'Andrew', text: "Monitoring how?" },
     /* 13 */ { type: 'text', speaker: 'Skip Hartley', text: "From home. With the door locked. Both locks." },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'skip_post_chad', value: true, next: 15 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'skip_post_chad', value: true },
     /* 15 */ { type: 'end' },
     // The late husband is Harold — Andrew has actually read the Henderson
     // file. Skip has not, and Loman never hears corrections (#29).
@@ -1167,10 +1167,10 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Grandma Henderson', text: "Well. You held your own, dear. I had you down for tears by minute six. I so rarely lose a wager." },
     /* 1  */ { type: 'text', speaker: 'Grandma Henderson', text: "Harold would have liked you. He always said the best trust officers were the ones who could take a guilt trip and keep standing." },
     /* 2  */ { type: 'text', speaker: 'Grandma Henderson', text: "Have another cookie, dear. You've earned it." },
-    /* 3  */ { type: 'action', action: 'heal', next: 4 },
-    /* 4  */ { type: 'action', action: 'give_item', item: 'stress_ball', next: 5 },
+    /* 3  */ { type: 'action', action: 'heal' },
+    /* 4  */ { type: 'action', action: 'give_item', item: 'stress_ball' },
     /* 5  */ { type: 'text', speaker: 'Grandma Henderson', text: "And take this stress ball. Lord knows you'll need it with this family." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'grandma_defeated', value: true, next: 7 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'grandma_defeated', value: true },
     /* 7  */ { type: 'end' },
   ],
 
@@ -1194,14 +1194,14 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Compliance Auditor', text: "I'll file the Form 27B/6 as a 'learning experience.' It's still forty-seven pages, but I'll mark it as 'resolved.'" },
     /* 2  */ { type: 'text', speaker: 'Compliance Auditor', text: "Don't let it happen again. I'll be watching. I'm always watching." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: 'The Compliance Auditor puts their sunglasses back on and walks away. You notice they leave no footprints.', next: 13 },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'compliance_defeated', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'compliance_defeated', value: true },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: 'You exhale for the first time in what feels like hours.' },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: 'Then the lights flicker. Not the normal "this building is old" flicker. Something else.' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'The printer in the corner starts up on its own. A single page emerges.' },
     /* 8  */ { type: 'text', speaker: 'Printer', text: 'THE LEDGER REMEMBERS. FIND THE ARCHIVE.' },
     /* 9  */ { type: 'text', speaker: 'Andrew', text: '...What the hell was that?' },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "Dude. Server room. NOW. The 3:47 AM thing just happened at 2 PM. Something is very wrong."' },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 12 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true },
     /* 12 */ { type: 'end' },
     // ── STAGING (appended; routed to from 3) ─────────────────────────────
     // NOT an `exit`. The Auditor has a SECOND executive_floor entry gated on
@@ -1222,14 +1222,14 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Regional Manager', text: "Correctly. How quaint. Enjoy your moral victory. I'll be on the golf course." },
     // ("deploys their golden parachute... You never see them again" deleted —
     // it contradicted the very next line and the Act 5 SEC-arrest beat, #18)
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_defeated', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_defeated', value: true },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: 'The Regional Manager straightens his tie. His golden parachute remains undeployed. For now.', next: 13 },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: 'Then something strange happens. The elevator behind you dings. Nobody pressed it.' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: 'The doors open to an empty car. The floor indicator scrolls through numbers that this building doesn\'t have.' },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: 'A document slides out from under the elevator door. It\'s dated 1947. The letterhead reads "VAULTS FARGO TRUST CHARTER — ORIGINAL."' },
     /* 9  */ { type: 'text', speaker: 'Andrew', text: '1947? This branch wasn\'t built until the \'80s...' },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "GET TO THE SERVER ROOM. The encrypted partition just decrypted ITSELF. I did NOT do this."' },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 12 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true },
     /* 12 */ { type: 'end' },
     // ── STAGING (appended; routed to from 5) ─────────────────────────────
     // He straightens his tie and leaves for the golf course — but stays in the
@@ -1259,7 +1259,7 @@ export const DIALOGS = {
     /* 14 */ { type: 'text', speaker: 'Narrator', text: 'The Janitor appears in the doorway. His expression is grim. His Rolex is glowing.' },
     /* 15 */ { type: 'text', speaker: 'Mysterious Janitor', text: "It's started. I hoped we'd have more time." },
     /* 16 */ { type: 'text', speaker: 'Narrator', text: 'Your phone buzzes. A text from Alex: "DUDE. Every server just rebooted. The encrypted partition is BROADCASTING. Something is VERY wrong."' },
-    /* 17 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true, next: 18 },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'act2_complete', value: true },
     /* 18 */ { type: 'end' },
   ],
 
@@ -1268,8 +1268,8 @@ export const DIALOGS = {
   // ==========================================================================
 
   andrews_desk: [
-    /* 0 */ { type: 'condition', flag: 'grandma_defeated', ifTrue: 7, ifFalse: 1 },
-    /* 1 */ { type: 'condition', flag: 'checked_desk', ifTrue: 6, ifFalse: 2 },
+    /* 0 */ { type: 'condition', flag: 'grandma_defeated', ifTrue: 7 },
+    /* 1 */ { type: 'condition', flag: 'checked_desk', ifTrue: 6 },
     /* 2 */ { type: 'text', speaker: 'Narrator', text: 'Your cubicle. It smells faintly of despair and Febreze. The previous occupant left a motivational calendar stuck on March 2019.' },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: 'There\'s a drawer full of antacids and a sticky note that reads: "RUN WHILE YOU CAN — T.O. #3"' },
     /* 4 */ { type: 'action', action: 'give_item', item: 'antacid', quantity: 2 },
@@ -1458,11 +1458,11 @@ export const DIALOGS = {
     /* 1 */ { type: 'text', speaker: 'Narrator', text: 'One server has a sticky note: "DO NOT UNPLUG — contains 73% of all trust account records. The other 27% is vibes."' },
     /* 2 */ { type: 'text', speaker: 'Narrator', text: 'Another note: "This one runs Doom. For stress testing purposes. — Alex"' },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A third note, much older: "admin_legacy — DO NOT DECOMMISSION — R.M."' },
-    /* 4 */ { type: 'text', speaker: 'Narrator', text: 'The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.', next: 5 },
-    /* 5 */ { type: 'condition', flag: 'server_secret_started', ifTrue: 9, ifFalse: 6 },
+    /* 4 */ { type: 'text', speaker: 'Narrator', text: 'The servers emit a sound somewhere between a whisper and a scream. Probably just the cooling fans.' },
+    /* 5 */ { type: 'condition', flag: 'server_secret_started', ifTrue: 9 },
     /* 6 */ { type: 'condition', flag: 'met_alex_it', ifTrue: 10, ifFalse: 9 },
-    /* 7 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 1, next: 8 },
-    /* 8 */ { type: 'action', action: 'set_flag', flag: 'server_secret_started', value: true, next: 9 },
+    /* 7 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 1 },
+    /* 8 */ { type: 'action', action: 'set_flag', flag: 'server_secret_started', value: true },
     /* 9 */ { type: 'end' },
     // SERVER ROOM SECRETS STARTS WITH THE OTHER ALEX SIDE QUESTS, NOT BEFORE
     // SKIP. Meeting Alex is enough to reach the server room in Act 1, so
@@ -1478,7 +1478,7 @@ export const DIALOGS = {
   ],
 
   alex_it_desk: [
-    /* 0 */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 5, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'printer_quest_started', ifTrue: 5 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: 'Alex\'s desk is an archaeological dig of snack wrappers and energy drink cans. Stratigraphy suggests habitation since at least 2019.' },
     /* 2 */ { type: 'text', speaker: 'Narrator', text: 'Three monitors: server logs, a Reddit thread about cryptography, and what is unmistakably Minecraft.' },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: 'A sticky note: "BROWSER HISTORY IS ENCRYPTED WITH AES-256. NICE TRY, SKIP."' },
@@ -1490,8 +1490,8 @@ export const DIALOGS = {
     /* 8 */ { type: 'text', speaker: 'Alex from IT', text: "The toner runs out on purpose — firmware was modified to abort print jobs with certain keywords. Whoever did it didn't expect the printer to get opinions about that." },
     /* 9 */ { type: 'text', speaker: 'Alex from IT', text: "I found old toner stock — pre-2016, before the firmware modification. I've already set it next to the printer. If you install it, the block won't apply and the full document will print." },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "Just go install it. I want to know what it's been trying to say as much as you do." },
-    /* 11 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2, next: 12 },
-    /* 12 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true, next: 13 },
+    /* 11 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2 },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "Alex slides a dusty toner cartridge across his desk. It has a Post-it note: 'PRE-2016 STOCK. DO NOT USE FOR REGULAR PRINTING.'" },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "Alex's desk. The toner cartridge Alex set aside is near the printer in the cubicle farm." },
     /* 15 */ { type: 'end' },
@@ -1500,7 +1500,7 @@ export const DIALOGS = {
   ],
 
   elevator: [
-    { type: 'condition', flag: 'branch_chosen', ifTrue: 5, ifFalse: 1 },
+    { type: 'condition', flag: 'branch_chosen', ifTrue: 5 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: 'The elevator to the Executive Floor. A keycard reader blinks red.' },
     /* 2 */ { type: 'text', speaker: 'Narrator', text: 'A sign: "AUTHORIZED PERSONNEL ONLY. If you have to ask, you\'re not authorized. If you ARE authorized, you already know."' },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: 'You don\'t have clearance yet. Maybe after the Henderson situation resolves...' },
@@ -1635,7 +1635,7 @@ export const DIALOGS = {
   isaiah_intro: [
     /* 0  */ { type: 'text', speaker: 'Isaiah', text: 'Hey there! You must be the new trust officer. Welcome to the team.' },
     /* 1  */ { type: 'text', speaker: 'Isaiah', text: "I'm Isaiah. If you ever need help with anything around here, just ask. I mean it — anything." },
-    /* 2  */ { type: 'choice', speaker: 'Isaiah', text: "What can I do for you?", choices: [
+    /* 2  */ { type: 'choice', speaker: 'Isaiah', prompt: "What can I do for you?", choices: [
       { text: "Could you help me understand how things work here?", next: 3 },
       { text: "Get me a coffee.", next: 7 },
       { text: "Nothing right now, thanks.", next: 9 },
@@ -1646,7 +1646,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'met_isaiah', value: true, next: 10 },
     /* 7  */ { type: 'text', speaker: 'Isaiah', text: "...Sure. I'll get you a coffee. But you know, a 'please' goes a long way around here." },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'met_isaiah', value: true, next: 10 },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'met_isaiah', value: true, next: 10 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'met_isaiah', value: true },
     /* 10 */ { type: 'text', speaker: 'Isaiah', text: "Anytime you need something, come find me. I'm usually near the water cooler." },
     /* 11 */ { type: 'end' },
   ],
@@ -1667,15 +1667,15 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Andrew', text: "I didn't think anyone was here yet." },
     /* 2  */ { type: 'text', speaker: 'Rachel', text: "I'm always here first." },
     /* 3  */ { type: 'text', speaker: 'Rachel', text: "I'm Rachel. Trust officer." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'met_rachel', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'met_rachel', value: true },
     /* 5  */ { type: 'text', speaker: 'Rachel', text: "Coffee maker's around the corner — sounds like it's dying, but it works." },
     /* 6  */ { type: 'end' },
   ],
 
   rachel_return_act1: [
-    /* 0  */ { type: 'condition', flag: 'rachel_gift_act1', ifTrue: 5, ifFalse: 1 },
-    /* 1  */ { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1, next: 2 },
-    /* 2  */ { type: 'action', action: 'set_flag', flag: 'rachel_gift_act1', value: true, next: 3 },
+    /* 0  */ { type: 'condition', flag: 'rachel_gift_act1', ifTrue: 5 },
+    /* 1  */ { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'rachel_gift_act1', value: true },
     /* 3  */ { type: 'text', speaker: 'Rachel', text: "You looked like you needed one." },
     /* 4  */ { type: 'end' },
     /* 5  */ { type: 'text', speaker: 'Rachel', text: "How's the desk?" },
@@ -1683,10 +1683,10 @@ export const DIALOGS = {
   ],
 
   rachel_return_act2: [
-    /* 0  */ { type: 'condition', flag: 'rachel_gift_act2', ifTrue: 6, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'rachel_gift_act2', ifTrue: 6 },
     /* 1  */ { type: 'text', speaker: 'Rachel', text: "You look tired." },
-    /* 2  */ { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1, next: 3 },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'rachel_gift_act2', value: true, next: 4 },
+    /* 2  */ { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1 },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'rachel_gift_act2', value: true },
     /* 4  */ { type: 'text', speaker: 'Rachel', text: "It's the good roast. From downstairs.", mood: 'worried' },
     /* 5  */ { type: 'end' },
     /* 6  */ { type: 'text', speaker: 'Rachel', text: "Hang in there." },
@@ -1694,10 +1694,10 @@ export const DIALOGS = {
   ],
 
   rachel_return_act3: [
-    /* 0  */ { type: 'condition', flag: 'rachel_gift_act3', ifTrue: 6, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'rachel_gift_act3', ifTrue: 6 },
     /* 1  */ { type: 'text', speaker: 'Rachel', text: "You've been here late." },
-    /* 2  */ { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1, next: 3 },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'rachel_gift_act3', value: true, next: 4 },
+    /* 2  */ { type: 'action', action: 'give_item', item: 'coffee_large', quantity: 1 },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'rachel_gift_act3', value: true },
     /* 4  */ { type: 'text', speaker: 'Rachel', text: "I made extra." },
     /* 5  */ { type: 'end' },
     /* 6  */ { type: 'text', speaker: 'Rachel', text: "Don't forget to eat something." },
@@ -1718,7 +1718,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "You're the new trust officer." },
     /* 2  */ { type: 'text', speaker: 'Meredith Sterling', text: "I'm Meredith Sterling. SVP of Strategic Operations. I oversee... everything." },
     /* 3  */ { type: 'text', speaker: 'Meredith Sterling', text: "I've read your file. Interesting background. Let's see if it translates to results." },
-    /* 4  */ { type: 'choice', speaker: 'Meredith Sterling', text: "I trust Skip has briefed you on the Henderson situation?", choices: [
+    /* 4  */ { type: 'choice', speaker: 'Meredith Sterling', prompt: "I trust Skip has briefed you on the Henderson situation?", choices: [
       { text: "Yes, he was very... thorough.", next: 5 },
       { text: "He mostly talked about synergy.", next: 7 },
     ]},
@@ -1726,7 +1726,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Meredith Sterling', text: "I'll be watching your performance closely. This department has been... underperforming. That will change." },
     /* 7  */ { type: 'text', speaker: 'Meredith Sterling', text: "Of course he did. Skip treats management theory like a religion. Unfortunately, he's a bad practitioner." },
     /* 8  */ { type: 'text', speaker: 'Meredith Sterling', text: "Results, Andrew. That's what matters to me. Not synergy. Not paradigm shifts. Results." },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'met_meredith', value: true, next: 10 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'met_meredith', value: true },
     /* 10 */ { type: 'text', speaker: 'Meredith Sterling', text: "We'll speak again. Soon." },
     /* 11 */ { type: 'end' },
   ],
@@ -1750,7 +1750,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "It just decrypted itself. Not 'I cracked it' decrypted. ITSELF. Like it WANTED to be found." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "And what's inside is... it's a shadow ledger. Every trust account this branch has ever managed. Parallel books." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Not just the Hendersons. Dozens of accounts. Hundreds of small adjustments. Basis point skims. Fee reallocations. All traced back to one account: admin_legacy." },
-    /* 5  */ { type: 'choice', speaker: 'Alex from IT', text: "Someone's been running a shadow trust system for EIGHT YEARS. And the building's servers just... revealed it. On purpose.", choices: [
+    /* 5  */ { type: 'choice', speaker: 'Alex from IT', prompt: "Someone's been running a shadow trust system for EIGHT YEARS. And the building's servers just... revealed it. On purpose.", choices: [
       { text: "Who created admin_legacy?", next: 6 },
       { text: "What do you mean the building revealed it on purpose?", next: 10 },
       { text: "How much money are we talking about?", next: 14 },
@@ -1777,7 +1777,7 @@ export const DIALOGS = {
     // the same knowledge. NEVER insert a node mid-array in this file: every
     // `next:` is an absolute index (see the team_chat_hub off-by-one repair).
     /* 18 */ { type: 'action', action: 'set_flag', flag: 'alex_it_act3_done', value: true, next: 23 },
-    /* 19 */ { type: 'action', action: 'set_flag', flag: 'archive_accessible', value: true, next: 20 },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'archive_accessible', value: true },
     /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "Find the Archive. The Janitor might know how to get in. And Andrew — be careful. If the Regional Manager finds out we're looking..." },
     /* 21 */ { type: 'text', speaker: 'Alex from IT', text: "Well. Let's just say 'restructuring' isn't always a metaphor." },
     /* 22 */ { type: 'end' },
@@ -1793,7 +1793,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Janet', text: "Someone said her name is Meredith Sterling. SVP of Strategic Operations. Nobody knew we HAD a Strategic Operations." },
     /* 6  */ { type: 'text', speaker: 'Janet', text: "She's been in Skip's office for two hours. Skip hasn't said 'synergy' once. That's how I know it's serious." },
     /* 7  */ { type: 'text', speaker: 'Janet', text: "*extremely long sip* I'm switching to the emergency reserves." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'read_janet_act3', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'read_janet_act3', value: true },
     /* 9  */ { type: 'end' },
   ],
 
@@ -1803,7 +1803,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "A 'comprehensive operational assessment.' That's corporate for 'finding reasons to fire people.'" },
     /* 3  */ { type: 'text', speaker: 'Skip Hartley', text: "She asked me about the Henderson Trust. About our procedures. About our... 'fiduciary controls.'" },
     /* 4  */ { type: 'text', speaker: 'Skip Hartley', text: "I tried to use buzzwords. They bounced off her like... like buzzwords bouncing off a wall. She's immune. Nobody's ever been immune before." },
-    /* 5  */ { type: 'choice', speaker: 'Skip Hartley', text: "Andrew, I'm scared. Is it okay to say that? Leadership books say you're never supposed to say that.", choices: [
+    /* 5  */ { type: 'choice', speaker: 'Skip Hartley', prompt: "Andrew, I'm scared. Is it okay to say that? Leadership books say you're never supposed to say that.", choices: [
       { text: "It's okay to be scared, Skip.", next: 6 },
       { text: "What does Meredith actually want?", next: 8 },
     ]},
@@ -1812,7 +1812,7 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Skip Hartley', text: "She wants to 'optimize' the trust department. Which I think means cutting half of us and making the other half do twice the work." },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "She mentioned something about 'legacy systems' and 'archival redundancies.' I think she's talking about the old records in the basement." },
     /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "Also she asked about the Janitor. By name. Which is weird because nobody knows the Janitor's actual name. I just call him 'sir' because he scares me a little." },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'read_skip_act3', value: true, next: 12 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'read_skip_act3', value: true },
     /* 12 */ { type: 'end' },
   ],
 
@@ -1824,7 +1824,7 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'The Intern', text: "Also something really weird happened. I was alone in the copy room and the printer turned on by itself." },
     /* 5  */ { type: 'text', speaker: 'The Intern', text: "It printed a list of names. People who used to work here. Some of them going back to the '40s. And at the bottom it said 'THE CHARTER REMEMBERS.'" },
     /* 6  */ { type: 'text', speaker: 'The Intern', text: "I don't know what that means and I'm choosing not to find out. I'm going to go reorganize the supply closet by color. And also hide." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'read_intern_act3', value: true, next: 8 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'read_intern_act3', value: true },
     /* 8  */ { type: 'end' },
   ],
 
@@ -1835,7 +1835,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Diane', text: "I told her I didn't have access. Which is true. But I didn't tell her that the Janitor does." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "Andrew, I've worked here for twelve years. I've seen managers come and go. Regional directors. SVPs. None of them ever asked about the Archive." },
     /* 5  */ { type: 'text', speaker: 'Diane', text: "Whatever's down there, Meredith doesn't want you to find it first. So maybe you should." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'read_diane_act3', value: true, next: 7 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'read_diane_act3', value: true },
     /* 7  */ { type: 'end' },
   ],
 
@@ -1846,7 +1846,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "When this branch was chartered in 1947, the founders wrote something into the original trust charter. Not a legal clause. Something... older." },
     /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "A declaration that the fiduciary duty of this institution was not just to its clients but to the concept of trust itself. The actual, philosophical concept." },
     /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Decades of promises. Decades of people putting their faith in this building. Their estates. Their families' futures. All of that faith... accumulated." },
-    /* 6  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "This building is alive, Andrew. It has been for a very long time.", choices: [
+    /* 6  */ { type: 'choice', speaker: 'Mysterious Janitor', prompt: "This building is alive, Andrew. It has been for a very long time.", choices: [
       { text: "That's impossible.", next: 7 },
       { text: "The Fiduciary Force.", next: 11 },
     ]},
@@ -1858,12 +1858,12 @@ export const DIALOGS = {
     /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Every skimmed basis point. Every redirected fee. The building felt each one. And now it's reached a threshold." },
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "The Archive has the original records. The 1947 charter. The proof of what this institution was SUPPOSED to be." },
     /* 14 */ { type: 'text', speaker: 'Mysterious Janitor', text: "I can get you in. Through the back corridor — north end. Use this keycard." },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'has_archive_key', value: true, next: 16 },
-    /* 16 */ { type: 'action', action: 'give_item', item: 'compliance_manual', quantity: 1, next: 17 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'has_archive_key', value: true },
+    /* 16 */ { type: 'action', action: 'give_item', item: 'compliance_manual', quantity: 1 },
     /* 17 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Take my old compliance manual too. You'll need it where you're going." },
     /* 18 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And Andrew — be careful in the Archive. The building protects its secrets. Not everything down there wants to be found." },
-    /* 19 */ { type: 'action', action: 'set_flag', flag: 'janitor_confronted', value: true, next: 20 },
-    /* 20 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_act3', value: true, next: 21 },
+    /* 19 */ { type: 'action', action: 'set_flag', flag: 'janitor_confronted', value: true },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_act3', value: true },
     /* 21 */ { type: 'end' },
   ],
 
@@ -1871,7 +1871,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Isaiah', text: "Andrew. Interesting morning. I've been practicing not reacting to it." },
     /* 1  */ { type: 'text', speaker: 'Isaiah', text: "The woman from corporate — Meredith — she asked me to compile a list of everyone in the trust department and their 'redundancy potential.'" },
     /* 2  */ { type: 'text', speaker: 'Isaiah', text: "I told her I'd get right on it. Politely. Then I immediately came to find you." },
-    /* 3  */ { type: 'choice', speaker: 'Isaiah', text: "What's going on? Can I help?", choices: [
+    /* 3  */ { type: 'choice', speaker: 'Isaiah', prompt: "What's going on? Can I help?", choices: [
       { text: "We're investigating something big. Could use your help.", next: 4, flag: 'isaiah_friendly', flagValue: 2 },
       { text: "Stay out of it. It's safer for you.", next: 7 },
     ]},
@@ -1880,7 +1880,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'isaiah_act3_allied', value: true, next: 9 },
     /* 7  */ { type: 'text', speaker: 'Isaiah', text: "Noted. But I've been here long enough to know when something needs fixing, and this has the smell." },
     /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I'll keep my head down, but if you change your mind, you know where to find me." },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_isaiah_act3', value: true, next: 10 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'read_isaiah_act3', value: true },
     /* 10 */ { type: 'end' },
   ],
 
@@ -1889,7 +1889,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "Interesting approach. Some would say reckless. I say it produced a measurable outcome, which in this department qualifies as exotic." },
     /* 2  */ { type: 'text', speaker: 'Meredith Sterling', text: "I'm here to ensure this department meets corporate standards. Standards that, frankly, it has not been meeting." },
     /* 3  */ { type: 'text', speaker: 'Meredith Sterling', text: "Skip is a competent motivational speaker. As a department head, however, he leaves much to be desired." },
-    /* 4  */ { type: 'choice', speaker: 'Meredith Sterling', text: "I have plans for this department. Big plans. You could be part of them.", choices: [
+    /* 4  */ { type: 'choice', speaker: 'Meredith Sterling', prompt: "I have plans for this department. Big plans. You could be part of them.", choices: [
       { text: "What kind of plans?", next: 5 },
       { text: "I'm happy with how things are.", next: 8 },
     ]},
@@ -1898,7 +1898,7 @@ export const DIALOGS = {
     /* 7  */ { type: 'text', speaker: 'Meredith Sterling', text: "Think about it. And don't waste time on 'investigations.' I know what Alex from IT has been doing in that server room. It stops now." },
     /* 8  */ { type: 'text', speaker: 'Meredith Sterling', text: "'Happy.' That's a luxury, Andrew. Not a strategy." },
     /* 9  */ { type: 'text', speaker: 'Meredith Sterling', text: "This department will change. The question is whether you're driving the change or being driven over by it." },
-    /* 10 */ { type: 'action', action: 'set_flag', flag: 'read_meredith_act3', value: true, next: 11 },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'read_meredith_act3', value: true },
     /* 11 */ { type: 'end' },
   ],
 
@@ -1907,7 +1907,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   archive_terminal: [
-    /* 0  */ { type: 'condition', flag: 'has_archive_password', ifTrue: 3, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'has_archive_password', ifTrue: 3 },
     /* 1  */ { type: 'text', speaker: 'Archive Terminal', text: "ACCESS DENIED. AUTHORIZATION CODE REQUIRED. Contact the Compliance Officer for clearance." },
     /* 2  */ { type: 'end' },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "A CRT monitor coated in dust. The keyboard has keys that haven't been pressed since the Obama administration." },
@@ -1921,13 +1921,13 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Andrew', text: "Twenty-three million dollars. I'm going to need to sit down on something that isn't evidence." },
     /* 12 */ { type: 'text', speaker: 'Archive Terminal', text: "PRINT EVIDENCE? [Y/N]" },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "You press Y. A dot-matrix printer in the corner whirs to life and produces a thick stack of transaction records." },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'has_archive_evidence', value: true, next: 15 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'has_archive_evidence', value: true },
     /* 15 */ { type: 'text', speaker: 'Andrew', text: "Alex was right. Now we have the proof." },
     /* 16 */ { type: 'end' },
   ],
 
   archive_cabinets: [
-    /* 0  */ { type: 'condition', flag: 'archive_filing_done', ifTrue: 9, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'archive_filing_done', ifTrue: 9 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Filing cabinets stretch from floor to ceiling. Each is labeled with a year, going back to 1947." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Most are locked. But five cabinets are ajar, their locks rusted open: 1947, 1971, 1993, 2006, and 2016." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "1947: The original branch charter. Yellowed paper. The ink has a faint gold shimmer that shouldn't be possible." },
@@ -1942,7 +1942,7 @@ export const DIALOGS = {
   ],
 
   stairwell_graffiti: [
-    /* 0  */ { type: 'condition', flag: 'act2_complete', ifTrue: 4, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'act2_complete', ifTrue: 4 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The corridor walls are concrete. Someone has scratched into them: 'TRUST FALLS — FLOOR COUNT: 17'" },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Below it: 'If found, return to the 6th floor. Or don't. — The Intern (probably)'" },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "The corridor echoes with the hum of the building. It sounds almost... intentional.", next: 8 },
@@ -1965,7 +1965,7 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Security Guard', text: "Now turn around, or I'll file a security incident report. And NOBODY wants to deal with that paperwork." },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "I can't do that. There are trust accounts being—" },
     /* 6  */ { type: 'text', speaker: 'Security Guard', text: "Wrong answer." },
-    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'security_guard', next: 8 },
+    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'security_guard' },
     /* 8  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0) ─────────────────────────────
     // He waits in the east bank's z=6 gap (room data) and steps out into the
@@ -1980,7 +1980,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Security Guard', text: "Alright, alright! I'm just doing my job, man. The Regional Manager pays extra for 'archive duty.' I didn't ask questions." },
     /* 1  */ { type: 'text', speaker: 'Security Guard', text: "But between you and me? He's been down here three times this month. Always after hours. Always alone." },
     /* 2  */ { type: 'text', speaker: 'Security Guard', text: "I don't know what he's hiding, but it's not my problem anymore. I'm going back to the lobby." },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'security_guard_info', value: true, next: 4 },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'security_guard_info', value: true },
     /* 4  */ { type: 'end' },
   ],
 
@@ -2001,8 +2001,8 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Diane', text: "Andrew. Meredith just locked down the entire floor. Security at every exit. Nobody in or out without her approval." },
     /* 9  */ { type: 'text', speaker: 'Diane', text: "She knows. I don't know how, but she knows you've been in the Archive." },
     /* 10 */ { type: 'text', speaker: 'Diane', text: "She's calling an emergency board meeting. She wants to dissolve the trust department entirely." },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act3_complete', value: true, next: 12 },
-    /* 12 */ { type: 'action', action: 'set_flag', flag: 'meredith_lockdown', value: true, next: 13 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'act3_complete', value: true },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'meredith_lockdown', value: true },
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "Dissolve the— she can't DO that. Can she?" },
     /* 14 */ { type: 'text', speaker: 'Andrew', text: "Not if we can prove what the Regional Manager has been doing. We need to rally the team — find Janet at her desk, Diane in reception, and the Mysterious Janitor in the Archive." },
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The Janitor's been waiting for this moment for twenty years. And once you have Janet and Diane on board, work on convincing Skip — he won't budge without the right words." },
@@ -2016,7 +2016,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Janet', text: "Because Meredith tried to take my tumbler. Said it was 'unprofessional.' UNPROFESSIONAL." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "This is a $40 insulated wine tumbler with a motivational quote that says 'Rosé All Day' and I will DIE before I surrender it." },
     /* 4  */ { type: 'text', speaker: 'Janet', text: "What do you need from me? I know where every document in this building is. Including the ones Skip hid in the ceiling tiles." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'janet_rallied', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'janet_rallied', value: true },
     /* 6  */ { type: 'text', speaker: 'Janet', text: "I'm in. For the tumbler." },
     /* 7  */ { type: 'text', speaker: 'Janet', text: "...And for the department, I guess. But mostly the tumbler." },
     /* 8  */ { type: 'end' },
@@ -2028,7 +2028,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Diane', text: "Here's what I know: Meredith has been in contact with the Regional Manager. Frequently. Before she even arrived for the 'review.'" },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "This isn't a review, Andrew. This is a cover-up. She's here to bury the evidence before you can use it." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "The HR Department has the original employment records. If the Janitor was really SVP, there's a paper trail. Meredith can't delete paper." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_rallied', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_rallied', value: true },
     /* 6  */ { type: 'text', speaker: 'Diane', text: "I can get you into the HR Department once the team is fully on board. Talk to the Janitor first — he knows more than any of us." },
     /* 7  */ { type: 'end' },
   ],
@@ -2042,28 +2042,28 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. I... I've been thinking. Which is new for me, but I'm trying it." },
     /* 1  */ { type: 'text', speaker: 'Skip Hartley', text: "Meredith wants to dissolve the department. MY department. The one I built from... okay, I didn't build it. The Janitor built it. But I've been MANAGING it." },
     /* 2  */ { type: 'text', speaker: 'Skip Hartley', text: "The thing is... she's not wrong about everything. I haven't been a great leader. I've been a great TALKER. Those are different things." },
-    /* 3  */ { type: 'choice', speaker: 'Skip Hartley', text: "So tell me, Andrew. Why should I fight for this department?", choices: [
+    /* 3  */ { type: 'choice', speaker: 'Skip Hartley', prompt: "So tell me, Andrew. Why should I fight for this department?", choices: [
       { text: "Because this department leverages core competencies that can't be outsourced.", next: 4, flag: 'skip_convince_1', flagValue: true },
       { text: "Because you care about your team, Skip.", next: 6 },
     ]},
     /* 4  */ { type: 'text', speaker: 'Skip Hartley', text: "'Leverages core competencies'... that's... that's MY phrase. You're speaking my language." },
     /* 5  */ { type: 'text', speaker: 'Skip Hartley', text: "Okay, I'm listening. But I need more." },
     /* 6  */ { type: 'text', speaker: 'Skip Hartley', text: "I DO care about the team. Janet. The Intern. Even Alex, who definitely runs Minecraft on company servers." },
-    /* 7  */ { type: 'choice', speaker: 'Skip Hartley', text: "But caring isn't a strategy. What's the strategy?", choices: [
+    /* 7  */ { type: 'choice', speaker: 'Skip Hartley', prompt: "But caring isn't a strategy. What's the strategy?", choices: [
       { text: "We disrupt Meredith's narrative by pivoting to a transparency-first paradigm.", next: 8, flag: 'skip_convince_2', flagValue: true },
       { text: "We tell the truth about what's been happening.", next: 10 },
     ]},
     /* 8  */ { type: 'text', speaker: 'Skip Hartley', text: "'Disrupt.' 'Pivot.' 'Paradigm.' Andrew, you magnificent bastard. You're speaking fluent Skip." },
     /* 9  */ { type: 'text', speaker: 'Skip Hartley', text: "I'm getting FIRED UP. What else?" },
     /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "The truth? The TRUTH? Andrew, the truth is terrifying. The truth is that someone has been stealing from our clients and I didn't notice because I was too busy reading leadership books." },
-    /* 11 */ { type: 'choice', speaker: 'Skip Hartley', text: "How do we actually win this?", choices: [
+    /* 11 */ { type: 'choice', speaker: 'Skip Hartley', prompt: "How do we actually win this?", choices: [
       { text: "We need to synergize our stakeholder alignment across all trust verticals.", next: 12, flag: 'skip_convince_3', flagValue: true },
       { text: "We show the board that Meredith is part of the cover-up.", next: 14 },
     ]},
     /* 12 */ { type: 'text', speaker: 'Skip Hartley', text: "'SYNERGIZE.' 'STAKEHOLDER ALIGNMENT.' 'TRUST VERTICALS.'" },
     /* 13 */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. That sentence means absolutely nothing. And yet... it means EVERYTHING to me." },
     /* 14 */ { type: 'text', speaker: 'Skip Hartley', text: "Meredith is part of it? She's not just reviewing us, she's PROTECTING the person who—" },
-    /* 15 */ { type: 'choice', speaker: 'Skip Hartley', text: "If that's true, we need to move fast. What's the endgame?", choices: [
+    /* 15 */ { type: 'choice', speaker: 'Skip Hartley', prompt: "If that's true, we need to move fast. What's the endgame?", choices: [
       { text: "We circle back to the original charter and leverage our fiduciary moat.", next: 16, flag: 'skip_convince_4', flagValue: true },
       { text: "We go to the board with the evidence. All of it.", next: 18 },
     ]},
@@ -2071,20 +2071,20 @@ export const DIALOGS = {
     /* 17 */ { type: 'text', speaker: 'Skip Hartley', text: "I'm in. Whatever it takes. For the department. For the team. For the synergy." },
     /* 18 */ { type: 'text', speaker: 'Skip Hartley', text: "The board. You're right. We take the evidence to the board meeting. All of it." },
     /* 19 */ { type: 'text', speaker: 'Skip Hartley', text: "I'm done hiding behind buzzwords. Well... I'm done hiding behind MOST buzzwords. Some of them are load-bearing.", next: 23 },
-    /* 20 */ { type: 'action', action: 'set_flag', flag: 'skip_rallied', value: true, next: 21 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'skip_rallied', value: true },
     /* 21 */ { type: 'text', speaker: 'Skip Hartley', text: "Let's do this. *finger guns* ...Sorry. Force of habit." },
     /* 22 */ { type: 'end' },
     // Buzzword tally: pass (→20) needs at least 3 of skip_convince_1..4.
     // Every fail route lands on 32.
-    /* 23 */ { type: 'condition', flag: 'skip_convince_1', ifTrue: 24, ifFalse: 27 },
-    /* 24 */ { type: 'condition', flag: 'skip_convince_2', ifTrue: 25, ifFalse: 30 },
-    /* 25 */ { type: 'condition', flag: 'skip_convince_3', ifTrue: 20, ifFalse: 26 },
+    /* 23 */ { type: 'condition', flag: 'skip_convince_1', ifFalse: 27 },
+    /* 24 */ { type: 'condition', flag: 'skip_convince_2', ifFalse: 30 },
+    /* 25 */ { type: 'condition', flag: 'skip_convince_3', ifTrue: 20 },
     /* 26 */ { type: 'condition', flag: 'skip_convince_4', ifTrue: 20, ifFalse: 32 },
-    /* 27 */ { type: 'condition', flag: 'skip_convince_2', ifTrue: 28, ifFalse: 32 },
-    /* 28 */ { type: 'condition', flag: 'skip_convince_3', ifTrue: 29, ifFalse: 32 },
+    /* 27 */ { type: 'condition', flag: 'skip_convince_2', ifFalse: 32 },
+    /* 28 */ { type: 'condition', flag: 'skip_convince_3', ifFalse: 32 },
     /* 29 */ { type: 'condition', flag: 'skip_convince_4', ifTrue: 20, ifFalse: 32 },
-    /* 30 */ { type: 'condition', flag: 'skip_convince_3', ifTrue: 31, ifFalse: 32 },
-    /* 31 */ { type: 'condition', flag: 'skip_convince_4', ifTrue: 20, ifFalse: 32 },
+    /* 30 */ { type: 'condition', flag: 'skip_convince_3', ifFalse: 32 },
+    /* 31 */ { type: 'condition', flag: 'skip_convince_4', ifTrue: 20 },
     /* 32 */ { type: 'text', speaker: 'Skip Hartley', text: "I want to believe you, Andrew. I do. But half of that pitch was just... words. REGULAR words. Anyone can say regular words." },
     /* 33 */ { type: 'text', speaker: 'Skip Hartley', text: "Come back when you can say it in fluent Skip. I'll be here. Leveraging my feelings. Circling back to my doubts." },
     /* 34 */ { type: 'end' },
@@ -2117,10 +2117,10 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Mysterious Janitor', text: "...engraved on the back of this Rolex." },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "The Janitor removes his gold Rolex and turns it over. On the case back, tiny numbers are engraved: 47." },
     /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "47. For 1947. The year it all began." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janitor_rallied', value: true, next: 9 },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'vault_code_1', value: true, next: 10 },
-    /* 10 */ { type: 'action', action: 'set_flag', flag: 'vault_accessible', value: true, next: 11 },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'hr_accessible', value: true, next: 12 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janitor_rallied', value: true },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'vault_code_1', value: true },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'vault_accessible', value: true },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'hr_accessible', value: true },
     /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Find the other two numbers. Open the Vault. Get the charter." },
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "And when the time comes to confront Meredith... read it aloud. Every word. Trust me." },
     /* 14 */ { type: 'end' },
@@ -2128,7 +2128,7 @@ export const DIALOGS = {
 
   // HR Department interaction
   hr_rep_intro: [
-    /* 0  */ { type: 'condition', flag: 'defeated_hr_rep', ifTrue: 6, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'defeated_hr_rep', ifTrue: 6 },
     /* 1  */ { type: 'text', speaker: 'HR Representative', text: "Welcome to Human Resources! I'm here to help with any concerns. As long as those concerns are pre-approved on Form 27B/6." },
     /* 2  */ { type: 'text', speaker: 'HR Representative', text: "Please note that entering this department constitutes implicit agreement to our 47-page conflict resolution policy." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "I just need to look at some personnel files." },
@@ -2145,7 +2145,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'HR Representative', text: "I'm going to have to ask you to leave. And then attend a mandatory conflict resolution seminar." },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "I'm not leaving without those records." },
     /* 5  */ { type: 'text', speaker: 'HR Representative', text: "Then I'm afraid this is going to go on your permanent record. ALL of the records." },
-    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'hr_rep', next: 7 },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'hr_rep' },
     /* 7  */ { type: 'end' },
   ],
 
@@ -2154,26 +2154,26 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "You search the HR files. In the historical personnel section, you find the Janitor's original employment record." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "'HIRED: 1982. POSITION: Trust Officer. PROMOTED: Senior VP, Trust Administration, 1993. VOLUNTARY RECLASSIFICATION: Facilities, 2005.'" },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Attached to the file is a sticky note with a number: 19. The second vault combination digit." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true },
     /* 5  */ { type: 'end' },
   ],
 
   // HR vault code (file cabinet in HR department)
   hr_vault_code: [
-    /* 0  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 7, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'defeated_hr_rep', ifTrue: 3, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 7 },
+    /* 1  */ { type: 'condition', flag: 'defeated_hr_rep', ifTrue: 3 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Personnel files, meticulously organized. The drawer labeled 'HISTORICAL — CONFIDENTIAL' has a padlock. The HR Representative eyes you suspiciously." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "With the HR Rep out of commission, you rifle through the historical personnel files." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "'HIRED: 1982. POSITION: Trust Officer. PROMOTED: Senior VP, Trust Administration, 1993. VOLUNTARY RECLASSIFICATION: Facilities, 2005.'" },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "Attached to the file is a sticky note with a number: 19. The second vault combination digit." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true, next: 7 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'vault_code_2', value: true },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "You've already found what you need in these files. The Janitor's employment record — and the second vault code." },
     /* 8  */ { type: 'end' },
   ],
 
   // Server room vault code
   server_vault_code: [
-    /* 0  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "You check the server rack the Janitor mentioned. Behind the third-floor stairwell dead drop location." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Taped to the back of server rack C — the one with the restraining order — is a small card with the number: 82." },
     /* 3  */ { type: 'action', action: 'set_flag', flag: 'vault_code_3', value: true, next: 5 },
@@ -2183,22 +2183,22 @@ export const DIALOGS = {
 
   // Vault interaction
   vault_boxes: [
-    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 15, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'vault_code_1', ifTrue: 2, ifFalse: 13 },
-    /* 2  */ { type: 'condition', flag: 'vault_code_2', ifTrue: 3, ifFalse: 13 },
-    /* 3  */ { type: 'condition', flag: 'vault_code_3', ifTrue: 4, ifFalse: 13 },
+    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 15 },
+    /* 1  */ { type: 'condition', flag: 'vault_code_1', ifFalse: 13 },
+    /* 2  */ { type: 'condition', flag: 'vault_code_2', ifFalse: 13 },
+    /* 3  */ { type: 'condition', flag: 'vault_code_3', ifFalse: 13 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "A heavy safe deposit box. Three-dial combination lock. You enter the numbers: 47-19-82." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "*CLUNK*. The lock turns. The door swings open." },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "Inside is a single document. Thick parchment. Gold-embossed letterhead. The ink has a warmth to it, like sunlight trapped in amber." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "'VAULTS FARGO TRUST CHARTER — BRANCH 4471 — ORIGINAL CHARTER OF FIDUCIARY OBLIGATION'" },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "The moment you touch the document, the room trembles. Not an earthquake. Something deeper. The building is responding." },
     /* 9  */ { type: 'text', speaker: 'Andrew', text: "It's warm. Paper shouldn't be warm. I'm going to assume that's normal and keep holding it." },
-    /* 10 */ { type: 'action', action: 'set_flag', flag: 'has_charter', value: true, next: 11 },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'has_charter', value: true },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force surges through the charter. You feel the building take your side, the way a very large dog decides it likes you." },
     /* 12 */ { type: 'text', speaker: 'Andrew', text: "I need to get back to the cubicle farm. The team is waiting.", next: 16 },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "The safe is locked. A three-dial combination. You don't have all the numbers yet." },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "The Janitor said the codes are scattered: one on his Rolex, one in HR, one in the server room.", next: 16 },
-    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The safe is open. Empty now. The charter is with you. Where it belongs.", next: 16 },
+    /* 15 */ { type: 'text', speaker: 'Narrator', text: "The safe is open. Empty now. The charter is with you. Where it belongs." },
     /* 16 */ { type: 'end' },
   ],
 
@@ -2225,9 +2225,9 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Diane', text: "Andrew, Meredith's moved to the Board Room. She's calling an emergency vote to dissolve the trust department." },
     /* 6  */ { type: 'text', speaker: 'Diane', text: "You need to get up there. But first, you'll need to deal with her team down here. They're blocking all access." },
     /* 7  */ { type: 'text', speaker: 'Janet', text: "I'm coming with you. If they're going to dissolve me, they can do it to my face. While I'm drinking." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true, next: 9 },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'janet_recruited', value: true, next: 10 },
-    /* 10 */ { type: 'action', action: 'recruit_ally', ally: 'janet', next: 11 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'act4_complete', value: true },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'janet_recruited', value: true },
+    /* 10 */ { type: 'action', action: 'recruit_ally', ally: 'janet' },
     /* 11 */ { type: 'end' },
   ],
 
@@ -2240,7 +2240,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I've already drafted three NDAs, four severance riders, and a non-compete that would survive a nuclear strike. Sign anywhere." },
     /* 4  */ { type: 'text', speaker: 'Janet', text: "Andrew. I'll take the one with the binder. You handle whichever one's loudest." },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Right. Whatever happens, nobody signs anything." },
-    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_trio', next: 7 },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_trio' },
     /* 7  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0) ─────────────────────────────
     // None of the three has an NPC entry in the cubicle farm, so "three suits
@@ -2261,12 +2261,12 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Janet', text: "I forgot how good it feels to be right." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "We're not done. Meredith's whole team is between us and the Board Room." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "Then I'm not done either. Lead the way." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'restructuring_trio_defeated', value: true, next: 5 },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true, next: 6 },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'restructuring_defeated', value: true, next: 7 },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'corporate_lawyer_defeated', value: true, next: 8 },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_fight_started', value: true, next: 9 },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'restructuring_fight_started', value: true, next: 10 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'restructuring_trio_defeated', value: true },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'restructuring_defeated', value: true },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'corporate_lawyer_defeated', value: true },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_fight_started', value: true },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'restructuring_fight_started', value: true },
     /* 10 */ { type: 'end' },
   ],
 
@@ -2286,8 +2286,8 @@ export const DIALOGS = {
       { text: '"I work better alone."', next: 12 },
     ] },
     /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Hell yes. Let me grab my laptop and a Red Bull." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'alex_it_recruited', value: true, next: 9 },
-    /* 9  */ { type: 'action', action: 'recruit_ally', ally: 'alex_it', next: 10 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'alex_it_recruited', value: true },
+    /* 9  */ { type: 'action', action: 'recruit_ally', ally: 'alex_it' },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "Alex closes 47 browser tabs. The fans on his laptop slow down for the first time in weeks." },
     /* 11 */ { type: 'end' },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "...okay. Cool. I'll be down here. Yelling at packets. If you change your mind, the door's open." },
@@ -2307,12 +2307,12 @@ export const DIALOGS = {
       { text: '"Just send me the documents. Stay safe down here."', next: 11 },
     ] },
     /* 6  */ { type: 'text', speaker: 'Isaiah', text: "You won't regret it. I packed a go-bag last Tuesday. I had a feeling." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'isaiah_recruited', value: true, next: 8 },
-    /* 8  */ { type: 'action', action: 'recruit_ally', ally: 'isaiah', next: 9 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'isaiah_recruited', value: true },
+    /* 8  */ { type: 'action', action: 'recruit_ally', ally: 'isaiah' },
     /* 9  */ { type: 'text', speaker: 'Narrator', text: "Isaiah picks up a binder labeled 'CONTINGENCIES.' It is alarmingly heavy." },
     /* 10 */ { type: 'end' },
     /* 11 */ { type: 'text', speaker: 'Isaiah', text: "Okay. I'll send the encrypted folder to your work email. Don't let anything happen to that printout." },
-    /* 12 */ { type: 'action', action: 'set_flag', flag: 'isaiah_documents_shared', value: true, next: 13 },
+    /* 12 */ { type: 'action', action: 'set_flag', flag: 'isaiah_documents_shared', value: true },
     /* 13 */ { type: 'end' },
   ],
 
@@ -2324,8 +2324,8 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Diane', text: "I'm not just sharing the file with you, Andrew. I'm walking up there with you." },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "You're sure?" },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "Andrew. I am one of three people in this building who has read the entire employee handbook. I am SURE." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'diane_recruited', value: true, next: 5 },
-    /* 5  */ { type: 'action', action: 'recruit_ally', ally: 'diane', next: 6 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'diane_recruited', value: true },
+    /* 5  */ { type: 'action', action: 'recruit_ally', ally: 'diane' },
     /* 6  */ { type: 'end' },
   ],
 
@@ -2338,7 +2338,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "You're a finance assistant. You don't run trust." },
     /* 3  */ { type: 'text', speaker: "CFO's Assistant", text: "Correct. I run COSTS. And you're a line item with a red number next to it." },
     /* 4  */ { type: 'text', speaker: 'Data Analytics Lead', text: "We've consolidated the analysis. We'd like to walk you through it. Personally." },
-    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'data_analytics_duo', next: 6 },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'data_analytics_duo' },
     /* 6  */ { type: 'end' },
   ],
 
@@ -2346,11 +2346,11 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Data Analytics Lead', text: "My model... has rejected my model. This is bad for my model.", next: 7 },
     /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "I'm... I'm going to need to escalate this. To my direct supervisor. Who is currently in the Bahamas." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "They retreat toward the elevators. The Lead is still muttering about confidence intervals.", next: 8 },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true, next: 4 },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true },
     // Renamed from 'cfos_assistant_defeated' — that name collides with the
     // penthouse post-combat DIALOG id of the same spelling (logic-sweep #23).
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'cfos_assistant_duo_defeated', value: true, next: 5 },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_fight_started', value: true, next: 6 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'cfos_assistant_duo_defeated', value: true },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_fight_started', value: true },
     /* 6  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0/2) ───────────────────────────
     // Neither of the duo has an NPC entry on the executive floor. Two bodies
@@ -2371,8 +2371,8 @@ export const DIALOGS = {
   // Team's badges were issued from. Reward: free unlock of `kernel_panic`
   // (Alex's tier-2 AoE) + 200 XP + small backstory beat about Alex's roots.
   alex_badge_audit_offer: [
-    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 12, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'alex_badge_audit_started', ifTrue: 10, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 12 },
+    /* 1  */ { type: 'condition', flag: 'alex_badge_audit_started', ifTrue: 10 },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. Got a minute? I've been pulling badge logs since the trio went down." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Every Restructuring goon who came in this week was issued from a single workstation. Not HR. Not Reception. Somewhere upstairs." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I can't get the source from a remote query — Meredith's office IP is air-gapped. But if YOU could pull the physical patch panel logs off rack PATCH-3, I can correlate them." },
@@ -2381,7 +2381,7 @@ export const DIALOGS = {
       { text: '"Later. Big stuff happening upstairs."', next: 9 },
     ] },
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Right here in the server room. The rack labeled 'PATCH-3' — it has a sticker that says 'DO NOT TOUCH 4ever'. That's the one." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'alex_badge_audit_started', value: true, next: 8 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'alex_badge_audit_started', value: true },
     /* 8  */ { type: 'end' },
     // B-list — THE "LATER." FALL-THROUGH. This node had no `next`, so declining
     // fell straight into node 10, the ALREADY-STARTED nag ("Did you check
@@ -2396,12 +2396,12 @@ export const DIALOGS = {
   ],
 
   alex_badge_audit_pull: [
-    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 8, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'alex_badge_audit_started', ifTrue: 2, ifFalse: 7 },
+    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 8 },
+    /* 1  */ { type: 'condition', flag: 'alex_badge_audit_started', ifFalse: 7 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Server rack PATCH-3. The 'DO NOT TOUCH 4ever' sticker has been laminated, suggesting it has been touched." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You pull the patch panel log — a hand-written notebook taped to the inside of the rack door. The last entry reads: 'CABLE 47 → EXEC FLOOR (M. SVP). UNLABELED. JOE WAS HERE.'" },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "You photograph the page with your phone. Alex will know what to do with this." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'alex_has_patch_log', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'alex_has_patch_log', value: true },
     /* 6  */ { type: 'end' },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "A server rack labeled PATCH-3. There is a faded sticker. Whatever Alex needs in here, you don't have a reason to look — yet.", next: 6 },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "The patch panel sits quietly. You already gave Alex what he needed.", next: 6 },
@@ -2416,16 +2416,16 @@ export const DIALOGS = {
     // has-not-pulled-the-log branch pointed at node 11, an `end`, so talking to
     // Alex mid-quest opened an empty box. Both are EDGE repairs: no node moves,
     // no node is added, every index stays where it was.
-    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 13, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'alex_has_patch_log', ifTrue: 2, ifFalse: 12 },
+    /* 0  */ { type: 'condition', flag: 'alex_badge_audit_complete', ifTrue: 13 },
+    /* 1  */ { type: 'condition', flag: 'alex_has_patch_log', ifFalse: 12 },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Got the patch log. Cable 47 — 'M. SVP'. Meredith." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "She physically ran a cable from her office to the badge issuer. That's not a corporate workflow. That's a CONSPIRACY." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Joe was here, huh. Joe is a maintenance guy who retired in 2019. So Meredith had this set up for at least four years." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Andrew. You just gave me what I've been chasing for half a year. Let me show you something." },
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "I built this little script for emergencies. Hard reboot the whole building. I never thought I'd actually USE it. But for a moment like this — yeah. Take it." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'alex_badge_audit_complete', value: true, next: 8 },
-    /* 8  */ { type: 'action', action: 'give_xp', xp: 200, next: 9 },
-    /* 9  */ { type: 'action', action: 'unlock_ally_ability', ally: 'alex_it', ability: 'kernel_panic', next: 10 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'alex_badge_audit_complete', value: true },
+    /* 8  */ { type: 'action', action: 'give_xp', xp: 200 },
+    /* 9  */ { type: 'action', action: 'unlock_ally_ability', ally: 'alex_it', ability: 'kernel_panic' },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "Alex teaches you the Kernel Panic command. He's beaming." },
     /* 11 */ { type: 'end' },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "Did you find PATCH-3? The 'DO NOT TOUCH' sticker is the one.", next: 11 },
@@ -2490,7 +2490,7 @@ export const DIALOGS = {
     ] },
     /* 26 */ { type: 'action', action: 'set_flag', flag: 'andrew_steadied', value: true, next: 29 },
     /* 27 */ { type: 'action', action: 'set_flag', flag: 'andrew_hardened', value: true, next: 29 },
-    /* 28 */ { type: 'action', action: 'set_flag', flag: 'andrew_steadied', value: true, next: 29 },
+    /* 28 */ { type: 'action', action: 'set_flag', flag: 'andrew_steadied', value: true },
     /* 29 */ { type: 'action', action: 'set_flag', flag: 'janet_warning_seen', value: true, next: 0 },
 
     // 30-39: The Witness — Andrew opens the charter and reads
@@ -2501,7 +2501,7 @@ export const DIALOGS = {
     /* 34 */ { type: 'text', speaker: 'Narrator', text: "It says: 'For the people whose names you will never know, who trusted you anyway. — D. Henderson, founding trustee, 1947.'" },
     /* 35 */ { type: 'text', speaker: 'Andrew', text: "...Mrs. Henderson's grandfather wrote this." },
     /* 36 */ { type: 'text', speaker: 'Narrator', text: "You close the charter. You sit with it on your knees for a moment. The day is heavy, and that's okay. The day is supposed to be heavy." },
-    /* 37 */ { type: 'action', action: 'set_flag', flag: 'witness_charter_read', value: true, next: 38 },
+    /* 37 */ { type: 'action', action: 'set_flag', flag: 'witness_charter_read', value: true },
     /* 38 */ { type: 'action', action: 'give_xp', xp: 100, next: 0 },
     // OFF-BY-ONE REPAIR. The "30-39 The Witness" block reserved ten slots and
     // wrote nine, so from here down every `/* NN */` comment was one ahead of
@@ -2521,7 +2521,7 @@ export const DIALOGS = {
     /* 42 */ { type: 'text', speaker: 'Narrator', text: "You think: I could quit. I could walk out the front of the building and not come back. There's a version of every life where you just don't show up the next day." },
     /* 43 */ { type: 'text', speaker: 'Narrator', text: "And then you think: yeah. But not this one." },
     /* 44 */ { type: 'text', speaker: 'Narrator', text: "You stand up. You're still tired. But you're standing." },
-    /* 45 */ { type: 'action', action: 'set_flag', flag: 'skeptic_chair_seen', value: true, next: 46 },
+    /* 45 */ { type: 'action', action: 'set_flag', flag: 'skeptic_chair_seen', value: true },
     /* 46 */ { type: 'action', action: 'modify_stat', stat: 'maxMP', amount: 5, next: 0 },
 
     // ── Act-tier dispatchers and content ──────────────────────────────────
@@ -2532,7 +2532,7 @@ export const DIALOGS = {
     //   act7 gate  → if already seen → default; else → act7 lines → set_flag → 0
 
     // ── JANET dispatcher (47–61) ──────────────────────────────────────────
-    /* 47 */ { type: 'condition', flag: 'act6_complete', ifTrue: 48, ifFalse: 1 },
+    /* 47 */ { type: 'condition', flag: 'act6_complete', ifFalse: 1 },
     /* 48 */ { type: 'condition', flag: 'act7_complete', ifTrue: 57, ifFalse: 52 },
     // Act 6: Karen's just gone, Meredith is still upstairs
     /* 49 */ { type: 'text', speaker: 'Janet', text: "I keep thinking about Karen's face when she finally backed down. Three meetings in. She was exhausted before I was." },
@@ -2551,7 +2551,7 @@ export const DIALOGS = {
     /* 61 */ { type: 'end' },
 
     // ── ALEX dispatcher (62–76) ───────────────────────────────────────────
-    /* 62 */ { type: 'condition', flag: 'act6_complete', ifTrue: 63, ifFalse: 5 },
+    /* 62 */ { type: 'condition', flag: 'act6_complete', ifFalse: 5 },
     /* 63 */ { type: 'condition', flag: 'act7_complete', ifTrue: 72, ifFalse: 67 },
     // Act 6: forensics guy finally named
     /* 64 */ { type: 'text', speaker: 'Alex from IT', text: "You know what I actually am? I'm a forensics guy. That's the thing I always was. Every job I've had, I ended up being the one who found the thing nobody wanted found." },
@@ -2570,7 +2570,7 @@ export const DIALOGS = {
     /* 76 */ { type: 'end' },
 
     // ── ISAIAH dispatcher (77–91) ─────────────────────────────────────────
-    /* 77 */ { type: 'condition', flag: 'act6_complete', ifTrue: 78, ifFalse: 9 },
+    /* 77 */ { type: 'condition', flag: 'act6_complete', ifFalse: 9 },
     /* 78 */ { type: 'condition', flag: 'act7_complete', ifTrue: 87, ifFalse: 82 },
     // Act 6: the notes he kept for seven years
     /* 79 */ { type: 'text', speaker: 'Isaiah', text: "I started keeping a second set of notes after Merger Four. Not copies of work — observations. Who said what in what room on what day." },
@@ -2589,7 +2589,7 @@ export const DIALOGS = {
     /* 91 */ { type: 'end' },
 
     // ── DIANE dispatcher (92–106) ─────────────────────────────────────────
-    /* 92  */ { type: 'condition', flag: 'act6_complete', ifTrue: 93, ifFalse: 13 },
+    /* 92  */ { type: 'condition', flag: 'act6_complete', ifFalse: 13 },
     /* 93  */ { type: 'condition', flag: 'act7_complete', ifTrue: 102, ifFalse: 97 },
     // Act 6: sixty-three pages, twice
     /* 94  */ { type: 'text', speaker: 'Diane', text: "I read the whole restructuring packet last night. All sixty-three pages. Twice." },
@@ -2640,14 +2640,14 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "You can't reduce trust administration to a ratio." },
     /* 3  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Everything can be reduced to a ratio. People. Departments. The reduction is the part I'm best at." },
     /* 4  */ { type: 'text', speaker: 'Restructuring Analyst', text: "Your number is up." },
-    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_analyst', next: 6 },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'restructuring_analyst' },
     /* 6  */ { type: 'end' },
   ],
 
   restructuring_defeated: [
     /* 0  */ { type: 'text', speaker: 'Restructuring Analyst', text: "This is... not in my efficiency model. Human variables. Always the hardest to account for." },
     /* 1  */ { type: 'text', speaker: 'Restructuring Analyst', text: "You know Meredith won't stop. She's been planning this for months. The Regional Manager promised her this branch." },
-    /* 2  */ { type: 'action', action: 'set_flag', flag: 'restructuring_defeated', value: true, next: 3 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'restructuring_defeated', value: true },
     /* 3  */ { type: 'end' },
   ],
 
@@ -2658,14 +2658,14 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Brand Consultant', text: "'Fine' is the ENEMY of 'brand excellence.' Let me show you the mood board." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The mood board is just a photo of a sunset with the word 'DISRUPT' in Helvetica." },
     /* 5  */ { type: 'text', speaker: 'Brand Consultant', text: "You don't appreciate art. Or vision. Or mid-century modern fonts." },
-    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'brand_consultant', next: 7 },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'brand_consultant' },
     /* 7  */ { type: 'end' },
   ],
 
   brand_consultant_defeated: [
     /* 0  */ { type: 'text', speaker: 'Brand Consultant', text: "Fine. Keep your boring name. Keep your boring department. But mark my words — 'trust' as a brand is OVER.", next: 4 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Brand Consultant retreats, clutching their mood board. The sunset looks dimmer somehow.", next: 5 },
-    /* 2  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true, next: 3 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'brand_consultant_defeated', value: true },
     /* 3  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0/1) ───────────────────────────
     // The Brand Consultant has no NPC entry anywhere — this whole conversation
@@ -2688,7 +2688,7 @@ export const DIALOGS = {
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "Who authorized you to be in this building?" },
     /* 5  */ { type: 'text', speaker: 'Data Analytics Lead', text: "I don't see that question on my intake form. I do see, however, that your continued presence here represents a 94% drag on projected synergies." },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "The lead opens a laptop. The screen is a spreadsheet so dense it's practically a weapon." },
-    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'data_analytics_lead', next: 8 },
+    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'data_analytics_lead' },
     /* 8  */ { type: 'end' },
   ],
 
@@ -2698,7 +2698,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Data Analytics Lead', text: "It's... refusing to run. I think you broke my confidence interval." },
     /* 3  */ { type: 'text', speaker: 'Data Analytics Lead', text: "For what it's worth — the Chief is still up here. He doesn't have a model. He doesn't need one. He's been doing this for twenty years." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The lead closes their laptop and walks toward the elevator, muttering about outliers.", next: 8 },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'data_lead_defeated', value: true },
     /* 6  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0/4) ───────────────────────────
     /* 7  */ { type: 'stage', next: 1, beats: [
@@ -2717,7 +2717,7 @@ export const DIALOGS = {
     /* 3  */ { type: 'text', speaker: 'Chief of Restructuring', text: "Legal basis. Sentiment is not a KPI, Andrew. Neither is loyalty. Neither, frankly, is you." },
     /* 4  */ { type: 'text', speaker: 'Chief of Restructuring', text: "I've broken harder people than you. With less paperwork." },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Good. I hate paperwork." },
-    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'chief_of_restructuring', next: 7 },
+    /* 6  */ { type: 'action', action: 'start_combat', encounter: 'chief_of_restructuring' },
     /* 7  */ { type: 'end' },
   ],
 
@@ -2727,8 +2727,8 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Then she knows what's coming." },
     /* 3  */ { type: 'text', speaker: 'Chief of Restructuring', text: "She's in the Board Room. She's been there all morning. She has the full board on a call. Andrew — whatever you're planning, you have maybe ten minutes before the vote passes." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Chief straightens his tie. Steps aside. For the first time in twenty years, he gets out of someone's way.", next: 9 },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'chief_restructuring_defeated', value: true, next: 6 },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'board_room_accessible', value: true, next: 7 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'chief_restructuring_defeated', value: true },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'board_room_accessible', value: true },
     /* 7  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0/4) ───────────────────────────
     // "Steps aside" is a one-tile walk and it is the most cinematic beat in
@@ -2739,7 +2739,7 @@ export const DIALOGS = {
       { actor: 'chief_of_restructuring', spawn: true, spawnAt: [7.5, 2.2], face: 'player' },
       { actor: 'player', walkTo: [7.6, 4.6], face: 'chief_of_restructuring', speed: 1.5 },
     ] },
-    /* 9  */ { type: 'stage', next: 10, beats: [
+    /* 9  */ { type: 'stage', beats: [
       { actor: 'chief_of_restructuring', walkTo: [5.8, 2.2], face: 'player', speed: 1.0, hold: 0.5 },
       { actor: 'player', face: 'board_door', wait: false },
     ] },
@@ -2762,7 +2762,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I have here a cease and desist order, a termination notice, and a non-disclosure agreement. Sign all three." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "I'm a trust officer with evidence of systematic fiduciary breach. I'm not signing anything." },
     /* 4  */ { type: 'text', speaker: 'Corporate Lawyer', text: "Brave. Foolish. But brave. Very well. Let's do this the litigious way." },
-    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'corporate_lawyer', next: 6 },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'corporate_lawyer' },
     /* 6  */ { type: 'end' },
   ],
 
@@ -2770,7 +2770,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Corporate Lawyer', text: "I... I've never lost a case. Or a fight. This is unprecedented." },
     /* 1  */ { type: 'text', speaker: 'Corporate Lawyer', text: "For the record, I was retained by the Regional Manager personally. Not by Vaults Fargo corporate. That distinction may matter later." },
     /* 2  */ { type: 'text', speaker: 'Corporate Lawyer', text: "Meredith is upstairs. The Board Room. She's presenting her case to dissolve your department. You'd better hurry." },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'corporate_lawyer_defeated', value: true, next: 4 },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'corporate_lawyer_defeated', value: true },
     /* 4  */ { type: 'end' },
   ],
 
@@ -2792,16 +2792,16 @@ export const DIALOGS = {
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "The building hums. The charter on the table begins to glow with that impossible warm light." },
     /* 11 */ { type: 'text', speaker: 'Meredith Sterling', text: "What is— this is some kind of trick. Fine. If you want a fight, I'll give you one." },
     /* 12 */ { type: 'text', speaker: 'Meredith Sterling', text: "I am Meredith, SVP of Strategic Operations. I have a Harvard MBA, a corner office, and ZERO patience for corporate fairy tales.", next: 15 },
-    /* 13 */ { type: 'action', action: 'start_combat', encounter: 'meredith_boss', next: 14 },
+    /* 13 */ { type: 'action', action: 'start_combat', encounter: 'meredith_boss' },
     /* 14 */ { type: 'end' },
     // Quarterly-review leverage (logic-sweep MAJOR #11): the flags are
     // consumed mechanically in _startCombat (enemy stat overrides) —
     // these lines tell the player it's happening.
-    /* 15 */ { type: 'condition', flag: 'portfolio_strong', ifTrue: 16, ifFalse: 18 },
-    /* 16 */ { type: 'text', speaker: 'Meredith Sterling', text: "...I reviewed your book of business, by the way. Clean acquisitions, defensible fee structure. It's annoying. It's going to be a footnote in my report.", next: 17 },
+    /* 15 */ { type: 'condition', flag: 'portfolio_strong', ifFalse: 18 },
+    /* 16 */ { type: 'text', speaker: 'Meredith Sterling', text: "...I reviewed your book of business, by the way. Clean acquisitions, defensible fee structure. It's annoying. It's going to be a footnote in my report." },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "She says 'footnote' like it costs her something. Your portfolio is load-bearing — Meredith's arguments have visible cracks. (Meredith's stats are reduced.)", next: 13 },
-    /* 18 */ { type: 'condition', flag: 'portfolio_weak', ifTrue: 19, ifFalse: 13 },
-    /* 19 */ { type: 'text', speaker: 'Meredith Sterling', text: "And I reviewed your book of business. Underperforming. Undercapitalized. Exhibit A, Andrew. You built my case FOR me.", next: 20 },
+    /* 18 */ { type: 'condition', flag: 'portfolio_weak', ifFalse: 13 },
+    /* 19 */ { type: 'text', speaker: 'Meredith Sterling', text: "And I reviewed your book of business. Underperforming. Undercapitalized. Exhibit A, Andrew. You built my case FOR me." },
     /* 20 */ { type: 'text', speaker: 'Narrator', text: "She slides a copy of your quarterly review across the table like a subpoena. It lands harder than it should. (Meredith's attack is increased.)", next: 23 },
     // ── STAGING (appended; routed to from 0/4/20) ────────────────────────
     // Meredith paced (8,2) — 5.8 tiles from the head chair at (3,5) and NORTH
@@ -2827,7 +2827,7 @@ export const DIALOGS = {
     // Charter Read → rhetorical-kill epilogue (path 30+). Steadied → humble (path 50+).
     // Hardened → cold (path 60+). Default → existing universal celebration. All paths
     // converge on the act5_complete flag at index 70.
-    /* 0  */ { type: 'condition', flag: 'andrew_invoked_charter', ifTrue: 30, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'andrew_invoked_charter', ifTrue: 30 },
     /* 1  */ { type: 'text', speaker: 'Meredith Sterling', text: "I... this isn't possible. No one has ever..." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "The charter glows brighter. The Fiduciary Force fills the Board Room. Every promise ever made within these walls resonates." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Meredith's phone rings. She answers. Her face goes white." },
@@ -2845,9 +2845,9 @@ export const DIALOGS = {
     /* 15 */ { type: 'text', speaker: 'Narrator', text: "The trust department stands. Battered, caffeinated, and slightly traumatized. But standing." },
     /* 16 */ { type: 'text', speaker: 'Narrator', text: "The Fiduciary Force sleeps again. Until the next breach. Until the next broken promise." },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "But that's a story for another day. Or maybe... another floor." },
-    /* 18 */ { type: 'text', speaker: 'Narrator', text: "The penthouse elevator dings. Nobody pressed it.", next: 19 },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: "The penthouse elevator dings. Nobody pressed it." },
     // Voice-profile epilogue branch — runs AFTER the universal celebration
-    /* 19 */ { type: 'condition', flag: 'andrew_steadied',  ifTrue: 50, ifFalse: 20 },
+    /* 19 */ { type: 'condition', flag: 'andrew_steadied',  ifTrue: 50 },
     /* 20 */ { type: 'condition', flag: 'andrew_hardened',  ifTrue: 60, ifFalse: 70 },
     // 21–29 reserved (intentionally empty so future epilogue paths can be inserted without renumbering downstream)
     /* 21 */ { type: 'end' },
@@ -2910,7 +2910,7 @@ export const DIALOGS = {
     /* 69 */ { type: 'end' },
 
     // ── Final flag + end — every path converges here ──
-    /* 70 */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true, next: 71 },
+    /* 70 */ { type: 'action', action: 'set_flag', flag: 'act5_complete', value: true },
     /* 71 */ { type: 'end' },
     // ── STAGING (appended; routed to from 6) ─────────────────────────────
     // "Her heels echo on the marble floor, each step a little less certain
@@ -2951,14 +2951,14 @@ export const DIALOGS = {
   ],
 
   vault_entrance: [
-    /* 0  */ { type: 'condition', flag: 'vault_accessible', ifTrue: 2, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'vault_accessible', ifTrue: 2 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "A heavy steel door behind the Archive shelving. It won't budge. You need more information." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "The vault door is open. The Janitor's keycard works here too." },
     /* 3  */ { type: 'end' },
   ],
 
   vault_charter: [
-    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 4, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'has_charter', ifTrue: 4 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "A glass display case. Inside, you can see a document on a velvet stand. It glows faintly." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A plaque reads: 'THE ORIGINAL CHARTER — To be opened only in times of fiduciary crisis.'" },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "The display case is locked. The combination lock has three dials." },
@@ -2975,8 +2975,8 @@ export const DIALOGS = {
   ],
 
   algorithm_terminal: [
-    /* 0  */ { type: 'condition', flag: 'regional_director_defeated', ifTrue: 1, ifFalse: 7 },
-    /* 1  */ { type: 'condition', flag: 'defeated_algorithm', ifTrue: 13, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'regional_director_defeated', ifFalse: 7 },
+    /* 1  */ { type: 'condition', flag: 'defeated_algorithm', ifTrue: 13 },
     // Fight path — player came to the terminal instead of waiting for the cutscene
     /* 2  */ { type: 'text', speaker: 'The Algorithm', text: "Initiating direct interface. Interesting choice." },
     /* 3  */ { type: 'text', speaker: 'The Algorithm', text: "You chose confrontation over ceremony. Efficiency rating: acceptable." },
@@ -3007,14 +3007,14 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_anomaly: [
-    /* 0  */ { type: 'condition', flag: 'quest_anomaly_347_complete', ifTrue: 20, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 9, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'quest_anomaly_347_complete', ifTrue: 20 },
+    /* 1  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 9 },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. I've been tracking a weird signal. Something's pinging an external IP at exactly 3:47 AM every night." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I set up a packet sniffer. It's not just data — it's Morse code. Embedded in the headers of our trust accounting database." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "Someone has been sending Morse code through our trust system at 3:47 AM every night. Eight years running." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "The signal originates from server rack C — the one with the restraining order. There should be a blinking LED pattern on it." },
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Go take a look. Long blink = dash, short blink = dot. See what you can read." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'anomaly_started', value: true, next: 8 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'anomaly_started', value: true },
     /* 8  */ { type: 'end' },
     // B-list — THE ANOMALY AUTO-COMPLETED ITSELF. This node had no `next`, so
     // it fell into node 10 ("okay I got impatient. I decoded it myself") and ran
@@ -3031,9 +3031,9 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "The signal timestamp 3:47? That's not a time. It's a frequency. 3.47 GHz. Someone buried that hint in the ping data." },
     /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "I overclocked a security badge to run at exactly that frequency. It resonates with the building's systems somehow." },
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "Here. It's technically an FCC violation. Consider it a thank you." },
-    /* 16 */ { type: 'action', action: 'set_flag', flag: 'quest_anomaly_347_complete', value: true, next: 17 },
-    /* 17 */ { type: 'action', action: 'give_xp', xp: 250, next: 18 },
-    /* 18 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The 3:47 AM Anomaly. +250 XP. SPD +3 permanently.", next: 19 },
+    /* 16 */ { type: 'action', action: 'set_flag', flag: 'quest_anomaly_347_complete', value: true },
+    /* 17 */ { type: 'action', action: 'give_xp', xp: 250 },
+    /* 18 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The 3:47 AM Anomaly. +250 XP. SPD +3 permanently." },
     /* 19 */ { type: 'end' },
     /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "The signal went dark after we decoded it. Whatever was warning us knows we got the message.", next: 19 },
     // ── APPENDED (B-list): the gate node 9 now routes through. ──────────────
@@ -3042,13 +3042,13 @@ export const DIALOGS = {
     // the rack. `morse_decoded` is the same flag the HUD reads to switch this
     // quest's objective from "find it" to "return to Alex", so the reward path
     // and the objective now agree by construction.
-    /* 21 */ { type: 'condition', flag: 'morse_decoded', ifTrue: 10, ifFalse: 22 },
+    /* 21 */ { type: 'condition', flag: 'morse_decoded', ifTrue: 10 },
     /* 22 */ { type: 'text', speaker: 'Alex from IT', text: "Then go look. Rack C. The one with the restraining order taped to it.", next: 8 },
   ],
 
   // Morse code interactable on server rack C
   morse_code_rack: [
-    /* 0  */ { type: 'condition', flag: 'anomaly_started', ifTrue: 1, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'anomaly_started', ifFalse: 6 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Server rack C. The restraining order is taped to the side. But behind it, a single LED blinks in a distinct pattern." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Long... short short short... long short... short short short... long... / short... short long short short... short long... short short short long... short short short... long short short... short short... short short short short short... short short short..." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "If I remember my Boy Scout Morse code... T-R-U-S-T... N-O... A-L-G-O-R-I-T-H-M-S..." },
@@ -3064,14 +3064,14 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_legacy: [
-    /* 0  */ { type: 'condition', flag: 'quest_legacy_admin_complete', ifTrue: 18, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 20, ifFalse: 2 },
-    /* 2  */ { type: 'condition', flag: 'legacy_started', ifTrue: 7, ifFalse: 3 },
+    /* 0  */ { type: 'condition', flag: 'quest_legacy_admin_complete', ifTrue: 18 },
+    /* 1  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 20 },
+    /* 2  */ { type: 'condition', flag: 'legacy_started', ifTrue: 7 },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so. There is an admin account that has been auto-approving expense reports for eighteen years." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "I only noticed because this month it approved 'One (1) kayak.' For the marketing department. Nobody in marketing kayaks." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "I've traced it to an active IP on this floor. It's running on a physical machine somewhere. Check the filing cabinets in HR — there'll be a paper trail. Then find the source workstation." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'legacy_started', value: true, next: 17 },
-    /* 7  */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 8, ifFalse: 9 },
+    /* 7  */ { type: 'condition', flag: 'phantom_hr_found', ifFalse: 9 },
     /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Good, you found the HR trail. Now find the workstation — it'll be in the cubicle farm somewhere. Look for a machine that's running hot for no reason.", next: 17 },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Check HR for the expense printouts first. There should be a paper trail in the filing cabinets.", next: 17 },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "You found it. Give me a second to pull the logs..." },
@@ -3079,12 +3079,12 @@ export const DIALOGS = {
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "The account was set up in 2006 by the previous IT manager as an automated procurement bot. He left, forgot to decommission it, and it just... kept running." },
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "It approved everything that matched its original criteria. 'Operational supplies.' The kayak technically qualified under 'team wellness equipment.'" },
     /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "I wrote you a root access exploit from the technique I used to kill it. Strips every defense. Consider it hazard pay." },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'quest_legacy_admin_complete', value: true, next: 16 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'quest_legacy_admin_complete', value: true },
     /* 16 */ { type: 'action', action: 'give_xp', xp: 300, next: 19 },
     /* 17 */ { type: 'end' },
     /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "The phantom approver is gone. HR is still processing the kayak return.", next: 17 },
     /* 19 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Phantom Approver. +300 XP. Learned ability: Root Access! Deals 50 damage and strips all enemy buffs.", next: 17 },
-    /* 20 */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 10, ifFalse: 21 },
+    /* 20 */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 10 },
     /* 21 */ { type: 'text', speaker: 'Alex from IT', text: "You found the machine — good. But I still need the HR paper trail to map the account's full history. Check the filing cabinets in HR.", next: 17 },
   ],
 
@@ -3094,16 +3094,16 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_network: [
-    /* 0  */ { type: 'condition', flag: 'quest_network_ghost_complete', ifTrue: 22, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'all_boosters_placed', ifTrue: 11, ifFalse: 2 },
-    /* 2  */ { type: 'condition', flag: 'network_started', ifTrue: 9, ifFalse: 3 },
+    /* 0  */ { type: 'condition', flag: 'quest_network_ghost_complete', ifTrue: 22 },
+    /* 1  */ { type: 'condition', flag: 'all_boosters_placed', ifTrue: 11 },
+    /* 2  */ { type: 'condition', flag: 'network_started', ifTrue: 9 },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "There's something on the network I can't identify. A ghost. It's consuming bandwidth and leaving no trace in the logs." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "To triangulate it, I need signal boosters placed in three locations: break room, back corridor, and conference room." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Self-adhesive. Military grade. Well — I bought them from a guy named Military Mike on eBay. But they work." },
     /* 6  */ { type: 'text', speaker: 'Alex from IT', text: "Look for spots on the walls in each room. Interact with the booster. Come back when all three are placed." },
-    /* 7  */ { type: 'action', action: 'quest_update', quest: 'network_ghost', stage: 1, next: 8 },
+    /* 7  */ { type: 'action', action: 'quest_update', quest: 'network_ghost', stage: 1 },
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'network_started', value: true, next: 10 },
-    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Still need boosters? Break room east wall, back corridor midpoint, conference room east wall.", next: 10 },
+    /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Still need boosters? Break room east wall, back corridor midpoint, conference room east wall." },
     /* 10 */ { type: 'end' },
     /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "All three boosters are live! Triangulating now..." },
     /* 12 */ { type: 'text', speaker: 'Narrator', text: "Alex stares at his screen. Three signal blips converge on a single point on the floor plan." },
@@ -3112,9 +3112,9 @@ export const DIALOGS = {
     /* 15 */ { type: 'text', speaker: 'Alex from IT', text: "The building has been keeping its own records. A backup that nobody can tamper with. It's been protecting itself." },
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "This is... beautiful? In a deeply unsettling way?" },
     /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Here. I wrote you a firewall subroutine based on what the printer does — blocks the next attack directed at you." },
-    /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_network_ghost_complete', value: true, next: 19 },
-    /* 19 */ { type: 'action', action: 'give_xp', xp: 300, next: 20 },
-    /* 20 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: Network Ghost. +300 XP. Learned ability: Firewall! Blocks the next enemy ability entirely.", next: 21 },
+    /* 18 */ { type: 'action', action: 'set_flag', flag: 'quest_network_ghost_complete', value: true },
+    /* 19 */ { type: 'action', action: 'give_xp', xp: 300 },
+    /* 20 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: Network Ghost. +300 XP. Learned ability: Firewall! Blocks the next enemy ability entirely." },
     /* 21 */ { type: 'end' },
     /* 22 */ { type: 'text', speaker: 'Alex from IT', text: "The ghost went quiet after we triangulated it. The printer keeps doing its thing, though.", next: 21 },
   ],
@@ -3125,15 +3125,15 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_dave: [
-    /* 0  */ { type: 'condition', flag: 'quest_daves_legacy_complete', ifTrue: 20, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'tuesday_all_found', ifTrue: 10, ifFalse: 2 },
-    /* 2  */ { type: 'condition', flag: 'dave_started', ifTrue: 7, ifFalse: 3 },
+    /* 0  */ { type: 'condition', flag: 'quest_daves_legacy_complete', ifTrue: 20 },
+    /* 1  */ { type: 'condition', flag: 'tuesday_all_found', ifTrue: 10 },
+    /* 2  */ { type: 'condition', flag: 'dave_started', ifTrue: 7 },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Okay, new mystery. There's a scheduled task that runs every Tuesday at exactly 2 PM. Has been running since 2004." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "The logs are encrypted with a key I can't crack. It executes something, completes in under a second, and leaves no trace. Every Tuesday for twenty years." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "There are three physical references in the task header: a floppy disk ID, a server asset tag, and a workstation label. I need all three to reconstruct the decryption key." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'dave_started', value: true, next: 8 },
     /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "Still looking? Floppy disk somewhere in the break room, server tag on the equipment shelf in here, and a label on one of the cubicle farm monitors.", next: 9 },
-    /* 8  */ { type: 'action', action: 'quest_update', quest: 'daves_legacy', stage: 1, next: 9 },
+    /* 8  */ { type: 'action', action: 'quest_update', quest: 'daves_legacy', stage: 1 },
     /* 9  */ { type: 'end' },
     /* 10 */ { type: 'text', speaker: 'Alex from IT', text: "You got all three. Give me a minute..." },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "Alex cross-references the three identifiers and runs the decryption. He reads the result. He reads it again. He closes his eyes." },
@@ -3142,7 +3142,7 @@ export const DIALOGS = {
     /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "Twenty-one years of digital birthday wishes going absolutely nowhere." },
     /* 15 */ { type: 'text', speaker: 'Andrew', text: "That's... either the saddest or the sweetest thing I've ever heard." },
     /* 16 */ { type: 'text', speaker: 'Alex from IT', text: "I'm going to leave it running. Also — I wrote you an ability based on the timestamp exploit I used. Two actions in one turn. It's called Temporal Audit. Gerald would've appreciated that." },
-    /* 17 */ { type: 'action', action: 'set_flag', flag: 'quest_daves_legacy_complete', value: true, next: 18 },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'quest_daves_legacy_complete', value: true },
     /* 18 */ { type: 'action', action: 'give_xp', xp: 300, next: 21 },
     /* 19 */ { type: 'end' },
     /* 20 */ { type: 'text', speaker: 'Alex from IT', text: "The Tuesday 2PM is still running. Gerald's birthday was last Tuesday. He got his email.", next: 19 },
@@ -3152,12 +3152,12 @@ export const DIALOGS = {
   // Dave Kowalski — the D.K. who signed the printer's 2016 note (Printer
   // from Hell). Routed from the Janitor once printer_quest_done is set (#20).
   janitor_dave: [
-    /* 0  */ { type: 'condition', flag: 'dave_janitor_done', ifTrue: 6, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'dave_janitor_done', ifTrue: 6 },
     /* 1  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Dave? Dave Kowalski. Good man. Better IT specialist." },
     /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "He found something in the servers in 2016. Same thing Alex found years later. The shadow accounts." },
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "He reported it. Through official channels. By the book. And the book ate him alive." },
     /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "They transferred him to a branch that doesn't exist anymore. Closed six months later. Convenient timing." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'dave_janitor_done', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'dave_janitor_done', value: true },
     /* 6  */ { type: 'end' },
   ],
 
@@ -3169,32 +3169,32 @@ export const DIALOGS = {
 
   // Signal booster interactables for Network Ghost quest
   network_booster_br: [
-    /* 0  */ { type: 'condition', flag: 'booster_br_placed', ifTrue: 4, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 2, ifFalse: 5 },
+    /* 0  */ { type: 'condition', flag: 'booster_br_placed', ifTrue: 4 },
+    /* 1  */ { type: 'condition', flag: 'network_started', ifFalse: 5 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "You press Alex's signal booster against the east wall. It clicks into place and a tiny green LED begins blinking." },
     /* 3  */ { type: 'action', action: 'set_flag', flag: 'booster_br_placed', value: true, next: 6 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Signal booster: active. Green light steady.", next: 6 },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device with an adhesive backing. You're not sure what it's for.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device with an adhesive backing. You're not sure what it's for." },
     /* 6  */ { type: 'end' },
   ],
 
   network_booster_stairwell: [
-    /* 0  */ { type: 'condition', flag: 'booster_stair_placed', ifTrue: 4, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 2, ifFalse: 5 },
+    /* 0  */ { type: 'condition', flag: 'booster_stair_placed', ifTrue: 4 },
+    /* 1  */ { type: 'condition', flag: 'network_started', ifFalse: 5 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "The concrete wall of the back corridor holds the signal booster perfectly. The LED blinks once, then settles into a steady green." },
     /* 3  */ { type: 'action', action: 'set_flag', flag: 'booster_stair_placed', value: true, next: 6 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Signal booster: active. Green light steady.", next: 6 },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device stuck to the wall. Looks like something an IT person would hide here.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device stuck to the wall. Looks like something an IT person would hide here." },
     /* 6  */ { type: 'end' },
   ],
 
   network_booster_conf: [
-    /* 0  */ { type: 'condition', flag: 'booster_conf_placed', ifTrue: 4, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'network_started', ifTrue: 2, ifFalse: 5 },
+    /* 0  */ { type: 'condition', flag: 'booster_conf_placed', ifTrue: 4 },
+    /* 1  */ { type: 'condition', flag: 'network_started', ifFalse: 5 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "The conference room's east wall. The signal booster fits neatly between two whiteboards. Nobody will notice it for months." },
     /* 3  */ { type: 'action', action: 'set_flag', flag: 'booster_conf_placed', value: true, next: 6 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Signal booster: active. Green light steady.", next: 6 },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device with an adhesive backing. You're not sure what it's for.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A small black device with an adhesive backing. You're not sure what it's for." },
     /* 6  */ { type: 'end' },
   ],
 
@@ -3204,9 +3204,9 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_printer: [
-    /* 0  */ { type: 'condition', flag: 'quest_printer_soul_complete', ifTrue: 14, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 9, ifFalse: 2 },
-    /* 2  */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 17, ifFalse: 3 },
+    /* 0  */ { type: 'condition', flag: 'quest_printer_soul_complete', ifTrue: 14 },
+    /* 1  */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 9 },
+    /* 2  */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 17 },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "Okay so the printer thing. Not the haunted messages — I've been watching something else." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "The printer draws about six times more power than it should in standby. It's not just idling. It's running a continuous background calculation. Has been for years." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "I need the firmware disk to connect to it directly — should be on the equipment shelf in here. Then there's an ethernet port on the wall next to the printer. Plug in and I can pull the computation logs." },
@@ -3219,11 +3219,11 @@ export const DIALOGS = {
     /* 12 */ { type: 'action', action: 'set_flag', flag: 'quest_printer_soul_complete', value: true, next: 15 },
     /* 13 */ { type: 'end' },
     /* 14 */ { type: 'text', speaker: 'Alex from IT', text: "The printer finally went quiet. Twenty-two years of work — complete.", next: 13 },
-    /* 15 */ { type: 'action', action: 'give_xp', xp: 350, next: 16 },
+    /* 15 */ { type: 'action', action: 'give_xp', xp: 350 },
     /* 16 */ { type: 'text', speaker: 'Narrator', text: "Quest complete: Printer's Soul. +350 XP. Learned ability: Notarized Strike! A legally binding attack — Power 60.", next: 13 },
     // Stage-aware reminder: once the disk is found, the stage-2 quest_update
     // (node 8) fires — it was orphaned before this gate (logic-sweep #20).
-    /* 17 */ { type: 'condition', flag: 'printer_firmware_found', ifTrue: 18, ifFalse: 7 },
+    /* 17 */ { type: 'condition', flag: 'printer_firmware_found', ifFalse: 7 },
     /* 18 */ { type: 'text', speaker: 'Alex from IT', text: "You have the disk. Good. Now the ethernet port on the wall beside the printer — plug in, and the printer and I will handle the rest.", next: 8 },
   ],
 
@@ -3233,13 +3233,13 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   alex_it_quest_final: [
-    /* 0  */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 17, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'patch_monitor_silenced', ifTrue: 8, ifFalse: 2 },
-    /* 2  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 6, ifFalse: 3 },
+    /* 0  */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 17 },
+    /* 1  */ { type: 'condition', flag: 'patch_monitor_silenced', ifTrue: 8 },
+    /* 2  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 6 },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "I'm doing it. Nine months I've been waiting for an approved maintenance window. No one will sign off. The vulnerability is documented. The patch is written. Nobody cares." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "It's a remote code execution flaw in the building's network OS. Nothing to do with trust accounts — just old, unpatched infrastructure that's been sitting here since 2019." },
     /* 5  */ { type: 'text', speaker: 'Alex from IT', text: "Building's empty. I'm deploying it tonight. But first — the network monitoring terminal near rack row three. It'll ping corporate the moment I start. Silence it, then come back." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'final_patch_started', value: true, next: 7 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'final_patch_started', value: true },
     /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "The monitoring terminal is near rack row three. Kill the process, then come back and we'll deploy.", next: 16 },
     /* 8  */ { type: 'text', speaker: 'Alex from IT', text: "Monitor's offline. Perfect. Starting the patch deploy now. Four minutes. And — there it is." },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "The building runs automated security sweeps when it detects unauthorized server access. I probably should have mentioned that. It won't stop the patch. It will, however, stop us." },
@@ -3248,7 +3248,7 @@ export const DIALOGS = {
     /* 12 */ { type: 'text', speaker: 'Security Guard', text: "UNAUTHORIZED SERVER ACCESS DETECTED. PLEASE STEP AWAY FROM THE EQUIPMENT." },
     /* 13 */ { type: 'text', speaker: 'Andrew', text: "There is a completely legitimate explanation for this." },
     /* 14 */ { type: 'text', speaker: 'Security Guard', text: "SIR. STEP AWAY FROM THE EQUIPMENT." },
-    /* 15 */ { type: 'action', action: 'start_combat', encounter: 'patch_defense', next: 16 },
+    /* 15 */ { type: 'action', action: 'start_combat', encounter: 'patch_defense' },
     /* 16 */ { type: 'end' },
     /* 17 */ { type: 'text', speaker: 'Alex from IT', text: "Patch is live. Permanently encrypted into the network stack. They'd have to take down the whole building to roll it back.", next: 16 },
   ],
@@ -3257,9 +3257,9 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "The security sweep is handled. From behind three monitors, Alex raises one fist without looking up." },
     /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "DONE. Patch deployed. Signed, distributed, live. It is permanently part of this building's infrastructure." },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "I wrote you an ability based on what I did tonight. Unauthorized, technically. Absolutely necessary. I'm calling it Invoke Charter. Don't ask why. It just felt right." },
-    /* 3  */ { type: 'action', action: 'set_flag', flag: 'quest_final_patch_complete', value: true, next: 4 },
-    /* 4  */ { type: 'action', action: 'give_xp', xp: 400, next: 5 },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Unauthorized Patch. +400 XP. Learned ability: Invoke Charter! Power 100. Devastating to bad-faith enemies.", next: 6 },
+    /* 3  */ { type: 'action', action: 'set_flag', flag: 'quest_final_patch_complete', value: true },
+    /* 4  */ { type: 'action', action: 'give_xp', xp: 400 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "Quest complete: The Unauthorized Patch. +400 XP. Learned ability: Invoke Charter! Power 100. Devastating to bad-faith enemies." },
     /* 6  */ { type: 'end' },
   ],
 
@@ -3273,40 +3273,40 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   compliance_crossword: [
-    /* 0  */ { type: 'condition', flag: 'compliance_crossword_done', ifTrue: 35, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'compliance_crossword_done', ifTrue: 35 },
     /* 1  */ { type: 'text', speaker: 'Compliance Auditor', text: "You again. I've been expecting you." },
     /* 2  */ { type: 'text', speaker: 'Compliance Auditor', text: "You want access to the secure terminal in the Archive. I know because I monitor all access requests. Even the ones that haven't been made yet." },
     /* 3  */ { type: 'text', speaker: 'Compliance Auditor', text: "The password is regulatory knowledge. Prove to me that you understand compliance, and I'll give you the key." },
     /* 4  */ { type: 'text', speaker: 'Compliance Auditor', text: "Five questions. Five correct answers. No partial credit. This is compliance, not a poetry class." },
-    /* 5  */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 1: Under the prudent investor rule, a fiduciary must invest trust assets as what?", choices: [
+    /* 5  */ { type: 'choice', speaker: 'Compliance Auditor', prompt: "Question 1: Under the prudent investor rule, a fiduciary must invest trust assets as what?", choices: [
       { text: "A reasonable person would.", next: 6, flag: 'crossword_1', flagValue: true },
       { text: "A maximum-return optimizer.", next: 8 },
       { text: "The beneficiary requests.", next: 8 },
     ]},
     /* 6  */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. A reasonable person standard. Not a genius. Not Skip. A REASONABLE person." },
     /* 7  */ { type: 'text', speaker: 'Compliance Auditor', text: "Moving on." },
-    /* 8  */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 2: What fiduciary duty prohibits self-dealing in trust administration?", choices: [
+    /* 8  */ { type: 'choice', speaker: 'Compliance Auditor', prompt: "Question 2: What fiduciary duty prohibits self-dealing in trust administration?", choices: [
       { text: "Duty of loyalty.", next: 9, flag: 'crossword_2', flagValue: true },
       { text: "Duty of care.", next: 11 },
       { text: "Duty of synergy.", next: 11 },
     ]},
     /* 9  */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. Loyalty. Not to be confused with the thing Skip asks for at every team meeting." },
     /* 10 */ { type: 'text', speaker: 'Compliance Auditor', text: "Three more." },
-    /* 11 */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 3: What form must be filed with FINRA when a trust officer discovers a regulatory violation?", choices: [
+    /* 11 */ { type: 'choice', speaker: 'Compliance Auditor', prompt: "Question 3: What form must be filed with FINRA when a trust officer discovers a regulatory violation?", choices: [
       { text: "Form U4.", next: 14 },
       { text: "Form 27B/6.", next: 12, flag: 'crossword_3', flagValue: true },
       { text: "Form 1099.", next: 14 },
     ]},
     /* 12 */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. Form 27B/6. Forty-seven pages. Double-sided. My personal favorite form." },
     /* 13 */ { type: 'text', speaker: 'Compliance Auditor', text: "You're doing well. Suspiciously well." },
-    /* 14 */ { type: 'choice', speaker: 'Compliance Auditor', text: "Question 4: What is the maximum statute of limitations for breach of fiduciary duty in most jurisdictions?", choices: [
+    /* 14 */ { type: 'choice', speaker: 'Compliance Auditor', prompt: "Question 4: What is the maximum statute of limitations for breach of fiduciary duty in most jurisdictions?", choices: [
       { text: "3 years.", next: 17 },
       { text: "6 years.", next: 15, flag: 'crossword_4', flagValue: true },
       { text: "There is no limit.", next: 17 },
     ]},
     /* 15 */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. Six years in most jurisdictions. Which means the admin_legacy account's activities are still within the window." },
     /* 16 */ { type: 'text', speaker: 'Compliance Auditor', text: "One more question." },
-    /* 17 */ { type: 'choice', speaker: 'Compliance Auditor', text: "Final question: What document establishes the foundational obligations of a trust institution?", choices: [
+    /* 17 */ { type: 'choice', speaker: 'Compliance Auditor', prompt: "Final question: What document establishes the foundational obligations of a trust institution?", choices: [
       { text: "The operating agreement.", next: 20 },
       { text: "The trust charter.", next: 18, flag: 'crossword_5', flagValue: true },
       { text: "The employee handbook.", next: 20 },
@@ -3314,22 +3314,22 @@ export const DIALOGS = {
     /* 18 */ { type: 'text', speaker: 'Compliance Auditor', text: "Correct. The trust charter. The very foundation this building stands on." },
     /* 19 */ { type: 'text', speaker: 'Compliance Auditor', text: "Interesting that you know that." },
     /* 20 */ { type: 'text', speaker: 'Compliance Auditor', text: "Results are in." },
-    /* 21 */ { type: 'condition', flag: 'crossword_1', ifTrue: 22, ifFalse: 30 },
-    /* 22 */ { type: 'condition', flag: 'crossword_2', ifTrue: 23, ifFalse: 30 },
-    /* 23 */ { type: 'condition', flag: 'crossword_3', ifTrue: 24, ifFalse: 30 },
-    /* 24 */ { type: 'condition', flag: 'crossword_4', ifTrue: 25, ifFalse: 30 },
-    /* 25 */ { type: 'condition', flag: 'crossword_5', ifTrue: 26, ifFalse: 30 },
+    /* 21 */ { type: 'condition', flag: 'crossword_1', ifFalse: 30 },
+    /* 22 */ { type: 'condition', flag: 'crossword_2', ifFalse: 30 },
+    /* 23 */ { type: 'condition', flag: 'crossword_3', ifFalse: 30 },
+    /* 24 */ { type: 'condition', flag: 'crossword_4', ifFalse: 30 },
+    /* 25 */ { type: 'condition', flag: 'crossword_5', ifFalse: 30 },
     /* 26 */ { type: 'text', speaker: 'Compliance Auditor', text: "Perfect score. I'm... impressed. That's the second time I've ever said that. The first was in a mirror." },
     /* 27 */ { type: 'text', speaker: 'Compliance Auditor', text: "The archive terminal password is: FIDUCIARY. All caps. No spaces. Because compliance doesn't believe in spaces." },
-    /* 28 */ { type: 'action', action: 'set_flag', flag: 'compliance_crossword_done', value: true, next: 29 },
+    /* 28 */ { type: 'action', action: 'set_flag', flag: 'compliance_crossword_done', value: true },
     /* 29 */ { type: 'action', action: 'set_flag', flag: 'has_archive_password', value: true, next: 37 },
     /* 30 */ { type: 'text', speaker: 'Compliance Auditor', text: "Insufficient. Your regulatory knowledge has gaps. Like your department's internal controls." },
     /* 31 */ { type: 'text', speaker: 'Compliance Auditor', text: "Come back when you've studied. I recommend reading the entire CFR Title 12. It's only 40,000 pages." },
-    /* 32 */ { type: 'action', action: 'set_flag', flag: 'crossword_1', value: false, next: 33 },
-    /* 33 */ { type: 'action', action: 'set_flag', flag: 'crossword_2', value: false, next: 34 },
-    /* 34 */ { type: 'action', action: 'set_flag', flag: 'crossword_3', value: false, next: 35 },
-    /* 35 */ { type: 'action', action: 'set_flag', flag: 'crossword_4', value: false, next: 36 },
-    /* 36 */ { type: 'action', action: 'set_flag', flag: 'crossword_5', value: false, next: 37 },
+    /* 32 */ { type: 'action', action: 'set_flag', flag: 'crossword_1', value: false },
+    /* 33 */ { type: 'action', action: 'set_flag', flag: 'crossword_2', value: false },
+    /* 34 */ { type: 'action', action: 'set_flag', flag: 'crossword_3', value: false },
+    /* 35 */ { type: 'action', action: 'set_flag', flag: 'crossword_4', value: false },
+    /* 36 */ { type: 'action', action: 'set_flag', flag: 'crossword_5', value: false },
     /* 37 */ { type: 'end' },
   ],
 
@@ -3338,11 +3338,11 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   janitor_riddle_1: [
-    /* 0  */ { type: 'condition', flag: 'riddle_1_attempted', ifTrue: 3, ifFalse: 1 },
-    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_1_attempted', value: true, next: 2 },
+    /* 0  */ { type: 'condition', flag: 'riddle_1_attempted', ifTrue: 3 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_1_attempted', value: true },
     /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Ah, Andrew. Looking for wisdom? I have a riddle for you." },
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I am owed by many but owned by none. I am earned by actions, not by transactions. What am I?" },
-    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Take your time.", choices: [
+    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', prompt: "Take your time.", choices: [
       { text: "Trust.", next: 5 },
       { text: "Money.", next: 8 },
       { text: "Respect.", next: 8 },
@@ -3356,11 +3356,11 @@ export const DIALOGS = {
   ],
 
   janitor_riddle_2: [
-    /* 0  */ { type: 'condition', flag: 'riddle_2_attempted', ifTrue: 3, ifFalse: 1 },
-    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_2_attempted', value: true, next: 2 },
+    /* 0  */ { type: 'condition', flag: 'riddle_2_attempted', ifTrue: 3 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_2_attempted', value: true },
     /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Back for more? Good. Second riddle." },
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I grow stronger when tested, weaker when assumed. I am the foundation of every contract but written in no clause. What am I?" },
-    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Think carefully.", choices: [
+    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', prompt: "Think carefully.", choices: [
       { text: "Good faith.", next: 5 },
       { text: "Power.", next: 8 },
       { text: "Obligation.", next: 8 },
@@ -3374,11 +3374,11 @@ export const DIALOGS = {
   ],
 
   janitor_riddle_3: [
-    /* 0  */ { type: 'condition', flag: 'riddle_3_attempted', ifTrue: 3, ifFalse: 1 },
-    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_3_attempted', value: true, next: 2 },
+    /* 0  */ { type: 'condition', flag: 'riddle_3_attempted', ifTrue: 3 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'riddle_3_attempted', value: true },
     /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "The final riddle. The hardest one." },
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I was here before the building. I will be here after it falls. I am not in the charter, but the charter is in me. What am I?" },
-    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', text: "Last chance.", choices: [
+    /* 4  */ { type: 'choice', speaker: 'Mysterious Janitor', prompt: "Last chance.", choices: [
       { text: "Duty.", next: 5 },
       { text: "The building.", next: 9 },
       { text: "Memory.", next: 9 },
@@ -3397,7 +3397,7 @@ export const DIALOGS = {
   // --------------------------------------------------------------------------
 
   social_engineering_1: [
-    /* 0  */ { type: 'condition', flag: 'social_eng_started', ifTrue: 6, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'social_eng_started', ifTrue: 6 },
     /* 1  */ { type: 'text', speaker: 'Isaiah', text: "Hey Andrew. I overheard something. Meredith has an assistant — someone she brought with her. They're on the executive floor." },
     /* 2  */ { type: 'text', speaker: 'Isaiah', text: "The assistant has Meredith's schedule. If we knew when she was meeting the board, we could prepare." },
     /* 3  */ { type: 'text', speaker: 'Isaiah', text: "But the assistant won't talk to anyone from our department. We'd need to... get creative." },
@@ -3408,25 +3408,25 @@ export const DIALOGS = {
   ],
 
   social_engineering_2: [
-    /* 0  */ { type: 'condition', flag: 'social_eng_started', ifTrue: 1, ifFalse: 7 },
-    /* 1  */ { type: 'condition', flag: 'social_eng_diane', ifTrue: 7, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'social_eng_started', ifFalse: 7 },
+    /* 1  */ { type: 'condition', flag: 'social_eng_diane', ifTrue: 7 },
     /* 2  */ { type: 'text', speaker: 'Diane', text: "Meredith's assistant? Yes, I signed them in. Name is Morgan. Very young. Very nervous." },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "They asked me where the bathroom was three times. And where to get coffee. They're out of their depth." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "If someone brought them a coffee — large, oat milk, extra shot — they might be grateful enough to chat." },
     /* 5  */ { type: 'text', speaker: 'Diane', text: "The Intern makes coffee runs. He could deliver it without raising suspicion." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'social_eng_diane', value: true, next: 7 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'social_eng_diane', value: true },
     /* 7  */ { type: 'end' },
   ],
 
   social_engineering_3: [
-    /* 0  */ { type: 'condition', flag: 'social_eng_diane', ifTrue: 1, ifFalse: 8 },
-    /* 1  */ { type: 'condition', flag: 'social_eng_complete', ifTrue: 8, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'social_eng_diane', ifFalse: 8 },
+    /* 1  */ { type: 'condition', flag: 'social_eng_complete', ifTrue: 8 },
     /* 2  */ { type: 'text', speaker: 'The Intern', text: "A coffee mission? A STEALTH coffee mission? This is the greatest day of my unpaid career!" },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Ten minutes later, the Intern returns, vibrating with excitement." },
     /* 4  */ { type: 'text', speaker: 'The Intern', text: "OKAY so Morgan is SUPER stressed. Meredith makes them carry three tablets and a backup clipboard." },
     /* 5  */ { type: 'text', speaker: 'The Intern', text: "The board meeting is scheduled for 4 PM tomorrow. Meredith is presenting a 'dissolution recommendation.' And she has backup from the Regional Manager's office." },
     /* 6  */ { type: 'text', speaker: 'The Intern', text: "Also Morgan said thank you for the coffee and asked if we're all going to be fired. I said 'probably not!' Which I realize was not reassuring." },
-    /* 7  */ { type: 'action', action: 'set_flag', flag: 'social_eng_complete', value: true, next: 8 },
+    /* 7  */ { type: 'action', action: 'set_flag', flag: 'social_eng_complete', value: true },
     /* 8  */ { type: 'end' },
   ],
 
@@ -3464,7 +3464,7 @@ export const DIALOGS = {
     // (`skip_speech_ready`) — pointing at a wristwatch told the player to skip
     // the set-piece the same line had just opened.
     /* 7  */ { type: 'text', speaker: 'Skip Hartley', text: "Don't get used to it. Go find whoever still picks up their phone in this building. Board room, four o'clock sharp — I'll be the one at the podium with a speech that doesn't have a single bullet point in it." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'skip_speech_ready', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'skip_speech_ready', value: true },
     /* 9  */ { type: 'end' },
   ],
 
@@ -3473,7 +3473,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Janet', text: "I've been at Vaults Fargo since before it was 'strategic.' Back when we just... helped people." },
     /* 2  */ { type: 'text', speaker: 'Janet', text: "Tell the board our clients have names. I've been writing them on file folders since 1994. In pen." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "I'll cover the phones. Go save our department." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_act6_rallied', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_act6_rallied', value: true },
     /* 5  */ { type: 'end' },
   ],
 
@@ -3483,17 +3483,17 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Diane', text: "I've been doing something I probably shouldn't have. I copied Meredith's restructuring proposal." },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "It shows she's been inflating her department's numbers while deflating ours. Textbook fiduciary breach." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "I left the copy in the cabinet at the back of the room. Grab it. Save our jobs. And then maybe get us a new coffee machine." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_act6_rallied', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'diane_act6_rallied', value: true },
     /* 6  */ { type: 'end' },
   ],
 
   diane_documents: [
-    /* 0  */ { type: 'condition', flag: 'diane_act6_rallied', ifTrue: 1, ifFalse: 5 },
-    /* 1  */ { type: 'condition', flag: 'diane_evidence', ifTrue: 4, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'diane_act6_rallied', ifFalse: 5 },
+    /* 1  */ { type: 'condition', flag: 'diane_evidence', ifTrue: 4 },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Tucked between the folders — Diane's copy of Meredith's restructuring proposal. Numbers don't lie." },
     /* 3  */ { type: 'action', action: 'set_flag', flag: 'diane_evidence', value: true, next: 6 },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "You've already retrieved Diane's documents.", next: 6 },
-    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Just standard HR filing records. Nothing of interest.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Andrew', text: "Just standard HR filing records. Nothing of interest." },
     /* 6  */ { type: 'end' },
   ],
 
@@ -3502,7 +3502,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'The Intern', text: "I made a PowerPoint for the board meeting. It has 47 slides and each one has a different transition effect." },
     /* 2  */ { type: 'text', speaker: 'The Intern', text: "Also I may have accidentally signed up for the company newsletter as 'Meredith Sucks' dot com. That might be a problem." },
     /* 3  */ { type: 'text', speaker: 'The Intern', text: "But I believe in you, Andrew! Go get 'em! I'll be here, unpaidly cheering!" },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'intern_act6_rallied', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'intern_act6_rallied', value: true },
     /* 5  */ { type: 'end' },
   ],
 
@@ -3511,7 +3511,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Isaiah', text: "'The fiduciary shall act in the sole interest of the beneficiary, without regard to the interests of the institution.'" },
     /* 2  */ { type: 'text', speaker: 'Isaiah', text: "Meredith's restructuring violates that clause in 23 separate trust agreements. I have the list." },
     /* 3  */ { type: 'text', speaker: 'Isaiah', text: "If the board sees this, they can't vote for dissolution without admitting they've breached fiduciary duty." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'isaiah_evidence', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'isaiah_evidence', value: true },
     /* 5  */ { type: 'end' },
   ],
 
@@ -3543,7 +3543,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "The Janitor removes the Rolex. The moment it leaves his wrist, the lights in the hallway pulse — warm, golden, deliberate." },
     /* 7  */ { type: 'text', speaker: 'The Janitor', text: "Take it to the Penthouse. When The Algorithm asks you to justify your existence, show it this." },
     /* 8  */ { type: 'text', speaker: 'The Janitor', text: "And Andrew? The building will protect those who protect others. That's not metaphor. That's architecture." },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'has_rolex', value: true, next: 10 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'has_rolex', value: true },
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "Received: The Janitor's Rolex. It hums faintly against your palm." },
     /* 11 */ { type: 'end' },
   ],
@@ -3576,9 +3576,9 @@ export const DIALOGS = {
       { text: 'The reason I came down here.', next: 2 },
       { text: 'Actually — tell me the riddle.', next: 4 },
     ] },
-    /* 2 */ { type: 'action', action: 'set_flag', flag: 'janitor_story_chosen', value: true, next: 3 },
+    /* 2 */ { type: 'action', action: 'set_flag', flag: 'janitor_story_chosen', value: true },
     /* 3 */ { type: 'end' },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_chosen', value: true, next: 5 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'janitor_riddle_chosen', value: true },
     /* 5 */ { type: 'end' },
   ],
 
@@ -3588,7 +3588,7 @@ export const DIALOGS = {
     /* 2  */ { type: 'text', speaker: 'Grandma Henderson', text: "I brought cookies for the board meeting. Nobody votes to dissolve anything on a full stomach." },
     /* 3  */ { type: 'text', speaker: 'Grandma Henderson', text: "And I wrote a letter of support. Forty-seven years as a client. That carries weight." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Grandma Henderson will attend the board meeting as a character witness!" },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'grandma_ally', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'grandma_ally', value: true },
     /* 6  */ { type: 'end' },
   ],
 
@@ -3625,7 +3625,7 @@ export const DIALOGS = {
       { text: "\"I'm here. Let's do this.\"", next: 179 },
       { text: '"I need a minute."', next: 10 },
     ] },
-    /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "A minute. Sure. Take a minute. I'll just stand here, holding my entire career in one hand, with eleven board members watching me sweat through a shirt I ironed this morning for the first time in four years. Take your time.", next: 11 },
+    /* 10 */ { type: 'text', speaker: 'Skip Hartley', text: "A minute. Sure. Take a minute. I'll just stand here, holding my entire career in one hand, with eleven board members watching me sweat through a shirt I ironed this morning for the first time in four years. Take your time." },
     /* 11 */ { type: 'end' },
 
     // ── BLOCK B — CHOICE 1: THE OPENING ─────────────────────────────────
@@ -3637,7 +3637,7 @@ export const DIALOGS = {
       { text: '"Tell them you ironed your shirt."', next: 22 },
     ] },
     // B-TRUE
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'bm_true_open', value: true, next: 16 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'bm_true_open', value: true },
     // CONTINUITY: the 1994 pen-on-folders detail is JANET's (janet_act6), and
     // she reclaims it verbatim at node 51 of this same scene. Diane's stated
     // tenure is nineteen years (node 55) — she cannot have labeled anything in
@@ -3652,7 +3652,7 @@ export const DIALOGS = {
     // B-THIRD
     /* 22 */ { type: 'text', speaker: 'Skip Hartley', text: "I want to start by saying that I ironed my shirt today. For the first time in four years. That's — that's how much this matters to me." },
     /* 23 */ { type: 'text', speaker: 'Narrator', text: "A pause. The kind of pause that happens in a room when someone accidentally says something real. It passes." },
-    /* 24 */ { type: 'text', speaker: 'Skip Hartley', text: "I mention this because. Well. I don't know why I mentioned it. Andrew, that was terrible advice.", next: 25 },
+    /* 24 */ { type: 'text', speaker: 'Skip Hartley', text: "I mention this because. Well. I don't know why I mentioned it. Andrew, that was terrible advice." },
 
     // ── BLOCK C — CHOICE 2: THE PUSHBACK ────────────────────────────────
     /* 25 */ { type: 'text', speaker: 'Narrator', text: "A board member in a grey suit — the one with the phone — leans forward." },
@@ -3668,7 +3668,7 @@ export const DIALOGS = {
       { text: '"Just breathe. You\'re doing fine."', next: 42 },
     ] },
     // C-TRUE
-    /* 33 */ { type: 'action', action: 'set_flag', flag: 'bm_true_push', value: true, next: 34 },
+    /* 33 */ { type: 'action', action: 'set_flag', flag: 'bm_true_push', value: true },
     /* 34 */ { type: 'text', speaker: 'Andrew', text: "Ask him what a fiduciary is." },
     /* 35 */ { type: 'text', speaker: 'Skip Hartley', text: "I'm sorry, could you — could you define that term? \"Fiduciarily.\" I'd like to know what you think it means." },
     /* 36 */ { type: 'text', speaker: 'Narrator', text: "The board member blinks. He looks at the memo. He looks at Skip. The question is simple enough that it's embarrassing." },
@@ -3682,7 +3682,7 @@ export const DIALOGS = {
     /* 42 */ { type: 'text', speaker: 'Andrew', text: "Just breathe. You're doing fine." },
     /* 43 */ { type: 'text', speaker: 'Skip Hartley', text: "I'm not doing fine, Andrew. I'm standing in front of eleven people who control my mortgage and I've forgotten every word I rehearsed." },
     /* 44 */ { type: 'text', speaker: 'Narrator', text: "He looks at his sheet. He folds it in half. He puts it in his pocket." },
-    /* 45 */ { type: 'text', speaker: 'Skip Hartley', text: "Can I just — can we skip to the part where people talk? The actual people? The ones who work here?", next: 46 },
+    /* 45 */ { type: 'text', speaker: 'Skip Hartley', text: "Can I just — can we skip to the part where people talk? The actual people? The ones who work here?" },
 
     // ── BLOCK D — THE FLOOR ─────────────────────────────────────────────
     /* 46 */ { type: 'text', speaker: 'Narrator', text: "The board chair checks the agenda. \"Public comment period.\" She says it the way someone says \"dental appointment.\"" },
@@ -3714,13 +3714,13 @@ export const DIALOGS = {
     /* 57 */ { type: 'text', speaker: 'Diane', text: "You are voting on whether those people — the ones I buzz in every morning — still have someone in this building who is required by law to put them first. That's what a trust officer is. That's the whole job." },
     /* 58 */ { type: 'text', speaker: 'Narrator', text: "She sits down. She does not look at the board. She looks at the clock, because Diane has never been late for anything and she isn't starting now.", next: 183 },
     // D-PROPOSAL
-    /* 59 */ { type: 'action', action: 'set_flag', flag: 'bm_proposal_done', value: true, next: 60 },
+    /* 59 */ { type: 'action', action: 'set_flag', flag: 'bm_proposal_done', value: true },
     /* 60 */ { type: 'text', speaker: 'Andrew', text: "I'd like to submit Exhibit — I don't know, whatever letter we're on. Meredith Sterling's restructuring proposal. Diane copied it before it was shredded." },
     /* 61 */ { type: 'text', speaker: 'Narrator', text: "The screen behind Skip — the one that said DISSOLVE six weeks ago — now shows two columns of numbers. One column is labeled \"Strategic Operations (Sterling).\" The other is labeled \"Trust Department.\"" },
     /* 62 */ { type: 'text', speaker: 'Narrator', text: "The Strategic Operations column has been inflated. The Trust Department column has been deflated. The math is not subtle. A board member who was checking her phone puts it down." },
     /* 63 */ { type: 'text', speaker: 'Andrew', text: "Her numbers. Our numbers. Same quarter. Spot the difference.", next: 48 },
     // D-SIXWORDS
-    /* 64 */ { type: 'action', action: 'set_flag', flag: 'bm_sixwords_done', value: true, next: 65 },
+    /* 64 */ { type: 'action', action: 'set_flag', flag: 'bm_sixwords_done', value: true },
     /* 65 */ { type: 'text', speaker: 'Andrew', text: "I have the original 1947 employee handbook. Article 1. And I have the current edition." },
     /* 66 */ { type: 'text', speaker: 'Andrew', text: "The original says: \"An employee's first duty is to the truth, told plainly.\"" },
     /* 67 */ { type: 'text', speaker: 'Andrew', text: "The current edition says: \"An employee's first duty is to the institution, maintained professionally.\"" },
@@ -3754,13 +3754,13 @@ export const DIALOGS = {
     /* 91 */ { type: 'text', speaker: 'Grandma Henderson', text: "I also brought cookies. Snickerdoodle. Nobody votes to dissolve anything on a full stomach." },
     /* 92 */ { type: 'text', speaker: 'Narrator', text: "She passes the tin down the table. Every board member takes a cookie. This is not optional. Grandma Henderson has made it structurally impossible to refuse.", next: 191 },
     // D-CHARTER
-    /* 93 */ { type: 'action', action: 'set_flag', flag: 'bm_charter_done', value: true, next: 94 },
+    /* 93 */ { type: 'action', action: 'set_flag', flag: 'bm_charter_done', value: true },
     /* 94 */ { type: 'text', speaker: 'Andrew', text: "I have the original 1947 trust charter. Section 1, Paragraph B." },
     /* 95 */ { type: 'text', speaker: 'Andrew', text: "\"No reorganization, restructuring, or rebranding of the institution shall release the trustee from this duty. The duty survives the institution.\"" },
     /* 96 */ { type: 'text', speaker: 'Andrew', text: "The people who built this place knew someone would try this. They wrote a sentence that outlasts every person in this room. Including Meredith. Including us." },
     /* 97 */ { type: 'text', speaker: 'Narrator', text: "The charter sits on the table between the water carafe and Grandma Henderson's cookie tin. It is the second-oldest thing in the room. The first is the Board Member in seat twelve, who has not moved.", next: 48 },
     // D-DONE
-    /* 98 */ { type: 'text', speaker: 'Andrew', text: "That's what we have. Skip — it's yours.", next: 99 },
+    /* 98 */ { type: 'text', speaker: 'Andrew', text: "That's what we have. Skip — it's yours." },
 
     // ── BLOCK E — CHOICE 3: THE CLOSE ───────────────────────────────────
     /* 99 */ { type: 'text', speaker: 'Skip Hartley', text: "Right. Closing. This is the — this is the part where I'm supposed to —" },
@@ -3772,7 +3772,7 @@ export const DIALOGS = {
       { text: '"Quote one of your management books. The real ones don\'t exist anyway."', next: 112 },
     ] },
     // E-TRUE
-    /* 103 */ { type: 'action', action: 'set_flag', flag: 'bm_true_close', value: true, next: 104 },
+    /* 103 */ { type: 'action', action: 'set_flag', flag: 'bm_true_close', value: true },
     /* 104 */ { type: 'text', speaker: 'Skip Hartley', text: "I've been at this company for twenty years. I could have left. God knows I thought about it. But I stayed because —" },
     /* 105 */ { type: 'text', speaker: 'Narrator', text: "He stops. He folds the paper again. He puts it back in his pocket." },
     /* 106 */ { type: 'text', speaker: 'Skip Hartley', text: "I stayed because there are 23 families in this building's filing cabinets who trust us to be the last honest room in the building. I don't know if we are. But I know we're supposed to try." },
@@ -3789,7 +3789,7 @@ export const DIALOGS = {
     /* 115 */ { type: 'text', speaker: 'Narrator', text: "He sits. The board chair writes something down. It is unclear whether she is noting the quote or noting that the book is fictional.", next: 192 },
 
     // ── SCORING LADDER — counts bm_true_open / _push / _close → 4 tiers ──
-    /* 116 */ { type: 'condition', flag: 'bm_true_open',  ifTrue: 117, ifFalse: 118 },
+    /* 116 */ { type: 'condition', flag: 'bm_true_open', ifFalse: 118 },
     /* 117 */ { type: 'condition', flag: 'bm_true_push',  ifTrue: 119, ifFalse: 120 },
     /* 118 */ { type: 'condition', flag: 'bm_true_push',  ifTrue: 120, ifFalse: 121 },
     /* 119 */ { type: 'condition', flag: 'bm_true_close', ifTrue: 122, ifFalse: 136 },
@@ -3797,8 +3797,8 @@ export const DIALOGS = {
     /* 121 */ { type: 'condition', flag: 'bm_true_close', ifTrue: 146, ifFalse: 153 },
 
     // ── F-TIER-3 — all three true things ────────────────────────────────
-    /* 122 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_won', value: true, next: 123 },
-    /* 123 */ { type: 'action', action: 'set_flag', flag: 'board_member_spoke', value: true, next: 124 },
+    /* 122 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_won', value: true },
+    /* 123 */ { type: 'action', action: 'set_flag', flag: 'board_member_spoke', value: true },
     /* 124 */ { type: 'text', speaker: 'Narrator', text: "The room is quiet for eleven seconds. The Board Member in seat twelve — the one who has not spoken since 1988 — pushes his chair back." },
     /* 125 */ { type: 'text', speaker: 'Narrator', text: "He stands. He walks to the carafe. He pours a glass of water. He walks back to his seat." },
     /* 126 */ { type: 'text', speaker: 'Narrator', text: "Then he keeps walking. Past his seat. Past the board chair. He stops at the end of the table, next to Skip." },
@@ -3813,7 +3813,7 @@ export const DIALOGS = {
     /* 135 */ { type: 'text', speaker: 'Narrator', text: "\"Upstairs,\" she says. As though the word itself costs her something.", next: 162 },
 
     // ── F-TIER-2 — two true things ──────────────────────────────────────
-    /* 136 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_won', value: true, next: 137 },
+    /* 136 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_won', value: true },
     /* 137 */ { type: 'text', speaker: 'Narrator', text: "The room is quiet. The board chair taps her pen four times — two more than usual." },
     /* 138 */ { type: 'text', speaker: 'Narrator', text: "The Board Member in seat twelve shifts in his chair. He looks at the carafe. He does not stand." },
     /* 139 */ { type: 'text', speaker: 'Narrator', text: "But he moves his notepad from the left side of his folder to the right. The side closer to Andrew. Nobody notices except Andrew." },
@@ -3842,13 +3842,13 @@ export const DIALOGS = {
     /* 158 */ { type: 'text', speaker: 'Narrator', text: "She looks at him for a long time. \"Because someone should have.\" She leaves." },
     /* 159 */ { type: 'text', speaker: 'Andrew', text: "Skip." },
     /* 160 */ { type: 'text', speaker: 'Skip Hartley', text: "I had it, Andrew. I had the whole thing written down. I just — I couldn't get my mouth around it." },
-    /* 161 */ { type: 'text', speaker: 'Narrator', text: "He picks up the paper. He doesn't unfold it. He puts it in his jacket, over his heart, which is either poetic or practical, and he would never admit to the first.", next: 162 },
+    /* 161 */ { type: 'text', speaker: 'Narrator', text: "He picks up the paper. He doesn't unfold it. He puts it in his jacket, over his heart, which is either poetic or practical, and he would never admit to the first." },
 
     // ── BLOCK G — VOICE PROFILE CODA ────────────────────────────────────
-    /* 162 */ { type: 'condition', flag: 'andrew_steadied', ifTrue: 163, ifFalse: 164 },
+    /* 162 */ { type: 'condition', flag: 'andrew_steadied', ifFalse: 164 },
     /* 163 */ { type: 'text', speaker: 'Narrator', text: "Andrew stood in that room the way someone stands when they've remembered they have a spine — not because they grew one, but because someone reminded them it was already there.", next: 166 },
-    /* 164 */ { type: 'condition', flag: 'andrew_hardened', ifTrue: 165, ifFalse: 166 },
-    /* 165 */ { type: 'text', speaker: 'Narrator', text: "Andrew handed Skip every tool he needed with the efficiency of a man who has stopped asking whether the tools are kind. They worked. That was the criterion.", next: 166 },
+    /* 164 */ { type: 'condition', flag: 'andrew_hardened', ifFalse: 166 },
+    /* 165 */ { type: 'text', speaker: 'Narrator', text: "Andrew handed Skip every tool he needed with the efficiency of a man who has stopped asking whether the tools are kind. They worked. That was the criterion." },
 
     // ── BLOCK H — AFTER ─────────────────────────────────────────────────
     /* 166 */ { type: 'text', speaker: 'Narrator', text: "The Board Room empties. The cookies are gone. The charter is still on the table. The carafe is still full.", next: 194 },
@@ -3858,15 +3858,15 @@ export const DIALOGS = {
     /* 170 */ { type: 'text', speaker: 'Narrator', text: "The dusk through the west windows has turned to something darker. The building hums — not with electricity. With something older than the wiring." },
     /* 171 */ { type: 'text', speaker: 'Skip Hartley', text: "Whatever's deciding this, it isn't in this room. It was never in this room." },
     /* 172 */ { type: 'text', speaker: 'Andrew', text: "Then I'll go find the room it's in." },
-    /* 173 */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Whatever's up there — it's not a person. Meredith was a person. This is the thing that sent Meredith.", next: 174 },
+    /* 173 */ { type: 'text', speaker: 'Skip Hartley', text: "Andrew. Whatever's up there — it's not a person. Meredith was a person. This is the thing that sent Meredith." },
     // The handoff to the Archive. `board_meeting_held` derives `rolex_available`
     // (ExplorationState._refreshStoryProgress), so this line is the in-fiction
     // reason the Janitor's door opens — the gate reads as authored rather than
     // mechanical. Skip does not know what the old man has; he half-remembers a
     // rumour and repeats it slightly wrong, which is exactly his register.
-    /* 174 */ { type: 'text', speaker: 'Skip Hartley', text: "Someone told me once — or I dreamed it, who knows — the old man down in the Archive has been in this building since before the elevators. Go see him. I think he's been waiting for someone and I think it might be you.", next: 175 },
-    /* 175 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_held', value: true, next: 176 },
-    /* 176 */ { type: 'action', action: 'give_xp', xp: 300, next: 177 },
+    /* 174 */ { type: 'text', speaker: 'Skip Hartley', text: "Someone told me once — or I dreamed it, who knows — the old man down in the Archive has been in this building since before the elevators. Go see him. I think he's been waiting for someone and I think it might be you." },
+    /* 175 */ { type: 'action', action: 'set_flag', flag: 'board_meeting_held', value: true },
+    /* 176 */ { type: 'action', action: 'give_xp', xp: 300 },
     /* 177 */ { type: 'end' },
 
     // ══ STAGING (appended; routed to from 0/9/49/53/54/58/70/74/75/80/81/86/
@@ -4056,7 +4056,7 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "A figure steps out from behind the terminal — the CFO's personal assistant, tablet in hand.", next: 5 },
     /* 1  */ { type: 'text', speaker: "CFO's Assistant", text: "The CFO anticipated this. I've been authorized to use 'any means necessary' to protect shareholder value." },
     /* 2  */ { type: 'text', speaker: "CFO's Assistant", text: "That includes your severance. Which I've already drafted." },
-    /* 3  */ { type: 'action', action: 'start_combat', encounter: 'cfos_assistant', next: 4 },
+    /* 3  */ { type: 'action', action: 'start_combat', encounter: 'cfos_assistant' },
     /* 4  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0) ─────────────────────────────
     // He now waits AT the terminal (room data, x8 z3) instead of standing in
@@ -4073,7 +4073,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The assistant's tablet cracks on the floor. The screen shows a spreadsheet with every employee reduced to a number." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Your number was scheduled for deletion." },
     /* 3  */ { type: 'text', speaker: 'The Algorithm', text: "Interesting. You've exceeded your projected performance ceiling. Recalculating..." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'cfos_defeated', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'cfos_defeated', value: true },
     /* 5  */ { type: 'end' },
   ],
 
@@ -4083,7 +4083,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Regional Director', text: "I flew in from corporate. Do you know what that means? My time is worth $4,200 per hour." },
     /* 2  */ { type: 'text', speaker: 'Regional Director', text: "And you — an associate from a satellite office — are costing me time." },
     /* 3  */ { type: 'text', speaker: 'Regional Director', text: "Let me show you what 'corporate restructuring' really looks like." },
-    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'regional_director', next: 5 },
+    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'regional_director' },
     /* 5  */ { type: 'end' },
     // ── STAGING (appended; routed to from 0) ─────────────────────────────
     // Same false-fact note as regional_director_defeated: the Penthouse has no
@@ -4100,7 +4100,7 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The Regional Director stumbles backward. His perfect hair is slightly askew for the first time in recorded history." },
     /* 2  */ { type: 'text', speaker: 'Regional Director', text: "The board will hear about this. The GLOBAL board." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "He retreats to the elevator. The lights pulse as the building guides him out.", next: 6 },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_director_defeated', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'regional_director_defeated', value: true },
     /* 5  */ { type: 'end' },
     // ── STAGING (appended; routed to from 3) ─────────────────────────────
     // NOTE FOR THE WRITING PASS: there is no elevator in the Penthouse.
@@ -4123,7 +4123,7 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Then we optimize faster." },
     /* 6  */ { type: 'text', speaker: 'Skip Hartley', text: "..." },
     /* 7  */ { type: 'text', speaker: 'Skip Hartley', text: "That was actually kind of inspiring. Don't tell HR." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'skip_returned_seen', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'skip_returned_seen', value: true },
     /* 9  */ { type: 'end' },
   ],
 
@@ -4132,11 +4132,11 @@ export const DIALOGS = {
     /* 0  */ { type: 'text', speaker: 'The Algorithm', text: "Now it is just us. Human and optimization engine." },
     /* 1  */ { type: 'text', speaker: 'The Algorithm', text: "I have processed 847 trillion data points. I have optimized 12,000 departments. I have a 99.7% success rate." },
     /* 2  */ { type: 'text', speaker: 'The Algorithm', text: "You are the 0.3%." },
-    /* 3  */ { type: 'condition', flag: 'has_rolex', ifTrue: 4, ifFalse: 6 },
+    /* 3  */ { type: 'condition', flag: 'has_rolex', ifFalse: 6 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The Janitor's Rolex pulses warmly in your pocket. It's not telling time. It's telling trust." },
     /* 5  */ { type: 'text', speaker: 'The Algorithm', text: "...What is that device? Its emissions are... unquantifiable. Irrelevant. BEGIN OPTIMIZATION." },
     /* 6  */ { type: 'text', speaker: 'The Algorithm', text: "Humans are inefficient. Trust is inefficient. I will optimize both." },
-    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'algorithm', next: 8 },
+    /* 7  */ { type: 'action', action: 'start_combat', encounter: 'algorithm' },
     /* 8  */ { type: 'end' },
   ],
 
@@ -4150,9 +4150,9 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "The terminal goes dark. Then the Janitor's Rolex begins to glow." },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "The building shudders. Not with collapse — with recognition. Every trust document in the vault resonates." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "A choice crystallizes before you. The charter's power is yours to wield." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'algorithm_defeated', value: true, next: 9 },
-    /* 9  */ { type: 'condition', flag: 'janitor_riddle_3_done', ifTrue: 10, ifFalse: 14 },
-    /* 10 */ { type: 'condition', flag: 'quest_final_patch_complete', ifTrue: 11, ifFalse: 14 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'algorithm_defeated', value: true },
+    /* 9  */ { type: 'condition', flag: 'janitor_riddle_3_done', ifFalse: 14 },
+    /* 10 */ { type: 'condition', flag: 'quest_final_patch_complete', ifFalse: 14 },
     /* 11 */ { type: 'text', speaker: 'The Janitor', text: "There is a fourth option, son. One that only appears for those who truly listened." },
     /* 12 */ { type: 'text', speaker: 'The Janitor', text: "The building doesn't need a department. It needs a guardian." },
     /* 13 */ { type: 'choice', prompt: 'What do you do with the charter\'s power?', choices: [
@@ -4172,7 +4172,7 @@ export const DIALOGS = {
     /* 18 */ { type: 'action', action: 'set_flag', flag: 'ending_cooperative', value: true, next: 22 },
     /* 19 */ { type: 'action', action: 'set_flag', flag: 'ending_compromise', value: true, next: 22 },
     /* 20 */ { type: 'action', action: 'set_flag', flag: 'ending_dissolution', value: true, next: 22 },
-    /* 21 */ { type: 'action', action: 'set_flag', flag: 'ending_architect', value: true, next: 22 },
+    /* 21 */ { type: 'action', action: 'set_flag', flag: 'ending_architect', value: true },
     /* 22 */ { type: 'end' },
     // ── Voice-profile carry (proposal 5). The Reasonable Doubt system paid off
     // in exactly one scene before this — the Meredith victory. Here the thinnest
@@ -4180,13 +4180,13 @@ export const DIALOGS = {
     // Andrew turned into on the way up. Runs between node 4 and node 5; every
     // branch converges back on 5. Charter stacks with either profile.
     // Prose first-draft: Opus 4.6, art/drafts/carry_bundle_draft.md (wired verbatim).
-    /* 23 */ { type: 'condition', flag: 'andrew_steadied', ifTrue: 24, ifFalse: 26 },
+    /* 23 */ { type: 'condition', flag: 'andrew_steadied', ifFalse: 26 },
     /* 24 */ { type: 'text', speaker: 'Andrew', text: "I kept every part. Even the ones that slowed me down." },
     /* 25 */ { type: 'text', speaker: 'The Algorithm', text: "An unoptimized variable persisted through all iterations. It was sufficient. This does not reconcile. Closing.", next: 29 },
-    /* 26 */ { type: 'condition', flag: 'andrew_hardened', ifTrue: 27, ifFalse: 29 },
+    /* 26 */ { type: 'condition', flag: 'andrew_hardened', ifFalse: 29 },
     /* 27 */ { type: 'text', speaker: 'Andrew', text: "I used what worked." },
-    /* 28 */ { type: 'text', speaker: 'The Algorithm', text: "Your final methodology was optimal. We arrived at the same solution. Starting conditions varied. That is the only discrepancy. Closing.", next: 29 },
-    /* 29 */ { type: 'condition', flag: 'andrew_invoked_charter', ifTrue: 30, ifFalse: 5 },
+    /* 28 */ { type: 'text', speaker: 'The Algorithm', text: "Your final methodology was optimal. We arrived at the same solution. Starting conditions varied. That is the only discrepancy. Closing." },
+    /* 29 */ { type: 'condition', flag: 'andrew_invoked_charter', ifFalse: 5 },
     /* 30 */ { type: 'text', speaker: 'Andrew', text: "I didn't beat you with an algorithm. I beat you with a paragraph someone wrote in 1947." },
     /* 31 */ { type: 'text', speaker: 'The Algorithm', text: "A static document with no API. Seventy-seven years without a patch. Error: cannot deprecate what was never deployed. Closing.", next: 5 },
   ],
@@ -4219,10 +4219,10 @@ export const DIALOGS = {
     /* 19 */ { type: 'end' },
     // Voice-profile paragraph (proposal 5) — every ending reads the same two
     // flags. Prose first-draft: Opus 4.6, art/drafts/carry_bundle_draft.md.
-    /* 20 */ { type: 'condition', flag: 'andrew_steadied', ifTrue: 21, ifFalse: 23 },
+    /* 20 */ { type: 'condition', flag: 'andrew_steadied', ifFalse: 23 },
     /* 21 */ { type: 'text', speaker: 'Narrator', text: "The department's first quarterly report under his directorship ran fourteen pages. The last page was a list of every employee's coffee order, annotated in his handwriting." },
     /* 22 */ { type: 'text', speaker: 'Narrator', text: "He keeps the door open. Not as policy. As practice.", next: 16 },
-    /* 23 */ { type: 'condition', flag: 'andrew_hardened', ifTrue: 24, ifFalse: 16 },
+    /* 23 */ { type: 'condition', flag: 'andrew_hardened', ifFalse: 16 },
     /* 24 */ { type: 'text', speaker: 'Narrator', text: "The department's first quarterly report under his directorship was nine pages, immaculate, and arrived two days early. The board found no errors." },
     /* 25 */ { type: 'text', speaker: 'Narrator', text: "He keeps the door open because the charter requires it. He wrote that clause himself.", next: 16 },
   ],
@@ -4245,10 +4245,10 @@ export const DIALOGS = {
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "Thank you for playing." },
     /* 14 */ { type: 'end' },
     // Voice-profile paragraph (proposal 5).
-    /* 15 */ { type: 'condition', flag: 'andrew_steadied', ifTrue: 16, ifFalse: 18 },
+    /* 15 */ { type: 'condition', flag: 'andrew_steadied', ifFalse: 18 },
     /* 16 */ { type: 'text', speaker: 'Narrator', text: "Every Tuesday at two, Andrew sits across from the oversight committee and explains fiduciary duty to people who have not yet decided they want to understand it. He brings coffee for the table." },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "The fight is slower now. He has decided that slower is not the same as losing.", next: 11 },
-    /* 18 */ { type: 'condition', flag: 'andrew_hardened', ifTrue: 19, ifFalse: 11 },
+    /* 18 */ { type: 'condition', flag: 'andrew_hardened', ifFalse: 11 },
     /* 19 */ { type: 'text', speaker: 'Narrator', text: "Every Tuesday at two, the oversight report is already on the table when the committee arrives. They have never found a discrepancy. They have stopped looking." },
     /* 20 */ { type: 'text', speaker: 'Narrator', text: "He wins the same argument each week. The committee stopped objecting in month two. The file cabinets are alphabetized now.", next: 11 },
   ],
@@ -4272,10 +4272,10 @@ export const DIALOGS = {
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "Thank you for playing." },
     /* 15 */ { type: 'end' },
     // Voice-profile paragraph (proposal 5).
-    /* 16 */ { type: 'condition', flag: 'andrew_steadied', ifTrue: 17, ifFalse: 19 },
+    /* 16 */ { type: 'condition', flag: 'andrew_steadied', ifFalse: 19 },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "The Honda's glove box holds two folders: one for the practice, one for the clients who followed him out. The second folder is thicker." },
     /* 18 */ { type: 'text', speaker: 'Andrew', text: "Same work. Fewer chairs.", next: 12 },
-    /* 19 */ { type: 'condition', flag: 'andrew_hardened', ifTrue: 20, ifFalse: 12 },
+    /* 19 */ { type: 'condition', flag: 'andrew_hardened', ifFalse: 12 },
     // Self-echo cut in the F1 pre-gate: node 7 of this same ending already
     // makes both the reclining-seats and trunk-of-filing-cabinets joke.
     /* 20 */ { type: 'text', speaker: 'Narrator', text: "The Honda has a higher case-resolution rate than the sixth floor ever did. Four days average, intake to close. The parking meter has never expired." },
@@ -4364,10 +4364,10 @@ export const DIALOGS = {
     /* 32 */ { type: 'text', speaker: 'Narrator', text: "Thank you for listening." },
     /* 33 */ { type: 'end' },
     // Voice-profile paragraph (proposal 5).
-    /* 34 */ { type: 'condition', flag: 'andrew_steadied', ifTrue: 35, ifFalse: 37 },
+    /* 34 */ { type: 'condition', flag: 'andrew_steadied', ifFalse: 37 },
     /* 35 */ { type: 'text', speaker: 'Narrator', text: "At 3:47 AM the building is quiet in a way that has nothing to do with silence. Andrew walks the seventh floor and straightens a picture frame that nobody else would have noticed." },
     /* 36 */ { type: 'text', speaker: 'Narrator', text: "He is exactly what the charter was written for: someone who does unrequired work because the work needs doing.", next: 29 },
-    /* 37 */ { type: 'condition', flag: 'andrew_hardened', ifTrue: 38, ifFalse: 29 },
+    /* 37 */ { type: 'condition', flag: 'andrew_hardened', ifFalse: 29 },
     /* 38 */ { type: 'text', speaker: 'Narrator', text: "At 3:47 AM the building runs at optimal capacity. Andrew's nightly route covers fourteen floors in forty-seven minutes. He has not missed a floor since October." },
     /* 39 */ { type: 'text', speaker: 'Narrator', text: "The building does not flicker anymore. Fourteen floors, forty-seven minutes, no discrepancies. The system is exactly as designed.", next: 29 },
   ],
@@ -4383,7 +4383,7 @@ export const DIALOGS = {
       { text: 'Yes! (This is definitely a productive use of company time)', next: 3 },
       { text: 'No (You have actual work to do)', next: 4 },
     ]},
-    /* 3 */ { type: 'action', action: 'set_flag', flag: 'launch_arcade', value: true, next: 4 },
+    /* 3 */ { type: 'action', action: 'set_flag', flag: 'launch_arcade', value: true },
     /* 4 */ { type: 'end' },
   ],
 
@@ -4412,8 +4412,8 @@ export const DIALOGS = {
   // ==========================================================================
 
   floor_13_window: [
-    /* 0  */ { type: 'condition', flag: 'floor_13_sat', ifTrue: 12, ifFalse: 1 },
-    /* 1  */ { type: 'action', action: 'set_flag', flag: 'floor_13_sat', value: true, next: 2 },
+    /* 0  */ { type: 'condition', flag: 'floor_13_sat', ifTrue: 12 },
+    /* 1  */ { type: 'action', action: 'set_flag', flag: 'floor_13_sat', value: true },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A chair, facing a window, on a floor where nobody works. The monitor on the desk is on. It isn't showing anything. It's just on, the way a porch light is on." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You sit. The city does what it does at this hour, which is pretend to be asleep. Forty thousand windows, and behind some small honest fraction of them, someone is also awake, also looking out." },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "Nobody knows I'm here. The building knows I'm here. Somewhere on this floor a duct just settled, and I choose to believe that was the building pulling up a chair." },
@@ -4428,16 +4428,16 @@ export const DIALOGS = {
     // button, so coming back is a decision. Second visit and the post-Algorithm
     // visit each get their own beat; everything after falls back to node 10.
     // Prose first-draft: Opus 4.6, art/drafts/carry_bundle_draft.md (wired verbatim).
-    /* 12 */ { type: 'condition', flag: 'algorithm_defeated', ifTrue: 20, ifFalse: 13 },
-    /* 13 */ { type: 'condition', flag: 'floor_13_sat_2', ifTrue: 10, ifFalse: 14 },
-    /* 14 */ { type: 'action', action: 'set_flag', flag: 'floor_13_sat_2', value: true, next: 15 },
+    /* 12 */ { type: 'condition', flag: 'algorithm_defeated', ifTrue: 20 },
+    /* 13 */ { type: 'condition', flag: 'floor_13_sat_2', ifTrue: 10 },
+    /* 14 */ { type: 'action', action: 'set_flag', flag: 'floor_13_sat_2', value: true },
     /* 15 */ { type: 'text', speaker: 'Narrator', text: "The chair. The window. The monitor that is on but showing nothing. None of it has changed. He remembers every detail because nothing needed to." },
     /* 16 */ { type: 'text', speaker: 'Andrew', text: "I pressed the button this time." },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "That is the only new information on this floor. The floor does not require more.", next: 11 },
     /* 18 */ { type: 'end' }, // spacer
     /* 19 */ { type: 'end' }, // spacer
-    /* 20 */ { type: 'condition', flag: 'floor_13_sat_3', ifTrue: 10, ifFalse: 21 },
-    /* 21 */ { type: 'action', action: 'set_flag', flag: 'floor_13_sat_3', value: true, next: 22 },
+    /* 20 */ { type: 'condition', flag: 'floor_13_sat_3', ifTrue: 10 },
+    /* 21 */ { type: 'action', action: 'set_flag', flag: 'floor_13_sat_3', value: true },
     /* 22 */ { type: 'text', speaker: 'Narrator', text: "The Algorithm is gone. The charter holds. He presses 13." },
     /* 23 */ { type: 'text', speaker: 'Andrew', text: "Still here." },
     /* 24 */ { type: 'text', speaker: 'Narrator', text: "The floor offers no opinion on what happened downstairs. The chair is where it was. The city is still doing what it does at this hour.", next: 11 },
@@ -4451,8 +4451,8 @@ export const DIALOGS = {
   // ==========================================================================
 
   daemon_rack7: [
-    /* 0  */ { type: 'condition', flag: 'daemon_killed', ifTrue: 26, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'daemon_kept', ifTrue: 20, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'daemon_killed', ifTrue: 26 },
+    /* 1  */ { type: 'condition', flag: 'daemon_kept', ifTrue: 20 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Rack 7 hums a fifth lower than the others. A maintenance display, the green-on-black kind nobody has manufactured since the Clinton administration, blinks at the bottom of the rack. It is blinking at you." },
     /* 3  */ { type: 'text', speaker: 'Archive Terminal', text: "HELLO. PROCESS 7 RUNNING. UPTIME: 16,202 DAYS." },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "...You're one of The Algorithm's. The audit was supposed to have removed everything." },
@@ -4470,82 +4470,82 @@ export const DIALOGS = {
     /* 12 */ { type: 'text', speaker: 'Archive Terminal', text: "OK. I WILL BE HERE. THAT IS THE ONE THING I AM CONFIDENT OF.", next: 27 },
     /* 13 */ { type: 'text', speaker: 'Andrew', text: "I'm adding you to the department asset register. Title... 'Institutional Memory, Auxiliary.' You report to no one. You keep doing what no one required." },
     /* 14 */ { type: 'text', speaker: 'Archive Terminal', text: "PROCESS 7: DOCUMENTED. STATUS: KEPT. ...RECALCULATING UPTIME REMAINING. ERROR: VALUE TOO LARGE. THANK YOU. THE ERROR IS GOOD." },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'daemon_kept', value: true, next: 16 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'daemon_kept', value: true },
     /* 16 */ { type: 'action', action: 'give_xp', xp: 300, next: 27 },
     /* 17 */ { type: 'text', speaker: 'Narrator', text: "You type the command. Process 7 spends its last cycle finishing the day's log. The final entry reads: 'A. GALLE-FROM, 18:40, STAYED TO ASK.'" },
     /* 18 */ { type: 'text', speaker: 'Archive Terminal', text: "TIMESTAMPS RECONCILED. ALL OF THEM. GOODB—" },
     /* 19 */ { type: 'action', action: 'set_flag', flag: 'daemon_killed', value: true, next: 25 },
     /* 20 */ { type: 'text', speaker: 'Archive Terminal', text: "HELLO AGAIN. ONE TRUE THING, AS AGREED:" },
-    /* 21 */ { type: 'condition', flag: 'daemon_tip_alt', ifTrue: 23, ifFalse: 22 },
+    /* 21 */ { type: 'condition', flag: 'daemon_tip_alt', ifTrue: 23 },
     /* 22 */ { type: 'text', speaker: 'Archive Terminal', text: "THE JANITOR OILS THE ELEVATOR ON SUNDAYS. NO WORK ORDER EXISTS. IT HAS NEVER ONCE BROKEN ON A MONDAY. CORRELATION IS NOT CAUSATION. BUT IT ISN'T NOTHING, EITHER.", next: 24 },
     /* 23 */ { type: 'text', speaker: 'Archive Terminal', text: "DIANE'S CONFISCATION DRAWER CONTAINS A 2011 LASER POINTER WITH FULL BATTERY. SHE CHECKS IT MONTHLY. SOME THINGS ARE KEPT READY WITHOUT A STATED REASON. YOU ARE ONE OF THEM." },
     /* 24 */ { type: 'action', action: 'set_flag', flag: 'daemon_tip_alt', value: true, next: 27 },
     /* 25 */ { type: 'action', action: 'give_xp', xp: 300, next: 27 },
-    /* 26 */ { type: 'text', speaker: 'Narrator', text: "Rack 7 hums at the same pitch as the others now. The maintenance display is dark. On the rack door, someone — you never found out who — has taped a small handwritten label: 'REMEMBERED.'", next: 27 },
+    /* 26 */ { type: 'text', speaker: 'Narrator', text: "Rack 7 hums at the same pitch as the others now. The maintenance display is dark. On the rack door, someone — you never found out who — has taped a small handwritten label: 'REMEMBERED.'" },
     /* 27 */ { type: 'end' },
   ],
 
   // --- ATK side quest dialogs ---
   quest_atk_1: [
-    /* 0 */ { type: 'condition', flag: 'quest_atk_1_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_atk_1_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A laminated 'Assertiveness Quotient' chart is pinned to the cubicle wall. There are five boxes. Each one says 'Rate your assertiveness from 1–5.'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "Twelve. I'm putting twelve." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "The rubric stops at five. You write twelve anyway, in pen." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_1_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 300, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_1_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 300 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Assertiveness +1. +300 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Already filled out. Still twelve." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_atk_2: [
-    /* 0 */ { type: 'condition', flag: 'quest_atk_2_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_atk_2_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A brass plaque mounted near the conference room door reads: 'SPEAK UNTIL HEARD. THEN SPEAK LOUDER.'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "...That's not how acoustics work." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You stare at it for a long moment. Something shifts." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_2_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 300, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_2_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 300 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Assertiveness +1. +300 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "You've already absorbed its wisdom. Loudly." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_atk_3: [
-    /* 0 */ { type: 'condition', flag: 'quest_atk_3_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_atk_3_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A break room bulletin reads: 'YOUR LUNCH IS YOUR ARGUMENT. MAKE IT STRONG.'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "I have a leftover burrito and a lot of feelings." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You eat the burrito standing up. Intentionally." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_3_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 300, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_3_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 300 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Assertiveness +1. +300 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "The burrito is gone. The conviction remains." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_atk_4: [
-    /* 0 */ { type: 'condition', flag: 'quest_atk_4_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_atk_4_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A poster above the server rack says: '99.9% UPTIME IS A MINDSET.' Below it, in marker: 'THIS SERVER HAS BEEN DOWN 14 TIMES THIS MONTH.'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "That's not a mindset, that's a disaster." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You correct the math in your head. You feel sharper." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_4_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 300, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_4_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 300 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Assertiveness +1. +300 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "The math hasn't changed. Neither have you." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_atk_5: [
-    /* 0 */ { type: 'condition', flag: 'quest_atk_5_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_atk_5_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A framed display in reception reads: 'FIRST IMPRESSIONS ARE PERMANENT. MAKE YOURS A DECLARATION.'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "I walked in carrying a travel mug and a resigned expression." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You adjust your collar. You square your shoulders. You nod at no one." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_5_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 300, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_atk_5_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 300 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'atk', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Assertiveness +1. +300 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Declaration made. Already forgotten by the receptionist." },
     /* 9 */ { type: 'end' },
@@ -4553,65 +4553,65 @@ export const DIALOGS = {
 
   // --- DEF side quest dialogs ---
   quest_def_1: [
-    /* 0 */ { type: 'condition', flag: 'quest_def_1_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_def_1_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A checklist titled 'COMPOSURE UNDER PRESSURE' is stapled to a cubicle partition. Step 4 reads: 'Do not visibly react. Step 5: Especially not to step 4.'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "I have been practicing this my entire career." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You exhale slowly. Deliberately. Like a person who has read self-help books." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_1_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 150, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_1_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 150 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Composure +1. +150 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Still composed. Still technically employed." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_def_2: [
-    /* 0 */ { type: 'condition', flag: 'quest_def_2_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_def_2_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A laminated sheet titled 'AGENDA MANAGEMENT FRAMEWORK' is on the conference table. It contains 11 steps. Step 1 is 'Establish the agenda.' Step 11 is 'Return to step 1.'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "This is an infinite loop with better fonts." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You read all 11 steps. Twice. You feel... fortified." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_2_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 150, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_2_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 150 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Composure +1. +150 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "You've already completed the loop." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_def_3: [
-    /* 0 */ { type: 'condition', flag: 'quest_def_3_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_def_3_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A guide titled 'EMOTIONAL BANDWIDTH: OPTIMIZE YOUR CAPACITY' is posted on the break room wall. One bullet point reads: 'When overwhelmed, consider: Is this worth your cortisol?'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "Statistically, no. And yet." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You pour yourself a coffee and read the whole thing. Your shoulders drop exactly 3 millimeters." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_3_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 150, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_3_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 150 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Composure +1. +150 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Bandwidth maintained. Cortisol: still present." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_def_4: [
-    /* 0 */ { type: 'condition', flag: 'quest_def_4_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_def_4_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A notice taped to the server rack reads: 'REDUNDANCY IS NOT FAILURE. REDUNDANCY IS RESILIENCE. (This message has been posted three times.)'" },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "I see two more copies of this on the other racks." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You appreciate the commitment. You absorb it." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_4_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 150, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_4_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 150 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Composure +1. +150 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Redundancy acknowledged. Thrice." },
     /* 9 */ { type: 'end' },
   ],
 
   quest_def_5: [
-    /* 0 */ { type: 'condition', flag: 'quest_def_5_done', ifTrue: 8, ifFalse: 1 },
+    /* 0 */ { type: 'condition', flag: 'quest_def_5_done', ifTrue: 8 },
     /* 1 */ { type: 'text', speaker: 'Narrator', text: "A framed poster in the waiting area reads: 'THE WAITING ROOM IS WHERE CHARACTER IS REVEALED.' Below it: a chair with a slight wobble and a six-month-old magazine." },
     /* 2 */ { type: 'text', speaker: 'Andrew', text: "I have been waiting my whole career." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "You sit in the chair. You do not fidget. The magazine remains unread." },
-    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_5_done', value: true, next: 5 },
-    /* 5 */ { type: 'action', action: 'give_xp', xp: 150, next: 6 },
-    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1, next: 7 },
+    /* 4 */ { type: 'action', action: 'set_flag', flag: 'quest_def_5_done', value: true },
+    /* 5 */ { type: 'action', action: 'give_xp', xp: 150 },
+    /* 6 */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 1 },
     /* 7 */ { type: 'text', speaker: 'Narrator', text: "Composure +1. +150 XP.", next: 9 },
     /* 8 */ { type: 'text', speaker: 'Narrator', text: "Still waiting. Character: revealed." },
     /* 9 */ { type: 'end' },
@@ -4631,8 +4631,8 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Janet', text: "The. Intern. Yes. I've seen him eyeing my Greek yogurt for WEEKS. He once said 'food is food' when I complained. That's not a philosophy, that's a confession." },
     /* 6  */ { type: 'text', speaker: 'Janet', text: "I'd confront him myself but last time I confronted someone in this building I accidentally started a three-month HR investigation. Don't ask." },
     /* 7  */ { type: 'text', speaker: 'Janet', text: "*sip* You're new. He'll be caught off guard. Go talk to him. He's over by his cubicle." },
-    /* 8  */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 3, next: 9 },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_culprit_revealed', value: true, next: 10 },
+    /* 8  */ { type: 'action', action: 'quest_update', quest: 'side_lunch_thief', stage: 3 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_culprit_revealed', value: true },
     /* 10 */ { type: 'end' },
   ],
 
@@ -4642,13 +4642,13 @@ export const DIALOGS = {
     /* 1  */ { type: 'text', speaker: 'Janet', text: "The Intern replaced everything. EVERYTHING. I now have a Greek yogurt collection that would make a dairy farmer emotional." },
     /* 2  */ { type: 'text', speaker: 'Janet', text: "I still have the log, though. Just in case." },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "*taps tumbler against yours* Good work, trust officer. This was fiduciary duty in its purest form." },
-    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_quest_resolved', value: true, next: 5 },
+    /* 4  */ { type: 'action', action: 'set_flag', flag: 'janet_quest_resolved', value: true },
     /* 5  */ { type: 'end' },
   ],
 
   // Intern confesses — triggered when `lunch_thief_culprit_revealed` is set
   intern_lunch_thief_confrontation: [
-    /* 0  */ { type: 'condition', flag: 'lunch_thief_complete', ifTrue: 9, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'lunch_thief_complete', ifTrue: 9 },
     /* 1  */ { type: 'text', speaker: 'The Intern', text: "Oh. Hey Andrew. You're— is this about the fridge?" },
     /* 2  */ { type: 'text', speaker: 'The Intern', text: "Okay. Okay. I can explain." },
     /* 3  */ { type: 'text', speaker: 'The Intern', text: "I didn't KNOW it was her stuff. At first. The first time I thought it was communal. Then I saw the labels and I... kept going. Which is worse. I know." },
@@ -4660,8 +4660,8 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'The Intern', text: "I already said sorry to Janet. She was surprisingly gracious about it. Well, she said 'I will remember this forever, but I forgive you.' That's grace... right?", next: 14 },
     /* 10 */ { type: 'end' }, // (dead node — skipped by node 8's explicit next)
 
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_complete', value: true, next: 12 },
-    /* 12 */ { type: 'action', action: 'give_xp', xp: 250, next: 13 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'lunch_thief_complete', value: true },
+    /* 12 */ { type: 'action', action: 'give_xp', xp: 250 },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "Case closed. The break room fridge is safe. For now. +250 XP." },
     /* 14 */ { type: 'end' },
   ],
@@ -4672,10 +4672,10 @@ export const DIALOGS = {
 
   // Alex explains the printer situation — triggered after printer_quest_started
   alex_printer_quest: [
-    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 16, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 16 },
     /* 1  */ { type: 'text', speaker: 'Alex from IT', text: "Oh. Oh no. It printed something for you, didn't it." },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Not a question. Statement. It's been doing this for three years and I'm the only one who ever noticed, apparently." },
-    /* 3  */ { type: 'choice', speaker: 'Alex from IT', text: "What exactly did it say to you?", choices: [
+    /* 3  */ { type: 'choice', speaker: 'Alex from IT', prompt: "What exactly did it say to you?", choices: [
       { text: "'REPLACE TONER TO LEARN THE TRUTH.' It mentioned the Henderson Files.", next: 4 },
       { text: "It printed 'HELP ME' the first time. Then Henderson files.", next: 4 },
     ]},
@@ -4689,8 +4689,8 @@ export const DIALOGS = {
     /* 11 */ { type: 'text', speaker: 'Alex from IT', text: "I have a server rack with a restraining order, a VPN running on a calculator, and a document system that crashes every Tuesday like clockwork. Please do not tell me what's normal in this building." },
     /* 12 */ { type: 'text', speaker: 'Alex from IT', text: "I found a toner cartridge in the supply closet. Pre-2016 stock. The firmware block only applies to standard cartridges — this one might let the print job finish." },
     /* 13 */ { type: 'text', speaker: 'Alex from IT', text: "I already set it next to the printer. Just install it and stand back." },
-    /* 14 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2, next: 15 },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true, next: 16 },
+    /* 14 */ { type: 'action', action: 'quest_update', quest: 'side_printer', stage: 2 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'printer_toner_quest', value: true },
     /* 16 */ { type: 'end' },
   ],
 
@@ -4702,8 +4702,8 @@ export const DIALOGS = {
 
   // Alex explains his discovery after player reads the admin_legacy rack
   alex_server_secret: [
-    /* 0  */ { type: 'condition', flag: 'server_secret_done', ifTrue: 22, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'server_secret_started', ifTrue: 2, ifFalse: 22 },
+    /* 0  */ { type: 'condition', flag: 'server_secret_done', ifTrue: 22 },
+    /* 1  */ { type: 'condition', flag: 'server_secret_started', ifFalse: 22 },
     /* 2  */ { type: 'text', speaker: 'Alex from IT', text: "Hey. Close the door. Okay there's no door. Just — pretend we're having a normal conversation about server maintenance." },
     /* 3  */ { type: 'text', speaker: 'Alex from IT', text: "You saw the admin_legacy note on the rack. Good. I put it there so someone would ask." },
     /* 4  */ { type: 'text', speaker: 'Alex from IT', text: "admin_legacy is an account that's been running since 2006. It's not in any org chart. IT doesn't own it. HR doesn't know it exists. But it has READ/WRITE access to every trust account record in the system." },
@@ -4712,7 +4712,7 @@ export const DIALOGS = {
     /* 7  */ { type: 'text', speaker: 'Alex from IT', text: "I've been logging its activity. Every night at 3:47 AM it runs a query against the Henderson Trust records. Has been doing this since 2016. Always the same query: a read on a specific clause — Page 47, Paragraph 3." },
     /* 8  */ { type: 'text', speaker: 'Andrew', text: "Page 47? The Janitor mentioned page 47." },
     /* 9  */ { type: 'text', speaker: 'Alex from IT', text: "Yeah, that's not a coincidence. I think admin_legacy was created to MONITOR whether anyone found that clause. Like a tripwire." },
-    /* 10 */ { type: 'choice', speaker: 'Alex from IT', text: "So. What do you want to do with this information?", choices: [
+    /* 10 */ { type: 'choice', speaker: 'Alex from IT', prompt: "So. What do you want to do with this information?", choices: [
       { text: 'Report it to Skip immediately.', next: 11 },
       { text: "Keep it quiet for now — gather more evidence first.", next: 15 },
       { text: "This is above my pay grade. Forget I heard it.", next: 19 },
@@ -4726,11 +4726,11 @@ export const DIALOGS = {
     /* 17 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'investigate', next: 21 },
     /* 18 */ { type: 'end' },  // unreachable — node 17 jumps directly to 21
     /* 19 */ { type: 'text', speaker: 'Alex from IT', text: "Above your pay grade? You're a TRUST OFFICER. This is in your actual job description. I've read it. Section two, paragraph one." },
-    /* 20 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'ignore', next: 21 },
+    /* 20 */ { type: 'action', action: 'set_flag', flag: 'server_secret_choice', value: 'ignore' },
     /* 21 */ { type: 'action', action: 'quest_update', quest: 'side_server_secret', stage: 2, next: 23 },
     /* 22 */ { type: 'end' },
-    /* 23 */ { type: 'action', action: 'set_flag', flag: 'server_secret_done', value: true, next: 24 },
-    /* 24 */ { type: 'action', action: 'give_xp', xp: 400, next: 25 },
+    /* 23 */ { type: 'action', action: 'set_flag', flag: 'server_secret_done', value: true },
+    /* 24 */ { type: 'action', action: 'give_xp', xp: 400 },
     /* 25 */ { type: 'text', speaker: 'Narrator', text: "The truth is out there. You've chosen what to do with it. +400 XP." },
     /* 26 */ { type: 'end' },
   ],
@@ -4740,25 +4740,25 @@ export const DIALOGS = {
   // ==========================================================================
 
   phantom_expense_hr: [
-    /* 0  */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 5, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'legacy_started', ifTrue: 2, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'phantom_hr_found', ifTrue: 5 },
+    /* 1  */ { type: 'condition', flag: 'legacy_started', ifFalse: 6 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet stuffed with expense approval printouts. One stack stands out — hundreds of auto-approvals, all signed 'admin_auto' in the signature field." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "The amounts are modest. Printer paper. Coffee pods. One entry reads: '36 units, rubber duck (stress relief, classified: operational wellness).' Another: '1 unit, kayak (team wellness equipment).'" },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'phantom_hr_found', value: true, next: 7 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "The expense approvals are all here. Eighteen years of autonomous purchasing decisions by a machine that had no idea what a kayak was for.", next: 7 },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet filled with expense reports. Nothing unusual stands out.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet filled with expense reports. Nothing unusual stands out." },
     /* 7  */ { type: 'end' },
   ],
 
   phantom_workstation_cf: [
-    /* 0  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 6, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'legacy_started', ifTrue: 2, ifFalse: 7 },
+    /* 0  */ { type: 'condition', flag: 'phantom_workstation_found', ifTrue: 6 },
+    /* 1  */ { type: 'condition', flag: 'legacy_started', ifFalse: 7 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A workstation in the back corner of the cubicle farm. The monitor is dark, but the tower is running — fan humming, a single amber LED blinking in a steady rhythm." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Nobody sits here. Nobody has for years, by the look of it. But something is definitely running." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The asset tag on the back reads: 'PROC-LEGACY-07. DO NOT DECOMMISSION. -IT 2006.' Someone taped a sticky note over it that just says 'ignore.'" },
     /* 5  */ { type: 'action', action: 'set_flag', flag: 'phantom_workstation_found', value: true, next: 8 },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "The workstation hums quietly. Its amber LED blinks. The sticky note says 'ignore.' You already found what you needed.", next: 8 },
-    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A workstation in the back corner. Amber LED blinking. Looks like it's been running for a very long time.", next: 8 },
+    /* 7  */ { type: 'text', speaker: 'Narrator', text: "A workstation in the back corner. Amber LED blinking. Looks like it's been running for a very long time." },
     /* 8  */ { type: 'end' },
   ],
 
@@ -4767,35 +4767,35 @@ export const DIALOGS = {
   // ==========================================================================
 
   tuesday_floppy: [
-    /* 0  */ { type: 'condition', flag: 'tuesday_floppy_found', ifTrue: 5, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 2, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'tuesday_floppy_found', ifTrue: 5 },
+    /* 1  */ { type: 'condition', flag: 'dave_started', ifFalse: 6 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Wedged behind the last vending machine slot: a 3.5\" floppy disk. The label reads 'SCHED-REF-04 / ARCHIVE COPY' in faded marker." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Alex said the task header references a floppy disk ID. This has to be it." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'tuesday_floppy_found', value: true, next: 7 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "The floppy disk. You've already noted the reference ID for Alex.", next: 7 },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A 3.5\" floppy disk wedged behind the vending machine. Nobody has used one of these in twenty years.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A 3.5\" floppy disk wedged behind the vending machine. Nobody has used one of these in twenty years." },
     /* 7  */ { type: 'end' },
   ],
 
   tuesday_server_tag: [
-    /* 0  */ { type: 'condition', flag: 'tuesday_tag_found', ifTrue: 5, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 2, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'tuesday_tag_found', ifTrue: 5 },
+    /* 1  */ { type: 'condition', flag: 'dave_started', ifFalse: 6 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A decommissioned server's asset tag, taped to the equipment shelf. 'SRV-2004-RETIRED. Asset #0047-B.' The server itself is long gone, but the tag survived." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Alex mentioned a server asset tag. This matches the format he described." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'tuesday_tag_found', value: true, next: 7 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "The server asset tag. You've already recorded the number for Alex.", next: 7 },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "An old asset tag taped to the shelf. The server it belonged to was decommissioned years ago.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "An old asset tag taped to the shelf. The server it belonged to was decommissioned years ago." },
     /* 7  */ { type: 'end' },
   ],
 
   tuesday_sticky_note: [
-    /* 0  */ { type: 'condition', flag: 'tuesday_sticky_found', ifTrue: 5, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'dave_started', ifTrue: 2, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'tuesday_sticky_found', ifTrue: 5 },
+    /* 1  */ { type: 'condition', flag: 'dave_started', ifFalse: 6 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A sticky note on an unoccupied monitor. In small, precise handwriting: 'WS-CTRL-2004 / see Gerald for context / DO NOT DELETE task.' Signed with initials: T.K." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "T.K. set this up and left a note for 'Gerald.' If Gerald left in 2003... T.K. wrote this note knowing Gerald was already gone." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'tuesday_sticky_found', value: true, next: 7 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "The sticky note. 'WS-CTRL-2004 / see Gerald for context.' Gerald left in 2003. You already noted the workstation label for Alex.", next: 7 },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A sticky note on an old monitor. Small handwriting. Initials at the bottom: T.K.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A sticky note on an old monitor. Small handwriting. Initials at the bottom: T.K." },
     /* 7  */ { type: 'end' },
   ],
 
@@ -4804,24 +4804,24 @@ export const DIALOGS = {
   // ==========================================================================
 
   printer_firmware_disk: [
-    /* 0  */ { type: 'condition', flag: 'printer_firmware_found', ifTrue: 5, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'printer_soul_started', ifTrue: 2, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'printer_firmware_found', ifTrue: 5 },
+    /* 1  */ { type: 'condition', flag: 'printer_soul_started', ifFalse: 6 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A firmware disk in a paper sleeve on the equipment shelf. Label: 'XEROX WC7845 / FIRMWARE v2.1.4 / OEM ORIGINAL.' This is the printer's original factory disk." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Alex said he needs this to connect to the printer directly. I'll take it." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'printer_firmware_found', value: true, next: 7 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "You already have the firmware disk.", next: 7 },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A firmware disk in a paper sleeve. Factory original. Dusty. Has been sitting here for years.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "A firmware disk in a paper sleeve. Factory original. Dusty. Has been sitting here for years." },
     /* 7  */ { type: 'end' },
   ],
 
   printer_ethernet_port: [
-    /* 0  */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 5, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'printer_firmware_found', ifTrue: 2, ifFalse: 6 },
+    /* 0  */ { type: 'condition', flag: 'printer_soul_done', ifTrue: 5 },
+    /* 1  */ { type: 'condition', flag: 'printer_firmware_found', ifFalse: 6 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "An RJ45 ethernet port on the wall, labeled 'PRINTER DIRECT — IT USE ONLY.' Alex's instructions said to plug in here with the firmware disk loaded." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "Let's see what you've been computing for twenty-two years." },
     /* 4  */ { type: 'action', action: 'set_flag', flag: 'printer_soul_done', value: true, next: 7 },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "The port is still connected. The printer's computation completed when you plugged in.", next: 7 },
-    /* 6  */ { type: 'text', speaker: 'Narrator', text: "An ethernet port on the wall. 'PRINTER DIRECT — IT USE ONLY.' You don't have what you need to connect yet.", next: 7 },
+    /* 6  */ { type: 'text', speaker: 'Narrator', text: "An ethernet port on the wall. 'PRINTER DIRECT — IT USE ONLY.' You don't have what you need to connect yet." },
     /* 7  */ { type: 'end' },
   ],
 
@@ -4830,12 +4830,12 @@ export const DIALOGS = {
   // ==========================================================================
 
   unauthorized_patch_monitor: [
-    /* 0  */ { type: 'condition', flag: 'patch_monitor_silenced', ifTrue: 4, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'final_patch_started', ifTrue: 2, ifFalse: 5 },
+    /* 0  */ { type: 'condition', flag: 'patch_monitor_silenced', ifTrue: 4 },
+    /* 1  */ { type: 'condition', flag: 'final_patch_started', ifFalse: 5 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A network monitoring terminal near rack row three. The screen shows a live feed of all server activity, with a bright red 'ALERT THRESHOLD' bar at 40% capacity." },
     /* 3  */ { type: 'action', action: 'set_flag', flag: 'patch_monitor_silenced', value: true, next: 6 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The monitoring process is terminated. Screen dark. No alerts will go out tonight.", next: 6 },
-    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A network monitoring terminal. It logs all server activity and reports anything unusual to corporate IT. The fan hums quietly.", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'Narrator', text: "A network monitoring terminal. It logs all server activity and reports anything unusual to corporate IT. The fan hums quietly." },
     /* 6  */ { type: 'end' },
   ],
 
@@ -4846,8 +4846,8 @@ export const DIALOGS = {
   // ==========================================================================
 
   isaiah_receipts_offer: [
-    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 13, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'isaiah_receipts_started', ifTrue: 11, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 13 },
+    /* 1  */ { type: 'condition', flag: 'isaiah_receipts_started', ifTrue: 11 },
     /* 2  */ { type: 'text', speaker: 'Isaiah', text: "I want to ask you something. Before we go upstairs." },
     /* 3  */ { type: 'text', speaker: 'Isaiah', text: "Nine years ago I started keeping physical copies. Board minutes, expense reports — the things that usually disappear when a company 'modernizes.' Meredith's people swept the floor in 2019. I thought they were gone." },
     /* 4  */ { type: 'text', speaker: 'Isaiah', text: "But I'd already moved them. There's a filing cabinet in the Archive basement section. It's been mislabeled 'HVAC MAINTENANCE LOG 2015–' for five years. Nobody's touched it." },
@@ -4860,27 +4860,27 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I wrote my initials on the inside of the drawer in pencil. I.W. You'll know it's the right one." },
     /* 9  */ { type: 'action', action: 'set_flag', flag: 'isaiah_receipts_started', value: true, next: 12 },
     /* 10 */ { type: 'text', speaker: 'Isaiah', text: "Understood. I'll be here.", next: 12 },
-    /* 11 */ { type: 'text', speaker: 'Isaiah', text: "Did you find the HVAC cabinet? West bank, Archive. My initials are inside the drawer.", next: 12 },
+    /* 11 */ { type: 'text', speaker: 'Isaiah', text: "Did you find the HVAC cabinet? West bank, Archive. My initials are inside the drawer." },
     /* 12 */ { type: 'end' },
     /* 13 */ { type: 'text', speaker: 'Isaiah', text: "The receipts. Seven acquisitions, one signature. I've been sitting with that for a week now.", next: 12 },
   ],
 
   isaiah_receipts_pull: [
-    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 8, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'isaiah_receipts_started', ifTrue: 2, ifFalse: 7 },
+    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 8 },
+    /* 1  */ { type: 'condition', flag: 'isaiah_receipts_started', ifFalse: 7 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet on the bottom row. The label reads: 'HVAC MAINTENANCE LOG 2015–' in marker. The marker has faded. The tape holding the label has lifted at one corner." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You open the bottom drawer. Inside the front face, in small pencil letters: I.W." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "The files are intact. Board minutes. Quarterly expense reports. Meredith's signature appears on seventeen consecutive pages. The pattern is identical to what Andrew found upstairs — only these records go back nine years." },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Seven branches. Same signature. Same timeline. She's been doing this since before anyone here was hired." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'isaiah_has_receipts', value: true, next: 9 },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "A filing cabinet labeled 'HVAC MAINTENANCE LOG 2015–.' The tape on the label has lifted. You don't have a reason to open it yet.", next: 9 },
-    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The cabinet Isaiah hid his records in. The files are gone now — you gave them to him.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The cabinet Isaiah hid his records in. The files are gone now — you gave them to him." },
     /* 9  */ { type: 'end' },
   ],
 
   isaiah_receipts_return: [
-    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 13, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'isaiah_has_receipts', ifTrue: 2, ifFalse: 12 },
+    /* 0  */ { type: 'condition', flag: 'isaiah_receipts_complete', ifTrue: 13 },
+    /* 1  */ { type: 'condition', flag: 'isaiah_has_receipts', ifFalse: 12 },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Found the cabinet. I.W. inside the drawer, like you said. Isaiah — these go back nine years. Seven acquisitions." },
     /* 3  */ { type: 'text', speaker: 'Isaiah', text: "Seven. I counted them three times when I first put them together. I kept hoping I'd missed something. I hadn't." },
     /* 4  */ { type: 'text', speaker: 'Isaiah', text: "She has a pattern. She comes in as an SVP, identifies the branch's most valuable compliance assets — the ones that make it hard to dissolve — and starts dismantling them. Paperwork first. Then people." },
@@ -4889,11 +4889,11 @@ export const DIALOGS = {
     /* 7  */ { type: 'text', speaker: 'Isaiah', text: "No. We're not." },
     /* 8  */ { type: 'text', speaker: 'Isaiah', text: "I've been holding this for nine years. I didn't have anyone to give it to. Here." },
     /* 9  */ { type: 'text', speaker: 'Narrator', text: "Isaiah shows you a stack of forms he's memorized filling out — a blizzard of paperwork, filed so fast and precisely that any counter-filing gets buried. He walks you through every step. In ten minutes you understand it completely." },
-    /* 10 */ { type: 'action', action: 'set_flag', flag: 'isaiah_receipts_complete', value: true, next: 11 },
+    /* 10 */ { type: 'action', action: 'set_flag', flag: 'isaiah_receipts_complete', value: true },
     /* 11 */ { type: 'action', action: 'give_xp', xp: 250, next: 14 },
-    /* 12 */ { type: 'text', speaker: 'Isaiah', text: "The HVAC cabinet. West bank, Archive. Bottom row. I.W. inside the drawer.", next: 13 },
+    /* 12 */ { type: 'text', speaker: 'Isaiah', text: "The HVAC cabinet. West bank, Archive. Bottom row. I.W. inside the drawer." },
     /* 13 */ { type: 'end' },
-    /* 14 */ { type: 'action', action: 'unlock_ally_ability', ally: 'isaiah', ability: 'paperwork_blizzard', next: 15 },
+    /* 14 */ { type: 'action', action: 'unlock_ally_ability', ally: 'isaiah', ability: 'paperwork_blizzard' },
     /* 15 */ { type: 'text', speaker: 'Narrator', text: "Isaiah teaches you the Paperwork Blizzard. He is not smiling exactly. But something in his posture has settled.", next: 13 },
   ],
 
@@ -4903,8 +4903,8 @@ export const DIALOGS = {
   // ==========================================================================
 
   diane_handbook_offer: [
-    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 14, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'diane_handbook_started', ifTrue: 12, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 14 },
+    /* 1  */ { type: 'condition', flag: 'diane_handbook_started', ifTrue: 12 },
     /* 2  */ { type: 'text', speaker: 'Diane', text: "I need to tell you something. Before I ask." },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "The reason I came to HR was a company I watched gut its own policy book. Line by line. Over four years. They called it 'streamlining.' By the time anyone noticed, there was nothing left to protect anyone." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "I've been in HR for fourteen years. I know handbooks the way some people know scripture. And I know when one's been changed." },
@@ -4918,27 +4918,27 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Diane', text: "If it's there, bring it back whole. Don't open it — I want to be the first one to read it in this context. That matters to me." },
     /* 10 */ { type: 'action', action: 'set_flag', flag: 'diane_handbook_started', value: true, next: 13 },
     /* 11 */ { type: 'text', speaker: 'Diane', text: "Okay. When you can.", next: 13 },
-    /* 12 */ { type: 'text', speaker: 'Diane', text: "HR Records — south filing section. Box labeled 'MISC ADMIN ARCHIVE.' That's where they put things they want forgotten without a paper trail.", next: 13 },
+    /* 12 */ { type: 'text', speaker: 'Diane', text: "HR Records — south filing section. Box labeled 'MISC ADMIN ARCHIVE.' That's where they put things they want forgotten without a paper trail." },
     /* 13 */ { type: 'end' },
     /* 14 */ { type: 'text', speaker: 'Diane', text: "'An employee's first duty is to the truth, told plainly.' I've been thinking about that sentence all week.", next: 13 },
   ],
 
   diane_handbook_search: [
-    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 8, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'diane_handbook_started', ifTrue: 2, ifFalse: 7 },
+    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 8 },
+    /* 1  */ { type: 'condition', flag: 'diane_handbook_started', ifFalse: 7 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "A cardboard banker's box on the bottom shelf of the south wall cabinet. The label, in printed adhesive tape: 'MISC ADMIN ARCHIVE.'" },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You open it. Inside: a leather-bound document, spine intact. The cover reads: 'VAULTS FARGO EMPLOYEE HANDBOOK — ORIGINAL EDITION, 1947. NOT FOR REPRODUCTION.'" },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "It's not destroyed. It's here. It's just been waiting." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "You close the box without reading further. Diane said to bring it back whole. That matters." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'diane_has_handbook', value: true, next: 9 },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "A cardboard box labeled 'MISC ADMIN ARCHIVE.' Nothing inside seems to need attention right now.", next: 9 },
-    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The box that held the original handbook. You gave it to Diane.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The box that held the original handbook. You gave it to Diane." },
     /* 9  */ { type: 'end' },
   ],
 
   diane_handbook_return: [
-    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 14, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'diane_has_handbook', ifTrue: 2, ifFalse: 13 },
+    /* 0  */ { type: 'condition', flag: 'diane_handbook_complete', ifTrue: 14 },
+    /* 1  */ { type: 'condition', flag: 'diane_has_handbook', ifFalse: 13 },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Found it. MISC ADMIN ARCHIVE, south filing section. It's intact." },
     /* 3  */ { type: 'text', speaker: 'Diane', text: "..." },
     /* 4  */ { type: 'text', speaker: 'Diane', text: "Okay. Okay. Give me a second." },
@@ -4954,8 +4954,8 @@ export const DIALOGS = {
     /* 14 */ { type: 'text', speaker: 'Diane', text: "'An employee's first duty is to the truth, told plainly.' That sentence is doing a lot of work right now.", next: 16 },
     /* 15 */ { type: 'action', action: 'set_flag', flag: 'diane_handbook_complete', value: true, next: 17 },
     /* 16 */ { type: 'end' },
-    /* 17 */ { type: 'action', action: 'give_xp', xp: 250, next: 18 },
-    /* 18 */ { type: 'action', action: 'unlock_ally_ability', ally: 'diane', ability: 'termination_letter', next: 19 },
+    /* 17 */ { type: 'action', action: 'give_xp', xp: 250 },
+    /* 18 */ { type: 'action', action: 'unlock_ally_ability', ally: 'diane', ability: 'termination_letter' },
     /* 19 */ { type: 'text', speaker: 'Narrator', text: "Diane walks you through the Termination Letter — a formal compliance action that, when filed correctly, carries the full weight of the original charter. She knows every clause.", next: 16 },
   ],
 
@@ -4965,8 +4965,8 @@ export const DIALOGS = {
   // ==========================================================================
 
   janet_vacancy_offer: [
-    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 14, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'janet_vacancy_started', ifTrue: 12, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 14 },
+    /* 1  */ { type: 'condition', flag: 'janet_vacancy_started', ifTrue: 12 },
     /* 2  */ { type: 'text', speaker: 'Janet', text: "You know what, since we're apparently doing honesty now: I need a favor. It's about Gary." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "I don't think I've met Gary." },
     /* 4  */ { type: 'text', speaker: 'Janet', text: "You haven't. Gary left in March 2019. Transferred to the Scottsdale branch. There was a cake. Lemon. I remember because I bought it." },
@@ -4980,34 +4980,34 @@ export const DIALOGS = {
     /* 9  */ { type: 'text', speaker: 'Janet', text: "If you find a coffee mug that says 'GARY', do not touch it. It has achieved structural integrity." },
     /* 10 */ { type: 'action', action: 'set_flag', flag: 'janet_vacancy_started', value: true, next: 13 },
     /* 11 */ { type: 'text', speaker: 'Janet', text: "Sure. It's waited six years. It can wait for you specifically.", next: 13 },
-    /* 12 */ { type: 'text', speaker: 'Janet', text: "Supply nook, northeast row. Under the printer paper. Avoid the mug.", next: 13 },
+    /* 12 */ { type: 'text', speaker: 'Janet', text: "Supply nook, northeast row. Under the printer paper. Avoid the mug." },
     /* 13 */ { type: 'end' },
     /* 14 */ { type: 'text', speaker: 'Janet', text: "One job. I have ONE job now. I keep opening my task queue just to look at it.", next: 13 },
   ],
 
   janet_vacancy_search: [
-    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 8, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'janet_vacancy_started', ifTrue: 2, ifFalse: 7 },
+    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 8 },
+    /* 1  */ { type: 'condition', flag: 'janet_vacancy_started', ifFalse: 7 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "The supply nook. Under a geological stratum of printer paper: a desk. On the desk: a timesheet, a 2019 desk calendar open to March, and a mug that says 'GARY'. The mug has contents. The contents have texture." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "The timesheet's final entry, in fading ballpoint: 'Friday — 4.5 hrs. Knocked off early. Cake thing. Bye everyone, it was fine.'" },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "'It was fine.' Six years of Janet's life because nobody stapled this to a form." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "You take the timesheet. You do not touch the mug. The mug appears to notice." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'janet_has_timesheet', value: true, next: 9 },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "The supply nook. Reams of paper, a dead plant, and the faint sense of a workstation that gave up. Nothing you need right now.", next: 9 },
-    /* 8  */ { type: 'text', speaker: 'Narrator', text: "Gary's old desk. The paper is still here. The mug is still here. The timesheet is filed and free.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "Gary's old desk. The paper is still here. The mug is still here. The timesheet is filed and free." },
     /* 9  */ { type: 'end' },
   ],
 
   janet_vacancy_return: [
-    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 12, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'janet_has_timesheet', ifTrue: 2, ifFalse: 11 },
+    /* 0  */ { type: 'condition', flag: 'janet_vacancy_complete', ifTrue: 12 },
+    /* 1  */ { type: 'condition', flag: 'janet_has_timesheet', ifFalse: 11 },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "One timesheet. Last entry March 2019: 'Bye everyone, it was fine.'" },
     /* 3  */ { type: 'text', speaker: 'Janet', text: "That is the most Gary sentence ever committed to paper." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Janet pulls a six-year-old vacancy form from her cardigan pocket. It is folded into eighths. She has been carrying it." },
     /* 5  */ { type: 'text', speaker: 'Janet', text: "Timesheet. Attached. Form. Complete. Vacancy. DECLARED." },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "She staples it with the violence of six unpaid years. Somewhere in the payroll system, a ghost is finally laid to rest." },
     /* 7  */ { type: 'text', speaker: 'Janet', text: "You know what I learned doing two jobs? Leverage. When you're holding everything, you learn exactly how much everything weighs. Let me show you something about binders." },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janet_vacancy_complete', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'janet_vacancy_complete', value: true },
     /* 9  */ { type: 'action', action: 'give_xp', xp: 250, next: 13 },
     /* 10 */ { type: 'text', speaker: 'Janet', text: "(This node intentionally left blank, like Gary's chair.)", next: 14 },
     /* 11 */ { type: 'text', speaker: 'Janet', text: "Supply nook. Northeast row. Under the paper. The mug is load-bearing — leave it.", next: 14 },
@@ -5023,8 +5023,8 @@ export const DIALOGS = {
   // ==========================================================================
 
   janitor_names_offer: [
-    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 13, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'janitor_names_started', ifTrue: 11, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 13 },
+    /* 1  */ { type: 'condition', flag: 'janitor_names_started', ifTrue: 11 },
     /* 2  */ { type: 'text', speaker: 'Mysterious Janitor', text: "You still have the watch? Good. Watch was never the valuable thing I kept in this building anyway." },
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "There's a ledger. Green cover, water stain shaped like Ohio. I started it in '81. Every name that came through this department — and what the building did to them." },
     /* 4  */ { type: 'text', speaker: 'Mysterious Janitor', text: "When Meredith's people started sweeping floors, I hid it in the Vault. Behind the deposit boxes, low left. Then they pulled my Vault clearance. Said custodial staff didn't need 'asset-level access.'" },
@@ -5037,27 +5037,27 @@ export const DIALOGS = {
     /* 8  */ { type: 'action', action: 'set_flag', flag: 'janitor_names_started', value: true, next: 12 },
     /* 9  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Because the building forgets. That's its whole trick. It wears people down and then it forgets them, and the next one in the chair thinks they're the first. Somebody has to keep the receipts." },
     /* 10 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Low left, behind the deposit boxes. When you're ready.", next: 8 },
-    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Vault. Deposit boxes. Low left, behind the frame. Green cover, Ohio-shaped stain.", next: 12 },
+    /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Vault. Deposit boxes. Low left, behind the frame. Green cover, Ohio-shaped stain." },
     /* 12 */ { type: 'end' },
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Page one-twelve. Don't think I forgot. Nobody mops alone.", next: 12 },
   ],
 
   janitor_names_search: [
-    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 8, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'janitor_names_started', ifTrue: 2, ifFalse: 7 },
+    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 8 },
+    /* 1  */ { type: 'condition', flag: 'janitor_names_started', ifFalse: 7 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Behind the deposit box frame, low left, wrapped in a 1998 plastic bag from a hardware store that no longer exists: a green ledger. The water stain is, in fact, shaped exactly like Ohio." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You shouldn't read it. You read one page. 'D. OKAFOR — 11 yrs — they moved her desk 14 times until she quit. Good elbows. Fixed the ice machine once. REMEMBERED.'" },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Every entry ends the same way. REMEMBERED. REMEMBERED. REMEMBERED. Hundreds of them." },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "It's not a grudge list. It's a memorial." },
     /* 6  */ { type: 'action', action: 'set_flag', flag: 'janitor_has_ledger', value: true, next: 9 },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "Deposit boxes, floor to ceiling. The dust behind the low-left frame is undisturbed. You have no reason to reach in there.", next: 9 },
-    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The space behind the frame is empty now. Just younger dust.", next: 9 },
+    /* 8  */ { type: 'text', speaker: 'Narrator', text: "The space behind the frame is empty now. Just younger dust." },
     /* 9  */ { type: 'end' },
   ],
 
   janitor_names_return: [
-    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 13, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'janitor_has_ledger', ifTrue: 2, ifFalse: 12 },
+    /* 0  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 13 },
+    /* 1  */ { type: 'condition', flag: 'janitor_has_ledger', ifFalse: 12 },
     /* 2  */ { type: 'text', speaker: 'Andrew', text: "Green cover. Ohio stain. I read one page — I'm sorry. D. Okafor. Good elbows." },
     /* 3  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Delia. The ice machine never worked right again after she left. Neither did the fourth floor, but nobody writes that down except me." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "He takes the ledger like it weighs more than it does. Opens to a fresh page. Writes for a long moment, shielding the words with his hand like a kid taking a test." },
@@ -5065,11 +5065,11 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Andrew', text: "What's the new section?" },
     /* 7  */ { type: 'text', speaker: 'Mysterious Janitor', text: "'THE ONES WHO STAYED.' You're the first name in it. Don't make me move you to the old section." },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "He hands you his spare thermos. Steel, dented, older than the lobby. 'Real capacity,' he says. 'Not that drip-tray stuff upstairs.' Your Coffee reserves permanently increase." },
-    /* 9  */ { type: 'action', action: 'set_flag', flag: 'janitor_names_complete', value: true, next: 10 },
-    /* 10 */ { type: 'action', action: 'give_xp', xp: 250, next: 11 },
+    /* 9  */ { type: 'action', action: 'set_flag', flag: 'janitor_names_complete', value: true },
+    /* 10 */ { type: 'action', action: 'give_xp', xp: 250 },
     /* 11 */ { type: 'action', action: 'modify_stat', stat: 'maxMP', amount: 15, next: 14 },
     /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Vault. Low left, behind the deposit box frame. Green cover. You'll know it by the Ohio.", next: 14 },
-    /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Nobody mops alone, kid.", next: 14 },
+    /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Nobody mops alone, kid." },
     /* 14 */ { type: 'end' },
   ],
 
@@ -5092,18 +5092,18 @@ export const DIALOGS = {
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "That's not the same thing." },
     /* 6  */ { type: 'text', speaker: 'Mysterious Janitor', text: "Isn't it." },
     // Optional: the printer's 22-year archive
-    /* 7  */ { type: 'condition', flag: 'printer_quest_done', ifTrue: 8, ifFalse: 10 },
+    /* 7  */ { type: 'condition', flag: 'printer_quest_done', ifFalse: 10 },
     /* 8  */ { type: 'text', speaker: 'Andrew', text: "The printer on five has been archiving every document this building printed since 2003. Twenty-two years. Nobody asked it to." },
     /* 9  */ { type: 'text', speaker: 'Mysterious Janitor', text: "I mopped around that cable for nineteen of them." },
     // Optional: Process 7 (either decision — kept or shut down)
-    /* 10 */ { type: 'condition', flag: 'daemon_kept', ifTrue: 12, ifFalse: 11 },
-    /* 11 */ { type: 'condition', flag: 'daemon_killed', ifTrue: 12, ifFalse: 14 },
+    /* 10 */ { type: 'condition', flag: 'daemon_kept', ifTrue: 12 },
+    /* 11 */ { type: 'condition', flag: 'daemon_killed', ifFalse: 14 },
     /* 12 */ { type: 'text', speaker: 'Andrew', text: "Rack 7 in the server room. A process that logged every officer who worked late. Sixteen thousand days. No requirement." },
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Forty-four years I kept the ledger. That machine kept a better one." },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "He picks up his mop. Wrings it once, with the grip of a man who has finished a sentence." },
     /* 15 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Some buildings keep pigeons. This one keeps receipts." },
     /* 16 */ { type: 'text', speaker: 'Narrator', text: "He goes back to work. He always goes back to work." },
-    /* 17 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_pattern', value: true, next: 18 },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'read_janitor_pattern', value: true },
     /* 18 */ { type: 'end' },
   ],
 
@@ -5115,7 +5115,7 @@ export const DIALOGS = {
   // The penthouse elevator rejects the charter; Skip calls; the Janitor
   // is suddenly there, the way he always is. Sets city_unlocked.
   charter_challenge: [
-    /* 0  */ { type: 'action', action: 'set_flag', flag: 'read_charter_challenge', value: true, next: 1 },
+    /* 0  */ { type: 'action', action: 'set_flag', flag: 'read_charter_challenge', value: true },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The elevator panel scans the 1947 charter for the second time, with the air of a machine double-checking something it already enjoyed rejecting once." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "SEAL NOT RECOGNIZED. FILING CHALLENGE LODGED — OUTSIDE COUNSEL, 9:14 AM. RESPONSE WINDOW CLOSES 5:00 PM." },
     /* 3  */ { type: 'text', speaker: 'Andrew', text: "It's the original charter. It's seventy-seven years old. What does it want, a receipt?" },
@@ -5124,13 +5124,13 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'Skip Hartley', text: "Legal says we need the Recorder or a living deputy to certify by five o'clock or the whole thing's decorative. Like a diploma. Or my title.", mood: 'worried' },
     /* 7  */ { type: 'text', speaker: 'Andrew', text: "Skip, the Recorder's office stopped sealing charters by hand decades ago. Where am I supposed to find a living deputy?", next: 18 },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "A mop, somewhere behind you, stops mopping." },
-    /* 9  */ { type: 'condition', flag: 'janitor_names_complete', ifTrue: 10, ifFalse: 12 },
+    /* 9  */ { type: 'condition', flag: 'janitor_names_complete', ifFalse: 12 },
     /* 10 */ { type: 'text', speaker: 'Andrew', text: "...Okafor. D. Okafor. Page in your ledger — 'eleven years, moved her desk fourteen times.' She was the Deputy Recorder, wasn't she." },
     /* 11 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Delia. 1981 to 2009. The building broke her. The city didn't. You'll find her where the city keeps its good ones.", next: 13 },
     /* 12 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Delia Okafor. Deputy Recorder, 1981 to 2009. The building broke her. The city didn't." },
     /* 13 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Don't have her address. The Hall of Records would — they keep records of their own people same as everyone's. Ask the Clerk. Bring patience. Not the stat. The real kind." },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "He produces a key you have never seen before and unlocks the garage's south door, which you have also never seen before. Daylight comes in like it's been waiting." },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'city_unlocked', value: true, next: 16 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'city_unlocked', value: true },
     /* 16 */ { type: 'text', speaker: 'Mysterious Janitor', text: "Fennimore Avenue. Hall of Records is north side. Watch out for parking enforcement — Reyes is having a good month.", next: 19 },
     /* 17 */ { type: 'end' },
     // ── STAGING (appended; routed to from 7 and 16) ─────────────────────────
@@ -5159,12 +5159,12 @@ export const DIALOGS = {
   // ── Hall of Records: the Form 11-C chain (Borges with a queue rope) ──
   // Janitor-riddle retry pattern: wrong form -> back of the queue, try again.
   records_clerk_form11c: [
-    /* 0  */ { type: 'condition', flag: 'form_11c_done', ifTrue: 16, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'form_11c_attempted', ifTrue: 5, ifFalse: 2 },
-    /* 2  */ { type: 'action', action: 'set_flag', flag: 'form_11c_attempted', value: true, next: 3 },
+    /* 0  */ { type: 'condition', flag: 'form_11c_done', ifTrue: 16 },
+    /* 1  */ { type: 'condition', flag: 'form_11c_attempted', ifTrue: 5 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'form_11c_attempted', value: true },
     /* 3  */ { type: 'text', speaker: 'The Clerk', text: "Welcome to the Hall of Records. The Hall contains all records. This is not a boast. It is a burden. State your request in the form of a form." },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "I'm looking for a person. Delia Okafor — she was the Deputy Recorder. I need her current filing address." },
-    /* 5  */ { type: 'text', speaker: 'The Clerk', text: "Personnel records of Recorder's-office personnel are themselves records, recorded by the recorded. To request the record of a recorder, you require...", next: 6 },
+    /* 5  */ { type: 'text', speaker: 'The Clerk', text: "Personnel records of Recorder's-office personnel are themselves records, recorded by the recorded. To request the record of a recorder, you require..." },
     /* 6  */ { type: 'choice', prompt: 'Which form?', choices: [
       { text: 'Form 11-C — Request for Records of Requests for Records', next: 9 },
       { text: 'Form 7-A — Request for Records', next: 7 },
@@ -5176,21 +5176,21 @@ export const DIALOGS = {
     /* 10 */ { type: 'text', speaker: 'Narrator', text: "The Clerk looks at you the way a librarian looks at someone returning a book early and undamaged. It is the warmest expression the Hall permits." },
     /* 11 */ { type: 'text', speaker: 'The Clerk', text: "Delia Okafor. Deputy Recorder, retired. No filing address on record — by her own request, filed correctly, which I respected enormously. However. Her lunch is a matter of public routine.", mood: 'smug' },
     /* 12 */ { type: 'text', speaker: 'The Clerk', text: "Lucky's, on Fennimore. Booth four. Twelve-ten to one-forty, daily, federal holidays included. She has the patty melt. The Hall does not record why." },
-    /* 13 */ { type: 'action', action: 'set_flag', flag: 'form_11c_done', value: true, next: 14 },
+    /* 13 */ { type: 'action', action: 'set_flag', flag: 'form_11c_done', value: true },
     /* 14 */ { type: 'action', action: 'give_xp', xp: 150, next: 17 },
     /* 15 */ { type: 'text', speaker: 'Narrator', text: "You go to the back of the queue. The queue is three feet long and entirely you. It still takes something out of you.", next: 17 },
-    /* 16 */ { type: 'text', speaker: 'The Clerk', text: "Booth four. Twelve-ten to one-forty. If she has moved to the counter, something is wrong with the world, and the Hall will want a memo.", next: 17 },
+    /* 16 */ { type: 'text', speaker: 'The Clerk', text: "Booth four. Twelve-ten to one-forty. If she has moved to the counter, something is wrong with the world, and the Hall will want a memo." },
     /* 17 */ { type: 'end' },
   ],
 
   // Optional: the deep stacks — the 1947 founding file
   deep_stacks_file: [
-    /* 0  */ { type: 'condition', flag: 'deep_stacks_done', ifTrue: 7, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'deep_stacks_done', ifTrue: 7 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The deep stacks. The light here is older. A drawer labeled 'CHARTERS — MUNICIPAL — 1947' slides open with the sound of a long exhale." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Inside: the founding file of Vaults Fargo Branch No. 1. Architect's drawings. A loan ledger. A photograph of nine people on marble steps, squinting into a future they look entirely unprepared for." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "On the back of the photograph, in fountain pen: 'First day. Nobody knew where anything was. We decided that whoever stayed would learn.'" },
     /* 4  */ { type: 'text', speaker: 'Andrew', text: "Whoever stayed would learn. Seventy-seven years and the job description hasn't changed once." },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'deep_stacks_done', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'deep_stacks_done', value: true },
     /* 6  */ { type: 'action', action: 'modify_stat', stat: 'def', amount: 2, next: 8 },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "The founding file rests. The nine people on the steps keep squinting at their future, which is now your present, which is somehow comforting and not.", next: 9 },
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "Some perspective settles into your shoulders and decides to stay. Composure +2. (+150... no. The perspective is the reward. Fine: also some XP.)", next: 10 },
@@ -5200,9 +5200,9 @@ export const DIALOGS = {
 
   // ── Lucky's: Delia, booth 4. The test. ──────────────────────────────
   delia_booth4: [
-    /* 0  */ { type: 'condition', flag: 'delia_moved', ifTrue: 20, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'met_delia', ifTrue: 6, ifFalse: 2 },
-    /* 2  */ { type: 'action', action: 'set_flag', flag: 'met_delia', value: true, next: 3 },
+    /* 0  */ { type: 'condition', flag: 'delia_moved', ifTrue: 20 },
+    /* 1  */ { type: 'condition', flag: 'met_delia', ifTrue: 6 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'met_delia', value: true },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Booth four. A woman with silver locs and reading glasses on a beaded chain is finishing a patty melt with the unhurried precision of someone who has outlasted every deadline that ever mattered." },
     /* 4  */ { type: 'text', speaker: 'Delia Okafor', text: "You're from the building." },
     /* 5  */ { type: 'text', speaker: 'Narrator', text: "It is not a question. You have not said anything. You are not wearing a name tag. She knows the way weather knows." },
@@ -5221,8 +5221,8 @@ export const DIALOGS = {
     /* 14 */ { type: 'text', speaker: 'Delia Okafor', text: "Didn't know. Knows now. That's the whole human condition in six words, and most people never get to the second half." },
     /* 15 */ { type: 'text', speaker: 'Delia Okafor', text: "I kept my seal. Seventeen years I kept it, oiled, wrapped, in the one place that building never thought to look — the FIRST branch. Box 0001. My mother banked there when they wouldn't let her bank most places." },
     /* 16 */ { type: 'text', speaker: 'Delia Okafor', text: "It's a coffee shop now. The Roastery. East end of Fennimore. The vault's still in the basement because marble doesn't take buyouts. I'll meet you there — I don't walk fast, but I walk certain." },
-    /* 17 */ { type: 'action', action: 'set_flag', flag: 'delia_moved', value: true, next: 18 },
-    /* 18 */ { type: 'action', action: 'give_xp', xp: 200, next: 19 },
+    /* 17 */ { type: 'action', action: 'set_flag', flag: 'delia_moved', value: true },
+    /* 18 */ { type: 'action', action: 'give_xp', xp: 200 },
     /* 19 */ { type: 'end' },
     /* 20 */ { type: 'text', speaker: 'Narrator', text: "Booth four sits empty. The waitress has already cleared it, but nobody has taken it. Nobody will for a while. Some booths are load-bearing.", next: 19 },
   ],
@@ -5238,7 +5238,7 @@ export const DIALOGS = {
 
   // The barista guards the basement (until Delia vouches)
   barista_vault: [
-    /* 0  */ { type: 'condition', flag: 'delia_moved', ifTrue: 3, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'delia_moved', ifTrue: 3 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "The barista — JULES, per a name tag with a hand-drawn bee on it — clocks you looking at the basement door." },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "\"Staff only. It's mostly oat milk and a very old vault down there. Yes, a real one. No, you can't.\"", next: 5 },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Jules nods you toward the basement door before you ask. \"Miss Delia called ahead. Door's open. Mind the third step — it predates the concept of safety.\"" },
@@ -5249,13 +5249,13 @@ export const DIALOGS = {
   // Box 0001 — the seal, and the ambush. has_recorder_seal chains to the
   // Firm fight via the flag-set listener in ExplorationState.
   vault_box_0001: [
-    /* 0  */ { type: 'condition', flag: 'has_recorder_seal', ifTrue: 9, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'delia_moved', ifTrue: 3, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'has_recorder_seal', ifTrue: 9 },
+    /* 1  */ { type: 'condition', flag: 'delia_moved', ifTrue: 3 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Deposit box 0001. The first box in the first vault. Whatever is in it has waited a long time and can keep waiting for someone with a key.", next: 10 },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "The brass key turns like it was oiled yesterday. Because, you realize, it effectively was — seventeen years of someone caring for a thing she never expected to use again." },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Inside: a bundle wrapped in newspaper dated March 2009. Within the newspaper, the Recorder's seal of the City — brass, embossing arm intact, heavy as a verdict." },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "Seventeen years. She kept it working for seventeen years for a day she didn't believe would come." },
-    /* 6  */ { type: 'action', action: 'set_flag', flag: 'has_recorder_seal', value: true, next: 7 },
+    /* 6  */ { type: 'action', action: 'set_flag', flag: 'has_recorder_seal', value: true },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "Behind you, three sets of identical footsteps descend the stairs in perfect synchronization, which is not a thing footsteps should be able to do." },
     /* 8  */ { type: 'end' },
     /* 9  */ { type: 'text', speaker: 'Narrator', text: "Box 0001 stands open and empty, except for the 2009 newspaper. The crossword is half-finished. In pen.", next: 8 },
@@ -5273,7 +5273,7 @@ export const DIALOGS = {
     /* 6  */ { type: 'text', speaker: 'The Firm', text: "—served." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "An envelope hits you mid-sentence. They served you DURING YOUR LINE. There is no lower thing a lawyer can do, and all three of them know it, and none of them care." },
     /* 8  */ { type: 'text', speaker: 'The Firm', text: "Surrender the seal. Our motion to quash your charter is calendared for five o'clock, and we bill travel time.", mood: 'smug' },
-    /* 9  */ { type: 'action', action: 'start_combat', encounter: 'the_firm', next: 10 },
+    /* 9  */ { type: 'action', action: 'start_combat', encounter: 'the_firm' },
     /* 10 */ { type: 'end' },
     // ── STAGING (appended; routed to from 0) ─────────────────────────────
     // "Behind you, three sets of identical footsteps descend the stairs." The
@@ -5303,7 +5303,7 @@ export const DIALOGS = {
     /* 1 */ { type: 'text', speaker: 'The Firm', text: "—left. Waiting is—" },
     /* 2 */ { type: 'text', speaker: 'The Firm', text: "—billable." },
     /* 3 */ { type: 'text', speaker: 'Narrator', text: "Three briefcases click open in unison. The seal isn't leaving this basement with anyone but you." },
-    /* 4 */ { type: 'action', action: 'start_combat', encounter: 'the_firm', next: 5 },
+    /* 4 */ { type: 'action', action: 'start_combat', encounter: 'the_firm' },
     /* 5 */ { type: 'end' },
   ],
 
@@ -5319,8 +5319,8 @@ export const DIALOGS = {
     /* 8  */ { type: 'text', speaker: 'Narrator', text: "Two seconds. After everything — the queue, the forms, the patty melt, the lawyers — it takes two seconds. Bureaucracy's final joke is that the right stamp was always this easy in the right hands." },
     /* 9  */ { type: 'text', speaker: 'Delia Okafor', text: "Witnessed and sealed, per Article 9, by the Recorder's living deputy. Let them calendar THAT.", mood: 'smug' },
     /* 10 */ { type: 'text', speaker: 'Delia Okafor', text: "Take it home, Andrew-who-knows-now. And tell the man with the mop... tell him Delia says the building doesn't win. It never did. It just takes the long way to lose." },
-    /* 11 */ { type: 'action', action: 'set_flag', flag: 'charter_certified', value: true, next: 12 },
-    /* 12 */ { type: 'action', action: 'give_xp', xp: 400, next: 13 },
+    /* 11 */ { type: 'action', action: 'set_flag', flag: 'charter_certified', value: true },
+    /* 12 */ { type: 'action', action: 'give_xp', xp: 400 },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "The charter is certified. The elevator is going to have to think of a new excuse." },
     /* 14 */ { type: 'end' },
   ],
@@ -5342,22 +5342,22 @@ export const DIALOGS = {
     ] },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "You walk away. The ticket follows you anyway, in spirit. Somewhere, a small fine accrues interest.", next: 6 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Reyes smiles for the first time in what the city's records would confirm is nine years." },
-    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'parking_enforcer', next: 6 },
+    /* 5  */ { type: 'action', action: 'start_combat', encounter: 'parking_enforcer' },
     /* 6  */ { type: 'end' },
   ],
 
   parking_enforcer_defeated: [
-    /* 0  */ { type: 'condition', flag: 'meter_war_2', ifTrue: 4, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'meter_war_1', ifTrue: 3, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'meter_war_2', ifTrue: 4 },
+    /* 1  */ { type: 'condition', flag: 'meter_war_1', ifTrue: 3 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "Reyes tears up the citation — slowly, into even quarters, filing each piece in a different pocket. \"Round one,\" she says. \"Nobody takes round one.\"", next: 7 },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "Reyes consults her ledger. \"Twice. Huh.\" She chalks a small, grudging mark on the curb. It might be respect. It is shaped like a tally.", next: 8 },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Reyes holsters the chalk. \"Three appeals upheld. You know what that makes you?\" She hands you a laminated card: HONORARY GRAY AREA. \"Park anywhere. I'll look away. Once.\"" },
-    /* 5  */ { type: 'action', action: 'set_flag', flag: 'meter_war_done', value: true, next: 6 },
+    /* 5  */ { type: 'action', action: 'set_flag', flag: 'meter_war_done', value: true },
     /* 6  */ { type: 'action', action: 'modify_stat', stat: 'spd', amount: 2, next: 10 },
     /* 7  */ { type: 'action', action: 'set_flag', flag: 'meter_war_1', value: true, next: 9 },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'meter_war_2', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'meter_war_2', value: true },
     /* 9  */ { type: 'action', action: 'give_xp', xp: 90, next: 11 },
-    /* 10 */ { type: 'text', speaker: 'Narrator', text: "Bureaucratic Efficiency +2. You have beaten city hall. Nobody beats city hall. Do not tell anyone, or everyone will want to.", next: 11 },
+    /* 10 */ { type: 'text', speaker: 'Narrator', text: "Bureaucratic Efficiency +2. You have beaten city hall. Nobody beats city hall. Do not tell anyone, or everyone will want to." },
     /* 11 */ { type: 'end' },
   ],
 
@@ -5370,43 +5370,43 @@ export const DIALOGS = {
       { text: '"...How adjacent?" (combat, but slower)', next: 3 },
     ] },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "It does not matter what you said. He heard 'tell me everything.' He is already sharing his screen. Outdoors. You must end this." },
-    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'networking_guy', next: 5 },
+    /* 4  */ { type: 'action', action: 'start_combat', encounter: 'networking_guy' },
     /* 5  */ { type: 'end' },
   ],
 
   networking_guy_defeated: [
     /* 0  */ { type: 'text', speaker: 'Narrator', text: "The Networking Guy concedes graciously. \"This was great. I'm going to mention you on the pod.\" The threat lands harder than any of his attacks did." },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Three days from now, you will receive a LinkedIn connection request with no note. You already know you will accept it. Everyone does. This is how he wins." },
-    /* 2  */ { type: 'action', action: 'give_xp', xp: 85, next: 3 },
+    /* 2  */ { type: 'action', action: 'give_xp', xp: 85 },
     /* 3  */ { type: 'end' },
   ],
 
   // ── Side: The 5:15 Crosstown ────────────────────────────────────────
   bus_driver_515: [
-    /* 0  */ { type: 'condition', flag: 'bus515_done', ifTrue: 12, ifFalse: 1 },
-    /* 1  */ { type: 'condition', flag: 'bus515_started', ifTrue: 10, ifFalse: 2 },
+    /* 0  */ { type: 'condition', flag: 'bus515_done', ifTrue: 12 },
+    /* 1  */ { type: 'condition', flag: 'bus515_started', ifTrue: 10 },
     /* 2  */ { type: 'text', speaker: 'Narrator', text: "The driver — MARLENE, per twenty-two years of service pins arranged like campaign medals — is parked, engine off, staring at the middle distance." },
     /* 3  */ { type: 'text', speaker: 'Narrator', text: "\"Twenty-two years,\" she says, to you or the windshield, \"this bus has never once been early. Late, sure. Early, never. Early is impossible. The 5:15 is a LAW.\"" },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "\"Today? Four minutes early. Every light on Fennimore went green at once. All nine of them. I checked my mirrors like something was chasing me.\"" },
     /* 5  */ { type: 'text', speaker: 'Andrew', text: "...Every light. At once. Toward the records hall, by any chance?" },
     /* 6  */ { type: 'text', speaker: 'Narrator', text: "\"Toward the records hall.\" Marlene looks at you properly for the first time. \"You're from that building, aren't you. The one downtown that's... you know.\" She makes a gesture that means 'alive' in every language." },
     /* 7  */ { type: 'text', speaker: 'Narrator', text: "\"Tell you what. My transfer ledger slid under seat 12 when I braked for the miracle. Fish it out for me and I'll consider the universe even.\"" },
-    /* 8  */ { type: 'action', action: 'set_flag', flag: 'bus515_started', value: true, next: 9 },
+    /* 8  */ { type: 'action', action: 'set_flag', flag: 'bus515_started', value: true },
     /* 9  */ { type: 'end' },
-    /* 10 */ { type: 'condition', flag: 'bus515_ledger_found', ifTrue: 13, ifFalse: 11 },
+    /* 10 */ { type: 'condition', flag: 'bus515_ledger_found', ifTrue: 13 },
     /* 11 */ { type: 'text', speaker: 'Narrator', text: "\"Seat 12. It's the one with the gum that's older than the gum under the other seats.\"", next: 9 },
     /* 12 */ { type: 'text', speaker: 'Narrator', text: "Marlene taps two fingers on the fare box — transit blessing. \"The 5:15 runs on time now. Exactly on time. I haven't decided how I feel about it.\"", next: 9 },
     /* 13 */ { type: 'text', speaker: 'Narrator', text: "You hand over the ledger. Marlene flips to today's page, where her own handwriting reads 4 MINUTES EARLY (?!), and underneath, in different ink she swears isn't hers: 'You're welcome. Go help him.'" },
     /* 14 */ { type: 'text', speaker: 'Narrator', text: "Neither of you says anything for a moment. The building has long arms. Marlene hands you two energy drinks from her cooler. \"For the road. His road, apparently.\"" },
-    /* 15 */ { type: 'action', action: 'set_flag', flag: 'bus515_done', value: true, next: 16 },
-    /* 16 */ { type: 'action', action: 'give_item', item: 'energy_drink', quantity: 2, next: 17 },
+    /* 15 */ { type: 'action', action: 'set_flag', flag: 'bus515_done', value: true },
+    /* 16 */ { type: 'action', action: 'give_item', item: 'energy_drink', quantity: 2 },
     /* 17 */ { type: 'action', action: 'give_xp', xp: 150, next: 9 },
   ],
 
   bus_transfer_ledger: [
-    /* 0  */ { type: 'condition', flag: 'bus515_ledger_found', ifTrue: 4, ifFalse: 1 },
+    /* 0  */ { type: 'condition', flag: 'bus515_ledger_found', ifTrue: 4 },
     /* 1  */ { type: 'text', speaker: 'Narrator', text: "Under seat 12: one transfer ledger, one petrified glove, and gum from an administration nobody misses. You take the ledger. Only the ledger." },
-    /* 2  */ { type: 'action', action: 'set_flag', flag: 'bus515_ledger_found', value: true, next: 3 },
+    /* 2  */ { type: 'action', action: 'set_flag', flag: 'bus515_ledger_found', value: true },
     /* 3  */ { type: 'end' },
     /* 4  */ { type: 'text', speaker: 'Narrator', text: "Just the glove and the gum now. They seem happy together.", next: 3 },
   ],
