@@ -136,6 +136,14 @@ export const COMBAT_DEPTH = {
   // Momentum decay per player turn under Escalation Clause / the Open-Door
   // Policy stretch goal. The report's named version of both.
   MOMENTUM_DECAY: 10,
+  // Press Advantage's price, hoisted out of `getPressAdvantageCost` so the
+  // balance harness can A/B it (`tools/_l-balance.mjs --cand F1`). Same two
+  // numbers as before — the cost is `max(FLOOR, BASE - floor((spd - 8) / 2))`.
+  // It is a CEILING-ONLY knob: combat-sim's CASUAL policy has no branch that
+  // calls Press Advantage, so moving it cannot reach the PIP floor. See the
+  // note above `getPressAdvantageCost` for what the price is buying.
+  PRESS_ADVANTAGE_BASE: 40,
+  PRESS_ADVANTAGE_FLOOR: 25,
 };
 
 // ── New Game+ ladder ────────────────────────────────────────────────────
@@ -1800,6 +1808,70 @@ export class CombatEngine {
     }
   }
 
+  // ── THE AGGRESSION FLOOR (`preferAttack`) ─────────────────────────────
+  // An authorable per-enemy chance that a turn which would otherwise have been
+  // chosen UNIFORMLY AT RANDOM out of the active phase's list is spent on a
+  // damaging move instead. It is INERT unless `ENEMY_AI_PATTERNS[id]` sets a
+  // `preferAttack` value: with no row, every branch below falls through to
+  // exactly the pick it made before, so authoring nothing is bit-identical to
+  // the shipped build.
+  //
+  // It exists because the balance diagnosis found the difficulty leaking out
+  // of the enemy's TURN QUALITY, not its damage numbers. Measured on the
+  // shipped build (`node tools/_l-balance.mjs --diag`), of the enemy turns that
+  // survived Objections and Composure, the share that dealt ZERO damage was
+  // 73.8% for Grandma, 50.7% for Meredith, 49.7% for the Algorithm and 49.6%
+  // for the trio — their phase lists are mostly heals, buffs, debuffs and
+  // stuns, and the picker draws from them flat. The `aggressive` pattern has
+  // had exactly this dial since it shipped (`preferAttack: 0.7`, which is why
+  // Chad reads 5.6% quiet); this generalises the same dial to the other four
+  // patterns rather than inventing a mechanic.
+  //
+  // `strategic` is the one that is also a BUG FIX. Its rotation lists were
+  // authored against an enemy's BASE `abilities` array, and the phase system
+  // then replaced that array per HP band — so `abilities.includes(pick)` is
+  // false for most of the fight (Meredith's phase-1 list has no
+  // `strategic_pivot`; the Director's phase-0 and phase-2 lists have no
+  // `market_correction` / `quarterly_target`) and the rotation silently
+  // degrades to a uniform random draw. That fallback is what this dial catches.
+  //
+  // TWO FIELDS, AND THE DIFFERENCE IS THE WHOLE POINT.
+  //   `preferAttack`        — unconditional. What `aggressive` has always had.
+  //   `escalateAfterDenial` — fires ONLY on a pick made while the enemy is
+  //                           owed a turn: `denialStreak > 0` (its last move
+  //                           fizzled, or it was Broken, stunned or blocked)
+  //                           or `sealed` (the Denial Tax is about to pay it
+  //                           back). This is THE ESCALATION RESPONSE.
+  //
+  // The gate is not decoration, it is the entire safety argument. Measured
+  // (`node tools/_l-balance.mjs --diag`), the CASUAL policy denies **0.0%** of
+  // enemy turns on every solo rung — it lands no tagged hit, so it clears no
+  // Objection, and it never Braces or Breaks — so a `escalateAfterDenial` row
+  // is unreachable for the player the Performance Improvement Plan exists for.
+  // An UNGATED `preferAttack` is not: authored at 0.55 on Grandma it cost the
+  // casual floor **31.6 pp** at grandma@8 / PIP 20%. The fiction is the same
+  // one the Denial Tax already ships ("Escalated to Committee"): the move you
+  // objected away comes back as the thing there is no objection to.
+  //
+  // Called from `_pickEnemyAbility`, which runs inside `telegraph()` on the
+  // PLAYER'S turn — i.e. after the denial has been recorded and before
+  // `_clearDenial` runs, which happens only when the enemy actually acts.
+  _attackFallback(abilities, pattern, enemy) {
+    if (!pattern) return null;
+    const owed = !!(enemy && ((enemy.denialStreak || 0) > 0 || enemy.sealed));
+    const pref = Math.max(
+      pattern.preferAttack || 0,
+      owed ? (pattern.escalateAfterDenial || 0) : 0,
+    );
+    if (!pref || Math.random() >= pref) return null;
+    const atks = abilities.filter((id) => {
+      const a = ENEMY_ABILITIES[id];
+      return a && (a.type === 'attack' || a.type === 'dot' || a.type === 'summon');
+    });
+    if (atks.length === 0) return null;
+    return atks[Math.floor(Math.random() * atks.length)];
+  }
+
   _pickEnemyAbility(enemy) {
     // The Pivot resolves before the move is chosen, so the phase message, the
     // telegraph and the HUD's `COMPOSURE — X ONLY` all agree on the same frame.
@@ -1824,7 +1896,7 @@ export class CombatEngine {
 
     switch (pattern.pattern) {
       case 'random':
-        return this._pickRandom(abilities, true, enemy);
+        return this._attackFallback(abilities, pattern, enemy) || this._pickRandom(abilities, true, enemy);
 
       case 'escalating': {
         const seq = pattern.sequence || [];
@@ -1833,7 +1905,10 @@ export class CombatEngine {
           enemy.abilityIndex++;
           if (abilities.includes(pick)) return pick;
         }
-        if (pattern.randomAfter) return abilities[Math.floor(Math.random() * abilities.length)];
+        if (pattern.randomAfter) {
+          return this._attackFallback(abilities, pattern, enemy)
+            || abilities[Math.floor(Math.random() * abilities.length)];
+        }
         const last = seq[seq.length - 1];
         return abilities.includes(last) ? last : abilities[Math.floor(Math.random() * abilities.length)];
       }
@@ -1868,7 +1943,8 @@ export class CombatEngine {
           });
           if (debuffAbilities.length > 0) return debuffAbilities[Math.floor(Math.random() * debuffAbilities.length)];
         }
-        return abilities[Math.floor(Math.random() * abilities.length)];
+        return this._attackFallback(abilities, pattern, enemy)
+          || abilities[Math.floor(Math.random() * abilities.length)];
       }
 
       case 'rotation': {
@@ -1883,12 +1959,16 @@ export class CombatEngine {
         if (enemy.abilityIndex < p1.length) {
           const pick = p1[enemy.abilityIndex];
           enemy.abilityIndex++;
-          return abilities.includes(pick) ? pick : abilities[Math.floor(Math.random() * abilities.length)];
+          if (abilities.includes(pick)) return pick;
+          return this._attackFallback(abilities, pattern, enemy)
+            || abilities[Math.floor(Math.random() * abilities.length)];
         }
         const p2Index = (enemy.abilityIndex - p1.length) % p2.length;
         enemy.abilityIndex++;
         const pick = p2[p2Index];
-        return abilities.includes(pick) ? pick : abilities[Math.floor(Math.random() * abilities.length)];
+        if (abilities.includes(pick)) return pick;
+        return this._attackFallback(abilities, pattern, enemy)
+          || abilities[Math.floor(Math.random() * abilities.length)];
       }
 
       case 'chaotic': {
@@ -1900,11 +1980,12 @@ export class CombatEngine {
           if (noRepeat.length > 0) pool = noRepeat;
         }
         if (pool.length === 0) pool = abilities;
-        return pool[Math.floor(Math.random() * pool.length)];
+        return this._attackFallback(pool, pattern, enemy)
+          || pool[Math.floor(Math.random() * pool.length)];
       }
 
       default:
-        return this._pickRandom(abilities, true, enemy);
+        return this._attackFallback(abilities, pattern, enemy) || this._pickRandom(abilities, true, enemy);
     }
   }
 
@@ -2199,7 +2280,10 @@ export class CombatEngine {
   // i.e. roughly every third turn — tempo, not a free extra action every turn.
   getPressAdvantageCost() {
     const spd = this._getEffective(this.player).spd;
-    const base = Math.max(25, 40 - Math.floor((spd - 8) * 0.5));
+    const base = Math.max(
+      COMBAT_DEPTH.PRESS_ADVANTAGE_FLOOR,
+      COMBAT_DEPTH.PRESS_ADVANTAGE_BASE - Math.floor((spd - 8) * 0.5),
+    );
     // AGGRAVATING FACTORS (E10): -10, floored at 15.
     return this.hasNode('aggravating_factors') ? Math.max(15, base - 10) : base;
   }

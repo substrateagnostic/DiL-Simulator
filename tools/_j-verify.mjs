@@ -48,7 +48,7 @@ function treeOrder(track) {
     .sort((x, y) => (x[1].depth ?? 99) - (y[1].depth ?? 99))
     .map(([id, a]) => [id, a.upgradePointCost, a.tier]);
 }
-const TREES = {
+export const TREES = {
   shipped: { label: 'SHIPPED (control)', order: null },   // resolved below
   litigation: { label: PRACTICE_GROUPS.litigation.name, order: treeOrder('litigation') },
   compliance: { label: PRACTICE_GROUPS.compliance.name, order: treeOrder('compliance') },
@@ -63,7 +63,7 @@ TREES.shipped.order = [
 ];
 
 /** Nodes owned at `level`, spending 1 point per level-up, under the tier gate. */
-function buildUnlocked(treeId, level, opts = {}) {
+export function buildUnlocked(treeId, level, opts = {}) {
   const s = new Set(STARTERS);
   let points = Math.max(0, level - 1) + (opts.extraPoints || 0);
   for (const [id, cost, tier] of TREES[treeId].order) {
@@ -81,7 +81,7 @@ function buildUnlocked(treeId, level, opts = {}) {
 }
 
 // ── INSTRUMENTATION (counts only; changes nothing) ──────────────────────
-function instrument(engine, st) {
+export function instrument(engine, st) {
   const wrap = (name) => {
     const real = engine[name].bind(engine);
     engine[name] = (...a) => {
@@ -407,7 +407,7 @@ function auditTurn(engine, sim, unlocked) {
   takeTurnBack(engine, sim, unlocked, ti);
 }
 
-const POLICIES = {
+export const POLICIES = {
   shipped: (e, s, u) => { competentTurn(e, s, u); takeTurnBack(e, s, u, pickTargetIndex(e)); },
   litigation: litigationTurn,
   compliance: complianceTurn,
@@ -461,16 +461,24 @@ function batch(encId, level, treeId, runs, opts = {}) {
 // the shipping ladder (combat-sim's own LADDER passes it explicitly), and
 // running them SOLO measures a fight the game never serves — it read 41% win /
 // 18.5 rounds against the ladder's 100% / 4.5.
-const PARTY = { regional_director: ['janet', 'isaiah'], algorithm: ['janet', 'isaiah'] };
-const LADDER = [
+export const PARTY = { regional_director: ['janet', 'isaiah'], algorithm: ['janet', 'isaiah'] };
+export const LADDER = [
   ['karen', 3], ['karen', 4], ['chad', 5], ['chad', 6], ['grandma', 7], ['grandma', 8],
   ['restructuring_trio', 7], ['restructuring_trio', 8], ['meredith_boss', 8], ['meredith_boss', 9],
   ['regional_director', 10], ['algorithm', 10],
 ];
 
-async function main() {
+// Exported so tools/_l-balance.mjs can wire the same telegraph-power lookup the
+// lane policies read. Without it `ENEMY_POWER` returns null and every policy
+// stops Bracing — which measures a player this game does not have.
+export async function initEnemyAbilities() {
   const { ENEMY_ABILITIES } = await import('../src/data/stats.js');
   _ENEMY_ABILITIES = ENEMY_ABILITIES;
+  return ENEMY_ABILITIES;
+}
+
+async function main() {
+  await initEnemyAbilities();
 
   if (has('points')) {
     console.log('\n=== THE BUDGET (shipped data, derived) ===');
@@ -641,4 +649,9 @@ async function main() {
   }
 }
 
-main();
+// Importable: tools/_l-balance.mjs reuses TREES / POLICIES / instrument so the
+// balance lane measures the same shipped trees this file verifies, rather than
+// a second copy that can drift from it.
+const _isMain = process.argv[1]
+  && import.meta.url.endsWith(process.argv[1].split(/[\\/]/).pop());
+if (_isMain) main();
