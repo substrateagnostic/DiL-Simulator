@@ -37,7 +37,8 @@ Denial Tax seal at one denial instead of two**, **Press Advantage repriced 40 �
 **1.24 pp** against an instrument whose own null arm is **1.12 pp**, and it
 is the only candidate set tested that does. The brief's premise that *"every ENEMY buff is
 casual-safe"* is **false and now measured**: a flat +15 % on boss ability power moves the
-floor **12.16 pp, 21 cells down and 0 up, worst cell −22.1 pp**. Two costs are declared
+floor **12.13 pp, 21 cells down and 0 up, worst cell −23.2 pp** — and still leaves eleven
+of twelve rungs outside the requested win band. Two costs are declared
 rather than buried: the Practice-Group diversity band widens (**6.5 pp -> 16.5 pp**), all of it
 Audit, and NG+ gets harder (`ng-sim`: `algorithm@NG+3` 68.5 % -> 48.0 %). And the honest answer to the requested
 70–85 % win band is **no, not at a price this game can pay** — §7 shows what reaching it
@@ -106,15 +107,18 @@ limits of an n = 3 capture, are in §7.1.
 
 Verified, and it is the opposite of the law. H-run §4.1 says: *"The CASUAL policy never
 uses a tagged ability… Every HP/ATK knob therefore lands entirely on the PIP floor."*
-This run reproduces it at higher resolution. `--pip --runs 1500`, the same 21 cells the
-J-run defended, boss ability power **× 1.15** on top of the rest of the proposal:
+This run reproduces it at higher resolution. `node tools/_l-balance.mjs --pip --runs 1500
+--cand A15` (`PIP-A15.txt`) — the same 21 cells the J-run defended, THE PROPOSAL plus
+boss ability power **× 1.15**, the cheapest lever the brief asked for first:
 
 | | mean \|Δ\| | signed mean | worst cell | direction |
 |---|---|---|---|---|
-| **null arm** (baseline measured twice) | 1.15 pp | +0.13 pp | +3.6 pp | 9 down / 12 up |
-| **boss power × 1.15** | **12.16 pp** | **−12.16 pp** | **−22.1 pp** | **21 down / 0 up** |
+| **null arm** (baseline measured twice, same run) | 1.24 pp | +0.17 pp | −3.7 pp | 6 down / 14 up |
+| **THE PROPOSAL** (`PIP-final.txt`, its own null 1.12 pp) | 1.24 pp | −0.40 pp | −6.2 pp | 11 down / 9 up |
+| **THE PROPOSAL + boss power × 1.15** | **12.13 pp** | **−12.13 pp** | **−23.2 pp** | **21 down / 0 up** |
 
-Twenty-one cells, twenty-one of them down. That is not a difficulty knob landing on the
+Twenty-one cells, twenty-one of them down. `grandma@7 / PIP 20 %` goes **38.3 % → 18.1 %**
+and `karen@4 / PIP 0 %` goes **48.0 % → 24.8 %**. That is not a difficulty knob landing on the
 ceiling; it is a tax collected in full from the player the Performance Improvement Plan
 exists for. **Every enemy-stat lever in the brief's "cheapest first" list is rejected on
 this table**, and the triage behind it (`_triage-ladder.txt`) shows why it would not even
@@ -151,7 +155,7 @@ outside the null (§4), and it is named for that reason.
 
 ## 3. THE PROPOSAL
 
-Four components. Three files, seventeen changed lines.
+Four components. Three files: the diff adds **15** lines and rewrites **3**.
 
 | # | component | where | what |
 |---|---|---|---|
@@ -188,7 +192,7 @@ take away are unchanged.**
 | A1/A2 | boss ability power × 1.20 / × 1.35 | ×1.35 → karen@4 **53.2 % win** while grandma@8 stays 99.6 % | **CUT.** A flat multiplier on a ladder whose TTK gaps differ 6× breaks the tutorial before it touches the problem. And it is paid by the floor (§2). |
 | A3 | boss ATK + 25 % | grandma@8 dmg/T **3.98 → 3.61** (i.e. nothing) | **CUT.** Her damage was never the constraint. |
 | B1 | `LOCK_PARTIAL_REDUCTION` 0.30 → 0.18 | dmg/T ± 0.5 everywhere | **CUT.** Free, and worth nothing. |
-| **B2** | two tags on the 26–33 power haymakers | grandma HP-left −5 pp, **top-tag 49.7 % → 60.8 %** | **CUT, and this is the interesting one.** It worked. A haymaker demanding two tags is unclearable by a solo Andrew, so the policy stops spending tagged hits on Objections and just presses the printed weakness — buying turn count with **monotony**, which is the exact number the J-run's Pivot was built to lower. Not for sale at that price. |
+| **B2** | two tags on the 26–33 power haymakers | grandma HP-left −5 pp, **top-tag 49.7 % → 60.8 %** *(measured on the pre-fix package, `_p8-lanes.txt` vs `_final-lanes.txt`; not re-run after the ordering fix)* | **CUT, and this is the interesting one.** It worked. A haymaker demanding two tags is unclearable by a solo Andrew, so the policy stops spending tagged hits on Objections and just presses the printed weakness — buying turn count with **monotony**, which is the exact number the J-run's Pivot was built to lower. Not for sale at that price. **Stated as the reason for a CUT, not as a shipped number** — it was measured before §3.1's ordering fix and would need re-running if anyone wants to revive it. |
 | D1 | boss `maxHP` × 1.25 | karen HP-left 72.8 → **76.0 %**, Director 76.1 → **79.3 %**, dmg/T **down** | **CUT, and it confirms H-run §4.** A bigger health bar on a boss that is being denied its turns does not make it dangerous; it makes the fight longer while the boss still does not hit you. |
 | E1/E2 | **ungated** `preferAttack` (0.55 / 0.35) | PIP mean 9.12 pp, **−31.6 pp at grandma@8 / PIP 20 %** | **CUT — and it is why E3 is gated.** This is the same dial without the denial gate. It is published here because the difference between E1 and E3 is the entire safety argument, and it was found by the gate rather than by reasoning. |
 
@@ -283,20 +287,26 @@ than its own null is not a gate.
 |---|---|---|---|---|---|
 | **NULL ARM** | 1.12 pp | −0.32 pp | −2.8 pp | 11 down / 9 up | resolution |
 | **THE PROPOSAL** | **1.24 pp** | **−0.40 pp** | −6.2 pp | **11 down / 9 up** | **PASS — inside the null** |
-| *(rejected)* boss power × 1.15 | 12.16 pp | −12.16 pp | −22.1 pp | 21 down / 0 up | FAIL |
+| *(rejected)* + boss power × 1.15 | 12.13 pp | −12.13 pp | −23.2 pp | 21 down / 0 up | FAIL |
 
-**Eighteen of the twenty-one cells sit inside the instrument's own null**, and the
-direction is a coin flip. Excluding the Algorithm rows the mean is **1.32 pp** against a
-null of 1.12 and the signed mean is **−0.18 pp** — flat.
+**Twenty of the twenty-one cells move less than the largest single-cell move the NULL ARM
+itself produced (−2.8 pp)**, and the direction is a coin flip (11 down / 9 up). Excluding
+the three Algorithm cells entirely, the remaining eighteen read mean \|Δ\| **0.91 pp**,
+signed mean **+0.07 pp**, 8 down / 9 up — flat, and *below* the null's own 1.12 pp.
 
-**The three cells that are not noise are all the Algorithm, and the mechanism is named,
-not hand-waved.** That fight stages Janet and Isaiah, and *the allies* land tagged hits
+**The one cell that is not noise is `algorithm@10 / PIP 0 %` at −6.2 pp, and the
+mechanism is named rather than hand-waved.** That fight stages Janet and Isaiah, and
+*the allies* land tagged hits
 on a casual player's behalf: it is the only encounter in the game where CASUAL denies any
 enemy turn at all (**6.1 %**; every solo rung reads 0.0 %). The denial pricing therefore
 reaches the floor there and only there. The affected cell reads **81.0 % at zero deaths**,
 which is the highest-margin cell in the table and still inside the documented 40–85 %
-band. The `regional_director`, the other party fight, shows no such effect (+3.1 / +0.2 /
-+0.6 in the pre-fix pass, −0.3 / −1.2 / +0.3 here) because its allies clear fewer locks.
+band. The `regional_director` — the game's other party fight, with the same two allies —
+shows **no** such effect (−0.3 / −1.2 / +0.3, all inside the null). **Why the two party
+fights differ is not measured and is not claimed here.** The plausible reading is that the
+Algorithm's kit carries more lockable moves for the allies to clear, but that is a
+hypothesis, not a result, and it is the first thing to check if this cell is ever
+tightened.
 
 **Sized mitigation, untested, offered rather than assumed:** dropping the
 `escalateAfterDenial` row from `algorithm` alone is one line and would remove one of the
@@ -396,10 +406,13 @@ second signature.
 ### 6.5 A correction to my own instrument, published
 
 `tools/_l-balance.mjs --ng` runs the LEVEL-CURVE kit on an NG+ lap — a player the game
-never produces, since NG+ returns every ability and the AUM to rebuy every upgrade. It
-read `meredith@NG+2` at **1.5 %** where `ng-sim` reads **77.5 %** on the same package.
-The mode is kept, relabelled, and now prints that warning at the top of its own output.
-**Every NG+ claim in this document is from `ng-sim`.**
+never produces, since NG+ returns every ability and the AUM to rebuy every upgrade. On an
+early version of this package it read `meredith@NG+2` at **1.5 %** (`_final-ng.txt`),
+which would have been a wall; `ng-sim`, the purpose-built instrument, reads **77.5 %** on
+the shipped-code version of the same package. The two runs are not the same arm — the
+point is the **order-of-magnitude** disagreement between the two harnesses, not the pair
+of numbers. The mode is kept, relabelled, and now prints that warning at the top of its
+own output. **Every NG+ claim in this document is from `ng-sim`.**
 
 ---
 
@@ -408,11 +421,13 @@ The mode is kept, relabelled, and now prints that warning at the top of its own 
 The brief asks for competent at-level win rates of 70–85 % on story bosses. The proposal
 delivers **90.0 – 100 %**. That gap is deliberate and here is the argument.
 
-**1. It was measured, and the bill is on the wrong account.** `P7` — this proposal plus
-boss ability power × 1.15 — reaches 75.8 – 99.8 %. It costs the PIP floor **12.16 pp
-across 21 cells, 21 down and 0 up, worst cell −22.1 pp**, which is the one constraint the
-brief made non-negotiable. Pushing further (× 1.30) reaches 64.0 – 99.8 % and takes
-`grandma@7 / PIP 20 %` from 37.7 % to **0.2 %**.
+**1. It was measured, the bill is on the wrong account, AND IT STILL DOES NOT GET THERE.**
+`A15` — this proposal plus boss ability power × 1.15 — costs the PIP floor **12.13 pp
+across 21 cells, 21 down and 0 up, worst cell −23.2 pp** (`PIP-A15.txt`), which is the one
+constraint the brief made non-negotiable. And for that price it reaches **83.0 – 99.8 %**
+(`LADDER-A15.txt`): **exactly one rung of twelve** (`meredith_boss@8`, 83.0 %) lands in
+the requested band, while eight of the other eleven are still above 94 %. You cannot buy
+the 70–85 % band with the floor's money, because the floor's money does not buy it.
 
 **2. A uniform knob cannot produce a uniform band on this ladder.** The TTK gaps in §1
 span **7.5 to 45.1** — a factor of six. Any multiplier moves all of them by the same
