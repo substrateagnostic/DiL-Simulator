@@ -454,8 +454,14 @@ export const CANDIDATES = {
   // lengthens fights, and a longer fight is exactly what the Audit lane's
   // Findings ramp is worst at — the diversity band's worst cell under P8 is
   // Audit on Meredith. 48 is the smallest step that is still a step.
+  // The refutation arm: THE PROPOSAL plus the cheapest lever the brief asked
+  // for first. It exists to price the brief's premise, not to be shipped.
+  A15: {
+    label: 'A15  THE PROPOSAL + boss ability power x1.15  [the brief\'s premise, priced]',
+    apply: (c) => { CANDIDATES.P8.apply(c); scaleBossPower(c, 1.15); },
+  },
   P9: {
-    label: 'P9  THE PROPOSAL  = E3 + B3 + F1(48) + C1',
+    label: 'P9  P8 with a gentler Press Advantage (48)',
     apply: (c) => {
       CANDIDATES.E3.apply(c);
       CANDIDATES.B3.apply(c);
