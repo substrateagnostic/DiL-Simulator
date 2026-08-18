@@ -1,3 +1,32 @@
+## [RESUME HERE — 08-18, the wave is MERGED]
+
+**Main advanced 62cfc52 → d5d4f7e and pushed (Vercel live).** Every lane of the
+six-lane evening landed, was judged, packet-surfaced, and merged in one coherent
+advance: constants flip (d964b81), Audit-on-Hard (7d1b7b5/412628c), slider screen
+(0d27c05), Janet's quiz (e767a01), **trait perks LIVE** (d9d420b — Alex cosigned
+the packet 08-18; `TRAIT_PERKS_LIVE = true`), the exploration bob fix (a7ee375),
+the wardrobe mirror + Alex's three notes (5a603e9 + fe1e2e7 — half-lit
+fluorescent, caption cut, Fitting Room menu reuse), and the collision ghost
+sweep (d5d4f7e). Producer decisions recorded this session:
+- Seed 3 stands provisionally — **needs Alex's own Hard/Audit playtest**
+  (`.claude/plans/n-run/SEED-DECISION.md`); Hard warning label stays cut.
+- Skill-check seed FILED, not scheduled: `.claude/plans/ch2/SKILL-CHECK-SEED.md`
+  (trait-keyed dialog checks, visible fails, S2 heist tie-in; needs per-arm
+  `ask` conditions in the compiler — wants a quiet tree + own lane).
+- AWAITING Alex: day-one "Temporary Visitor Badge (+1 DEF)" starter cosmetic
+  (drafted, dark — BADGE slot is empty until `bestiary_intern`).
+- Filed forward (judge-found, sub-threshold, unfixed): loungeBar 1-row footprint
+  vs 3.15 m mesh (3 rooms), board-room credenza legacy 1×3 rows, Lucky's
+  run-end tiles. Plus the standing NG+ × Hard re-tune bill and the Persona
+  attack-feel re-judge.
+- **NEW REMOTE BRANCH `origin/Andrew` appeared 08-18** — surfaced to Alex,
+  untouched. Ask him what Andrew is building.
+- Ops: `npm run gate:ghost` is a MANUAL gate (65–110 s, headed) — run after any
+  collision change, beside `_g-wall-census`. 193 furniture placements moved
+  ~half a tile in the ghost merge; if a room reads differently, look there
+  first. `old_vault` had been unreachable since ship (stair outside the
+  movement clamp) — fixed in d5d4f7e.
+
 ## [THE COLLISION GHOST SWEEP — 08-18 (Fable 5, ghost lane, resumed)]
 
 Your two reports — the bathroom stalls you could only get into from behind,
