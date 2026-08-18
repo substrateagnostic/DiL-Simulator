@@ -108,6 +108,55 @@ const GESTURES = {
   ]},
 };
 
+// ── THE WHOLE-BODY SETTLE (the idle/walk bob) ───────────────────────────────
+// A character group has FAR more direct children than the four the old
+// `_breathe` list knew about. `buildCharacter` adds, all at the same level as
+// the torso: the two legs, a dowager HUMP, a PELVIS, a SKIRT and a RISE, the
+// blob shadow, any group-level cosmetic prop — and the STATIC DRESSING NODE,
+// which owns the NECK COLUMN, the collar, the shirt V, the tie and the belt.
+// `CombatScene` adds a bounce card and an AO ellipse on top of that.
+//
+// v7 round-4b (52eace4) correctly killed the squash & stretch and moved the
+// breath to ONE offset — applied to torso + head + arms. That is four of
+// eleven. Measured on the shipping EXPLORATION path (tools/_bb-probe.mjs, the
+// per-child shear table):
+//     idle   body/head/arms travel  39.99 mm  ·  every other child 0.00 mm
+//     walk   body/head/arms travel 119.49 mm  ·  every other child 0.00 mm
+// i.e. the jacket shell, the head and the arms slid up and down off a neck
+// column and a collar that stayed bolted to the pelvis — up to 23.9 % of torso
+// height, twice a second, once per step. That is the producer's "full body bob
+// that distorts the neck/clothing" (2026-08-15), and it is a CLASS of bug, not
+// an instance: any node the builder adds tomorrow is one more to forget.
+//
+// So the offset is applied to EVERY child. That is whole-group motion and it
+// cannot shear by construction. It is done child-by-child rather than on
+// `group.position.y` DELIBERATELY: that field is owned by `Player.move`'s
+// terrain lerp — which reads its own previous output — and by NPC patrol,
+// StageDirector and CombatScene's entry slide. A bob written there feeds back
+// into the lerp, and the walking player sinks to the -0.06 SINK_TOLERANCE
+// floor and stays there.
+//
+// SINK-ONLY, never a rise: the offset runs 0 → -A, so a planted foot can never
+// leave the floor. The travel hides inside the sole; a rise of the same size
+// reads as hovering at the closest camera in the game (the New Game desk
+// vignette). `ANIM.IDLE_BOUNCE` / `ANIM.WALK_BOUNCE` are the OLD shear
+// amplitudes and are no longer read by anything — this is a different quantity
+// (whole-body ground clearance, not torso-against-pelvis shear), so its dials
+// live here.
+const ROOT_SETTLE_IDLE = 0.014;   // m — one quiet breath, whole body
+const ROOT_SETTLE_WALK = 0.034;   // m — centre-of-mass dip at full stride
+
+// Ground décor is pinned to the FLOOR, not to the body: `CharacterBuilder`'s
+// `blobShadow` and `CombatScene`'s bounce card + AO contact ellipse. A contact
+// shadow that lifts with the figure is exactly what makes body motion read as
+// hovering. The test is GEOMETRIC — a flat plane lying in the floor plane — so
+// a fourth one needs no new list to be written.
+function isGroundDecor(o) {
+  return (o.userData && o.userData.blobShadow === true)
+    || (o.isMesh && o.geometry && o.geometry.type === 'PlaneGeometry'
+      && Math.abs(o.rotation.x + Math.PI / 2) < 0.01);
+}
+
 // Blend two poses (linear).
 function lerpPose(a, b, k) {
   const o = {};
@@ -232,21 +281,36 @@ export class CharacterAnimator {
   setCombatMode(on) {
     this.bobScale = on ? 0.35 : 1;
     if (!on) return;
-    this._breathe(0);
+    this._settleBody(0);
   }
 
-  // ONE offset, applied to the whole upper body (torso + both arms + head) so
-  // nothing that shares a seam moves relative to anything else. The legs stay
-  // planted; the only join that opens is hip-to-hem, which the jacket hem already
-  // overlaps by construction.
-  _breathe(dy) {
-    for (const n of [this.group.body, this.group.head, this.group.leftArm, this.group.rightArm]) {
-      if (!n) continue;
-      if (n.userData.baseY == null) n.userData.baseY = n.position.y;
-      n.position.y = n.userData.baseY + dy;
+  // ONE offset, applied to EVERY child of the character group except the
+  // ground décor — see THE WHOLE-BODY SETTLE above. Nothing that shares a seam
+  // can move relative to anything else, because nothing moves relative to
+  // anything else at all.
+  _settleBody(dy) {
+    for (const n of this.group.children) {
+      if (isGroundDecor(n)) continue;
+      if (n.userData.bobBaseY == null) n.userData.bobBaseY = n.position.y;
+      n.position.y = n.userData.bobBaseY + dy;
     }
-    // belt-and-braces: any scale a previous build of this code left on the shell
+    // belt-and-braces: no scale-based squash may ever come back on the shell.
+    // On a v7 build `group.body` IS the whole merged torso and the arms, neck
+    // and head are its SIBLINGS, so scaling it 3.6 % in y pulled the shell out
+    // from under the shoulder and the collar every cycle.
     if (this.group.body && this.group.body.scale.y !== 1) this.group.body.scale.set(1, 1, 1);
+  }
+
+  // The settle curve. Sink-only (0 → A) so a foot never leaves the floor.
+  //   idle: one dip per breath — 2π/IDLE_SPEED ≈ 3.1 s ≈ 19 breaths/min.
+  //   walk: TWO dips per stride, deepest at full stride and level at the pass,
+  //         which is where a walking body actually puts its centre of mass.
+  //         The old bob ran at ONE dip per stride and in phase with the leg
+  //         swing, i.e. it lifted the body exactly when a real one drops.
+  _settleAmount(ta) {
+    return this.isWalking
+      ? ROOT_SETTLE_WALK * (1 - Math.cos(2 * ta)) / 2
+      : ROOT_SETTLE_IDLE * (1 - Math.cos(ta)) / 2;
   }
 
   update(dt) {
@@ -293,24 +357,24 @@ export class CharacterAnimator {
       // Arms rest slightly forward
       if (this.group.leftArm)  this.group.leftArm.rotation.x  = 0.2;
       if (this.group.rightArm) this.group.rightArm.rotation.x = 0.2;
-      // Subtle seated breath — whole upper body, one offset (see _breathe).
-      this._breathe(Math.sin(t * ANIM.IDLE_SPEED) * ANIM.IDLE_BOUNCE * this.bobScale);
+      // Subtle seated breath — the WHOLE body settles into the chair by one
+      // offset (see _settleBody). The seated hip drop above is an absolute
+      // write to `group.position.y`; the settle rides the children, so the two
+      // never fight.
+      this._settleBody(-this._settleAmount(t * ANIM.IDLE_SPEED) * this.bobScale);
       this._updateFacing(dt);
       return;
     }
 
     const speed = this.isWalking ? ANIM.WALK_SPEED : ANIM.IDLE_SPEED;
-    const bounce = this.isWalking ? ANIM.WALK_BOUNCE : ANIM.IDLE_BOUNCE;
     const ta = t * speed;
 
-    // Breathing — see _breathe. NO squash & stretch: on a v7 build `group.body`
-    // is the ENTIRE merged torso shell and the arms, neck and head are its
-    // SIBLINGS, so scaling it 3.6% in y and 1.8% in x/z pulled the shell out
-    // from under the shoulder and the collar every idle cycle. That is the
-    // producer's "the bobbing body-morph is deforming the v7 bodies out of
-    // shape in fights". A v4 body was a small box with nothing seamed to it, so
-    // the same code was free there and is not free now.
-    this._breathe(Math.sin(ta) * bounce * this.bobScale);
+    // The bob — see THE WHOLE-BODY SETTLE. NO squash & stretch and NO partial
+    // upper-body offset: on a v7 build `group.body` is the ENTIRE merged torso
+    // shell and the arms, the head AND the neck/collar/tie node are its
+    // SIBLINGS, so moving a subset of them shears the figure at whatever seam
+    // the subset stops at. Every child moves or none does.
+    this._settleBody(-this._settleAmount(ta) * this.bobScale);
 
     // Blink — eyes squeeze shut for ~0.12s every few seconds
     if (this.group.leftEye && this.group.rightEye) {
@@ -332,8 +396,10 @@ export class CharacterAnimator {
     this.group.rotation.x += newLean - this._appliedLean;
     this._appliedLean = newLean;
 
-    // (the head rides the same offset as the torso — a phase-shifted head bob
-    //  tore the neck open on every cycle now that the neck is a lit column)
+    // (the head rides the same offset as everything else — a phase-shifted head
+    //  bob tore the neck open on every cycle now that the neck is a lit column,
+    //  and a head that moves while the neck node does NOT is the same bug with
+    //  the phase set to 1)
 
     // Leg swing
     if (this.isWalking) {
