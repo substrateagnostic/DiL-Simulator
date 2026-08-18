@@ -18,7 +18,7 @@
 //     page. Old saves have none, and every trait-conditional line falls back
 //     to the original line by construction — the flags are ADDITIVE on saves,
 //     and all three are carried in SaveManager's FLAGS_OF_RECORD.
-export const TRAIT_PERKS_LIVE = false;
+export const TRAIT_PERKS_LIVE = true; // Producer cosigned the trait packet 2026-08-18.
 
 // Dev/sim override so the dark plumbing stays testable: the balance harness
 // (and a curious dev console) can flip `globalThis.__traitPerksOn = true`
