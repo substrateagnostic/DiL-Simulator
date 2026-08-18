@@ -1,6 +1,6 @@
 import { InputManager } from '../core/InputManager.js';
 import { AudioManager } from '../core/AudioManager.js';
-import { DifficultyPanel } from '../ui/DifficultyPanel.js';
+import { NewGameScreen } from '../ui/NewGameScreen.js';
 import { Difficulty } from '../core/DifficultyManager.js';
 import { SaveManager } from '../core/SaveManager.js';
 
@@ -104,6 +104,10 @@ export class TitleState {
   exit() {
     this._closeControls();
     this._closeSlotPicker();
+    // Defensive: on a confirmed pick the screen has already closed itself;
+    // this covers any other route out of the title (quit-to-title re-push,
+    // future flows) so a diorama scene can never leak past the state.
+    NewGameScreen.close();
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -232,26 +236,34 @@ export class TitleState {
   }
 
   /**
-   * The last step before a run exists. On a NEW game the engagement-terms
-   * picker gets one screen; on a LOAD it does not, because the save already
-   * carries the answer and asking again would overwrite it.
+   * The last step before a run exists. On a NEW game the difficulty screen —
+   * NewGameScreen, the diorama slider — gets one screen; on a LOAD it does
+   * not, because the save already carries the answer and asking again would
+   * overwrite it. (DifficultyPanel keeps the pause-menu 'run' context;
+   * this call site is the 'new' context, upgraded to the visual screen.)
    *
-   * `DifficultyPanel.open()` returns false while the producer gate is closed,
-   * and the `if` collapses to the shipped call — which is the property that
-   * makes a dark build's New Game flow byte-identical to today's.
+   * `NewGameScreen.open()` returns false while the producer gate is closed,
+   * and the `if` collapses to the shipped call — the property that kept a
+   * dark build's New Game flow byte-identical while the modes were dark, and
+   * the one that would re-darken it cleanly if the gate ever closed again.
+   *
+   * The title DOM is opaque (radial gradient), so it hides while the diorama
+   * owns the canvas and returns on cancel. On pick it stays hidden: `go()`
+   * pops this state on the same call and a one-frame title flash would read
+   * as a glitch.
    */
   _beginRun(mode, slot) {
     const go = () => { if (this.onStart) this.onStart(mode, slot); };
     if (mode !== 'new') { go(); return; }
     Difficulty.reset();
-    const opened = DifficultyPanel.open({
-      context: 'new',
+    const opened = NewGameScreen.open({
       onPick: (id) => { Difficulty.reset(id); go(); },
-      // Backing out of the terms screen returns to the title, not into a run
-      // on a mode the player never picked.
-      onCancel: () => {},
+      // Backing out returns to the title, not into a run on a mode the
+      // player never picked.
+      onCancel: () => { if (this.element) this.element.style.display = ''; },
     });
-    if (!opened) go();
+    if (!opened) { go(); return; }
+    if (this.element) this.element.style.display = 'none';
   }
 
   _showOverwriteConfirm(slot) {
@@ -405,14 +417,17 @@ export class TitleState {
   // ── Input ──────────────────────────────────────────────────────────────────
 
   update(dt) {
-    // The picker is polled from the host state like every other screen in this
-    // game — it owns no keyboard listener, so its Enter cannot also reach
-    // `_select()` on the same frame. See src/ui/DifficultyPanel.js.
-    if (DifficultyPanel.isOpen) {
-      if (InputManager.isCancelPressed()) { DifficultyPanel.cancel(); return; }
-      if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) DifficultyPanel.move(-1);
-      if (InputManager.isJustPressed('arrowdown') || InputManager.isJustPressed('s')) DifficultyPanel.move(1);
-      if (InputManager.isConfirmPressed()) DifficultyPanel.confirm();
+    // The new-game screen is polled from the host state like every other
+    // screen in this game — it owns no keyboard listener, so its Enter cannot
+    // also reach `_select()` on the same frame (see src/ui/DifficultyPanel.js
+    // for the law). It also renders its diorama from this tick, via
+    // Engine.renderScene + skipDefaultRender, so update(dt) runs FIRST.
+    if (NewGameScreen.isOpen) {
+      NewGameScreen.update(dt);
+      if (InputManager.isCancelPressed()) { NewGameScreen.cancel(); return; }
+      if (InputManager.isJustPressed('arrowleft') || InputManager.isJustPressed('a')) NewGameScreen.move(-1);
+      if (InputManager.isJustPressed('arrowright') || InputManager.isJustPressed('d')) NewGameScreen.move(1);
+      if (InputManager.isConfirmPressed()) NewGameScreen.confirm();
       return;
     }
 

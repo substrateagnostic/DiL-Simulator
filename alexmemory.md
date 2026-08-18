@@ -1,3 +1,53 @@
+## [NEW-GAME SCREEN — THE DIFFICULTY SLIDER YOU CAN SEE, 08-17 (Fable 5, ng lane)]
+
+Your ask, in concept: a Stick-of-Truth-style selector — each difficulty's
+meaning OBVIOUS visually, no genre or trust-law vocabulary needed — plus the
+proper start screen you have wanted. Branch `display-case`, one commit, pushed,
+NOT merged. Binds to the flip lane's signed ids (`easy`/`normal`/`hard`).
+
+- **What shipped: New Game now opens a Display Case diorama** — Andrew at his
+  desk in a small lit case above a three-stop slider. Move the slider and the
+  room redresses itself: EASY warm sunrise window, amber pendant light, leafy
+  plant, welcome balloon, sticky note on the monitor, full coffee; NORMAL the
+  shipped office verbatim (house light-rig numbers, overcast window, the dying
+  succulent); HARD overtime-dark window with other people's lit offices, cold
+  utility light, two stacks of red-tabbed case files, a packing carton, and
+  the same mug tipped over with the stain drying. The mug stays on ONE desk
+  spot across stops, so sliding the handle knocks the coffee over.
+- **The three caption lines, Opus 4.6 draft wired verbatim** (one ladder on
+  one verb): EASY "Someone left you a nice note." / NORMAL "No one left you
+  anything." / HARD "Someone left, and took the coffee."
+- **Assembly, not new art**: every prop is an existing Furniture factory, the
+  troffer tints and floor pool are the real FIXTURE_PROFILES numbers, Andrew
+  is the shipping exploration build, and the whole scene renders through
+  Engine.renderScene so bloom/tilt-shift/grade all apply. Keyboard (arrows +
+  Enter/Escape), mouse (click stops, drag the handle). Escape returns to
+  title; the pick lands through the same Difficulty.reset(id) as the panel.
+  DifficultyPanel keeps the pause-menu picker; only the New Game door changed.
+- **REVIEW: screenshots/ng-screen/** — ng-easy.png / ng-normal.png /
+  ng-hard.png (stills at each stop), ng-slider.webm (the slider moving),
+  ng-garage.png (the flow's far end). Re-shoot any time:
+  `node tools/_ng-shoot.mjs --port=<port>` against a dev server or preview.
+- **Judge (Fable, harsh, did not build it)**: two-second read PASS on all
+  three stops round 1 ("carried by color temperature — the strongest possible
+  channel"); look FAIL round 1 (empty-room framing, window read as a
+  projection screen, HARD props buried). One fix round: case cropped, window
+  given its muntin cross + wall margins, props unburied. Final verdict in the
+  session report.
+- **Verified**: npm run check exit 0; _ux-smoke 11/11 PASS; the 14-check
+  harness ALL PASS on the production bundle — includes: picked mode lands on
+  the save blob, survives save/load, and the Load Game path never shows the
+  screen.
+- **HONEST list**: (1) the desk's built-in paper clutter is random per open,
+  so stills vary slightly run to run — the authored props are deterministic;
+  (2) Andrew's per-stop facial expression (victory/neutral/worried) is wired
+  but barely reads at this camera distance — the room carries the meaning;
+  (3) the harness runs on port 5199 with an isolated vite cache because two
+  dev servers on this repo fight over node_modules/.vite — documented in
+  CLAUDE.md; (4) my earlier CLAUDE.md edits for this lane rode into the audit
+  lane's 412628c by the same index-collision pattern d964b81 documents — the
+  remainder is in this lane's commit.
+
 ## [AUDIT-ON-HARD REWORK — §7.3(a) CLOSED, 08-17 (Fable 5, n-run)]
 
 Your challenge, verbatim intent: "I find it hard to believe there's no way to
