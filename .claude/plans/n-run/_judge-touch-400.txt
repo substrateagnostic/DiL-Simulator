@@ -1,0 +1,23 @@
+
+=== TOUCH TEST — the accommodation may only reach Audit-on-Hard (400 runs/cell) ===
+Every pair below must sit inside sampler noise (~2-3 pp at these n).
+
+-- litigation on HARD, arm base vs P6s3
+grandma                 7   92.3% ->  93.8%   (1.5 pp)
+restructuring_trio      7   83.3% ->  81.3%   (-2.0 pp)
+meredith_boss           9   99.5% ->  99.0%   (-0.5 pp)
+
+-- compliance on HARD, arm base vs P6s3
+grandma                 7   91.8% ->  90.5%   (-1.2 pp)
+restructuring_trio      7   80.3% ->  82.8%   (2.5 pp)
+meredith_boss           9   99.5% ->  98.3%   (-1.2 pp)
+
+-- audit lane on NORMAL, hard block P6s3 present vs absent
+grandma                 7   87.0% ->  88.5%   (1.5 pp)
+restructuring_trio      7   85.3% ->  86.8%   (1.5 pp)
+meredith_boss           9   99.5% ->  99.0%   (-0.5 pp)
+
+-- audit lane on EASY, hard block P6s3 present vs absent
+grandma                 7   97.0% ->  96.8%   (-0.2 pp)
+restructuring_trio      7   85.8% ->  84.8%   (-1.0 pp)
+meredith_boss           9   99.5% ->  99.5%   (0.0 pp)

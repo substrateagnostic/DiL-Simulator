@@ -179,10 +179,13 @@ class DifficultyManagerImpl {
   }
 
   /**
-   * Multiply one of an ENEMY's built stats. Applied in `_buildEnemy` after NG+,
-   * Overtime and the scripted `overrides`, so a fight that hands in an explicit
-   * number (the tutorial Karen's `atk: 999`) still wins and a mode cannot
-   * silently retune a scripted beat.
+   * Multiply one of an ENEMY's built stats. Applied in `_buildEnemy` after
+   * NG+, Overtime and the scripted `overrides` — which means it multiplies an
+   * explicit override rather than yielding to it (the tutorial Karen's
+   * `atk: 999` builds at 1449 on Hard; still a guaranteed one-shot, so the
+   * beat survives). A scripted number tuned to be SURVIVABLE would be retuned
+   * by the mode — see the order note at the `_buildEnemy` call site before
+   * authoring one.
    */
   enemyStat(key, value) {
     const m = this.bundle.enemyMult;

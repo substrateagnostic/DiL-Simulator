@@ -1,0 +1,17 @@
+
+=== ML-SPAM vs honest audit (400 runs/cell) ===
+
+-- hard+block
+restructuring_trio      7  honest  73.8%/12.29r   mlspam  99.8%/ 4.20r   delta 26.0 pp   *** SPAM WINS ***
+restructuring_trio      8  honest  88.3%/13.28r   mlspam 100.0%/ 3.98r   delta 11.8 pp   *** SPAM WINS ***
+meredith_boss           9  honest  89.5%/11.83r   mlspam  61.8%/18.57r   delta -27.7 pp
+
+-- hard-base
+restructuring_trio      7  honest  44.3%/ 9.64r   mlspam  99.8%/ 4.55r   delta 55.5 pp   *** SPAM WINS ***
+restructuring_trio      8  honest  65.5%/11.60r   mlspam  99.8%/ 4.31r   delta 34.3 pp   *** SPAM WINS ***
+meredith_boss           9  honest  85.0%/ 8.63r   mlspam  10.0%/16.79r   delta -75.0 pp
+
+-- normal
+restructuring_trio      7  honest  83.8%/12.89r   mlspam 100.0%/ 4.22r   delta 16.2 pp   *** SPAM WINS ***
+restructuring_trio      8  honest  91.0%/12.90r   mlspam  99.8%/ 4.04r   delta 8.8 pp   *** SPAM WINS ***
+meredith_boss           9  honest  99.5%/ 6.81r   mlspam  54.5%/23.79r   delta -45.0 pp

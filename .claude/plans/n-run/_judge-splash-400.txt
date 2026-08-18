@@ -1,0 +1,16 @@
+
+=== CROSS-LANE 1-POINT SPLASH on hard+block (400 runs/cell) ===
+
+-- litigation@12 idle point -> findings
+grandma                 7  pure  91.3%   +findings  96.8%   delta 5.5 pp
+restructuring_trio      8  pure  89.8%   +findings  97.3%   delta 7.5 pp
+meredith_boss           9  pure  97.0%   +findings 100.0%   delta 3.0 pp
+
+-- compliance@12 idle point -> findings
+grandma                 7  pure  94.8%   +findings  99.5%   delta 4.7 pp
+restructuring_trio      8  pure  91.0%   +findings  96.8%   delta 5.8 pp
+meredith_boss           9  pure  98.5%   +findings 100.0%   delta 1.5 pp
+
+-- litigation@10, TRADE the last-bought lane node for findings (regional_director@10, algorithm@10)
+regional_director      10  full-lane  99.0%   trade(-cc_all +findings) 100.0%   delta 1.0 pp
+algorithm              10  full-lane  97.0%   trade(-cc_all +findings)  99.8%   delta 2.8 pp

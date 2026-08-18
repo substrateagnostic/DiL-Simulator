@@ -1,0 +1,21 @@
+
+=== SMART-HOLD (judge's line) vs honest audit (400 runs/cell) ===
+Hold build omits scope_expansion (DD never files) + material_weakness (maxF 5).
+
+-- hard+block
+chad                    6  honest 100.0%/ 4.07r   hold  97.8%/ 6.74r  (t/o 0)  delta -2.2 pp
+grandma                 8  honest  97.0%/ 6.19r   hold  28.5%/32.19r  (t/o 0)  delta -68.5 pp
+meredith_boss           9  honest  87.8%/11.29r   hold  18.0%/44.39r  (t/o 0)  delta -69.8 pp
+restructuring_trio      8  honest  83.8%/12.86r   hold  70.3%/15.92r  (t/o 0)  delta -13.5 pp
+
+-- hard-base
+chad                    6  honest  97.3%/ 4.42r   hold  70.8%/15.79r  (t/o 0)  delta -26.5 pp
+grandma                 8  honest  91.8%/ 7.01r   hold  12.0%/20.09r  (t/o 0)  delta -79.8 pp
+meredith_boss           9  honest  84.3%/ 8.65r   hold   2.5%/18.91r  (t/o 0)  delta -81.8 pp
+restructuring_trio      8  honest  68.3%/11.63r   hold  37.0%/11.65r  (t/o 0)  delta -31.3 pp
+
+-- normal
+chad                    6  honest  99.8%/ 4.05r   hold  88.3%/11.07r  (t/o 0)  delta -11.5 pp
+grandma                 8  honest  98.0%/ 6.73r   hold  31.5%/29.59r  (t/o 0)  delta -66.5 pp
+meredith_boss           9  honest  98.5%/ 6.83r   hold  43.0%/36.76r  (t/o 0)  delta -55.5 pp
+restructuring_trio      8  honest  90.3%/12.58r   hold  79.3%/16.84r  (t/o 0)  delta -11.0 pp

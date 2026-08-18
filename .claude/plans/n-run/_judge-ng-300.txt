@@ -1,0 +1,4 @@
+
+=== NG+1 ON HARD spot check (300 runs/cell) ===
+meredith_boss@12 NG+1 litigation   win  86.7%  rounds 10.01
+meredith_boss@12 NG+1 audit        win  60.7%  rounds 27.95

@@ -1,0 +1,14 @@
+
+=== KAREN@3 CEILING DECOMPOSITION, audit lane (400 runs/cell) ===
+base               win  83.8%  rounds 6.19
+F2 (fileRate 2)    win  86.3%  rounds 5.69
+F2+slow.06         win  90.3%  rounds 5.75
+P6s3 (shipped)     win  96.3%  rounds 4.83
+
+=== RECEPTION ON HARD, per lane (300 runs/cell) ===
+L4 slot0 litigation   win  88.3%  rounds 3.41
+L4 slot0 compliance   win  81.0%  rounds 5.84
+L4 slot0 audit        win  83.7%  rounds 5.14
+L8 slot3 litigation   win  78.0%  rounds 4.45
+L8 slot3 compliance   win  83.3%  rounds 3.78
+L8 slot3 audit        win  80.3%  rounds 6.18

@@ -419,9 +419,15 @@ export class CombatEngine {
     // makes "the Pivot's weakness rows are untouched" a property of the code
     // rather than a promise in a comment.
     merged.phases = Difficulty.phasesFor(enemyId, merged.phases);
-    // MODE ENEMY MULTIPLIERS, applied LAST so an explicit `overrides` value
-    // still wins — the scripted first-Karen fight hands in `atk: 999` and a
-    // difficulty mode has no business touching a beat the story wrote.
+    // MODE ENEMY MULTIPLIERS, applied LAST — which means they apply ON TOP of
+    // an explicit `overrides` value, not under it (the n-run judge caught the
+    // old comment claiming the opposite): the scripted first-Karen fight hands
+    // in `atk: 999` and on Hard she is built at 1449. That beat survives
+    // because 999 was already a guaranteed one-shot and so is any multiple of
+    // it — but a future scripted beat that hands in a NUMBER TUNED TO BE
+    // SURVIVABLE will be silently retuned by the mode. If that beat ever
+    // exists, swap this to the NG+ block's order (multiply base, then spread
+    // overrides), which exists for exactly that reason.
     // Deliberately NOT applied to `maxHP`: more enemy health is more ROUNDS,
     // and the balance lane's whole finding about the declined package was that
     // its bill was a 13-round Meredith. A hard mode raises the threat per turn;

@@ -1,0 +1,8 @@
+
+=== EFFECTIVE ENEMY TURNS — audit lane on HARD, arm P6s3 (400 runs/cell) ===
+encounter              lvl   eff.T   vs suppressed   uc/f   msj/f
+grandma                10    5.17      69.1%        2.18   0.00
+meredith_boss          10    8.91      77.0%        0.95   0.00
+regional_director      10   10.12     101.2%        0.77   0.00
+algorithm              10    6.47      87.1%        1.93   0.00
+restructuring_trio     10    8.78      90.5%        0.84   0.00

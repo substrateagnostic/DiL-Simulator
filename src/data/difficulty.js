@@ -360,8 +360,9 @@ export const DIFFICULTY_MODES = {
   // word (Q5): Meredith's Break rate sits under its derived floor on two
   // cells. The §7.3(a) cost — the Audit lane collapsing to 44.3 % on one rung
   // — was CLOSED by the audit accommodation below (2026-08-17, packet §7.4
-  // addendum); the residual band on Hard is ~10 pp, in line with the shipped
-  // build's own spread.
+  // addendum): Audit's worst deficit against the top lane on any rung is
+  // 11.5-12.5 pp (builder 600s / judge 400s), and the residual MAX band is
+  // 15.0-15.3 pp at karen@3 with AUDIT ON TOP — a ceiling, not a floor.
   //
   // The Algorithm exemption from the Escalation Response is LIFTED here and
   // only here. That exemption exists to protect the casual floor — the

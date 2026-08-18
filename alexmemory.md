@@ -38,19 +38,41 @@ residual max band, 15.3 pp, is now Audit ON TOP of the tutorial rung, 97.2
 vs 86.8 — a seeded record against the lowest-ATK boss. Sized fix is seed
 3 -> 2, which costs the trio 11 pp; I would not pay it, your call).
 
-HONEST LIST: (1) the Uc chain deepens on two overlevelled cells —
-grandma@10 / meredith@10 eff.T 70–72 % vs the J-run's accepted 78–85 %
-breach; at-rung wins there are 100/95.7 %, declared in §7.4, sized knob
-exists but reopens the sealed One More design. (2) A completionist
-litigator (L12+) can buy the Findings keystone for 1 point and carry the
-seed onto Hard: +3.4 to +6.6 pp. Bounded, post-story, same shape as the
-other keystone splashes; reported, not fixed. (3) Findings still have NO
-HUD surface (`getFindings` has zero UI callers — pre-existing since the
-J-build), so the whole accommodation is engine-visible only; on Hard the
-file and the slow deserve a chip, and that is a UI lane, not this one.
-(4) My commit rode partly in the flip lane's: the data block + accessor
-were staged when that lane committed 7554ef8, so the engine reads land in
-mine — neither commit alone was the whole mechanism.
+JUDGED: one adversarial Fable judge, its own sims, license to break the
+verb — **PASS** (raw tables `.claude/plans/n-run/_judge-*.txt`). Its
+smart-hold line (sharper than mine: no scope_expansion so nothing can
+close, proper bracing, untagged verbs only) loses by 2.2–69.8 pp on every
+arm; its splash and NG+ extensions and its six-item mislead list are all
+folded into the packet §7.4 corrections. The one fix round was spent on
+documentation honesty; no number moved after the verdict.
+
+HONEST LIST (post-judge): (1) **A FEEL claim of mine was false and is
+retracted in §7.4**: the trio is NOT white-knuckle for a greedy audit
+player — leading with Management Letter takes Hard's trio at 99.8 % in
+4.2 rounds, and 100 % on Normal. Pre-existing audit-kit softness (the
+judge's Litigation control caps at 70–71 %), which also means §7.3's
+42.0 pp premise was partly the honest policy's priority order. (2) the Uc
+chain deepens on two overlevelled cells — grandma@10 / meredith@10 eff.T
+69–77 % vs the J-run's accepted 78–85 % breach; at-rung wins there are
+100/95.7 %, sized knob exists but reopens the sealed One More design.
+(3) The Findings keystone is the best 1-point cross-lane splash on Hard
+for EVERY build (+1.5 to +7.5 pp, comp included, at-rung L10 trade already
+net-positive); bounded, will surface in build guides. (4) **NG+ x Hard is
+the residual hole**: meredith@12 NG+1 still reads a ~28–38 pp gap at
+30-round fights — the accommodation recovers +20–30 pp, does not close
+it; belongs to the dossier's named NG+ re-tune bill (§6.5). (5) Ally
+tagged hits file and close findings too (no actor check at the filing
+site) — shipped J-run shape, doubled by Hard, now written down. (6) Two
+comments claimed mode multipliers yield to scripted overrides; the code
+multiplies them (tutorial Karen builds at 1449 on Hard — still a
+guaranteed one-shot). Comments fixed to describe reality, with the order
+swap named for any future survivable scripted number. (7) Findings still
+have NO HUD surface (`getFindings` has zero UI callers — pre-existing
+since the J-build); on Hard the file and the slow deserve a chip, and
+that is a UI lane, not this one. (8) My work rode in two commits: the
+data block + accessor were staged when the flip lane committed
+(d964b81), the engine reads landed in mine (7d1b7b5) — neither alone was
+the whole mechanism.
 
 ## [RESUME HERE - 08-17 evening (Fable, six lanes in flight)]
 

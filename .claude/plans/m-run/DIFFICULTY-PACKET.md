@@ -608,9 +608,21 @@ node — no other lane, and no Easy/Normal player, is reachable by any of them:
 **Audit's worst deficit against the top lane anywhere: 11.5 pp** (meredith@8),
 against the brief's ≤ ~15 and the shipped build's own ~10 pp law breach. The
 42.0 pp hole is 7.5 pp. Feel table (`FEEL-final.txt`): audit near-death on
-meredith@8 50.7 → 23.2 %, grandma@7 38.0 → 11.5 %; the trio stays
-white-knuckle (near-death 86–93 %) — Hard's trio frightens every lane, which
-is Hard doing its job.
+meredith@8 50.7 → 23.2 %, grandma@7 38.0 → 11.5 %.
+
+**A FEEL claim retracted by the judge, and the correction matters more than
+the claim.** The first draft of this addendum said the trio "stays
+white-knuckle for every lane" off the honest policy's near-death numbers
+(86–93 %). The adversarial judge falsified it: an audit player who simply
+LEADS with Management Letter takes Hard's trio at **99.8 % in 4.2 rounds**
+— and at **99.8 % on BASE Hard and 100 % on Normal**, with a
+Litigation-side control (cc_all spam) reaching only 70–71 %. So the
+softness is a pre-existing property of the audit kit played greedily
+(power-40 AoE + `filesFindings: 2` + two of three trio bodies weak to
+audit), not of this accommodation — and it means §7.3's 42.0 pp premise
+was partly an artifact of the honest policy's priority order, not the
+lane's best available play. Consistent with how every J-run band was
+measured; declared here so the trio row is read for what it is.
 
 **Read the karen@3 row before signing.** The residual MAX band (15.3) is now
 Audit's CEILING, not its floor: a seeded record against the lowest-ATK boss in
@@ -645,14 +657,31 @@ seedRecord 3 → 2, which costs the trio 11 pp (r3a). I would not pay that.
   (at-rung wins there are 100 / 95.7 %). Declared, not hidden; the sized knob
   if you ever want it is H-run §8.2's (charge the sustain return Confidence),
   which reopens a design you sealed, so I did not.
-- **The 1-point splash**: a completionist litigator (L12+) buying the
-  `findings` keystone carries the seed onto Hard for +3.4 to +6.6 pp. Bounded,
-  post-story, Hard-only, and the same shape as the other 1-point keystone
-  splashes; reported, not fixed.
+- **The 1-point splash is UNIVERSAL, not a litigator curiosity** (judge
+  extension): lit@12 +3.0 to +7.5 pp, comp@12 +1.5 to +5.8 pp, and at-rung
+  L10 the trade (a lane's own last node for the `findings` keystone) is
+  already net-positive on the party fights. On Hard, `findings` is the best
+  single cross-training point for every build — bounded and
+  ceiling-compressed, but it will surface in build guides. Reported, not
+  fixed: it is the same shape as the other 1-point keystone splashes, and
+  gating the seed deeper into the tree would tax the lane the accommodation
+  exists to save.
 - **Break floors** (`BREAKS-hard.txt`, shipped-kit policy): Hard passes 10 of
   12 against the derived floor; the two misses are meredith@8/9 — §7.3(b)'s
   declared cost, bit-identical mechanism, untouched by this work (the
   shipped-kit policy owns no `findings` node).
+- **Ally tagged hits file and close findings** (judge finding): there is no
+  actor check at the `_calcDamage` filing site, so on the two party fights
+  Janet's and Isaiah's tagged hits grow the record at fileRate 2 on the
+  player's behalf. Shipped J-run shape, doubled by Hard, now written down.
+- **NG+ × Hard is the residual hole, off the measured ladder** (judge
+  sizing, 300 runs): meredith@12 on the NG+1 lap reads a ~28–38 pp lane gap
+  (audit ~50–61 %, ~30-round fights against Litigation's 10) — the
+  accommodation recovers +20–30 pp there but does not close it, and Normal's
+  own NG+ gap on that cell is 16.3 pp pre-existing. This belongs to the
+  dossier's already-named NG+ re-tune bill (§6.5, "the largest unpaid bill in
+  the design"), not to a fourth knob here; declared so it is a known row and
+  not a discovery.
 
 ### Touch test (`TOUCH-final.txt`, `ISO-final.txt`)
 
@@ -667,6 +696,19 @@ No J-lane node moved. No enemy stat moved. No COMBAT_DEPTH constant moved.
 Easy and Normal are byte-identical for every lane. The Hard blurb dropped its
 apology line ("Some approaches struggle here. That is the point.") the same
 day the reason for it closed — one string to restore if you want it back.
+
+### The adversarial verdict
+
+One Fable judge, instructed to re-run the lane table itself and to break the
+new verb, returned **PASS** (its raw tables: `.claude/plans/n-run/_judge-*.txt`,
+400 runs/cell): worst audit deficit at its draw 12.5 pp; its own smart-hold
+line (built to keep the shield and never close — no scope_expansion, no
+capstone, proper bracing, untagged verbs only) **loses by 2.2–69.8 pp on
+every arm**, confirming the monotonic record deletes hold-the-file; ML-spam,
+splash, scripted-Karen, reception and NG+ batteries as folded in above; the
+six-item mislead list it returned is what this addendum's corrections are.
+One fix round was spent on documentation honesty only — no number moved
+after the verdict.
 
 Reproduction:
 ```bash

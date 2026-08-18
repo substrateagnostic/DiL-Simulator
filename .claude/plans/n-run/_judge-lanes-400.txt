@@ -1,0 +1,16 @@
+
+=== THE DIVERSITY BAND ON HARD, ARM P6s3 {"fileRate":2,"assaultSlow":0.06,"seedRecord":3} (400 runs/cell) ===
+encounter              lvl   win: lit / comp / audit          band
+karen                   3   88.3% / 82.5% / 97.5%    15.0 pp
+karen                   4   96.8% / 91.0% / 91.0%     5.8 pp
+chad                    5   98.5% / 91.3% / 96.3%     7.3 pp
+chad                    6  100.0% / 99.0% / 99.8%     1.0 pp
+grandma                 7   95.5% / 91.8% / 94.5%     3.7 pp
+grandma                 8   95.5% / 99.3% / 97.8%     3.8 pp
+restructuring_trio      7   82.8% / 85.5% / 73.8%    11.7 pp
+restructuring_trio      8   90.5% / 91.3% / 88.8%     2.5 pp
+meredith_boss           8   92.8% / 97.0% / 84.5%    12.5 pp
+meredith_boss           9   98.3% / 98.8% / 88.3%    10.5 pp
+regional_director      10   98.5% / 89.0% / 93.8%     9.5 pp
+algorithm              10   98.5% / 93.3% / 98.8%     5.5 pp
+   MAX BAND: 15.0 pp at karen@3
