@@ -286,14 +286,25 @@ const sharedResources = () => {
 // actually uses. Quarter-turn rotations swap (w,h) and (ox,oz) for these
 // entries automatically. Legacy entries (no ox/oz) keep corner anchoring at
 // Math.floor(coord) and are NOT rotation-aware (cubicleWall excepted).
-const FURNITURE_FOOTPRINTS = {
+// Exported (read-only) for tools/ghost-walk.mjs, which re-derives the blocked
+// rect per placement to attribute every blocked tile to the furniture that
+// claimed it. Same rule as the wall census: the gate reads the SHIPPING
+// constants, never its own copy of them.
+export const FURNITURE_FOOTPRINTS = {
   desk:               { w: 1, h: 1 },
-  grandDesk:          { w: 3, h: 1, ox: -1, oz: 0 },   // mesh is 2.55x1.1 centered — old 3x2 ghost-blocked a full empty row
-  cubicleWall:        { w: 2, h: 1 },
+  // GHOST-WALK sweep (2026-08-17): grandDesk's 1.1-deep centered mesh straddles
+  // two z rows; blocking only one left the north half walk-through (measured
+  // 0.50 coverage on walkable tiles behind the executive desk).
+  grandDesk:          { w: 3, h: 2, ox: -1, oz: -1 },  // mesh is 2.55x1.1 centered
+  // Center-anchored: the panel mesh is CENTERED on its placement (spans x±1),
+  // while the old corner anchor blocked [x, x+2) — one full tile east of the
+  // visual, an invisible wall in every aisle beside a pod (ghost-walk, 15
+  // flagged tiles across cubicle_farm + hr_department).
+  cubicleWall:        { w: 2, h: 1, ox: -1, oz: 0 },
   vendingMachine:     { w: 1, h: 1 },
   supplyShop:         { w: 1, h: 1 },
-  boardroomTable:     { w: 9, h: 3, ox: 0, oz: 0 },    // mesh spans 0..8 x 0..2 (half-tile past the old 8x2 on +x/+z)
-  conferenceTable:    { w: 3, h: 1, ox: -1, oz: 0 },   // center-origin: old corner-anchored 3x1 left a ghost tile + a walk-through tile
+  boardroomTable:     { w: 8, h: 2, ox: 0, oz: 0 },    // mesh spans EXACTLY x 0..8, z 0..2 from anchor (measured); the old 9x3 blocked a tile of air east and south
+  conferenceTable:    { w: 3, h: 2, ox: -1, oz: -1 },  // 3.0x1.2 centered — depth straddles two rows; one-row blocking left the far half walk-through (ghost-walk)
   serverRack:         { w: 1, h: 1 },
   receptionDesk:       { w: 3, h: 1, ox: -1, oz: 0 },  // 2.56 wide, center-origin
   receptionDeskMarble: { w: 3, h: 1, ox: -1, oz: 0 },
@@ -302,7 +313,12 @@ const FURNITURE_FOOTPRINTS = {
   // F-9, floor 6's two missing rooms. All four are CENTER-ORIGIN meshes, so
   // they take the ox/oz anchor form; the numbers are the mesh's own extent
   // rounded out, never guessed.
-  bathroomStall:      { w: 3, h: 2, ox: -1, oz: 0 },   // 3 stalls x 0.95 = 2.85 wide, 1.15 deep
+  // oz -1, not 0: the stall run is 1.45 deep INCLUDING the ajar door (z
+  // [-0.6, +0.85] of the placement), so blocking [z, z+2) sealed the tile in
+  // FRONT of the doors and left the back row open — the producer's "stalls
+  // enterable only from the back". [z-1, z+1) wraps the mesh with the doors
+  // flush to the front boundary (ghost-walk seed #1).
+  bathroomStall:      { w: 3, h: 2, ox: -1, oz: -1 },  // 3 stalls x 0.95 = 2.85 wide
   sinkCounter:        { w: 3, h: 1, ox: -1, oz: 0 },   // 2 basins = 2.10 wide, 0.55 deep
   copier:             { w: 2, h: 1, ox: -1, oz: 0 },   // 0.9 body + a 0.73 finisher tray out the -x side
   supplyShelf:        { w: 1, h: 1, ox: 0, oz: 0 },
@@ -310,10 +326,16 @@ const FURNITURE_FOOTPRINTS = {
   fileCabinet:        { w: 1, h: 1, ox: 0, oz: 0 },    // nearest-tile anchor: the old_vault cabinets sit at z .8 fractions
   fileCabinetLow:     { w: 1, h: 1, ox: 0, oz: 0 },
   fileCabinetLateral: { w: 1, h: 1, ox: 0, oz: 0 },
-  car:                { w: 1, h: 3, ox: 0, oz: -1 },   // ~1.9 long, center-origin; every placement is rotated 90° —
-  carSUV:             { w: 1, h: 3, ox: 0, oz: -1 },   // the old 1x2 corner block left invisible walls in the garage aisles
-  carSports:          { w: 1, h: 3, ox: 0, oz: -1 },
-  andrewsCar:         { w: 1, h: 3, ox: 0, oz: -1 },
+  // Cars are 1.9 long (bumper to bumper, measured x[±0.95]) — TWO tiles, not
+  // three. The h:3 block put a full tile of invisible wall off every car's far
+  // end: in the garage that SEALED the drive aisles between parking columns
+  // (blocked [0,3)+[3,6) with no gap), and on Fennimore Avenue it blocked the
+  // landing tiles of the garage door (ghost-walk; the producer's "weird
+  // collisions in the garage").
+  car:                { w: 1, h: 2, ox: 0, oz: -1 },
+  carSUV:             { w: 1, h: 2, ox: 0, oz: -1 },
+  carSports:          { w: 1, h: 2, ox: 0, oz: -1 },
+  andrewsCar:         { w: 1, h: 2, ox: 0, oz: -1 },
   // NOTE: `staircase` and `stairFlight` are ALSO in NO_BLOCK below, which is
   // checked first, so neither footprint can ever fire. Kept only so a future
   // author who removes them from NO_BLOCK gets a sane default.
@@ -324,7 +346,11 @@ const FURNITURE_FOOTPRINTS = {
   credenzaEast:       { w: 1, h: 3 },
   cornerBar:          { w: 2, h: 1 },
   chargingBull:       { w: 2, h: 1 },
-  puttingGreen:       { w: 3, h: 2 },
+  // DEAD ROW — puttingGreen is in NO_BLOCK below, which is checked first, so
+  // this can never fire. Kept for the same reason `staircase` keeps one: it is
+  // 2.8x1.6 centered, and an author who takes it out of NO_BLOCK should not
+  // land on the 1x1 default.
+  puttingGreen:       { w: 3, h: 2, ox: -1, oz: -1 },
   luxuryFridge:       { w: 2, h: 1, ox: -1, oz: 0 },   // 1.6 wide, center-origin
   kitchenIsland:      { w: 3, h: 1, ox: -1, oz: 0 },   // 2.1 wide, center-origin
   kitchenCounter:     { w: 1, h: 1 },
@@ -337,10 +363,15 @@ const FURNITURE_FOOTPRINTS = {
   coffeeTable:        { w: 1, h: 1, ox: 0, oz: 0 },
   pokerTable:         { w: 3, h: 3, ox: -1, oz: -1 },  // 2.93x2.79 centered
   poolTable:          { w: 3, h: 1, ox: -1, oz: 0 },   // 2.22x1.1 centered
-  dinerBooth:         { w: 1, h: 1, ox: 0, oz: 0 },    // mesh narrowed to keep the door aisle between the south booths open
+  // A booth is table + two benches at ±0.61 along its width — 1.72 long
+  // (measured [±0.86]), TWO tiles. The 1x1 block left one whole bench
+  // walk-through on every booth in Lucky's (ghost-walk: five phantom tiles).
+  // The door aisle between the south booths stays open: booths at x 5 and 8
+  // now block [4,6) and [7,9), and the exit column x 6 is untouched.
+  dinerBooth:         { w: 2, h: 1, ox: -1, oz: 0 },
   bench:              { w: 1, h: 1, ox: 0, oz: 0 },    // transit benches sit at z .8 fractions
   missionControlDesk: { w: 1, h: 1, ox: 0, oz: 0 },    // analytics desks sit at z .2-.8 fractions
-  lockbox:            { w: 1, h: 1, ox: 0, oz: 0 },    // vault boxes sit at .875 fractions
+  lockbox:            { w: 2, h: 1, ox: -1, oz: 0 },   // a bank is 1.79 long (variant 1.75 + frame) — the 1x1 block left half of every bank walk-through (ghost-walk)
 };
 
 // ── SEATS ─────────────────────────────────────────────────────────────────
@@ -386,7 +417,8 @@ const WALL_THICKNESS = 0.15;
 
 // Small/decorative items that should NOT block movement.
 // Players can clip through these slightly for smoother pathing.
-const NO_BLOCK = new Set([
+// Exported for tools/ghost-walk.mjs — see FURNITURE_FOOTPRINTS above.
+export const NO_BLOCK = new Set([
   'monitor', 'keyboard', 'chair', 'executiveChair', 'plant', 'plantTall', 'plantSucculent', 'plantFern', 'trashCan', 'marblePlanter', 'marbleStatue', 'trophyCase',
   'coffeeMachine', 'espressoMachine', 'microwave', 'waterCooler', 'printer',
   'whiteboard', 'smartBoard', 'motivationalPoster', 'executivePoster', 'parkingSpot',
@@ -401,6 +433,24 @@ const NO_BLOCK = new Set([
   'popcornPopper', 'neonSign', 'operatorChair',
   'cableTray', 'monitorWall', 'aisleGlow',
   'lamppost', 'hydrant', 'busStopSign', 'newspaperBox', 'curb', 'elevatorDoors',
+  // Hangs at y 2.05-2.9 — an overhead sign was blocking a floor tile under it
+  // in reception (ghost-walk: invisible wall at the north doors).
+  'exitSign',
+  // GHOST-WALK, resume round. Two props that were blocking floor while being
+  // nothing you can walk into:
+  //   puttingGreen — a 2.8 x 0.02 x 1.6 TURF MAT plus a 0.4 m flag stick. It is
+  //     a rug. It was blocking six tiles of the penthouse at measured 0.00
+  //     coverage in the body band: the largest single invisible wall in the
+  //     game. Its FURNITURE_FOOTPRINTS row is kept, dead, for the same reason
+  //     `staircase` keeps one — so a future author who removes this line gets a
+  //     sane default instead of 1x1.
+  //   loungeLamp — a 0.155 m table lamp whose group carries a 1.7 x 1.7
+  //     ANCHORED LIGHT POOL, and every placement lifts it (y 0.735-1.08) so the
+  //     pool floats at chest height over the bar/poker/pool tables it dresses.
+  //     You cannot collide with a light pool. All three penthouse_bar PHANTOMs
+  //     were this one prop's pool lying across walkable floor at 0.83 coverage;
+  //     the lamp body itself always stands on a table that is already blocked.
+  'puttingGreen', 'loungeLamp',
   // A 0.5 m carton is ankle-high, and it is ACT-CONDITIONAL: a blocker that
   // appears at act5_complete is a room whose collision changes under the
   // player's save. Neither reason alone would settle it; together they do.

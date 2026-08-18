@@ -77,14 +77,14 @@ export const ROOMS = {
 
       // --- NW pod — 3 cubicles (x=2, 4, 6) ---
       // Continuous back wall across all three
-      { type: 'cubicleWall', x: 1, z: 2, rotation: 0 },
-      { type: 'cubicleWall', x: 3, z: 2, rotation: 0 },
-      { type: 'cubicleWall', x: 5, z: 2, rotation: 0 },
+      { type: 'cubicleWall', x: 1, z: 2.5, rotation: 0 },
+      { type: 'cubicleWall', x: 3, z: 2.5, rotation: 0 },
+      { type: 'cubicleWall', x: 5, z: 2.5, rotation: 0 },
       // Side dividers (outer walls + shared dividers between bays)
-      { type: 'cubicleWall', x: 1, z: 2.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 3, z: 2.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 5, z: 2.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 7, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 1, z: 3, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 3, z: 3, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 5, z: 3, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 7.5, z: 3, rotation: Math.PI / 2 },
       // Cubicle desks
       { type: 'desk', x: 2, z: 3, rotation: 0 },
       { type: 'monitor', x: 2,    z: 2.7, condition: { notFlag: 'renovation_ergonomic_workstations' } },
@@ -125,12 +125,12 @@ export const ROOMS = {
       { type: 'chair',         x: 17, z: 5.8, rotation: Math.PI, condition: { notFlag: 'renovation_ergonomic_workstations' } },
       { type: 'executiveChair', x: 17, z: 5.8, rotation: Math.PI, condition: { flag:    'renovation_ergonomic_workstations' } },
       // Back walls
-      { type: 'cubicleWall', x: 12, z: 4, rotation: 0 },
-      { type: 'cubicleWall', x: 14, z: 4, rotation: 0 },
+      { type: 'cubicleWall', x: 12, z: 4.5, rotation: 0 },
+      { type: 'cubicleWall', x: 14, z: 4.5, rotation: 0 },
       // Side dividers
-      { type: 'cubicleWall', x: 12, z: 4.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 14, z: 4.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 16, z: 4.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 12, z: 5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 14, z: 5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 16, z: 5, rotation: Math.PI / 2 },
       // Cubicle desks
       { type: 'desk', x: 13, z: 5, rotation: 0 },
       { type: 'monitor', x: 13,    z: 4.7, condition: { notFlag: 'renovation_ergonomic_workstations' } },
@@ -159,13 +159,13 @@ export const ROOMS = {
 
       // --- SW pod — Andrew (x=3) + 1 neighbor (x=6) ---
       // Back walls
-      { type: 'cubicleWall', x: 2, z: 9, rotation: 0 },
-      { type: 'cubicleWall', x: 5, z: 9, rotation: 0 },
+      { type: 'cubicleWall', x: 2, z: 9.5, rotation: 0 },
+      { type: 'cubicleWall', x: 5, z: 9.5, rotation: 0 },
       // Side dividers
-      { type: 'cubicleWall', x: 2, z: 9.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 4, z: 9.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 5, z: 9.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 7, z: 9.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 2, z: 10, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 4.5, z: 10, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 5, z: 10, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 7.5, z: 10, rotation: Math.PI / 2 },
       // Andrew's desk — keep at (3,10) for the interactable
       { type: 'desk', x: 3, z: 10, rotation: 0 },
       { type: 'monitor', x: 3,    z: 9.7, condition: { notFlag: 'renovation_ergonomic_workstations' } },
@@ -204,10 +204,10 @@ export const ROOMS = {
 
       // --- SE pod — 1 cubicle (x=13) + open water-cooler alcove ---
       // Back wall
-      { type: 'cubicleWall', x: 12, z: 9, rotation: 0 },
+      { type: 'cubicleWall', x: 12, z: 9.5, rotation: 0 },
       // Side dividers
-      { type: 'cubicleWall', x: 12, z: 9.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 14, z: 9.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 12, z: 10, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 14.5, z: 10, rotation: Math.PI / 2 },
       // Cubicle desk
       { type: 'desk', x: 13, z: 10, rotation: 0 },
       { type: 'monitor', x: 13,    z: 9.7, condition: { notFlag: 'renovation_ergonomic_workstations' } },
@@ -228,9 +228,9 @@ export const ROOMS = {
       // SHARED RESOURCE STATION — north-center (x=11-13, z=2)
       // Printer flanked symmetrically by file cabinets
       // ============================================================
-      { type: 'fileCabinet', x: 11, z: 2 },
+      { type: 'fileCabinet', x: 11.5, z: 2.5 },
       { type: 'printer', x: 12, z: 2 },
-      { type: 'fileCabinet', x: 13, z: 2 },
+      { type: 'fileCabinet', x: 13.5, z: 2.5 },
 
       // ============================================================
       // STORAGE — file cabinet rows along north wall (handles face south/center)
@@ -249,7 +249,7 @@ export const ROOMS = {
       { type: 'fileCabinetLow',     x: 4,  z: 0.5 },
       { type: 'fileCabinetLow',     x: 14, z: 0.5 },
       { type: 'fileCabinetLateral', x: 15, z: 0.5 },
-      { type: 'fileCabinet',        x: 16, z: 0.5 },
+      { type: 'fileCabinet',        x: 16.5, z: 0.5 },
 
       // Gary's desk, NE supply nook. `janet_vacancy_search` (16,3) is the
       // quest tile and the nearest desk was two tiles away in the pod, so the
@@ -267,7 +267,7 @@ export const ROOMS = {
       { type: 'fileCabinetLateral', x: 4,  z: 14.5, rotation: Math.PI },
       { type: 'fileCabinetLateral', x: 15, z: 14.5, rotation: Math.PI },
       { type: 'fileCabinetLow',     x: 16, z: 14.5, rotation: Math.PI },
-      { type: 'fileCabinet',        x: 17, z: 14.5, rotation: Math.PI },
+      { type: 'fileCabinet',        x: 17.3, z: 14.5, rotation: Math.PI },
 
       // ============================================================
       // MOTIVATIONAL POSTERS — scattered around all four walls
@@ -462,8 +462,8 @@ export const ROOMS = {
       { type: 'trashCan', x: 8.6, z: 1, condition: { flag: 'act2_complete', notFlag: 'act5_complete' } },
 
       // === Vending machine + supply shop counter (northeast corner) ===
-      { type: 'vendingMachine', x: 14, z: 1, rotation: 0 },
-      { type: 'supplyShop',     x: 10, z: 1, rotation: 0 },
+      { type: 'vendingMachine', x: 14.5, z: 1, rotation: 0 },
+      { type: 'supplyShop',     x: 10.5, z: 1, rotation: 0 },
 
       // === Table 1 (west center) ===
       { type: 'desk', x: 4, z: 6, rotation: 0 },
@@ -490,7 +490,7 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 10, z: 0.1, rotation: 0 },
 
       // === Arcade cabinet (southeast) ===
-      { type: 'arcadeCabinet', x: 13, z: 10, rotation: Math.PI },
+      { type: 'arcadeCabinet', x: 13.5, z: 10.5, rotation: Math.PI },
 
       // Side quest posters — north/west walls only; the south wall faces away
       // from the isometric camera (was x:2 z:10.9 rotation Math.PI).
@@ -578,8 +578,8 @@ export const ROOMS = {
       { type: 'motivationalPoster', x: 6, z: 0.1, rotation: 0 },   // "TEAMWORK"
 
       // === File cabinet behind desk ===
-      { type: 'fileCabinet', x: 1, z: 1 },
-      { type: 'fileCabinet', x: 2, z: 1 },
+      { type: 'fileCabinet', x: 1.5, z: 1.5 },
+      { type: 'fileCabinet', x: 2.5, z: 1.5 },
 
       // === Golf putter leaning against wall ===
       // RESTORED. This comment headed nothing for five months — it is the grave
@@ -593,9 +593,9 @@ export const ROOMS = {
       { type: 'plant', x: 6, z: 1 },  // the "dying" plant
 
       // === Bookshelf / credenza area (west wall) ===
-      { type: 'fileCabinet', x: 0.5, z: 3 },
-      { type: 'fileCabinet', x: 0.5, z: 4 },
-      { type: 'fileCabinet', x: 0.5, z: 5 },
+      { type: 'fileCabinet', x: 0.5, z: 3.5 },
+      { type: 'fileCabinet', x: 0.5, z: 4.5 },
+      { type: 'fileCabinet', x: 0.5, z: 5.5 },
 
     ],
     npcs: [
@@ -666,8 +666,8 @@ export const ROOMS = {
 
       // === West wall — credenza + file cabinets behind desk ===
       { type: 'credenza',    x: 0.5, z: 4 },
-      { type: 'fileCabinet', x: 1,   z: 1 },
-      { type: 'fileCabinet', x: 2,   z: 1 },
+      { type: 'fileCabinet', x: 1.5, z: 1.5 },
+      { type: 'fileCabinet', x: 2.5, z: 1.5 },
 
       // === Globe stand (east of desk) ===
       { type: 'globeStand', x: 7.5, z: 1.5 },
@@ -873,7 +873,14 @@ export const ROOMS = {
     marks: {
       chair_west:  [4, 4],
       chair_east:  [8, 4],
-      chair_n_mid: [6, 3],
+      // z 2, not 3. `conferenceTable` is a 3.0 x 1.2 CENTRED mesh, so its
+      // corrected footprint blocks z rows 3 AND 4 — the old mark stood inside
+      // the table. It survived only because the one beat that uses it
+      // (`02-act-2-henderson-family-e` node 196) carries `sit`, which snaps to
+      // a real seat from `room.seats` afterwards; a bare `walkTo` would have
+      // stopped a tile short forever. A mark is a DESTINATION and must be on
+      // walkable floor in its own right (judge, ghost lane).
+      chair_n_mid: [6, 2],
       chair_s_mid: [6, 5],
       aisle_s:     [7.6, 5.9],
       door_west:   [0.7, 3.5],
@@ -945,24 +952,24 @@ export const ROOMS = {
       { type: 'monitorWall', x: 6, z: 6.3, rotation: Math.PI },
 
       // === Row 1 of server racks (west side) ===
-      { type: 'serverRack', x: 1, z: 1, rotation: 0 },
-      { type: 'serverRack', x: 1, z: 2, rotation: 0 },
-      { type: 'serverRack', x: 1, z: 3, rotation: 0 },
-      { type: 'serverRack', x: 1, z: 4, rotation: 0 },
-      { type: 'serverRack', x: 1, z: 5, rotation: 0 },
+      { type: 'serverRack', x: 1.5, z: 1.5, rotation: 0 },
+      { type: 'serverRack', x: 1.5, z: 2.5, rotation: 0 },
+      { type: 'serverRack', x: 1.5, z: 3.5, rotation: 0 },
+      { type: 'serverRack', x: 1.5, z: 4.5, rotation: 0 },
+      { type: 'serverRack', x: 1.5, z: 5.5, rotation: 0 },
 
       // === Row 2 of server racks ===
-      { type: 'serverRack', x: 3, z: 1, rotation: Math.PI },
-      { type: 'serverRack', x: 3, z: 2, rotation: Math.PI },
-      { type: 'serverRack', x: 3, z: 3, rotation: Math.PI },
-      { type: 'serverRack', x: 3, z: 4, rotation: Math.PI },
-      { type: 'serverRack', x: 3, z: 5, rotation: Math.PI },
+      { type: 'serverRack', x: 3.5, z: 1.5, rotation: Math.PI },
+      { type: 'serverRack', x: 3.5, z: 2.5, rotation: Math.PI },
+      { type: 'serverRack', x: 3.5, z: 3.5, rotation: Math.PI },
+      { type: 'serverRack', x: 3.5, z: 4.5, rotation: Math.PI },
+      { type: 'serverRack', x: 3.5, z: 5.5, rotation: Math.PI },
 
       // === Row 3 of server racks (east side) ===
-      { type: 'serverRack', x: 5, z: 1, rotation: 0 },
-      { type: 'serverRack', x: 5, z: 2, rotation: 0 },
-      { type: 'serverRack', x: 5, z: 3, rotation: 0 },
-      { type: 'serverRack', x: 5, z: 4, rotation: 0 },
+      { type: 'serverRack', x: 5.5, z: 1.5, rotation: 0 },
+      { type: 'serverRack', x: 5.5, z: 2.5, rotation: 0 },
+      { type: 'serverRack', x: 5.5, z: 3.5, rotation: 0 },
+      { type: 'serverRack', x: 5.5, z: 4.5, rotation: 0 },
 
       // === Alex IT's corner (southeast) — his desk among the racks ===
       { type: 'desk', x: 6, z: 7, rotation: 0 },
@@ -976,13 +983,13 @@ export const ROOMS = {
       { type: 'trashCan', x: 7, z: 8 },
 
       // === Misc server room equipment ===
-      { type: 'serverRack', x: 5, z: 5, rotation: 0 },
+      { type: 'serverRack', x: 5.5, z: 5.5, rotation: 0 },
 
       // === Cable management / fire extinguisher feel ===
-      { type: 'fileCabinet', x: 7, z: 1 },  // equipment shelf
-      { type: 'fileCabinet', x: 7, z: 2 },
-      { type: 'fileCabinet', x: 7, z: 3 },  // shelf for tuesday_server_tag interactable
-      { type: 'fileCabinet', x: 7, z: 4 },
+      { type: 'fileCabinet', x: 7.3, z: 1.5 },  // equipment shelf
+      { type: 'fileCabinet', x: 7.3, z: 2.5 },
+      { type: 'fileCabinet', x: 7.3, z: 3.5 },  // shelf for tuesday_server_tag interactable
+      { type: 'fileCabinet', x: 7.3, z: 4.5 },
       // Unauthorized Patch: standalone network monitoring terminal in the aisle
       { type: 'monitor', x: 5, z: 6 },
       // Side quest posters
@@ -1092,7 +1099,7 @@ export const ROOMS = {
       { type: 'elevatorDoors', x: 13, z: 3, rotation: -Math.PI / 2 },
 
       // === File cabinet next to reception desk (east side) ===
-      { type: 'fileCabinet', x: 9, z: 3, rotation: Math.PI },
+      { type: 'fileCabinet', x: 9.5, z: 3.5, rotation: Math.PI },
       // Side quest posters
       { type: 'motivationalPoster', x: 11,  z: 0.1, rotation: 0 },
       { type: 'motivationalPoster', x: 0.1, z: 5,   rotation: Math.PI / 2 },
@@ -1177,46 +1184,46 @@ export const ROOMS = {
       { type: 'garagePendant', x: 7,    z: 5, y: 2.12 },
       { type: 'garagePendant', x: 10.5, z: 4, y: 2.12 },
       // === Parking spots (floor markings) ===
-      { type: 'parkingSpot', x: 1,  z: 2, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 1,  z: 4, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 1,  z: 6, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 4,  z: 2, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 4,  z: 4, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 4,  z: 6, rotation: Math.PI / 2 }, // Andrew's empty spot
-      { type: 'parkingSpot', x: 9,  z: 2, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 9,  z: 4, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 9,  z: 6, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 12, z: 2, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 12, z: 4, rotation: Math.PI / 2 },
-      { type: 'parkingSpot', x: 12, z: 6, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 1,  z: 2.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 1,  z: 4.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 1,  z: 6.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 4,  z: 2.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 4,  z: 4.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 4,  z: 6.5, rotation: Math.PI / 2 }, // Andrew's empty spot
+      { type: 'parkingSpot', x: 9,  z: 2.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 9,  z: 4.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 9,  z: 6.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 12, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 12, z: 4.5, rotation: Math.PI / 2 },
+      { type: 'parkingSpot', x: 12, z: 6.5, rotation: Math.PI / 2 },
 
       // === Parked cars ===
-      { type: 'carSUV',    x: 1,  z: 2, rotation: Math.PI / 2 },
-      { type: 'car',       x: 1,  z: 4, rotation: Math.PI / 2 },
-      { type: 'carSports', x: 1,  z: 6, rotation: Math.PI / 2 },
-      { type: 'carSUV',    x: 4,  z: 2, rotation: Math.PI / 2 },
-      { type: 'car',       x: 4,  z: 4, rotation: Math.PI / 2 },
-      { type: 'andrewsCar',x: 4,  z: 6, rotation: Math.PI / 2 }, // Andrew's beat-up hatchback
-      { type: 'car',       x: 9,  z: 2, rotation: Math.PI / 2 },
-      { type: 'carSports', x: 9,  z: 4, rotation: Math.PI / 2 },
-      { type: 'carSUV',    x: 9,  z: 6, rotation: Math.PI / 2 },
-      { type: 'car',       x: 12, z: 2, rotation: Math.PI / 2 },
-      { type: 'carSUV',    x: 12, z: 4, rotation: Math.PI / 2 },
-      { type: 'carSports', x: 12, z: 6, rotation: Math.PI / 2 },
+      { type: 'carSUV',    x: 1,  z: 2.5, rotation: Math.PI / 2 },
+      { type: 'car',       x: 1,  z: 4.5, rotation: Math.PI / 2 },
+      { type: 'carSports', x: 1,  z: 6.5, rotation: Math.PI / 2 },
+      { type: 'carSUV',    x: 4,  z: 2.5, rotation: Math.PI / 2 },
+      { type: 'car',       x: 4,  z: 4.5, rotation: Math.PI / 2 },
+      { type: 'andrewsCar',x: 4,  z: 6.5, rotation: Math.PI / 2 }, // Andrew's beat-up hatchback
+      { type: 'car',       x: 9,  z: 2.5, rotation: Math.PI / 2 },
+      { type: 'carSports', x: 9,  z: 4.5, rotation: Math.PI / 2 },
+      { type: 'carSUV',    x: 9,  z: 6.5, rotation: Math.PI / 2 },
+      { type: 'car',       x: 12, z: 2.5, rotation: Math.PI / 2 },
+      { type: 'carSUV',    x: 12, z: 4.5, rotation: Math.PI / 2 },
+      { type: 'carSports', x: 12, z: 6.5, rotation: Math.PI / 2 },
 
       // The elevator up into the building (north exit tiles 6-7)
       { type: 'elevatorDoors', x: 6.5, z: -0.45, variant: 'G' },
       // The janitor's supply locker. The `janitor_closet` interactable sits on
       // this tile and had nothing to aim at — bare concrete (CLAUDE.md "Quest
       // interactable visibility"). Industrial grey-green metal, on his patrol.
-      { type: 'fileCabinet', variant: 0x55605a, x: 12, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x55605a, x: 12.5, z: 8.5, rotation: Math.PI },
       // F-9. Structural columns. The garage has never had one, which is why it
       // reads as a floor rather than a level of a building — and the middle
       // one, beside the spot the Trust Officer parks in, carries a repair.
       // `variant` is the patch height in metres.
-      { type: 'garagePillar', x: 2,  z: 5 },
-      { type: 'garagePillar', x: 7,  z: 5, variant: 0.9 },
-      { type: 'garagePillar', x: 11, z: 5 },
+      { type: 'garagePillar', x: 2.5,  z: 5.5 },
+      { type: 'garagePillar', x: 7.5,  z: 5.5, variant: 0.9 },
+      { type: 'garagePillar', x: 11.5, z: 5.5 },
     ],
     npcs: [
       { id: 'janitor', x: 12, z: 9, facing: Math.PI, movement: { type: 'patrol', waypoints: [{ x: 12, z: 9 }, { x: 12, z: 3 }, { x: 3, z: 3 }, { x: 3, z: 9 }] } },  // sweeps the garage
@@ -1307,10 +1314,10 @@ export const ROOMS = {
       { type: 'chair', x: 14, z: 3, rotation: -Math.PI / 2 },
 
       // === Credenza / power decor along north wall ===
-      { type: 'fileCabinet', x: 1, z: 1 },
-      { type: 'fileCabinet', x: 2, z: 1 },
-      { type: 'fileCabinet', x: 14, z: 1 },
-      { type: 'fileCabinet', x: 15, z: 1 },
+      { type: 'fileCabinet', x: 1.5, z: 1.5 },
+      { type: 'fileCabinet', x: 2.5, z: 1.5 },
+      { type: 'fileCabinet', x: 14.5, z: 1.5 },
+      { type: 'fileCabinet', x: 15.3, z: 1.5 },
 
       // === Conference area (west half, near water cooler) ===
       { type: 'conferenceTable', x: 4, z: 8, rotation: 0 },
@@ -1429,8 +1436,12 @@ export const ROOMS = {
       table_seat_s:    [5, 9],       // south-side chair Andrew takes
       table_seat_sw:   [4, 9],
       table_seat_e:    [6.1, 8],     // Skip's east-end chair
-      table_seat_n:    [4, 7],       // Grandma's north-side chair
-      table_seat_ne:   [5, 7],
+      // z 6, not 7 — same reason as `chair_n_mid` in the conference room: the
+      // centred conferenceTable now blocks rows 7 and 8, and both of these
+      // stood inside it. `table_seat_ne` is walked to by `03-act-3-endings`
+      // node 61 and only survived on its `sit` snap.
+      table_seat_n:    [4, 6],       // Grandma's north-side chair
+      table_seat_ne:   [5, 6],
       table_stand_n:   [5, 6.3],     // standing at the table on the north side
       regional_post:     [10, 5],    // where the Regional Manager stands (his NPC home)
       regional_confront: [9, 5],     // one tile short of him, face to face
@@ -1556,37 +1567,37 @@ export const ROOMS = {
     furniture: [
       // Rows of file cabinets — all facing south (toward player)
       // West bank
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 5, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 5, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 5, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1.5, z: 5.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2.5, z: 5.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3.5, z: 5.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4.5, z: 5.5, rotation: 0 },
       // East bank
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 7, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 8, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 9, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 10, z: 1, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 7, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 8, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 9, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 10, z: 3, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 7, z: 5, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 8, z: 5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 7.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 8.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 9.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 10.5, z: 1.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 7.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 8.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 9.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 10.5, z: 3.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 7.5, z: 5.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 8.5, z: 5.5, rotation: 0 },
       // West cluster — south extension (NPC paces x:3-7, so x:1-2 safe)
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 7, rotation: 0 },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 7, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1.5, z: 7.5, rotation: 0 },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2.5, z: 7.5, rotation: 0 },
       // South wall — west side (facing north into room)
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 1, z: 8, rotation: Math.PI },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 2, z: 8, rotation: Math.PI },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 3, z: 8, rotation: Math.PI },
-      { type: 'fileCabinet', variant: 0x3a2e20, x: 4, z: 8, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 1.5, z: 8.5, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 2.5, z: 8.5, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 3.5, z: 8.5, rotation: Math.PI },
+      { type: 'fileCabinet', variant: 0x3a2e20, x: 4.5, z: 8.5, rotation: Math.PI },
       // Desk with terminal in far corner
       { type: 'desk', x: 10, z: 7, rotation: -Math.PI / 2 },
       { type: 'monitor', x: 10.3, z: 7, rotation: -Math.PI / 2 },
@@ -1667,37 +1678,37 @@ export const ROOMS = {
 
       // === North cubicle row — 3 pods with wide aisles between them ===
       // Pod A (west, x:2-4)
-      { type: 'cubicleWall', x: 2, z: 1, rotation: 0 },
-      { type: 'cubicleWall', x: 4, z: 1, rotation: 0 },
-      { type: 'cubicleWall', x: 2, z: 1.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 5, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 2, z: 1.5, rotation: 0 },
+      { type: 'cubicleWall', x: 4, z: 1.5, rotation: 0 },
+      { type: 'cubicleWall', x: 2, z: 2, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 5.5, z: 2, rotation: Math.PI / 2 },
       { type: 'desk', x: 3, z: 2, rotation: 0 },
       { type: 'monitor', x: 3, z: 1.7 },
       { type: 'chair', x: 3, z: 2.8, rotation: Math.PI },
 
       // Pod B (center, x:7-9)
-      { type: 'cubicleWall', x: 7, z: 1, rotation: 0 },
-      { type: 'cubicleWall', x: 9, z: 1, rotation: 0 },
-      { type: 'cubicleWall', x: 7, z: 1.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 10, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 7, z: 1.5, rotation: 0 },
+      { type: 'cubicleWall', x: 9, z: 1.5, rotation: 0 },
+      { type: 'cubicleWall', x: 7, z: 2, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 10.5, z: 2, rotation: Math.PI / 2 },
       { type: 'desk', x: 8, z: 2, rotation: 0 },
       { type: 'monitor', x: 8, z: 1.7 },
       { type: 'chair', x: 8, z: 2.8, rotation: Math.PI },
 
       // Pod C (east, x:11-13)
-      { type: 'cubicleWall', x: 11, z: 1, rotation: 0 },
-      { type: 'cubicleWall', x: 13, z: 1, rotation: 0 },
-      { type: 'cubicleWall', x: 11, z: 1.5, rotation: Math.PI / 2 },
-      { type: 'cubicleWall', x: 14, z: 1.5, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 11, z: 1.5, rotation: 0 },
+      { type: 'cubicleWall', x: 13, z: 1.5, rotation: 0 },
+      { type: 'cubicleWall', x: 11, z: 2, rotation: Math.PI / 2 },
+      { type: 'cubicleWall', x: 14.5, z: 2, rotation: Math.PI / 2 },
       { type: 'desk', x: 12, z: 2, rotation: 0 },
       { type: 'monitor', x: 12, z: 1.7 },
       { type: 'chair', x: 12, z: 2.8, rotation: Math.PI },
 
       // === South-wall filing cabinets (all HR records) ===
-      { type: 'fileCabinet', x: 2,  z: 9, rotation: Math.PI },
-      { type: 'fileCabinet', x: 6,  z: 9, rotation: Math.PI },
-      { type: 'fileCabinet', x: 11, z: 9, rotation: Math.PI },
-      { type: 'fileCabinet', x: 14, z: 9, rotation: Math.PI },
+      { type: 'fileCabinet', x: 2.5,  z: 9.25, rotation: Math.PI },
+      { type: 'fileCabinet', x: 6.5,  z: 9.25, rotation: Math.PI },
+      { type: 'fileCabinet', x: 11.5, z: 9.25, rotation: Math.PI },
+      { type: 'fileCabinet', x: 14.5, z: 9.25, rotation: Math.PI },
 
       // === Suggestion box on desk (south area) ===
       { type: 'desk', x: 9, z: 9, rotation: Math.PI },
@@ -1767,7 +1778,7 @@ export const ROOMS = {
       // `janitor_names_search` interactable at (1,6) is described as "behind
       // the low-left deposit box frame" and there was no box on that wall at
       // all — nothing to walk up to (CLAUDE.md "Quest interactable visibility").
-      { type: 'lockbox', x: 0.64, z: 6.125, rotation: Math.PI / 2, variant: 1.75 },
+      { type: 'lockbox', x: 0.45, z: 6.125, rotation: Math.PI / 2, variant: 1.75 },
     ],
     npcs: [],
     exits: [
@@ -2042,9 +2053,9 @@ export const ROOMS = {
       { type: 'chair',    x: 8,   z: 1, rotation: 0 },
 
       // ── The Algorithm's server rack cluster — NE corner ───────
-      { type: 'serverRack', x: 11, z: 1 },
-      { type: 'serverRack', x: 12, z: 1 },
-      { type: 'serverRack', x: 13, z: 1 },
+      { type: 'serverRack', x: 11.5, z: 0.5 },
+      { type: 'serverRack', x: 12.5, z: 0.5 },
+      { type: 'serverRack', x: 13.5, z: 0.5 },
 
 
 
@@ -2059,11 +2070,17 @@ export const ROOMS = {
       { type: 'luxuryFridge',   x: 0.8, z: 1 },
       { type: 'wineFridge',     x: 6, z: 1 },
       // Island — centred in the L, open to south and east
-      { type: 'kitchenIsland',  x: 3, z: 3 },
-      // Bar stools on the open faces only (south + east)
-      { type: 'chair', x: 2.5, z: 4.2, rotation: Math.PI },
-      { type: 'chair', x: 3.5, z: 4.2, rotation: Math.PI },
-      { type: 'chair', x: 4.6, z: 3,   rotation: Math.PI / 2 },
+      { type: 'kitchenIsland',  x: 3.5, z: 3.5 },
+      // Bar stools on the open faces only (south + east). THEY MOVE WITH THE
+      // ISLAND. It went 3,3 -> 3.5,3.5 so its mesh sits on the tiles it blocks;
+      // the stools did not, and the island (x[2.45,4.55] z[3.00,4.02]) then
+      // interpenetrated all three — 0.17 x 0.23 m into the east stool and
+      // 0.04 m into each south one, from 0.33 and 0.46 m of clearance (judge,
+      // ghost lane). Chairs are NO_BLOCK, so this is composition only and not
+      // one grid cell moves. Same pair of lines in `penthouse_expanded`.
+      { type: 'chair', x: 3.0, z: 4.7, rotation: Math.PI },
+      { type: 'chair', x: 4.0, z: 4.7, rotation: Math.PI },
+      { type: 'chair', x: 5.1, z: 3.5, rotation: Math.PI / 2 },
 
 
       // ── Putting green ─────────────────────────────────────────
@@ -2171,10 +2188,10 @@ export const ROOMS = {
       { type: 'kitchenCounter', x: 4,   z: 1, variant: 'sink' },
       { type: 'kitchenCounter', x: 5,   z: 1 },
       { type: 'wineFridge',     x: 6,   z: 1 },
-      { type: 'kitchenIsland',  x: 3,   z: 3 },
-      { type: 'chair', x: 2.5, z: 4.2, rotation: Math.PI },
-      { type: 'chair', x: 3.5, z: 4.2, rotation: Math.PI },
-      { type: 'chair', x: 4.6, z: 3,   rotation: Math.PI / 2 },
+      { type: 'kitchenIsland',  x: 3.5, z: 3.5 },
+      { type: 'chair', x: 3.0, z: 4.7, rotation: Math.PI },
+      { type: 'chair', x: 4.0, z: 4.7, rotation: Math.PI },
+      { type: 'chair', x: 5.1, z: 3.5, rotation: Math.PI / 2 },
 
       // ── Executive desk — near server racks ───────────────────────
       { type: 'desk',     x: 13, z: 2, rotation: Math.PI },
@@ -2259,8 +2276,8 @@ export const ROOMS = {
       { type: 'movieScreen',  x: 7,  z: 0.1 },
       { type: 'aquariumWall', x: 12, z: 0.1 },
       // Two couches facing the aquarium (back toward south, seat faces north)
-      { type: 'couch', x: 5,  z: 5 },
-      { type: 'couch', x: 11, z: 5 },
+      { type: 'couch', x: 5.5,  z: 5 },
+      { type: 'couch', x: 11.5, z: 5 },
       // Popcorn popper — back right corner (SE)
       { type: 'popcornPopper', x: 14.5, z: 6.5 },
     ],
@@ -2438,10 +2455,10 @@ export const ROOMS = {
     ],
     furniture: [
       // ── Bar — north wall, centered ──────────────────────────
-      { type: 'loungeBar', x: 9, z: 0.6 },
+      { type: 'loungeBar', x: 8.5, z: 1.0 },
       // Warm practical on the bar counter — a low lamp pool so the near-black
       // counter box carries a warm source instead of reading dead (round-3 note).
-      { type: 'loungeLamp', x: 11, z: 0.66, y: 1.08 },
+      { type: 'loungeLamp', x: 10.5, z: 1.0, y: 1.08 },
 
       // ── Neon flanking bar ───────────────────────────────────
       // ONE readable "TRUST ISSUES" sign; the second is an abstract magenta
@@ -2456,25 +2473,25 @@ export const ROOMS = {
       { type: 'coffeeTable',      x: 2.0, z: 2.2 },
 
       // ── Poker table — NE corner ──────────────────────────────
-      { type: 'pokerTable', x: 15, z: 1.8 },
+      { type: 'pokerTable', x: 15.5, z: 2.3 },
       // Warm practical over the poker felt — a low lamp pool so the black poker
       // box in the room's dead middle reads as a lit table (round-3 note).
-      { type: 'loungeLamp', x: 15, z: 2.3, y: 0.735 },
+      { type: 'loungeLamp', x: 15.5, z: 2.8, y: 0.735 },
 
       // ── Pool table — centre room ────────────────────────────
-      { type: 'poolTable', x: 9, z: 6 },
+      { type: 'poolTable', x: 9.5, z: 6.5 },
       // Warm practical on the pool felt — the dead-centre black box was the
       // room's darkest middle mass; a low lamp pool lifts it (round-3 note).
-      { type: 'loungeLamp', x: 9, z: 5.55, y: 0.74 },
+      { type: 'loungeLamp', x: 9.5, z: 6.05, y: 0.74 },
 
       // ── West VIP booth — L-shape in SW corner ───────────────
-      { type: 'couch', x: 1,   z: 9,    rotation: -Math.PI / 2 }, // west wall, faces east
-      { type: 'couch', x: 3,   z: 11                            }, // south wall, faces north
+      { type: 'couch', x: 1,   z: 9.5,  rotation: -Math.PI / 2 }, // west wall, faces east
+      { type: 'couch', x: 3.5, z: 11                            }, // south wall, faces north
       { type: 'coffeeTable', x: 3,   z: 9.2  },
 
       // ── East VIP booth — L-shape in SE corner ───────────────
-      { type: 'couch', x: 15,  z: 9,    rotation:  Math.PI / 2 }, // east wall, faces west
-      { type: 'couch', x: 13,  z: 11                            }, // south wall, faces north
+      { type: 'couch', x: 15,  z: 9.5,  rotation:  Math.PI / 2 }, // east wall, faces west
+      { type: 'couch', x: 13.5, z: 11                            }, // south wall, faces north
       { type: 'coffeeTable', x: 13,   z: 9.2  },
     ],
     // F-6. The lounge is the post-game team hub the writing already assumes:
@@ -2580,11 +2597,15 @@ export const ROOMS = {
       { type: 'busStopSign', x: 20.4, z: 1.3 },
       { type: 'trashCan', x: 16.2, z: 1.4 },
       // Parked cars along the south curb
-      { type: 'car', x: 3,  z: 10, rotation: Math.PI / 2 },
-      { type: 'car', x: 8,  z: 10, rotation: Math.PI / 2 },
-      { type: 'car', x: 13, z: 10, rotation: Math.PI / 2 },
-      { type: 'car', x: 18, z: 10, rotation: Math.PI / 2 },
-      { type: 'car', x: 23, z: 10, rotation: Math.PI / 2 },
+      { type: 'car', x: 3,  z: 10.5, rotation: Math.PI / 2 },
+      { type: 'car', x: 8,  z: 10.5, rotation: Math.PI / 2 },
+      // x 15, not 15.5: a car is 1.92 long and blocks two tiles, so an odd
+      // half-tile anchor hangs 0.46 of bumper over the tile east of the block
+      // (ghost-walk PHANTOM @16,10, cov 0.50). At 15 the mesh is 14.04-15.96
+      // inside its own [14,16) block.
+      { type: 'car', x: 15, z: 10.5, rotation: Math.PI / 2 },
+      { type: 'car', x: 18, z: 10.5, rotation: Math.PI / 2 },
+      { type: 'car', x: 23, z: 10.5, rotation: Math.PI / 2 },
       // A planter or two of civic optimism
       { type: 'plant', x: 7.5, z: 1.4 },
       { type: 'plant', x: 14.2, z: 1.4 },
@@ -2627,11 +2648,19 @@ export const ROOMS = {
     walls: true,
     lighting: { ambient: 0xd8e0e8, ambientIntensity: 0.6, dir: 0xc8d4e0, dirIntensity: 0.6, flicker: true },
     furniture: [
-      // Bench seating along both walls
-      { type: 'bench', x: 2, z: 0.8 },
-      { type: 'bench', x: 4, z: 0.8 },
-      { type: 'bench', x: 6, z: 0.8 },
-      { type: 'bench', x: 8, z: 0.8 },
+      // Bench seating along both walls. The NORTH row moved 0.8 -> 0.5: at 0.8
+      // the block row was floor(1.3) = 1 while the mesh sat entirely in row 0,
+      // i.e. four blocked tiles with no geometry on them. The SOUTH row is at
+      // 4.2 and STAYS THERE — its block row is floor(4.7) = 4 and its mesh
+      // z[4.03,4.42] was already inside [4,5), so the sweep's blanket centring
+      // rule moved it for nothing and put 0.22 m of a 0.39 m bench through the
+      // south wall (interior face z 4.50, outer face 4.65), with 0.07 m poking
+      // out of the bus. Centre a prop on its blocked tile ONLY when the mesh
+      // is not already inside it (judge, ghost lane).
+      { type: 'bench', x: 2, z: 0.5 },
+      { type: 'bench', x: 4, z: 0.5 },
+      { type: 'bench', x: 6, z: 0.5 },
+      { type: 'bench', x: 8, z: 0.5 },
       { type: 'bench', x: 2, z: 4.2, rotation: Math.PI },
       { type: 'bench', x: 4, z: 4.2, rotation: Math.PI },
       // Seat 12. The `bus_transfer_ledger` interactable is wedged under it at
@@ -2679,29 +2708,29 @@ export const ROOMS = {
     ],
     furniture: [
       // The stacks — towering ranks of records (dark wood cabinets)
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 1, z: 1 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 2, z: 1 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 3, z: 1 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 4, z: 1 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 5, z: 1 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 1, z: 3 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 2, z: 3 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 3, z: 3 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 4, z: 3 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 5, z: 3 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 1, z: 5 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 2, z: 5 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 3, z: 5 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 4, z: 5 },
-      { type: 'fileCabinet', variant: 0x4a3a28, x: 5, z: 5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 1.5, z: 1.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 2.5, z: 1.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 3.5, z: 1.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 4.5, z: 1.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 5.5, z: 1.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 1.5, z: 3.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 2.5, z: 3.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 3.5, z: 3.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 4.5, z: 3.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 5.5, z: 3.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 1.5, z: 5.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 2.5, z: 5.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 3.5, z: 5.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 4.5, z: 5.5 },
+      { type: 'fileCabinet', variant: 0x4a3a28, x: 5.5, z: 5.5 },
       // Deep stacks (west rear) — optional lore run
-      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1, z: 8 },
-      { type: 'fileCabinet', variant: 0x3a2c1e, x: 2, z: 8 },
-      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1, z: 10 },
-      { type: 'fileCabinet', variant: 0x3a2c1e, x: 2, z: 10 },
-      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1, z: 12 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1.5, z: 8.5 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 2.5, z: 8.5 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1.5, z: 10.5 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 2.5, z: 10.5 },
+      { type: 'fileCabinet', variant: 0x3a2c1e, x: 1.5, z: 12.5 },
       // The Clerk's desk — center, unavoidable, eternal
-      { type: 'receptionDesk', x: 9, z: 6, rotation: Math.PI },
+      { type: 'receptionDesk', x: 9.5, z: 6, rotation: Math.PI },
       { type: 'chair', x: 9, z: 5, rotation: 0 },
       { type: 'monitor', x: 9.5, z: 5.7 },
       { type: 'deskPlantSucculent', x: 10.2, z: 5.8 },
@@ -2755,7 +2784,7 @@ export const ROOMS = {
     ],
     furniture: [
       // Counter along the north wall with stools (lounge bar repurposed)
-      { type: 'loungeBar', x: 7.5, z: 0.8, rotation: 0 },
+      { type: 'loungeBar', x: 7.5, z: 1.0, rotation: 0 },
       // Booths along the west wall
       { type: 'dinerBooth', x: 1.4, z: 2, rotation: Math.PI / 2 },
       { type: 'dinerBooth', x: 1.4, z: 4, rotation: Math.PI / 2 },
@@ -2764,8 +2793,8 @@ export const ROOMS = {
       { type: 'dinerBooth', x: 5, z: 6.4 },
       { type: 'dinerBooth', x: 8, z: 6.4 },
       // Pie case (fridge standing in, proudly)
-      { type: 'fridge', x: 11, z: 1 },
-      { type: 'coffeeMachine', x: 10, z: 0.8 },
+      { type: 'fridge', x: 11.1, z: 1.5 },
+      { type: 'coffeeMachine', x: 10, z: 1.0 },
     ],
     npcs: [
       // Delia Okafor, booth 4, holding court. ON the north bench: the booth at
@@ -2808,9 +2837,9 @@ export const ROOMS = {
     ],
     furniture: [
       // Espresso bar where the teller line used to be
-      { type: 'loungeBar', x: 4, z: 1, rotation: 0 },
-      { type: 'coffeeMachine', x: 2, z: 0.8 },
-      { type: 'coffeeMachine', x: 6, z: 0.8 },
+      { type: 'loungeBar', x: 4.5, z: 1, rotation: 0 },
+      { type: 'coffeeMachine', x: 2.5, z: 0.8 },
+      { type: 'coffeeMachine', x: 6.5, z: 0.8 },
       // 1947 marble: grand painting + the old teller window frames
       { type: 'grandPainting', x: 12.5, z: 0.4 },
       // Cafe tables (desks + chairs in casual arrangement)
@@ -2836,8 +2865,21 @@ export const ROOMS = {
     ],
     exits: [
       { x: 0, z: 5, targetRoom: 'city_street', spawnX: 24, spawnZ: 5 },
-      // Basement stairs (behind the bar, gated by the barista dialog)
-      { x: 13, z: 9, targetRoom: 'old_vault', spawnX: 1, spawnZ: 1 },
+      // Basement stairs (behind the bar, gated by the barista dialog).
+      //
+      // x 12, NOT 13 — and this is not a nudge, it is the only way into the
+      // room. `old_branch` is 14 x 10, `Player.move` clamps the body to
+      // [0.4, W-1.4] x [0.4, H-1.4] = [0.4, 12.6] x [0.4, 8.6], and
+      // `_getNearbyTargets` offers an exit only from its own tile or an
+      // ORTHOGONAL neighbour. `Math.floor(px)` therefore never reaches 13 and
+      // `Math.floor(pz)` never reaches 9, so the tile at (13,9) could not be
+      // stood on OR reached from (13,8) or (12,9) — both outside the clamp on
+      // one axis. **`old_vault` had been unreachable since it shipped in
+      // 3bcfd50**: the Firm ambush retry, `janitor_names_search` and
+      // `vault_ledger_niche` were all behind a door with no floor in front of
+      // it. Found by the ghost lane's cross-room EXIT pass; keep any exit tile
+      // inside the clamp box, which is one tile in from the far walls.
+      { x: 12, z: 9, targetRoom: 'old_vault', spawnX: 1, spawnZ: 1 },
     ],
     interactables: [],
     playerSpawn: { x: 1, z: 5 },
@@ -2869,8 +2911,8 @@ export const ROOMS = {
       { type: 'lockbox', x: 7.36, z: 0.875, rotation: -Math.PI / 2, variant: 1.75 },
       { type: 'lockbox', x: 7.36, z: 2.625, rotation: -Math.PI / 2, variant: 1.75 },
       // Roastery storage creeping in — the present invading the past
-      { type: 'fileCabinet', variant: 0x6a5238, x: 1, z: 6.8 },
-      { type: 'fileCabinet', variant: 0x6a5238, x: 2, z: 6.8 },
+      { type: 'fileCabinet', variant: 0x6a5238, x: 1.5, z: 7.25 },
+      { type: 'fileCabinet', variant: 0x6a5238, x: 2.5, z: 7.25 },
       { type: 'popcornPopper', x: 6.5, z: 6.5 },
       { type: 'cobweb', x: 7.4, z: 0.6 },
     ],
@@ -2938,10 +2980,16 @@ export const ROOMS = {
       // The stall run against the NORTH wall, doors facing SOUTH into the room.
       // rotation 0 = SOUTH (the rotation law, CLAUDE.md) — and which way a
       // stall door faces is the entire point of the prop.
-      { type: 'bathroomStall', x: 4, z: 1, rotation: 0, variant: 3 },
+      // x 4.5, not 4: the run is 3 stalls x 0.95 = 2.85 wide and CENTRED, so at
+      // x 4 it spanned 2.575-5.425 while its 3-tile block landed on 3,4,5 —
+      // 0.43 of stall hanging over walkable tile 2 (ghost-walk PHANTOM, grp
+      // 0.50). At 4.5 the mesh is 3.075-5.925 and sits inside its own block.
+      // The middle stall is then centred on tile 4, which is where the
+      // `bathroom_stall_door` interactable already lives.
+      { type: 'bathroomStall', x: 4.5, z: 1, rotation: 0, variant: 3 },
       // Basins on the WEST wall, facing EAST. The mirror is on the prop's own
       // -z, i.e. against the wall behind the taps.
-      { type: 'sinkCounter', x: 0.6, z: 3.5, rotation: Math.PI / 2, variant: 2 },
+      { type: 'sinkCounter', x: 0.45, z: 3.4, rotation: Math.PI / 2, variant: 2 },
       { type: 'trashCan', x: 6.6, z: 4.2 },
       { type: 'plantSucculent', x: 7.2, z: 1.2 },
     ],

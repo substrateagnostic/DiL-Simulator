@@ -15,6 +15,7 @@
     "story:sim": "node tools/story-sim.mjs",
     "validate:data": "node scripts/validate-data.mjs",
     "check": "npm run dialogs:check && npm run story:sim && npm run validate:data && npm run build",
+    "gate:ghost": "node tools/ghost-walk.mjs",
     "package:itch": "node scripts/package-itch.mjs"
   },
   "keywords": [],

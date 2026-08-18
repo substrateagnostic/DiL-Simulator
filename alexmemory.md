@@ -1,3 +1,116 @@
+## [THE COLLISION GHOST SWEEP — 08-18 (Fable 5, ghost lane, resumed)]
+
+Your two reports — the bathroom stalls you could only get into from behind,
+and the weird collisions in the garage — turned out to be one bug with a
+family. The visual world and the collision world are built by different code
+and nobody had ever diffed them. Now something does, every room, three save
+states. Branch `display-case`, NOT merged.
+
+- **`tools/ghost-walk.mjs`** walks all 28 rooms in `fresh` / `act7` / `post`
+  through the shipping load path and names six fault classes: floor you can
+  see but never reach, blocked tiles with nothing on them (the invisible
+  wall), walkable tiles with a solid prop standing on them (the walk-through
+  prop), exits whose landing is unreachable, interactables you can only fire
+  from the wrong side, and NPCs standing inside furniture. It exits 1.
+- **The count, and where each number comes from — because two of them are
+  not mine.** The instrument reads `NO_BLOCK` and `FURNITURE_FOOTPRINTS` as
+  live exports from `Room.js`, and those exports are part of this change, so
+  there is no measurable "before this lane existed" figure: I tried, and
+  every room fails extraction at the parent commit. The honest ladder is the
+  lane's own logs plus mine. **674 faults** across three states on 08-17 at
+  23:36 (the instrument working, the footprints not yet corrected).
+  **49** when I picked the lane up. **40** after one instrument correction
+  (see the honest list). **13** after the data fixes, and all 13 waived by
+  name, so the gate reports **0** and exits 0. The five that mattered:
+  - the **bathroom stalls**: a 2.85 m run at x 4 with its 3-tile block one
+    tile east of its own mesh — the tile in FRONT of the doors was sealed and
+    the tiles BEHIND were open. Exactly your report. Fixed by anchoring the
+    run at 4.5, where it sits inside its own block.
+  - the **garage**: cars were blocked as 3 tiles long when they are 1.92 m —
+    two — so every bay put a tile of invisible car off its far end and the
+    drive aisles between parking columns were sealed. Also your report.
+  - the **penthouse putting green**: a 2.8 x 0.02 x 1.6 TURF MAT was blocking
+    six tiles at measured 0.00 coverage. It is a rug. The largest single
+    invisible wall in the game.
+  - the **penthouse bar**: all three walk-through tiles were one prop — the
+    lounge lamp's 1.7 x 1.7 light POOL, floating at chest height because
+    every placement lifts the lamp onto a table. You cannot collide with
+    light.
+  - **Fennimore Avenue**: a parked car hanging half a tile over the pavement
+    east of it.
+- **Also fixed by the same sweep, before I got here**: cubicle partitions
+  blocking one full tile east of the panel you can see (an invisible wall in
+  every aisle beside a pod), the executive desk walk-through on its north
+  half, every diner booth with one bench you could stand inside, the vault
+  lockbox banks half open, the reception exit sign blocking the floor under
+  it, and a long tail of props whose mesh sat on a tile CORNER instead of on
+  a tile. 193 furniture placements changed in all.
+- **13 waivers, each with the alternative I rejected written next to it.**
+  Three garage tiles are the dead space between parked bumpers behind a
+  structural column — I checked every other column position and each one just
+  moves the pocket, because a wall-side bay is a dead end by construction.
+  The rest are RUN-END TILES: a 2.56 m reception desk cannot be wrapped by a
+  whole number of tiles, and the last appliance in a flush counter run has no
+  neighbour to cover the other half of its tile. Fixing either means moving a
+  hand-placed assembly — reception's desk carries two monitors, a keyboard, a
+  plant, a chair, a seated Diane and her own interactable — or opening a
+  visible gap in a counter run. `--nowaive` prints exactly those 13 and exits
+  1, so the waiver list can never quietly grow.
+- **The judge said FAIL, and it was right — three fixes landed.** It could not
+  fault the claim (the numbers reproduce, the seeded defects are fixed, the
+  threshold change is sound) so it went after the thing the instrument cannot
+  see: **composition**. The 193-prop rule was applied as a blanket, and
+  (a) four transit-bus benches were moved for nothing and ended up **0.22 m
+  through the south wall**, with 0.07 m poking out of the bus — their block
+  row was already right; (b) the penthouse kitchen island moved into all three
+  of its own bar stools, 0.33 m of clearance becoming 0.17 x 0.23 m of
+  interpenetration, in your final room. Both fixed and shot. (c) It also
+  caught that correcting the conference table's depth had put three stage
+  MARKS inside the table — they survived only because those beats end in
+  `sit`, which snaps to a real seat afterwards.
+- **And it found the biggest thing in the lane, which was hiding in a silent
+  one-character diff.** The predecessor moved `old_branch`'s basement stair
+  from x 13 to x 12 with no comment. That tile was outside the player's
+  movement clamp on BOTH axes, and an exit only offers itself from its own
+  tile or an orthogonal neighbour — so **`old_vault` had been unreachable
+  since the day it shipped.** The Firm ambush retry, `janitor_names_search`
+  and `vault_ledger_niche` were all behind a door with no floor in front of
+  it. It now carries a comment saying so.
+- **One waiver deleted for being a waiver.** The `stairwell` row was
+  cell-less and class-wide and matched zero faults — it could only ever
+  swallow the next real stairwell pocket in silence. Two more had reasons that
+  overstated the case; both rewritten to say what the trade actually is,
+  including the correction that a garage column COULD be moved without
+  creating a new pocket, and that what stops it is the `garage_pillar` story
+  object pinned to the middle one.
+- **Verified**: ghost 0 unwaived faults across three states; `_g-wall-census` 0 faults
+  (16 props / 7 rooms); `_ux-smoke` PASS; `_ux-dev` 0 duplicate NPCs and 0
+  unaccepted cross-room placements over 8 presets x 28 rooms; `npm run check`
+  green. Headed walk capture `tools/_gw-walk.mjs`, 10/10: Andrew walks to the
+  stall doors and opens one FROM THE FRONT, and three garage aisles run end
+  to end. Artifacts in `screenshots/ghost-walk/`.
+- **HONEST LIST.** (1) The ghost walk is a MANUAL gate — it needs a dev
+  server and a headed browser and takes 65-110 s, so it is not in
+  `npm run check`; it is documented in CLAUDE.md as run-it-after-any-
+  collision-change. (2) I widened the instrument's body band from 0.30 m to
+  0.15 m because a sports car's whole chassis lives at 0.10-0.30 and the tool
+  was calling three parked cars invisible walls; that change alone accounts
+  for 9 of the fault reduction and I have said so rather than banking it.
+  (3) 193 furniture placements moved, most of them by half a tile, so each
+  prop sits on the tile it blocks. That is a real if small visual change in a
+  lot of rooms — it IS the fix, but it is the first thing to look at if a room
+  reads differently to you. (4) The two
+  RUN-END waivers in `penthouse_expanded` are post-game-only content.
+  (5) The judge named three MEASURED defects it found and I did NOT fix,
+  because each needs its own verification round and all three sit below the
+  instrument's own thresholds: the `loungeBar` footprint is 1 row deep against
+  a 3.15 m mesh, so 0.26 m of counter stands on walkable floor at 0.33
+  coverage in Lucky's, the old branch and the penthouse bar; `credenza` /
+  `credenzaEast` in the board room are legacy 1x3 rows on a 0.64 m mesh, six
+  tiles of two-thirds-empty block; and Lucky's own run-end tiles (5,1) and
+  (9,1) measure 0.17-0.19, the same phenomenon as the two I waived by name,
+  sitting just above the line that would have reported them.
+
 ## [JANET'S QUIZ — THE WORKING STYLES, 08-17 (Fable 5, q-run / traits pilot)]
 
 Your round-9 commission, built: personality selection is diegetic. Day one,
