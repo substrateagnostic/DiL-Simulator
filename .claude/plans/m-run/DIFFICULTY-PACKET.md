@@ -556,3 +556,124 @@ LANES-final, HARD-nodl, HARD-enemy, HARD-v3, HARD-v4, HARD-alt130, _base-diag) a
 
 To make any of it real: `DIFFICULTY_LIVE = true` in `src/data/difficulty.js`, and
 `ACTIVE_NAME_SET` to your pick.
+
+---
+
+## 7.4 ADDENDUM (2026-08-17, the n-run) — THE AUDIT ACCOMMODATION: §7.3(a) IS CLOSED
+
+*Appended after the flip. You opened the gate with §7.3(a) declared as a hole —
+"Hard is currently playable on two of three Practice Groups" — and licensed a
+rework past the J-lane structures. This is what shipped, what lost, and the
+honest residuals. Everything below is measured through the shipping engine
+(`Difficulty.force('hard')`, knobs as DATA on the hard bundle, zero engine
+patches in the harness); raw tables in `.claude/plans/n-run/`.*
+
+### What shipped — `hard.audit = { fileRate: 2, assaultSlow: 0.06, seedRecord: 3 }`
+
+On Hard, and only on Hard, the Audit lane's file works under audit conditions.
+Three data fields, one accessor (`DifficultyManager.auditRamp`), three read
+sites in `CombatEngine`, all intrinsically gated on owning the `findings`
+node — no other lane, and no Easy/Normal player, is reachable by any of them:
+
+- **Exhibits file at double rate** (damage-carrying tagged hits only). The
+  ramp's clock is resized to Hard's turn budget; the identity — accumulate,
+  then close — is untouched, and Easy/Normal values are untouched.
+- **The paper trail slows the assault**: −6 % outgoing ATK per Finding EVER
+  filed on that enemy (the monotonic `_findingsEver` record, capped at 5 →
+  max −30 %). A fully documented opponent presses at 1.45 × 0.70 = **1.015 —
+  a hair above Normal, never below it**. This is the structural answer: the
+  lane gets its turns back on the exact axis Hard took them.
+- **The record starts three entries deep** — the auditor read their file
+  before the meeting. Seeds the shield only, never the burst clock. This is
+  the piece that reaches the trio, where the lane's deaths were three
+  undocumented bodies swinging ×1.45 in the opening rounds.
+
+### The achieved table (600 runs/cell, `LANES-hard-final.txt`)
+
+| rung | lit / comp / audit | band | was (packet §7.3) |
+|---|---|---|---|
+| karen@3 | 86.8 / 81.8 / **97.2** | 15.3 | 4.2 |
+| karen@4 | 97.0 / 89.5 / 89.5 | 7.5 | 19.0 |
+| chad@5 | 98.3 / 89.7 / 95.7 | 8.7 | 13.5 |
+| chad@6 | 100 / 98.7 / 100 | 1.3 | 0.5 |
+| grandma@7 | 93.0 / 92.3 / 92.2 | 0.8 | 17.5 |
+| grandma@8 | 96.8 / 98.8 / 97.8 | 2.0 | 5.5 |
+| **trio@7** | 82.3 / 81.7 / **74.8** | **7.5** | **42.0** |
+| trio@8 | 89.2 / 91.2 / 86.2 | 5.0 | 22.8 |
+| meredith@8 | 93.5 / 97.2 / 85.7 | 11.5 | 40.5 |
+| meredith@9 | 99.5 / 98.5 / 91.5 | 8.0 | 11.8 |
+| regional_director@10 | 99.3 / 87.7 / 92.5 | 11.7 | 31.8 |
+| algorithm@10 | 97.8 / 93.8 / 98.0 | 4.2 | 5.2 |
+
+**Audit's worst deficit against the top lane anywhere: 11.5 pp** (meredith@8),
+against the brief's ≤ ~15 and the shipped build's own ~10 pp law breach. The
+42.0 pp hole is 7.5 pp. Feel table (`FEEL-final.txt`): audit near-death on
+meredith@8 50.7 → 23.2 %, grandma@7 38.0 → 11.5 %; the trio stays
+white-knuckle (near-death 86–93 %) — Hard's trio frightens every lane, which
+is Hard doing its job.
+
+**Read the karen@3 row before signing.** The residual MAX band (15.3) is now
+Audit's CEILING, not its floor: a seeded record against the lowest-ATK boss in
+the game makes Audit the best Hard opener (97.2 vs Litigation 86.8). The other
+double-digit band (regional 11.7) is floored by COMPLIANCE (87.7, base Hard
+85.5 — untouched, pre-existing). Both are each-lane-owns-rungs texture, not a
+collapse; but if the karen@3 inversion reads wrong to you, the sized fix is
+seedRecord 3 → 2, which costs the trio 11 pp (r3a). I would not pay that.
+
+### The candidates that lost (400 runs/cell, `explore-*.txt`)
+
+| candidate | why it lost |
+|---|---|
+| fileRate alone (a) | Meredith got WORSE (60.8 → 47.3 %): doubling the debuff-notes path let Due Diligence race the file to closes no damaging hit was there to cash. Fixed by scoping the rate to exhibits; still leaves the trio at ~47 % |
+| transient assaultSlow (c as first built) | The shield emptied on every close — vanished exactly when the lane cashed its payoff. Trio 51.0 vs base 46.8 % |
+| composurePerFiling (b) | Mid-pack everywhere (trio 49.0, meredith 65.8), blurs Compliance's Composure-off-defence identity, inflates Breaks on 60-bar bosses. Knob stripped from the engine |
+| fileRate 3 | Fills a 5-slot file in two hits — the ramp stops being a ramp. Bought trio 60.8 but lost meredith (49.0) |
+
+### The degenerate-line hunt (`DEGEN-final.txt`, `ISO-final.txt`, `EFFT-final.txt`)
+
+- **Hold-the-file** (sit at max−1 forever for the standing +8 %/stack and the
+  shield): loses by 11–64 pp on chad/grandma/meredith. At trio@8 it reads
+  +2.6 pp over the honest policy — and the isolation run shows that edge is
+  PRE-EXISTING policy shape (base Hard +10.8 pp, Normal +1.3 pp: focus-fire
+  killing a body beats ML-cycling at the trio on any mode). The accommodation
+  SHRINKS it. The monotonic record is why: refusing to close earns nothing.
+- **The chain** (closes → supers → Uc / Loop In, capstone at L10): eff.T vs
+  suppressed turn-back reads 99.1 % (regional), 93.7 % (trio), 85.8 %
+  (algorithm) — and **70.4 / 71.7 % on grandma@10 / meredith@10**. Those two
+  are the J-run's accepted Audit-Uc breach (§3.2, accepted at 78.6–84.6 %)
+  deepened by the faster close cadence, on two overlevelled victory-lap cells
+  (at-rung wins there are 100 / 95.7 %). Declared, not hidden; the sized knob
+  if you ever want it is H-run §8.2's (charge the sustain return Confidence),
+  which reopens a design you sealed, so I did not.
+- **The 1-point splash**: a completionist litigator (L12+) buying the
+  `findings` keystone carries the seed onto Hard for +3.4 to +6.6 pp. Bounded,
+  post-story, Hard-only, and the same shape as the other 1-point keystone
+  splashes; reported, not fixed.
+- **Break floors** (`BREAKS-hard.txt`, shipped-kit policy): Hard passes 10 of
+  12 against the derived floor; the two misses are meredith@8/9 — §7.3(b)'s
+  declared cost, bit-identical mechanism, untouched by this work (the
+  shipped-kit policy owns no `findings` node).
+
+### Touch test (`TOUCH-final.txt`, `ISO-final.txt`)
+
+Litigation and Compliance on Hard, and Audit on Easy/Normal, are unreachable
+by construction (every knob is behind the `findings` node and the hard
+bundle) AND measured unmoved: all six pairs within sampler noise at 400, the
+two outliers re-drawn at 800 (+2.4 / −1.4 pp).
+
+### What this did NOT do
+
+No J-lane node moved. No enemy stat moved. No COMBAT_DEPTH constant moved.
+Easy and Normal are byte-identical for every lane. The Hard blurb dropped its
+apology line ("Some approaches struggle here. That is the point.") the same
+day the reason for it closed — one string to restore if you want it back.
+
+Reproduction:
+```bash
+node tools/_n-audit.mjs --lanes --arm P6s3 --runs 600
+node tools/_n-audit.mjs --touch --arm P6s3 --runs 400
+node tools/_n-audit.mjs --degen --arm P6s3 --runs 600
+node tools/_n-audit.mjs --efft  --arm P6s3 --runs 600
+node tools/_n-audit.mjs --iso   --arm P6s3 --runs 800
+node tools/_m-modes.mjs --breaks --modes shipped,hard --runs 600
+```

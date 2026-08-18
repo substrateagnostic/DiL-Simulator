@@ -1,0 +1,23 @@
+
+=== EXPLORATION — AUDIT LANE ON HARD, PER ARM (400 runs/cell) ===
+Arms are data blocks on DIFFICULTY_MODES.hard.audit; engine unpatched.
+
+-- P6s2  {"fileRate":2,"assaultSlow":0.06,"seedRecord":2}
+encounter              lvl    win  rounds  HP-left  breaks  compW  compOTH  lowW   nearD
+karen                   4  85.3%    6.67    60.4%    0.09  36.03     2.33  41.2%  25.0%
+chad                    5  94.3%    9.56    59.3%    0.46  29.37    10.44  38.8%  39.5%
+grandma                 7  92.0%    7.15    77.5%    0.64  97.13    13.65  59.0%  13.5%
+restructuring_trio      7  65.3%   11.52    54.0%    0.97  82.02    26.54   9.9%  93.0%
+restructuring_trio      8  81.8%   13.02    53.3%    1.14  93.41    38.37  12.9%  91.0%
+meredith_boss           8  88.5%   14.90    58.9%    0.19  49.47    24.11  44.0%  26.3%
+regional_director      10  93.5%   10.29    54.6%    0.76  49.11    64.97  18.5%  81.8%
+
+-- P6s3  {"fileRate":2,"assaultSlow":0.06,"seedRecord":3}
+encounter              lvl    win  rounds  HP-left  breaks  compW  compOTH  lowW   nearD
+karen                   4  93.5%    6.36    59.7%    0.12  40.84     3.23  46.6%  17.0%
+chad                    5  96.3%    9.13    59.0%    0.46  29.10    10.46  41.6%  34.0%
+grandma                 7  94.0%    7.07    76.0%    0.62  97.55    14.71  60.1%  13.3%
+restructuring_trio      7  76.8%   12.65    55.8%    1.18  89.73    33.85  10.9%  94.0%
+restructuring_trio      8  86.0%   13.06    53.8%    1.27  99.94    40.05  14.3%  87.0%
+meredith_boss           8  88.5%   13.97    55.7%    0.20  51.15    22.34  41.5%  24.3%
+regional_director      10  92.5%   10.38    53.9%    0.73  51.23    63.88  17.6%  82.5%

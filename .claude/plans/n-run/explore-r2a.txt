@@ -1,0 +1,43 @@
+
+=== EXPLORATION — AUDIT LANE ON HARD, PER ARM (400 runs/cell) ===
+Arms are data blocks on DIFFICULTY_MODES.hard.audit; engine unpatched.
+
+-- base  null
+encounter              lvl    win  rounds  HP-left  breaks  compW  compOTH  lowW   nearD
+karen                   4  80.3%    7.43    59.5%    0.12  41.56     2.98  36.6%  28.7%
+chad                    5  84.3%   13.11    57.9%    0.41  25.59    11.04  33.4%  44.3%
+grandma                 7  75.3%    9.41    70.4%    0.49  79.75    21.24  40.3%  37.8%
+restructuring_trio      7  43.5%    9.94    53.5%    0.16  46.58     4.71   5.1%  98.8%
+restructuring_trio      8  63.2%   11.46    53.3%    0.31  66.50     8.34   9.1%  93.8%
+meredith_boss           8  58.0%   12.68    57.5%    0.27  34.81    45.41  29.9%  48.0%
+regional_director      10  69.0%   10.18    53.1%    0.23  48.73    40.60  11.2%  89.8%
+
+-- A2  {"fileRate":2}
+encounter              lvl    win  rounds  HP-left  breaks  compW  compOTH  lowW   nearD
+karen                   4  76.8%    7.06    60.6%    0.10  37.63     2.96  32.6%  40.8%
+chad                    5  81.8%   15.06    59.8%    0.43  26.50    12.60  33.4%  47.8%
+grandma                 7  86.5%    7.67    77.8%    0.64  96.21    16.47  55.0%  21.3%
+restructuring_trio      7  46.5%   10.12    54.9%    0.70  61.09    18.34   5.0%  99.0%
+restructuring_trio      8  64.8%   11.51    52.4%    1.02  82.72    26.20   8.6%  93.3%
+meredith_boss           8  65.0%   11.09    59.9%    0.11  44.19    17.61  34.4%  42.8%
+regional_director      10  59.3%   10.80    55.4%    0.21  24.42    58.94   6.5%  98.8%
+
+-- A3  {"fileRate":3}
+encounter              lvl    win  rounds  HP-left  breaks  compW  compOTH  lowW   nearD
+karen                   4  85.5%    6.33    59.4%    0.09  36.80     2.69  42.8%  22.0%
+chad                    5  78.3%   14.89    60.9%    0.48  24.38    17.64  29.6%  54.0%
+grandma                 7  85.0%    7.38    77.4%    0.57  91.64    15.49  52.8%  24.8%
+restructuring_trio      7  47.0%    9.74    54.7%    0.75  57.28    23.13   6.1%  97.8%
+restructuring_trio      8  65.8%   11.38    54.1%    1.05  80.16    32.80   9.5%  92.0%
+meredith_boss           8  49.0%   12.92    60.8%    0.10  34.11    22.04  25.6%  58.8%
+regional_director      10  86.3%    8.46    51.9%    0.83  81.27    45.70  20.5%  72.3%
+
+-- S6  {"assaultSlow":0.06}
+encounter              lvl    win  rounds  HP-left  breaks  compW  compOTH  lowW   nearD
+karen                   4  81.3%    7.47    59.2%    0.09  38.31     2.17  36.8%  29.5%
+chad                    5  90.5%   11.23    58.1%    0.41  27.43     9.68  36.2%  42.5%
+grandma                 7  86.5%   10.31    69.4%    0.56  85.98    22.30  45.2%  25.8%
+restructuring_trio      7  53.8%   10.85    52.9%    0.20  54.21     5.75   7.2%  97.0%
+restructuring_trio      8  70.8%   12.14    54.8%    0.38  72.44     9.44  11.2%  90.0%
+meredith_boss           8  87.5%   13.78    57.2%    0.32  40.03    47.79  42.2%  25.5%
+regional_director      10  91.5%   10.54    56.7%    0.43  57.24    46.60  20.6%  59.0%

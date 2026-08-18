@@ -1,0 +1,21 @@
+
+=== ISOLATION (800 runs/cell) ===
+
+-- (a) touch outliers, higher n: the knobs are structurally unreachable
+   for these lanes (no findings node -> no filing, no seed, ever=0), so any
+   delta is sampler variance. Re-drawn at this n to show it.
+litigation grandma@7: 91.4% -> 93.8%  (2.4 pp)
+compliance restructuring_trio@7: 80.6% -> 79.3%  (-1.4 pp)
+
+-- (b) HOLD-THE-FILE at trio@8: is the win pre-existing policy shape or the
+   accommodation? Same pair under base Hard and under Normal (no block).
+hard+P6s3   honest 87.8% / 13.53r   hold 90.4% / 9.88r   delta 2.6 pp
+hard base   honest 67.1% / 11.82r   hold 77.9% / 9.90r   delta 10.8 pp
+normal      honest 92.9% / 12.92r   hold 94.1% / 9.93r   delta 1.3 pp
+
+-- (c) the 1-point cross-lane splash: a completionist litigator (L12) buys
+   the findings keystone for 1 point and carries the seed onto Hard.
+grandma                 7  pure-lit@12 90.9% / hp 77.1%   +findings 97.5% / hp 78.6%   delta 6.6 pp
+restructuring_trio      8  pure-lit@12 91.1% / hp 54.4%   +findings 96.9% / hp 57.5%   delta 5.8 pp
+meredith_boss           9  pure-lit@12 96.4% / hp 71.9%   +findings 99.8% / hp 79.4%   delta 3.4 pp
+pick: --explore --lanes --touch --degen --efft --feel   (--arm NAME --runs N)

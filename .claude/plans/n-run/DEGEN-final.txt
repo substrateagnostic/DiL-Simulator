@@ -1,0 +1,18 @@
+
+=== DEGENERATE-LINE HUNT, ARM P6s3 {"fileRate":2,"assaultSlow":0.06,"seedRecord":3} (600 runs/cell) ===
+
+-- 1. HOLD-THE-FILE vs the honest close loop (audit lane, HARD)
+encounter              lvl   honest win/rounds     hold win/rounds      verdict
+chad                    6    99.8% /  4.12      87.3% /  9.21     honest play wins
+grandma                 8    98.5% /  5.89      24.2% / 12.92     honest play wins
+meredith_boss           9    88.5% / 10.73      30.2% / 19.16     honest play wins
+restructuring_trio      8    85.3% / 13.03      91.2% /  9.99     *** HOLD WINS — DEGENERATE ***
+
+-- 2. THE CHAIN: closes -> supers -> Uc/MSJ + Loop In (audit @10, capstone owned)
+   headline counters here; the suppressed-arm eff.T ratio is --efft.
+encounter              lvl   eff.T   uc/f   msj/f  breaks   win
+grandma                10    5.15   2.18   0.00    0.18  100.0%
+meredith_boss          10    8.19   0.88   0.00    0.01   95.7%
+regional_director      10    9.95   0.83   0.00    0.76   92.5%
+algorithm              10    6.43   1.94   0.00    0.79   98.3%
+restructuring_trio     10    9.08   0.84   0.00    1.34   98.0%

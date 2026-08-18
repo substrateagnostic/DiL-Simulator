@@ -1,3 +1,57 @@
+## [AUDIT-ON-HARD REWORK — §7.3(a) CLOSED, 08-17 (Fable 5, n-run)]
+
+Your challenge, verbatim intent: "I find it hard to believe there's no way to
+tune/rework Audit to work on Hard." You were right. Branch `display-case`,
+one commit, pushed, NOT merged.
+
+- **What shipped: `hard.audit = { fileRate: 2, assaultSlow: 0.06,
+  seedRecord: 3 }`** — data on the hard bundle, one accessor
+  (`Difficulty.auditRamp()`), three engine read sites, all gated on owning
+  the Findings keystone. On Hard only: exhibits file at double rate; every
+  finding ever filed on an enemy shaves its ATK 6 % (cap 5 = −30 %, so a
+  fully documented boss presses at 1.45 x 0.70 = 1.015 — a hair above
+  Normal, NEVER below it); the record starts three entries deep (the
+  auditor read the file before the meeting).
+- **THE NUMBER: trio@7 lane gap 42.0 -> 7.5 pp** (Audit 44.3 % -> 74.8 %
+  vs Litigation 86.3/82.3 %). Audit's worst deficit anywhere is now
+  **11.5 pp** (meredith@8) against your <= ~15 bar and the shipped build's
+  own ~10 pp law breach. Meredith near-death 50.7 -> 23.2 %. 600 runs/cell,
+  `.claude/plans/n-run/LANES-hard-final.txt`.
+- **What lost, measured**: fileRate alone (doubling the debuff-notes path
+  let Due Diligence close the file with no damaging hit to cash it —
+  meredith −13.5 pp; now exhibits-only); transient slow (the shield
+  emptied on every close); composure-per-filing (mid-pack, blurred
+  Compliance's identity — knob stripped from the engine).
+- **Degenerate-line hunt came back clean**: hold-the-file loses 11–64 pp
+  (the monotonic record means refusing to close earns nothing — its small
+  trio edge is PRE-EXISTING policy shape my change shrinks 10.8 -> 2.6 pp).
+  Easy/Normal Audit and the other two lanes on Hard: unreachable by
+  construction, touch-tested unmoved. Break floors: 10/12 pass; the two
+  misses are meredith@8/9 — your already-declared §7.3(b) cost, untouched.
+- **I changed one line of your copy**: Hard's blurb dropped "Some
+  approaches struggle here. That is the point." the same day the reason
+  for it closed. One string to restore if you want the sterner line.
+
+REVIEW: `.claude/plans/m-run/DIFFICULTY-PACKET.md` **§7.4 addendum** — the
+achieved table, the losers, and the karen@3 note (read that one: the
+residual max band, 15.3 pp, is now Audit ON TOP of the tutorial rung, 97.2
+vs 86.8 — a seeded record against the lowest-ATK boss. Sized fix is seed
+3 -> 2, which costs the trio 11 pp; I would not pay it, your call).
+
+HONEST LIST: (1) the Uc chain deepens on two overlevelled cells —
+grandma@10 / meredith@10 eff.T 70–72 % vs the J-run's accepted 78–85 %
+breach; at-rung wins there are 100/95.7 %, declared in §7.4, sized knob
+exists but reopens the sealed One More design. (2) A completionist
+litigator (L12+) can buy the Findings keystone for 1 point and carry the
+seed onto Hard: +3.4 to +6.6 pp. Bounded, post-story, same shape as the
+other keystone splashes; reported, not fixed. (3) Findings still have NO
+HUD surface (`getFindings` has zero UI callers — pre-existing since the
+J-build), so the whole accommodation is engine-visible only; on Hard the
+file and the slow deserve a chip, and that is a UI lane, not this one.
+(4) My commit rode partly in the flip lane's: the data block + accessor
+were staged when that lane committed 7554ef8, so the engine reads land in
+mine — neither commit alone was the whole mechanism.
+
 ## [RESUME HERE - 08-17 evening (Fable, six lanes in flight)]
 
 MAIN == 62cfc52 (dialog refactor P4-P9 merged: .dlg is source, story

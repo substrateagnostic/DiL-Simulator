@@ -267,6 +267,15 @@ export class CombatEngine {
     // caller that passes nothing, which is exactly the shipped behaviour, so
     // an old save or a harness that has not been updated is bit-identical.
     this.nodes = new Set(opts.nodes || []);
+    // AUDIT-ON-HARD: the record can start seeded (`seedRecord`, shipped 0) —
+    // the auditor read their file before the meeting. Seeds `_findingsEver`
+    // (the assault-slow record) ONLY, never `_findings`: the shield arrives
+    // pre-warmed, the burst clock still starts at zero. Gated on the
+    // `findings` node so no other lane ever carries a record.
+    const _seed = Difficulty.auditRamp().seedRecord;
+    if (_seed > 0 && this.nodes.has('findings')) {
+      for (const e of this.enemies) e._findingsEver = _seed;
+    }
     // TURN-BACK ("Objection Sustained"). One mechanism, two grades: `sustain`
     // is universal and may not deal damage; `attack` is the Litigation
     // capstone's upgrade of that same return and may be a BASIC ATTACK ONLY.
@@ -852,10 +861,25 @@ export class CombatEngine {
           if (this.hasNode('material_weakness') && effective !== 'super') effective = 'super';
         } else {
           // One Finding per action however many ways it qualified, plus any the
-          // ability files itself (Management Letter, 2).
+          // ability files itself (Management Letter, 2). A mode may resize the
+          // ramp's clock (`Difficulty.auditRamp().fileRate`, shipped 1) — Hard
+          // grants fewer turns, so the file grows faster there. rate 1 is
+          // arithmetic-identical to the shipped line.
           const filed = ((effective !== 'super' || lockCleared > 0) ? 1 : 0)
             + (this._activeAbility?.filesFindings || 0);
-          if (filed > 0) target._findings = Math.min(maxF, findings + filed);
+          if (filed > 0) {
+            const ramp = Difficulty.auditRamp();
+            // The mode dial applies HERE and not in _fileFinding, on a measured
+            // ruling: this site is exhibits (damage-carrying tagged hits), that
+            // one is notes (Scope Expansion's debuff rider). Doubling the notes
+            // too let Due Diligence race the file to a close no damaging hit
+            // was there to cash — Meredith@8 audit fell 60.8 % -> 47.3 %.
+            const add = filed * ramp.fileRate;
+            target._findings = Math.min(maxF, findings + add);
+            // The RECORD is monotonic: it never resets when the file closes.
+            // Only `assaultSlow` modes read it (see enemyTurn).
+            target._findingsEver = (target._findingsEver || 0) + add;
+          }
         }
       }
     }
@@ -1230,7 +1254,11 @@ export class CombatEngine {
         target.buffs.push({ stats: { def: -6 }, duration: 3, name: 'Adverse Opinion' });
       }
     } else {
+      // NO mode dial here, on purpose: this is the notes path (Scope
+      // Expansion's debuff rider), and the Hard accommodation doubles
+      // exhibits only — see the _calcDamage filing site for the measurement.
       target._findings = Math.min(maxF, stacks + 1);
+      target._findingsEver = (target._findingsEver || 0) + 1;
     }
   }
 
@@ -1638,6 +1666,23 @@ export class CombatEngine {
     enemy.lastTargetAllyIndex = targetAllyIndex;
 
     const eStats = this._getEffective(enemy);
+    // THE PAPER TRAIL SLOWS THE ASSAULT (`Difficulty.auditRamp().assaultSlow`,
+    // shipped 0). Each Finding EVER FILED on THIS enemy — `_findingsEver`, the
+    // monotonic record, capped at five — shaves its outgoing ATK: a documented
+    // opponent swings with a lawyer watching, and the record does not unhappen
+    // when the file closes. Keying the shield on the record rather than the
+    // standing stacks is a measured call twice over: standing stacks empty on
+    // every close, so the shield vanished exactly when the lane cashed its
+    // payoff (transient arm: trio@7 51.0 % vs base 46.8 %); and a monotonic
+    // counter deletes the hold-the-file line outright, because refusing to
+    // close earns nothing the honest loop does not. Only the Audit lane can
+    // file on anyone, so the guard is intrinsic; `_getEffective` returns a
+    // copy, so this never touches the enemy's real stats.
+    const _slow = Difficulty.auditRamp().assaultSlow;
+    const _ever = Math.min(5, enemy._findingsEver || 0);
+    if (_slow > 0 && _ever > 0) {
+      eStats.atk = Math.max(1, Math.round(eStats.atk * (1 - Math.min(0.5, _slow * _ever))));
+    }
     const tStats = this._getEffective(target);
     const result = this._executeEnemyAbility(enemy, abilityId, eStats, tStats, previousAbilityId, target, lockMult);
 
