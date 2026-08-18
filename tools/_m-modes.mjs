@@ -28,7 +28,7 @@
 import { runFight, enc, casualTurn, buildPlayerStats } from './combat-sim.mjs';
 import { POLICIES, buildUnlocked, instrument, PARTY, LADDER, initEnemyAbilities } from './_j-verify.mjs';
 import { Difficulty } from '../src/core/DifficultyManager.js';
-import { PHASE_SURGERY, DIFFICULTY_MODES, MODE_ORDER } from '../src/data/difficulty.js';
+import { PHASE_SURGERY, PHASE_REVIVAL, DIFFICULTY_MODES, MODE_ORDER } from '../src/data/difficulty.js';
 import { ENEMY_STATS, ENEMY_ABILITIES } from '../src/data/stats.js';
 
 const arg = (k, d) => {
@@ -139,7 +139,14 @@ function cellFor(encId, level, treeId, runs, opts = {}) {
     const st = ZERO();
     const policy = opts.policy || ((e, s, u) => { POLICIES[treeId](e, s, u); });
     const r = runFight(
-      { ...cfg, unlocked, pipResist: opts.pipResist || 0 },
+      // THE MODE ASSIST IS APPLIED HERE, not only in the floor table. It used
+      // to be passed explicitly by `runFloor` and nowhere else, which made the
+      // CASUAL ladder rows a lie of omission: they showed a competent player on
+      // Casual fighting with zero assist, so every delta read as noise and the
+      // mode looked identical to shipped. `Math.max` is the same rule
+      // CombatState applies between the mode assist and a requisitioned PIP —
+      // one field, two sources, never stacked.
+      { ...cfg, unlocked, pipResist: Math.max(opts.pipResist || 0, Difficulty.assistResist(opts.deaths || 0)) },
       level,
       { policy, onEngine: (e) => { instrument(e, st); instrumentEnemy(e, st); } },
     );
@@ -199,7 +206,13 @@ function runCensus() {
       const kept = before.every(id => after.includes(id));
       const own = after.every(id => owned.has(id));
       if (!kept || !own) faults++;
-      console.log(`  phase ${i} (<= ${p.hpThreshold})  damaging ${pad(pct(share(before)), 6)} -> ${pad(pct(share(after)), 6)}`
+      // The REVIVAL is a different table and shows in a different column, so a
+      // reader can see which of the two edits touched this row. `hpThreshold: 0`
+      // is the dead row: `hpPercent <= 0` is only true at death.
+      const rev = (PHASE_REVIVAL[eid] || {})[i];
+      const thr = typeof rev === 'number' && rev > p.hpThreshold
+        ? `${p.hpThreshold} -> ${rev}  ** REVIVED (this row has never fired) **` : `${p.hpThreshold}`;
+      console.log(`  phase ${i} (<= ${thr})  damaging ${pad(pct(share(before)), 6)} -> ${pad(pct(share(after)), 6)}`
         + `   pool ${before.length} -> ${after.length}   KEPT ${kept ? 'yes' : 'NO'}   OWN ${own ? 'yes' : 'NO'}`);
       if (after !== before) console.log(`      ${after.join(' ')}`);
     });
@@ -213,7 +226,11 @@ function runCensus() {
     if (!base?.phases) continue;
     const setOf = (phases) => new Set([...(base.abilities || []), ...phases.flatMap(p => p.abilities || [])]);
     const a = setOf(base.phases);
-    const b = setOf(Difficulty.phasesFor(eid, base.phases));
+    // FORCED. Without this the resolver runs under the CLOSED producer gate and
+    // hands back the shipped rows, so the two columns were the same number and
+    // the check was vacuous — it reported 0 faults because it was comparing the
+    // shipped build against itself.
+    const b = withMode('standard', () => setOf(Difficulty.phasesFor(eid, base.phases)));
     const capA = Math.max(1, Math.ceil(a.size / 3));
     const capB = Math.max(1, Math.ceil(b.size / 3));
     const moved = capA !== capB;
@@ -377,46 +394,100 @@ function runLanes() {
 }
 
 // ── THE BREAK ECONOMY ───────────────────────────────────────────────────
-// A declared floor per boss. Breaking is the mechanic the whole Composure
-// system exists to teach, and a mode that suppresses it has broken a system
-// rather than tuned a number. Karen is the tutorial and her floor is the
-// strictest.
-const BREAK_FLOOR = {
-  karen: 0.50,             // the Break tutorial. Half a Break a fight, minimum.
-  chad: 0.25, grandma: 0.25, meredith_boss: 0.25,
-  regional_director: 0.15, algorithm: 0.15,
-};
+// A mode is allowed to be mean. It is not allowed to DELETE A SYSTEM: at 0.0x
+// breaks per fight the Composure bar is decoration, the `COMPOSURE — X ONLY`
+// HUD line is advice about nothing, and the tutorial that teaches it is a lie.
+//
+// THE FLOOR IS DERIVED FROM THE SHIPPED BUILD, NOT DECLARED. The first draft of
+// this table carried hand-picked numbers (0.50 for the Break tutorial, 0.25 for
+// the mid bosses) and the SHIPPED game failed four of ten cells against them —
+// Karen reads 0.34 and 0.27, Meredith 0.23 and 0.23. A floor the shipped build
+// cannot clear is not a floor, it is an opinion with a table around it. The rule
+// instead: a mode must deliver at least 60 % of the shipped Break rate for that
+// boss, and never less than 0.10 per fight in absolute terms. 60 % is the point
+// at which a mechanic goes from "rarer" to "you will finish a fight without
+// seeing it"; 0.10 is the floor under the floor.
+const BREAK_MIN_FRACTION = 0.60;
+const BREAK_MIN_ABS = 0.10;
 function runBreaks() {
-  console.log(`\n=== THE BREAK ECONOMY, PER MODE (${RUNS} runs/cell, COMPETENT) ===`);
-  console.log('breaks/fight, against a DECLARED FLOOR per boss. A mode is allowed to be mean.');
-  console.log('It is not allowed to delete a system: at 0.0x breaks the Composure bar is');
-  console.log('decoration and the tutorial that teaches it is a lie.');
+  console.log(`
+=== THE BREAK ECONOMY, PER MODE (${RUNS} runs/cell, COMPETENT) ===`);
+  console.log(`Floor per boss = max(${BREAK_MIN_ABS}, ${BREAK_MIN_FRACTION} x the SHIPPED rate for that boss),`);
+  console.log('derived in this same run so the two halves cannot drift.');
+  const shippedRate = {};
+  withMode('shipped', () => {
+    for (const [e, lv] of STORY) shippedRate[`${e}@${lv}`] = cellFor(e, lv, 'shipped', RUNS).breaks;
+  });
   for (const mode of MODES) {
     const b = DIFFICULTY_MODES[mode];
-    console.log(`\n-- ${mode.toUpperCase()}${b ? '  (' + b.name + ')' : ''}`);
-    console.log('encounter              lvl  breaks/fight   floor   verdict');
+    console.log(`
+-- ${mode.toUpperCase()}${b ? '  (' + b.name + ')' : ''}`);
+    console.log('encounter              lvl  breaks/fight  shipped   floor   verdict');
     withMode(mode, () => {
       for (const [e, lv] of STORY) {
-        const floor = BREAK_FLOOR[e];
-        if (floor === undefined) continue;
-        const r = cellFor(e, lv, 'shipped', RUNS);
+        const sh = shippedRate[`${e}@${lv}`];
+        const floor = Math.max(BREAK_MIN_ABS, BREAK_MIN_FRACTION * sh);
+        const r = mode === 'shipped' ? { breaks: sh } : cellFor(e, lv, 'shipped', RUNS);
         const ok = r.breaks >= floor;
-        console.log(`${e.padEnd(21)} ${pad(lv, 3)}  ${pad(n2(r.breaks), 12)}   ${pad(n2(floor), 5)}   ${ok ? 'ok' : '*** UNDER FLOOR ***'}`);
+        console.log(`${e.padEnd(21)} ${pad(lv, 3)}  ${pad(n2(r.breaks), 12)}  ${pad(n2(sh), 7)}  ${pad(n2(floor), 6)}   ${ok ? 'ok' : '*** UNDER FLOOR — the Break system is being deleted here ***'}`);
       }
     });
   }
 }
 
+// ── THE SELF-TEST — because a gate that has never failed is not a gate ──
+// `tools/story-sim.mjs --selftest` set this precedent and it is the right one.
+// Three mutations, one per invariant the census claims to hold, each applied to
+// a COPY of the surgery table and then reverted. If any of them fails to turn
+// the census red, the census is decoration.
+function runSelftest() {
+  const orig = {};
+  const save = (id) => { orig[id] = PHASE_SURGERY[id]; };
+  const restore = () => { for (const [id, v] of Object.entries(orig)) { if (v === undefined) delete PHASE_SURGERY[id]; else PHASE_SURGERY[id] = v; } };
+  const cases = [
+    ['DELETION - drop Grandma heals from phase 0', () => {
+      save('grandma');
+      PHASE_SURGERY.grandma = [PHASE_SURGERY.grandma[0].filter(id => id !== 'fresh_cookies' && id !== 'emergency_shortbread'), PHASE_SURGERY.grandma[1]];
+    }],
+    ['FOREIGN ID - give Grandma one of Chad moves', () => {
+      save('grandma');
+      PHASE_SURGERY.grandma = [[...orig.grandma[0], 'rage_quit_attack'], orig.grandma[1]];
+    }],
+    ['LOCK DRIFT — add three unowned ids to Chad, moving his lock cap', () => {
+      save('chad');
+      PHASE_SURGERY.chad = [[...orig.chad[0], 'father_wanted', 'yelp_review', 'guilt_trip'], orig.chad[1]];
+    }],
+  ];
+  let bad = 0;
+  const realLog = console.log;
+  for (const [label, mutate] of cases) {
+    mutate();
+    Difficulty.force(null);
+    console.log = () => {};
+    const f = runCensus();
+    console.log = realLog;
+    restore();
+    console.log(`${f > 0 ? 'RED  ' : '*** GREEN — THE CENSUS DID NOT CATCH THIS ***'}  ${label}  (faults=${f})`);
+    if (f === 0) bad++;
+  }
+  console.log(`\nselftest: ${cases.length - bad}/${cases.length} mutations caught`);
+  return bad;
+}
+
 async function main() {
   await initEnemyAbilities();
   let faults = 0;
+  if (has('selftest')) {
+    console.log('\n=== CENSUS SELF-TEST - each mutation must turn the census RED ===');
+    faults += runSelftest();
+  }
   if (has('census')) faults += runCensus();
   if (has('ladder')) runLadder();
   if (has('floor')) runFloor();
   if (has('lanes')) runLanes();
   if (has('breaks')) runBreaks();
-  if (!['census', 'ladder', 'floor', 'lanes', 'breaks'].some(has)) {
-    console.log('pick a mode: --census --ladder --floor --lanes --breaks');
+  if (!['census', 'ladder', 'floor', 'lanes', 'breaks', 'selftest'].some(has)) {
+    console.log('pick a mode: --census --ladder --floor --lanes --breaks --selftest');
   }
   if (faults > 0) process.exitCode = 1;
 }

@@ -1,0 +1,62 @@
+
+=== CENSUS SELF-TEST - each mutation must turn the census RED ===
+RED    DELETION - drop Grandma heals from phase 0  (faults=1)
+RED    FOREIGN ID - give Grandma one of Chad moves  (faults=1)
+RED    LOCK DRIFT — add three unowned ids to Chad, moving his lock cap  (faults=2)
+
+selftest: 3/3 mutations caught
+
+=== PHASE-LIST CENSUS — the mechanism, computed off the files ===
+damaging = share of the phase pool whose ability type is attack / dot / summon,
+           i.e. exactly what CombatEngine._damagingPick counts. Repetition is a
+           weight because every pattern that reaches a random draw draws
+           uniformly from the array.
+The two invariants this table proves, per row:
+  KEPT  — every shipped id is still in the pool (nothing is deleted).
+  OWN   — no id was introduced that the enemy does not already own.
+
+
+chad
+  phase 0 (<= 0.5)  damaging  66.7% ->  75.0%   pool 3 -> 4   KEPT yes   OWN yes
+      bro_down trust_fund_tantrum trust_fund_tantrum alpha_mode
+  phase 1 (<= 0.25)  damaging  66.7% ->  75.0%   pool 3 -> 4   KEPT yes   OWN yes
+      rage_quit_attack rage_quit_attack trust_fund_tantrum alpha_mode
+
+grandma
+  phase 0 (<= 0.5)  damaging  33.3% ->  55.6%   pool 6 -> 9   KEPT yes   OWN yes
+      guilt_trip guilt_trip guilt_trip passive_aggression passive_aggression the_look changed_the_will fresh_cookies emergency_shortbread
+  phase 1 (<= 0.25)  damaging  20.0% ->  55.6%   pool 5 -> 9   KEPT yes   OWN yes
+      gerald_incident gerald_incident gerald_incident guilt_trip guilt_trip the_look final_revision changed_the_will emergency_shortbread
+
+meredith_boss
+  phase 0 (<= 0.6)  damaging  66.7% ->  80.0%   pool 3 -> 5   KEPT yes   OWN yes
+      strategic_pivot strategic_pivot strategic_pivot restructure_threat performance_review
+  phase 1 (<= 0.3)  damaging  33.3% ->  60.0%   pool 3 -> 5   KEPT yes   OWN yes
+      hostile_takeover hostile_takeover hostile_takeover golden_handcuffs board_resolution
+  phase 2 (<= 0.12)  damaging  66.7% ->  80.0%   pool 3 -> 5   KEPT yes   OWN yes
+      final_assessment final_assessment hostile_takeover hostile_takeover board_resolution
+
+regional_director
+  phase 0 (<= 0.6)  damaging 100.0% -> 100.0%   pool 3 -> 4   KEPT yes   OWN yes
+      corporate_mandate synergy_blast synergy_blast quarterly_target
+  phase 1 (<= 0.3)  damaging 100.0% -> 100.0%   pool 3 -> 4   KEPT yes   OWN yes
+      market_correction market_correction corporate_mandate quarterly_target
+  phase 2 (<= 0 -> 0.12  ** REVIVED (this row has never fired) **)  damaging 100.0% -> 100.0%   pool 3 -> 3   KEPT yes   OWN yes
+
+algorithm
+  phase 0 (<= 0.7)  damaging  50.0% ->  60.0%   pool 4 -> 5   KEPT yes   OWN yes
+      data_harvest data_harvest system_overload pattern_recognition risk_assessment
+  phase 1 (<= 0.35)  damaging  60.0% ->  71.4%   pool 5 -> 7   KEPT yes   OWN yes
+      algorithmic_trading algorithmic_trading algorithmic_trading data_harvest system_overload predictive_model process_termination
+  phase 2 (<= 0 -> 0.12  ** REVIVED (this row has never fired) **)  damaging  40.0% ->  62.5%   pool 5 -> 8   KEPT yes   OWN yes
+      total_optimization total_optimization total_optimization algorithmic_trading algorithmic_trading predictive_model process_termination pattern_recognition
+
+--- Lock pool size (deduped ids across base + every phase) ---
+enemy                  shipped  surgery   cap shipped -> surgery
+chad                         5        5   2 -> 2
+grandma                      8        8   3 -> 3
+meredith_boss                7        7   3 -> 3
+regional_director            4        4   2 -> 2
+algorithm                    8        8   3 -> 3
+
+faults: 0

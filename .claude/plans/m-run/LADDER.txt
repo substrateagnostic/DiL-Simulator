@@ -1,0 +1,126 @@
+
+=== THE LADDER, PER MODE (600 runs/cell, COMPETENT shipped kit) ===
+low-water = the lowest fraction of maxHP Andrew ever stood at, averaged over
+            runs, with a defeat counted as 0. near-death = share of runs whose
+            low-water reached 25 %. These are the producer-facing pair; win rate
+            saturates long before a fight stops being frightening.
+quiet     = enemy turns that landed and dealt 0 damage. dotT is the part of that
+            which is a DoT being APPLIED (the damage lands two beats later on
+            Andrew's turn-start) — subtract it to read the real bookkeeping turns.
+
+-- SHIPPED  (As Shipped)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  99.7%    3.99      63.1%        1.2%    3.99   31.0%   32.5%   32.2%    0.0%   15.48    8.0   0.35
+karen                   4  99.8%    3.88      67.1%        0.3%    3.88   33.5%   32.4%   32.3%    0.0%   13.84    9.8   0.28
+chad                    5  99.7%    4.46      58.5%        7.5%    4.46   41.1%    6.0%    0.0%    0.0%   17.16    8.6   0.56
+chad                    6  100.0%    3.54      89.1%        0.0%    2.55   63.4%    4.6%    0.0%    0.0%    6.82   23.4   0.45
+grandma                 7  99.0%    6.47      69.8%        3.7%    6.47   22.6%   68.2%   15.3%   14.3%   10.08   17.1   0.70
+grandma                 8  99.5%    5.90      79.4%        1.5%    4.91   24.8%   67.6%   18.7%   15.2%    8.24   22.3   0.55
+restructuring_trio      7  99.3%    6.14      44.1%       11.7%    9.78    8.5%   46.4%    0.0%    3.0%   11.33   15.2   0.39
+restructuring_trio      8  100.0%    6.21      48.0%        5.7%    9.71    7.9%   47.1%    0.0%    3.3%   11.07   16.6   0.16
+meredith_boss           8  98.5%    8.04      64.7%        6.8%    7.06   37.2%   48.1%   16.5%    9.0%   11.93   15.4   0.22
+meredith_boss           9  99.3%    7.55      69.2%        6.5%    6.55   36.4%   50.2%   17.5%    9.6%   10.82   18.1   0.22
+regional_director      10  100.0%    4.58      73.4%        0.3%    3.58   40.3%   18.8%   18.8%    0.0%   15.69   13.3   0.31
+algorithm              10  99.7%    6.13      80.4%        1.5%    5.26   24.9%   49.8%    1.1%    0.0%    8.13   25.6   0.68
+
+-- CASUAL  (Advisory)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  99.7%    3.98      63.1%        1.0%    3.98   30.8%   31.8%   31.4%    0.0%   15.47    8.0   0.39 (+0.0)
+karen                   4  99.0%    3.85      66.7%        1.0%    3.85   33.2%   32.7%   32.6%    0.0%   14.18    9.6   0.30 (-0.4)
+chad                    5  98.5%    4.32      59.1%        6.8%    4.32   41.6%    5.8%    0.0%    0.0%   16.98    8.7   0.57 (+0.6)
+chad                    6  100.0%    3.45      88.7%        0.0%    2.45   61.7%    4.3%    0.0%    0.0%    7.34   21.8   0.55 (-0.4)
+grandma                 7  99.5%    6.56      70.2%        3.8%    6.56   23.3%   67.8%   15.8%   14.0%    9.90   17.4   0.67 (+0.4)
+grandma                 8  99.3%    5.87      79.1%        1.3%    4.88   25.2%   67.2%   19.1%   14.9%    8.31   22.1   0.58 (-0.3)
+restructuring_trio      7  99.8%    6.17      45.1%       10.2%    9.76    9.2%   46.5%    0.0%    3.2%   11.04   15.6   0.37 (+1.0)
+restructuring_trio      8  99.8%    6.24      48.2%        8.2%    9.83    7.7%   47.4%    0.0%    4.2%   11.22   16.4   0.17 (+0.2)
+meredith_boss           8  99.0%    7.98      66.0%        5.2%    6.99   39.2%   47.3%   16.5%    9.0%   10.95   16.8   0.22 (+1.4)
+meredith_boss           9  99.3%    7.58      67.4%        5.7%    6.58   37.0%   50.8%   18.6%    9.0%   10.80   18.2   0.25 (-1.8)
+regional_director      10  100.0%    4.58      73.6%        0.5%    3.58   39.7%   19.3%   19.3%    0.0%   15.50   13.4   0.32 (+0.3)
+algorithm              10  99.8%    6.22      79.7%        1.2%    5.34   25.4%   49.0%    1.3%    0.0%    8.22   25.3   0.65 (-0.6)
+
+-- STANDARD  (Fiduciary)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  99.0%    4.04      61.9%        2.3%    4.04   30.3%   31.3%   30.8%    0.0%   16.52    7.5   0.37 (-1.2)
+karen                   4  99.3%    3.90      66.5%        1.0%    3.90   34.0%   31.9%   31.7%    0.0%   14.24    9.6   0.29 (-0.6)
+chad                    5  99.8%    4.39      58.8%        6.0%    4.39   41.6%    5.5%    0.0%    0.0%   17.29    8.6   0.56 (+0.3)
+chad                    6  100.0%    3.47      89.0%        0.0%    2.48   62.8%    4.6%    0.0%    0.0%    7.14   22.4   0.45 (-0.2)
+grandma                 7  97.0%    6.98      65.3%        8.0%    6.98   23.9%   63.3%   16.0%   13.0%   12.79   13.5   0.56 (-4.5)
+grandma                 8  98.0%    6.24      72.6%        4.8%    5.25   29.1%   58.5%   19.5%   13.8%   11.52   16.0   0.43 (-6.8)
+restructuring_trio      7  99.8%    6.13      45.1%       10.0%    9.68    8.7%   46.7%    0.0%    3.2%   11.21   15.3   0.39 (+1.0)
+restructuring_trio      8  100.0%    6.17      48.4%        5.8%    9.65    8.2%   47.0%    0.0%    3.7%   10.96   16.8   0.13 (+0.4)
+meredith_boss           8  97.3%    8.82      60.0%       10.2%    7.85   38.7%   41.3%   13.4%    9.7%   13.63   13.5   0.15 (-4.6)
+meredith_boss           9  98.2%    8.07      64.3%       10.0%    7.09   40.3%   41.6%   13.7%    9.2%   12.39   15.8   0.12 (-4.9)
+regional_director      10  100.0%    4.50      74.4%        0.2%    3.50   41.6%   16.3%   16.3%    0.0%   15.30   13.6   0.34 (+1.0)
+algorithm              10  99.7%    6.17      78.1%        2.7%    5.31   26.8%   46.3%    1.0%    0.0%    8.95   23.2   0.64 (-2.3)
+
+-- HARD  (Discretionary)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  95.5%    5.11      56.9%        8.5%    5.11   22.7%   33.7%   28.4%    0.0%   20.31    6.1   0.06 (-6.1)
+karen                   4  99.3%    4.72      63.8%        2.5%    4.72   26.2%   32.8%   26.7%    0.0%   17.87    7.6   0.01 (-3.4)
+chad                    5  93.5%    7.55      37.6%       32.2%    7.55   19.7%    6.0%    0.0%    0.0%   27.02    5.5   0.29 (-20.9)
+chad                    6  100.0%    4.17      69.3%        2.8%    3.19   44.6%    3.4%    0.0%    0.0%   17.17    9.3   0.34 (-19.8)
+grandma                 7  84.3%   10.28      43.1%       28.7%   10.28   16.3%   61.5%   12.4%   16.6%   19.42    8.9   0.59 (-26.7)
+grandma                 8  93.5%    8.45      55.9%       17.0%    7.52   19.4%   60.8%   16.4%   16.7%   17.20   10.7   0.46 (-23.5)
+restructuring_trio      7  98.2%    8.22      35.5%       29.8%   12.45    9.1%   43.8%    0.0%    4.1%   13.00   13.2   0.34 (-8.6)
+restructuring_trio      8  98.8%    7.45      41.1%       19.0%   11.10    7.2%   46.0%    0.0%    3.7%   12.54   14.7   0.11 (-6.9)
+meredith_boss           8  76.3%   20.82      30.8%       50.0%   20.05   14.4%   41.2%    6.1%   24.6%   26.75    6.9   0.09 (-33.9)
+meredith_boss           9  77.8%   17.95      21.9%       65.8%   17.16   18.3%   37.3%    6.5%   20.0%   25.05    7.8   0.04 (-47.3)
+regional_director      10  99.8%    5.63      57.3%        4.3%    4.63   24.7%   26.3%   26.3%    0.0%   21.71    9.6   0.03 (-16.1)
+algorithm              10  96.5%    7.81      49.1%       24.7%    7.06   19.2%   42.4%    3.8%    0.0%   18.85   11.0   0.54 (-31.3)
+
+=== THE BREAK ECONOMY, PER MODE (600 runs/cell, COMPETENT) ===
+breaks/fight, against a DECLARED FLOOR per boss. A mode is allowed to be mean.
+It is not allowed to delete a system: at 0.0x breaks the Composure bar is
+decoration and the tutorial that teaches it is a lie.
+
+-- SHIPPED  (As Shipped)
+encounter              lvl  breaks/fight   floor   verdict
+karen                   3          0.34    0.50   *** UNDER FLOOR ***
+karen                   4          0.27    0.50   *** UNDER FLOOR ***
+chad                    5          0.56    0.25   ok
+chad                    6          0.48    0.25   ok
+grandma                 7          0.66    0.25   ok
+grandma                 8          0.58    0.25   ok
+meredith_boss           8          0.23    0.25   *** UNDER FLOOR ***
+meredith_boss           9          0.23    0.25   *** UNDER FLOOR ***
+regional_director      10          0.34    0.15   ok
+algorithm              10          0.65    0.15   ok
+
+-- CASUAL  (Advisory)
+encounter              lvl  breaks/fight   floor   verdict
+karen                   3          0.38    0.50   *** UNDER FLOOR ***
+karen                   4          0.30    0.50   *** UNDER FLOOR ***
+chad                    5          0.54    0.25   ok
+chad                    6          0.52    0.25   ok
+grandma                 7          0.68    0.25   ok
+grandma                 8          0.57    0.25   ok
+meredith_boss           8          0.23    0.25   *** UNDER FLOOR ***
+meredith_boss           9          0.21    0.25   *** UNDER FLOOR ***
+regional_director      10          0.35    0.15   ok
+algorithm              10          0.68    0.15   ok
+
+-- STANDARD  (Fiduciary)
+encounter              lvl  breaks/fight   floor   verdict
+karen                   3          0.33    0.50   *** UNDER FLOOR ***
+karen                   4          0.27    0.50   *** UNDER FLOOR ***
+chad                    5          0.55    0.25   ok
+chad                    6          0.44    0.25   ok
+grandma                 7          0.54    0.25   ok
+grandma                 8          0.46    0.25   ok
+meredith_boss           8          0.18    0.25   *** UNDER FLOOR ***
+meredith_boss           9          0.15    0.25   *** UNDER FLOOR ***
+regional_director      10          0.34    0.15   ok
+algorithm              10          0.64    0.15   ok
+
+-- HARD  (Discretionary)
+encounter              lvl  breaks/fight   floor   verdict
+karen                   3          0.06    0.50   *** UNDER FLOOR ***
+karen                   4          0.01    0.50   *** UNDER FLOOR ***
+chad                    5          0.32    0.25   ok
+chad                    6          0.31    0.25   ok
+grandma                 7          0.63    0.25   ok
+grandma                 8          0.49    0.25   ok
+meredith_boss           8          0.08    0.25   *** UNDER FLOOR ***
+meredith_boss           9          0.05    0.25   *** UNDER FLOOR ***
+regional_director      10          0.03    0.15   *** UNDER FLOOR ***
+algorithm              10          0.52    0.15   ok

@@ -193,6 +193,18 @@ class DifficultyManagerImpl {
     return { ...pattern, ...over };
   }
 
+  /**
+   * Multiply one of an ENEMY's built stats. Applied in `_buildEnemy` after NG+,
+   * Overtime and the scripted `overrides`, so a fight that hands in an explicit
+   * number (the tutorial Karen's `atk: 999`) still wins and a mode cannot
+   * silently retune a scripted beat.
+   */
+  enemyStat(key, value) {
+    const m = this.bundle.enemyMult;
+    if (!m || typeof m[key] !== 'number' || typeof value !== 'number') return value;
+    return Math.max(1, Math.round(value * m[key]));
+  }
+
   /** Multiply one of Andrew's working-copy stats. Never touches the save. */
   playerStat(key, value) {
     const m = this.bundle.playerMult;

@@ -12,6 +12,7 @@ import { updateStageDirectors } from './world/StageDirector.js';
 import { TouchControls } from './ui/TouchControls.js';
 import { installErrorBoundary } from './core/ErrorBoundary.js';
 import { DEV_MODE } from './utils/constants.js';
+import { Difficulty } from './core/DifficultyManager.js';
 
 class Game {
   constructor() {
@@ -194,6 +195,25 @@ class Game {
     // this pin holds for the whole take.
     const qtier = params.get('qtier');
     if (qtier) Engine.setQualityTier(qtier);
+
+    // ?difficulty=casual|standard|hard|shipped — FORCE a difficulty mode for a
+    // capture, past the producer gate.
+    //
+    // This is the second and last caller of `Difficulty.force()`; the other is
+    // `tools/_m-modes.mjs`. Both exist for the same reason: the modes ship DARK
+    // (`DIFFICULTY_LIVE = false`), and a before/after capture of a dark build is
+    // impossible without a door. It is DEV_MODE-only by virtue of living inside
+    // `_startFixture`, which only runs behind that flag.
+    //
+    // A capture must never take this as PROOF of which mode it ran — that is a
+    // claim, and `tools/_m-fight-ab.mjs` checks it against an OBSERVABLE off the
+    // live engine (the size of the boss's phase pool, and the enemy's built
+    // ATK) instead. See the BUILD IDENTITY block there.
+    const diff = params.get('difficulty');
+    if (diff) {
+      Difficulty.force(diff);
+      window.__difficulty = Difficulty;
+    }
     const fight = params.get('fight');
     if (fight) {
       setTimeout(() => ex._startCombat(fight), 700);

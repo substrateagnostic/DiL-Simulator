@@ -1,0 +1,49 @@
+
+=== THE 21-CELL CASUAL FLOOR (800 runs/cell, CASUAL policy) ===
+CASUAL policy: basic attacks, the free starter heal, Assert Dominance when the
+bar fills on its own. Never a tagged hit, never a Brace, so it denies 0.0 % of
+enemy turns on every solo rung and every denial-gated component is unreachable.
+
+The three columns are the resistance the player has REQUISITIONED (the shipped
+Performance Improvement Plan at 0 / 10 / 25 recorded defeats). A mode with an
+assist takes the MAX of the two, so:
+  • column PIP 0 %  measures the ASSIST — Casual lifting an unaided player.
+  • columns 20/30 % measure the PHASE SURGERY ALONE, because the assist is
+    already saturated there and both arms run the same resistance. THAT is the
+    bill, and it is the pair of columns the gate is read on.
+Judge against the NULL ARM (the identity bundle measured a second time), never
+against a round number.
+
+-- SHIPPED  (As Shipped)
+encounter              lvl   PIP 0%    PIP 20%   PIP 30%
+karen                   3     18.4%    59.8%    73.6%
+karen                   4     48.6%    79.9%    85.6%
+grandma                 7      5.4%    39.0%    59.9%
+grandma                 8     22.6%    59.3%    71.9%
+meredith_boss           9     25.9%    71.8%    89.5%
+regional_director      10     60.9%    90.5%    98.0%
+algorithm              10     87.6%    94.3%    98.3%
+
+-- SHIPPED#NULL  [NULL ARM — identical bundle, second draw]
+encounter              lvl   PIP 0%    PIP 20%   PIP 30%   (delta vs first arm)
+karen                   3     16.3%  -2.1    62.1%  +2.4    74.0%  +0.4
+karen                   4     49.6%  +1.0    76.4%  -3.5    85.1%  -0.5
+grandma                 7      5.4%  +0.0    38.5%  -0.5    54.0%  -5.9
+grandma                 8     22.4%  -0.3    59.3%  +0.0    72.1%  +0.2
+meredith_boss           9     25.0%  -0.9    72.1%  +0.4    89.6%  +0.1
+regional_director      10     59.6%  -1.3    90.5%  +0.0    98.1%  +0.1
+algorithm              10     86.1%  -1.5    95.6%  +1.4    98.3%  +0.0
+   all 21: mean |delta| 1.07 pp
+   THE BILL (14 cells at PIP 20/30 %): mean |delta| 1.10 pp   signed -0.38 pp   worst -5.9 pp   RESOLUTION
+
+-- CASUAL  (Advisory)
+encounter              lvl   PIP 0%    PIP 20%   PIP 30%   (delta vs first arm)
+karen                   3     59.1% +40.8    60.5%  +0.7    77.1%  +3.5
+karen                   4     79.6% +31.0    77.1%  -2.7    85.0%  -0.6
+grandma                 7     17.5% +12.1    19.8% -19.3    38.4% -21.5
+grandma                 8     44.3% +21.6    43.5% -15.8    59.9% -12.0
+meredith_boss           9     69.9% +44.0    69.8%  -2.0    89.5%  +0.0
+regional_director      10     91.3% +30.4    92.6%  +2.1    98.6%  +0.6
+algorithm              10     88.6%  +1.0    88.1%  -6.1    93.1%  -5.1
+   all 21: mean |delta| 13.00 pp
+   THE BILL (14 cells at PIP 20/30 %): mean |delta| 6.58 pp   signed -5.58 pp   worst -21.5 pp   (null = 1.10 pp)   FAIL — the floor pays for this

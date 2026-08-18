@@ -1,0 +1,73 @@
+
+=== THE LADDER, PER MODE (400 runs/cell, COMPETENT shipped kit) ===
+low-water = the lowest fraction of maxHP Andrew ever stood at, averaged over
+            runs, with a defeat counted as 0. near-death = share of runs whose
+            low-water reached 25 %. These are the producer-facing pair; win rate
+            saturates long before a fight stops being frightening.
+quiet     = enemy turns that landed and dealt 0 damage. dotT is the part of that
+            which is a DoT being APPLIED (the damage lands two beats later on
+            Andrew's turn-start) — subtract it to read the real bookkeeping turns.
+
+-- SHIPPED  (As Shipped)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  99.3%    3.98      62.7%        2.5%    3.98   30.8%   31.3%   30.9%    0.0%   15.81    7.8   0.36
+karen                   4  99.5%    3.90      67.1%        0.8%    3.90   33.1%   32.5%   32.3%    0.0%   14.26    9.5   0.28
+chad                    5  99.5%    4.54      58.3%        6.5%    4.54   40.5%    5.5%    0.0%    0.0%   17.68    8.4   0.57
+chad                    6  100.0%    3.46      89.1%        0.0%    2.46   62.6%    5.0%    0.0%    0.0%    7.09   22.6   0.49
+grandma                 7  99.5%    6.61      70.0%        2.0%    6.61   22.5%   68.6%   15.3%   13.5%    9.84   17.5   0.71
+grandma                 8  100.0%    5.90      80.6%        0.5%    4.90   25.6%   67.2%   17.7%   16.4%    7.45   24.7   0.59
+restructuring_trio      7  99.5%    6.13      45.2%       10.5%    9.71    9.0%   46.1%    0.0%    3.2%   11.37   15.1   0.38
+restructuring_trio      8  100.0%    6.22      48.5%        7.2%    9.69    8.0%   47.6%    0.0%    4.0%   10.99   16.7   0.17
+meredith_boss           8  98.3%    7.88      65.8%        5.8%    6.90   38.5%   48.1%   16.7%    8.8%   11.16   16.5   0.22
+meredith_boss           9  99.0%    7.54      68.5%        5.0%    6.55   35.5%   50.7%   17.9%    9.8%   11.20   17.5   0.26
+regional_director      10  100.0%    4.61      73.4%        0.3%    3.61   40.1%   19.7%   19.7%    0.0%   15.43   13.5   0.36
+algorithm              10  100.0%    6.08      80.8%        0.5%    5.17   25.7%   48.2%    1.2%    0.0%    8.08   25.7   0.70
+
+-- HARD  (Discretionary)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  89.0%    5.57      44.7%       16.5%    5.57   17.1%   28.6%   25.6%    0.0%   29.30    4.2   0.57 (-18.1)
+karen                   4  96.8%    4.53      55.1%        6.3%    4.53   26.3%   30.8%   28.8%    0.0%   23.28    5.8   0.40 (-12.0)
+chad                    5  96.5%    5.86      48.7%       18.3%    5.86   35.0%    5.3%    0.0%    0.0%   23.94    6.2   0.49 (-9.6)
+chad                    6  99.8%    3.53      85.6%        0.3%    2.53   62.5%    3.2%    0.0%    0.0%    9.17   17.4   0.38 (-3.5)
+grandma                 7  87.3%    7.30      55.6%       20.5%    7.30   21.4%   62.0%   15.8%   14.0%   18.45    9.3   0.58 (-14.3)
+grandma                 8  95.8%    6.51      66.9%        9.0%    5.56   28.6%   56.5%   18.7%   13.5%   15.22   12.1   0.43 (-13.7)
+restructuring_trio      7  96.5%    6.73      35.3%       31.8%   10.69    9.6%   45.6%    0.0%    3.4%   13.88   12.4   0.46 (-9.9)
+restructuring_trio      8  98.3%    7.00      38.6%       22.0%   10.93    9.8%   45.5%    0.0%    5.1%   13.70   13.4   0.25 (-9.8)
+meredith_boss           8  74.3%   11.44      41.4%       36.0%   10.70   29.8%   34.8%    9.6%   10.9%   26.89    6.8   0.13 (-24.4)
+meredith_boss           9  82.0%    9.72      50.9%       28.2%    8.90   33.3%   36.5%   12.6%    8.8%   24.32    8.1   0.09 (-17.6)
+regional_director      10  99.5%    4.76      64.1%        4.0%    3.77   40.6%   14.9%   14.9%    0.0%   21.57    9.6   0.34 (-9.3)
+algorithm              10  96.5%    6.16      65.4%       12.5%    5.32   29.8%   39.7%    0.8%    0.0%   15.98   13.0   0.63 (-15.5)
+
+=== THE BREAK ECONOMY, PER MODE (400 runs/cell, COMPETENT) ===
+Floor per boss = max(0.1, 0.6 x the SHIPPED rate for that boss),
+derived in this same run so the two halves cannot drift.
+
+-- SHIPPED  (As Shipped)
+encounter              lvl  breaks/fight  shipped   floor   verdict
+karen                   3          0.37     0.37    0.22   ok
+karen                   4          0.26     0.26    0.16   ok
+chad                    5          0.56     0.56    0.34   ok
+chad                    6          0.54     0.54    0.32   ok
+grandma                 7          0.72     0.72    0.43   ok
+grandma                 8          0.55     0.55    0.33   ok
+restructuring_trio      7          0.40     0.40    0.24   ok
+restructuring_trio      8          0.15     0.15    0.10   ok
+meredith_boss           8          0.26     0.26    0.15   ok
+meredith_boss           9          0.24     0.24    0.15   ok
+regional_director      10          0.35     0.35    0.21   ok
+algorithm              10          0.65     0.65    0.39   ok
+
+-- HARD  (Discretionary)
+encounter              lvl  breaks/fight  shipped   floor   verdict
+karen                   3          0.50     0.37    0.22   ok
+karen                   4          0.34     0.26    0.16   ok
+chad                    5          0.49     0.56    0.34   ok
+chad                    6          0.44     0.54    0.32   ok
+grandma                 7          0.55     0.72    0.43   ok
+grandma                 8          0.43     0.55    0.33   ok
+restructuring_trio      7          0.46     0.40    0.24   ok
+restructuring_trio      8          0.27     0.15    0.10   ok
+meredith_boss           8          0.13     0.26    0.15   *** UNDER FLOOR — the Break system is being deleted here ***
+meredith_boss           9          0.10     0.24    0.15   *** UNDER FLOOR — the Break system is being deleted here ***
+regional_director      10          0.39     0.35    0.21   ok
+algorithm              10          0.57     0.65    0.39   ok

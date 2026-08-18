@@ -410,6 +410,15 @@ export class CombatEngine {
     // makes "the Pivot's weakness rows are untouched" a property of the code
     // rather than a promise in a comment.
     merged.phases = Difficulty.phasesFor(enemyId, merged.phases);
+    // MODE ENEMY MULTIPLIERS, applied LAST so an explicit `overrides` value
+    // still wins — the scripted first-Karen fight hands in `atk: 999` and a
+    // difficulty mode has no business touching a beat the story wrote.
+    // Deliberately NOT applied to `maxHP`: more enemy health is more ROUNDS,
+    // and the balance lane's whole finding about the declined package was that
+    // its bill was a 13-round Meredith. A hard mode raises the threat per turn;
+    // it does not make the fight take longer.
+    merged.atk = Difficulty.enemyStat('atk', merged.atk);
+    merged.def = Difficulty.enemyStat('def', merged.def);
     const maxComposure = this._defaultMaxComposure(merged);
     return {
       ...merged,

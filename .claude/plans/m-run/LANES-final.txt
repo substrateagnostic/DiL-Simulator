@@ -1,0 +1,54 @@
+
+=== THE DIVERSITY BAND, PER MODE (400 runs/cell) ===
+J's law is <= 8.0 pp between the three Practice Groups at every rung.
+This table has NO null arm and four passes of the identical shipped config have
+read max bands of 6.3 / 6.5 / 7.5 / 10.0 pp — read a cell only when it moves
+further than that spread.
+
+-- SHIPPED  (As Shipped)
+encounter              lvl   win: lit / comp / audit          band
+karen                   3   97.5% / 93.3% / 98.0%     4.7 pp
+karen                   4   99.5% / 98.0% / 95.5%     4.0 pp
+chad                    5  100.0% / 96.3% / 97.3%     3.7 pp
+chad                    6  100.0% /100.0% / 99.8%     0.2 pp
+grandma                 7   99.0% / 99.3% / 97.8%     1.5 pp
+grandma                 8   99.8% / 99.5% / 99.5%     0.3 pp
+restructuring_trio      7   96.3% / 94.8% / 86.0%    10.3 pp
+restructuring_trio      8   98.0% / 98.5% / 95.0%     3.5 pp
+meredith_boss           8   99.8% / 99.8% / 94.0%     5.8 pp
+meredith_boss           9  100.0% /100.0% / 99.5%     0.5 pp
+regional_director      10  100.0% / 97.5% / 94.5%     5.5 pp
+algorithm              10  100.0% /100.0% / 99.8%     0.2 pp
+   MAX BAND: 10.3 pp at restructuring_trio@7
+
+-- STANDARD  (Fiduciary)
+encounter              lvl   win: lit / comp / audit          band
+karen                   3   97.8% / 95.3% / 97.5%     2.5 pp
+karen                   4   99.8% / 98.0% / 96.3%     3.5 pp
+chad                    5  100.0% / 97.0% / 94.0%     6.0 pp
+chad                    6  100.0% / 99.5% /100.0%     0.5 pp
+grandma                 7   98.8% / 98.5% / 86.0%    12.8 pp
+grandma                 8   99.5% / 99.8% / 95.8%     4.0 pp
+restructuring_trio      7   96.8% / 94.3% / 84.8%    12.0 pp
+restructuring_trio      8   98.5% / 99.3% / 93.8%     5.5 pp
+meredith_boss           8  100.0% / 99.5% / 92.3%     7.8 pp
+meredith_boss           9  100.0% / 99.8% / 99.0%     1.0 pp
+regional_director      10  100.0% / 96.8% / 95.8%     4.2 pp
+algorithm              10   99.8% / 99.8% / 99.0%     0.8 pp
+   MAX BAND: 12.8 pp at grandma@7
+
+-- HARD  (Discretionary)
+encounter              lvl   win: lit / comp / audit          band
+karen                   3   88.5% / 84.3% / 86.8%     4.2 pp
+karen                   4   96.0% / 89.8% / 77.0%    19.0 pp
+chad                    5   98.3% / 92.5% / 84.8%    13.5 pp
+chad                    6  100.0% / 99.5% / 99.5%     0.5 pp
+grandma                 7   91.5% / 94.3% / 76.8%    17.5 pp
+grandma                 8   98.0% / 97.8% / 92.5%     5.5 pp
+restructuring_trio      7   86.3% / 83.8% / 44.3%    42.0 pp
+restructuring_trio      8   91.3% / 93.3% / 70.5%    22.8 pp
+meredith_boss           8   93.5% / 97.0% / 56.5%    40.5 pp
+meredith_boss           9   99.5% / 99.5% / 87.8%    11.8 pp
+regional_director      10   99.0% / 85.5% / 67.3%    31.8 pp
+algorithm              10   98.3% / 94.5% / 93.0%     5.2 pp
+   MAX BAND: 42.0 pp at restructuring_trio@7

@@ -1,0 +1,39 @@
+
+=== THE LADDER, PER MODE (400 runs/cell, COMPETENT shipped kit) ===
+low-water = the lowest fraction of maxHP Andrew ever stood at, averaged over
+            runs, with a defeat counted as 0. near-death = share of runs whose
+            low-water reached 25 %. These are the producer-facing pair; win rate
+            saturates long before a fight stops being frightening.
+quiet     = enemy turns that landed and dealt 0 damage. dotT is the part of that
+            which is a DoT being APPLIED (the damage lands two beats later on
+            Andrew's turn-start) — subtract it to read the real bookkeeping turns.
+
+-- SHIPPED  (As Shipped)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  99.3%    4.04      62.3%        1.3%    4.04   30.1%   30.5%   30.3%    0.0%   16.60    7.5   0.38
+karen                   4  100.0%    3.92      66.2%        0.5%    3.92   33.6%   32.1%   31.6%    0.0%   14.22    9.6   0.29
+chad                    5  99.8%    4.22      59.9%        6.0%    4.22   42.1%    4.9%    0.0%    0.0%   16.63    8.9   0.51
+chad                    6  100.0%    3.54      89.4%        0.0%    2.54   63.3%    4.9%    0.0%    0.0%    6.69   23.9   0.49
+grandma                 7  99.8%    6.56      70.9%        2.8%    6.56   23.0%   67.8%   16.0%   13.6%    9.95   17.3   0.68
+grandma                 8  99.3%    5.83      79.2%        1.3%    4.83   24.1%   67.7%   19.1%   15.2%    8.52   21.6   0.62
+restructuring_trio      7  99.3%    6.05      45.1%       10.8%    9.54    8.2%   46.8%    0.0%    3.5%   11.14   15.4   0.37
+restructuring_trio      8  100.0%    6.05      49.4%        5.5%    9.54    7.4%   47.8%    0.0%    4.0%   10.94   16.8   0.13
+meredith_boss           8  98.8%    8.05      65.7%        7.0%    7.06   37.6%   48.5%   16.0%    9.6%   11.17   16.5   0.23
+meredith_boss           9  100.0%    7.69      68.0%        5.0%    6.69   36.5%   49.7%   16.8%    9.7%   11.31   17.3   0.23
+regional_director      10  100.0%    4.56      74.3%        0.3%    3.56   40.1%   18.6%   18.6%    0.0%   15.14   13.7   0.33
+algorithm              10  100.0%    6.15      80.9%        0.8%    5.28   26.9%   47.6%    1.3%    0.0%    7.80   26.7   0.70
+
+-- HARD  (Discretionary)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  93.0%    4.57      52.5%        9.5%    4.57   27.2%   30.3%   28.5%    0.0%   22.08    5.6   0.26 (-9.8)
+karen                   4  95.5%    4.30      58.3%        5.8%    4.30   29.1%   31.3%   29.4%    0.0%   20.51    6.6   0.24 (-7.9)
+chad                    5  96.8%    5.98      47.2%       22.3%    5.98   33.9%    5.9%    0.0%    0.0%   23.48    6.3   0.50 (-12.7)
+chad                    6  100.0%    3.57      84.5%        0.0%    2.58   58.8%    4.2%    0.0%    0.0%    9.73   16.4   0.32 (-4.9)
+grandma                 7  86.3%    8.10      53.2%       21.8%    8.10   20.2%   60.7%   14.6%   13.2%   19.01    9.0   0.61 (-17.7)
+grandma                 8  96.5%    6.92      66.8%        7.2%    5.96   26.8%   58.3%   17.7%   15.7%   14.41   12.8   0.47 (-12.5)
+restructuring_trio      7  95.0%    8.39      31.0%       38.3%   12.74    8.8%   43.6%    0.0%    4.0%   15.02   11.5   0.28 (-14.1)
+restructuring_trio      8  98.5%    7.64      36.8%       21.0%   11.51    6.9%   46.3%    0.0%    4.3%   13.91   13.2   0.19 (-12.6)
+meredith_boss           8  78.5%   11.21      41.3%       31.5%   10.43   32.5%   35.3%   10.9%   10.6%   24.63    7.5   0.11 (-24.4)
+meredith_boss           9  72.5%   13.02      35.5%       42.3%   12.29   30.4%   31.7%    8.8%   10.6%   27.46    7.1   0.06 (-32.5)
+regional_director      10  97.8%    6.12      48.8%       22.0%    5.13   34.2%   22.3%   22.3%    0.0%   25.72    8.1   0.49 (-25.4)
+algorithm              10  92.5%    7.25      54.4%       25.0%    6.49   23.8%   40.7%    2.0%    0.0%   20.11   10.3   0.43 (-26.5)

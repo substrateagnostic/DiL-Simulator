@@ -89,8 +89,9 @@ export const ACTIVE_NAME_SET = 'B';
 // THE DIAGNOSIS, in one line: a boss's phase `abilities` array is drawn FLAT,
 // so a phase list holding one attack and four heals/debuffs/stuns spends 80 %
 // of its turns dealing zero damage. Measured on the shipped ladder with the
-// Escalation Response live (`.claude/plans/m-run/_base-diag.txt`): Grandma 68.1
-// and 66.8 % quiet turns, Meredith 49.0 and 49.8 %, the Algorithm 49.5 %.
+// Escalation Response live (`.claude/plans/m-run/LADDER-final.txt`, 600 runs a
+// cell): Grandma 68.3 and 66.2 % quiet turns, Meredith 48.6 and 48.9 %, the
+// Algorithm 48.9 %.
 //
 // THE MECHANISM IS REPETITION, and it is deliberately not new engine code.
 // `_pickEnemyAbility` draws uniformly from the phase's `abilities` array in
@@ -317,8 +318,8 @@ export const DIFFICULTY_MODES = {
     // This is the ONE knob in Standard that is NOT gated behind something the
     // casual floor cannot do, so it is the one that has to be paid for on the
     // 21-cell table. CASUAL therefore does not carry it — see that bundle. The
-    // measured effect on Standard, 500 runs, grandma@7: low-water 70.5 -> 62.8,
-    // near-death 4.8 -> 9.2 %, damage per enemy turn 9.54 -> 13.77.
+    // measured effect on Standard, 600 runs, grandma@7: low-water 69.7 -> 65.1,
+    // near-death 4.0 -> 7.3 %, damage per enemy turn 9.98 -> 12.56.
     ai: { grandma: { healChance: 0.22, debuffChance: 0.20 } },
   },
 
@@ -337,11 +338,7 @@ export const DIFFICULTY_MODES = {
     id: 'hard',
     name: NAME_SETS[ACTIVE_NAME_SET].hard.name,
     blurb: NAME_SETS[ACTIVE_NAME_SET].hard.blurb,
-    depth: {
-      DENIAL_LIMIT: 1,          // a seal after ONE denied turn, not two
-      PRESS_ADVANTAGE_BASE: 52, // the free action costs more Confidence
-    },
-    playerMult: { maxMP: 0.8 }, // Coffee 75 -> 60
+    enemyMult: { atk: 1.45 },
     phases: 'surgery',
     // `'*'` raises the Escalation Response from 0.85 to certainty on every
     // pattern that has one. `algorithm` is listed explicitly because it is the
@@ -356,6 +353,11 @@ export const DIFFICULTY_MODES = {
       // a named id REPLACES the `'*'` contribution, so anything this row does
       // not say, this row does not get.
       grandma: { escalateAfterDenial: 1.0, healChance: 0.22, debuffChance: 0.20 },
+      meredith_boss: {
+        escalateAfterDenial: 1.0,
+        phase1: ['performance_review'],
+        phase2: ['strategic_pivot', 'hostile_takeover', 'strategic_pivot', 'hostile_takeover', 'board_resolution'],
+      },
       intern: {},
     },
   },

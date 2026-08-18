@@ -1,0 +1,46 @@
+
+=== THE LADDER, PER MODE (400 runs/cell, COMPETENT shipped kit) ===
+low-water = the lowest fraction of maxHP Andrew ever stood at, averaged over
+            runs, with a defeat counted as 0. near-death = share of runs whose
+            low-water reached 25 %. These are the producer-facing pair; win rate
+            saturates long before a fight stops being frightening.
+quiet     = enemy turns that landed and dealt 0 damage. dotT is the part of that
+            which is a DoT being APPLIED (the damage lands two beats later on
+            Andrew's turn-start) — subtract it to read the real bookkeeping turns.
+
+-- HARD  (Discretionary)
+encounter              lvl    win  rounds  low-water  near-death  eTurns  denial   quiet    dotT   healT   dmg/T   TTK  breaks
+karen                   3  97.3%    4.49      54.5%        6.0%    4.49   27.7%   30.5%   28.2%    0.0%   21.55    5.8   0.39
+karen                   4  98.0%    4.23      59.2%        3.0%    4.23   29.8%   31.1%   30.1%    0.0%   19.95    6.8   0.35
+chad                    5  98.0%    4.76      55.9%        9.5%    4.76   39.8%    5.5%    0.0%    0.0%   19.34    7.7   0.54
+chad                    6  100.0%    3.54      88.2%        0.0%    2.54   63.9%    3.6%    0.0%    0.0%    7.43   21.5   0.39
+grandma                 7  92.3%    7.20      59.4%       14.0%    7.20   22.8%   61.9%   15.2%   12.7%   15.81   10.9   0.56
+grandma                 8  96.0%    6.32      69.3%        6.8%    5.36   26.9%   59.1%   19.4%   14.2%   13.71   13.4   0.49
+restructuring_trio      7  97.5%    6.67      37.6%       22.0%   10.39   11.0%   44.8%    0.0%    3.4%   13.15   13.1   0.45
+restructuring_trio      8  98.8%    7.05      38.4%       22.3%   10.93    9.4%   45.3%    0.0%    4.4%   13.27   13.9   0.24
+meredith_boss           8  82.0%   10.57      46.4%       27.8%    9.75   33.1%   35.5%   10.9%    9.9%   23.17    7.9   0.16
+meredith_boss           9  85.8%    9.41      51.7%       25.0%    8.56   36.0%   35.1%   11.0%    8.9%   21.36    9.2   0.10
+regional_director      10  99.0%    4.60      67.4%        1.8%    3.60   41.7%   13.0%   13.0%    0.0%   19.37   10.7   0.36
+algorithm              10  97.5%    6.16      68.5%        8.3%    5.31   29.2%   40.0%    1.3%    0.0%   14.41   14.4   0.64
+
+=== THE DIVERSITY BAND, PER MODE (400 runs/cell) ===
+J's law is <= 8.0 pp between the three Practice Groups at every rung.
+This table has NO null arm and four passes of the identical shipped config have
+read max bands of 6.3 / 6.5 / 7.5 / 10.0 pp — read a cell only when it moves
+further than that spread.
+
+-- HARD  (Discretionary)
+encounter              lvl   win: lit / comp / audit          band
+karen                   3   91.0% / 88.8% / 92.8%     4.0 pp
+karen                   4   95.5% / 94.5% / 78.0%    17.5 pp
+chad                    5   98.8% / 95.8% / 89.0%     9.8 pp
+chad                    6  100.0% / 99.5% /100.0%     0.5 pp
+grandma                 7   94.3% / 94.3% / 81.8%    12.5 pp
+grandma                 8   98.5% / 98.8% / 93.5%     5.2 pp
+restructuring_trio      7   85.0% / 86.8% / 51.5%    35.3 pp
+restructuring_trio      8   94.5% / 94.3% / 74.3%    20.2 pp
+meredith_boss           8   93.8% / 97.8% / 68.3%    29.5 pp
+meredith_boss           9   99.8% / 98.5% / 89.0%    10.8 pp
+regional_director      10   99.5% / 92.5% / 81.3%    18.3 pp
+algorithm              10   98.8% / 97.5% / 96.3%     2.5 pp
+   MAX BAND: 35.3 pp at restructuring_trio@7
