@@ -422,12 +422,11 @@ export class Player {
       allyState: JSON.parse(JSON.stringify(this.allyState)),
       voiceCounts: { ...this.voiceCounts },
       allyControl: this.allyControl,
-      // DIFFICULTY MODE — ADDITIVE, and additive in the strong sense: while the
-      // producer gate is closed these are always the default, every save
-      // written before this reads them as the default, and no field was
-      // renamed, removed or repurposed to make room. `difficultyFloor` is the
-      // EASIEST mode this run has been played on, which is the number the
-      // records read; see DifficultyManager.set().
+      // DIFFICULTY MODE — ADDITIVE, one field (`difficulty`). Every save
+      // written before this reads it as the default, and no field was renamed,
+      // removed or repurposed to make room. The packet's `difficultyFloor`
+      // stamp was declined by the producer (2026-08-17) before anything
+      // persisted it, so it is simply absent; see DifficultyManager.set().
       ...Difficulty.serialize(),
     };
   }

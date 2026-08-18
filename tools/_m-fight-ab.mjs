@@ -8,9 +8,9 @@
 // runs tagged against the wrong bundle because `dist/` had not been rebuilt.
 //
 //   npm run dev                                   # :5173 must be up
-//   node tools/_m-fight-ab.mjs --mode=shipped  --fight=grandma
-//   node tools/_m-fight-ab.mjs --mode=standard --fight=grandma
-//   node tools/_m-fight-ab.mjs --mode=hard     --fight=meredith_boss
+//   node tools/_m-fight-ab.mjs --mode=shipped --fight=grandma
+//   node tools/_m-fight-ab.mjs --mode=normal  --fight=grandma
+//   node tools/_m-fight-ab.mjs --mode=hard    --fight=meredith_boss
 //
 // CAPTURE LAW, both halves:
 //  * FIDELITY — `?qtier=high` pins the tier AND switches the adaptive governor
@@ -171,7 +171,10 @@ if (ident.claimed !== MODE) {
 {
   const bundle = DIFFICULTY_MODES[MODE] || {};
   const surgery = bundle.phases === 'surgery' ? (PHASE_SURGERY[FIGHT] || null) : null;
-  const revival = bundle.phases === 'surgery' ? (PHASE_REVIVAL[FIGHT] || null) : null;
+  // The revival ships in EVERY selectable mode (producer freebie, 2026-08-17);
+  // only the `shipped` null arm stays pre-fix. Mirror the resolver exactly, or
+  // an easy-mode capture would skip the threshold half of its own identity check.
+  const revival = MODE !== 'shipped' ? (PHASE_REVIVAL[FIGHT] || null) : null;
   const faults = [];
   if (surgery) {
     ident.poolSizes.forEach((n, i) => {

@@ -24,7 +24,7 @@
 //   node tools/_m-modes.mjs --floor   --runs 800          # the 21-cell CASUAL gate
 //   node tools/_m-modes.mjs --lanes   --runs 600          # the diversity band per mode
 //   node tools/_m-modes.mjs --breaks  --runs 600          # Break economy per boss per mode
-//   node tools/_m-modes.mjs --ladder --modes shipped,standard --runs 1500
+//   node tools/_m-modes.mjs --ladder --modes shipped,normal --runs 1500
 import { runFight, enc, casualTurn, buildPlayerStats } from './combat-sim.mjs';
 import { POLICIES, buildUnlocked, instrument, PARTY, LADDER, initEnemyAbilities } from './_j-verify.mjs';
 import { Difficulty } from '../src/core/DifficultyManager.js';
@@ -226,11 +226,12 @@ function runCensus() {
     if (!base?.phases) continue;
     const setOf = (phases) => new Set([...(base.abilities || []), ...phases.flatMap(p => p.abilities || [])]);
     const a = setOf(base.phases);
-    // FORCED. Without this the resolver runs under the CLOSED producer gate and
-    // hands back the shipped rows, so the two columns were the same number and
-    // the check was vacuous — it reported 0 faults because it was comparing the
-    // shipped build against itself.
-    const b = withMode('standard', () => setOf(Difficulty.phasesFor(eid, base.phases)));
+    // FORCED. Without this the resolver used to run under the CLOSED producer
+    // gate and hand back the shipped rows, so the two columns were the same
+    // number and the check was vacuous — it reported 0 faults because it was
+    // comparing the shipped build against itself. ('normal' is the surgery
+    // band; the ids renamed casual/standard -> easy/normal on 2026-08-17.)
+    const b = withMode('normal', () => setOf(Difficulty.phasesFor(eid, base.phases)));
     const capA = Math.max(1, Math.ceil(a.size / 3));
     const capB = Math.max(1, Math.ceil(b.size / 3));
     const moved = capA !== capB;

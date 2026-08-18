@@ -6,7 +6,6 @@ import { BESTIARY_DATA } from '../data/bestiary.js';
 import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE, PRACTICE_GROUPS, TIER_LEVEL } from '../data/stats.js';
 import { DifficultyPanel } from '../ui/DifficultyPanel.js';
 import { Difficulty } from '../core/DifficultyManager.js';
-import { DIFFICULTY_MODES } from '../data/difficulty.js';
 import { ALLY_STATS, ALLY_ABILITIES } from '../data/allies.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { AchievementManager } from '../core/AchievementManager.js';
@@ -20,10 +19,12 @@ export class MenuState {
     this.element = null;
     this.selectedIndex = 0;
     this.menuItems = ['Resume', 'Unstick Andrew', 'Abilities', 'Cosmetics', 'Journal', 'Log', 'Achievements', 'Stats', 'Save Game', 'Transfer Save', 'Controls', 'Settings', 'Quit to Title'];
-    // ENGAGEMENT TERMS sits in SETTINGS, beside Controls, and is spliced in only
-    // when the producer gate is open — a dark build's pause menu is unchanged,
-    // down to the row order and the index every other row sits at.
-    if (Difficulty.live) this.menuItems.splice(this.menuItems.indexOf('Controls'), 0, 'Engagement Terms');
+    // DIFFICULTY sits beside Controls, and is spliced in only when the
+    // producer gate is open — a dark build's pause menu is unchanged, down to
+    // the row order and the index every other row sits at. Plain label, not
+    // 'Engagement Terms': the producer picked the audience-first register for
+    // the whole difficulty surface (2026-08-17).
+    if (Difficulty.live) this.menuItems.splice(this.menuItems.indexOf('Controls'), 0, 'Difficulty');
     // New Game+ unlocks after the Algorithm falls
     if (player.getFlag('algorithm_defeated')) {
       this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
@@ -235,7 +236,7 @@ export class MenuState {
       case 'Transfer Save':
         this._showTransfer();
         break;
-      case 'Engagement Terms':
+      case 'Difficulty':
         this._showDifficulty();
         break;
       case 'Controls':
@@ -422,11 +423,11 @@ export class MenuState {
     if (this.element) this.element.style.display = '';
   }
 
-  // ── ENGAGEMENT TERMS ────────────────────────────────────────────────
-  // Mid-run mode switching. DOWNWARD is always allowed and asks nothing;
-  // UPWARD is allowed too and the file simply keeps the lowest tier ever
-  // worked under (`Difficulty.floor`), which the panel prints back. The whole
-  // rule lives in DifficultyManager.set(); this method only draws it.
+  // ── DIFFICULTY ──────────────────────────────────────────────────────
+  // Mid-run mode switching, allowed in BOTH directions with no ceremony and
+  // no record kept — the producer declined the `difficultyFloor` stamp
+  // (2026-08-17). The whole rule lives in DifficultyManager.set(); this
+  // method only draws it.
   //
   // The new mode is written to the save immediately, because a player who
   // changes difficulty and then quits without an autosave would otherwise
@@ -445,9 +446,7 @@ export class MenuState {
         NotificationArbiter.post({
           cls: NC.PROGRESS,
           key: 'difficulty',
-          text: r.direction < 0
-            ? `Engagement terms amended to ${m.name}. Effective immediately.`
-            : `Engagement terms amended to ${m.name}. Your file still reads ${DIFFICULTY_MODES[r.floor]?.name || r.floor}.`,
+          text: `Difficulty set to ${m.name}. Takes effect from your next fight.`,
         });
       },
       onCancel: restore,

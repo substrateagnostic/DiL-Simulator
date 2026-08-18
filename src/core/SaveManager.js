@@ -1,3 +1,5 @@
+import { DIFFICULTY_MODES, DEFAULT_MODE } from '../data/difficulty.js';
+
 const SAVE_KEY_PREFIX = 'trust_issues_save_';
 const LEGACY_KEY = 'trust_issues_save';
 const NUM_SLOTS = 3;
@@ -282,15 +284,16 @@ class SaveManagerClass {
       deaths: data?.deaths || 0,
       party: Array.isArray(data?.party) ? [...data.party] : [],
       voiceCounts: { ...(data?.voiceCounts || {}) },
-      // THE DIFFICULTY RECORD. Additive under rule 1 — nothing was renamed,
-      // removed or repurposed, and a reader that does not know these keys
-      // ignores them. `difficulty` is where the run ENDED; `difficultyFloor` is
-      // the easiest mode it was ever played on, and the floor is the honest one
-      // for a later chapter to dramatise. Both default to the shipped mode for
-      // every card exported before this existed, so no card already in a
-      // player's hands changes meaning.
-      difficulty: data?.difficulty || 'standard',
-      difficultyFloor: data?.difficultyFloor || data?.difficulty || 'standard',
+      // THE DIFFICULTY RECORD. Additive under rule 1 — one key, `difficulty`,
+      // the mode the run was played on, defaulting to the default mode for
+      // every card exported before this existed. The packet's second key
+      // (`difficultyFloor`, the easiest mode ever active) was DECLINED by the
+      // producer (2026-08-17) before any card carried it, so it never became
+      // part of the contract and is not written. An unknown value — including
+      // `'standard'`, the pre-rename id dark builds wrote — lands on the
+      // default rather than exporting a dead id.
+      difficulty: DIFFICULTY_MODES[data?.difficulty] && data?.difficulty !== 'shipped'
+        ? data.difficulty : DEFAULT_MODE,
       flags: carriedFlags,
     };
   }

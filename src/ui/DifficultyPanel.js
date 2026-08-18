@@ -1,9 +1,11 @@
-// DifficultyPanel.js — the mode picker, one implementation, two call sites.
+// DifficultyPanel.js — the text mode picker. ONE live call site: MenuState,
+// mid-run ('run' context).
 //
-// TitleState opens it on New Game (before the run exists) and MenuState opens it
-// mid-run. Both go through the same object, so there is one place where the copy
-// lives, one place where the layout lives, and no way for the two screens to
-// drift apart.
+// TitleState's New Game path used to open this too; as of 2026-08-17 it opens
+// `src/ui/NewGameScreen.js` instead — the diorama slider — which binds to the
+// same MODE_ORDER ids and calls the same `Difficulty.reset(id)`. The 'new'
+// context here is kept working (it is the clean fallback if the visual screen
+// is ever pulled), but nothing ships a path to it today.
 //
 // INPUT DISCIPLINE. This panel owns NO keyboard listener. Every other screen in
 // this game is driven by polling `InputManager` from the host state's
@@ -22,14 +24,18 @@ import { Difficulty } from '../core/DifficultyManager.js';
 import { MODE_ORDER, DIFFICULTY_MODES } from '../data/difficulty.js';
 import { AudioManager } from '../core/AudioManager.js';
 
+// Plain, audience-first register throughout (producer, 2026-08-17): the mode
+// names are Easy / Normal / Hard and the chrome around them matches. No trust
+// jargon on this screen. The visual slider start-screen landed as
+// `src/ui/NewGameScreen.js` and binds to the same MODE_ORDER ids.
 const COPY = {
-  titleNew: 'ENGAGEMENT TERMS',
-  titleRun: 'AMEND ENGAGEMENT TERMS',
+  titleNew: 'DIFFICULTY',
+  titleRun: 'CHANGE DIFFICULTY',
   // Said plainly and once, at the moment the choice is made, because a player
   // who does not know a setting is reversible will pick the safe one and resent
   // it. This is the same reason the shipped PIP costs zero Review Points.
   blurbNew: 'This can be changed at any time from the pause menu. Nothing is locked behind it.',
-  blurbRun: 'Effective from your next engagement. Your file keeps the lowest tier you have worked under.',
+  blurbRun: 'Takes effect from your next fight. Switch back whenever you like.',
   hint: '↑↓ select &nbsp; ENTER confirm &nbsp; ESC back',
 };
 
@@ -101,15 +107,13 @@ class DifficultyPanelImpl {
   _render() {
     if (!this.overlay) return;
     const current = Difficulty.selected;
-    const floor = Difficulty.floor;
     const rows = MODE_ORDER.map((id, i) => {
       const m = DIFFICULTY_MODES[id];
       const sel = i === this.index;
-      // The tier the file already records, shown where the player can see it
-      // rather than discovered in an epilogue. See DifficultyManager.set().
+      // No floor stamp: the producer declined `difficultyFloor` (2026-08-17),
+      // so the only mark is where you are now.
       const marks = [];
       if (id === current) marks.push('current');
-      if (id === floor && floor !== current) marks.push('on file');
       return `
         <div class="difficulty-row${sel ? ' selected' : ''}" data-index="${i}">
           <div class="difficulty-row-head">

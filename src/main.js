@@ -196,14 +196,15 @@ class Game {
     const qtier = params.get('qtier');
     if (qtier) Engine.setQualityTier(qtier);
 
-    // ?difficulty=casual|standard|hard|shipped — FORCE a difficulty mode for a
-    // capture, past the producer gate.
+    // ?difficulty=easy|normal|hard|shipped — FORCE a difficulty mode for a
+    // capture, ignoring whatever the save says.
     //
     // This is the second and last caller of `Difficulty.force()`; the other is
-    // `tools/_m-modes.mjs`. Both exist for the same reason: the modes ship DARK
-    // (`DIFFICULTY_LIVE = false`), and a before/after capture of a dark build is
-    // impossible without a door. It is DEV_MODE-only by virtue of living inside
-    // `_startFixture`, which only runs behind that flag.
+    // `tools/_m-modes.mjs`. The modes are LIVE now (2026-08-17), but the door
+    // stays: it is how a capture pins a mode without driving the picker, and
+    // the only way to stage the `shipped` null arm at all. It is DEV_MODE-only
+    // by virtue of living inside `_startFixture`, which only runs behind that
+    // flag.
     //
     // A capture must never take this as PROOF of which mode it ran — that is a
     // claim, and `tools/_m-fight-ab.mjs` checks it against an OBSERVABLE off the

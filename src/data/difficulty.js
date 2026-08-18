@@ -17,14 +17,17 @@
 // There is no code fork anywhere** — `src/core/DifficultyManager.js` resolves a
 // bundle and the engine asks it questions.
 //
-// THE PRODUCER GATE
-// -----------------
-// `DIFFICULTY_LIVE = false` means: the machinery is wired, imported, exercised
-// by the harness and inert in the game. `DifficultyManager` hands out the
-// `shipped` bundle — an explicit fourth entry below whose every field is the
-// identity — so a build with the gate off is byte-for-byte the game the
-// producer last signed. Flipping the constant to `true` is the whole release.
-// Do not flip it. That is his call and it is the point of the packet.
+// THE PRODUCER GATE — OPEN AS OF 2026-08-17
+// -----------------------------------------
+// The producer answered the packet's six questions and the constant below is
+// the flip. His rulings, implemented here: display names are the plain set
+// (Easy / Normal / Hard — the A/B/C register sets were all declined); the mode
+// ids are `easy` / `normal` / `hard` and are LOAD-BEARING — a visual slider
+// start-screen is being built in a parallel lane and binds to these ids, so
+// never rename them; the `difficultyFloor` stamp was declined and does not
+// exist; and the PHASE_REVIVAL bug fix ships in every selectable mode.
+// Setting this back to `false` re-darkens the whole system (the `shipped`
+// identity bundle comes back for everything).
 //
 // THREE AUTHORING LAWS
 // --------------------
@@ -40,49 +43,64 @@
 //    See `DifficultyManager.phasesFor`.
 
 // ── THE PRODUCER GATE ───────────────────────────────────────────────────
-// false: `DifficultyManager` returns `shipped` for everything, the selection
-//        UI does not render, and no save writes a difficulty field.
+// false: `DifficultyManager` returns `shipped` for everything and the
+//        selection UI does not render.
 // true:  three modes, a picker on New Game, a picker in the pause menu.
-export const DIFFICULTY_LIVE = false;
+// Flipped 2026-08-17 on the producer's answer to the packet (Q2: ship).
+export const DIFFICULTY_LIVE = true;
 
-export const DEFAULT_MODE = 'standard';
-/** Player-selectable modes, easiest first. `shipped` is deliberately absent. */
-export const MODE_ORDER = ['casual', 'standard', 'hard'];
+export const DEFAULT_MODE = 'normal';
+/**
+ * Player-selectable modes, easiest first. `shipped` is deliberately absent.
+ * THE IDS ARE A CONTRACT: the slider start-screen lane binds to
+ * `easy` / `normal` / `hard`. Keep them stable; display names live in
+ * NAME_SETS, never here.
+ */
+export const MODE_ORDER = ['easy', 'normal', 'hard'];
 
-// ── NAME SETS — THE PRODUCER PICKS ONE ──────────────────────────────────
-// Three registers, all office satire, all three modes named from one metaphor
-// so the ladder reads as a ladder. `ACTIVE_NAME_SET` is a one-character edit.
+// ── NAME SETS — THE PRODUCER PICKED (2026-08-17) ────────────────────────
+// The answer to Q1 is the `plain` set: Easy / Normal / Hard, audience-first,
+// no trust jargon. Sets A/B/C were all DECLINED; they stay here as the record
+// of the decision, not as options to quietly reactivate. `ACTIVE_NAME_SET` is
+// still a one-word edit, but changing it now is a producer call.
 //
-// A note on set C: "Development Plan" deliberately rhymes with the shipped
-// **Performance Improvement Plan** (`src/data/review.js`), which is exactly the
-// machinery CASUAL absorbs — so the rhyme is true. It is also a collision: the
-// PIP is a separate, still-shipping opt-in item and a player could reasonably
-// think the mode and the item are the same thing. Flagged, not hidden.
+// The Hard blurb used to carry the honest §7.3 line the producer asked for
+// (Q5) — "Some approaches struggle here. That is the point." — written while
+// the Audit lane collapsed to 44.3 % on one rung. The audit accommodation
+// (the `audit` block on the hard bundle, 2026-08-17) closed that gap to
+// ~10 pp, so the apology came out of the blurb the same day the reason for
+// it did. If the producer wants the sterner line back, it is one string.
 export const NAME_SETS = {
-  // The onboarding ladder. Reads instantly; least specific to this game.
+  // THE ACTIVE SET. Plain, audience-first (producer, 2026-08-17).
+  plain: {
+    label: 'Plain — Easy / Normal / Hard (active)',
+    easy: { name: 'Easy', blurb: 'You take less damage. Nothing is cut and nothing is locked away.' },
+    normal: { name: 'Normal', blurb: 'The game as designed.' },
+    hard: { name: 'Hard', blurb: 'The opposition hits harder and wastes nothing.' },
+  },
+  // DECLINED — the onboarding ladder. Reads instantly; least specific to this game.
   A: {
-    label: 'A — the onboarding ladder',
-    casual: { name: 'Intern', blurb: 'Supervised. Mistakes are development opportunities.' },
-    standard: { name: 'Associate', blurb: 'The job as written.' },
+    label: 'A — the onboarding ladder (declined 2026-08-17)',
+    easy: { name: 'Intern', blurb: 'Supervised. Mistakes are development opportunities.' },
+    normal: { name: 'Associate', blurb: 'The job as written.' },
     hard: { name: 'Partner Track', blurb: 'No supervision. No cover. No supply budget.' },
   },
-  // The engagement letter. The register the game actually speaks in — these are
-  // real trust-department words and each one is honest about the mode.
+  // DECLINED — the engagement letter. Real trust-department words.
   B: {
-    label: 'B — the engagement letter',
-    casual: { name: 'Advisory', blurb: 'Non-binding. We will walk you through it.' },
-    standard: { name: 'Fiduciary', blurb: 'The standard of care. Act in their interest.' },
+    label: 'B — the engagement letter (declined 2026-08-17)',
+    easy: { name: 'Advisory', blurb: 'Non-binding. We will walk you through it.' },
+    normal: { name: 'Fiduciary', blurb: 'The standard of care. Act in their interest.' },
     hard: { name: 'Discretionary', blurb: 'Full authority. Full liability. No second signature.' },
   },
-  // The performance review. Ties to the Review Points tab already shipped.
+  // DECLINED — the performance review. Rhymed with (and collided with) the PIP.
   C: {
-    label: 'C — the performance review',
-    casual: { name: 'Development Plan', blurb: 'A structured framework. Nobody is being written up.' },
-    standard: { name: 'Meets Expectations', blurb: 'The documented standard for this role.' },
+    label: 'C — the performance review (declined 2026-08-17)',
+    easy: { name: 'Development Plan', blurb: 'A structured framework. Nobody is being written up.' },
+    normal: { name: 'Meets Expectations', blurb: 'The documented standard for this role.' },
     hard: { name: 'Exceeds Expectations', blurb: 'You asked for this in writing.' },
   },
 };
-export const ACTIVE_NAME_SET = 'B';
+export const ACTIVE_NAME_SET = 'plain';
 
 // ── PHASE-LIST SURGERY (Part 2) ─────────────────────────────────────────
 //
@@ -206,6 +224,12 @@ export const PHASE_SURGERY = {
 // Algorithm, and it is the one that most literally answers "get their threat
 // from their OWN kits": both rows are already written, already balanced, and
 // already have their phase message and their Pivot weakness authored.
+//
+// SHIPS IN EVERY SELECTABLE MODE (producer ruling 2026-08-17, the packet's
+// "freebie"): it is a bug fix, not a difficulty lever, measured at -0.2 to
+// +0.3 pp of low-water. `DifficultyManager.phasesFor` applies it to easy,
+// normal and hard alike; ONLY the `shipped` null arm stays pre-fix, so the
+// instruments keep an honest before-column.
 export const PHASE_REVIVAL = {
   regional_director: { 2: 0.12 },
   algorithm: { 2: 0.12 },
@@ -247,7 +271,7 @@ export const DIFFICULTY_MODES = {
     phases: 'shipped',
   },
 
-  // ── CASUAL ───────────────────────────────────────────────────────────
+  // ── EASY (the packet's CASUAL band) ──────────────────────────────────
   // The Performance Improvement Plan, promoted from a post-defeat offer to this
   // mode's spine. The shipped PIP is Hades' God Mode filed as HR paperwork —
   // 20 % incoming-damage resistance, +2 % per recorded defeat, capped at 80 %,
@@ -276,15 +300,17 @@ export const DIFFICULTY_MODES = {
   // than against the ceiling — which is the whole reason a one-knob game could
   // not buy a Standard band, restated from the other end.
   //
-  // So CASUAL IS DEFINED AS "THE SHIPPED FIGHT, PLUS HELP". Shipped phases,
+  // So EASY IS DEFINED AS "THE SHIPPED FIGHT, PLUS HELP". Shipped phases,
   // shipped AI weights, shipped everything, and the assist on top. The floor law
   // then holds by construction rather than by tuning, and the honest cost —
-  // Casual and Standard fight measurably different Grandmas — is declared in the
-  // producer packet rather than buried here.
-  casual: {
-    id: 'casual',
-    name: NAME_SETS[ACTIVE_NAME_SET].casual.name,
-    blurb: NAME_SETS[ACTIVE_NAME_SET].casual.blurb,
+  // Easy and Normal fight measurably different Grandmas — is declared in the
+  // producer packet rather than buried here. (The one post-packet change:
+  // PHASE_REVIVAL now reaches this mode too — the freebie ruling — and the
+  // floor table was re-run against it; see the m-run reproduction commands.)
+  easy: {
+    id: 'easy',
+    name: NAME_SETS[ACTIVE_NAME_SET].easy.name,
+    blurb: NAME_SETS[ACTIVE_NAME_SET].easy.blurb,
     assist: { base: 0.20, perDeath: 0.02, cap: 0.80 },
     phases: 'shipped',
     // NO `ai` BLOCK, AND THAT IS THE DESIGN. Standard weights Grandma's
@@ -297,14 +323,14 @@ export const DIFFICULTY_MODES = {
     // are measuring the surgery and nothing else.
   },
 
-  // ── STANDARD ─────────────────────────────────────────────────────────
+  // ── NORMAL (the packet's STANDARD band) ──────────────────────────────
   // The shipped experience plus Part 2. No economy knobs: DENIAL_LIMIT stays 2,
   // Press Advantage stays 40, Coffee stays 75. Those were priced and declined
-  // for Standard (66c3a88) and this wave does not reopen that.
-  standard: {
-    id: 'standard',
-    name: NAME_SETS[ACTIVE_NAME_SET].standard.name,
-    blurb: NAME_SETS[ACTIVE_NAME_SET].standard.blurb,
+  // for this band (66c3a88) and this wave does not reopen that.
+  normal: {
+    id: 'normal',
+    name: NAME_SETS[ACTIVE_NAME_SET].normal.name,
+    blurb: NAME_SETS[ACTIVE_NAME_SET].normal.blurb,
     phases: 'surgery',
     // THE OTHER FLAT DRAW. Weighting a phase array only reaches the branch that
     // draws from it, and `tactical` gates two branches AHEAD of that draw at
@@ -315,19 +341,27 @@ export const DIFFICULTY_MODES = {
     // weighted too, by the same principle and to the same end: heals and
     // debuffs stay in the fight and stop being drawn flat against her punches.
     //
-    // This is the ONE knob in Standard that is NOT gated behind something the
+    // This is the ONE knob in Normal that is NOT gated behind something the
     // casual floor cannot do, so it is the one that has to be paid for on the
-    // 21-cell table. CASUAL therefore does not carry it — see that bundle. The
-    // measured effect on Standard, 600 runs, grandma@7: low-water 69.7 -> 65.1,
+    // 21-cell table. EASY therefore does not carry it — see that bundle. The
+    // measured effect on this band, 600 runs, grandma@7: low-water 69.7 -> 65.1,
     // near-death 4.0 -> 7.3 %, damage per enemy turn 9.98 -> 12.56.
     ai: { grandma: { healChance: 0.22, debuffChance: 0.20 } },
   },
 
   // ── HARD ─────────────────────────────────────────────────────────────
-  // The declined Tier 2 package, which is legal here because a Hard player
-  // volunteers for the bill Standard refused. Its costs are real and are in the
-  // packet: fights get LONGER, and DENIAL_LIMIT 1 suppresses Breaks on the
-  // shortest fights (a seal freezes the Composure bar).
+  // ENTIRELY ENEMY-SIDE, and the near-miss is worth remembering: Hard v1 WAS
+  // the declined Tier 2 package (DENIAL_LIMIT 1, Press Advantage 52, Coffee
+  // 60), it was measured, and it was thrown away — a 20.8-round Meredith with
+  // 0.04 Breaks per fight, because player-economy screws buy difficulty by
+  // making fights LONGER (packet §7.2). What ships is the opposition getting
+  // relentless (ATK x1.45, Escalation Response at certainty) while Andrew's
+  // own toolkit is untouched. Declared costs, packet §7.3 with the producer's
+  // word (Q5): Meredith's Break rate sits under its derived floor on two
+  // cells. The §7.3(a) cost — the Audit lane collapsing to 44.3 % on one rung
+  // — was CLOSED by the audit accommodation below (2026-08-17, packet §7.4
+  // addendum); the residual band on Hard is ~10 pp, in line with the shipped
+  // build's own spread.
   //
   // The Algorithm exemption from the Escalation Response is LIFTED here and
   // only here. That exemption exists to protect the casual floor — the
@@ -340,6 +374,49 @@ export const DIFFICULTY_MODES = {
     blurb: NAME_SETS[ACTIVE_NAME_SET].hard.blurb,
     enemyMult: { atk: 1.45 },
     phases: 'surgery',
+    // ── THE AUDIT ACCOMMODATION (n-run, 2026-08-17) ──────────────────
+    // Hard buys its threat enemy-side, and that priced out exactly one build:
+    // the Audit lane's Findings ramp needs TURNS, and ATK x1.45 takes them
+    // away — measured at a 42.0 pp lane gap on restructuring_trio@7 (packet
+    // §7.3, Audit 44.3 % vs Litigation 86.3 %), uncloseable by ATK dials
+    // (x1.30 still 35.3 pp). On Hard, and only on Hard, the file works under
+    // audit conditions. Three fields, one accessor
+    // (`DifficultyManager.auditRamp`), all intrinsically gated on owning the
+    // `findings` node — no other lane, and no Easy/Normal player, is reachable
+    // by any of them:
+    //
+    //   fileRate 2     — exhibits file at double rate (damage-carrying tagged
+    //                    hits ONLY; Scope Expansion's debuff notes stay at 1 —
+    //                    doubling those let Due Diligence race the file to a
+    //                    close no damaging hit was there to cash, measured
+    //                    -13.5 pp on meredith_boss@8). The ramp's clock is
+    //                    resized to Hard's turn budget; the identity —
+    //                    accumulate, then close — is untouched.
+    //   assaultSlow    — THE PAPER TRAIL SLOWS THE ASSAULT: -6 % outgoing ATK
+    //                    per Finding EVER FILED on that enemy (`_findingsEver`,
+    //                    monotonic, capped at 5 → max -30 %, i.e. a fully
+    //                    documented opponent presses at 1.45 x 0.70 = 1.015 —
+    //                    a hair above Normal, never below it). Keyed on the
+    //                    record rather than the standing stacks because stacks
+    //                    empty on every close, which vanished the shield at
+    //                    the exact moment the lane cashed its payoff — and
+    //                    because a monotonic record deletes the hold-the-file
+    //                    degenerate line outright.
+    //   seedRecord 3   — the record starts three entries deep: the auditor
+    //                    read their file before the meeting. Seeds the SHIELD
+    //                    only, never `_findings` — the burst clock still
+    //                    starts at zero. This is what reaches the trio, where
+    //                    the lane's deaths were three undocumented bodies
+    //                    swinging 1.45x in the opening rounds (near-death 99 %
+    //                    at base; 94 % seeded — trio@7 55.8 % -> 76.8 %).
+    //
+    // Measured winner (400-600 runs/cell, .claude/plans/n-run/): the lane gap
+    // at trio@7 closes 42.0 -> ~9.5 pp and every other failing cell lands
+    // inside ~10 pp; Litigation/Compliance on Hard and every lane on
+    // Easy/Normal are untouched by construction AND by measurement
+    // (n-run touch test). The losing candidates and why they lost are in
+    // the packet's §7.4 addendum.
+    audit: { fileRate: 2, assaultSlow: 0.06, seedRecord: 3 },
     // `'*'` raises the Escalation Response from 0.85 to certainty on every
     // pattern that has one. `algorithm` is listed explicitly because it is the
     // one row that does NOT have one at rest, and a reader has to be able to see
@@ -349,7 +426,7 @@ export const DIFFICULTY_MODES = {
     ai: {
       '*': { escalateAfterDenial: 1.0 },
       algorithm: { escalateAfterDenial: 1.0 },
-      // Standard's Grandma weights, written out in full rather than inherited:
+      // Normal's Grandma weights, written out in full rather than inherited:
       // a named id REPLACES the `'*'` contribution, so anything this row does
       // not say, this row does not get.
       grandma: { escalateAfterDenial: 1.0, healChance: 0.22, debuffChance: 0.20 },

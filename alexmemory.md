@@ -1,3 +1,81 @@
+## [RESUME HERE - 08-17 evening (Fable, six lanes in flight)]
+
+MAIN == 62cfc52 (dialog refactor P4-P9 merged: .dlg is source, story
+SIMULATOR gates npm run check, routing = 65-row table). display-case
+is AHEAD with the rebalance wave (5464491/afe794f/bb753a4, judged PASS,
+dark) + whatever in-flight lanes have landed since.
+
+PRODUCER ANSWERS SIGNED (08-17): difficulty modes SHIP as Easy/Normal/
+Hard (plain names; slider start screen carries the meaning); Casual =
+shipped fight + assist; Standard accepts unreachable chad@6/regional/
+algorithm; Hard ships WITH stated lane limitation AND an Audit rework
+lane is challenging that limitation; mid-run switching free both ways
+NO stamp; dead boss phases ship all modes (the freebie). Identity
+rulings: keep the face, no name entry, no creator; female playable =
+S3 Rachel (already canon); wardrobe = cosmetics channel.
+
+SIX LANES IN FLIGHT (all Fable, all STOP-before-merge; coordinator
+merges via `git fetch . display-case:main` — NEVER checkout main while
+lanes hold the tree):
+1. Constants flip: Easy/Normal/Hard names, mode activation, freebie
+   phases, no-stamp switching.
+2. Audit-on-Hard rework (license to break J-lane structures; per-mode
+   moveset allowed; target gap <=15pp from 42pp).
+3. Slider start screen (the room dresses itself per difficulty).
+4. Janet's quiz (diegetic personality traits, day-one PC homepage;
+   trait names/perks = SIGN-OFF PACKET, dark until Alex signs).
+5. Rachel's mirror (wardrobe onboarding after first Karen loss,
+   bathroom mirror = preview; starter-cosmetic additions dark).
+6. Collision ghost sweep (post-graphical/F-wave collision debt; seeds:
+   bathroom stalls enterable only from BACK not doors, garage weird
+   collisions; examples-are-seeds).
+PACKETS PENDING ALEX: trait set, any starter cosmetics, Audit design.
+FLEET: Fable tap OPEN (his account 34% weekly til Wednesday; main
+account reset). Judges: single Fable xhigh per lane, one fix round.
+LAWS: HANDOFF_PACKAGE.md section 4; prose = Opus 4.6 verbatim; no
+Set-Content on source; new save fields additive (carry contract).
+THE NEW-GAME ARC being assembled: title -> slider vignette -> garage
+-> Janet's quiz -> first loss -> Rachel's mirror. All diegetic.
+## [THE FLIP — DIFFICULTY MODES GO LIVE, 08-17 (Fable 5)]
+
+You answered the packet; this lane implemented exactly that and nothing else.
+Branch `display-case`, one commit, pushed, NOT merged.
+
+- **Q2: `DIFFICULTY_LIVE = true`.** The whole release, as the packet promised.
+- **Q1: names are Easy / Normal / Hard** — new `plain` set in `NAME_SETS`,
+  active; A/B/C kept in the file marked DECLINED. **The internal ids renamed
+  `casual`/`standard` -> `easy`/`normal`** (semantic, stable — the slider
+  start-screen lane binds to them). Old dark-build blobs saying `standard`
+  adopt to `normal`, the same game.
+- **Q5: Hard ships**, blurb carries the honest line: *The opposition hits
+  harder and wastes nothing. Some approaches struggle here. That is the point.*
+- **Q6: switching free BOTH ways, NO `difficultyFloor`.** Removed outright —
+  it never shipped, nothing ever persisted it, so no dead field was left
+  behind. Save + carry now hold ONE key: `difficulty`.
+- **The freebie: PHASE_REVIVAL in ALL selectable modes** (Director + Algorithm
+  third rows, 0 -> 0.12). Re-measured with it reaching Easy: the 21-cell floor
+  bill is signed -0.43 pp against a 1.79 pp null — PASS, the floor does not
+  pay for it (`.claude/plans/m-run/FLOOR-flip.txt`).
+- Pause row / panel titles now plain too: `Difficulty`, not `Engagement Terms`.
+
+VERIFIED: `npm run check` exit 0 on the committed tree; `_m-modes` selftest
+3/3 + census 0 faults; ladder+breaks re-run at 600 (`LADDER-flip.txt`) matches
+the packet's tables; headed boot drove New Game -> picker (EASY/NORMAL/HARD
+render, cursor on NORMAL), picked Hard, save blob reads `difficulty: "hard"`
+with no floor key, reload+Load Game adopts it back; one Hard fight entered and
+exited clean (stills + ledger in `screenshots/m-run/`).
+
+HONEST LIST: (1) Normal's meredith@9 Break rate read 0.13 vs floor 0.15 this
+run — borderline sampling around the packet's own declared Meredith Break
+weakness; Hard's meredith@9 under floor as declared. (2) Two parallel lanes
+were writing this tree while I worked; my commit deliberately EXCLUDES their
+in-flight files (`TitleState.js` slider swap, `NewGameScreen.js`,
+`CombatEngine.js` audit rework) but INCLUDES two riders I could not cleanly
+split: the inert `auditRamp()` accessor in DifficultyManager (unused until
+their commit) and their DifficultyPanel header note that says the slider
+screen already owns New Game — true one commit later, not in mine. (3) On my
+commit alone, New Game still opens the TEXT picker; the slider replaces it
+when that lane lands.
 ## [THE REBALANCE WAVE — DIFFICULTY MODES + PHASE SURGERY, 08-17 (Opus 5)]
 
 Branch `display-case`, two commits (`5464491`, `afe794f`), pushed, NOT merged.
