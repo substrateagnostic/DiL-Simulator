@@ -26,6 +26,10 @@ export const DEV_PRESETS = [
       // No `branch_chosen`: this is the REAL Act 1 — Karen live in the
       // conference room, the roguelite tutorial ahead of you.
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
+      // Janet's quiz fires on checked_desk in real play, so every state past
+      // it holds a read flag and exactly one trait — a preset that skipped
+      // both would land a save no playthrough can reach (preset law 1).
+      read_janet_quiz: true, trait_advance_reader: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true,
     },
@@ -35,6 +39,10 @@ export const DEV_PRESETS = [
     label: 'Act 2 — Branch Chosen (finale)',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
+      // Janet's quiz fires on checked_desk in real play, so every state past
+      // it holds a read flag and exactly one trait — a preset that skipped
+      // both would land a save no playthrough can reach (preset law 1).
+      read_janet_quiz: true, trait_advance_reader: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -47,6 +55,10 @@ export const DEV_PRESETS = [
     label: 'Act 3 — Hendersons Defeated',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
+      // Janet's quiz fires on checked_desk in real play, so every state past
+      // it holds a read flag and exactly one trait — a preset that skipped
+      // both would land a save no playthrough can reach (preset law 1).
+      read_janet_quiz: true, trait_advance_reader: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -61,6 +73,10 @@ export const DEV_PRESETS = [
     label: 'Act 4 — Archive Evidence Found',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
+      // Janet's quiz fires on checked_desk in real play, so every state past
+      // it holds a read flag and exactly one trait — a preset that skipped
+      // both would land a save no playthrough can reach (preset law 1).
+      read_janet_quiz: true, trait_advance_reader: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -78,6 +94,10 @@ export const DEV_PRESETS = [
     label: 'Act 5 — Charter Recovered',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
+      // Janet's quiz fires on checked_desk in real play, so every state past
+      // it holds a read flag and exactly one trait — a preset that skipped
+      // both would land a save no playthrough can reach (preset law 1).
+      read_janet_quiz: true, trait_advance_reader: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -97,6 +117,10 @@ export const DEV_PRESETS = [
     label: 'Act 6 — Meredith Defeated',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
+      // Janet's quiz fires on checked_desk in real play, so every state past
+      // it holds a read flag and exactly one trait — a preset that skipped
+      // both would land a save no playthrough can reach (preset law 1).
+      read_janet_quiz: true, trait_advance_reader: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,
@@ -129,6 +153,10 @@ export const DEV_PRESETS = [
     label: 'Act 7 — Penthouse Unlocked',
     flags: {
       checked_desk: true, met_janet: true, met_intern: true, met_isaiah: true, met_alex_it: true, met_rachel: true,
+      // Janet's quiz fires on checked_desk in real play, so every state past
+      // it holds a read flag and exactly one trait — a preset that skipped
+      // both would land a save no playthrough can reach (preset law 1).
+      read_janet_quiz: true, trait_advance_reader: true,
       read_janet_intro: true, read_intern_intro: true, read_isaiah_intro: true, read_alex_it_intro: true,
       defeated_intern: true, briefing_complete: true, branch_chosen: true,
       retry_karen: true, karen_retry_ready: true, karen_defeated: true, defeated_karen: true,

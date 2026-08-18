@@ -24,7 +24,11 @@ scene karen_meeting
   Karen Henderson: Finally. FINALLY. Do you know how long I've been waiting? I have a Pilates class at 2.
   Andrew: Mrs. Henderson, thank you for coming in. I'm Andrew, the trust officer assigned to--
   Karen Henderson: I know what you are. You're the fourth one. The last one cried. Will you cry? You look like you might cry.
-  Andrew: I'm... not going to cry.
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original at @q_km_base
+  # below). Every variant amounts to "no, I will not cry" — her "Good." lands
+  # on all four.
+  if trait_advance_reader -> q_km_ar else -> q_km_d2
+  @q_km_cont
   Karen Henderson: Good. Because I have DOCUMENTATION. I have EMAILS. I have a BINDER.
   Narrator: Karen slams a three-ring binder on the desk. It's at least four inches thick. Tabs are color-coded.
   Karen Henderson: My father PROMISED me the lake house. Page 34 of my binder. I have the Christmas card where he said, and I quote, 'Karen, the lake house is yours someday, now please stop asking.'
@@ -55,13 +59,33 @@ scene karen_meeting
   fight karen
   end
 
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_km_d2
+  if trait_shock_absorber -> q_km_sa
+  if trait_percolator -> q_km_pc
+  @q_km_base
+  Andrew: I'm... not going to cry.
+  goto q_km_cont
+  @q_km_ar
+  Andrew: I... reviewed the full trust file this morning, Mrs. Henderson. The crying wasn't in my notes.
+  goto q_km_cont
+  @q_km_sa
+  Andrew: No. No, I think I'm all right, actually. Thank you for asking.
+  goto q_km_cont
+  @q_km_pc
+  Andrew: Not immediately, no. I tend to take a while to get to things.
+  goto q_km_cont
+
 # --------------------------------------------------------------------------
 # CHAD HENDERSON -- Pre-combat
 # --------------------------------------------------------------------------
 scene chad_meeting
   Chad Henderson: Broooo. What's up. You the new trust guy? Sweet office, dude.
   Narrator: Chad Henderson enters wearing a backwards cap, a popped collar polo, and carrying a protein shake that cost more than your lunch.
-  Andrew: Mr. Henderson, thank you for meeting with me about the trust dist--
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original at @q_cm_base
+  # below). Every variant ends mid-word — Chad interrupts all four.
+  if trait_advance_reader -> q_cm_ar else -> q_cm_d2
+  @q_cm_cont
   Chad Henderson: Call me Chad, bro. Mr. Henderson was my grandpa. Well, I guess that's why we're here. RIP to the GOAT.
   Chad Henderson: So anyway, Grandpa Chad -- yeah, he was also Chad, family tradition -- he totally told me the portfolio was mine.
   Chad Henderson: I've got BIG plans for it, bro. I'm gonna put it all into crypto. Well, not Bitcoin, that's for boomers. I'm talking about PumpCoin. It's got a dog on it.
@@ -95,6 +119,23 @@ scene chad_meeting
   set chad_met
   fight chad
   end
+
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_cm_d2
+  if trait_shock_absorber -> q_cm_sa
+  if trait_percolator -> q_cm_pc
+  @q_cm_base
+  Andrew: Mr. Henderson, thank you for meeting with me about the trust dist--
+  goto q_cm_cont
+  @q_cm_ar
+  Andrew: Mr. Henderson, I've prepared an annotated summary of the trust provisions, and I'd like to start with the distribut--
+  goto q_cm_cont
+  @q_cm_sa
+  Andrew: Mr. Henderson, I'm sure we can work through the trust distribution without any complicat--
+  goto q_cm_cont
+  @q_cm_pc
+  Andrew: Mr. Henderson, if we could go through the trust one section at a time, starting with the distribut--
+  goto q_cm_cont
 
 # --------------------------------------------------------------------------
 # GRANDMA HENDERSON -- Pre-combat
@@ -132,7 +173,10 @@ scene grandma_meeting
   Grandma Henderson: It's ALL mine. Every penny. The lake house, the portfolio, the savings, the vintage car collection, and the timeshare in Branson that nobody wants but everybody fights about.
   Grandma Henderson: I've been letting them argue for six months because, frankly, watching Karen make binders is the most entertainment I've had since Harold passed.
   Grandma Henderson: But now I'm bored. And my stories are on at 3. So let's wrap this up.
-  Andrew: Mrs. Henderson, I... this changes everything about the distribution plan.
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original at @q_gm_base
+  # below, appended after the @n31 staging block).
+  if trait_advance_reader -> q_gm_ar else -> q_gm_d2
+  @q_gm_cont
   Grandma Henderson: Oh sweetie. I know. That's the point.
   Grandma Henderson: Now. I'm going to make you an offer. You seem like a nice young man. Better than the last four, at least. The third one DEFINITELY cried.
   Grandma Henderson: But nice is a currency, dear, and I've watched it devalue since 1987. Let's see what else you're holding.
@@ -152,6 +196,23 @@ scene grandma_meeting
     player walkTo chair_n_mid sit speed 1.5
     grandma face chair_n_mid nowait
   goto n1
+
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_gm_d2
+  if trait_shock_absorber -> q_gm_sa
+  if trait_percolator -> q_gm_pc
+  @q_gm_base
+  Andrew: Mrs. Henderson, I... this changes everything about the distribution plan.
+  goto q_gm_cont
+  @q_gm_ar
+  Andrew: Mrs. Henderson, I read every page of this trust. I prepared for two days. How did I not see page forty-seven?
+  goto q_gm_cont
+  @q_gm_sa
+  Andrew: Mrs. Henderson, I... all right. All right. That changes the entire distribution. Quite a lot, actually.
+  goto q_gm_cont
+  @q_gm_pc
+  Andrew: Mrs. Henderson, I was taking this one page at a time and I... wasn't expecting page forty-seven to do that.
+  goto q_gm_cont
 
 # --------------------------------------------------------------------------
 # ROSS ACT 2 -- Terrible mid-game advice
@@ -189,7 +250,11 @@ scene skip_act2
 scene skip_post_karen
   Skip Hartley: Andrew! Come in, come in. Shut the door. This is a Level Three conversation. We don't broadcast Level Threes.
   Skip Hartley: First — HUGE props on Karen. I'm not going to say I had doubts, but I had... significant doubts. A medium-to-large amount of doubts.
-  Andrew: She threw a binder at me, Skip.
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original at @q_spk_base
+  # below). The binder fact survives in all four — Skip's "And you SURVIVED"
+  # needs it.
+  if trait_advance_reader -> q_spk_ar else -> q_spk_d2
+  @q_spk_cont
   Skip Hartley: And you SURVIVED. That's the narrative. You're a survivor. This is a brand moment, Andrew. We should get you a mug.
   Skip Hartley: Okay. Next up: Chad. Chad Henderson. Chad is... different.
   Skip Hartley: Karen had rage. Organized, tabulated, binder-formatted rage. Chad has... energy. Undirected energy. The kinetic chaos of a man who once tried to invest his entire trust distribution in a cryptocurrency called PumpCoin.
@@ -211,11 +276,31 @@ scene skip_post_karen
   set skip_post_karen
   end
 
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_spk_d2
+  if trait_shock_absorber -> q_spk_sa
+  if trait_percolator -> q_spk_pc
+  @q_spk_base
+  Andrew: She threw a binder at me, Skip.
+  goto q_spk_cont
+  @q_spk_ar
+  Andrew: I prepared talking points, Skip. She threw a binder at me before I finished the first one.
+  goto q_spk_cont
+  @q_spk_sa
+  Andrew: She threw a binder at me, Skip. I'm fine. It was a very large binder, but I'm fine.
+  goto q_spk_cont
+  @q_spk_pc
+  Andrew: I was trying to take it slow, Skip. She threw a binder at me. I don't think she wanted to take it slow.
+  goto q_spk_cont
+
 # --------------------------------------------------------------------------
 # JANET ACT 2 -- Updated gossip
 # --------------------------------------------------------------------------
 scene janet_act2
-  Janet: Oh God, you're still here? I mean -- oh GOOD, you're still here.
+  # WORKING-STYLE VARIANT SITE (in-place dispatch at index 0; original at
+  # @q_ja_base below). She has been keeping score since the diagnosis.
+  if trait_advance_reader -> q_ja_ar else -> q_ja_d2
+  @q_ja_cont
   Janet: *extremely long sip from tumbler*
   Janet: So I heard about Karen. And the binder. And the... incident.
   Janet: For what it's worth, that's actually a GOOD sign. She only throws binders at people she's beginning to respect. The last trust officer? She threw a STAPLER.
@@ -234,6 +319,23 @@ scene janet_act2
   Andrew: There's an emergency kombucha?
   Janet: Bottom desk drawer. The one that locks. Don't ask what ABV it is.
   end
+
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_ja_d2
+  if trait_shock_absorber -> q_ja_sa
+  if trait_percolator -> q_ja_pc
+  @q_ja_base
+  Janet: Oh God, you're still here? I mean -- oh GOOD, you're still here.
+  goto q_ja_cont
+  @q_ja_ar
+  Janet: You're still here. You probably had a contingency plan for still being here. That's not a compliment.
+  goto q_ja_cont
+  @q_ja_sa
+  Janet: You're still here. After all of it. I don't know if that's resilience or a very specific type of not noticing.
+  goto q_ja_cont
+  @q_ja_pc
+  Janet: You're still here. Slowly, presumably. That's... actually somewhat reassuring. Don't tell anyone I said that.
+  goto q_ja_cont
 
 # --------------------------------------------------------------------------
 # ALEX IT SIDE ROUTER -- lets player choose between side quest and regular chat

@@ -169,6 +169,24 @@ function buildCards(player) {
     }
   }
 
+  // ── THE WORKING STYLE (Janet's quiz). One card, three variants, omitted on
+  // any save that never took the day-one homepage quiz (pre-quiz saves, dev
+  // jumps) rather than faked. Plate-pending frame until the epilogue art pass
+  // lands `epilogue_workstyle.png`. Prose first-draft: Opus 4.6,
+  // .claude/plans/q-run/PROSE-DRAFT.md (wired verbatim).
+  {
+    const styleLine = f('trait_advance_reader')
+      ? 'Andrew was rated an Advance Reader on his first morning. His preparation notes from that day are still in his desk drawer. They were annotated and wrong about everything that mattered.'
+      : f('trait_shock_absorber')
+        ? 'The assessment classified Andrew as a Shock Absorber on day one. In six years, the classification has not changed. Neither, measurably, has Andrew.'
+        : f('trait_percolator')
+          ? 'Andrew was identified as a Percolator on his first morning. The results were emailed to an undisclosed recipient who has not yet responded. These things take time.'
+          : null;
+    if (styleLine) {
+      cards.push({ img: 'epilogue_workstyle', title: 'THE WORKING STYLE', lines: [styleLine] });
+    }
+  }
+
   // ── THE SECOND LAP (NG+). `ng_plus_count` was written by MenuState and read
   // by nothing — the documented Dark Souls anti-pattern, where the only thing
   // a second run buys is bigger enemy numbers. Chrono Trigger's answer is that

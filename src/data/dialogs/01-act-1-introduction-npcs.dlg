@@ -77,7 +77,11 @@ scene neutral_janitor
 scene janet_intro
   Janet: Ah. The new trust officer. They get younger every year. Or I'm aging in the cask. One of those.
   Janet: I'm Janet. I handle the... *sip* ...smaller accounts. The ones where nobody's fighting. So, like, three of them.
-  Janet: Welcome to the sixth floor. We call it 'The Trust Fall.' Nobody catches you.
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original line lives at
+  # @q_ji_base below — the never-insert law means the swap happens at this
+  # index and the prose moves to the appended tail). Janet's trait lines are
+  # THE deadpan acknowledgment that she set the homepage; she never says so.
+  if trait_advance_reader -> q_ji_ar else -> q_ji_d2
 
   @n3
   ask Janet: Anyway -- what can I help you with, hon?
@@ -121,12 +125,33 @@ scene janet_intro
   set lunch_thief_started
   goto n3
 
+  # ── WORKING-STYLE VARIANTS (appended; dispatched from the in-place `if`
+  # above; prose Opus 4.6, wired verbatim) ─────────────────────────────────
+  @q_ji_d2
+  if trait_shock_absorber -> q_ji_sa
+  if trait_percolator -> q_ji_pc
+  @q_ji_base
+  Janet: Welcome to the sixth floor. We call it 'The Trust Fall.' Nobody catches you.
+  goto n3
+  @q_ji_ar
+  Janet: An Advance Reader. So was the second one. Didn't help.
+  goto q_ji_base
+  @q_ji_sa
+  Janet: Shock Absorber. The third one tested the same. Right up until the parking garage.
+  goto q_ji_base
+  @q_ji_pc
+  Janet: A Percolator. Good. The last two were fast. You can see how that went.
+  goto q_ji_base
+
 # --------------------------------------------------------------------------
 # ALEX FROM IT
 # --------------------------------------------------------------------------
 scene alex_it_intro
   Alex from IT: Andrew, right? I knew at 8:52 — the badge server and I keep each other informed. Welcome to Vaults Fargo.
-  Alex from IT: I'm Alex. IT department. Well, I AM the IT department. Had a team once. They all 'transferred.' That's corporate for 'fled.'
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original line at @q_ai_base
+  # below). Alex already knows the result — the network told him first.
+  if trait_advance_reader -> q_ai_ar else -> q_ai_d2
+  @q_ai_cont
   Alex from IT: Anyway — good to have you. The trust department could use someone who hasn't been here long enough to stop trying.
   Alex from IT: One thing before we get into it. Have you touched any of the legacy systems yet?
   Andrew: I just started tod--
@@ -167,6 +192,23 @@ scene alex_it_intro
   Alex from IT: The 'please' is important. These machines run on spite and desperation.
   end
 
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_ai_d2
+  if trait_shock_absorber -> q_ai_sa
+  if trait_percolator -> q_ai_pc
+  @q_ai_base
+  Alex from IT: I'm Alex. IT department. Well, I AM the IT department. Had a team once. They all 'transferred.' That's corporate for 'fled.'
+  goto q_ai_cont
+  @q_ai_ar
+  Alex from IT: The quiz said Advance Reader. The DHCP lease history said the same thing four minutes earlier, but the quiz has better formatting.
+  goto q_ai_base
+  @q_ai_sa
+  Alex from IT: The quiz said Shock Absorber. I knew from the login attempts -- nine failed, zero frustration clicks. The keyboard never lies.
+  goto q_ai_base
+  @q_ai_pc
+  Alex from IT: The assessment said Percolator. I could have told them from the boot sequence -- you let the whole POST cycle finish before touching a key. Nobody does that.
+  goto q_ai_base
+
 # --------------------------------------------------------------------------
 # THE INTERN
 # --------------------------------------------------------------------------
@@ -198,10 +240,30 @@ scene intern_intro
   @n15
   set met_intern
   The Intern: Oh! I almost forgot. Skip said to tell you the Henderson meeting is 'mission critical.' He said those words while doing finger guns.
-  The Intern: Good luck, Adam!
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original at @q_ii_base
+  # below). Every variant still gets the first name wrong — that is the bit.
+  if trait_advance_reader -> q_ii_ar else -> q_ii_d2
+  @q_ii_cont
   Andrew: Andrew.
   The Intern: That's what I said!
   end
+
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_ii_d2
+  if trait_shock_absorber -> q_ii_sa
+  if trait_percolator -> q_ii_pc
+  @q_ii_base
+  The Intern: Good luck, Adam!
+  goto q_ii_cont
+  @q_ii_ar
+  The Intern: Good luck, Arthur! I heard you're an Advance Reader -- that sounds very organized!
+  goto q_ii_cont
+  @q_ii_sa
+  The Intern: Good luck, Aaron! They said you're a Shock Absorber? That sounds painful. Sorry.
+  goto q_ii_cont
+  @q_ii_pc
+  The Intern: Good luck, Albert! They said Percolator? That sounds like a nice thing to be.
+  goto q_ii_cont
 
 # --------------------------------------------------------------------------
 # ROSS -- Your boss. The briefing.
@@ -215,7 +277,11 @@ scene skip_not_ready
 
 scene skip_intro
   Skip Hartley: Andrew! My man! Come in, come in. Close the door. Actually, leave it open. Actually, close it halfway. Power move.
-  Skip Hartley: So. The Henderson Trust. This is the big one, buddy. This is our Super Bowl. Our moon landing. Our... what's that thing where they do the thing?
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original at @q_si_base
+  # below). Skip read the emailed results through a management book that does
+  # not exist.
+  if trait_advance_reader -> q_si_ar else -> q_si_d2
+  @q_si_cont
   Andrew: Could you be more specific?
   Skip Hartley: The specifics aren't important. What's important is the ENERGY. And the energy here is: Henderson family, big trust, lots of assets.
   Skip Hartley: Mrs. Henderson's assets are... substantial. Very well-endowed. The trust, I mean. The trust is well-endowed.
@@ -258,6 +324,23 @@ scene skip_intro
   Skip Hartley: Wait, you don't know about the shredder. Forget I said that. Circle back later. *finger guns*
   end
 
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_si_d2
+  if trait_shock_absorber -> q_si_sa
+  if trait_percolator -> q_si_pc
+  @q_si_base
+  Skip Hartley: So. The Henderson Trust. This is the big one, buddy. This is our Super Bowl. Our moon landing. Our... what's that thing where they do the thing?
+  goto q_si_cont
+  @q_si_ar
+  Skip Hartley: Hey, saw your assessment -- Advance Reader! Chapter nine of 'The Stakeholder Within': 'Preparation is the only meeting that never gets cancelled.' That's so you, buddy.
+  goto q_si_base
+  @q_si_sa
+  Skip Hartley: Saw your assessment -- Shock Absorber! There's this book, 'Bounce: Leaning Into What Hits You' -- haven't finished it, but: 'The blow is the brand.' LOVE that.
+  goto q_si_base
+  @q_si_pc
+  Skip Hartley: Oh! Your assessment came through -- Percolator! 'The Patient Yield' -- haven't read it yet, but the TITLE, Andrew. 'Slow is just fast that respects the process.' That's a brand.
+  goto q_si_base
+
 # --------------------------------------------------------------------------
 # DIANE -- Reception, actually competent
 # --------------------------------------------------------------------------
@@ -288,11 +371,32 @@ scene diane_intro
   goto n1
 
   @n13
-  Diane: Well, good luck. And seriously -- my desk, bottom drawer, antacids. Anytime you need them.
+  # WORKING-STYLE VARIANT SITE (in-place dispatch under the existing @n13;
+  # original at @q_di_base below). Every variant still offers the antacids —
+  # the next node hands one over.
+  if trait_advance_reader -> q_di_ar else -> q_di_d2
+  @q_di_cont
   set met_diane
   give antacid x1
   Diane: Here, take one now. Consider it a welcome gift.
   end
+
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_di_d2
+  if trait_shock_absorber -> q_di_sa
+  if trait_percolator -> q_di_pc
+  @q_di_base
+  Diane: Well, good luck. And seriously -- my desk, bottom drawer, antacids. Anytime you need them.
+  goto q_di_cont
+  @q_di_ar
+  Diane: You came prepared. I can see that. So did the second one, right up until she couldn't stop crying. My desk, bottom drawer -- antacids. You'll know when.
+  goto q_di_cont
+  @q_di_sa
+  Diane: Mm. You've got a steady look about you. That counts for something here. The last three didn't. My desk, bottom drawer, antacids. Don't wait until you need them.
+  goto q_di_cont
+  @q_di_pc
+  Diane: Take your time with this place. I mean that. The ones who rushed are gone. Bottom drawer of my desk -- antacids. Patience won't cover everything.
+  goto q_di_cont
 
 # --------------------------------------------------------------------------
 # WATER COOLER -- Random gossip

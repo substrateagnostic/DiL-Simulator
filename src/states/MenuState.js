@@ -8,6 +8,7 @@ import { DifficultyPanel } from '../ui/DifficultyPanel.js';
 import { Difficulty } from '../core/DifficultyManager.js';
 import { ALLY_STATS, ALLY_ABILITIES } from '../data/allies.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
+import { activeTrait } from '../data/traits.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { Player } from '../entities/Player.js';
@@ -1723,6 +1724,15 @@ export class MenuState {
           <span style="color:#888;font-size:18px">Times Defeated</span>
           <span style="color:#888;font-size:18px">${this.player.deaths || 0}</span>
         </div>
+        ${(() => {
+          // WORKING STYLE — Janet's day-one quiz verdict. Omitted entirely on
+          // a save that never took the quiz (pre-quiz saves, dev jumps).
+          const trait = activeTrait(this.player);
+          return trait ? `<div style="margin-top:8px;display:flex;justify-content:space-between">
+          <span style="color:#8fb7c9;font-size:18px">Working Style</span>
+          <span style="color:#8fb7c9;font-size:18px">${trait.name}</span>
+        </div>` : '';
+        })()}
         ${(this.player.getFlag('pb_richest_client') || this.player.getFlag('pb_accept_streak')) ? `
         <div style="border-top:1px solid #1a2a3a;margin-top:14px;padding-top:10px">
           <div style="color:#53a8b6;font-size:14px;letter-spacing:1px;margin-bottom:6px">RECEPTION RECORDS</div>

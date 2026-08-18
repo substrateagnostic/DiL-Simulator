@@ -62,6 +62,9 @@ const SPEAKER_COLORS = {
   'Narrator':           '#e94560',
   'Printer':            '#88ccff',
   'Vending Machine':    '#53a8b6',
+  // Janet's working-style quiz — the browser homepage on Andrew's desk PC.
+  // Corporate-portal teal; deliberately close to a default-theme intranet.
+  'Homepage':           '#5bb8c4',
   'Fridge Note':        '#ff6b6b',
   'Archive Terminal':   '#4cc9f0',
   'Delia Okafor':       '#d4a373',

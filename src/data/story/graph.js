@@ -327,6 +327,18 @@ export const TRIGGERS = [
     note: 'The actual guard is reception_intro_done, which the scene grants; semantically the same completion latch as once:scene.',
   },
   {
+    id: 'desk-quiz-chain', on: 'flag-set', flag: 'checked_desk',
+    when: ['not', 'briefing_complete'], once: 'scene', scene: 'janet_quiz',
+    delayMs: 500, grants: [], src: 'ExplorationState.js:542',
+    note: 'Janet set the desk PC\'s browser homepage to the working-style quiz; it fires once, '
+      + 'right after the first desk check and before the team intros (the PRE_DESK_TEAM guard '
+      + 'already forces desk-before-intros, so the quiz precedes every coworker scene on any '
+      + 'real save). read_janet_quiz is the once-guard and the replay path covers a quit inside '
+      + 'the 500 ms window. The ¬briefing_complete term keeps the day-one-framed scene from '
+      + 'replaying onto a pre-quiz legacy save mid-campaign: such a save simply never takes the '
+      + 'quiz, and every trait-conditional line falls back to its original by construction.',
+  },
+  {
     id: 'karen-first-loss', on: 'flag-set', flag: 'retry_karen',
     when: ['not', 'defeated_karen'], once: 'scene',
     scene: 'karen_first_loss_tutorial', delayMs: 1200, grants: [],

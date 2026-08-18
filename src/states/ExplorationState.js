@@ -525,6 +525,13 @@ export class ExplorationState {
           // Queue the epilogue for when the ending dialogs finish
           if (!this.player.getFlag('epilogue_seen')) this._pendingEpilogue = true;
         }
+        // Day one: settling in at the desk wakes the PC, whose browser
+        // homepage Janet has set to the working-style quiz. Queued behind the
+        // desk scene the flag is set inside of; `_replayInterruptedFlagStory-
+        // Triggers` re-offers it on load if a quit lands inside the window.
+        if (key === 'checked_desk' && value) {
+          this._queuePendingStoryTrigger('desk-quiz-chain');
+        }
         // Act 6½: pulling the seal from box 0001 triggers The Firm's ambush
         if (key === 'has_recorder_seal') {
           this._queuePendingStoryTrigger('firm-ambush-chain');

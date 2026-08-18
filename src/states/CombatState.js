@@ -18,6 +18,7 @@ import { ParticleSystem } from '../effects/ParticleSystem.js';
 import { CombatCinematics, ARENA_PALETTES, resolveArena } from '../combat/CombatCinematics.js';
 import { DAY_BALANCE, dayMutatorActive, readDay } from '../data/billableDay.js';
 import { qteModifiers } from '../data/cosmetics.js';
+import { traitPerkValue } from '../data/traits.js';
 import {
   activeStretchIds, reviewLevel, noteReviewLevel, pipResistance, REVIEW_COPY,
 } from '../data/review.js';
@@ -238,6 +239,16 @@ export class CombatState {
         nodes: [...this.player.unlockedAbilities],
       }
     );
+
+    // WORKING STYLE (Janet's quiz) — The Advance Reader walks in already
+    // briefed: starting Confidence, once, at combat start. All three trait
+    // perks are DARK until the producer signs the packet — traitPerkValue
+    // returns the fallback while TRAIT_PERKS_LIVE is false, so this line is
+    // inert on every shipped save (src/data/traits.js).
+    const traitOpening = traitPerkValue(this.player, 'startMomentum', 0);
+    if (traitOpening > 0) {
+      this.engine.player.momentum = Math.min(100, Math.max(this.engine.player.momentum || 0, traitOpening));
+    }
 
     // Reasonable Doubt: unlock the Charter voice in the Meredith fight if the
     // player has read the charter via the team_chat_hub Witness branch.
@@ -478,6 +489,13 @@ export class CombatState {
 
     // Process turn-start effects (DoTs, status decrement) for this ally
     const effects = this.engine.processTurnStart(ally);
+    // WORKING STYLE — The Percolator's Fresh Pot: a drip of Coffee at the
+    // start of each of ANDREW's turns (index 0 only, never the bench). Dark
+    // until the trait packet is signed; see src/data/traits.js.
+    if (this._activeAllyIndex === 0) {
+      const traitDrip = traitPerkValue(this.player, 'mpPerTurn', 0);
+      if (traitDrip > 0) ally.mp = Math.min(ally.maxMP, ally.mp + traitDrip);
+    }
     const continueTurn = () => {
       if (this.engine.isOver) {
         this._handleResult();
@@ -2417,7 +2435,11 @@ export class CombatState {
     // Relic slot: Ergonomic Wrist Support widens both bands by 40% (P1.6).
     // Identity multiplier for anyone with nothing equipped, so the shipped
     // 0.10 / 0.35 feel is untouched by default.
-    const widen = qteModifiers(this.player).braceWindow;
+    // WORKING STYLE — The Shock Absorber is steadier under impact: the trait
+    // multiplies into the same channel as the relic, so the two stack
+    // multiplicatively. Identity (1) while the trait packet is unsigned.
+    const widen = qteModifiers(this.player).braceWindow
+      * traitPerkValue(this.player, 'qteWindow', 1);
     const perfectBand = 0.10 * widen;
     const goodBand = 0.35 * widen;
 

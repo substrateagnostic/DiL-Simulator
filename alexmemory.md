@@ -1,3 +1,49 @@
+## [JANET'S QUIZ — THE WORKING STYLES, 08-17 (Fable 5, q-run / traits pilot)]
+
+Your round-9 commission, built: personality selection is diegetic. Day one,
+first desk check, the PC wakes and the browser homepage — Janet set it, she
+never says so — is the Bridgewell-Kaplan Workplace Temperament Inventory™,
+Build 4.7.1. Unskippable (the tab has no close button; structurally too — the
+dialog exit law refuses to bail before the verdict is written). 3–4 questions
+per path, adaptive scoring the player can't see, and the game remembers who
+Andrew is for the rest of the run. Branch `display-case`, NOT merged.
+
+- **NEEDS YOU — the trait packet** (`.claude/plans/q-run/TRAIT-PACKET.md`):
+  three working styles, names + perks, all perks DARK behind
+  `TRAIT_PERKS_LIVE` in `src/data/traits.js` until you sign. The Advance
+  Reader (start fights with 8 Confidence), The Shock Absorber (Brace bands
+  ×1.2), The Percolator (+1 Coffee per turn). All sim-checked ≤1.3 pp
+  anywhere on the ladder, ≤1.0 pp at karen@3 (4000 runs/arm, raw in
+  q-run/trait-sim-raw.txt). One measured landmine documented: a 10-point
+  Confidence start deletes a whole basic attack from the road to Assert
+  Dominance and cost −6 to −7.5 pp — 8 is deliberately below that quantum.
+- **The quiz + 33 line variants are CONTENT and are live** (judge-gated, one
+  fix round): 11 sites across Acts 1–2 where a line plays in the style's key —
+  Janet's intro carries her deadpan acknowledgment ("A Percolator. Good. The
+  last two were fast. You can see how that went."), Skip quotes a management
+  book that doesn't exist per style, Alex knew from the DHCP lease history,
+  the Intern mangles the style AND the name, Chad interrupts all four
+  openers mid-word. Old saves: no trait, every site falls back to the
+  original line by construction. Trait flags ride FLAGS_OF_RECORD (additive).
+- **All prose Opus 4.6, wired verbatim** (q-run/PROSE-DRAFT.md). Result pages
+  print the style in caps with "Assessment confidence: 94.2%."; the outro
+  mails the results to a distribution list no directory contains.
+- **Stats tab** shows Working Style; **epilogue** gains a THE WORKING STYLE
+  card (plate-pending frame — `epilogue_workstyle.png` joins the queued
+  epilogue art pass).
+- **Verified**: npm run check GREEN (simulator A–G; the quiz is a trigger row
+  in the story graph, so a broken chain is a red build); _ux-smoke PASS;
+  _ux-dev census 0/0; headed day-one playthrough garage → elevator →
+  reception → farm → desk → quiz → Janet, 18/18 asserts, stills in
+  screenshots/q-run/ (01-garage … 06-stats-workstyle).
+- **HONEST**: the F2 presets now grant read_janet_quiz + trait_advance_reader
+  (a preset without a verdict is a state no playthrough can reach), so
+  fixture-driven captures of Act 1–2 scenes will show ADVANCE READER variants
+  — if a line reads unfamiliar in a harness shot, check the trait before
+  filing it as a text change. CASUAL-policy wins at karen@3 turned out to be
+  100 % power-move-carried — that knife-edge is now written down in
+  traits.js and is worth knowing about independent of this lane.
+
 ## [NEW-GAME SCREEN — THE DIFFICULTY SLIDER YOU CAN SEE, 08-17 (Fable 5, ng lane)]
 
 Your ask, in concept: a Stick-of-Truth-style selector — each difficulty's

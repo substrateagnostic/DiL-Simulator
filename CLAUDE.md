@@ -382,6 +382,54 @@ and it means the review artifact for a content change is the `.dlg` diff itself.
 `node tools/_g-stage-verify.mjs` is the tool that catches an *unintended* one, and it is not
 wired into `check`; run it by hand when a change was supposed to be structural only.
 
+### The working style — Janet's quiz (`src/data/traits.js`, scene `janet_quiz`)
+
+Personality selection is DIEGETIC: day one, the first desk check (`andrews_desk` sets
+`checked_desk`) queues scene **`janet_quiz`** via the `desk-quiz-chain` trigger — the browser
+homepage on Andrew's work PC, set by Janet, who is never named on that surface. Her later
+acknowledgment IS the trait-variant line in `janet_intro`. The quiz's speaker is
+**`Homepage`** (a `SPEAKER_COLORS` row, no portrait). The result page sets exactly ONE of
+`trait_advance_reader` / `trait_shock_absorber` / `trait_percolator` — the flag family every
+other surface reads. Laws, all earned:
+
+- **CONTENT is live; PERKS are DARK.** `TRAIT_PERKS_LIVE` in `traits.js` is the producer's
+  signature line (packet: `.claude/plans/q-run/TRAIT-PACKET.md`). Every combat hook goes
+  through `traitPerkValue(player, key, fallback)`, which returns the fallback while dark, so
+  the three hooks in `CombatState` (starting Confidence after engine construction, the Brace
+  `widen` multiplier, +MP at Andrew's turn start) are bit-identical to shipped behaviour
+  until signed. `globalThis.__traitPerksOn` is the sim/dev override; `tools/_q-trait-sim.mjs`
+  measures the perks against the ≤2 pp bar at karen@3.
+- **THE 10-POINT ACTION QUANTUM.** Every basic hit banks exactly 10 Confidence, so a
+  starting-momentum perk of 10+ deletes one whole attack from the road to Assert Dominance
+  and SHIFTS THE BURST TURN — measured −6.0 pp COMPETENT / −7.5 pp CASUAL at karen@3, where
+  CASUAL wins are 100 % power-move-carried (0.0 % win rate in runs that never reach 100).
+  The Advance Reader's perk is 8 for that reason. Any Confidence head start must stay below
+  the quantum.
+- **The quiz is unskippable STRUCTURALLY**: flag-writing choice arms are reachable from node
+  0, so `_isBailSafe` refuses the Escape-exit until the verdict is written. The trait is set
+  at the `conf_*` labels BEFORE the final (unscored) question, so the last question cannot be
+  read as the decider; a bail on the outro leaves `read_janet_quiz` unwritten, the replay
+  path re-serves the scene, and the top-of-scene trait guard collapses it to one line.
+- **The trigger's `when` is `¬briefing_complete`** — a pre-quiz legacy save mid-campaign
+  never gets the day-one-framed scene; it simply has no trait, and every variant falls back
+  to the original line by construction. The trait flags are in `FLAGS_OF_RECORD` (additive).
+- **THE VARIANT-SITE PATTERN (in-place dispatch + appended tail).** The never-insert law
+  forbids mid-scene insertion, so a line gains trait variants by REPLACING its statement
+  with `if trait_advance_reader -> <site>_ar else -> <site>_d2` at the SAME index, appending
+  the second/third `if`, the ORIGINAL line (`@<site>_base` — the no-trait fallback), and the
+  three variants at the scene tail, and labelling the continuation statement. 11 sites ship
+  (grep `WORKING-STYLE VARIANT`): 5 in file 01, 5 in file 02, 1 in file 04. Add-before
+  variants `goto <site>_base`; replace variants `goto <site>_cont`. The compiler accepts it
+  as purely additive — no label moves, `index.js` grows, save keys stable.
+- **DevPanel presets carry `read_janet_quiz` + `trait_advance_reader`** — real play cannot
+  pass the desk without a verdict, so a preset without one lands a state no playthrough can
+  reach (preset law 1). `tools/_ux-dev.mjs` still reports 0.
+- Stats tab shows `Working Style: <name>` via `activeTrait()` (omitted when trait-less);
+  EpilogueState carries the THE WORKING STYLE card (plate-pending frame,
+  `epilogue_workstyle.png` queued for the art pass). Day-one flow harness:
+  `tools/_q-quiz-play.mjs` (headed; garage → elevator → reception → farm → desk → quiz →
+  Janet, 18 asserts + 8 stills into `screenshots/q-run/`).
+
 ### Arcade (`src/arcade/`)
 
 **SPRINT REVIEW** — the break-room cabinet. A Genesis-Sonic momentum platformer wearing an office. Launched from the `arcade_intro` dialog, which sets `launch_arcade`; `ExplorationState`'s `flag-set` listener dynamically imports `ArcadeState` and hides the exploration HUD for the duration.

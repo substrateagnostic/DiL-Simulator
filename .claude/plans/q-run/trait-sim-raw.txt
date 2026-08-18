@@ -1,0 +1,32 @@
+=== WORKING STYLE perk A/B — 4000 runs/arm ===
+values: advance_reader startMomentum=8  shock_absorber qteWindow=1.2  percolator mpPerTurn=1
+
+── policy: COMPETENT ──
+  karen@3  advance_reader               win 95.4% vs 95.6%  Δ -0.3 pp   rounds 4.45 vs 4.47  hpLeft 62.9% vs 63.0%
+  karen@3  percolator                   win 95.3% vs 95.6%  Δ -0.3 pp   rounds 4.44 vs 4.47  hpLeft 63.2% vs 63.0%
+  karen@3  shock_absorber               win 95.8% vs 95.6%  Δ +0.1 pp   rounds 4.46 vs 4.47  hpLeft 63.1% vs 63.0%
+  karen@3  shock_absorber (shaky aim)   win 95.6% vs 96.3%  Δ -0.7 pp   rounds 4.48 vs 4.46  hpLeft 62.8% vs 63.1%
+  chad@5  advance_reader               win 97.4% vs 97.5%  Δ -0.1 pp   rounds 5.93 vs 5.85  hpLeft 56.8% vs 56.8%
+  chad@5  percolator                   win 97.8% vs 97.5%  Δ +0.3 pp   rounds 5.74 vs 5.85  hpLeft 56.8% vs 56.8%
+  chad@5  shock_absorber               win 97.9% vs 97.5%  Δ +0.4 pp   rounds 5.91 vs 5.85  hpLeft 56.9% vs 56.8%
+  chad@5  shock_absorber (shaky aim)   win 95.1% vs 95.3%  Δ -0.2 pp   rounds 6.00 vs 6.11  hpLeft 57.0% vs 56.3%
+  grandma@7  advance_reader               win 86.5% vs 86.1%  Δ +0.4 pp   rounds 8.42 vs 8.95  hpLeft 69.6% vs 68.8%
+  grandma@7  percolator                   win 86.4% vs 86.1%  Δ +0.2 pp   rounds 8.74 vs 8.95  hpLeft 68.3% vs 68.8%
+  grandma@7  shock_absorber               win 87.4% vs 86.1%  Δ +1.3 pp   rounds 8.90 vs 8.95  hpLeft 68.2% vs 68.8%
+  grandma@7  shock_absorber (shaky aim)   win 82.8% vs 82.5%  Δ +0.3 pp   rounds 8.92 vs 9.00  hpLeft 69.2% vs 69.0%
+
+── policy: CASUAL ──
+  karen@3  advance_reader               win 18.3% vs 17.3%  Δ +1.0 pp   rounds 22.38 vs 22.21  hpLeft 58.2% vs 57.7%
+  karen@3  percolator                   win 17.8% vs 17.3%  Δ +0.6 pp   rounds 22.30 vs 22.21  hpLeft 57.9% vs 57.7%
+  karen@3  shock_absorber               0.0 pp by construction (CASUAL never Braces)
+  karen@3  shock_absorber (shaky aim)   0.0 pp by construction (CASUAL never Braces)
+  chad@5  advance_reader               win 58.6% vs 59.9%  Δ -1.2 pp   rounds 22.97 vs 22.83  hpLeft 49.8% vs 49.9%
+  chad@5  percolator                   win 59.6% vs 59.9%  Δ -0.2 pp   rounds 22.74 vs 22.83  hpLeft 50.0% vs 49.9%
+  chad@5  shock_absorber               0.0 pp by construction (CASUAL never Braces)
+  chad@5  shock_absorber (shaky aim)   0.0 pp by construction (CASUAL never Braces)
+  grandma@7  advance_reader               win 0.1% vs 0.1%  Δ +0.0 pp   rounds 66.75 vs 73.33  hpLeft 57.8% vs 48.6%
+  grandma@7  percolator                   win 0.1% vs 0.1%  Δ +0.0 pp   rounds 57.50 vs 73.33  hpLeft 52.6% vs 48.6%
+  grandma@7  shock_absorber               0.0 pp by construction (CASUAL never Braces)
+  grandma@7  shock_absorber (shaky aim)   0.0 pp by construction (CASUAL never Braces)
+
+BAR: each perk ≤ ~2 pp at karen@3. Anything above is a FAIL for the packet.

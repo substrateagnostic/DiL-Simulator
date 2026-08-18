@@ -1,0 +1,126 @@
+# ==========================================================================
+# JANET'S QUIZ — the working-style inventory
+# ==========================================================================
+# Day one, Andrew's desk: the browser homepage on his work PC has been set —
+# by Janet, who is never named here — to an unskippable personality quiz.
+# Pushed by the `desk-quiz-chain` trigger 500 ms after `andrews_desk` sets
+# `checked_desk` (src/data/story/graph.js). The result page sets exactly ONE
+# trait_* flag (src/data/traits.js), which every trait-conditional variant in
+# files 01/02/04 dispatches on and SaveManager's FLAGS_OF_RECORD carries.
+#
+# Unskippable is structural, not scripted: flag-writing choices are reachable
+# from node 0, so DialogState's `_isBailSafe` refuses the Escape-exit until
+# the result has been written — the browser will not close because the game
+# will not let the conversation be lossless before the verdict.
+#
+# ADAPTIVE SCORING, invisible on purpose: Q2 exists in three copies with
+# identical player-facing text — which copy you are on is Q1's provisional
+# verdict, its arms either confirm or route to the pairwise tiebreak, and the
+# final question is unscored (the trait is already set when it renders). The
+# mapping is legible in retrospect, not gameable on sight.
+#
+# Prose first-draft: Claude Opus 4.6 (.claude/plans/q-run/PROSE-DRAFT.md),
+# wired verbatim per HANDOFF_PACKAGE §4.5.
+scene janet_quiz
+  # Re-serve guard: a bail on the outro line leaves read_janet_quiz unwritten
+  # and the trigger replay path re-offers the scene — with the trait already
+  # set, it collapses to the homepage-reverted line and latches shut.
+  if trait_advance_reader -> reload
+  if trait_shock_absorber -> reload
+  if trait_percolator -> reload
+  Narrator: The PC boots in forty-one seconds -- third-fastest on the sixth floor. The browser opens to the Bridgewell-Kaplan Workplace Temperament Inventory™, Build 4.7.1.
+  Narrator: The tab has no close button. The keyboard shortcut for closing tabs has been intercepted. The quiz will proceed.
+  Andrew: I did click where the X should be. Twice. I think it knows.
+
+  @q1
+  ask Homepage: It is 8:47 a.m. You have arrived at your workstation. The break-room coffee was brewed at an indeterminate hour by a colleague who has since left the building. Describe your approach.
+    -> q2_ar: I brought a thermos. I reviewed the floor plan last night and the break room doesn't have a french press.
+    -> q2_sa: I pour whatever's in the pot. It's coffee. It'll do what coffee does.
+    -> q2_pc: I empty the old pot, rinse it, and start a fresh twelve-cup batch. I can wait.
+
+  # Q2 — one question, three copies. The copy you land on is Q1's provisional
+  # verdict; the player-facing text is identical so the adaptivity never shows.
+  @q2_ar
+  ask Homepage: The Xerox WorkCentre 7845i displays the message PC LOAD LETTER. It has displayed this message before, including once when no print job was active. Three colleagues are waiting. Select your response.
+    -> conf_ar: I open tray 3 and clear the jam. I read the service manual once, in 2019. Certain things stay with you.
+    -> tb_ar_sa: I clear the paper, close the tray, and press Resume. Nobody in this line needs narration.
+    -> tb_ar_pc: I power-cycle the unit, recalibrate the feed path, and run a test page. This takes four minutes. The printer will behave for the rest of the week.
+
+  @q2_sa
+  ask Homepage: The Xerox WorkCentre 7845i displays the message PC LOAD LETTER. It has displayed this message before, including once when no print job was active. Three colleagues are waiting. Select your response.
+    -> tb_ar_sa: I open tray 3 and clear the jam. I read the service manual once, in 2019. Certain things stay with you.
+    -> conf_sa: I clear the paper, close the tray, and press Resume. Nobody in this line needs narration.
+    -> tb_sa_pc: I power-cycle the unit, recalibrate the feed path, and run a test page. This takes four minutes. The printer will behave for the rest of the week.
+
+  @q2_pc
+  ask Homepage: The Xerox WorkCentre 7845i displays the message PC LOAD LETTER. It has displayed this message before, including once when no print job was active. Three colleagues are waiting. Select your response.
+    -> tb_ar_pc: I open tray 3 and clear the jam. I read the service manual once, in 2019. Certain things stay with you.
+    -> tb_sa_pc: I clear the paper, close the tray, and press Resume. Nobody in this line needs narration.
+    -> conf_pc: I power-cycle the unit, recalibrate the feed path, and run a test page. This takes four minutes. The printer will behave for the rest of the week.
+
+  # Tiebreaks — played only when Q1 and Q2 disagreed; each splits its pair.
+  @tb_ar_sa
+  ask Homepage: A client meeting has been moved forward by one hour. You learn this fourteen minutes before it begins. Select your response.
+    -> conf_ar: Rewrite the agenda. Arrive with a revised timeline.
+    -> conf_sa: Go to the meeting.
+
+  @tb_ar_pc
+  ask Homepage: A forty-page compliance report is due Friday at 5:00 p.m. It is Monday morning. Select your approach.
+    -> conf_ar: Outline the full document by noon Monday. Draft the conclusion before the introduction.
+    -> conf_pc: Eight pages a day, every day, until Friday. The last page prints at 4:40 p.m.
+
+  @tb_sa_pc
+  ask Homepage: The fire alarm activates during your lunch break. Your sandwich is half-eaten. Select your response.
+    -> conf_sa: Leave the sandwich. There will be other sandwiches.
+    -> conf_pc: Wrap the sandwich and put it in the refrigerator. You will finish it after the all-clear.
+
+  # The verdict is banked HERE — before the last question — so the unscored
+  # question cannot be read as the decider. One flag, exactly one, per save.
+  @conf_ar
+  set trait_advance_reader
+  goto q_last
+  @conf_sa
+  set trait_shock_absorber
+  goto q_last
+  @conf_pc
+  set trait_percolator
+  goto q_last
+
+  # The unscored question. All three answers land in the same place, which is
+  # the joke.
+  @q_last
+  ask Homepage: The ceiling fluorescent nearest your workstation has developed a flicker. Facilities has been notified. It has been nine weeks. Describe your relationship with the fluorescent.
+    -> calc: Adversarial.
+    -> calc: Companionable.
+    -> calc: It has been here longer than I will be.
+
+  @calc
+  Narrator: The progress bar fills to 87%, holds for nine seconds, then completes in a single jump. This is the documented behavior of all progress bars and always has been.
+  if trait_advance_reader -> res_ar
+  if trait_shock_absorber -> res_sa
+
+  @res_pc
+  Homepage: YOUR RESULT: THE PERCOLATOR. Assessment confidence: 94.2%.
+  Homepage: You proceed at the pace required by the process, not by the people waiting for the process. You are aware they are waiting.
+  Andrew: I do like to be thorough. I didn't realize that was a whole... type.
+  goto outro
+
+  @res_ar
+  Homepage: YOUR RESULT: THE ADVANCE READER. Assessment confidence: 94.2%.
+  Homepage: You have already prepared for outcomes that have not yet been scheduled. The inventory does not determine whether this is diligence or a form of preemptive grief.
+  Andrew: I did read the employee handbook before today. I thought that was normal.
+  goto outro
+
+  @res_sa
+  Homepage: YOUR RESULT: THE SHOCK ABSORBER. Assessment confidence: 94.2%.
+  Homepage: You absorb operational disruption without measurable recalibration. You have been doing this so long you may have forgotten the original shape.
+  Andrew: That's... is that a good thing? It sounds like it might not be a good thing.
+
+  @outro
+  Narrator: The quiz dispatches its results to a distribution list whose membership does not appear in any company directory.
+  Narrator: The tab closes on its own. The homepage beneath it is a SharePoint migration notice marked URGENT -- ACTION REQUIRED. The notice is dated 2019. The migration has not occurred.
+  end
+
+  @reload
+  Narrator: The tab closes on its own. The homepage beneath it is a SharePoint migration notice marked URGENT -- ACTION REQUIRED. The notice is dated 2019. The migration has not occurred.
+  end

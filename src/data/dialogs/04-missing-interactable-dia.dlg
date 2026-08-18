@@ -21,9 +21,30 @@ scene coffee_machine
   Narrator: The coffee machine was manufactured during an era when "ergonomic" meant "won't explode."
   Narrator: A sign reads: "COFFEE IS A PRIVILEGE, NOT A RIGHT. — Management"
   Narrator: Below it, in Sharpie: "Management can fight me. — Anonymous (Janet)"
-  Narrator: You pour yourself a large coffee. It tastes like determination and existential compromise.
+  # WORKING-STYLE VARIANT SITE (in-place dispatch; original at @q_cf_base
+  # below). The Percolator's version is allowed to be quietly triumphant —
+  # this machine is his people.
+  if trait_advance_reader -> q_cf_ar else -> q_cf_d2
+  @q_cf_cont
   give coffee_large x1
   end
+
+  # ── WORKING-STYLE VARIANTS (appended; prose Opus 4.6, wired verbatim) ────
+  @q_cf_d2
+  if trait_shock_absorber -> q_cf_sa
+  if trait_percolator -> q_cf_pc
+  @q_cf_base
+  Narrator: You pour yourself a large coffee. It tastes like determination and existential compromise.
+  goto q_cf_cont
+  @q_cf_ar
+  Narrator: You pour yourself a large coffee. You already know the break room's brewing schedule. The pot is twenty minutes old, which is within your acceptable window.
+  goto q_cf_cont
+  @q_cf_sa
+  Narrator: You pour yourself a large coffee. You don't check when it was made. You never do. It tastes like everything else on this floor -- survivable.
+  goto q_cf_cont
+  @q_cf_pc
+  Narrator: You pour yourself a large coffee from the pot you started eleven minutes ago. It is, against all evidence of the surrounding institution, good.
+  goto q_cf_cont
 
 scene microwave
   Narrator: The break room microwave. A monument to culinary war crimes.

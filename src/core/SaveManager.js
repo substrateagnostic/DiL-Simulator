@@ -108,6 +108,11 @@ const FLAGS_OF_RECORD = [
   'renovation_espresso_bar', 'renovation_catering_fridge',
   'renovation_ergonomic_workstations', 'renovation_projection_wall',
   'renovation_corner_office', 'renovation_penthouse',
+  // ADDITIVE (rule 1): Andrew's WORKING STYLE — Janet's day-one quiz
+  // (scene `janet_quiz`, src/data/traits.js). Exactly one is ever set per
+  // save, by the quiz's result page; a later chapter reads it as who Andrew
+  // already was on the morning he arrived.
+  'trait_advance_reader', 'trait_shock_absorber', 'trait_percolator',
 ];
 
 class SaveManagerClass {
