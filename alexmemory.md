@@ -1,3 +1,80 @@
+## [THE REBALANCE WAVE — DIFFICULTY MODES + PHASE SURGERY, 08-17 (Opus 5)]
+
+Branch `display-case`, two commits (`5464491`, `afe794f`), pushed, NOT merged.
+**EVERYTHING IS DARK.** `DIFFICULTY_LIVE = false` in `src/data/difficulty.js`.
+The machinery is committed, wired and measured; the game is byte-for-byte what
+you last signed. Flipping that one constant is the whole release.
+
+**NEEDS YOU — six questions, all in `.claude/plans/m-run/DIFFICULTY-PACKET.md`
+§0.** Short version: (1) which of three name sets; (2) do the modes ship at all;
+(3) is Casual allowed to be a different fight from Standard (it has to be — the
+21-cell table killed the alternative); (4) accept that Standard cannot reach
+chad@6 / the Director / the Algorithm; (5) **Hard breaks the lane-diversity law
+badly and this is the one I would hold it over**; (6) upward mid-run switching
+with a stamp on the file, or locked.
+
+WHAT LANDED:
+
+- **PART 1, the frame.** Three modes as data bundles read from one table, with a
+  resolver singleton. No branch on mode anywhere else. Selection UI on New Game
+  and in the pause menu under SETTINGS. Save fields `difficulty` /
+  `difficultyFloor`, additive, on the blob and on the carry envelope, both
+  defaulting to `standard` for every save and export card ever written.
+  Inertness proven, not claimed: with the gate shut, `phasesFor` returns the
+  SAME ARRAY OBJECT for all six phased bosses, `DENIAL_LIMIT` 2, Press Advantage
+  40, `assistResist` 0 at any death count, and a legacy blob adopts to standard.
+- **CASUAL is the Performance Improvement Plan with the shame removed** — same
+  numbers, same engine field, same code path, on by default instead of offered
+  after you lose. The 21-cell floor is its gate and only its. Effect on an
+  unaided casual player: karen@3 16.3 -> 62.0 %, grandma@7 5.4 -> 38.0 %,
+  meredith@9 26.8 -> 70.1 %.
+- **PART 2, the surgery.** Boss `phases[].abilities` redrawn toward their damage
+  kits by repetition. grandma@7 low-water 69.7 -> 65.1 %, near-death 4.0 -> 7.3;
+  meredith@8 65.0 -> 58.7 % and 5.5 -> 13.8. Seven of twelve rungs now sit in
+  the low-water 40-75 / near-death 5-35 band. Capture evidence, headed and qtier
+  held: Grandma published **4 of 28 damaging telegraphs on the shipped build and
+  8 of 24 on Standard**. In the shipped pair the single most common thing she
+  said was *I Changed the Will*, 8 and 6 times out of 14.
+- **A shipped bug, fixed.** Two boss phases carry `hpThreshold: 0` and
+  `hpPercent <= 0` is only true at death, so **the Regional Director's third
+  phase and the Algorithm's third phase have never fired.**
+  `total_optimization` at 40 power is the biggest ability in the game and no
+  player has been hit by it. Revived at 0.12 at measured ~zero cost. This one
+  could ship on its own if you want a small thing out early.
+- **HARD carries NONE of the declined Tier 2 package**, and that is a
+  measurement, not a preference. Built it as Tier 2 first: Meredith came out at
+  **20.8 rounds with 0.04 Breaks a fight** and five cells under the Break floor.
+  DENIAL_LIMIT 1 does both — a seal freezes Composure. Hard is enemy-side now:
+  ATK x1.45, Escalation Response at 1.00 with the Algorithm exemption lifted.
+  Longest fight 10.5 rounds.
+
+HONEST LIST — things that would mislead you if I did not say them:
+
+1. **Hard is currently playable on two of three Practice Groups.** Lane band
+   42.0 pp at trio@7 (Audit 44.3 vs Litigation 86.3) against a shipped baseline
+   of 10.3. Softening the ATK multiplier to 1.30 only reaches 35.3 — the cause is
+   structural, Audit's Findings ramp needs turns a harder mode does not give.
+2. **The shipped build already breaches its own lane law** (10.3 pp vs the 8.0
+   pp rule). Standard adds 2.5 pp on top. That table has no null arm.
+3. **Casual and Standard fight measurably different Grandmas.** Forced by the
+   21-cell table, which rejected giving Casual the surgery at -21.5 pp worst
+   cell against a null of 1.10.
+4. **chad@6 did not move and cannot.** He is granted 2.51 enemy turn attempts
+   against the 22.1 he needs. The pattern is general — the upper level of every
+   rung is softer than the lower one, which is a progression observation, not
+   twelve boss problems.
+5. **Two of my own instruments were wrong and both changed a table**, and both
+   corrections are in the diff: the census's lock check ran outside the forced
+   mode and was comparing the shipped build against itself; the ladder applied
+   no mode assist, so every Casual row was a competent player fighting with zero
+   help. The Break-floor law was also wrong — I declared floors the SHIPPED game
+   failed four of ten cells against, and it is derived from the shipped rate now.
+6. **One capture failed, informatively.** The Standard Meredith run at level 9
+   killed the scripted player at turn 10; the game routed to its retry path, the
+   page navigated, and the harness threw. No clean video for that arm.
+7. **No merge to main, no default flipped, no music touched.** Spend: zero
+   (no vendor calls this wave).
+
 ## [DIALOG REFACTOR P4-P9 — THE CUTOVER AND FINISH, 08-16 (Fable 5, oversight; codex gpt-5.6-sol xhigh, implementation)]
 
 Branch `display-case`, six commits, all pushed, NOT merged to main. P0-P3 (the
