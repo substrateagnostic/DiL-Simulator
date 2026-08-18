@@ -1,0 +1,142 @@
+// DifficultyPanel.js — the mode picker, one implementation, two call sites.
+//
+// TitleState opens it on New Game (before the run exists) and MenuState opens it
+// mid-run. Both go through the same object, so there is one place where the copy
+// lives, one place where the layout lives, and no way for the two screens to
+// drift apart.
+//
+// INPUT DISCIPLINE. This panel owns NO keyboard listener. Every other screen in
+// this game is driven by polling `InputManager` from the host state's
+// `update()`, and a DOM `keydown` listener bolted onto one panel would fire
+// *alongside* that poll — the Enter that confirms a mode would also reach
+// TitleState's own `_select()` on the same frame. So the panel exposes
+// `move()` / `confirm()` / `close()` and the host calls them from the update it
+// already has. Mouse clicks are the one thing the panel handles itself, because
+// nothing else in the game reads the mouse.
+//
+// THE GATE. `open()` returns false when `DIFFICULTY_LIVE` is off, and every
+// caller treats a false return as "there is no such screen" and carries on. That
+// is what keeps a dark build's New Game flow bit-identical.
+
+import { Difficulty } from '../core/DifficultyManager.js';
+import { MODE_ORDER, DIFFICULTY_MODES } from '../data/difficulty.js';
+import { AudioManager } from '../core/AudioManager.js';
+
+const COPY = {
+  titleNew: 'ENGAGEMENT TERMS',
+  titleRun: 'AMEND ENGAGEMENT TERMS',
+  // Said plainly and once, at the moment the choice is made, because a player
+  // who does not know a setting is reversible will pick the safe one and resent
+  // it. This is the same reason the shipped PIP costs zero Review Points.
+  blurbNew: 'This can be changed at any time from the pause menu. Nothing is locked behind it.',
+  blurbRun: 'Effective from your next engagement. Your file keeps the lowest tier you have worked under.',
+  hint: '↑↓ select &nbsp; ENTER confirm &nbsp; ESC back',
+};
+
+class DifficultyPanelImpl {
+  constructor() {
+    this.overlay = null;
+    this.index = 0;
+    this._onPick = null;
+    this._onCancel = null;
+    this._context = 'new';
+  }
+
+  get isOpen() { return !!this.overlay; }
+
+  /**
+   * @param {object} opts
+   * @param {'new'|'run'} opts.context  which copy to show
+   * @param {function}    opts.onPick   called with the chosen mode id
+   * @param {function}   [opts.onCancel]
+   * @returns {boolean} false when the producer gate is closed — the caller
+   *          should proceed exactly as it did before this screen existed.
+   */
+  open(opts = {}) {
+    if (!Difficulty.live || this.overlay) return false;
+    this._context = opts.context === 'run' ? 'run' : 'new';
+    this._onPick = opts.onPick || null;
+    this._onCancel = opts.onCancel || null;
+    this.index = Math.max(0, MODE_ORDER.indexOf(Difficulty.selected));
+
+    this.overlay = document.createElement('div');
+    this.overlay.className = 'menu-overlay difficulty-overlay';
+    this.overlay.style.zIndex = '70';
+    document.getElementById('ui-overlay').appendChild(this.overlay);
+    this._render();
+    return true;
+  }
+
+  close() {
+    if (this.overlay?.parentNode) this.overlay.parentNode.removeChild(this.overlay);
+    this.overlay = null;
+    this._onPick = null;
+    this._onCancel = null;
+  }
+
+  cancel() {
+    const cb = this._onCancel;
+    this.close();
+    if (cb) cb();
+  }
+
+  move(delta) {
+    if (!this.overlay) return;
+    const next = Math.max(0, Math.min(MODE_ORDER.length - 1, this.index + delta));
+    if (next === this.index) return;
+    this.index = next;
+    AudioManager.playSfx('cursor');
+    this._render();
+  }
+
+  confirm() {
+    if (!this.overlay) return;
+    const id = MODE_ORDER[this.index];
+    const cb = this._onPick;
+    AudioManager.playSfx('confirm');
+    this.close();
+    if (cb) cb(id);
+  }
+
+  _render() {
+    if (!this.overlay) return;
+    const current = Difficulty.selected;
+    const floor = Difficulty.floor;
+    const rows = MODE_ORDER.map((id, i) => {
+      const m = DIFFICULTY_MODES[id];
+      const sel = i === this.index;
+      // The tier the file already records, shown where the player can see it
+      // rather than discovered in an epilogue. See DifficultyManager.set().
+      const marks = [];
+      if (id === current) marks.push('current');
+      if (id === floor && floor !== current) marks.push('on file');
+      return `
+        <div class="difficulty-row${sel ? ' selected' : ''}" data-index="${i}">
+          <div class="difficulty-row-head">
+            <span class="difficulty-row-name">${m.name.toUpperCase()}</span>
+            ${marks.length ? `<span class="difficulty-row-mark">[${marks.join(' · ')}]</span>` : ''}
+          </div>
+          <div class="difficulty-row-blurb">${m.blurb}</div>
+        </div>`;
+    }).join('');
+
+    this.overlay.innerHTML = `
+      <div class="menu-panel difficulty-panel">
+        <div class="menu-title">${this._context === 'run' ? COPY.titleRun : COPY.titleNew}</div>
+        <div class="difficulty-rows">${rows}</div>
+        <div class="difficulty-note">${this._context === 'run' ? COPY.blurbRun : COPY.blurbNew}</div>
+        <div class="difficulty-hint">${COPY.hint}</div>
+      </div>`;
+
+    this.overlay.querySelectorAll('.difficulty-row').forEach((el) => {
+      el.addEventListener('click', () => {
+        const i = Number(el.dataset.index);
+        if (i === this.index) this.confirm();
+        else { this.index = i; AudioManager.playSfx('cursor'); this._render(); }
+      });
+    });
+  }
+}
+
+export const DifficultyPanel = new DifficultyPanelImpl();
+export default DifficultyPanel;

@@ -9,6 +9,7 @@ import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { applyReviewPurchases } from '../data/review.js';
 import { PLAYER } from '../utils/constants.js';
 import { EventBus } from '../core/EventBus.js';
+import { Difficulty } from '../core/DifficultyManager.js';
 
 export class Player {
   constructor() {
@@ -421,6 +422,13 @@ export class Player {
       allyState: JSON.parse(JSON.stringify(this.allyState)),
       voiceCounts: { ...this.voiceCounts },
       allyControl: this.allyControl,
+      // DIFFICULTY MODE — ADDITIVE, and additive in the strong sense: while the
+      // producer gate is closed these are always the default, every save
+      // written before this reads them as the default, and no field was
+      // renamed, removed or repurposed to make room. `difficultyFloor` is the
+      // EASIEST mode this run has been played on, which is the number the
+      // records read; see DifficultyManager.set().
+      ...Difficulty.serialize(),
     };
   }
 
@@ -436,6 +444,9 @@ export class Player {
     this.actIndex = data.actIndex || 0;
     this.upgradePoints = data.upgradePoints || 0;
     this.deaths = data.deaths || 0;
+    // An unknown or absent mode lands on the default, which is the shipped
+    // game — a stale or hand-edited blob can never change how a fight plays.
+    Difficulty.adopt(data);
     if (data.stats?.aum !== undefined) this.stats.aum = data.stats.aum;
     this.unlockedAbilities = new Set(data.unlockedAbilities || ['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check']);
     ['file_motion', 'coffee_break', 'stall', 'raise_concerns', 'spot_check'].forEach(id => this.unlockedAbilities.add(id));

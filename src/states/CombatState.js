@@ -22,6 +22,7 @@ import {
   activeStretchIds, reviewLevel, noteReviewLevel, pipResistance, REVIEW_COPY,
 } from '../data/review.js';
 import { DEV_MODE } from '../utils/constants.js';
+import { Difficulty } from '../core/DifficultyManager.js';
 import { BOSS_ULTIMATE_CARDS, BOSS_KILL_IDS } from '../data/splash-cards.js';
 
 export class CombatState {
@@ -220,8 +221,17 @@ export class CombatState {
         // Stretch Goals: the subtractive, player-priced difficulty ladder.
         // Empty array on any save that never opened the Performance Review tab.
         stretch: activeStretchIds(this.player),
-        // Performance Improvement Plan: 0 unless the player filed it.
-        pipResist: pipResistance(this.player),
+        // ANDREW'S ASSIST — one field, two possible sources, never stacked.
+        // The Performance Improvement Plan (0 unless the player filed it) and
+        // the CASUAL mode's proactive assist are the same mechanism with the
+        // same numbers: the mode simply does not make you lose first and then
+        // find it in a menu. MAX, not sum — a Casual player who also files the
+        // paperwork must not be resistant twice, and a Standard player who
+        // files it is bit-identical to today.
+        pipResist: Math.max(
+          pipResistance(this.player),
+          Difficulty.assistResist(this.player.deaths),
+        ),
         // PRACTICE GROUP NODES. The engine READS the passives Andrew owns —
         // it never executes them. An empty set is exactly the shipped
         // behaviour, so a save from before the trees is bit-identical.

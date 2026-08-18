@@ -282,6 +282,15 @@ class SaveManagerClass {
       deaths: data?.deaths || 0,
       party: Array.isArray(data?.party) ? [...data.party] : [],
       voiceCounts: { ...(data?.voiceCounts || {}) },
+      // THE DIFFICULTY RECORD. Additive under rule 1 — nothing was renamed,
+      // removed or repurposed, and a reader that does not know these keys
+      // ignores them. `difficulty` is where the run ENDED; `difficultyFloor` is
+      // the easiest mode it was ever played on, and the floor is the honest one
+      // for a later chapter to dramatise. Both default to the shipped mode for
+      // every card exported before this existed, so no card already in a
+      // player's hands changes meaning.
+      difficulty: data?.difficulty || 'standard',
+      difficultyFloor: data?.difficultyFloor || data?.difficulty || 'standard',
       flags: carriedFlags,
     };
   }

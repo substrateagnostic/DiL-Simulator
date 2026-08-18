@@ -4,6 +4,13 @@ import { VOICES, VOICE_ACTIONS } from '../data/voices.js';
 import { COMBAT } from '../utils/constants.js';
 import { randomRange } from '../utils/math.js';
 import { ENEMY_AI_PATTERNS } from '../combat/EnemyAI.js';
+// DIFFICULTY MODES. Four questions, four accessors, no branch on mode anywhere
+// in this file: the phase rows an enemy fights with, the AI pattern row it
+// draws through, two COMBAT_DEPTH values, and one multiplier on Andrew's
+// working-copy stats. While `DIFFICULTY_LIVE` is false every one of them
+// returns the shipped value, so this import is inert. See
+// `src/core/DifficultyManager.js`.
+import { Difficulty } from '../core/DifficultyManager.js';
 
 // Multi-combatant turn-based engine.
 // Backward compatible with single-enemy fights via get player() / get enemy().
@@ -293,8 +300,19 @@ export class CombatEngine {
   }
 
   _initPlayer(playerStats) {
+    // MODE MULTIPLIERS land on the engine's WORKING COPY of Andrew's stats and
+    // never on the save. That is what makes a mid-run mode switch instant and
+    // reversible: the number in the pause menu is the number on the save, and
+    // Hard's smaller Coffee pool exists only for the length of a fight. `mp` is
+    // clamped so a switch cannot leave Andrew holding more than the pool.
+    const maxMP = Difficulty.playerStat('maxMP', playerStats.maxMP);
+    const maxHP = Difficulty.playerStat('maxHP', playerStats.maxHP);
     return {
       ...playerStats,
+      maxMP,
+      maxHP,
+      mp: Math.min(maxMP, playerStats.mp ?? maxMP),
+      hp: Math.min(maxHP, playerStats.hp ?? maxHP),
       buffs: [],
       dots: [],
       stunned: 0,
@@ -385,6 +403,13 @@ export class CombatEngine {
       scaled.xpReward = Math.round((src.xpReward ?? base.xpReward ?? 0) * OVERTIME_SCALING.xpReward);
     }
     const merged = { ...base, ...scaled, ...overrides };
+    // PHASE-LIST SURGERY. Resolved after `overrides` so a scripted fight that
+    // hands in its own `phases` still wins, and returned as the SAME ARRAY when
+    // the mode asks for shipped phases, so the default path allocates nothing.
+    // The resolver spreads `{ abilities }` over each shipped row, which is what
+    // makes "the Pivot's weakness rows are untouched" a property of the code
+    // rather than a promise in a comment.
+    merged.phases = Difficulty.phasesFor(enemyId, merged.phases);
     const maxComposure = this._defaultMaxComposure(merged);
     return {
       ...merged,
@@ -665,7 +690,7 @@ export class CombatEngine {
   _noteDenial(enemy) {
     if (!enemy || enemy.hp <= 0) return false;
     enemy.denialStreak = (enemy.denialStreak || 0) + 1;
-    if (enemy.denialStreak >= COMBAT_DEPTH.DENIAL_LIMIT) {
+    if (enemy.denialStreak >= Difficulty.depth('DENIAL_LIMIT', COMBAT_DEPTH.DENIAL_LIMIT)) {
       enemy.denialStreak = 0;
       enemy.sealed = true;
       return true;
@@ -1910,7 +1935,7 @@ export class CombatEngine {
     }
     if (!abilities || abilities.length === 0) return null;
 
-    const pattern = ENEMY_AI_PATTERNS[enemy.enemyId];
+    const pattern = Difficulty.aiFor(enemy.enemyId, ENEMY_AI_PATTERNS[enemy.enemyId]);
     // THE ESCALATION RESPONSE outranks the pattern entirely — see
     // `_escalationPick` for why the ordering is the mechanic and not a detail.
     const escalated = this._escalationPick(abilities, pattern, enemy);
@@ -2305,7 +2330,8 @@ export class CombatEngine {
     const spd = this._getEffective(this.player).spd;
     const base = Math.max(
       COMBAT_DEPTH.PRESS_ADVANTAGE_FLOOR,
-      COMBAT_DEPTH.PRESS_ADVANTAGE_BASE - Math.floor((spd - 8) * 0.5),
+      Difficulty.depth('PRESS_ADVANTAGE_BASE', COMBAT_DEPTH.PRESS_ADVANTAGE_BASE)
+        - Math.floor((spd - 8) * 0.5),
     );
     // AGGRAVATING FACTORS (E10): -10, floored at 15.
     return this.hasNode('aggravating_factors') ? Math.max(15, base - 10) : base;

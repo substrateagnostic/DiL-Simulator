@@ -891,3 +891,95 @@
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   line-height: 1.5;
 }
+
+/* ── ENGAGEMENT TERMS (difficulty picker) ────────────────────────────────
+   Same panel language as the rest of the Employee Portal: the VT323 body face,
+   the #e94560 left-rail selection mark the pause menu uses, and a blurb line in
+   the muted #7a8aaa the portal header already speaks in. Nothing new is
+   invented here on purpose — a settings screen that looks like a different game
+   reads as a settings screen bolted on. */
+.difficulty-panel {
+  max-width: 460px;
+  padding-bottom: 4px;
+}
+
+.difficulty-panel .menu-title {
+  font-family: 'VT323', monospace;
+  font-size: 24px;
+  color: #e94560;
+  letter-spacing: 3px;
+  text-align: center;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid rgba(233, 69, 96, 0.25);
+}
+
+.difficulty-rows {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 0;
+}
+
+.difficulty-row {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.1s;
+}
+
+.difficulty-row:hover { background: rgba(255, 255, 255, 0.04); }
+
+.difficulty-row.selected {
+  background: rgba(233, 69, 96, 0.12);
+  border-left-color: #e94560;
+}
+
+.difficulty-row-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.difficulty-row-name {
+  font-family: 'VT323', monospace;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: #c8d0e0;
+  line-height: 1.1;
+}
+
+.difficulty-row.selected .difficulty-row-name { color: #fff; }
+
+.difficulty-row-mark {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: #7bc8d4;
+  letter-spacing: 1px;
+}
+
+.difficulty-row-blurb {
+  font-family: 'VT323', monospace;
+  font-size: 16px;
+  color: #7a8aaa;
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+.difficulty-row.selected .difficulty-row-blurb { color: #9aa8c4; }
+
+.difficulty-note {
+  font-family: 'VT323', monospace;
+  font-size: 15px;
+  color: #6a7690;
+  line-height: 1.4;
+  padding: 8px 16px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.difficulty-hint {
+  font-family: 'VT323', monospace;
+  font-size: 14px;
+  color: #46506a;
+  letter-spacing: 1px;
+  text-align: center;
+  padding: 2px 16px 10px;
+}

@@ -4,6 +4,9 @@ import { SaveManager } from '../core/SaveManager.js';
 import { EventBus } from '../core/EventBus.js';
 import { BESTIARY_DATA } from '../data/bestiary.js';
 import { ENEMY_STATS, PLAYER_ABILITIES, XP_TABLE, PRACTICE_GROUPS, TIER_LEVEL } from '../data/stats.js';
+import { DifficultyPanel } from '../ui/DifficultyPanel.js';
+import { Difficulty } from '../core/DifficultyManager.js';
+import { DIFFICULTY_MODES } from '../data/difficulty.js';
 import { ALLY_STATS, ALLY_ABILITIES } from '../data/allies.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 import { AchievementManager } from '../core/AchievementManager.js';
@@ -17,6 +20,10 @@ export class MenuState {
     this.element = null;
     this.selectedIndex = 0;
     this.menuItems = ['Resume', 'Unstick Andrew', 'Abilities', 'Cosmetics', 'Journal', 'Log', 'Achievements', 'Stats', 'Save Game', 'Transfer Save', 'Controls', 'Settings', 'Quit to Title'];
+    // ENGAGEMENT TERMS sits in SETTINGS, beside Controls, and is spliced in only
+    // when the producer gate is open — a dark build's pause menu is unchanged,
+    // down to the row order and the index every other row sits at.
+    if (Difficulty.live) this.menuItems.splice(this.menuItems.indexOf('Controls'), 0, 'Engagement Terms');
     // New Game+ unlocks after the Algorithm falls
     if (player.getFlag('algorithm_defeated')) {
       this.menuItems.splice(this.menuItems.length - 1, 0, 'New Game+');
@@ -57,6 +64,7 @@ export class MenuState {
       'Stats':          { tag: '[PROFILE]',  tagColor: '#ffcc33', section: null },
       'Save Game':      { tag: '[SYS]',      tagColor: '#44cc88', section: 'SETTINGS' },
       'Transfer Save':  { tag: '[SYS]',      tagColor: '#44cc88', section: null },
+      'Engagement Terms': { tag: '[SYS]',    tagColor: '#ffcc33', section: null },
       'Controls':       { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
       'Settings': { tag: '[SYS]',      tagColor: '#53a8b6', section: null },
       'New Game+':      { tag: '[NG+]',      tagColor: '#ffaa44', section: null },
@@ -226,6 +234,9 @@ export class MenuState {
         break;
       case 'Transfer Save':
         this._showTransfer();
+        break;
+      case 'Engagement Terms':
+        this._showDifficulty();
         break;
       case 'Controls':
         this._showControls();
@@ -409,6 +420,39 @@ export class MenuState {
     }
     this.bestiaryOverlay = null;
     if (this.element) this.element.style.display = '';
+  }
+
+  // ── ENGAGEMENT TERMS ────────────────────────────────────────────────
+  // Mid-run mode switching. DOWNWARD is always allowed and asks nothing;
+  // UPWARD is allowed too and the file simply keeps the lowest tier ever
+  // worked under (`Difficulty.floor`), which the panel prints back. The whole
+  // rule lives in DifficultyManager.set(); this method only draws it.
+  //
+  // The new mode is written to the save immediately, because a player who
+  // changes difficulty and then quits without an autosave would otherwise
+  // find the old one waiting, and would reasonably read that as the setting
+  // not working.
+  _showDifficulty() {
+    const restore = () => { if (this.element) this.element.style.display = ''; };
+    const opened = DifficultyPanel.open({
+      context: 'run',
+      onPick: (id) => {
+        const r = Difficulty.set(id);
+        restore();
+        if (!r.ok || r.from === r.to) return;
+        SaveManager.save(this.player.serialize());
+        const m = Difficulty.bundle;
+        NotificationArbiter.post({
+          cls: NC.PROGRESS,
+          key: 'difficulty',
+          text: r.direction < 0
+            ? `Engagement terms amended to ${m.name}. Effective immediately.`
+            : `Engagement terms amended to ${m.name}. Your file still reads ${DIFFICULTY_MODES[r.floor]?.name || r.floor}.`,
+        });
+      },
+      onCancel: restore,
+    });
+    if (opened && this.element) this.element.style.display = 'none';
   }
 
   _showControls() {
@@ -1295,6 +1339,16 @@ export class MenuState {
   }
 
   update(dt) {
+    // Polled, never listener-driven — see src/ui/DifficultyPanel.js. It is
+    // checked FIRST because it is the top overlay whenever it is open.
+    if (DifficultyPanel.isOpen) {
+      if (InputManager.isCancelPressed()) { DifficultyPanel.cancel(); return; }
+      if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) DifficultyPanel.move(-1);
+      if (InputManager.isJustPressed('arrowdown') || InputManager.isJustPressed('s')) DifficultyPanel.move(1);
+      if (InputManager.isConfirmPressed()) DifficultyPanel.confirm();
+      return;
+    }
+
     if (this.abilitiesOverlay) {
       if (InputManager.isCancelPressed()) { this._closeAbilities(); return; }
       const up   = InputManager.isJustPressed('arrowup')   || InputManager.isJustPressed('w');

@@ -1,5 +1,7 @@
 import { InputManager } from '../core/InputManager.js';
 import { AudioManager } from '../core/AudioManager.js';
+import { DifficultyPanel } from '../ui/DifficultyPanel.js';
+import { Difficulty } from '../core/DifficultyManager.js';
 import { SaveManager } from '../core/SaveManager.js';
 
 const ROOM_DISPLAY_NAMES = {
@@ -226,7 +228,30 @@ export class TitleState {
 
     AudioManager.playSfx('confirm');
     this._closeSlotPicker();
-    if (this.onStart) this.onStart(mode, slot);
+    this._beginRun(mode, slot);
+  }
+
+  /**
+   * The last step before a run exists. On a NEW game the engagement-terms
+   * picker gets one screen; on a LOAD it does not, because the save already
+   * carries the answer and asking again would overwrite it.
+   *
+   * `DifficultyPanel.open()` returns false while the producer gate is closed,
+   * and the `if` collapses to the shipped call — which is the property that
+   * makes a dark build's New Game flow byte-identical to today's.
+   */
+  _beginRun(mode, slot) {
+    const go = () => { if (this.onStart) this.onStart(mode, slot); };
+    if (mode !== 'new') { go(); return; }
+    Difficulty.reset();
+    const opened = DifficultyPanel.open({
+      context: 'new',
+      onPick: (id) => { Difficulty.reset(id); go(); },
+      // Backing out of the terms screen returns to the title, not into a run
+      // on a mode the player never picked.
+      onCancel: () => {},
+    });
+    if (!opened) go();
   }
 
   _showOverwriteConfirm(slot) {
@@ -248,7 +273,9 @@ export class TitleState {
       SaveManager.deleteSave(slot);
       AudioManager.playSfx('confirm');
       this._closeSlotPicker();
-      if (this.onStart) this.onStart('new', slot);
+      // The SECOND door into a new run. Both go through `_beginRun` or the
+      // overwrite path silently skips the engagement-terms screen.
+      this._beginRun('new', slot);
     });
     document.getElementById('cancel-overwrite').addEventListener('click', () => {
       confirm.remove();
@@ -378,6 +405,17 @@ export class TitleState {
   // ── Input ──────────────────────────────────────────────────────────────────
 
   update(dt) {
+    // The picker is polled from the host state like every other screen in this
+    // game — it owns no keyboard listener, so its Enter cannot also reach
+    // `_select()` on the same frame. See src/ui/DifficultyPanel.js.
+    if (DifficultyPanel.isOpen) {
+      if (InputManager.isCancelPressed()) { DifficultyPanel.cancel(); return; }
+      if (InputManager.isJustPressed('arrowup') || InputManager.isJustPressed('w')) DifficultyPanel.move(-1);
+      if (InputManager.isJustPressed('arrowdown') || InputManager.isJustPressed('s')) DifficultyPanel.move(1);
+      if (InputManager.isConfirmPressed()) DifficultyPanel.confirm();
+      return;
+    }
+
     if (this.controlsOverlay) {
       if (InputManager.isConfirmPressed() || InputManager.isCancelPressed()) {
         this._closeControls();
