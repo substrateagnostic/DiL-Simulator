@@ -2,7 +2,9 @@
 
 Your challenge, verbatim intent: "I find it hard to believe there's no way to
 tune/rework Audit to work on Hard." You were right. Branch `display-case`,
-one commit, pushed, NOT merged.
+two commits (`7d1b7b5` the mechanism + evidence, `412628c` the judge's fix
+round), pushed, NOT merged. The data block + accessor rode earlier in the
+flip lane's `d964b81` — see item (8) below.
 
 - **What shipped: `hard.audit = { fileRate: 2, assaultSlow: 0.06,
   seedRecord: 3 }`** — data on the hard bundle, one accessor
