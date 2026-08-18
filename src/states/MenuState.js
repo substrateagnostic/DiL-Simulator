@@ -12,6 +12,7 @@ import { activeTrait } from '../data/traits.js';
 import { AchievementManager } from '../core/AchievementManager.js';
 import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { Player } from '../entities/Player.js';
+import { WardrobeState } from './WardrobeState.js';
 
 export class MenuState {
   constructor(stateManager, player) {
@@ -169,8 +170,23 @@ export class MenuState {
   // menu, `GameStateManager.push()` calls these and the panel gets out of the
   // way instead of floating over the new state. The real guard is
   // `ExplorationState._transitionArmed()`, which stops the burial happening.
-  pause()  { if (this.element) this.element.style.display = 'none'; }
-  resume() { if (this.element) this.element.style.display = ''; }
+  // A state pushed OVER the menu must hide the sub-overlay too, not only the
+  // root panel: each overlay is its own element on #ui-overlay at z-index 60,
+  // above WardrobeState's z 55. The Cosmetics tab is the one that can push
+  // today (the Fitting Room); the rest are listed so the next one is free.
+  _surfaces() {
+    return [this.element, this.cosmeticsOverlay, this.abilitiesOverlay, this.logOverlay,
+      this.bestiaryOverlay, this.controlsOverlay, this.transferOverlay, this.audioOverlay];
+  }
+
+  pause()  { for (const el of this._surfaces()) if (el) el.style.display = 'none'; }
+  resume() {
+    for (const el of this._surfaces()) if (el) el.style.display = '';
+    // The fitting room equips through Player.equipCosmetic, so the tab under
+    // it is stale the moment it pops. Re-render rather than hand the player a
+    // panel that disagrees with the model they were just looking at.
+    if (this.cosmeticsOverlay) this._rerenderCosmetics();
+  }
 
   exit() {
     NotificationArbiter.resumeScope('world');
@@ -1244,9 +1260,31 @@ export class MenuState {
     }
     panel.appendChild(equipped);
 
-    // Items by slot
+    // THE FITTING ROOM — index 0 of the action list, and the reason this tab
+    // now has one. `WardrobeState` owns its own scene and builds Andrew
+    // procedurally, so opening it here costs no teleport and no room load: it
+    // is the SAME screen the sixth-floor mirror opens, in its 'stage' dressing
+    // (no mirror frame, even light, and no flags — see WardrobeState). This
+    // tab stays the browsing surface, with its `???` cards for everything not
+    // yet unlocked; the fitting room is the preview/equip surface it opens
+    // into. The equip path is unforked on both: Player.equipCosmetic.
     this._cosmeticActions = [];
-    let cosIdx = 0;
+    const fitting = document.createElement('div');
+    fitting.className = `cosmetic-card available wd-fitting-entry${this._cosmeticSelectedIndex === 0 ? ' selected' : ''}`;
+    fitting.innerHTML = '<div class="ability-card-header">'
+      + '<span class="ability-name">Fitting Room</span>'
+      + '<span class="ability-unlocked-badge">SEE IT ON</span></div>'
+      + '<div class="ability-desc">Try your unlocked pieces on the live model.</div>';
+    const openFitting = () => {
+      AudioManager.playSfx('confirm');
+      this.stateManager.push(new WardrobeState(this.stateManager, this.player, { dressing: 'stage' }));
+    };
+    fitting.addEventListener('click', openFitting);
+    panel.appendChild(fitting);
+    this._cosmeticActions.push(openFitting);
+
+    // Items by slot
+    let cosIdx = 1;
     for (const slot of COSMETIC_SLOTS) {
       const slotItems = Object.entries(COSMETICS).filter(([, c]) => c.slot === slot);
       if (slotItems.length === 0) continue;

@@ -143,6 +143,120 @@ try {
   const secondToast = await page.evaluate(() => !!window.__explore.player.getFlag('wardrobe_tip_shown'));
   check('no second teach needed (flag already set)', secondToast);
 
+  // 9. PRODUCER 08-18 (a): the caption is gone. It was a line of italic across
+  //    the bottom of the glass; "the moment doesn't need a snarky comment".
+  check('no mirror caption element anywhere',
+    (await page.evaluate(() => document.querySelectorAll('.wd-caption').length)) === 0);
+
+  // 10. PRODUCER 08-18 (b): the half-lit fluorescent, MEASURED. The reflected
+  //     wall lights the model's left and leaves his right in mood, so the two
+  //     halves of the glass must not read the same. Measured off the FILE —
+  //     the renderer has no preserveDrawingBuffer, so an in-page probe is 0
+  //     (CLAUDE.md harness law). Two assertions, and the second is the
+  //     producer's guardrail: asymmetric, AND the lit half still legible.
+  //     Re-open the glass to measure it, and wait past the strike-and-settle
+  //     beat (STRIKE_MS 720) so the reading is of the SETTLED rig, not of a
+  //     tube mid-flicker.
+  await tap('e');
+  await page.waitForTimeout(1500);
+  check('mirror re-opened for the light reading', (await top()) === 'WardrobeState', await top());
+  const lum = await page.evaluate(async () => {
+    const el = document.querySelector('.wd-mirror');
+    const r = el.getBoundingClientRect();
+    return { x: r.x, y: r.y, w: r.width, h: r.height };
+  });
+  const shotPath = `${OUT}/06-half-lit.png`;
+  await page.screenshot({ path: shotPath });
+  const halves = await page.evaluate(async ({ src, box }) => {
+    const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+    const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(im, 0, 0);
+    // Inset 12 px so the frame bead is not sampled as "the wall".
+    const x0 = Math.round(box.x + 12), x1 = Math.round(box.x + box.w - 12);
+    const y0 = Math.round(box.y + 12), y1 = Math.round(box.y + box.h * 0.55);
+    const mid = Math.round((x0 + x1) / 2);
+    const mean = (ax, ay, bx, by) => {
+      const d = g.getImageData(ax, ay, bx - ax, by - ay).data;
+      let s = 0, n = 0;
+      for (let i = 0; i < d.length; i += 4) { s += 0.2126 * d[i] + 0.7152 * d[i + 1] + 0.0722 * d[i + 2]; n++; }
+      return s / n;
+    };
+    // Two different questions, two different boxes. The ASYMMETRY is a fact
+    // about the whole glass (wall + model), so it samples both halves of the
+    // upper pane. LEGIBILITY is a fact about the THING BEING JUDGED, so it
+    // samples the model's own head-and-shoulders box — the backdrop is a
+    // MeshBasicMaterial and takes no lighting at all, so a whole-pane mean
+    // barely moves when the rig changes and would be a lie about the model.
+    const bx0 = Math.round(box.x + box.w * 0.30), bx1 = Math.round(box.x + box.w * 0.70);
+    const by0 = Math.round(box.y + box.h * 0.14), by1 = Math.round(box.y + box.h * 0.42);
+    return {
+      left: +mean(x0, y0, mid, y1).toFixed(1),
+      right: +mean(mid, y0, x1, y1).toFixed(1),
+      model: +mean(bx0, by0, bx1, by1).toFixed(1),
+    };
+  }, { src: `data:image/png;base64,${(await import('node:fs')).readFileSync(shotPath).toString('base64')}`, box: lum });
+  check('the glass is lit on ONE side (asymmetric fluorescent)',
+    halves.left > halves.right * 1.15, `left ${halves.left} vs right ${halves.right}`);
+  check('and the model stays legible for judging a cosmetic',
+    halves.model > 55, `model box ${halves.model}`);
+
+  // 11. PRODUCER 08-18 (c): the SAME screen from the pause menu, anywhere,
+  //     with no teleport and no flags. Fresh boot so the mirror has never been
+  //     opened in this save — that is the only way to prove the menu path
+  //     writes nothing.
+  await page.goto(`http://localhost:${PORT}/?dev&fixture=act1&shot=cubicle_farm&qtier=high`);
+  await page.waitForFunction(() => window.__shotReady === true, { timeout: 45000 });
+  await page.waitForTimeout(1200);
+  const roomBefore = await page.evaluate(() => window.__explore.player.currentRoom);
+  await tap('Escape', 120);
+  await page.waitForTimeout(700);
+  check('pause menu open from the cubicle farm', (await top()) === 'MenuState', await top());
+  // Walk the menu to Cosmetics and open it.
+  const openedCos = await page.evaluate(() => {
+    const st = window.__explore.stateManager.stack;
+    const menu = st[st.length - 1];
+    menu._showCosmetics?.();
+    return !!menu.cosmeticsOverlay;
+  });
+  check('cosmetics tab open', openedCos);
+  const entry = await page.evaluate(() =>
+    document.querySelector('.wd-fitting-entry .ability-name')?.textContent || null);
+  check('the tab offers a Fitting Room row', entry === 'Fitting Room', String(entry));
+  await tap('Enter', 120);
+  await page.waitForTimeout(900);
+  check('fitting room pushed from the menu', (await top()) === 'WardrobeState', await top());
+  const stage = await page.evaluate(() => {
+    const st = window.__explore.stateManager.stack;
+    const w = st[st.length - 1];
+    return {
+      dressing: w.dressing,
+      title: document.querySelector('.wd-rail-title')?.textContent,
+      gleam: getComputedStyle(document.querySelector('.wd-mirror-gleam')).display,
+      room: window.__explore.player.currentRoom,
+    };
+  });
+  check('it is the stage dressing, not the mirror', stage.dressing === 'stage', JSON.stringify(stage));
+  check('titled FITTING ROOM', stage.title === 'FITTING ROOM', String(stage.title));
+  check('no mirror gleam in the menu dressing', stage.gleam === 'none', String(stage.gleam));
+  check('and it did NOT move the player', stage.room === roomBefore, `${roomBefore} -> ${stage.room}`);
+  await tap('Enter', 120);   // equip the first row
+  await page.waitForTimeout(500);
+  const menuEquip = await page.evaluate(() => ({ ...window.__explore.player.equipped }));
+  check('equipping works from the menu path', !!menuEquip.hat, JSON.stringify(menuEquip));
+  const noFlags = await page.evaluate(() => ({
+    used: !!window.__explore.player.getFlag('wardrobe_mirror_used'),
+    tip: !!window.__explore.player.getFlag('wardrobe_tip_shown'),
+  }));
+  check('the menu path writes NO wardrobe flags', !noFlags.used && !noFlags.tip, JSON.stringify(noFlags));
+  await page.screenshot({ path: `${OUT}/07-menu-fitting-room.png` });
+  await tap('Escape', 120);
+  await page.waitForTimeout(700);
+  check('back to the menu, not the world', (await top()) === 'MenuState', await top());
+  const panelFresh = await page.evaluate(() =>
+    [...document.querySelectorAll('.cosmetics-slot-value')].map(e => e.textContent).join('|'));
+  check('the tab under it re-rendered with the new equip',
+    !/^— empty —\|/.test(panelFresh), panelFresh);
+
   console.log(fails === 0 ? '\nALL PASS' : `\n${fails} FAILURE(S)`);
 } catch (err) {
   console.error('HARNESS ERROR:', err.message);

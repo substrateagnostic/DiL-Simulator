@@ -102,6 +102,29 @@ loss, Rachel catches Andrew and points him at the sixth-floor bathroom mirror
   desk-plant line, 4.8 s into the Bathroom). The room-scoped feed only owned
   the lines it had not posted yet. `NotificationArbiter.dismiss(id)` is new
   and has exactly one caller.
+- **Round 3 — your three notes tonight, all landed.** (a) **The mirror is
+  half-lit now**, and the bathroom's own line is the spec: the working tube is
+  on Andrew's left, the dead one on his right, the wall falls off behind him
+  and the rig keys from the lit side. It STRIKES and settles in 0.72 s and is
+  then constant — it never flickers while you are comparing two hats. Your
+  guardrail is a gate, not a promise: the harness reads the settled glass off
+  the PNG and fails the build unless the lit half beats the dark half by 1.15x
+  AND the model itself holds a luma above 55. Shipping numbers: **164.8 vs
+  124.3, model 145.5**. (b) **The caption is gone.** (c) **The pause menu opens
+  the same screen** — a `Fitting Room` row at the top of the Cosmetics tab,
+  from anywhere in the building, no teleport and no load, because the state
+  owns its own scene and builds Andrew procedurally. It is ONE state in two
+  dressings: from the bathroom you get the mirror frame and the fluorescent;
+  from the menu you get the model on a neutral stage, titled FITTING ROOM,
+  and it writes NO flags. Verified from a clean boot: the menu path leaves
+  `wardrobe_mirror_used` and `wardrobe_tip_shown` both false, does not move the
+  player out of the cubicle farm, and the tab under it re-renders with what you
+  just put on. The tab keeps its full `???` catalogue as the browsing surface.
+- **One bug that round found, worth knowing**: naming the dressing class
+  `wd-mirror` made the ROOT element match the mirror FRAME rule, and the whole
+  screen collapsed inside a 342 px box with the rail sitting on the glass. It
+  is now `wd-dress-mirror`. Nothing caught it by eye — the luminance gate
+  caught it, reading a model that had nowhere to be.
 - **Honest list**: (1) the optional act-3 Rachel callback ("Suits you.") is
   drafted but NOT wired — it belongs in dialog file 04; (2) trait-conditional
   Rachel variant skipped — trait flags had not landed at authoring time;

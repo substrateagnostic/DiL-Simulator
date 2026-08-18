@@ -9,13 +9,20 @@ import { CHARACTER_CONFIGS } from '../data/characters.js';
 import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 
 // ============================================================
-// THE WARDROBE MIRROR — sixth-floor bathroom
+// THE WARDROBE — the sixth-floor mirror, and the pause menu's fitting room
 // ============================================================
 // The mirror over the basins IS the wardrobe preview: a focused overlay
 // showing Andrew's live procedural exploration model, rebuilt on every
 // equip exactly the way the world rebuilds him (Player.rebuildMesh ->
 // buildCharacter with `cosmetic_<id>` accessories). Opened from the
 // `wardrobe_mirror` interactable in ExplorationState._interact().
+//
+// ONE STATE, TWO DRESSINGS (`opts.dressing`, see the constructor). The pause
+// menu's Cosmetics tab opens the SAME screen from anywhere in the building —
+// no teleport, no load, because this state owns its scene and never touches
+// the room the player is standing in. The tab keeps the full catalogue with
+// its `???` cards as the BROWSING surface; this is the PREVIEW/equip surface
+// it opens into.
 //
 // Contract with the rest of the game (do not break silently):
 //   * EQUIP CODE IS NOT FORKED. Every change goes through
@@ -34,7 +41,9 @@ import { COSMETICS, COSMETIC_SLOTS } from '../data/cosmetics.js';
 //   * writes `wardrobe_mirror_used` on enter (clears the side-quest
 //     signpost; declared in story/grants.js CODE_GRANTS) and
 //     `wardrobe_tip_shown` on first exit (gates the one-time PROGRESS
-//     teach: Pause Menu -> Cosmetics).
+//     teach: Pause Menu -> Cosmetics). BOTH ARE 'mirror'-DRESSING ONLY —
+//     the menu path writes no flags, and pointing a player at the pause
+//     menu while they are standing in it is not a teach.
 //   * shows UNLOCKED cosmetics only. The pause-menu Cosmetics tab is the
 //     complete catalogue with ??? cards; the mirror is what is actually
 //     on the shelf. Both surfaces read Player.isCosmeticUnlocked.
@@ -48,10 +57,6 @@ const STAT_LABELS = [
   ['maxMP', 'COFFEE'],
 ];
 
-// One line of mirror text, always on, small and dim. Drafted through the
-// prose law (claude -p, Opus 4.6) with the rest of the scene's prose.
-const MIRROR_CAPTION = 'The mirror reflects without editorial comment. This puts it in a slim minority around here.';
-
 // A card's effect line. `stats` first; then `qte`, because the ONE relic in the
 // game that trades a bonus for a cost — Ergonomic Wrist Support, +40 % Brace
 // window for −20 % Retaliate — carries `stats: {}` and lives entirely in `qte`.
@@ -63,6 +68,7 @@ const MIRROR_CAPTION = 'The mirror reflects without editorial comment. This puts
 // An UNKNOWN qte key still prints, as `key ×value`. That is deliberate: the
 // failure this replaces was a silent one, and a new modifier must never be
 // able to disappear here just because nobody added a label for it.
+
 // The reflected bathroom wall. `TUBE_FRAC` is where the fixture row sits down
 // the canvas; `_applyFraming` uses it to place the plane, so the tubes land in
 // frame at any viewport instead of at one tuned pixel row.
@@ -70,6 +76,9 @@ const BACKDROP_W = 3.4;
 const BACKDROP_H = 5.1;
 const BACKDROP_Z = -1.5;
 const TUBE_FRAC = 0.25;
+// How long the fluorescent takes to strike and settle, ms. After this the key
+// light is CONSTANT — see _updateStrike.
+const STRIKE_MS = 720;
 
 const QTE_LABELS = {
   braceWindow:      (v) => `${v > 1 ? '+' : '−'}${Math.round(Math.abs(v - 1) * 100)}% BRACE WINDOW`,
@@ -89,9 +98,25 @@ function _effectLine(cos) {
 }
 
 export class WardrobeState {
-  constructor(stateManager, player) {
+  /**
+   * ONE STATE, TWO DRESSINGS (producer, 08-18).
+   *   'mirror' — the sixth-floor bathroom. Mirror frame, the tiled wall, the
+   *              half-lit fluorescent rig, the `wardrobe_mirror_used` grant
+   *              and the one-time Pause-Menu teach.
+   *   'stage'  — pushed from MenuState's Cosmetics tab, anywhere in the
+   *              building. Same model, same equip calls, same input; no mirror
+   *              frame, a neutral fitting-room ground, even light, and NO
+   *              flags — looking at yourself in a menu is not looking in that
+   *              bathroom's mirror, and the teach would be telling the player
+   *              where they already are.
+   * It costs no teleport and no load: this state owns its own scene and builds
+   * Andrew procedurally, so it never touches the room the player is standing
+   * in. That is the whole reason the menu can reuse it.
+   */
+  constructor(stateManager, player, opts = {}) {
     this.stateManager = stateManager;
     this.player = player;
+    this.dressing = opts.dressing === 'stage' ? 'stage' : 'mirror';
 
     this.scene = null;
     this.camera = null;
@@ -107,6 +132,11 @@ export class WardrobeState {
     this._prevTilt = true;
     this._resize = null;
     this._closing = false;
+    // Fluorescent strike-and-settle, mirror dressing only. See _updateStrike.
+    this._strikeT = 0;
+    this._keyLight = null;
+    this._fillLight = null;
+    this._keyBase = 1;
   }
 
   enter() {
@@ -122,22 +152,15 @@ export class WardrobeState {
     this.scene.background = new THREE.Color(0x141b1f);
 
     this.camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 50);
-
-    // Severance-cool key over the basin, warm fill so the face still reads.
-    this.scene.add(new THREE.AmbientLight(0xf2f6fa, 0.85));
-    const key = new THREE.DirectionalLight(0xf6fbff, 0.95);
-    key.position.set(1.4, 2.8, 3.2);
-    this.scene.add(key);
-    const fill = new THREE.DirectionalLight(0xffe9cf, 0.28);
-    fill.position.set(-2.2, 1.2, 2.0);
-    this.scene.add(fill);
+    this._buildLights();
 
     this._buildBackdrop();
     this._buildPreview();
     this._buildDom();
 
-    // The signpost clears the moment he actually looks in the mirror.
-    this.player.setFlag('wardrobe_mirror_used', true);
+    // The signpost clears the moment he actually looks in the mirror — and
+    // ONLY the mirror. The pause-menu fitting room is not that bathroom.
+    if (this.dressing === 'mirror') this.player.setFlag('wardrobe_mirror_used', true);
 
     this._resize = () => this._applyFraming();
     window.addEventListener('resize', this._resize);
@@ -164,13 +187,17 @@ export class WardrobeState {
     this.styleEl = null;
 
     Engine.setTiltShift(this._prevTilt);
-    if (this._explorationHud) this._explorationHud.style.display = '';
+    // Only un-hide the exploration HUD if THIS state hid it. On the menu path
+    // MenuState hid it first and owns putting it back; clearing it here would
+    // paint the world HUD under an open pause menu.
+    if (this._explorationHud && this.dressing === 'mirror') this._explorationHud.style.display = '';
 
     NotificationArbiter.resumeScope('world');
 
     // One-time teach, AFTER the world scope is live again so it lands on the
-    // exploration screen instead of deferring into a suspended scope.
-    if (!this.player.getFlag('wardrobe_tip_shown')) {
+    // exploration screen instead of deferring into a suspended scope. Mirror
+    // dressing only: from the menu, the player is already where it points.
+    if (this.dressing === 'mirror' && !this.player.getFlag('wardrobe_tip_shown')) {
       this.player.setFlag('wardrobe_tip_shown', true);
       NotificationArbiter.post({
         cls: NC.PROGRESS,
@@ -181,6 +208,80 @@ export class WardrobeState {
 
   pause() { if (this.element) this.element.style.display = 'none'; }
   resume() { if (this.element) this.element.style.display = ''; }
+
+  // ---- light --------------------------------------------------------------
+
+  // THE HALF-LIT FLUORESCENT, MADE LITERAL (producer, 08-18).
+  // `ROOM_THOUGHTS.bathroom[0]` is the spec: "The mirror has one working
+  // fluorescent and one dead one, which means you can see exactly half of how
+  // tired you look." The reflected wall already carries a lit tube on the
+  // model's LEFT (world -x, canvas left) and a dead one on his right, so the
+  // rig lights him the same way and the two agree.
+  //
+  // THE GUARDRAIL, and it is the reason this is not just "turn the lights
+  // down": the player is making a VISUAL CHOICE in here. Mood may own the
+  // shadow side; the lit side must stay legible enough to judge a hat by. So
+  // the key is front-biased (z 3.4 against x -2.0) rather than raking, and a
+  // cool bounce off the tiled wall keeps the dark side readable instead of
+  // black. Measured intent: the lit cheek reads, the far shoulder falls into
+  // mood, and nothing about a cosmetic disappears.
+  //
+  // The 'stage' dressing (pause menu) gets an even, neutral fitting-room rig.
+  // A menu is not a room, and a moody menu is a menu you cannot read.
+  _buildLights() {
+    if (this.dressing === 'stage') {
+      this.scene.add(new THREE.AmbientLight(0xeef3f8, 0.82));
+      const key = new THREE.DirectionalLight(0xf8fbff, 0.85);
+      key.position.set(1.2, 2.8, 3.4);
+      this.scene.add(key);
+      const fill = new THREE.DirectionalLight(0xdfe8f2, 0.34);
+      fill.position.set(-2.2, 1.4, 2.2);
+      this.scene.add(fill);
+      this._keyLight = key;
+      this._keyBase = key.intensity;
+      this._strikeT = STRIKE_MS;   // no strike beat in a menu
+      return;
+    }
+
+    // One tube, one dead socket. The levels are MEASURED against the guardrail,
+    // not dialled by eye: `_w-mirror.mjs` reads the settled glass off the PNG
+    // and requires the lit half to beat the dark half by >1.15x AND to hold a
+    // mean Rec.709 luma above 40, which is where a cosmetic stops being
+    // judgeable. First pass was ambient 0.30 / key 1.22 and measured
+    // 35.7 vs 24.9 — asymmetric, and too dark to shop in.
+    this.scene.add(new THREE.AmbientLight(0xdfe9f2, 0.80));
+    const key = new THREE.DirectionalLight(0xf3f9ff, 1.30);
+    key.position.set(-2.0, 3.0, 3.4);      // the working tube, model's left
+    this.scene.add(key);
+    // Bounce off the tile on the dead side. Cool and weak: it is reflected
+    // light off a wall, and it exists only so the shadow side keeps shape.
+    const fill = new THREE.DirectionalLight(0x9fb4c4, 0.13);
+    fill.position.set(2.6, 1.1, 1.6);
+    this.scene.add(fill);
+    this._keyLight = key;
+    this._fillLight = fill;
+    this._keyBase = key.intensity;
+    this._strikeT = 0;
+  }
+
+  // A tube striking. TWO dips inside the first 360 ms, then it SETTLES and is
+  // constant for the rest of the session — the producer's line is that it
+  // never strobes through the selection, and a light that keeps twitching
+  // while you compare two hats is a light arguing with the screen's job.
+  _updateStrike(dt) {
+    if (this._strikeT >= STRIKE_MS || !this._keyLight) return;
+    this._strikeT = Math.min(STRIKE_MS, this._strikeT + dt * 1000);
+    const t = this._strikeT;
+    let k;
+    if (t < 90)       k = 0.22;
+    else if (t < 150) k = 0.95;
+    else if (t < 205) k = 0.30;
+    else if (t < 265) k = 1.00;
+    else if (t < 300) k = 0.62;
+    else              k = 0.62 + 0.38 * ((t - 300) / (STRIKE_MS - 300));
+    this._keyLight.intensity = this._keyBase * k;
+    if (this._strikeT >= STRIKE_MS) this._keyLight.intensity = this._keyBase;
+  }
 
   // ---- preview ------------------------------------------------------------
 
@@ -210,6 +311,25 @@ export class WardrobeState {
     const canvas = document.createElement('canvas');
     canvas.width = 256; canvas.height = 384;
     const g = canvas.getContext('2d');
+
+    // 'stage' dressing: a neutral fitting-room ground. No tile, no fixture,
+    // nothing that claims to be a place — the pause menu is not a room.
+    if (this.dressing === 'stage') {
+      const sg = g.createLinearGradient(0, 0, 0, 384);
+      sg.addColorStop(0, '#39424b');
+      sg.addColorStop(0.62, '#272e35');
+      sg.addColorStop(1, '#171c21');
+      g.fillStyle = sg;
+      g.fillRect(0, 0, 256, 384);
+      const pool = g.createRadialGradient(128, 250, 10, 128, 250, 190);
+      pool.addColorStop(0, 'rgba(190, 208, 224, 0.16)');
+      pool.addColorStop(1, 'rgba(190, 208, 224, 0)');
+      g.fillStyle = pool;
+      g.fillRect(0, 0, 256, 384);
+      this._finishBackdrop(canvas);
+      return;
+    }
+
     const grad = g.createLinearGradient(0, 0, 0, 384);
     grad.addColorStop(0, '#4b5a63');
     grad.addColorStop(0.55, '#333f46');
@@ -257,7 +377,21 @@ export class WardrobeState {
     g.fillStyle = 'rgba(46, 55, 62, 0.98)';
     g.fillRect(120, ty - 3, 8, 15);
     g.fillRect(128, ty - 3, 8, 15);
+    // And the wall itself goes with the fixtures: the dead half loses light.
+    // Painted into the TEXTURE rather than left to the rig, because the plane
+    // is MeshBasic (it is a backdrop, not a surface) and takes no lighting.
+    // Starts at the SEAM (128), not before it: the falloff has to begin where
+    // the dead tube begins, or it eats into the half the player shops on.
+    const dark = g.createLinearGradient(128, 0, 256, 0);
+    dark.addColorStop(0, 'rgba(6, 9, 12, 0)');
+    dark.addColorStop(1, 'rgba(6, 9, 12, 0.72)');
+    g.fillStyle = dark;
+    g.fillRect(128, 0, 128, 384);
 
+    this._finishBackdrop(canvas);
+  }
+
+  _finishBackdrop(canvas) {
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.LinearFilter;
     texture.generateMipmaps = false;
@@ -350,14 +484,21 @@ export class WardrobeState {
     document.head.appendChild(this.styleEl);
 
     this.element = document.createElement('div');
-    this.element.className = 'wd-root';
+    // `wd-dress-`, NOT `wd-${dressing}`: the plain form makes the ROOT element
+    // match `.wd-mirror`, the frame rule — a 342 px box with a 200vmax vignette
+    // — and the whole screen collapses into it, rail on top of glass. Caught by
+    // the luma check reading a model that had nowhere to be.
+    this.element.className = `wd-root wd-dress-${this.dressing}`;
+    // NO CAPTION. There was a line of Andrew-voice italic across the bottom of
+    // the glass; the producer cut it on 08-18 — "the moment doesn't need a
+    // snarky comment this time". The screen speaks for itself. The one-time
+    // exit teach ("Pause Menu -> Cosmetics") is a different surface and stays.
     this.element.innerHTML = `
       <div class="wd-mirror">
         <div class="wd-mirror-gleam"></div>
-        <div class="wd-caption">${MIRROR_CAPTION}</div>
       </div>
       <div class="wd-rail">
-        <div class="wd-rail-title">WARDROBE</div>
+        <div class="wd-rail-title">${this.dressing === 'stage' ? 'FITTING ROOM' : 'WARDROBE'}</div>
         <div class="wd-rail-items"></div>
         <div class="wd-stats"></div>
         <div class="wd-hint">↑↓ browse &nbsp;·&nbsp; Enter wear / put back &nbsp;·&nbsp; ←→ turn &nbsp;·&nbsp; Esc done</div>
@@ -474,6 +615,7 @@ export class WardrobeState {
     }
 
     if (this.previewAnimator) this.previewAnimator.update(dt);
+    this._updateStrike(dt);
 
     Engine.renderScene(this.scene, this.camera);
     Engine.skipDefaultRender();
@@ -499,6 +641,16 @@ const WARDROBE_CSS = `
               inset 0 0 3px rgba(220, 240, 250, 0.28);
   pointer-events: none;
 }
+/* The 'stage' dressing keeps the same cut-out — it is what makes the model
+   read at a size worth judging a hat by — but drops everything that says
+   MIRROR: the bevelled frame, the bead of glass, the gleam. A pause menu
+   opened on floor 9 must not claim to be the sixth-floor bathroom. */
+.wd-dress-stage .wd-mirror {
+  border: 1px solid rgba(120, 140, 158, 0.30);
+  border-radius: 3px;
+  box-shadow: 0 0 0 200vmax rgba(6, 9, 11, 0.975);
+}
+.wd-dress-stage .wd-mirror-gleam { display: none; }
 .wd-mirror-gleam {
   position: absolute; inset: 0; overflow: hidden; border-radius: 2px;
 }
@@ -507,16 +659,6 @@ const WARDROBE_CSS = `
   width: 55%; height: 150%;
   background: linear-gradient(105deg, transparent 0%, rgba(225, 240, 250, 0.07) 45%, rgba(225, 240, 250, 0.11) 50%, transparent 60%);
   transform: rotate(2deg);
-}
-.wd-caption {
-  /* Inside the glass, like an etching — outside the frame it collided with
-     the frame edge at 720p. */
-  position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%);
-  width: 88%; text-align: center;
-  color: #aebcc4; font-size: 11.5px; font-style: italic;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-  background: rgba(10, 14, 16, 0.5);
-  padding: 4px 8px; border-radius: 3px;
 }
 .wd-rail {
   position: absolute; top: 7%; bottom: 9%; right: 4%;
