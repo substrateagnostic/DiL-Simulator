@@ -42,10 +42,21 @@ export const COSMETICS = {
   // --- Glasses ---
   reading_glasses: {
     name: 'Reading Glasses',
-    description: 'Helps you see the fine print. +1 ATK',
+    description: 'Green frames. Helps you see the fine print. +1 ATK',
     slot: 'glasses',
     stats: { atk: 1 },
-    visual: { type: 'glasses', color: 0x888888 },
+    // Green frames on purpose: the rachel_wardrobe narrator line plants a
+    // pair of green-framed reading glasses on Rachel's desk, and the item
+    // the mirror offers rhymes with it without a word (judge-endorsed).
+    // CharacterBuilder reads this color for the cosmetic frame material.
+    //
+    // Round 2: the first value was 0x2f7d52, and at the mirror's shipping
+    // scale it read as a ~2 px hue shift on a ring Andrew's default pair had
+    // already drawn there — the one item the scene's last line plants was the
+    // hardest change on the screen to see (judge). Same hue family, lifted in
+    // value and saturation so it separates from the default near-black rim at
+    // a glance; `buildGlasses` also thickens a COSMETIC rim (see there).
+    visual: { type: 'glasses', color: 0x3fbf72 },
     unlock: 'default',
   },
   blue_light_blockers: {

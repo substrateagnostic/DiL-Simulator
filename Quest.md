@@ -294,6 +294,20 @@ All six are started by talking to Alex in the Server Room. Each unlocks progress
 
 ## Other Side Quests
 
+### Down the Hall
+*After the first Karen loss, Rachel says something small.*
+
+> **Unlocks after:** the scripted first Karen defeat and Skip's pep talk — Rachel's `rachel_wardrobe` scene fires in the Cubicle Farm. Pure signpost: nothing gates on it, and the mirror works even if the scene is missed.
+
+| Step | What to do |
+|------|-----------|
+| 1 | Check the mirror in the sixth-floor bathroom (the basins, west wall) |
+| 2 | The mirror is the wardrobe — equip any unlocked cosmetics; their stat bonuses apply immediately |
+
+**Reward:** none in XP — the starter cosmetics themselves (+1 ATK / +1 DEF / +5 HP if all three defaults are worn). Clears from the tracker on first mirror use.
+
+---
+
 ### The Lunch Thief
 *Someone is stealing lunches from the break room fridge.*
 

@@ -322,7 +322,7 @@ Achievements are tracked across all saves and viewable in the Pause Menu → Ach
 
 ## Cosmetics
 
-Cosmetics are equipped in the Pause Menu → Cosmetics tab. Each item occupies one of four slots: **hat**, **glasses**, **badge**, **accessory**. Stat bonuses from equipped cosmetics apply in combat. Only one item per slot can be equipped at a time.
+Cosmetics are equipped in the Pause Menu → Cosmetics tab, or at the **wardrobe mirror** in the sixth-floor bathroom — the mirror over the basins shows Andrew live and rebuilds him as pieces go on (Rachel points it out after the first Karen loss; the mirror works whether or not you talk to her). Each item occupies one of four slots: **hat**, **glasses**, **badge**, **accessory**. Stat bonuses from equipped cosmetics apply in combat. Only one item per slot can be equipped at a time. The mirror lists only unlocked pieces; the pause-menu tab is the full catalogue including undiscovered `???` entries.
 
 ### Hats
 

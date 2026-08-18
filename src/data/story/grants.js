@@ -23,6 +23,14 @@ export const CODE_GRANTS = [
   row('voice_apprentice_high', true, 'CombatState.js:1335', 'Existential combat-voice usage threshold.'),
   row('andrew_invoked_charter', 'has_charter', 'CombatState.js:1338', 'Written when Andrew invokes the Charter during combat.'),
   row('seen_karen_finisher', 'retry_karen', 'CombatState.js:2200', 'Karen finisher presentation latch.'),
+  row('read_karen_first_loss_tutorial', 'retry_karen', 'DialogState.js:576',
+    'Existential ordering declaration, not a new writer: the scene is served by the karen-first-loss '
+    + 'trigger behind ¬defeated_karen, and the monotone closure banks defeated_karen for every '
+    + 'reachable encounter, which closes the trigger before its auto-read can land. At runtime the '
+    + 'ordering is forced — the first Karen fight is a scripted, unavoidable loss (atk 999), so '
+    + 'retry_karen always precedes defeated_karen and the replay path re-offers the scene until it '
+    + 'is read. Declared here because the rachel-after-karen trigger reads this flag as its event '
+    + 'source; before that, nothing read it and the closure gap was invisible.'),
 
   row('epilogue_seen', 'act7_complete', 'EpilogueState.js:252', 'Written when the epilogue presentation completes.'),
 
@@ -85,6 +93,8 @@ export const CODE_GRANTS = [
   row('clientBuffTotal', 'retry_karen', 'ExplorationState.js:2450', 'Reception run-state aggregate.'),
   row('skipAngerDebuffTotal', 'retry_karen', 'ExplorationState.js:2465', 'Reception run-state aggregate.'),
   row('whisper_monitor_seen', true, 'ExplorationState.js:4247', 'Proximity-based first whisper-monitor discovery.'),
+  row('wardrobe_mirror_used', true, 'WardrobeState.js:103', 'Written on opening the sixth-floor bathroom mirror (the wardrobe preview). The bathroom is ungated from Act 1, so the grant is unconditional; clears the post-Karen-loss signpost and gates Rachel\'s later deadpan acknowledgement.'),
+  row('wardrobe_tip_shown', true, 'WardrobeState.js:130', 'One-time Pause Menu -> Cosmetics teach latch, written on first mirror exit.'),
 
   // Finite template-key writes discovered by the setFlag grep. Keep these
   // derived from the same data tables as the runtime so additions cannot leave

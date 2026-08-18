@@ -3,6 +3,7 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { Materials } from '../effects/MaterialLibrary.js';
 import { bakeEnabled, bakeVertexColor, batchMaterialFor, materialSignature } from '../effects/GeometryBatch.js';
 import { CHAR } from '../utils/constants.js';
+import { COSMETICS } from '../data/cosmetics.js';
 import { paintFaceSet } from './FacePainter.js';
 
 // CharacterBuilder v5 — "a lacquered miniature of a REAL adult."
@@ -996,7 +997,19 @@ export function buildCharacter(config, options = {}) {
 
   // ── Accessories (held items attach to the arm so they ride the swing) ─
   if (config.accessories) {
-    for (const acc of config.accessories) addAccessory(group, acc, rig, config, detailed, options.probe === true);
+    // A glasses-slot COSMETIC replaces the base 'glasses' accessory instead
+    // of stacking on it. Andrew's default pair sits at the exact lens plane
+    // the cosmetic builder uses, so equipping Reading Glasses produced zero
+    // visible pixel change (judge, wardrobe lane) — two near-identical
+    // toruses in the same spot. Same rule a real face obeys: one pair at a
+    // time.
+    const wearsGlassesCosmetic = config.accessories.some(a =>
+      typeof a === 'string' && a.startsWith('cosmetic_')
+      && COSMETICS[a.slice('cosmetic_'.length)]?.slot === 'glasses');
+    const accessories = wearsGlassesCosmetic
+      ? config.accessories.filter(a => a !== 'glasses')
+      : config.accessories;
+    for (const acc of accessories) addAccessory(group, acc, rig, config, detailed, options.probe === true);
   }
 
   // ── shadows: hair + face do not self-shadow; blob does the grounding ─
@@ -3341,14 +3354,14 @@ function buildHair(head, r, mat, style, streakMat = null, underMat = null, probe
   }
 }
 
-function buildGlasses(head, r, kind, detailed) {
+function buildGlasses(head, r, kind, detailed, frameColor = null) {
   // Addendum order (a): glasses are thin torus GEOMETRY, never face paint.
   // They MUST stand clearly in front of the curved face patch (which bulges
   // to ~1.012r), or they read as rings painted on the face (Grandma). So the
   // lens plane sits at ~1.06r with a real air gap, the rims get a catchlight,
   // and reading/clear lenses get a faint glass fill so the rim reads as a rim.
   const frameMat = new THREE.MeshPhysicalMaterial({
-    color: kind === 'reading' ? 0x6a4a24 : 0x14141a,
+    color: frameColor ?? (kind === 'reading' ? 0x6a4a24 : 0x14141a),
     roughness: 0.28, metalness: 0.45, clearcoat: 0.8, clearcoatRoughness: 0.2,
     envMapIntensity: 1.0,
   });
@@ -3357,7 +3370,12 @@ function buildGlasses(head, r, kind, detailed) {
   // of gap between them, LAW 3) and the eye LINE is y = 0, the skull equator.
   const lensR = r * (kind === 'sun' ? 0.27 : 0.245);
   const sep = r * 0.40;
-  const tube = r * (kind === 'sun' ? 0.042 : 0.032);
+  // A COSMETIC pair (frameColor set) gets a HEAVIER rim than the same character's
+  // default pair. It is the only geometric difference between the two, and
+  // without it equipping Reading Glasses is a recolour of a ring that was
+  // already on the face — measured at the wardrobe mirror's shipping scale as a
+  // change the judge could not see. Frames the player chose should look chosen.
+  const tube = r * (kind === 'sun' ? 0.042 : 0.032) * (frameColor ? 1.4 : 1);
   const zf = r * 1.02;               // lens plane — a real air gap over the socket
   for (const s of [-1, 1]) {
     const rim = new THREE.Mesh(new THREE.TorusGeometry(lensR, tube, 10, 26), frameMat);
@@ -3982,11 +4000,12 @@ function _addCosmeticVisual(group, cosmeticId, rig) {
       brim.position.set(0, headR * 1.20, 0);
       head?.add(brim);
     },
-    reading_glasses: () => buildGlasses(head, headR, 'reading', true),
-    blue_light_blockers: () => {
-      const g = new THREE.Group();
-      buildGlasses(head, headR, 'clear', true);
-    },
+    // Frame colours come from the item's own `visual.color` (cosmetics.js) so
+    // the equip visibly differs from Andrew's suppressed default pair — the
+    // reading glasses' green frames are the Narrator's plant on Rachel's desk
+    // (rachel_wardrobe), rhymed silently.
+    reading_glasses: () => buildGlasses(head, headR, 'reading', true, COSMETICS.reading_glasses?.visual?.color),
+    blue_light_blockers: () => buildGlasses(head, headR, 'clear', true, COSMETICS.blue_light_blockers?.visual?.color),
     power_shades: () => buildGlasses(head, headR, 'sun', true),
     intern_badge: () => {
       const tag = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.05, 0.008), Materials.paper());

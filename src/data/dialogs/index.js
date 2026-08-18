@@ -19802,5 +19802,77 @@ export const DIALOGS = {
     {
       "type": "end"
     }
+  ],
+  "rachel_wardrobe": [
+    {
+      "type": "stage",
+      "concurrent": true,
+      "beats": [
+        {
+          "actor": "rachel",
+          "face": "player",
+          "wait": false
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "speaker": "Rachel",
+      "text": "Bathroom's down the hall. Second door."
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "Sorry — what?"
+    },
+    {
+      "type": "text",
+      "speaker": "Rachel",
+      "text": "There's a mirror."
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "Do I look that bad?"
+    },
+    {
+      "type": "text",
+      "speaker": "Rachel",
+      "text": "You look like somebody who just had their first meeting."
+    },
+    {
+      "type": "text",
+      "speaker": "Rachel",
+      "text": "I went my first week."
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "Thanks, Rachel."
+    },
+    {
+      "type": "text",
+      "speaker": "Rachel",
+      "text": "On the left."
+    },
+    {
+      "type": "stage",
+      "concurrent": true,
+      "beats": [
+        {
+          "actor": "rachel",
+          "face": "rachel_monitor",
+          "wait": false
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "Rachel turned back to her spreadsheet. Next to her monitor was a pair of reading glasses with green frames."
+    },
+    {
+      "type": "end"
+    }
   ]
 };

@@ -44,6 +44,76 @@ Andrew is for the rest of the run. Branch `display-case`, NOT merged.
   100 % power-move-carried — that knife-edge is now written down in
   traits.js and is worth knowing about independent of this lane.
 
+## [THE WARDROBE SCENE — RACHEL AND THE MIRROR, 08-17 (Fable 5, wardrobe lane)]
+
+Your commissioned beat, upgraded per the brief: after the scripted first Karen
+loss, Rachel catches Andrew and points him at the sixth-floor bathroom mirror
+— and the mirror IS the wardrobe. Branch `display-case`, NOT merged.
+
+- **The scene (`rachel_wardrobe`), Opus 4.6 draft wired verbatim, two passes.**
+  She stays seated, turns her head (a stage beat, clamped shoulder turn), and:
+  "Bathroom's down the hall. Second door." / "There's a mirror." / "You look
+  like somebody who just had their first meeting." / "I went my first week." /
+  "On the left." Then the narrator: "Rachel turned back to her spreadsheet.
+  Next to her monitor was a pair of reading glasses with green frames." The
+  accessories-after-a-bad-meeting shape is played completely straight — that
+  restraint is the Office Space wink; the word never appears.
+- **The mirror is a real screen** (`WardrobeState`): your procedural
+  exploration Andrew, live, rebuilding as pieces go on — same equip code as
+  the pause-menu Cosmetics tab (two Player methods, zero forks), stat deltas
+  printed beside the glass, one lit fluorescent and one dead one painted into
+  the reflection because that is what the room data says about that bathroom.
+- **Missable-but-offered, argued in one line**: she suggests, a `Down the
+  Hall` side-quest signpost points at the room, nothing gates — a wardrobe
+  you are marched to is a uniform.
+- **Starter pool finding**: 4 default-unlocked pieces exist at that moment
+  (visor, reading glasses, stress ball, wrist support) — enough, no new items
+  needed. The BADGE slot is empty until `bestiary_intern`; if you want a
+  day-one badge, "Temporary Visitor Badge (+1 DEF)" is drafted in the report,
+  dark, awaiting your word.
+- **Verified end-to-end, headed, with video**: loss -> pep talk -> Rachel ->
+  bathroom -> mirror -> equip -> +1 ATK/+1 DEF/+5 HP visible in Stats -> the
+  reception grind entered with atk 13/def 11 IN the fight engine. 17/17 UI
+  checks + 20/20 flow checks. `npm run check` green; story-sim selftest still
+  PASS (one new existential CODE_GRANTS row, reasoning in the note).
+  Artifacts: `screenshots/w-run/` (stills + `flow/wardrobe-flow.webm`).
+- **Round 2 — the lane died at capture and was resumed; three things the
+  judge caught and one the harness did.** (a) `Ergonomic Wrist Support` is a
+  default unlock with `stats: {}` — its whole effect lives in `qte`, so a
+  quarter of the starting rail rendered as a name with nothing under it. It
+  now reads `+40% BRACE WINDOW · -20% RETALIATE`, and an unknown modifier key
+  prints rather than vanishing. (b) The green reading-glass frames were a
+  ~2 px hue shift on a ring Andrew's default pair already drew; the value is
+  lifted and a COSMETIC rim is 1.4x thicker than a default one, so the item
+  the scene's last line plants is now the change you can actually see.
+  (c) The reflected bathroom was authored for a full screen and the glass is
+  a 342 px letterbox — none of the tile, and neither fluorescent, was ever on
+  camera. The fixture row is now placed off the measured framing and each
+  tube runs to its own edge, so the wall is lit on one side of his head and
+  dark on the other, which is the room's own line. (d) The flow harness said
+  the bathroom's first-visit line never played while the arbiter's log said
+  `shown`: `_createHUD` was building a dead, permanently empty
+  `.inner-monologue` div AHEAD of the arbiter root, so every probe using the
+  selector CLAUDE.md tells them to use — including `_i-notify-probe` — was
+  reading the decoy. Deleted.
+- **One real cross-room bug, found by that capture and fixed**: a monologue
+  already ON SCREEN when you walk through a door kept its 2.4-9 s ttl and
+  finished under the next room's badge (measured: the cubicle farm's
+  desk-plant line, 4.8 s into the Bathroom). The room-scoped feed only owned
+  the lines it had not posted yet. `NotificationArbiter.dismiss(id)` is new
+  and has exactly one caller.
+- **Honest list**: (1) the optional act-3 Rachel callback ("Suits you.") is
+  drafted but NOT wired — it belongs in dialog file 04; (2) trait-conditional
+  Rachel variant skipped — trait flags had not landed at authoring time;
+  (3) the teach toast defers behind the bathroom's first-visit monologue by
+  design (claim ladder), so it lands a few seconds after the first exit, not
+  instantly; (4) the BADGE slot header is absent from the mirror at Act 1
+  because nothing in it is unlocked yet — correct per the unlocked-only rule,
+  but it does quietly teach a first-time player that the wardrobe has three
+  slots; (5) six catalogue accessories mount to the off hand and the mirror
+  crops at mid-thigh with the hands ON the crop line — none is unlocked in
+  the Act-1 fixture, so I could not shoot the case that would bite.
+
 ## [NEW-GAME SCREEN — THE DIFFICULTY SLIDER YOU CAN SEE, 08-17 (Fable 5, ng lane)]
 
 Your ask, in concept: a Stick-of-Truth-style selector — each difficulty's

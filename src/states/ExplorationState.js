@@ -38,6 +38,7 @@ import { AchievementManager } from '../core/AchievementManager.js';
 import { NotificationArbiter, NC } from '../core/NotificationArbiter.js';
 import { DEV_MODE, LEGACY_DIALOG_ROUTES, MESHY_MODE } from '../utils/constants.js';
 import { ShopState } from './ShopState.js';
+import { WardrobeState } from './WardrobeState.js';
 import { SHOP_ITEMS } from '../data/shop.js';
 import { ROOM_AMBIENCE, pickAmbientCue, nextAmbientDelay } from '../data/ambience.js';
 import { isDialogValidForQuestStage } from '../utils/dialogGating.js';
@@ -211,6 +212,12 @@ export class ExplorationState {
     this.toastContainer = null;
     this.nearestNPC = null;
     this.nearestInteractable = null;
+    // Room-scoped monologue feed — see _queueRoomThoughts.
+    this._thoughtFeed = null;
+    // The room thought CURRENTLY on screen, `{ room, id }` — see
+    // _dropRoomThoughts. Only ever a room thought; story and proximity
+    // monologues are not tracked here on purpose.
+    this._liveThought = null;
     this._pendingCombat = null;
     this._pendingDialog = null;
     // Session-only reservations cover the delay between deciding to serve a
@@ -498,6 +505,14 @@ export class ExplorationState {
         if (key === 'read_ending_compromise') this._scheduleStoryTrigger('post-credits-after-compromise');
         if (key === 'read_ending_dissolution') this._scheduleStoryTrigger('post-credits-after-dissolution');
         if (key === 'read_ending_architect') this._scheduleStoryTrigger('post-credits-after-architect');
+        // The wardrobe beat: Rachel catches Andrew after Skip's post-loss
+        // pep talk. Same delayed-push shape as the chains above; the graph
+        // row owns the once-guard (read_rachel_wardrobe) and the
+        // cubicle-farm room guard, and the replay path re-offers it if the
+        // scene is interrupted before it shows a node.
+        if (key === 'read_karen_first_loss_tutorial') {
+          this._scheduleStoryTrigger('rachel-after-karen');
+        }
         // Arcade minigame launch — hide the exploration HUD while playing.
         // The `&& value` guard is load-bearing: the next line clears the
         // flag, which re-emits `flag-set` with the SAME key, and without
@@ -671,8 +686,7 @@ export class ExplorationState {
         if (!this.player.getFlag(thoughtKey) && ROOM_THOUGHTS[roomId]) {
           this.player.setFlag(thoughtKey, true);
           firstVisitFired = true;
-          const thoughts = ROOM_THOUGHTS[roomId];
-          setTimeout(() => { for (const t of thoughts) this._showMonologue(t); }, 1500);
+          this._queueRoomThoughts(roomId, ROOM_THOUGHTS[roomId], 1500);
         }
 
         // F-3c: act-keyed room lines. The interiors change by act (time of day
@@ -733,7 +747,7 @@ export class ExplorationState {
           // whose flag is not yet set must stay available for a later visit.
           if (live.length && !this.player.getFlag(actKey)) {
             this.player.setFlag(actKey, true);
-            setTimeout(() => { for (const t of live) this._showMonologue(t); }, 2600);
+            this._queueRoomThoughts(roomId, live, 2600);
           }
         }
 
@@ -1084,6 +1098,10 @@ export class ExplorationState {
     // Rule 6: a room change mid-scene would otherwise be a permanent dialog
     // freeze — the actors the director is holding are about to be disposed.
     this.stage.abort();
+    // A thought about a room ends with the room — both the lines still queued
+    // and the one on screen. Must run BEFORE the new room queues its own, and
+    // before `player.currentRoom` moves.
+    this._dropRoomThoughts(roomId);
     let actualId = this._resolveRoomId(roomId);
     let result = this.roomManager.loadRoom(actualId, spawnX, spawnZ, this.player.flags);
     // A save can name a room this build no longer has — a hand-edited slot, or
@@ -2587,6 +2605,10 @@ export class ExplorationState {
       return this._supplyShopPromptText;
     }
 
+    if (interactableTarget.data.type === 'wardrobe_mirror') {
+      return 'Check the mirror';
+    }
+
     return 'Examine';
   }
 
@@ -2681,6 +2703,15 @@ export class ExplorationState {
       if (interactable.data.type === 'supply_shop') {
         AudioManager.playSfx('confirm');
         this.stateManager.push(new ShopState(this.stateManager, this.player));
+        return;
+      }
+
+      // The sixth-floor bathroom mirror — the wardrobe preview. Same push
+      // shape as the supply shop; WardrobeState owns its own scene and all
+      // equip changes go through Player.equipCosmetic (never forked).
+      if (interactable.data.type === 'wardrobe_mirror') {
+        AudioManager.playSfx('confirm');
+        this.stateManager.push(new WardrobeState(this.stateManager, this.player));
         return;
       }
 
@@ -3391,9 +3422,18 @@ export class ExplorationState {
     this.hudElement.appendChild(this.portfolioElement);
     this._updatePortfolioDisplay();
 
-    this.monologueElement = document.createElement('div');
-    this.monologueElement.className = 'inner-monologue';
-    this.hudElement.appendChild(this.monologueElement);
+    // NO `.inner-monologue` ELEMENT IS BUILT HERE. There used to be one — an
+    // empty div, written once and never touched again after the
+    // NotificationArbiter took the monologue surface over. It cost nothing to
+    // render and everything to measure: it sits EARLIER in the DOM than the
+    // arbiter root, so `document.querySelector('.inner-monologue')` — the
+    // selector CLAUDE.md tells every probe to use, and the one
+    // `tools/_i-notify-probe.mjs` was written against — always returned the
+    // empty decoy and never the card. Measured on the wardrobe flow capture:
+    // the arbiter log said `shown` for a line the harness reported missing,
+    // and a cross-room-thought assertion passed because it could not see any
+    // thought at all. A dead node that shadows a live selector is worse than
+    // no node. Do not re-add it; post to the arbiter.
 
     overlay.appendChild(this.hudElement);
   }
@@ -4345,6 +4385,13 @@ export class ExplorationState {
       if (defDone < 5) quests.push({ name: 'Composure Training', objective: `Find composure posters (${defDone}/5)` });
     }
 
+    // The wardrobe — Rachel's post-loss suggestion. A signpost, never a
+    // gate: it clears the moment the mirror is used and blocks nothing
+    // (missable-but-offered by design).
+    if (f('read_rachel_wardrobe') && !f('wardrobe_mirror_used')) {
+      quests.push({ name: 'Down the Hall', objective: 'Check the mirror in the sixth-floor bathroom' });
+    }
+
     // Alex IT subquests
     if (f('anomaly_started') && !f('quest_anomaly_347_complete')) {
       const anomalyObj = f('morse_decoded') ? 'Return to Alex from IT' : 'Find the Morse code pattern in server rack C';
@@ -4530,9 +4577,67 @@ export class ExplorationState {
    * (including a dialog scene, which holds VOICE), it is single-occupancy, and
    * its duration scales with how much there is to read.
    */
+  // ── ROOM-SCOPED THOUGHT FEED ────────────────────────────────────────────
+  // Room thoughts used to be posted to the arbiter in one burst
+  // (`setTimeout(() => { for (const t of thoughts) _showMonologue(t) })`).
+  // The VOICE zone queues, and a queue survives a room change, so a batch
+  // held back by a dialog surfaced under the NEXT room's location badge —
+  // measured on the wardrobe lane's flow capture: the conference room's
+  // "Q2 projections" line playing under the Bathroom badge while the
+  // bathroom's own fluorescent line sat behind it. A thought about a room
+  // is only true INSIDE it: the feed posts ONE line at a time, only while
+  // the player still stands in the room it belongs to (same
+  // `isActive(NC.VOICE)` check the ambience scheduler uses), and a room
+  // change drops the remainder. The first-visit / act latch is already
+  // spent by then — losing a flavour line is correct, misattributing it is
+  // not. Bonus: lines now land sequentially with natural spacing instead
+  // of draining a backlog at x0.62 ttl.
+  _queueRoomThoughts(roomId, lines, delayMs) {
+    this._thoughtFeed = {
+      room: roomId,
+      lines: [...lines],
+      notBefore: performance.now() + delayMs,
+    };
+  }
+
+  // The second half of the contract, and the half the first pass missed: a
+  // line ALREADY ON SCREEN when the player walks out is the same
+  // misattribution as a queued one, only shorter. VOICE ttl is 2.4-9 s and a
+  // door takes under one — measured on the wardrobe flow capture, the cubicle
+  // farm's desk-plant line was still up 4.8 s into the Bathroom, under the
+  // Bathroom badge, which is verbatim the defect the feed exists to kill.
+  // Called from `_loadRoom` BEFORE the new room queues anything, because the
+  // queue-side drop in `_updateThoughtFeed` can never see it: `_loadRoom`
+  // overwrites `_thoughtFeed` with the new room's lines in the same tick.
+  _dropRoomThoughts(nextRoomId) {
+    if (this._thoughtFeed && this._thoughtFeed.room !== nextRoomId) this._thoughtFeed = null;
+    const live = this._liveThought;
+    if (live && live.room !== nextRoomId) {
+      NotificationArbiter.dismiss(live.id);
+      this._liveThought = null;
+    }
+  }
+
+  _updateThoughtFeed() {
+    const feed = this._thoughtFeed;
+    if (!feed) return;
+    if (this.player.currentRoom !== feed.room) { this._thoughtFeed = null; return; }
+    if (performance.now() < feed.notBefore) return;
+    if (NotificationArbiter.isActive(NC.VOICE)) return;
+    const line = feed.lines.shift();
+    if (line) {
+      const id = this._showMonologue(line);
+      // Remember only the room-thought card, never a story or proximity
+      // monologue: those are about a MOMENT, not about a place, and leaving
+      // the room does not make them untrue.
+      this._liveThought = id == null ? null : { room: feed.room, id };
+    }
+    if (!feed.lines.length) this._thoughtFeed = null;
+  }
+
   _showMonologue(text) {
-    if (!text) return;
-    NotificationArbiter.monologue(text);
+    if (!text) return null;
+    return NotificationArbiter.monologue(text);
   }
 
   // ── Ambient scheduler (F-11) ──────────────────────────────────────────────
@@ -4571,6 +4676,7 @@ export class ExplorationState {
 
     this._updateWallFade(dt);
     this._updateAmbience(dt);
+    this._updateThoughtFeed();
 
     if (DEV_MODE && InputManager.isJustPressed('f2')) {
       const existing = document.getElementById('dev-panel');

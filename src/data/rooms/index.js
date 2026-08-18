@@ -417,6 +417,9 @@ export const ROOMS = {
       block_e:      [10.6, 12],
       andrews_desk: [3.6, 10.6],
       exit_south:   [9.5, 14.2],
+      // Rachel's monitor, one tile north of her chair (6, 10.8) — the
+      // `rachel_wardrobe` turn-back beat faces her here.
+      rachel_monitor: [6, 9.8],
     },
     playerSpawn: { x: 5, z: 12 },
   },
@@ -2951,6 +2954,11 @@ export const ROOMS = {
       // The middle stall. Co-placed with the stall run, which spans x 2.5-5.5
       // at z 0.4-1.6 — the invisible-interactable law (A1 B3).
       { x: 4, z: 1, type: 'stall_door', dialogId: 'bathroom_stall_door' },
+      // The mirror over the basins — the wardrobe preview. Co-placed with
+      // the west-wall sinkCounter per the invisible-interactable law; keep it
+      // within a tile of that prop if either one ever moves.
+      // No dialogId: ExplorationState._interact() pushes WardrobeState.
+      { x: 1, z: 3, type: 'wardrobe_mirror' },
     ],
     playerSpawn: { x: 4, z: 4 },
   },

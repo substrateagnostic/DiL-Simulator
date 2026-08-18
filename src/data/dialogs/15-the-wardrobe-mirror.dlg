@@ -1,0 +1,30 @@
+# ==========================================================================
+# THE WARDROBE MIRROR — Rachel catches Andrew after the first Karen loss.
+#
+# Fired by the `rachel-after-karen` trigger (story/graph.js): flag-set on
+# read_karen_first_loss_tutorial, room-guarded to cubicle_farm, 900 ms after
+# Skip's pep talk ends. Rachel is at her desk two bays over (seated, 6/10.8),
+# and stays seated — a seated actor's `face` is a clamped shoulder turn,
+# which is the entire beat. Pure suggestion: no flags, no gate; the mirror
+# interactable in the bathroom exists whether or not this scene plays.
+#
+# Prose drafted claude -p --model claude-opus-4-6 (2026-08-17, two passes)
+# and wired VERBATIM per HANDOFF_PACKAGE 4.5. Haruf register: she does the
+# kind thing and never discusses it. The accessories-after-a-bad-meeting
+# shape is played completely straight — that restraint is the reference.
+# ==========================================================================
+scene rachel_wardrobe
+  stage concurrent
+    rachel face player nowait
+  Rachel: Bathroom's down the hall. Second door.
+  Andrew: Sorry — what?
+  Rachel: There's a mirror.
+  Andrew: Do I look that bad?
+  Rachel: You look like somebody who just had their first meeting.
+  Rachel: I went my first week.
+  Andrew: Thanks, Rachel.
+  Rachel: On the left.
+  stage concurrent
+    rachel face rachel_monitor nowait
+  Narrator: Rachel turned back to her spreadsheet. Next to her monitor was a pair of reading glasses with green frames.
+  end

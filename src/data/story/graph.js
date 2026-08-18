@@ -346,6 +346,21 @@ export const TRIGGERS = [
     note: 'retry_karen remains the loss record and event source; read_karen_first_loss_tutorial is the once-guard.',
   },
   {
+    id: 'rachel-after-karen', on: 'flag-set', flag: 'read_karen_first_loss_tutorial',
+    when: ['all', ['room', 'cubicle_farm'], ['not', 'act3_complete']], once: 'scene',
+    scene: 'rachel_wardrobe', delayMs: 900, grants: [],
+    src: 'ExplorationState.js:507',
+    note: 'Rachel catches Andrew after Skip\'s post-loss pep talk and points him at the sixth-floor '
+      + 'bathroom mirror (the wardrobe). The room guard keeps an interrupted replay from firing her '
+      + 'line into a room she is not in; the per-frame replay path re-offers it the next time the '
+      + 'player stands in the farm. The ¬act3_complete term matches her own cubicle-farm exit window '
+      + '(she is gone from act3_complete on), so an interrupted scene can never replay as a '
+      + 'disembodied voice after she leaves — it silently retires instead, which is safe because the '
+      + 'scene is a pure suggestion: no grants, no gate, and the mirror interactable exists whether '
+      + 'or not it ever plays. The Down the Hall signpost keys off read_rachel_wardrobe, so a '
+      + 'retired scene also never leaves a stale objective.',
+  },
+  {
     id: 'firm-ambush-chain', on: 'flag-set', flag: 'has_recorder_seal',
     when: true, once: 'scene', scene: 'the_firm_ambush', delayMs: 500,
     grants: ['charter_certified'], src: 'ExplorationState.js:523',

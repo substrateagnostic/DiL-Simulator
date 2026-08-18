@@ -503,6 +503,44 @@ class NotificationArbiterClass {
     return this.post({ ...opts, cls: NC.VOICE, text, tone: 'monologue' });
   }
 
+  /**
+   * Drop one post by the id `post()` returned — off the screen if it is
+   * showing, out of the queue if it is still waiting. Instant, because a card
+   * that is being CANCELLED is not the same as one that timed out and gets a
+   * fade.
+   *
+   * There is exactly one caller and it should stay that way: the room-scoped
+   * thought feed in `ExplorationState`. A thought about a room stops being
+   * true the moment Andrew walks out of it, and a VOICE ttl is 2.4-9 s — long
+   * enough to outlive a door. Measured on the wardrobe flow capture: the
+   * cubicle farm's desk-plant line was still on screen 4.8 s into the
+   * Bathroom, under the Bathroom badge.
+   *
+   * NOT a general "close that toast" verb. Deferral, not destruction, is the
+   * arbiter's rule (law 3); this is the narrow exception for a card whose
+   * subject the player has physically left, and it is still logged — as
+   * `ended with the room`, so the Log tab can show what was cut. A card that
+   * already logged `shown` keeps its unread accounting (`_logStatus` updates
+   * the existing row), so this cannot inflate the badge on ordinary walking.
+   */
+  dismiss(id, logAs = 'ended with the room') {
+    if (id == null) return false;
+    for (const [, z] of this._zones) {
+      if (z.current && z.current.id === id) {
+        this._retire(z, logAs, true);
+        setTimeout(() => this._pumpAll(), 0);
+        return true;
+      }
+      const i = z.queue.findIndex(q => q.id === id);
+      if (i >= 0) {
+        const [item] = z.queue.splice(i, 1);
+        this._logStatus(item, logAs);
+        return true;
+      }
+    }
+    return false;
+  }
+
   _ttlFor(cls, o) {
     const zone = o.zone || DEFAULT_ZONE[cls];
     const bounds = (ZONES[zone] && ZONES[zone].ttl) || TTL[cls] || TTL[NC.PROGRESS];
