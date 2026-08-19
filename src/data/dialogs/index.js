@@ -4073,9 +4073,10 @@ export const DIALOGS = {
       "next": 6
     },
     {
-      "type": "text",
-      "speaker": "Janet",
-      "text": "Still alive? Good for you."
+      "type": "condition",
+      "flag": "act6_complete",
+      "ifTrue": 13,
+      "ifFalse": 7
     },
     {
       "type": "text",
@@ -4084,9 +4085,168 @@ export const DIALOGS = {
     },
     {
       "type": "end"
+    },
+    {
+      "type": "condition",
+      "flag": "janet_act6_rallied",
+      "ifTrue": 8,
+      "ifFalse": 9
+    },
+    {
+      "type": "condition",
+      "flag": "board_meeting_held",
+      "ifTrue": 9,
+      "ifFalse": 15
+    },
+    {
+      "type": "condition",
+      "flag": "act4_complete",
+      "ifTrue": 10,
+      "ifFalse": 11
+    },
+    {
+      "type": "condition",
+      "flag": "act5_complete",
+      "ifTrue": 11,
+      "ifFalse": 17
+    },
+    {
+      "type": "condition",
+      "flag": "act2_complete",
+      "ifTrue": 19,
+      "ifFalse": 12
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "Still alive? Good for you.",
+      "next": 5
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "Whatever's in that penthouse — you come back down."
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "That's the job. You go up. You come back down.",
+      "next": 6
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "Board meeting tomorrow. Thirty-two years and this is the first time I've been asked to testify for the department."
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "Make it count.",
+      "next": 6
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "Those restructuring consultants have been giving me the look. The 'your position is under review' look."
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "I've outlasted four SVPs. I'll outlast them too.",
+      "next": 6
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "You know what I've noticed? The building gets quieter the deeper you go. Like it's paying attention."
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "Or maybe I've just been here too long.",
+      "next": 6
     }
   ],
   "alex_it_return": [
+    {
+      "type": "condition",
+      "flag": "act6_complete",
+      "ifTrue": 5,
+      "ifFalse": 2
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "condition",
+      "flag": "act5_complete",
+      "ifTrue": 8,
+      "ifFalse": 3
+    },
+    {
+      "type": "condition",
+      "flag": "act4_complete",
+      "ifTrue": 11,
+      "ifFalse": 4
+    },
+    {
+      "type": "condition",
+      "flag": "knows_server_secret",
+      "ifTrue": 14,
+      "ifFalse": 17
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "I'm running interference from down here. Buying you time on their network."
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "Don't let The Algorithm run a diagnostic on you. Trust me on that one."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "Badge logs, patch history, the encrypted partition — every thread points up. To the penthouse."
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "Whatever's running up there has been running longer than Meredith. Factor that in."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "The restructuring consultants keep requesting server access. I keep telling them we're in maintenance."
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "Week three. They've stopped asking. Good."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "That encrypted partition keeps growing. Every time I think I've mapped it, there's another layer."
+    },
+    {
+      "type": "text",
+      "speaker": "Alex from IT",
+      "text": "Whatever they've been hiding, it's been accumulating for a long time."
+    },
+    {
+      "type": "end"
+    },
     {
       "type": "text",
       "speaker": "Alex from IT",
@@ -4098,9 +4258,10 @@ export const DIALOGS = {
   ],
   "intern_return": [
     {
-      "type": "text",
-      "speaker": "The Intern",
-      "text": "Hey Aiden! I mean -- whatever your name is!"
+      "type": "condition",
+      "flag": "act4_complete",
+      "ifTrue": 3,
+      "ifFalse": 4
     },
     {
       "type": "text",
@@ -4109,13 +4270,58 @@ export const DIALOGS = {
     },
     {
       "type": "end"
+    },
+    {
+      "type": "condition",
+      "flag": "act5_complete",
+      "ifTrue": 4,
+      "ifFalse": 5
+    },
+    {
+      "type": "condition",
+      "flag": "act2_complete",
+      "ifTrue": 8,
+      "ifFalse": 11
+    },
+    {
+      "type": "text",
+      "speaker": "The Intern",
+      "text": "I fought in the cubicle farm, Andrew. With a stapler. I am not the same person I was."
+    },
+    {
+      "type": "text",
+      "speaker": "The Intern",
+      "text": "Skip says I'm now 'junior trust operations support staff.' I think I got promoted? Nobody confirmed it."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "The Intern",
+      "text": "Is it just me or does the building feel different lately? Like the hallways are watching?"
+    },
+    {
+      "type": "text",
+      "speaker": "The Intern",
+      "text": "Skip said I'm 'picking up on enterprise resonance.' I wrote it down. I still don't know what it means."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "The Intern",
+      "text": "Hey Aiden! I mean -- whatever your name is!",
+      "next": 1
     }
   ],
   "diane_return": [
     {
-      "type": "text",
-      "speaker": "Diane",
-      "text": "You've got that look. The Henderson look. I've seen it before."
+      "type": "condition",
+      "flag": "diane_act6_rallied",
+      "ifTrue": 3,
+      "ifFalse": 4
     },
     {
       "type": "text",
@@ -4124,13 +4330,83 @@ export const DIALOGS = {
     },
     {
       "type": "end"
+    },
+    {
+      "type": "condition",
+      "flag": "board_meeting_held",
+      "ifTrue": 4,
+      "ifFalse": 7
+    },
+    {
+      "type": "condition",
+      "flag": "act4_complete",
+      "ifTrue": 5,
+      "ifFalse": 6
+    },
+    {
+      "type": "condition",
+      "flag": "act5_complete",
+      "ifTrue": 6,
+      "ifFalse": 10
+    },
+    {
+      "type": "condition",
+      "flag": "act3_complete",
+      "ifTrue": 13,
+      "ifFalse": 16
+    },
+    {
+      "type": "text",
+      "speaker": "Diane",
+      "text": "You get the documents?"
+    },
+    {
+      "type": "text",
+      "speaker": "Diane",
+      "text": "Board meeting's tomorrow at 4. I cleared my afternoon. This ends one way or another."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Diane",
+      "text": "The restructuring consultants keep walking past my desk without saying good morning."
+    },
+    {
+      "type": "text",
+      "speaker": "Diane",
+      "text": "That tells you everything you need to know about what they think of us."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Diane",
+      "text": "I've worked reception for twelve years. I know when something is about to break."
+    },
+    {
+      "type": "text",
+      "speaker": "Diane",
+      "text": "Something is about to break."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Diane",
+      "text": "You've got that look. The Henderson look. I've seen it before.",
+      "next": 1
     }
   ],
   "janitor_return": [
     {
       "type": "condition",
-      "flag": "janitor_return_2",
-      "ifTrue": 6
+      "flag": "has_rolex",
+      "ifTrue": 12,
+      "ifFalse": 11
     },
     {
       "type": "condition",
@@ -4178,6 +4454,58 @@ export const DIALOGS = {
       "type": "text",
       "speaker": "Narrator",
       "text": "He resumes mopping. The Rolex catches the light."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "condition",
+      "flag": "janitor_return_2",
+      "ifTrue": 6,
+      "ifFalse": 1
+    },
+    {
+      "type": "text",
+      "speaker": "Mysterious Janitor",
+      "text": "Strange to look at my wrist and see nothing there."
+    },
+    {
+      "type": "text",
+      "speaker": "Mysterious Janitor",
+      "text": "Seventy-nine years is a long time to carry something. Hand it to the right person and it weighs nothing at all."
+    },
+    {
+      "type": "end"
+    }
+  ],
+  "skip_return": [
+    {
+      "type": "condition",
+      "flag": "act2_complete",
+      "ifTrue": 4
+    },
+    {
+      "type": "text",
+      "speaker": "Skip Hartley",
+      "text": "Circle back with me after you've touched base on the Henderson action items."
+    },
+    {
+      "type": "text",
+      "speaker": "Skip Hartley",
+      "text": "And remember: every challenge is a learnable moment."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Skip Hartley",
+      "text": "Twenty years in this industry. I thought I understood how it worked."
+    },
+    {
+      "type": "text",
+      "speaker": "Skip Hartley",
+      "text": "Keep going. I'll cover things here."
     },
     {
       "type": "end"
@@ -5908,6 +6236,78 @@ export const DIALOGS = {
     }
   ],
   "isaiah_return": [
+    {
+      "type": "condition",
+      "flag": "isaiah_evidence",
+      "ifTrue": 2,
+      "ifFalse": 3
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "condition",
+      "flag": "board_meeting_held",
+      "ifTrue": 3,
+      "ifFalse": 6
+    },
+    {
+      "type": "condition",
+      "flag": "act4_complete",
+      "ifTrue": 4,
+      "ifFalse": 5
+    },
+    {
+      "type": "condition",
+      "flag": "act5_complete",
+      "ifTrue": 5,
+      "ifFalse": 9
+    },
+    {
+      "type": "condition",
+      "flag": "act2_complete",
+      "ifTrue": 12,
+      "ifFalse": 15
+    },
+    {
+      "type": "text",
+      "speaker": "Isaiah",
+      "text": "23 breached agreements. Triple-checked. The board has no defense if they see this."
+    },
+    {
+      "type": "text",
+      "speaker": "Isaiah",
+      "text": "Ready when you are."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Isaiah",
+      "text": "Eleven years. I have eleven years of receipts, Andrew."
+    },
+    {
+      "type": "text",
+      "speaker": "Isaiah",
+      "text": "When this is over, someone is going to have a very bad audit."
+    },
+    {
+      "type": "end"
+    },
+    {
+      "type": "text",
+      "speaker": "Isaiah",
+      "text": "I've been pulling operational records back to 2018. You'd be surprised what shows up if you look long enough."
+    },
+    {
+      "type": "text",
+      "speaker": "Isaiah",
+      "text": "Or maybe you wouldn't. You seem like someone who looks."
+    },
+    {
+      "type": "end"
+    },
     {
       "type": "text",
       "speaker": "Isaiah",

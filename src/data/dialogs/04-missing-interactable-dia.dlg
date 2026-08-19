@@ -409,7 +409,38 @@ scene isaiah_intro
   Isaiah: Anytime you need something, come find me. I'm usually near the water cooler.
   end
 
+# ANDREW-AMBIENT (harvest of andrew-lc 9aad2f1) — act-aware ambient variants,
+# in-place dispatch + appended tail, story-flag gated. See the block comment
+# above janet_return in 03-act-3-endings.dlg for the full wiring rationale.
 scene isaiah_return
+  if isaiah_evidence -> sc6 else -> sd2
+  end
+
+  # -- appended ambient dispatch + variants (Andrew, ported) --
+  @sc6
+  if board_meeting_held -> sd2 else -> sa6
+  @sd2
+  if act4_complete -> sc5 else -> sd3
+  @sc5
+  if act5_complete -> sd3 else -> sa5
+  @sd3
+  if act2_complete -> sa3 else -> sbase
+  # '23 breached agreements' matches canon exactly (isaiah_act6, the board
+  # meeting: '23 separate trust agreements').
+  @sa6
+  Isaiah: 23 breached agreements. Triple-checked. The board has no defense if they see this.
+  Isaiah: Ready when you are.
+  end
+  # 'Eleven years' is his canonical tenure (act-3 file, twice).
+  @sa5
+  Isaiah: Eleven years. I have eleven years of receipts, Andrew.
+  Isaiah: When this is over, someone is going to have a very bad audit.
+  end
+  @sa3
+  Isaiah: I've been pulling operational records back to 2018. You'd be surprised what shows up if you look long enough.
+  Isaiah: Or maybe you wouldn't. You seem like someone who looks.
+  end
+  @sbase
   Isaiah: Hey! Need anything? You know I'm always happy to help.
   end
 

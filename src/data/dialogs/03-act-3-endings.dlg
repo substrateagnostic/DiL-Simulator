@@ -347,6 +347,14 @@ scene intern_retry
 # ==========================================================================
 # POST-COMBAT / RETURN DIALOGS
 # ==========================================================================
+# ANDREW-AMBIENT (harvest of andrew-lc 9aad2f1). The _return trees below
+# carry act-aware ambient variants ported from Andrew's May branch, wired the
+# way the current game serves evergreen ambience: an in-place dispatch at the
+# repeat-visit site plus appended tails (the WORKING-STYLE VARIANT shape), on
+# story flags rather than his _return_aN ladder rungs — no routing change, no
+# new scene ids except skip_return, save keys untouched. Lines are his,
+# verbatim except where a rename or a canon fact required otherwise; every
+# departure is flagged inline.
 scene janet_return
   if lunch_thief_started -> n4
   Janet: Oh — before I forget. Someone's been stealing lunches from the fridge. My money's on Alex from IT, but the Janitor says it's 'an inside job.' Whatever that means.
@@ -355,28 +363,152 @@ scene janet_return
   goto n6
 
   @n4
-  Janet: Still alive? Good for you.
+  if act6_complete -> ja7 else -> jd1
+
+  @jsip
   Janet: *sip*
 
   @n6
   end
 
+  # -- appended ambient dispatch + variants (Andrew, ported) --
+  @jd1
+  if janet_act6_rallied -> jc6 else -> jd2
+  @jc6
+  if board_meeting_held -> jd2 else -> ja6
+  @jd2
+  if act4_complete -> jc5 else -> jd3
+  @jc5
+  if act5_complete -> jd3 else -> ja5
+  @jd3
+  if act2_complete -> ja3 else -> jbase
+  @jbase
+  Janet: Still alive? Good for you.
+  goto jsip
+  @ja7
+  Janet: Whatever's in that penthouse — you come back down.
+  Janet: That's the job. You go up. You come back down.
+  goto n6
+  # Her canonical tenure is thirty-two years (twice in the act-7 file:
+  # janet_act7 and the name-on-the-door scene); Andrew's line agrees with it
+  # and sets up that payoff. (The team_chat_hub act-7 branch has her saying
+  # 'twelve years' — a pre-existing corpus contradiction, flagged upstream,
+  # not introduced or resolvable here.)
+  @ja6
+  Janet: Board meeting tomorrow. Thirty-two years and this is the first time I've been asked to testify for the department.
+  Janet: Make it count.
+  goto n6
+  @ja5
+  Janet: Those restructuring consultants have been giving me the look. The 'your position is under review' look.
+  Janet: I've outlasted four SVPs. I'll outlast them too.
+  goto n6
+  @ja3
+  Janet: You know what I've noticed? The building gets quieter the deeper you go. Like it's paying attention.
+  Janet: Or maybe I've just been here too long.
+  goto n6
+
 scene alex_it_return
+  if act6_complete -> xa7 else -> xd1
+  end
+
+  # -- appended ambient dispatch + variants (Andrew, ported) --
+  @xd1
+  if act5_complete -> xa6 else -> xd2
+  @xd2
+  if act4_complete -> xa5 else -> xd3
+  @xd3
+  if knows_server_secret -> xa3 else -> xbase
+  @xa7
+  Alex from IT: I'm running interference from down here. Buying you time on their network.
+  Alex from IT: Don't let The Algorithm run a diagnostic on you. Trust me on that one.
+  end
+  # Rename per the naming law: Andrew's line said 'running longer than
+  # Rachel' — the SVP is Meredith Sterling now.
+  @xa6
+  Alex from IT: Badge logs, patch history, the encrypted partition — every thread points up. To the penthouse.
+  Alex from IT: Whatever's running up there has been running longer than Meredith. Factor that in.
+  end
+  @xa5
+  Alex from IT: The restructuring consultants keep requesting server access. I keep telling them we're in maintenance.
+  Alex from IT: Week three. They've stopped asking. Good.
+  end
+  # Gated on knows_server_secret, not act — 'that encrypted partition'
+  # presupposes the reveal, which is 100% missable before alex_it_act3.
+  @xa3
+  Alex from IT: That encrypted partition keeps growing. Every time I think I've mapped it, there's another layer.
+  Alex from IT: Whatever they've been hiding, it's been accumulating for a long time.
+  end
+  @xbase
   Alex from IT: Can't talk. Running a packet trace. Also your printer is still possessed — that's not a ticket, that's a relationship.
   end
 
 scene intern_return
-  The Intern: Hey Aiden! I mean -- whatever your name is!
+  if act4_complete -> ic5 else -> id2
+
+  @icont
   The Intern: I would talk more but Skip has me reorganizing the filing cabinets by 'vibrational frequency.' I don't know what that means and I'm afraid to ask.
   end
 
+  # -- appended ambient dispatch + variants (Andrew, ported) --
+  @ic5
+  if act5_complete -> id2 else -> ia5
+  @id2
+  if act2_complete -> ia3 else -> ibase
+  # 'Ross' -> 'Skip' per the naming law. The cubicle-farm fight he means is
+  # his own required act-1 spar with Andrew — the only fight he has been in,
+  # and it did happen in the cubicle farm.
+  @ia5
+  The Intern: I fought in the cubicle farm, Andrew. With a stapler. I am not the same person I was.
+  The Intern: Skip says I'm now 'junior trust operations support staff.' I think I got promoted? Nobody confirmed it.
+  end
+  @ia3
+  The Intern: Is it just me or does the building feel different lately? Like the hallways are watching?
+  The Intern: Skip said I'm 'picking up on enterprise resonance.' I wrote it down. I still don't know what it means.
+  end
+  @ibase
+  The Intern: Hey Aiden! I mean -- whatever your name is!
+  goto icont
+
 scene diane_return
-  Diane: You've got that look. The Henderson look. I've seen it before.
+  if diane_act6_rallied -> dc6 else -> dd2
+
+  @dcont
   Diane: Bottom drawer. Antacids. Seriously.
   end
 
+  # -- appended ambient dispatch + variants (Andrew, ported) --
+  @dc6
+  if board_meeting_held -> dd2 else -> da6
+  @dd2
+  if act4_complete -> dc5 else -> dd3
+  @dc5
+  if act5_complete -> dd3 else -> da5
+  @dd3
+  if act3_complete -> da4 else -> dbase
+  # 'tomorrow at 4' matches canon (skip_act6, the Intern's coffee mission).
+  @da6
+  Diane: You get the documents?
+  Diane: Board meeting's tomorrow at 4. I cleared my afternoon. This ends one way or another.
+  end
+  @da5
+  Diane: The restructuring consultants keep walking past my desk without saying good morning.
+  Diane: That tells you everything you need to know about what they think of us.
+  end
+  # REWORDED from Andrew's 'eleven years': Isaiah's canonical tenure is
+  # eleven years and the ledger's D. Okafor is '11 yrs' — three elevens read
+  # as copy-paste. Diane says twelve in diane_act3, the adjacent act.
+  @da4
+  Diane: I've worked reception for twelve years. I know when something is about to break.
+  Diane: Something is about to break.
+  end
+  @dbase
+  Diane: You've got that look. The Henderson look. I've seen it before.
+  goto dcont
+
 scene janitor_return
-  if janitor_return_2 -> n6
+  if has_rolex -> ta6 else -> tchain
+
+  @tc1
   if janitor_return_1 -> n4
   Mysterious Janitor: Page 47. Don't forget.
   set janitor_return_1
@@ -394,6 +526,40 @@ scene janitor_return
 
   @n9
   Narrator: He resumes mopping. The Rolex catches the light.
+  end
+
+  # -- appended ambient dispatch + variant (Andrew, ported) --
+  # The has_rolex branch also fixes a shipped continuity slip: the base
+  # cycle's n9 says 'The Rolex catches the light' after the handover.
+  @tchain
+  if janitor_return_2 -> n6 else -> tc1
+  # Seventy-nine years = 1947, the number his whole canon keeps not
+  # explaining. The variant ends WITHOUT n9 — no Rolex to catch the light.
+  @ta6
+  Mysterious Janitor: Strange to look at my wrist and see nothing there.
+  Mysterious Janitor: Seventy-nine years is a long time to carry something. Hand it to the right person and it weighs nothing at all.
+  end
+
+# ANDREW-AMBIENT: skip_return is NEW (Andrew: 'adding base ross_return which
+# didn't exist'). The ladder serves <id>_return AFTER every unread _actN
+# story beat, so his unread act scenes still fire first; what this replaces
+# is the read-actN replay / neutral_skip fallback. His a6 'The speech is
+# ready' variant was DROPPED as unreachable: once skip_speech_ready is set
+# Skip physically moves to the board room, where his entry pins the
+# board_meeting set-piece — no ladder-served window exists. Its 2003 beat
+# already lives in canon (skip_act6: 'I haven't been sincere since 2003').
+scene skip_return
+  if act2_complete -> ka4
+  Skip Hartley: Circle back with me after you've touched base on the Henderson action items.
+  Skip Hartley: And remember: every challenge is a learnable moment.
+  end
+  # Andrew authored this for act 4+; it is gated on act2_complete (post-
+  # Henderson) instead, because at act 3 his worldview has already cracked
+  # (skip_act3: 'Nobody's ever been immune before') and the alternative was
+  # serving the stale Henderson synergy line above.
+  @ka4
+  Skip Hartley: Twenty years in this industry. I thought I understood how it worked.
+  Skip Hartley: Keep going. I'll cover things here.
   end
 
 # --------------------------------------------------------------------------
