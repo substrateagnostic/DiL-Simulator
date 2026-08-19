@@ -40,7 +40,10 @@
   <link rel="stylesheet" href="/styles/menu.css" />
   <link rel="stylesheet" href="/styles/transitions.css" />
   <link rel="stylesheet" href="/styles/client-review.css" />
-  <link rel="stylesheet" href="/styles/arcade.css" />
+  <!-- No arcade stylesheet: SPRINT REVIEW's HUD injects its own `sr-`-prefixed
+       CSS from src/arcade/Hud.js. styles/arcade.css was the STAGECOACH STAMPEDE
+       sheet the rebuild replaced; its 19 selectors had zero references left in
+       src/ or tools/ and it is deleted. -->
   <link rel="stylesheet" href="/styles/touch.css" />
 </head>
 <body>
