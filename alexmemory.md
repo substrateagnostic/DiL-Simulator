@@ -1,3 +1,28 @@
+## [THE ANDREW HARVEST — 08-18 (Fable lane, judged PASS)]
+
+Andrew's forgotten May branch (`origin/andrew`, PR #10, 17 commits) was read, ruled
+on by Alex, and harvested by re-implementation in three commits (`b0c9d6d` routing,
+`7063bc8` prose, `d6aa701` editor), Andrew credited in each body. Highlights:
+- **Routing:** his garage-janitor diagnosis was still live in main; riddle rows now
+  carry row-level `room: 'archive'` filters (row filters, NOT when-terms — check G's
+  room enumeration only reaches row-level rooms), mirrored in `_getDialogIdLegacy`,
+  `_dr-route-diff` zero mismatches. Cast change DECLINED (Janitor's patrol is story
+  texture). New `janitor_garage` sweep line is MY authorship, not Opus-4.6-drafted —
+  redline in playtest per the prose law. Probe: `tools/_ah-garage-probe.mjs`.
+- **Prose:** 19/21 of his act-aware ambient lines wired as flag dispatches inside
+  existing `_return` trees (lock purely additive). Renames per the sweep; Diane
+  eleven→twelve years (Isaiah owns eleven); 2 dropped unreachable. Judge found a
+  PRE-EXISTING Janet contradiction (twelve vs thirty-two years, team_chat_hub a7 vs
+  janet_act7) — flagged, not fixed. Intern's stapler = his comic overstatement, kept.
+  Post-game penthouse_bar now serves Skip/Diane a4 lines over neutral — playtest call.
+- **Editor:** zoom, facing arrows (his were 180° out — coded to the pre-sweep inverted
+  rotation doc), exit overlay, R-rotate, undo/redo, SSE live preview via debounced
+  in-place `_loadRoom()` rebuild (statics are batched; mesh-nudge impossible). Dev-only,
+  dist greps clean. Auto-save-on-drop opt-in OFF, honoring Andrew's own removal reason.
+  Demo: `tools/_ah-editor-demo.mjs` 8/8, stills `screenshots/ah-run/editor/`.
+- GitHub ceremony (comment credit, close PR #10, delete both stale branches) run by
+  the director after this block; `origin/Andrew` (capital) was an empty April ref.
+
 ## [RESUME HERE — 08-18, the wave is MERGED]
 
 **Main advanced 62cfc52 → d5d4f7e and pushed (Vercel live).** Every lane of the
