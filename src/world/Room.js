@@ -358,7 +358,31 @@ export const FURNITURE_FOOTPRINTS = {
   // Previously unlisted (default 1x1) or NO_BLOCK items that read solid —
   // players walked through them (S5-COLL, Alex playtest):
   couch:              { w: 3, h: 1, ox: -1, oz: 0 },   // 2.32 wide
-  loungeBar:          { w: 5, h: 1, ox: -2, oz: 0 },   // 4.1 wide
+  // 4.1 wide (marble top) and — the part the 1-row block missed — 0.99 DEEP in
+  // the body band: backbar shelf at local z -0.30 through stool seats at +0.69.
+  // Every placement sits at z 1.0, so the counter's north 0.30 m stood on
+  // WALKABLE row 0 in all three rooms it appears in (ghost-walk --probe,
+  // blocking-mesh coverage on row 0: luckys x 5-9 = 0.167/0.333/0.333/0.333/
+  // 0.167, and 0.167/0.333/0.167 at the ends and centre of the other two runs)
+  // — i.e. the player could stand inside the counter from the staff side. Same
+  // class as grandDesk and conferenceTable above: a centred mesh deeper than
+  // half a tile straddles two rows, and one-row blocking leaves the far half
+  // walk-through.
+  // The 0.70 m of row 0 the second row costs is the sliver of staff alley
+  // between the backbar and the player's own EDGE_CLAMP; nobody should be
+  // behind a diner counter.
+  //
+  // THE RUN ENDS STAY SLIGHTLY EMPTY AND THAT IS THE CHEAPER ERROR. A 4.1 m top
+  // cannot be wrapped by a whole number of 1 m tiles, so the 5-tile block
+  // carries 0.45 m of slack at each end and Lucky's (5,1)/(9,1) measure mesh
+  // 0.167/0.194, grp 0.333 — just under the GHOST thresholds (0.15 mesh AND
+  // 0.35 grp), which is why the gate has never reported them. Same phenomenon,
+  // same reasoning as the two RUN-END rows in ghost-walk's WAIVERS. They get no
+  // waiver row because a waiver that matches zero faults is the hole that file
+  // deleted one of; they get this comment instead. The alternative — a 4-tile
+  // block — leaves 0.55 m of counter END standing on walkable floor, which is
+  // the defect above in miniature.
+  loungeBar:          { w: 5, h: 2, ox: -2, oz: -1 },
   leatherArmchair:    { w: 1, h: 1, ox: 0, oz: 0 },
   coffeeTable:        { w: 1, h: 1, ox: 0, oz: 0 },
   pokerTable:         { w: 3, h: 3, ox: -1, oz: -1 },  // 2.93x2.79 centered

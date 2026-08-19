@@ -665,7 +665,12 @@ export const ROOMS = {
       { type: 'portraitPainting', x: 8.5, z: 0.1,  rotation: 0 },
 
       // === West wall — credenza + file cabinets behind desk ===
-      { type: 'credenza',    x: 0.5, z: 4 },
+      // z 4.45, not 4: the 2.90 m body centres on its three blocked rows
+      // (4.05-6.95). At z 4 it ran 3.60-6.50 and 0.40 m of it stood on walkable
+      // row 3, which the player CAN reach here — x 0.5 puts the mesh at
+      // 0.18-0.82 and the clamp starts at 0.4. Same edit as the board room's
+      // two; x was already on the sweep's half-tile convention.
+      { type: 'credenza',    x: 0.5, z: 4.45 },
       { type: 'fileCabinet', x: 1.5, z: 1.5 },
       { type: 'fileCabinet', x: 2.5, z: 1.5 },
 
@@ -1847,8 +1852,26 @@ export const ROOMS = {
       { type: 'grandPainting', x: 12, z: 0.08 },
 
       // ── Credenzas — butted against west and east walls, drawers face inward ──
-      { type: 'credenza',     x: 0,  z: 4 },   // west wall, front faces east (+x)
-      { type: 'credenzaEast', x: 14, z: 4 },   // east wall, front faces west (-x)
+      // Both were on the pre-sweep INTEGER convention and both blocks sat off
+      // their own mesh. The credenza body is 0.64 x 2.90 and its 1x3 block is
+      // [floor(x), floor(x)+1) x [floor(z), floor(z)+3), so at (0,4)/(14,4):
+      //   z  mesh ran 3.60-6.50 against a block of [4,7) — 0.40 m of credenza
+      //      standing on WALKABLE row 3 and the last blocked row only half
+      //      covered (ghost-walk --probe: (·,6) 0.167 against (·,4) 0.333).
+      //   x  credenzaEast's mesh ran 13.68-14.32 against a block of [14,15), so
+      //      0.32 m of it stood on walkable tiles (13,4/5/6) at 0.333 coverage
+      //      — a real walk-through, since the player clamp reaches x 14.6.
+      // z 4.45 centres the 2.90 m body on its three rows (4.05-6.95); x 14.5 is
+      // the sweep's own half-tile convention (fileCabinet/serverRack, d5d4f7e),
+      // and it moves the east credenza 0.5 m TOWARD the east wall it is
+      // described as butted against (gap 1.18 -> 0.68 m). The west credenza
+      // keeps x 0: its mesh is already inside the wall's dead zone (max x 0.32
+      // against an EDGE_CLAMP of 0.4, so it can never be walked into) and
+      // moving it to 0.5 would open a 0.68 m gap behind it to buy coverage on a
+      // tile no body can reach. The 0.333 that leaves is the endemic wall-hug
+      // skew the ghost-walk header names, not a fault.
+      { type: 'credenza',     x: 0,    z: 4.45 },   // west wall, front faces east (+x)
+      { type: 'credenzaEast', x: 14.5, z: 4.45 },   // east wall, front faces west (-x)
 
       // ── Executive globe — NE corner ──
       { type: 'globeStand', x: 14, z: 2 },
@@ -1973,6 +1996,10 @@ export const ROOMS = {
       table_s_east:  [9, 7],
       table_n_mid:   [8, 3],      // north-side chair
       table_edge_s:  [8, 8],      // standing at the table, south side
+      // The credenza this names now spans x 14.18-14.82, z 4.05-6.95 (it moved
+      // 0.5 m east and 0.45 m south in the small-debts round), so a body here
+      // stands 0.78 m off its front face instead of 0.28 m — i.e. AT the
+      // sideboard rather than inside it. Unused by any stage beat today.
       carafe:        [13.4, 4],   // the credenza the twelfth member crosses to
       aisle_s:       [8, 9],
       aisle_n:       [8, 2],

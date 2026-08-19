@@ -47,10 +47,15 @@
 //
 //   node tools/ghost-walk.mjs [--port=5173] [--rooms=a,b] [--states=fresh,act7,post]
 //        [--json=path] [--overlays] [--overlayall] [--nooverlay]
-//        [--nofail] [--nowaive] [--dumpboxes]
+//        [--nofail] [--nowaive] [--dumpboxes] [--probe=room:x,z;room:x,z]
 //
 //   --nowaive    ignore the WAIVERS table. Must print exactly the rows in it
 //                and exit 1 — how you show the gate still bites.
+//   --probe      print coverage for NAMED cells whether or not they fault.
+//                Sub-threshold cells are invisible to the fault table by
+//                construction, and the honest way to argue about one is to
+//                read the same numbers the thresholds compare against — off
+//                this instrument, not off a second copy of its math.
 //   --dumpboxes  write measured per-prop world AABBs into the JSON. This is
 //                how you answer "what is actually standing on that tile"
 //                instead of reasoning about it from the factory source.
@@ -114,6 +119,17 @@ const NO_FAIL = has('nofail');
 // stale reason. Run it whenever you touch collision — it should print exactly
 // the rows in WAIVERS and exit 1.
 const NO_WAIVE = has('nowaive');
+// `--probe=room:x,z;room:x,z` prints per-cell coverage for NAMED cells whether
+// or not they fault. It exists because the three defects this gate reported to
+// its judge and did NOT fail on were all SUB-THRESHOLD, and the only way to
+// argue about a sub-threshold cell honestly is to read the same numbers the
+// thresholds are compared against — off THIS instrument, not off a second copy
+// of its coverage math. Read-only: it changes no fault, no waiver, no exit code.
+const PROBE = arg('probe', '').split(';').map(s => s.trim()).filter(Boolean).map(s => {
+  const [room, cell] = s.split(':');
+  const [x, z] = String(cell || '').split(',').map(Number);
+  return { room, x, z };
+});
 
 // ---------------------------------------------------------------------------
 // WAIVERS — deliberate blocks / accepted reads, BY NAME, with a reason.
@@ -573,7 +589,21 @@ function analyze(p) {
     }
   }
 
-  return { faults, comp: Array.from(comp), spawnCell, reachFn: null };
+  // --- named probes (read-only; see --probe) ------------------------------
+  const probes = [];
+  for (const q of PROBE) {
+    if (q.room !== p.id && q.room !== p.actualId) continue;
+    const c = covAt(q.x, q.z);
+    probes.push({
+      x: q.x, z: q.z,
+      grid: walkVal(q.x, q.z),
+      reach: reach(q.x, q.z),
+      mesh: c.mesh, meshBlk: c.meshBlk, grp: c.grp,
+      by: (blockedBy.get(`${q.x},${q.z}`) || []).join(' + ') || '-',
+    });
+  }
+
+  return { faults, probes, comp: Array.from(comp), spawnCell, reachFn: null };
 }
 
 // cross-room exit landing checks (needs every room of the state analyzed)
@@ -785,6 +815,7 @@ const OVERLAY_CLEANUP = () => {
 
   const VARIANT_IDS = new Set(['skip_office_large', 'penthouse_expanded']);
   const allFaults = [];
+  const allProbes = [];
   const report = { generated: new Date().toISOString(), states: {} };
 
   for (const state of STATES) {
@@ -828,6 +859,9 @@ const OVERLAY_CLEANUP = () => {
       for (const f of analyses[rid].faults) {
         allFaults.push({ state: state.key, room: rid, actualId: payload.actualId, ...f });
       }
+      for (const q of analyses[rid].probes || []) {
+        allProbes.push({ state: state.key, room: rid, actualId: payload.actualId, ...q });
+      }
     }
     allFaults.push(...crossCheck(state.key, payloads, analyses));
     report.states[state.key] = {
@@ -861,6 +895,20 @@ const OVERLAY_CLEANUP = () => {
   }
   console.log(`\nTOTALS: ${live.length} faults, ${infos.length} info, ${waived.length} waived  (${((Date.now() - t0) / 1000).toFixed(1)}s)`);
 
+  // ---- probe table (read-only diagnostic; see --probe) ----
+  if (PROBE.length) {
+    console.log('\n=== PROBE — named cells, coverage regardless of threshold ===');
+    console.log(`    (GHOST fires on mesh < ${GHOST_MESH_MAX} AND grp < ${GHOST_GROUP_MAX}; PHANTOM on grp >= ${PHANTOM_GROUP_MIN})`);
+    const GRIDNAME = { 0: 'walk', 1: 'BLOCK', 2: 'inter', 3: 'exit' };
+    for (const q of allProbes) {
+      console.log(
+        `    ${q.state.padEnd(6)} ${q.room.padEnd(16)} @${q.x},${q.z}`.padEnd(46) +
+        ` ${(GRIDNAME[q.grid] || q.grid)}  reach=${q.reach ? 'y' : 'n'}` +
+        `  mesh ${q.mesh.toFixed(3)}  meshBlk ${q.meshBlk.toFixed(3)}  grp ${q.grp.toFixed(3)}   by ${q.by}`);
+    }
+    if (!allProbes.length) console.log('    (no probed cell matched a walked room)');
+  }
+
   // ---- overlays ----
   if (!NO_OVERLAY) {
     const faultyKeys = new Set(
@@ -884,6 +932,7 @@ const OVERLAY_CLEANUP = () => {
   }
 
   report.faults = allFaults;
+  if (PROBE.length) report.probes = allProbes;
   report.totals = { faults: live.length, info: infos.length, waived: waived.length, runtimeSec: (Date.now() - t0) / 1000 };
   fs.mkdirSync(path.dirname(path.resolve(JSON_OUT)), { recursive: true });
   fs.writeFileSync(path.resolve(JSON_OUT), JSON.stringify(report, null, 1));
