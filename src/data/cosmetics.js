@@ -77,6 +77,14 @@ export const COSMETICS = {
   },
 
   // --- Badges ---
+  visitor_badge: {
+    name: 'Temporary Visitor Badge',
+    description: 'Valid for one business day. Issued eleven months ago. +1 DEF',
+    slot: 'badge',
+    stats: { def: 1 },
+    visual: { type: 'badge', color: 0xf0d060 },
+    unlock: 'default', // day-one — the BADGE rack is otherwise empty until bestiary_intern
+  },
   intern_badge: {
     name: 'Intern Badge',
     description: '"HELLO MY NAME IS..." Surprisingly endearing. +5 HP',
