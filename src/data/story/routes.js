@@ -132,38 +132,48 @@ export const DIALOG_ROUTES = [
     src: 'ExplorationState.js:2797-2803',
   },
   {
-    id: 'janitor-story-or-riddle-router', npc: 'janitor',
+    id: 'janitor-story-or-riddle-router', npc: 'janitor', room: 'archive',
     when: ['all', JANITOR_BEAT, JANITOR_RIDDLE, ['dialogExists', 'janitor_router'], ['pred', 'stashJanitorRoutes']],
     then: 'janitor_router',
-    why: 'When an Archive story beat and a riddle are both live, the player chooses and both destinations are stashed for the flag listener.',
+    why: 'When an Archive story beat and a riddle are both live, the player chooses and both destinations are stashed for the flag listener. Room-scoped to the Archive with the riddle rows (Andrew\'s bb534b4 diagnosis): the beat dialogIds only exist on Archive entries, but the riddle half of this pairing must never pair a beat with a riddle anywhere else.',
     src: 'ExplorationState.js:2805-2837',
   },
   {
     id: 'janitor-story-beat', npc: 'janitor',
     when: JANITOR_BEAT,
     then: ['npcDialogId'],
-    why: 'A hardcoded Archive Janitor story beat outranks the riddle chain when the router cannot be served.',
+    why: 'A hardcoded Archive Janitor story beat outranks the riddle chain when the router cannot be served. No room term needed: the four beat dialogIds exist only on Archive room entries, so this row is Archive-bound through npcDialogId by construction.',
     src: 'ExplorationState.js:2816-2838',
   },
+  // THE GARAGE LEAK (Andrew, bb534b4, re-diagnosed against the table): the
+  // parking-garage Janitor patrol has NO dialogId, and these riddle rows carried
+  // no room term — so from act 3 until all three riddles were answered, every
+  // E-press on the garage patrol served an Archive riddle in the garage, and a
+  // wrong answer re-served it forever (wrong answers set no done-flag). The
+  // riddles are the Archive Janitor's chain (gated on his Archive act-3 scene);
+  // they are now room-scoped there. The producer declined Andrew's cast change
+  // (a separate parking attendant) — the Mysterious Janitor's garage patrol is
+  // deliberate story texture (a predecessor object is on a garage pillar) — so
+  // the garage instead gets its own ambient row further down.
   {
-    id: 'janitor-riddle-one', npc: 'janitor',
+    id: 'janitor-riddle-one', npc: 'janitor', room: 'archive',
     when: ['all', ['act', '>=', 3], 'met_janitor', 'read_janitor_act3', ['not', 'janitor_riddle_1_done'], ['dialogExists', 'janitor_riddle_1']],
     then: 'janitor_riddle_1',
-    why: 'The first unfinished existing Janitor riddle is served after his Act 3 unlock.',
+    why: 'The first unfinished existing Janitor riddle is served after his Act 3 unlock — in the Archive only, so the garage patrol stops dispensing riddles.',
     src: 'ExplorationState.js:2823-2839',
   },
   {
-    id: 'janitor-riddle-two', npc: 'janitor',
+    id: 'janitor-riddle-two', npc: 'janitor', room: 'archive',
     when: ['all', ['act', '>=', 3], 'met_janitor', 'read_janitor_act3', ['not', 'janitor_riddle_2_done'], ['dialogExists', 'janitor_riddle_2']],
     then: 'janitor_riddle_2',
-    why: 'The second unfinished existing Janitor riddle follows the first by table priority.',
+    why: 'The second unfinished existing Janitor riddle follows the first by table priority, Archive-scoped like the first.',
     src: 'ExplorationState.js:2823-2839',
   },
   {
-    id: 'janitor-riddle-three', npc: 'janitor',
+    id: 'janitor-riddle-three', npc: 'janitor', room: 'archive',
     when: ['all', ['act', '>=', 3], 'met_janitor', 'read_janitor_act3', ['not', 'janitor_riddle_3_done'], ['dialogExists', 'janitor_riddle_3']],
     then: 'janitor_riddle_3',
-    why: 'The third unfinished existing Janitor riddle follows the first two by table priority.',
+    why: 'The third unfinished existing Janitor riddle follows the first two by table priority, Archive-scoped like both.',
     src: 'ExplorationState.js:2823-2839',
   },
   {
@@ -473,42 +483,42 @@ export const DIALOG_ROUTES = [
     id: 'janitor-names-return', npc: 'janitor',
     when: ['all', 'has_rolex', ['dialogExists', 'janitor_names_offer'], ['not', 'janitor_names_complete'], 'janitor_has_ledger'],
     then: 'janitor_names_return',
-    why: 'The Janitor receives the recovered ledger before repeating the Names mission offer.',
+    why: 'The Janitor receives the recovered ledger before repeating the Names mission offer. DELIBERATELY no room term (garage-leak sweep ruling): the personal ledger mission follows the man, so mid-mission a garage E-press serves the mission rows — which sit ABOVE the garage sweep line by design — and the offer text itself carries the Vault location.',
     src: 'ExplorationState.js:3112-3121',
   },
   {
     id: 'janitor-names-offer', npc: 'janitor',
     when: ['all', 'has_rolex', ['dialogExists', 'janitor_names_offer'], ['not', 'janitor_names_complete']],
     then: 'janitor_names_offer',
-    why: 'The Janitor\'s Names mission opens after the Rolex changes hands.',
+    why: 'The Janitor\'s Names mission opens after the Rolex changes hands. DELIBERATELY no room term, same ruling as janitor-names-return: the mission follows the man, and the garage patrol serving the offer outranks the sweep line on purpose.',
     src: 'ExplorationState.js:3112-3121',
   },
   {
     id: 'janitor-dave', npc: 'janitor',
     when: ['all', 'met_janitor', 'printer_quest_done', ['not', 'dave_janitor_done'], ['dialogExists', 'janitor_dave']],
     then: 'janitor_dave',
-    why: 'The Janitor explains Dave after the printer note is found, once.',
+    why: 'The Janitor explains Dave after the printer note is found, once. DELIBERATELY no room term (garage-leak sweep ruling): a once-scene about a person, behind its own done-flag, serveable wherever he is found — including the garage patrol.',
     src: 'ExplorationState.js:3123-3132',
   },
   {
     id: 'janitor-predecessors', npc: 'janitor',
     when: ['all', 'met_janitor', 'predecessors_all_found', ['not', 'read_janitor_predecessors'], ['dialogExists', 'janitor_predecessors']],
     then: 'janitor_predecessors',
-    why: 'The Janitor names the three predecessors once all their objects have been found.',
+    why: 'The Janitor names the three predecessors once all their objects have been found. DELIBERATELY no room term (garage-leak sweep ruling): one of the three objects is the garage pillar, so the payoff firing on the garage patrol — the player turns from the pillar and he is right there — is the best version of the scene, and it is a once-scene behind its own read flag.',
     src: 'ExplorationState.js:3134-3147',
   },
   {
     id: 'janitor-pattern', npc: 'janitor',
     when: ['all', 'janitor_names_complete', ['not', 'read_janitor_pattern'], ['dialogExists', 'janitor_pattern']],
     then: 'janitor_pattern',
-    why: 'After the Names mission, the Janitor identifies the building-wide pattern once.',
+    why: 'After the Names mission, the Janitor identifies the building-wide pattern once. DELIBERATELY no room term (garage-leak sweep ruling): this is a payoff about the man and the building, not the Archive room — the ledger mission rows above it are equally room-free, so the personal chain stays serveable wherever he is found, and the read flag makes it a once-scene.',
     src: 'ExplorationState.js:3149-3158',
   },
   {
     id: 'janitor-the-name', npc: 'janitor',
     when: ['all', 'janitor_names_complete', 'read_janitor_pattern', ['not', 'read_janitor_the_name'], ['dialogExists', 'janitor_the_name']],
     then: 'janitor_the_name',
-    why: 'The Janitor reveals his name only after the broader pattern scene, and only once.',
+    why: 'The Janitor reveals his name only after the broader pattern scene, and only once. DELIBERATELY no room term, same ruling as janitor-pattern: the name is about him, not about a room.',
     src: 'ExplorationState.js:3160-3172',
   },
   {
@@ -517,6 +527,13 @@ export const DIALOG_ROUTES = [
     then: 'janitor_intro',
     why: 'The timeless Janitor introduction is the first half of his terminal fallback.',
     src: 'ExplorationState.js:3174-3183',
+  },
+  {
+    id: 'janitor-garage-sweep', npc: 'janitor', room: 'parking_garage',
+    when: ['all', 'met_janitor', ['dialogExists', 'janitor_garage']],
+    then: 'janitor_garage',
+    why: 'The garage patrol\'s own ambient line. With the riddle rows Archive-scoped, the garage E-press fell through to the Archive small-talk tree (Page 47, the Rolex catching the light); the patrol now sweeps and says something short and slightly wrong instead. First meeting still serves janitor_intro above — B7 established that the intro is deliberately reachable in the garage. Sits below every once-payoff row so the predecessors/pattern/name chain still lands here.',
+    src: 'ExplorationState.js:3320-3323',
   },
   {
     id: 'janitor-terminal-return', npc: 'janitor',

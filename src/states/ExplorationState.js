@@ -2961,7 +2961,12 @@ export class ExplorationState {
       ? npc.dialogId : null;
 
     let janitorRiddle = null;
-    if (id === 'janitor' && act >= 3
+    // THE GARAGE LEAK (Andrew, bb534b4): the parking-garage patrol has no
+    // dialogId, and this block carried no room term — so from act 3 the garage
+    // Janitor dispensed Archive riddles. Archive-scoped here AND in the routing
+    // table (rows janitor-riddle-one/two/three + the router row), identically,
+    // so ?routes=legacy and tools/_dr-route-diff.mjs stay in exact agreement.
+    if (id === 'janitor' && act >= 3 && this.player.currentRoom === 'archive'
         && this.player.getFlag('met_janitor') && this.player.getFlag('read_janitor_act3')) {
       if (!this.player.getFlag('janitor_riddle_1_done') && DIALOGS.janitor_riddle_1) janitorRiddle = 'janitor_riddle_1';
       else if (!this.player.getFlag('janitor_riddle_2_done') && DIALOGS.janitor_riddle_2) janitorRiddle = 'janitor_riddle_2';
@@ -3319,6 +3324,12 @@ export class ExplorationState {
     // then small talk (logic-sweep MAJORs #5/#6).
     if (id === 'janitor') {
       if (!this.player.getFlag('met_janitor') && DIALOGS.janitor_intro) return 'janitor_intro';
+      // The garage patrol's own ambient line (harvest of Andrew's bb534b4
+      // diagnosis; the cast change was declined — the patrol is deliberate
+      // story texture). Mirrors route row janitor-garage-sweep exactly,
+      // met_janitor term included, so the two paths agree unconditionally.
+      if (this.player.getFlag('met_janitor')
+          && this.player.currentRoom === 'parking_garage' && DIALOGS.janitor_garage) return 'janitor_garage';
       if (DIALOGS.janitor_return) return 'janitor_return';
     }
 

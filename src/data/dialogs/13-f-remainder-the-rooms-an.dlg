@@ -256,3 +256,18 @@ scene copy_room_supplies
   Andrew: There are nine rolls of packing tape. That seems like a lot for a department that does not ship anything.
   Narrator: The top shelf holds a sealed box labeled THERMAL BINDING SUPPLIES - DO NOT OPEN - SEE DIANE. It has been on that shelf longer than anyone named Diane has worked in this building.
   end
+
+# ── ANDREW HARVEST · the garage patrol's own line ─────────────────────────
+# Piece 1 of the andrew-lc harvest (bb534b4 took the DIAGNOSIS: the garage
+# patrol was leaking through the Archive riddle rows). The cast change was
+# DECLINED — the Mysterious Janitor's garage patrol is deliberate texture —
+# so with the riddle rows Archive-scoped, the garage E-press gets this
+# instead of the Archive small-talk tree. No flags, no gates, re-serveable;
+# served by route row `janitor-garage-sweep` (parking_garage only, after
+# first meeting). He says something short and slightly wrong: a parking
+# garage is a bailment, not a trust, and the attorney in the audience knows.
+scene janitor_garage
+  Mysterious Janitor: A parking garage is just a trust, son. You hand over something valuable, you get a paper ticket, and you hope the institution honors the arrangement when you come back.
+  Mysterious Janitor: That one holds up better than most of mine do.
+  Narrator: He resumes sweeping a patch of concrete that is already clean.
+  end

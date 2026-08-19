@@ -2090,6 +2090,10 @@
     "rachel_wardrobe": {
       "labels": {},
       "length": 12
+    },
+    "janitor_garage": {
+      "labels": {},
+      "length": 4
     }
   }
 }

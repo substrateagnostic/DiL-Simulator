@@ -19527,6 +19527,26 @@ export const DIALOGS = {
       "type": "end"
     }
   ],
+  "janitor_garage": [
+    {
+      "type": "text",
+      "speaker": "Mysterious Janitor",
+      "text": "A parking garage is just a trust, son. You hand over something valuable, you get a paper ticket, and you hope the institution honors the arrangement when you come back."
+    },
+    {
+      "type": "text",
+      "speaker": "Mysterious Janitor",
+      "text": "That one holds up better than most of mine do."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "He resumes sweeping a patch of concrete that is already clean."
+    },
+    {
+      "type": "end"
+    }
+  ],
   "janet_quiz": [
     {
       "type": "condition",
