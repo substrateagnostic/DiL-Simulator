@@ -49,20 +49,20 @@ manual playtest plus the harnesses in `tools/`.
 
 ### Balance & Room Editor
 
-`npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for a 9-tab editor: Player, Abilities, Enemies, Shop, Rooms, Combat Sim, Encounters, Characters, Diff. Changes write to three override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
+`npm run editor` runs `scripts/editor.js` — a plain Node.js HTTP server. Open **http://localhost:3747** for an 11-tab editor: Player, Abilities, Enemies, Allies, Shop, Rooms, Combat Sim, Encounters, Characters, Dialogs (read-only), Diff. Changes write to the override JSON files in `src/data/`; Publish button commits and pushes them. The editor is never included in the Vite build and players cannot access it.
 
 #### Drag-and-drop furniture (Rooms tab)
 
-In the Rooms tab, furniture and NPC dots on the canvas can be dragged to new positions. The canvas updates in real-time as you drag (2D top-down view). Cursor changes to `grab` when hovering near an item and `grabbing` while dragging. Positions snap to 0.5 tile increments. Rotation can still be set via the edit panel or preset buttons below the canvas.
+In the Rooms tab, furniture and NPC dots on the canvas can be dragged to new positions. The canvas updates in real-time as you drag (2D top-down view). Cursor changes to `grab` when hovering near an item and `grabbing` while dragging. Positions snap to 0.5 tile increments. Rotation can be set via the edit panel, the preset buttons, or **R** (rotate selected 90° clockwise). Since the Andrew harvest (2026-08-18, re-implemented from his `ea7d624`/`bb552da`): **scroll-wheel zoom** (0.4×–4.0×, live % display), **NPC facing arrows** (orange; drawn with the VERIFIED θ→(sin, cos) convention — Andrew's original negated cos because it was written against the pre-2026-08-04 inverted doc, so every arrow pointed 180° out), **exit-tile overlay** (green squares, → glyph at ≥ ~80% zoom), **undo/redo** (Ctrl+Z / Ctrl+Y, 50-step stack per room, resets on room switch), and an **Auto-save on drop** checkbox (default OFF — Andrew's own later commit removed unconditional auto-save because every write full-reloads a running `npm run dev` via HMR, which kills the live preview below; the toggle keeps the feature honest).
 
-To see moves reflected in the 3D game view, run both servers simultaneously:
+#### SSE live preview (both servers running)
 
 ```bash
-npm run dev     # game at localhost:5173
+npm run dev     # game at localhost:5173 (open with ?dev)
 npm run editor  # editor at localhost:3747
 ```
 
-Workflow: drag furniture → **Save Room Overrides** → Vite detects the file change and hot-reloads → re-enter the room in the game (walk out and back in). Positions are live after re-entry.
+The editor broadcasts drags/rotates over SSE (`GET /api/live`, CORS-open; the editor page POSTs `/api/live-move`) and a game tab in DEV_MODE subscribes (`src/dev/LiveEditorClient.js`, connected from `ExplorationState.enter()`). **The client applies a move by mutating the imported `room-overrides.json` module object and re-running `_loadRoom()` in place (debounced ~220 ms, player kept where they stand) — NOT by nudging a mesh**: `Room.build()` ends in `_mergeStatics()`, so there is no per-piece mesh left to move, and only a rebuild keeps collision, interactables, seats, contact shadows and wall-art snapping true. Undo/redo/reset broadcast a whole-room `sync` so the preview can move *back*. Staged changes live in memory only — **Save Room Overrides** still persists to disk (and then Vite full-reloads, which is fine because the file now matches). The client module is bundling-proof dev-only: its sole importer is a dynamic import behind `import.meta.env.DEV && DEV_MODE`, which `vite build` folds to false — `dist/assets/*.js` greps clean of `api/live`/`EventSource` (checked by `tools/_ah-editor-demo.mjs`, which also drives a real canvas drag end-to-end and asserts the game-side rebuild).
 
 ### Dev Mode
 

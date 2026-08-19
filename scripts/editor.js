@@ -36,6 +36,16 @@ const TRACKED_PATHS = [
 // ── Module cache ──────────────────────────────────────────────────
 let _rooms = null, _encounters = null, _characters = null, _allies = null, _dialogs = null;
 
+// ── Live preview fan-out (SSE) — Andrew, bb552da ──────────────────
+// The editor page POSTs /api/live-move; every game tab subscribed to
+// /api/live (DEV_MODE only, src/dev/LiveEditorClient.js) gets the event.
+let sseClients = [];
+function broadcast(data) {
+  const msg = `data: ${JSON.stringify(data)}\n\n`;
+  sseClients = sseClients.filter(c => !c.destroyed);
+  sseClients.forEach(c => { try { c.write(msg); } catch { /* client gone */ } });
+}
+
 async function imp(relPath) {
   const url = pathToFileURL(path.join(ROOT, relPath)).href;
   return import(url);
@@ -146,8 +156,30 @@ const server = http.createServer(async (req, res) => {
         id: room.id, name: room.name, width: room.width, height: room.height,
         furniture: (room.furniture || []).map(f => ({ type: f.type, x: f.x, z: f.z, rotation: f.rotation ?? null, y: f.y ?? null })),
         npcs: (room.npcs || []).map(n => ({ id: n.id, x: n.x, z: n.z, facing: n.facing ?? null })),
+        exits: (room.exits || []).map(e => ({ x: e.x, z: e.z, targetRoom: e.targetRoom ?? null })),
       });
     } catch (e) { json(res, { error: String(e) }, 500); }
+    return;
+  }
+
+  // ── Live preview (Andrew, bb552da) ────────────────────────────
+  // CORS on /api/live only: the game subscribes cross-origin from the Vite
+  // dev server; /api/live-move is same-origin from the editor page itself.
+  if (req.method === 'GET' && pathname === '/api/live') {
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.write('data: {"type":"connected"}\n\n');
+    sseClients.push(res);
+    req.on('close', () => { sseClients = sseClients.filter(c => c !== res); });
+    return;
+  }
+  if (req.method === 'POST' && pathname === '/api/live-move') {
+    try { broadcast(JSON.parse(await readBody(req))); json(res, { ok: true, clients: sseClients.length }); }
+    catch (e) { json(res, { error: String(e) }, 400); }
     return;
   }
 

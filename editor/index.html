@@ -126,6 +126,9 @@ select { background:var(--surface); border:1px solid var(--border); color:var(--
 select:focus { border-color:var(--accent2); }
 .rooms-body { display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:start; }
 #room-canvas { display:block; border:1px solid var(--border); border-radius:6px; cursor:crosshair; max-width:100%; user-select:none; }
+.canvas-info { display:flex; align-items:center; gap:12px; margin-bottom:6px; font-size:11px; color:var(--muted); }
+#zoom-display { font-size:11px; color:var(--accent2); font-weight:700; min-width:38px; }
+.canvas-info label { display:flex; align-items:center; gap:4px; cursor:pointer; }
 .canvas-legend { display:flex; flex-wrap:wrap; gap:7px; margin-top:7px; }
 .legend-item { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--muted); }
 .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
@@ -222,7 +225,7 @@ select:focus { border-color:var(--accent2); }
 <header>
   <div>
     <h1>TRUST ISSUES — Content Editor</h1>
-    <span>Ctrl+S to save current tab</span>
+    <span>Ctrl+S to save current tab · Rooms: scroll to zoom · R rotates selected · Ctrl+Z/Y undo/redo</span>
   </div>
   <div class="toolbar">
     <span class="status-pill" id="status-pill" title="Override files awaiting publish">
@@ -296,6 +299,14 @@ select:focus { border-color:var(--accent2); }
   </div>
   <div class="rooms-body">
     <div>
+      <div class="canvas-info">
+        <span>Scroll to zoom</span>
+        <span id="zoom-display">100%</span>
+        <span>R = rotate · Ctrl+Z/Y = undo/redo</span>
+        <label title="Write room-overrides.json on every drag release. NOTE: a running npm run dev will full-reload on each write (the JSON is imported by Room.js), which fights the SSE live preview — leave off while using it.">
+          <input type="checkbox" id="autosave-drop"> Auto-save on drop
+        </label>
+      </div>
       <canvas id="room-canvas" width="220" height="160"></canvas>
       <div class="canvas-legend">
         <div class="legend-item"><div class="legend-dot" style="background:#8B5E3C"></div>Desk/Table</div>
@@ -306,6 +317,8 @@ select:focus { border-color:var(--accent2); }
         <div class="legend-item"><div class="legend-dot" style="background:#cc4488"></div>NPC</div>
         <div class="legend-item"><div class="legend-dot" style="background:#ffd700"></div>Selected</div>
         <div class="legend-item"><div class="legend-dot" style="background:#cc88ff"></div>Overridden</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#00cc66;border-radius:2px"></div>Exit</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ff9944"></div>Facing</div>
       </div>
     </div>
     <div class="room-list-wrap">
@@ -478,6 +491,66 @@ let encountersList = [], encounterOverrides = {};
 let dialogIds = [], selectedDialogId = null;
 let currentTab = 'player';
 const CELL = 22;
+
+// ── Zoom (Andrew, ea7d624) ────────────────────────────────────
+let zoomLevel = 1.0;
+function cellPx() { return Math.round(CELL * zoomLevel); }
+
+// ── Undo/Redo (Andrew, ea7d624) — 50-step stack, resets per room ──
+let undoStack = [], redoStack = [];
+function pushUndo() {
+  if (!currentRoom) return;
+  undoStack.push(JSON.parse(JSON.stringify(roomOverrides[currentRoom.id] || {})));
+  redoStack = [];
+  if (undoStack.length > 50) undoStack.shift();
+}
+function undo() {
+  if (!currentRoom || !undoStack.length) return;
+  redoStack.push(JSON.parse(JSON.stringify(roomOverrides[currentRoom.id] || {})));
+  applyUndoRedo(undoStack.pop());
+  showToast('Undone');
+}
+function redo() {
+  if (!currentRoom || !redoStack.length) return;
+  undoStack.push(JSON.parse(JSON.stringify(roomOverrides[currentRoom.id] || {})));
+  applyUndoRedo(redoStack.pop());
+  showToast('Redone');
+}
+function applyUndoRedo(snapshot) {
+  if (Object.keys(snapshot).length === 0) delete roomOverrides[currentRoom.id];
+  else roomOverrides[currentRoom.id] = snapshot;
+  renderCanvas();
+  renderItemList();
+  if (selectedItem) showEditPanel(selectedItem.category, selectedItem.index);
+  broadcastSync(); // make undo/redo visible in the live 3D preview too
+}
+
+// ── Live preview broadcast (Andrew, bb552da) ──────────────────
+// POSTs to the editor server, which fans out over SSE to any game tab
+// running in DEV_MODE. Throttled to ~20 events/s during a drag; a final
+// unthrottled send fires on release and on Apply so the last position
+// always lands.
+let _liveThrottle = 0;
+function broadcastMove(cat, i, force = false) {
+  if (!currentRoom) return;
+  const now = Date.now();
+  if (!force && now - _liveThrottle < 50) return;
+  _liveThrottle = now;
+  const eff = getEff(cat, i);
+  const msg = { type: 'move', roomId: currentRoom.id, category: cat, index: i, x: eff.x, z: eff.z };
+  const rotKey = cat === 'npcs' ? 'facing' : 'rotation';
+  if (typeof eff[rotKey] === 'number') msg[rotKey] = eff[rotKey];
+  fetch('/api/live-move', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(msg),
+  }).catch(() => {});
+}
+function broadcastSync() {
+  if (!currentRoom) return;
+  fetch('/api/live-move', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'sync', roomId: currentRoom.id, overrides: roomOverrides[currentRoom.id] || {} }),
+  }).catch(() => {});
+}
 const ABILITY_TYPES = ['attack', 'attack_aoe', 'heal_ally', 'buff_party', 'debuff', 'buff'];
 const ABILITY_TAGS = ['', 'legal', 'social', 'audit', 'technical'];
 const ALLY_STAT_FIELDS = ['maxHP', 'maxMP', 'atk', 'def', 'spd', 'growthFactor'];
@@ -658,6 +731,7 @@ async function onRoomSelect() {
   if (!id) { currentRoom=null; drawEmptyCanvas(); renderItemList(); hideEditPanel(); return; }
   currentRoom = await (await fetch('/api/rooms/'+id)).json();
   selectedItem = null;
+  undoStack = []; redoStack = [];
   document.getElementById('room-dims').textContent = `${currentRoom.width}×${currentRoom.height} tiles`;
   hideEditPanel(); renderCanvas(); renderItemList();
 }
@@ -669,14 +743,29 @@ function drawEmptyCanvas() {
 }
 function renderCanvas() {
   if (!currentRoom) { drawEmptyCanvas(); return; }
+  const cp = cellPx();
   const W=currentRoom.width, H=currentRoom.height, c=document.getElementById('room-canvas');
-  c.width=W*CELL; c.height=H*CELL;
+  c.width=W*cp; c.height=H*cp;
   const ctx=c.getContext('2d');
+  document.getElementById('zoom-display').textContent = Math.round(zoomLevel*100)+'%';
   ctx.fillStyle='#1a1a28'; ctx.fillRect(0,0,c.width,c.height);
   ctx.strokeStyle='#252535'; ctx.lineWidth=0.5;
-  for(let x=0;x<=W;x++){ctx.beginPath();ctx.moveTo(x*CELL,0);ctx.lineTo(x*CELL,H*CELL);ctx.stroke();}
-  for(let z=0;z<=H;z++){ctx.beginPath();ctx.moveTo(0,z*CELL);ctx.lineTo(W*CELL,z*CELL);ctx.stroke();}
-  ctx.strokeStyle='#3a3a55'; ctx.lineWidth=1.5; ctx.strokeRect(0.75,0.75,W*CELL-1.5,H*CELL-1.5);
+  for(let x=0;x<=W;x++){ctx.beginPath();ctx.moveTo(x*cp,0);ctx.lineTo(x*cp,H*cp);ctx.stroke();}
+  for(let z=0;z<=H;z++){ctx.beginPath();ctx.moveTo(0,z*cp);ctx.lineTo(W*cp,z*cp);ctx.stroke();}
+  ctx.strokeStyle='#3a3a55'; ctx.lineWidth=1.5; ctx.strokeRect(0.75,0.75,W*cp-1.5,H*cp-1.5);
+  // Exit tiles (Andrew, ea7d624) — green squares, arrow glyph at readable zoom
+  (currentRoom.exits||[]).forEach(ex => {
+    ctx.fillStyle='rgba(0,200,100,0.15)';
+    ctx.fillRect((ex.x-0.5)*cp, (ex.z-0.5)*cp, cp, cp);
+    ctx.strokeStyle='#00cc66'; ctx.lineWidth=1;
+    ctx.strokeRect((ex.x-0.5)*cp, (ex.z-0.5)*cp, cp, cp);
+    if (cp >= 18 && ex.targetRoom) {
+      ctx.fillStyle='#00cc66';
+      ctx.font=`${Math.max(8,Math.floor(cp*0.28))}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('→', ex.x*cp, ex.z*cp);
+    }
+  });
   const ov=getRoomOv();
   (currentRoom.furniture||[]).forEach((item,i) => {
     const e=getEff('furniture',i); const sel=selectedItem?.category==='furniture'&&selectedItem.index===i;
@@ -685,24 +774,55 @@ function renderCanvas() {
   (currentRoom.npcs||[]).forEach((npc,i) => {
     const e=getEff('npcs',i); const sel=selectedItem?.category==='npcs'&&selectedItem.index===i;
     drawDot(ctx,e.x,e.z,'#cc4488',sel,!!ov.npcs?.[i],'★');
+    drawFacingArrow(ctx, e.x, e.z, e.facing ?? npc.facing ?? 0);
   });
 }
 function drawDot(ctx,x,z,color,sel,ov,lbl) {
-  const px=x*CELL, pz=z*CELL, r=CELL*0.36;
+  const cp=cellPx(), px=x*cp, pz=z*cp, r=cp*0.36;
   ctx.fillStyle=ov?'#2a2810':'#1e1e2e';
   ctx.beginPath(); ctx.arc(px,pz,r,0,Math.PI*2); ctx.fill();
   ctx.strokeStyle=sel?'#ffd700':ov?'#cc88ff':color; ctx.lineWidth=sel?2.5:1.5;
   ctx.beginPath(); ctx.arc(px,pz,r,0,Math.PI*2); ctx.stroke();
   ctx.fillStyle=sel?'#ffd700':color;
-  ctx.font=`${Math.floor(CELL*.42)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.font=`${Math.floor(cp*.42)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(lbl,px,pz);
 }
+// NPC facing arrow (Andrew, ea7d624). Game convention (CLAUDE.md rotation
+// law): θ → forward (sin θ, cos θ), grid z=0 at the NORTH wall and canvas
+// +y drawing south — so screen dx = sin(θ), dz = +cos(θ). Andrew's original
+// negated cos; against the verified convention that pointed every arrow
+// 180° out, so the sign is corrected here.
+function drawFacingArrow(ctx, x, z, angle) {
+  const cp = cellPx();
+  const px = x * cp, pz = z * cp;
+  const len = cp * 0.48;
+  const dx = Math.sin(angle) * len;
+  const dz = Math.cos(angle) * len;
+  const ex = px + dx, ez = pz + dz;
+  ctx.strokeStyle = '#ff9944';
+  ctx.lineWidth = Math.max(1, cp * 0.07);
+  ctx.beginPath();
+  ctx.moveTo(px, pz);
+  ctx.lineTo(ex, ez);
+  ctx.stroke();
+  const headLen = Math.max(3, cp * 0.18);
+  const ang = Math.atan2(dz, dx);
+  const a1 = ang + Math.PI * 0.75;
+  const a2 = ang - Math.PI * 0.75;
+  ctx.beginPath();
+  ctx.moveTo(ex, ez);
+  ctx.lineTo(ex + Math.cos(a1)*headLen, ez + Math.sin(a1)*headLen);
+  ctx.moveTo(ex, ez);
+  ctx.lineTo(ex + Math.cos(a2)*headLen, ez + Math.sin(a2)*headLen);
+  ctx.stroke();
+}
 function canvasToTile(e) {
+  const cp = cellPx();
   const c = document.getElementById('room-canvas');
   const rect = c.getBoundingClientRect();
   return {
-    mx: (e.clientX - rect.left) * (c.width  / rect.width)  / CELL,
-    mz: (e.clientY - rect.top)  * (c.height / rect.height) / CELL,
+    mx: (e.clientX - rect.left) * (c.width  / rect.width)  / cp,
+    mz: (e.clientY - rect.top)  * (c.height / rect.height) / cp,
   };
 }
 function nearestItem(mx, mz) {
@@ -731,11 +851,21 @@ _rcanvas.addEventListener('mousedown', function(e) {
   const { best, bd } = nearestItem(mx, mz);
   if (!best || bd >= 1.5) return;
   e.preventDefault();
+  pushUndo(); // once per drag, before it starts
   selectItem(best.category, best.index);
   const ef = getEff(best.category, best.index);
   dragState = { category: best.category, index: best.index, ox: ef.x - mx, oz: ef.z - mz };
   _rcanvas.style.cursor = 'grabbing';
 });
+
+// Scroll-wheel zoom (Andrew, ea7d624): ±10% per step, 0.4×–4.0×.
+_rcanvas.addEventListener('wheel', function(e) {
+  if (!currentRoom) return;
+  e.preventDefault();
+  const delta = e.deltaY > 0 ? -0.1 : 0.1;
+  zoomLevel = Math.max(0.4, Math.min(4.0, Math.round((zoomLevel + delta) * 10) / 10));
+  renderCanvas();
+}, { passive: false });
 
 _rcanvas.addEventListener('mousemove', function(e) {
   if (dragState) return;
@@ -755,14 +885,26 @@ window.addEventListener('mousemove', function(e) {
   document.getElementById('edit-x').value = nx;
   document.getElementById('edit-z').value = nz;
   renderCanvas();
+  broadcastMove(dragState.category, dragState.index); // throttled live preview
 }, { passive: false });
 
 window.addEventListener('mouseup', function() {
   if (!dragState) return;
+  const { category, index } = dragState;
   dragState = null;
   _rcanvas.style.cursor = 'crosshair';
   renderItemList();
-  showToast('Override staged — click Save Room Overrides');
+  broadcastMove(category, index, true); // final unthrottled position
+  // Auto-save on drop (Andrew, ea7d624) — opt-in. Andrew's own later commit
+  // (bb552da) removed the unconditional version because each write makes a
+  // running `npm run dev` full-reload (room-overrides.json is imported by
+  // Room.js), which destroys the live preview session. The checkbox keeps
+  // the feature without letting it silently fight the SSE path.
+  if (document.getElementById('autosave-drop')?.checked) {
+    saveRoomOverrides();
+  } else {
+    showToast('Override staged — click Save Room Overrides');
+  }
 });
 function renderItemList() {
   const el=document.getElementById('room-item-list'); el.innerHTML='';
@@ -812,6 +954,7 @@ function hideEditPanel() { document.getElementById('edit-panel').style.display='
 function setRot(deg) { document.getElementById('edit-rot').value=deg; }
 function applyEdit() {
   if (!selectedItem||!currentRoom) return;
+  pushUndo();
   const {category:cat,index:i}=selectedItem, base=currentRoom[cat][i];
   const x=parseFloat(document.getElementById('edit-x').value);
   const z=parseFloat(document.getElementById('edit-z').value);
@@ -827,13 +970,17 @@ function applyEdit() {
   if(Object.keys(entry).length>0) roomOverrides[currentRoom.id][cat][String(i)]=entry;
   else delete roomOverrides[currentRoom.id][cat][String(i)];
   renderCanvas(); renderItemList(); showEditPanel(cat,i);
+  broadcastMove(cat,i,true); // rotation/position edits reach the live preview too
   showToast('Override staged — click Save Room Overrides');
 }
 function resetEdit() {
   if(!selectedItem||!currentRoom) return;
+  pushUndo();
   const {category:cat,index:i}=selectedItem;
   if(roomOverrides[currentRoom.id]?.[cat]) delete roomOverrides[currentRoom.id][cat][String(i)];
-  renderCanvas(); renderItemList(); showEditPanel(cat,i); showToast('Reset to default');
+  renderCanvas(); renderItemList(); showEditPanel(cat,i);
+  broadcastSync();
+  showToast('Reset to default');
 }
 async function saveRoomOverrides() {
   const r=await post('/api/room-overrides',roomOverrides);
@@ -1529,7 +1676,22 @@ async function refreshStatus() {
     }
   } catch (e) { /* ignore */ }
 }
-document.addEventListener('keydown', e => { if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCurrentTab();} });
+document.addEventListener('keydown', e => {
+  // Ctrl+S — save current tab
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveCurrentTab(); return;}
+  // Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) — undo/redo (Rooms tab)
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='z'){e.preventDefault();undo(); return;}
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo(); return;}
+  // R — rotate selected item 90° clockwise (never while typing in a field)
+  if((e.key==='r'||e.key==='R')&&currentTab==='rooms'&&selectedItem&&!e.ctrlKey&&!e.metaKey
+     &&!/INPUT|SELECT|TEXTAREA/.test(document.activeElement?.tagName||'')) {
+    e.preventDefault();
+    const rotInput=document.getElementById('edit-rot');
+    const cur=parseFloat(rotInput.value)||0;
+    rotInput.value=((cur+90)%360+360)%360;
+    applyEdit(); // applyEdit pushes undo and broadcasts
+  }
+});
 
 async function publishToGitHub() {
   openConsole('Publishing to GitHub...');

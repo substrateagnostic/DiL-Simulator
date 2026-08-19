@@ -278,6 +278,17 @@ export class ExplorationState {
     this._updateLocationDisplay(this.player.currentRoom);
     AudioManager.playMusic(this._getMusicForRoom(this.player.currentRoom));
 
+    // Live editor preview (dev only — see src/dev/LiveEditorClient.js).
+    // `import.meta.env.DEV` is a build-time constant, so `vite build` folds
+    // this whole block away and the SSE client is never bundled; DEV_MODE
+    // still gates it at runtime under `npm run dev`.
+    if (import.meta.env.DEV && DEV_MODE) {
+      import('../dev/LiveEditorClient.js').then((mod) => {
+        this._liveEditorDispose?.();
+        this._liveEditorDispose = mod.connectLiveEditor(this);
+      }).catch(() => {});
+    }
+
     this._listeners.push(
       // Dialog mood → facial expression on the NPC being talked to
       EventBus.on('dialog-mood', ({ mood }) => {
@@ -862,6 +873,7 @@ export class ExplorationState {
       unsub();
     }
     this._listeners = [];
+    if (this._liveEditorDispose) { this._liveEditorDispose(); this._liveEditorDispose = null; }
   }
 
   pause() {
