@@ -950,7 +950,14 @@ scene team_chat_hub
   @n53
   Janet: I called my mom last night. First time in six months. I said: 'I work somewhere worth keeping.' That's all I said. She cried.
   Janet: *very long sip*
-  Janet: I've been here twelve years, Andrew. This is the first time I've actually meant it.
+  # THIRTY-TWO, not twelve. Janet's canonical tenure is thirty-two years and it
+  # is load-bearing four times over — janet_act7's 'this is the first time I've
+  # been asked to testify', the name-on-the-door payoff, her retirement card and
+  # 'I've never been to the Penthouse' all read off the length of it, and she
+  # says elsewhere that she has outlasted four SVPs. Twelve is Diane's number
+  # (three mentions, all consistent) and this was a copy-slip from her. Flagged
+  # by the Andrew-harvest judge as pre-existing; fixed in the small-debts round.
+  Janet: I've been here thirty-two years, Andrew. This is the first time I've actually meant it.
   goto n58
 
   @n56

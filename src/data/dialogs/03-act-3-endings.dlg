@@ -391,9 +391,9 @@ scene janet_return
   goto n6
   # Her canonical tenure is thirty-two years (twice in the act-7 file:
   # janet_act7 and the name-on-the-door scene); Andrew's line agrees with it
-  # and sets up that payoff. (The team_chat_hub act-7 branch has her saying
-  # 'twelve years' — a pre-existing corpus contradiction, flagged upstream,
-  # not introduced or resolvable here.)
+  # and sets up that payoff. (The team_chat_hub act-7 branch used to have her
+  # saying 'twelve years' — Diane's number, a copy-slip. Corrected in the
+  # small-debts round; the corpus now says thirty-two in all five places.)
   @ja6
   Janet: Board meeting tomorrow. Thirty-two years and this is the first time I've been asked to testify for the department.
   Janet: Make it count.

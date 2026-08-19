@@ -9377,7 +9377,7 @@ export const DIALOGS = {
     {
       "type": "text",
       "speaker": "Janet",
-      "text": "I've been here twelve years, Andrew. This is the first time I've actually meant it.",
+      "text": "I've been here thirty-two years, Andrew. This is the first time I've actually meant it.",
       "next": 58
     },
     {
