@@ -1,3 +1,31 @@
+## [THE 8%-EVENING SECOND WAVE — 08-18, all landed and merged]
+
+Four more lanes after the harvest, all judged/self-evidenced, merged together:
+- **Visitor Badge** (`c5f6e19`): day-one BADGE-slot cosmetic, +1 DEF, Opus line
+  "Valid for one business day. Issued eleven months ago." Producer signed.
+- **Clearance sweep** (`4e7408e`/`6838b03`, REPORT-ONLY): `.claude/plans/clearance-sweep/REPORT.md`.
+  1 HIGH (the Vaults Fargo cluster — parody employer + fraud plot in the exact shape of
+  the real scandal + public-repo "Stagecoach Stampede" comment), 7 MEDIUM (real Nasdaq
+  tickers TRST/ALGM on the office ticker with ALGM crashed −99.9%; "Schwalb" one letter
+  from Schwab; Henderson/Janus-Henderson collision priced severe-prose-only; cast
+  namesakes incl. a real trusts-and-estates attorney named Curtis Briggs; Rolex ×25;
+  Mosler/Corbin). ALL DECISIONS AWAIT ALEX (he is the attorney). Ticker + Schwalb are
+  trivial fixes pre-offered, awaiting his nod.
+- **Findings HUD chip** (`e329b48`, Fable judge PASS): FINDINGS pips + ON RECORD ×N +
+  Hard-only ATK −N% under Composure, gated on the findings node; non-Audit builds proven
+  PNG byte-identical. Engine read `getFindings()` shares the shield arithmetic.
+- **Small-debts omnibus** (`f66e5f4`/`b20b783`/`933e3a9`): loungeBar 5×2 footprint (three
+  rooms, pixel-identical placements), board-room+skip-office credenza contamination → 0,
+  Janet twelve→thirty-two (corpus tenure sweep: Janet ×4 / Diane ×3 / Isaiah ×3 all
+  consistent; two Isaiah SOFT tensions reported not touched — "nine years of receipts",
+  "seven years/second notebook"), arcade.css deleted (8/8 headed boot). ghost 51→45 info,
+  0 unwaived. JUDGMENT CALL open to overrule: Lucky's run-ends (0.167/0.194) left as a
+  footprint-comment, NOT a waiver row — a row would match zero cells (the deleted-waiver
+  hole). `ghost-walk.mjs` gained read-only `--probe=room:x,z`. Erratum on record:
+  `f66e5f4` body says 25/25, harness says 26/26. `_fr1-dialog-indices` EXITS 0 EVEN ON
+  FAIL (documented in CLAUDE.md) — read its output, not its code.
+- CLAUDE.md corpus counts refreshed (15/296/3,588) with a re-derive instruction.
+
 ## [THE ANDREW HARVEST — 08-18 (Fable lane, judged PASS)]
 
 Andrew's forgotten May branch (`origin/andrew`, PR #10, 17 commits) was read, ruled

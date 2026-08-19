@@ -200,8 +200,9 @@ All game data is plain JS objects/exports:
 - `cosmetics.js` — Unlockable cosmetics with unlock conditions. `unlock` accepts **only** `'default'`, `{ flag }` or `{ quest }` (`Player.isCosmeticUnlocked`), so anything compound needs a derived flag — `renovations_all` is a DERIVE row in `src/data/story/graph.js` reading `SHOP_ITEMS`' renovation rows so a tenth renovation joins the completionist gate automatically. **Every `visual.type` needs a matching arm in `_addCosmeticVisual` (`CharacterBuilder.js`) or the item equips to nothing**; chest pieces go on the left lapel (x +0.07), held props in the off hand (`-handX`).
 - `ClientGenerator.js` — Procedurally generates Reception-room clients. `give_item` actions use the `item` field (not `itemId`). Roguelite enemy HP scales as `Math.round((100 + tier * 160) * levelMultiplier)`.
 - `rooms/index.js` — All room definitions. NPC entries support `condition: { flag, notFlag }` for conditional spawning. Break room has `type: 'supply_shop'` furniture that triggers `ShopState`. Rooms may also carry an optional **`marks: { name: [x, z], … }`** block — named staging destinations consumed by `stage` dialog nodes (see `src/world/StageDirector.js`). Marks are data only; nothing breaks if one is unused.
-- `dialogs/*.dlg` — **the dialog corpus, and the only file an author edits.** 13 files, 292
-  scenes, 3,392 nodes. See "Dialog authoring" below.
+- `dialogs/*.dlg` — **the dialog corpus, and the only file an author edits.** 15 files, 296
+  scenes, 3,588 nodes as of 2026-08-18 — re-derive from the compiler's own PASS line
+  (`npm run dialogs:check`), never from this sentence. See "Dialog authoring" below.
 - `dialogs/index.js` — **GENERATED. DO NOT EDIT.** `npm run dialogs:build` writes it from the
   `.dlg` files; `npm run dialogs:check` byte-compares it and fails the build on any hand
   edit. It is still a plain ES module exporting `DIALOGS`, so every importer (the game,
