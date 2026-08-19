@@ -1071,6 +1071,23 @@ export class CombatState {
     const committee = this.engine.enemies.map(e => e.hp > 0 && !!e.sealed);
     this.hud.updateLocksAll(locks, committee);
     this.hud.updateComposureAll(this.engine.enemies);
+    // AUDIT: the FINDINGS chip — owners of the `findings` node only.
+    // getFindings() returns null for every other build and updateFindingsAll
+    // hides the row on null, so a non-Audit HUD renders bit-identically to
+    // before (verified by pixel diff, tools/_hud-findings-shoot.mjs). The
+    // row stays up under NDA / Summary Briefing on purpose: those seal the
+    // ENEMY's intent — the file is Andrew's own paperwork.
+    const findings = this.engine.enemies.map((e, i) => this.engine.getFindings(i));
+    const beats = this.hud.updateFindingsAll(findings);
+    if (beats.closed.length > 0) {
+      // The close is the lane's payoff and used to be invisible. Wording is
+      // assembled from the Findings node's own copy ("CLOSES THE FILE: 1.5x
+      // damage and 30 Composure") minus the 1.5x, because the debuff-rider
+      // close (_fileFinding at max) carries no damage to multiply and the
+      // message must be true on both paths; 30 Composure is true on both.
+      setTimeout(() => this.hud.showMessage('FILE CLOSED — 30 Composure.'), 320);
+      AudioManager.playSfx('confirm');
+    }
   }
 
   // ESCALATED TO COMMITTEE. Banner + log line + one Andrew read. Kept in one

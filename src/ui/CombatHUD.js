@@ -315,6 +315,7 @@ export class CombatHUD {
           <div class="combat-composure-bar"><div class="combat-composure-fill"></div></div>
         </div>
         <div class="combat-locks" style="display:none;"></div>
+        <div class="combat-findings" style="display:none;"></div>
         <div class="combat-telegraph" style="display:none;"></div>
       `;
       const hpFill = wrap.querySelector('.combat-enemy-hp-fill');
@@ -323,9 +324,10 @@ export class CombatHUD {
       const locksEl = wrap.querySelector('.combat-locks');
       const composureEl = wrap.querySelector('.combat-composure');
       const composureFill = wrap.querySelector('.combat-composure-fill');
+      const findingsEl = wrap.querySelector('.combat-findings');
       this.enemyRowEl.appendChild(wrap);
       this.enemyEntries.push({
-        index: i, infoEl: wrap, hpFill, hpGhost, telegraphEl, locksEl, composureEl, composureFill,
+        index: i, infoEl: wrap, hpFill, hpGhost, telegraphEl, locksEl, composureEl, composureFill, findingsEl,
         _hpPct: e.maxHP > 0 ? (e.hp / e.maxHP) * 100 : 0,
       });
     });
@@ -396,6 +398,73 @@ export class CombatHUD {
         `<span class="combat-locks-label">${sealed ? 'COMMITTEE SEALED' : 'OBJECTIONS'}</span>` +
         locks.map(l => `<span class="combat-lock-chip lock-${l.tag}${l.cleared ? ' cleared' : ''}">${l.cleared ? '✓ ' : ''}${TAG_LABEL[l.tag] || l.tag.toUpperCase()}</span>`).join('');
     });
+  }
+
+  // ── FINDINGS row (Audit lane) ────────────────────────────────────────
+  // findingsPerEnemy: array parallel to enemies, each { count, max, ever,
+  // slowPct } or null. Null hides the row — CombatEngine.getFindings()
+  // returns null for every build without the `findings` node, so this
+  // surface structurally does not exist for a non-Audit player (the div
+  // ships display:none, exactly like .combat-locks on a lock-less fight).
+  //
+  // Bright pips are the STANDING file (they empty when it closes); the
+  // dimmed ON RECORD count is the monotonic record — the record does not
+  // unhappen when the file closes. When the mode's documentation shield is
+  // live (Hard's assaultSlow; slowPct is 0 everywhere else) the record also
+  // prints the ATK read, quietly.
+  //
+  // Beat detection is a DELTA, not a threaded result field: `_findings` only
+  // ever moves at a file or a close (there is no decay), so count-up IS the
+  // file beat and count-down IS the close. That covers every filing path —
+  // player hits, ally hits, Scope Expansion's debuff rider, Management
+  // Letter's double-file — with zero new engine plumbing. Returns
+  // { filed: [enemyIdx], closed: [enemyIdx] } so CombatState can announce a
+  // close on the CONSEQUENCE surface; the pulses are applied here.
+  updateFindingsAll(findingsPerEnemy) {
+    const beats = { filed: [], closed: [] };
+    this.enemyEntries.forEach((entry, i) => {
+      if (!entry.findingsEl) return;
+      const f = findingsPerEnemy?.[i];
+      if (!f) {
+        entry.findingsEl.style.display = 'none';
+        entry.findingsEl.innerHTML = '';
+        entry._findingsSig = '';
+        entry._findingsCount = null;
+        return;
+      }
+      const slowInt = Math.round((f.slowPct || 0) * 100);
+      // Only rewrite when the row actually changed (the locks-row precedent):
+      // _refreshHUD() runs on every beat and an unconditional rewrite would
+      // tear the file/close pulse off the pip that just landed.
+      const sig = `${f.count}/${f.max}|${f.ever}|${slowInt}`;
+      if (entry._findingsSig === sig) return;
+      const prevCount = entry._findingsCount;
+      entry._findingsSig = sig;
+      entry._findingsCount = f.count;
+      entry.findingsEl.style.display = '';
+      let html = `<span class="combat-findings-label">FINDINGS</span>`;
+      for (let p = 0; p < f.max; p++) {
+        html += `<span class="combat-finding-pip${p < f.count ? ' filed' : ''}"></span>`;
+      }
+      if (f.ever > 0) {
+        html += `<span class="combat-findings-record">ON RECORD ×${f.ever}</span>`;
+        if (slowInt > 0) html += `<span class="combat-findings-shield">ATK −${slowInt}%</span>`;
+      }
+      entry.findingsEl.innerHTML = html;
+      if (typeof prevCount === 'number') {
+        if (f.count > prevCount) {
+          beats.filed.push(i);
+          const pips = entry.findingsEl.querySelectorAll('.combat-finding-pip.filed');
+          for (let p = prevCount; p < f.count; p++) pips[p]?.classList.add('just-filed');
+        } else if (f.count < prevCount) {
+          beats.closed.push(i);
+          entry.findingsEl.classList.remove('closing');
+          void entry.findingsEl.offsetWidth;   // restart the animation
+          entry.findingsEl.classList.add('closing');
+        }
+      }
+    });
+    return beats;
   }
 
   // Shatter animation on a single chip that just cleared.

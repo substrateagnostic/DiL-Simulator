@@ -1268,12 +1268,27 @@ export class CombatEngine {
     }
   }
 
-  /** Public read for the HUD: how full the file is on a given enemy. */
+  /** Public read for the HUD: how full the file is on a given enemy.
+   *  `count`/`max` are the STANDING file (empties on a close); `ever` is the
+   *  monotonic record (`_findingsEver` — a close never resets it, and on Hard
+   *  it arrives seeded); `slowPct` is the documentation shield actually
+   *  applied to this enemy's outgoing ATK — the SAME arithmetic as the
+   *  enemyTurn site (`assaultSlow × min(5, ever)`, capped 0.5), so the HUD
+   *  prints what the engine does rather than a re-derivation that can drift.
+   *  0 on every mode without an `audit` block, i.e. everything but Hard.
+   *  Null for any build without the `findings` node — the chip's gate. */
   getFindings(enemyIndex = this.targetEnemyIndex) {
     if (!this.hasNode('findings')) return null;
     const t = this.enemies[enemyIndex];
     if (!t || t.hp <= 0) return null;
-    return { count: t._findings || 0, max: this.hasNode('material_weakness') ? 4 : 5 };
+    const ever = t._findingsEver || 0;
+    const slow = Difficulty.auditRamp().assaultSlow;
+    return {
+      count: t._findings || 0,
+      max: this.hasNode('material_weakness') ? 4 : 5,
+      ever,
+      slowPct: (slow > 0 && ever > 0) ? Math.min(0.5, slow * Math.min(5, ever)) : 0,
+    };
   }
 
   // ══════════════════════════════════════════════════════════════════
