@@ -1,0 +1,24 @@
+[
+ {
+  "name": "karen",
+  "tag": "before",
+  "identity": {
+   "enemies": [
+    "karen"
+   ],
+   "level": 3,
+   "difficulty": "normal(default)",
+   "qtier": "high"
+  },
+  "identityOk": true,
+  "turns": 6,
+  "result": "defeat",
+  "durationSec": 38,
+  "meshyThroughout": true,
+  "splash": [],
+  "banners": [
+   "OBJECTION SUSTAINED"
+  ],
+  "errors": []
+ }
+]

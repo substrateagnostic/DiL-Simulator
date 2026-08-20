@@ -18,7 +18,7 @@
 //
 // Writes screenshots/h2-run/videos/<tag>-<name>.webm + <tag>-report.json.
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync, renameSync, readdirSync, statSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, renameSync, readdirSync, statSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const REPO = 'C:/Users/agall/projects/DiL_Simulator';
@@ -60,7 +60,9 @@ const FIGHTS = [
   {
     name: 'trio', fixture: 'act5', level: 7, fight: 'restructuring_trio',
     clearFlags: ['restructuring_defeated'],
-    expect: ['restructuring_analyst', 'brand_consultant', 'data_analytics_lead'], maxSec: 420,
+    // ENCOUNTERS.restructuring_trio.enemyIds verbatim — the first draft guessed
+    // and the identity check correctly flagged the capture.
+    expect: ['brand_consultant', 'restructuring_analyst', 'corporate_lawyer'], maxSec: 420,
   },
 ];
 
@@ -175,27 +177,45 @@ async function captureFight(cfg) {
     }
     if (!st.input) { await page.waitForTimeout(350); continue; }
 
-    // Input is live — pick one action.
+    // Input is live — pick one action. The policy is a competent-casual player:
+    // press the weakness the HUD prints (COMPOSURE — X ONLY), drink coffee when
+    // low, take Assert Dominance when the bar offers it.
     state.turn++;
     const buttons = await page.$$eval('.combat-action-btn', els =>
       els.map(e => ({ text: e.textContent.trim(), disabled: e.classList.contains('disabled') })));
     const find = (t) => buttons.find(b => b.text.includes(t) && !b.disabled);
     const click = async (t) => { await page.click(`.combat-action-btn:has-text("${t}")`).catch(() => {}); };
-
-    if (find('ASSERT DOMINANCE') && !state.usedPower) {
-      state.usedPower = true;
-      await click('ASSERT DOMINANCE');
-    } else if (state.turn % 3 === 2 && find('Special')) {
-      await click('Special');
+    const vitals = await page.evaluate(() => {
+      const c = window.__combat;
+      const target = c.engine.enemies.findIndex(e => e.hp > 0);
+      const weak = c.engine.enemies[target]?.weakness || null;
+      const p = c.engine.player;
+      return { weak, hpFrac: p.hp / p.maxHP, mp: p.mp };
+    }).catch(() => ({ weak: null, hpFrac: 1, mp: 0 }));
+    const WEAK_BTN = { legal: 'File Motion', social: 'Raise Concerns', audit: 'Spot Check' };
+    const pickSub = async (name) => {
       await page.waitForTimeout(450);
-      const picked = await page.evaluate(() => {
+      return page.evaluate((want) => {
         const items = [...document.querySelectorAll('.combat-submenu-item')]
           .filter(e => !e.classList.contains('disabled') && !/back/i.test(e.textContent));
         if (!items.length) return false;
-        items[0].click();
+        const hit = want ? items.find(e => e.textContent.includes(want)) : null;
+        (hit || items[0]).click();
         return true;
-      });
-      if (!picked) { await page.keyboard.press('Escape', { delay: 100 }); await page.waitForTimeout(300); await click('Attack'); }
+      }, name);
+    };
+
+    if (find('ASSERT DOMINANCE')) {
+      state.usedPower = true;
+      await click('ASSERT DOMINANCE');
+    } else if (vitals.hpFrac < 0.30 && find('Special')) {
+      await click('Special');
+      const ok = await pickSub('Coffee Break');
+      if (!ok) { await page.keyboard.press('Escape', { delay: 100 }); await page.waitForTimeout(300); await click('Attack'); }
+    } else if (vitals.weak && WEAK_BTN[vitals.weak] && vitals.mp >= 10 && find('Special')) {
+      await click('Special');
+      const ok = await pickSub(WEAK_BTN[vitals.weak]);
+      if (!ok) { await page.keyboard.press('Escape', { delay: 100 }); await page.waitForTimeout(300); await click('Attack'); }
     } else if (find('Attack')) {
       await click('Attack');
     } else if (find('Item')) {
@@ -247,5 +267,11 @@ async function captureFight(cfg) {
 }
 
 for (const cfg of FIGHTS) await captureFight(cfg);
-writeFileSync(join(OUT, `${TAG}-report.json`), JSON.stringify(report, null, 1));
+// MERGE with any existing report for this tag: --only runs land in batches,
+// and a plain write made batch 2 silently overwrite batch 1's rows.
+const reportPath = join(OUT, `${TAG}-report.json`);
+let existing = [];
+try { existing = JSON.parse(readFileSync(reportPath, 'utf8')); } catch { /* first run */ }
+const merged = [...existing.filter(r => !report.some(n => n.name === r.name)), ...report];
+writeFileSync(reportPath, JSON.stringify(merged, null, 1));
 console.log(`\nwrote ${OUT}`);

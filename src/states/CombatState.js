@@ -1136,6 +1136,13 @@ export class CombatState {
     const ti = result.targetIndex ?? this.engine.targetEnemyIndex ?? 0;
     this._refreshDepthHUD();
     this.hud.pulseComposureBreak(ti);
+    // A Break on the KILLING hit announces nothing: the enemy has no next turn
+    // to lose (so the 700ms message would be false on screen), and the 1300ms
+    // COMPOSURE BROKEN banner double-exposed over the boss-kill CASE CLOSED
+    // card whenever the kill and the break were the same hit (H2 re-judge nit,
+    // seen on chad and grandma). The chip pulse above stays — the bar visibly
+    // empties — and the kill's own victory beat owns the frame.
+    if ((this.engine.enemies[ti]?.hp ?? 0) <= 0) return;
     setTimeout(() => {
       this.hud.showBanner('COMPOSURE BROKEN', 1300);
       AudioManager.playSfx('critical');

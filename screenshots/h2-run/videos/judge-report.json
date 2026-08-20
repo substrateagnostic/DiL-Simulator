@@ -1,0 +1,77 @@
+[
+ {
+  "name": "meredith",
+  "tag": "judge",
+  "identity": {
+   "enemies": [
+    "meredith_boss"
+   ],
+   "level": 9,
+   "difficulty": "normal(default)",
+   "qtier": "high"
+  },
+  "identityOk": true,
+  "turns": 10,
+  "result": "victory",
+  "durationSec": 54,
+  "meshyThroughout": true,
+  "splash": [
+   "assert_dominance",
+   "boss_meredith",
+   "boss_kill"
+  ],
+  "banners": [
+   "OBJECTION SUSTAINED",
+   "COMPOSURE BROKEN"
+  ],
+  "errors": []
+ },
+ {
+  "name": "client",
+  "tag": "judge",
+  "identity": {
+   "enemies": [
+    "reception_client"
+   ],
+   "level": 5,
+   "difficulty": "normal(default)",
+   "qtier": "high"
+  },
+  "identityOk": true,
+  "turns": 1,
+  "result": "victory",
+  "durationSec": 14,
+  "meshyThroughout": true,
+  "splash": [],
+  "banners": [],
+  "errors": []
+ },
+ {
+  "name": "trio",
+  "tag": "judge",
+  "identity": {
+   "enemies": [
+    "brand_consultant",
+    "restructuring_analyst",
+    "corporate_lawyer"
+   ],
+   "level": 7,
+   "difficulty": "normal(default)",
+   "qtier": "high"
+  },
+  "identityOk": false,
+  "turns": 20,
+  "result": "victory",
+  "durationSec": 100,
+  "meshyThroughout": true,
+  "splash": [
+   "assert_dominance"
+  ],
+  "banners": [
+   "Janet replies all — +50% damage!",
+   "OBJECTION SUSTAINED",
+   "COMPOSURE BROKEN"
+  ],
+  "errors": []
+ }
+]
