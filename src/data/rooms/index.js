@@ -2056,6 +2056,11 @@ export const ROOMS = {
       gloss: 0.05,
       extra: [
         { x: 3.5, z: 1.55, y: 2.2, housing: false, tint: 0xffc98a, pool: 0xffd9a0, opacity: 0.30, poolW: 4.6, poolD: 2.3, shaft: 0, shaftW: 0.1, shaftH: 0.1 },
+        // Judge fix (one round, 2026-08-20): the south conference table was
+        // the darkest story surface in the act-7 frame after the gloss cut —
+        // this promotes the point practical already beside it into a real low
+        // warm pool anchored to the tabletop, NOT a floor-wide term.
+        { x: 12, z: 6, y: 1.1, housing: false, tint: 0xffd9a0, pool: 0xffd9a0, opacity: 0.22, poolW: 3.2, poolD: 2.6, shaft: 0, shaftW: 0.1, shaftH: 0.1 },
       ],
     },
     name: 'The Penthouse',
@@ -2187,6 +2192,10 @@ export const ROOMS = {
       gloss: 0.05,
       extra: [
         { x: 3.5, z: 1.55, y: 2.2, housing: false, tint: 0xffc98a, pool: 0xffd9a0, opacity: 0.30, poolW: 4.6, poolD: 2.3, shaft: 0, shaftW: 0.1, shaftH: 0.1 },
+        // Judge fix (one round, 2026-08-20): as in `penthouse` — the south
+        // meeting table read as unfinished dark in the 22x16 footprint; a low
+        // warm tabletop pool anchored to its existing practical.
+        { x: 17, z: 9, y: 1.1, housing: false, tint: 0xffd9a0, pool: 0xffd9a0, opacity: 0.22, poolW: 3.2, poolD: 2.6, shaft: 0, shaftW: 0.1, shaftH: 0.1 },
       ],
     },
     name: 'The Penthouse',
