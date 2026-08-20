@@ -1,0 +1,49 @@
+
+=== NG+ LADDER ACCEPTANCE, PER MODE — cand base (BASELINE (shipped NG+ constants)), 500 runs/cell, CARRY kit, COMPETENT ===
+Rule (ng-sim.mjs): CARRY@NG+1 <= FRESH@NG — a second lap must not be easier.
+NG+ effective enemy multipliers under base:
+  lap    maxHP    atk    def
+  NG     1.000  1.000  1.000
+  NG+1    1.700  1.450  1.300
+  NG+2    1.955  1.667  1.430
+  NG+3    2.053  1.751  1.479
+  (Hard multiplies atk x1.45 ON TOP of the lap rung, after overrides.)
+
+-- MODE EASY
+encounter          lvl   FRESH@NG   CARRY@NG  CARRY@NG+1  CARRY@NG+2  CARRY@NG+3
+karen               4     100.0%     100.0%      100.0%      100.0%      100.0%
+                        rounds    4.11       1.90        2.76        2.79        2.79
+chad                6     100.0%     100.0%      100.0%      100.0%      100.0%
+                        rounds    3.49       2.25        3.22        3.42        3.48
+grandma             8      99.4%     100.0%       99.8%       99.8%       99.6%
+                        rounds    6.52       3.86        6.55        7.36        8.13
+meredith_boss       9      99.6%     100.0%      100.0%       99.4%       97.4%
+                        rounds    8.07       4.07        7.87       10.09       10.58
+algorithm          10     100.0%     100.0%       99.6%       93.2%       86.4%
+                        rounds    6.55       4.15        7.93       10.68       12.13
+
+-- MODE NORMAL
+encounter          lvl   FRESH@NG   CARRY@NG  CARRY@NG+1  CARRY@NG+2  CARRY@NG+3
+karen               4      95.4%     100.0%      100.0%       99.6%       98.4%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds    4.46       1.91        2.74        2.82        2.98
+chad                6     100.0%     100.0%      100.0%      100.0%      100.0%
+                        rounds    3.49       2.25        3.22        3.44        3.56
+grandma             8      93.2%      99.8%       98.2%       95.6%       91.4%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds    7.51       3.94        6.85        7.77        8.66
+meredith_boss       9      94.8%     100.0%       97.8%       92.2%       86.0%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds   10.27       4.26        8.34       11.08       12.04
+algorithm          10      99.0%     100.0%       90.0%       63.6%       55.6%
+                        rounds    6.79       4.29        9.00       11.39       12.08
+
+-- MODE HARD
+encounter          lvl   FRESH@NG   CARRY@NG  CARRY@NG+1  CARRY@NG+2  CARRY@NG+3
+karen               4      83.2%     100.0%      100.0%       97.0%       96.6%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds    5.29       1.89        2.76        3.31        3.40
+chad                6      99.8%     100.0%      100.0%      100.0%      100.0%
+                        rounds    3.63       2.14        2.89        3.16        3.15
+grandma             8      87.8%      99.8%       97.6%       94.6%       92.6%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds    7.61       3.72        6.37        7.24        7.90
+meredith_boss       9      64.0%     100.0%       95.4%       80.0%       72.4%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds   12.29       4.19        8.19       11.44       12.85
+algorithm          10      88.8%     100.0%       87.6%       65.8%       51.2%
+                        rounds    7.14       3.93        8.29       11.03       11.90

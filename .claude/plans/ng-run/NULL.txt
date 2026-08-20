@@ -1,0 +1,7 @@
+
+=== NULL ARM — the same shipped cell measured twice (800 runs/cell) ===
+Nothing here is a finding unless it clears these deltas.
+meredith_boss@12 audit NG+1 hard:  win 56.8% vs 56.0%  (|d| 0.7 pp)  rounds 30.13 vs 30.71
+meredith_boss@12 litigation NG+1 hard:  win 83.1% vs 85.1%  (|d| 2.0 pp)  rounds 10.04 vs 10.04
+grandma@8 audit NG+1 normal:  win 61.4% vs 60.8%  (|d| 0.6 pp)  rounds 14.80 vs 14.77
+algorithm@10 litigation NG+2 normal:  win 76.4% vs 77.0%  (|d| 0.6 pp)  rounds 13.10 vs 13.22
