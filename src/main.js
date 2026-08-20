@@ -166,6 +166,7 @@ class Game {
             }];
           }
         }
+        if (params.has('fxgloss')) room.fx.gloss = Number(params.get('fxgloss'));
         if (params.has('fxhousing')) {
           const v = String(params.get('fxhousing')).split(',').map(Number);
           room.fx.housingScale = v.length === 3 && v.every(Number.isFinite) ? v : null;

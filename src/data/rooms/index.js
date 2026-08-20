@@ -2043,7 +2043,21 @@ export const ROOMS = {
     // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
     // A mood room. Its own point lights own the floor; the grid pools were
     // a wash on top of them.
-    fx: { fixtures: 'none' },
+    // Extended lighting pass (2026-08-20): at act 7 the finale floor read as
+    // a flat grey plateau (plate sd 25.4, second-flattest interior) — the
+    // hardwood gloss ramp is a SOURCELESS 0.12 additive band across a
+    // near-black night floor, the same defect penthouse_bar's hand cut fixed.
+    // `gloss: 0.05` pulls the mid-floor toward black between the practicals;
+    // the kitchen gets back a warm under-hood wash (the rangeHood at (2,1) IS
+    // the fixture — housing:false, city_street precedent) so the room keeps
+    // one anchored warm zone instead of an even sheen.
+    fx: {
+      fixtures: 'none',
+      gloss: 0.05,
+      extra: [
+        { x: 3.5, z: 1.55, y: 2.2, housing: false, tint: 0xffc98a, pool: 0xffd9a0, opacity: 0.30, poolW: 4.6, poolD: 2.3, shaft: 0, shaftW: 0.1, shaftH: 0.1 },
+      ],
+    },
     name: 'The Penthouse',
     width: 16,
     height: 12,
@@ -2166,8 +2180,15 @@ export const ROOMS = {
   penthouse_expanded: {
     id: 'penthouse_expanded',
     // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
-    // As above.
-    fx: { fixtures: 'none' },
+    // As above — including the extended-lighting-pass gloss cut and the
+    // under-hood kitchen wash (same kitchen, same coordinates).
+    fx: {
+      fixtures: 'none',
+      gloss: 0.05,
+      extra: [
+        { x: 3.5, z: 1.55, y: 2.2, housing: false, tint: 0xffc98a, pool: 0xffd9a0, opacity: 0.30, poolW: 4.6, poolD: 2.3, shaft: 0, shaftW: 0.1, shaftH: 0.1 },
+      ],
+    },
     name: 'The Penthouse',
     width: 22,
     height: 16,
@@ -2667,13 +2688,32 @@ export const ROOMS = {
     id: 'transit_bus',
     // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
     // A bus interior is one flickering strip and nothing else.
-    fx: { fixtures: 'utility' },
+    // Extended lighting pass (2026-08-20): the strip is HAND-AUTHORED now, at
+    // the exact position/length the utility rig derived (x 5.5, z 2, 8.1 m),
+    // because the profile pool was a wall-to-wall wash — 10.46 x 4.4 m = 75.5%
+    // of a 12x5 floor at a fixed 0.26 opacity, which is "a floor that is
+    // somehow lit anyway" with nothing left dark. Measured before: plate luma
+    // 29.9 mean / 23.6 sd, the flattest fixture room in the game. The extra
+    // keeps the one-strip fiction and trades coverage for presence: pool
+    // 8.5 x 2.8 (39.7%) hugging the aisle at 0.40, so the bench ends fall off
+    // toward the goldenhour street instead of everything sitting in one grey.
+    fx: {
+      fixtures: 'none',
+      extra: [
+        { x: 5.5, z: 2, len: 8.1, tint: 0xccdcf0, pool: 0x9fc4e6, opacity: 0.40, poolW: 8.5, poolD: 2.8, shaft: 0.07, shaftW: 5.7, shaftH: 0.7 },
+      ],
+    },
     name: 'The 5:15 Crosstown',
     width: 12,
     height: 5,
     floorColor: 0x3a3e44,
     walls: true,
-    lighting: { ambient: 0xd8e0e8, ambientIntensity: 0.6, dir: 0xc8d4e0, dirIntensity: 0.6, flicker: true },
+    // Extended lighting pass (2026-08-20): a bus at goldenhour is a LIT
+    // CAPSULE against the dark street — the interior reads brighter than the
+    // world outside its windows, or the room is just a murky box (measured
+    // 29.9 mean / 23.6 sd, the flattest fixture room in the game, benches
+    // near-invisible). Intensities up, colours and the flicker untouched.
+    lighting: { ambient: 0xd8e0e8, ambientIntensity: 0.78, dir: 0xc8d4e0, dirIntensity: 0.72, flicker: true },
     furniture: [
       // Bench seating along both walls. The NORTH row moved 0.8 -> 0.5: at 0.8
       // the block row was floor(1.3) = 1 while the mesh sat entirely in row 0,
@@ -2991,7 +3031,26 @@ export const ROOMS = {
     id: 'bathroom',
     // Fixture profile (F-10 rider i) - see Engine.applyRoomFX.
     // Institutional cool. One strip, and the tube over the mirror is dead.
-    fx: { fixtures: 'utility' },
+    // Extended lighting pass (2026-08-20): the comment above was the intent,
+    // the utility rig delivered ONE centred 4.1 m bar and a 57.8% floor wash —
+    // measured the second-brightest room in the game (plate 84.6 mean), with
+    // ROOM_THOUGHTS' "one working fluorescent and one dead one" nowhere on
+    // screen. Both tubes are hand-authored now, at the exact positions the
+    // rig's perRow:2 split would derive (x 2.25 / 4.75, z 2.5, 1.6 m each):
+    // the WEST tube — the one over the mirror — is a DEAD housing (dark tint,
+    // zero-opacity pool, no shaft; a dead fixture composed from existing
+    // keys), the EAST tube works and carries the room's only pool. The base
+    // lighting block is untouched, so the dim half stays fully readable — the
+    // asymmetry is the fixture rig's, exactly as the fiction says.
+    fx: {
+      fixtures: 'none',
+      extra: [
+        // the dead tube, over the mirror
+        { x: 2.25, z: 2.5, len: 1.6, tint: 0x3a4046, opacity: 0, poolW: 0.1, poolD: 0.1, shaft: 0, shaftW: 0.1, shaftH: 0.1 },
+        // the working tube, over the stalls
+        { x: 4.75, z: 2.5, len: 1.6, tint: 0xccdcf0, pool: 0x9fc4e6, opacity: 0.30, poolW: 3.4, poolD: 3.6, shaft: 0.08, shaftW: 1.1, shaftH: 0.7 },
+      ],
+    },
     name: 'Bathroom',
     width: 8,
     height: 6,
@@ -3002,7 +3061,13 @@ export const ROOMS = {
     // the tile and the partitions separate, and kept under the old 0.9
     // office threshold on purpose - the profile above is what picks the rig
     // now, and this room wants one cool strip, not a troffer run.
-    lighting: { ambient: 0xe6edf1, ambientIntensity: 0.66, dir: 0xf2f6ff, dirIntensity: 0.84, flicker: true },
+    // Extended lighting pass (2026-08-20): trimmed from 0.66/0.84 — at that
+    // base the room measured the second-brightest in the game (plate mean
+    // 84.6) and no fixture story could lead it. With the base pulled back the
+    // working tube's pool is what lights the stall half; the dead half stays
+    // readable, just visibly UNLIT. Flicker untouched — it is the working
+    // tube's failing-ballast buzz.
+    lighting: { ambient: 0xe6edf1, ambientIntensity: 0.52, dir: 0xf2f6ff, dirIntensity: 0.64, flicker: true },
     furniture: [
       // The stall run against the NORTH wall, doors facing SOUTH into the room.
       // rotation 0 = SOUTH (the rotation law, CLAUDE.md) — and which way a

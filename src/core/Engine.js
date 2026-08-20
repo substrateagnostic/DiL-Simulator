@@ -1071,6 +1071,10 @@ class EngineClass {
       const y = ex.y ?? 2.44;
       if (ex.housing !== false) {
         const fixture = Furniture.ceilingFixture(len, tint);
+        // Same census name as the rig's troffers — a hand-authored tube is
+        // still a tube, and an unnamed one is invisible to any housing count
+        // (the bathroom's dead/working pair would otherwise census as 0).
+        fixture.name = 'ceiling_fixture';
         fixture.position.set(ex.x, y, ex.z);
         g.add(fixture);
       }
@@ -1096,8 +1100,17 @@ class EngineClass {
     // lamp pools" the rider flagged. Cut it hard for this room so the floor
     // falls toward black between the practicals; the point-light pools carry
     // the sheen. Other hardwood rooms keep the full lacquer response.
-    const glossOpacity = roomData.id === 'penthouse_bar' ? 0.035
-      : (roomData.floorPattern === 'hardwood' ? 0.12 : 0.085);
+    // `fx.gloss` — room-scoped gloss-ramp opacity (extended lighting pass,
+    // 2026-08-20). The hardwood 0.12 ramp is a SOURCELESS additive band, and on
+    // a near-black night floor it reads as the "flat milky-grey plateau" the
+    // penthouse_bar rider named — the main penthouse (the finale room) had the
+    // same defect at act 7 (plate sd 25.4, the second-flattest interior) with
+    // no way to say so in data. Same contract as every other fx key: a room
+    // that says nothing is bit-identical to before, and penthouse_bar's
+    // hand-cut ternary stays as the fallback for saves of its shipped look.
+    const glossOpacity = roomData.fx?.gloss
+      ?? (roomData.id === 'penthouse_bar' ? 0.035
+      : (roomData.floorPattern === 'hardwood' ? 0.12 : 0.085));
     const gloss = new THREE.Mesh(
       new THREE.PlaneGeometry(w, h),
       new THREE.MeshBasicMaterial({
