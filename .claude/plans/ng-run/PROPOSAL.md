@@ -34,11 +34,14 @@ shipped AFTER these constants were tuned, and the documented staircase quietly c
 Gameplay.md promises Meredith **82.6 → 48.2 → 29.8 %** across CARRY laps; today's live
 build measures **97.8 → 92.2 → 86.0 %** (`LADDER-base.txt`). The re-tune moves the NG+
 budget off HP and onto per-lap ATK: **entry maxHP 1.70 → 1.45, per-lap maxHP 1.15 → 1.10,
-per-lap ATK 1.15 → 1.22, lap decay 0.35 → 0.85** — entry ATK, DEF and every XP number
-untouched. Per-lap terms have exponent 0 at lap 1, so **NG+1 and the Hard × NG+1 stack
-cannot move by construction**; the staircase is bought back where it was lost (NG+2/NG+3)
-and the rounds bill is paid everywhere. Lap-0 is untouched by construction (`NG_PLUS_*`
-is only read when `laps > 0`) and measured untouched (`TOUCH-P4.txt`: −0.3/0.0/+0.2 pp).
+per-lap ATK 1.15 → 1.22, lap decay 0.35 → 0.85** — entry ATK, entry DEF and both
+`xpReward` constants untouched (the decay exponent still moves EFFECTIVE NG+3 XP and DEF;
+declared in §3/§5). Per-lap terms have exponent 0 at lap 1, so **the NG+1 threat product
+(ATK/DEF) and the Hard × NG+1 ATK stack cannot move by construction** — NG+1 *cells* do
+move, via the HP cut, and §4 reports them; the ladder keeps a real lap-to-lap descent
+(the NG+2 → NG+3 step steepens) while the rounds bill is paid everywhere. Lap-0 is
+untouched by construction (`NG_PLUS_*` is only read when `laps > 0`) and measured
+untouched (`TOUCH-P4.txt`: −0.3/0.0/+0.2 pp).
 
 ## 1. THE DIAGNOSIS — three findings, three loadout models
 
@@ -135,6 +138,14 @@ Effective enemy multipliers (HP / ATK / DEF):
 | NG+2 | 1.96 / 1.67 / 1.43 | **1.60 / 1.77** / 1.43 |
 | NG+3 | 2.05 / 1.75 / 1.48 | **1.73 / 2.10 / 1.55** |
 
+**The decay exponent also reaches effective NG+3 XP** (the `xpReward` constants are held,
+but `rung()` compounds them through the same decayed exponent): **×1.60 → ×1.75** on
+every NG+3 enemy, +9.5 %. Declared as a cost/reward in §5.5 rather than engineered away —
+exempting `xpReward` from the exponent would be new engine surface in a 3-line dark diff,
+and a small XP bump on the flex lap that just got its ATK raised is symmetric. If the
+producer wants NG+3 XP pinned at ×1.60, that is a one-function change (`ngLapExponent`
+made per-key) and a separate line on the signature.
+
 The shape: each lap now raises the THREAT more than the LENGTH — the same trade the Hard
 bundle made ("a hard mode raises the threat per turn; it does not make the fight take
 longer"), applied to the ladder that was violating it.
@@ -164,34 +175,54 @@ longer"), applied to the ladder that was violating it.
 
 **The staircase** (CARRY, Normal — `LADDER-P4.txt`): meredith 99.5 / 94.3 / **82.3 %**,
 algorithm 93.5 / 86.0 / **58.8 %**, against live-base 97.8 / 92.2 / 86.0 and 90.0 / 63.6 /
-55.6. NG+3 lands at or below the live baseline on both informative rows (82.3 vs 86.0,
-58.8 vs 55.6) while every CARRY fight got 1–3 rounds shorter. The documented 48/30 shape
-is **not** restored — see §6.
+55.6. Meredith's NG+3 lands at or below the live baseline (82.3 vs 86.0; the judge's
+re-measures read 82.7–85.0). **The algorithm's NG+3 does not**: the adversarial pass
+re-measured it twice (63.8 % at 500 runs, 63.0 % at 600 — pooled with this file's 58.8,
+≈ 61.8 ± 1.2 against base 55.6 ± 2.2), so on the finale **every CARRY lap under P4 is
+somewhat easier than live** — the lap-to-lap STEP steepens (86.0 → ~62 is a real stair
+where 63.6 → 55.6 was a shuffle), but the top rung softens by ~4–8 pp. Declared in §5.
+Every CARRY fight is 1–3 rounds shorter. The documented 48/30 shape is **not** restored —
+see §6.
 
 **Guard cells.** Lap-0: untouched by construction, measured −0.3 / 0.0 / +0.2 pp
 (`TOUCH-P4.txt`). Easy: every P4 cell within noise of base up through NG+3 (worst:
-algorithm NG+3 audit 89.2 → 87.3 %). Break economy: breaks/fight scale with fight length
-(algorithm Hard NG+2 lit 1.65 → 1.20 at 7.8 → 6.5 rounds), never to zero; the Break-floor
-law proper is a lap-0/mode law and lap-0 does not move.
+algorithm NG+3 audit 89.2 → 87.3 %). Break economy (`BREAKS-P4.txt`, 600 runs): breaks
+per fight scale with fight length and never approach zero — algorithm Hard NG+2 lit
+1.66 → 1.18 at 7.8 → 6.4 rounds, audit 0.76 → 0.53; the Break-floor law proper is a
+lap-0/mode law and lap-0 does not move.
 
 ## 5. WHAT IT COSTS ELSEWHERE — declared, not discovered
 
-1. **CARRY NG+2 gets easier on the finale.** Algorithm 63.6 → 86.0 % — the direct price
-   of paying the rounds bill. Still inside Gameplay.md's authored 40–85 band (at its
-   edge). Meredith NG+2 94.3 % (base 92.2).
-2. **NG+3 leans ATK, and the slow lanes feel it.** Real-loadout NG+3 audit: meredith@9
-   Normal 81.5 → 75.2, algorithm Normal 53.5 → 47.7, algorithm Hard 37.5 → 32.0
-   (400-run base columns, so ±3 pp). NG+3 is the documented flex — "deliberately below
-   the band" — and stays passable for the lanes it presses.
-3. **Constructed lane-kit players on early rungs pay for the per-lap ATK.** karen@4 at
-   NG+2/NG+3 with a bare 3-ability lane kit and no shop stats drops 8–15 pp
-   (lane-loadout model only; the REAL loadout reads ~100 % on every karen NG+ cell).
-   A player on lap 2+ without their carried kit does not exist in the game — NG+ hands
-   everything back — but the number is on the record.
-4. **The CARRY@NG+1 rule now also flags on Hard** (algorithm 96.0 vs FRESH 87.8). The
-   rule is evaluated on Normal — FRESH@NG on Hard is tuned to be barely passable (64 %
+1. **CARRY NG+2 and NG+3 get easier on the finale.** Algorithm NG+2 63.6 → 86.0 % — the
+   direct price of paying the rounds bill — landing at/just ABOVE the top edge of
+   Gameplay.md's authored 40–85 band. Algorithm NG+3 55.6 → ~62 % (judge-pooled
+   61.8 ± 1.2): the finale's top rung softens ~4–8 pp rather than holding, even as the
+   NG+2 → NG+3 step steepens. Meredith NG+2 94.3 % (base 92.2), NG+3 holds (82.3 vs 86.0).
+2. **NG+3 leans ATK, and EVERY lane pays there — litigation included.** All one cause
+   (per-lap ATK 1.22 + decay 0.85), all in the raw files: LANE Hard NG+3 grandma lit
+   48.8 → 33.3 (−15.5), comp −8.2; meredith@12 lit 52.5 → 43.8 (−8.7); LANE Normal NG+3
+   meredith@9 lit 65.3 → 54.8 (−10.5), grandma lit −6.7; REAL Hard NG+3 algorithm lit
+   95.5 → 89.0 (−6.5); CARRY Hard meredith NG+3 72.4 → 65.0 (−7.4). Audit at NG+3:
+   meredith@9 Normal 81.5 → 75.2, algorithm Normal 53.5 → 47.7, algorithm Hard
+   37.5 → 32.0 (400-run base columns, ±3 pp). NG+3 is the documented flex —
+   "deliberately below the band" — and this is what re-steepening it costs. **Laps 1–2
+   are clean**: the adversarial pass found zero undeclared >4 pp drops at NG+1/NG+2 in
+   either loadout, and every audit cell there improves.
+3. **Constructed lane-kit players on early rungs pay for the per-lap ATK, and Hard's
+   worst cell is severe.** karen@4 at NG+2/NG+3 with a bare 3-ability lane kit and no
+   shop stats drops 8–15.6 pp on NORMAL — and on HARD NG+3, karen@4 litigation falls
+   35.7 → 6.3 % (−29.4 pp). Lane-loadout model only; the REAL loadout reads 95.8–100 %
+   on every karen NG+ cell, and a player on lap 2+ without their carried kit does not
+   exist in the game (NG+ hands everything back). The number is on the record.
+4. **The CARRY@NG+1 rule now also flags on Hard** (algorithm 96.0 vs FRESH 87.8; the
+   base build already flags karen/grandma/meredith on Hard before any knob moves). The
+   rule is evaluated on Normal — FRESH@NG on Hard is tuned to be barely passable (61–64 %
    at meredith), so demanding a carried lap-2 be harder than that is not a coherent bar;
    this packet states that ruling explicitly rather than leaving it implied.
+5. **Effective NG+3 XP rises ×1.60 → ×1.75** (+9.5 % per NG+3 enemy) through the decay
+   exponent, constants untouched (§3). Small in practice — the level cap is 15 and NG+3
+   players are at it — and symmetric with the lap's added threat; pinning it is a named
+   one-function option on the signature line.
 
 ## 6. WHAT THIS DOES **NOT** CLOSE — the residuals, named
 
@@ -202,8 +233,9 @@ law proper is a lap-0/mode law and lap-0 does not move.
   instrument for it is H-run §8.2's sized knob: **charge the One-More returned turn 25
   Confidence on NG+ laps only** (one engine conditional, measured band-neutral there).
   That is a code-side change and a separate producer decision; this packet only names it.
-- **Hard × NG+2/3 audit stays a corner.** 59.8 / 39.0 % at meredith@9 NG+2/NG+3 —
-  improved from 54.5 / 40.8 but not inside the ~10 pp lap-0 standard. Three difficulty
+- **Hard × NG+2/3 audit stays a corner.** meredith@9 NG+2 54.5 → 59.8 % (a real
+  improvement, at 19.7 → 14.4 rounds); NG+3 40.8 → 39.0 % (within noise — NOT improved,
+  just not worsened). Neither is inside the ~10 pp lap-0 standard. Three difficulty
   systems stack there (mode × lap × lane); closing it fully needs a lap-aware
   accommodation term, which is new engine surface this lane does not propose.
 - **Lane-kit Regional Director on Hard NG+ remains near-unwinnable** (25.5 / 3.7 / 43.3 %
@@ -213,15 +245,17 @@ law proper is a lap-0/mode law and lap-0 does not move.
 ## 7. STANDING LAWS, CHECKED
 
 - **No code forks** — the diff is three constant lines; every mode remains a data bundle.
-- **Modes do not use maxHP** — unchanged; NG+ still uses HP but 15–23 % less of it.
+- **Modes do not use maxHP** — unchanged; NG+ still uses HP, at 14.7–18.4 % below the
+  shipped multipliers per lap.
 - **The audit accommodation cap law** — untouched and lap-proof by multiplication
   (§1, finding 3). `fileRate`/`assaultSlow`/`seedRecord` all unchanged (SEED-DECISION.md:
   seed is producer-frozen pending his playtest).
 - **PIP/assist single field** — untouched.
 - **The NG+ build order** (multiply base, then spread overrides) — untouched; scripted
   fights keep their explicit values.
-- **No XP movement** — both xpReward constants held, so lap pacing and the level curve
-  are bit-identical.
+- **XP** — both `xpReward` CONSTANTS held; NG/NG+1/NG+2 effective XP bit-identical.
+  NG+3 effective XP moves ×1.60 → ×1.75 through the decay exponent — declared in §3/§5.5,
+  not hidden behind "constants untouched".
 - **`npm run check`** — exit 0 on the committed tree (`_check.log`; the chunk-size
   warning is expected per CLAUDE.md).
 
@@ -249,7 +283,27 @@ node tools/_ng-retune.mjs --touch  --cand P4 --runs 600           # lap-0 null
 ```
 
 Raw evidence in this directory: `MATRIX-base*.txt`, `MATRIX-P4-*.txt`, `LADDER-*.txt`,
-`CAND-*.txt`, `TOUCH-P4.txt`, `NULL.txt`, `_check.log`.
+`CAND-*.txt`, `TOUCH-P4.txt`, `BREAKS-P4.txt`, `NULL.txt`, `_check.log`.
+
+**Evidence caveats, on the record:** every `CAND-*.txt` except `CAND-P7-ladder.txt` was
+generated before the header fix and prints the SHIPPED multipliers under the candidate's
+label — the CELLS are valid (candidates are applied per cell inside the restore scope,
+and `CAND-P4-real.txt` matches the regenerated `MATRIX-P4-real.txt` within noise), but
+read those headers as wrong. The finals (`MATRIX-P4-*`, `LADDER-P4`, `TOUCH-P4`,
+`BREAKS-P4`) carry correct headers. `LADDER-base.txt` is 500 runs where §9's repro
+commands say 600. §3 tables 2.095 as 2.10.
+
+## 10. JUDGED
+
+One adversarial Fable-high pass over the numbers (`_judge-verdict.md`, full text):
+**PASS WITH CORRECTIONS.** The judge recomputed §3's arithmetic, located every headline
+in the raw files, re-simulated five cells independently (the named residual reproduced
+*stronger* than claimed: its base/P4 pair moved +17.8 pp vs the packet's +11.3), audited
+the instrument, and left the tree as found. Its corrections — the NG+3 XP movement, the
+algorithm NG+3 staircase overclaim, the Normal-only karen cost range, the undeclared
+litigation NG+3 cells, the CAND header defect, and a latent `withMode` restore bug in
+the harness (also present in `tools/_m-modes.mjs`, noted there for its owner) — are all
+folded into §§0/3/4/5/6/7/9 above and into `tools/_ng-retune.mjs`.
 
 ---
 
@@ -259,6 +313,7 @@ The re-tune ships DARK until this line carries the producer's word.
 
 - [ ] **APPROVED — apply PROPOSAL.diff** (then do §8's three deliverables)
 - [ ] **APPROVED WITH CHANGES:** ______________________________________________
+      (named option: pin NG+3 XP at ×1.60 — one function, `ngLapExponent` per-key — §5.5)
 - [ ] **DECLINED — keep the shipped ladder** (the §1 regression then still stands
       and should be re-billed separately)
 

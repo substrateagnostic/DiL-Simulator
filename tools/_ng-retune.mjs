@@ -140,7 +140,15 @@ function withCand(name, fn) {
 }
 
 function withMode(id, fn) {
-  const prev = Difficulty.force(id);
+  // JUDGE FINDING (ng-run): `Difficulty.force(id)` returns the NEW forced id,
+  // not the previous one, so the `const prev = Difficulty.force(id)` idiom
+  // (which tools/_m-modes.mjs also uses) re-forces the same mode in `finally`
+  // instead of restoring. No shipped number was contaminated here — every
+  // cell sits inside an explicit withMode — but an "at rest" run after any
+  // withMode would silently measure the last forced mode. Capture the real
+  // prior state and put IT back.
+  const prev = Difficulty._forced || null;
+  Difficulty.force(id);
   try { return fn(); } finally { Difficulty.force(prev); }
 }
 
