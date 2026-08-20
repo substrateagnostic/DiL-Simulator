@@ -105,6 +105,20 @@ export const CANDS = {
     label: 'P3: entry HP 1.50, per-lap HP 1.08, per-lap atk 1.28, decay 0.60',
     entry: { maxHP: 1.50 }, scaling: { maxHP: 1.08, atk: 1.28 }, lap: { decay: 0.60 },
   },
+  // Refinements around P2: decay is the ONLY knob that reaches NG+3 without
+  // touching NG+1/NG+2, so the flex rung is re-steepened there.
+  P4: {
+    label: 'P4: entry HP 1.45, per-lap HP 1.10, per-lap atk 1.22, decay 0.85',
+    entry: { maxHP: 1.45 }, scaling: { maxHP: 1.10, atk: 1.22 }, lap: { decay: 0.85 },
+  },
+  P5: {
+    label: 'P5: entry HP 1.45, per-lap HP 1.10, per-lap atk 1.25, decay 0.70',
+    entry: { maxHP: 1.45 }, scaling: { maxHP: 1.10, atk: 1.25 }, lap: { decay: 0.70 },
+  },
+  P7: {
+    label: 'P7: P4 + entry atk 1.45 -> 1.50 (NG+1 bite, priced on the Hard lane cells)',
+    entry: { maxHP: 1.45, atk: 1.50 }, scaling: { maxHP: 1.10, atk: 1.22 }, lap: { decay: 0.85 },
+  },
 };
 
 function withCand(name, fn) {
@@ -246,12 +260,17 @@ const LAPS = (arg('laps', '0,1,2')).split(',').map(Number);
 const LANES = (arg('lanes', 'litigation,compliance,audit')).split(',').map(s => s.trim());
 
 function header() {
-  console.log(`NG+ effective enemy multipliers under ${arg('cand', 'base')}:`);
-  console.log('  lap    maxHP    atk    def');
-  for (const l of [0, 1, 2, 3]) {
-    console.log(`  ${l === 0 ? 'NG ' : 'NG+' + l}  ${pad(rung('maxHP', l).toFixed(3), 7)}  ${pad(rung('atk', l).toFixed(3), 5)}  ${pad(rung('def', l).toFixed(3), 5)}`);
-  }
-  console.log('  (Hard multiplies atk x1.45 ON TOP of the lap rung, after overrides.)');
+  // INSIDE the candidate scope, or the header prints the SHIPPED multipliers
+  // over a candidate's cells — which is exactly the kind of lying evidence
+  // file the capture law exists to prevent. (It did, for one sweep.)
+  withCand(arg('cand', 'base'), () => {
+    console.log(`NG+ effective enemy multipliers under ${arg('cand', 'base')}:`);
+    console.log('  lap    maxHP    atk    def');
+    for (const l of [0, 1, 2, 3]) {
+      console.log(`  ${l === 0 ? 'NG ' : 'NG+' + l}  ${pad(rung('maxHP', l).toFixed(3), 7)}  ${pad(rung('atk', l).toFixed(3), 5)}  ${pad(rung('def', l).toFixed(3), 5)}`);
+    }
+    console.log('  (Hard multiplies atk x1.45 ON TOP of the lap rung, after overrides.)');
+  });
 }
 
 // ── --matrix: the survey ────────────────────────────────────────────────
@@ -281,6 +300,7 @@ function runMatrix() {
             + `   ${r.map(x => pad(pct(x.lowWater), 5)).join('/')}`
             + `   ${r.map(x => pad(pct(x.nearDeath), 5)).join('/')}`
             + `   ${r.map(x => pad(n2(x.dmgPerTurn), 5)).join('/')}`
+            + (has('breaks') ? `   brk ${r.map(x => n2(x.breaks)).join('/')}` : '')
             + (r.some(x => x.timeouts) ? `   TIMEOUTS ${r.map(x => x.timeouts).join('/')}` : ''));
         }
       }

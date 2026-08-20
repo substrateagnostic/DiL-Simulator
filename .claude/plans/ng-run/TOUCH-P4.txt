@@ -1,0 +1,6 @@
+
+=== TOUCH TEST — cand P4 vs base on LAP-0 cells (600 runs/cell) ===
+NG_PLUS_* is only read when laps > 0, so lap-0 deltas must be pure noise.
+karen@3 shipped normal:  win 99.5% -> 99.2%  (-0.3 pp)  rounds 3.94 -> 4.02
+grandma@8 audit hard:  win 97.8% -> 97.8%  (0.0 pp)  rounds 6.02 -> 6.25
+meredith_boss@9 litigation normal:  win 99.8% -> 100.0%  (0.2 pp)  rounds 6.85 -> 6.92

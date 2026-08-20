@@ -1,0 +1,23 @@
+
+=== NG+ LADDER ACCEPTANCE, PER MODE — cand P1 (P1: entry HP 1.45, per-lap HP 1.10, per-lap atk 1.25, decay 0.60), 400 runs/cell, CARRY kit, COMPETENT ===
+Rule (ng-sim.mjs): CARRY@NG+1 <= FRESH@NG — a second lap must not be easier.
+NG+ effective enemy multipliers under P1:
+  lap    maxHP    atk    def
+  NG     1.000  1.000  1.000
+  NG+1    1.700  1.450  1.300
+  NG+2    1.955  1.667  1.430
+  NG+3    2.053  1.751  1.479
+  (Hard multiplies atk x1.45 ON TOP of the lap rung, after overrides.)
+
+-- MODE NORMAL
+encounter          lvl   FRESH@NG   CARRY@NG  CARRY@NG+1  CARRY@NG+2  CARRY@NG+3
+karen               4      97.3%     100.0%      100.0%      100.0%       97.8%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds    4.62       1.93        1.93        2.77        3.01
+chad                6     100.0%     100.0%      100.0%      100.0%      100.0%
+                        rounds    3.52       2.21        2.88        3.00        3.29
+grandma             8      93.5%     100.0%       99.5%       97.3%       90.0%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds    7.20       3.87        5.72        6.25        7.21
+meredith_boss       9      91.3%     100.0%       99.5%       93.5%       82.5%   ** CARRY@NG+1 > FRESH@NG **
+                        rounds   10.07       4.28        6.67        8.30        9.21
+algorithm          10      99.0%     100.0%       94.8%       89.5%       70.0%
+                        rounds    6.79       4.33        7.44        8.29        8.84

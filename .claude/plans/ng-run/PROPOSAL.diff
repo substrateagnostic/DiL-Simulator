@@ -1,0 +1,24 @@
+diff --git a/src/combat/CombatEngine.js b/src/combat/CombatEngine.js
+index f47da4b..0120b23 100644
+--- a/src/combat/CombatEngine.js
++++ b/src/combat/CombatEngine.js
+@@ -193,8 +193,8 @@ export const COMBAT_DEPTH = {
+ //
+ // Re-run it before touching any of these constants. `--sweep` sweeps the maxHP
+ // entry rung, `--hpscale` the per-lap maxHP, `--lapdecay` the top-rung decay.
+-export const NG_PLUS_ENTRY   = { maxHP: 1.70, atk: 1.45, def: 1.30, xpReward: 1.25 };
+-export const NG_PLUS_SCALING = { maxHP: 1.15, atk: 1.15, def: 1.10, xpReward: 1.20 };
++export const NG_PLUS_ENTRY   = { maxHP: 1.45, atk: 1.45, def: 1.30, xpReward: 1.25 };
++export const NG_PLUS_SCALING = { maxHP: 1.10, atk: 1.22, def: 1.10, xpReward: 1.20 };
+ export const NG_PLUS_CAP = 3;   // laps beyond this stop compounding
+ 
+ // Per-lap DECAY on the compounding exponent. The exponent for `laps` is
+@@ -208,7 +208,7 @@ export const NG_PLUS_CAP = 3;   // laps beyond this stop compounding
+ // voluntary ladder is a flex, not a checkpoint — but a flex you can pass.
+ // Swept in tools/ng-sim.mjs --lapdecay.
+ // Held on an object (like NG_PLUS_ENTRY) so the harness can sweep it in place.
+-export const NG_PLUS_LAP = { decay: 0.35 };
++export const NG_PLUS_LAP = { decay: 0.85 };
+ 
+ /**
+  * Compounding exponent for a given lap count: a decaying geometric sum so each

@@ -1,0 +1,144 @@
+
+> trust-issues@1.0.0 check
+> npm run dialogs:check && npm run story:sim && npm run validate:data && npm run build
+
+
+> trust-issues@1.0.0 dialogs:check
+> node tools/dlg/generate.mjs --check
+
+PASS src/data/dialogs/index.js is current: 15 files, 296 scenes, 3588 nodes, 44 warnings
+
+> trust-issues@1.0.0 story:sim
+> node tools/story-sim.mjs
+
+TRUST ISSUES STORY SIMULATOR — P6
+MODEL: monotone forward FIXPOINT (intentionally different from the runtime evaluator's single ordered pass).
+CORPUS: 296 scenes; 32 triggers; 186 code grants; 4 auto-grant patterns.
+CLOSURE: 773 flags; 278 scenes; 20 encounters; 40 iterations.
+ORDERING: 1 flag(s) recovered by a proven before-expiry choice order.
+PASS A ACT COMPLETABILITY
+PASS B FLAG REACHABILITY
+PASS C SCENE REACHABILITY
+PASS D GATE CLOSABILITY
+PASS E NO SPEND-BEFORE-GRANT
+PASS F EXPIRY / ORDERING
+PASS G ROUTE SHADOWING
+WAIVER C CUT vault_entrance: Ratified CUT: superseded by the live VaultKeypad service-code interaction; its Janitor keycard line is non-canon because the vault uses 47-19-82, and any placement at the archive door would be unreachable or shadow the exit.
+WAIVER C CUT vault_charter: Ratified CUT: vault_boxes has held the charter and been the sole has_charter writer since the same commit that authored this duplicate display (3efc4d5); a16d32a removed the redundant second container.
+WAIVER C CUT penthouse_terminal: Ratified CUT: superseded on the same prop by algorithm_terminal, which owns pre-fight, start_combat, and post-defeat states; the orphan's one unique appendix line was ported into that live terminal branch.
+WAIVER G SHADOWED alex-story-direct-act2 (ExplorationState.js:2981-2985): Dead while DIALOGS.alex_it_router exists, and it does. This is a faithful transcription of the `if (DIALOGS.alex_it_router) return ...; return hasAct2 ? ...` fallback: the router row above always wins on the shipped corpus, so this branch is already unreachable in _getDialogId. Kept so the table still mirrors the function, and so the row is here the day someone deletes alex_it_router.
+WAIVER G SHADOWED alex-story-direct-act3 (ExplorationState.js:2981-2985): Same as alex-story-direct-act2: dead while DIALOGS.alex_it_router exists. A faithful transcription of an already-unreachable branch, kept for the day the router tree is removed.
+WAIVER G SHADOWED intern-combat-retry-after-intro (ExplorationState.js:3013-3021): Dead, and dead in the shipped function too. The combat-retry rule at the top of the table fires on retry_intern && !defeated_intern && DIALOGS.intern_retry and returns the SAME scene, and every term of this row is a superset of that. No behaviour rides on it either way; it is transcribed because the nested branch is really there at :3013-3021, and check G finding it is the check doing its job on real code.
+SUMMARY: 0 failure(s); 0 trigger waiver row(s); 3 shadowed-route waiver row(s); 0 NEVER_SET row(s); 3 CUT disposition(s); 0 RESTORE disposition(s).
+HONEST LIMIT: Monotone closure does not model resource ordering (AUM prices or level gates); Check F covers negative-precondition expiry only. It also does not model COMBAT OUTCOME: the closure grants both defeated_<id> and retry_<id> for every reachable encounter, so a bug of the form "X becomes unreachable after a defeat" is invisible to A-G except for the one shape Check E now tests by hand (a fight-bearing once:scene trigger whose encounter has no player-initiable route).
+RESULT: GREEN
+
+> trust-issues@1.0.0 validate:data
+> node scripts/validate-data.mjs
+
+Validation passed: dialogs, data references, and combat smoke checks are clean.
+
+> trust-issues@1.0.0 build
+> vite build
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 199 modules transformed.
+rendering chunks...
+[33m[plugin vite:reporter] 
+(!) C:/Users/agall/projects/DiL_Simulator/node_modules/n8ao/dist/N8AO.js is dynamically imported by C:/Users/agall/projects/DiL_Simulator/src/core/Engine.js but also statically imported by C:/Users/agall/projects/DiL_Simulator/src/effects/N8AOFastTransparency.js, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin vite:reporter] 
+(!) C:/Users/agall/projects/DiL_Simulator/src/core/Settings.js is dynamically imported by C:/Users/agall/projects/DiL_Simulator/src/combat/CombatScene.js, C:/Users/agall/projects/DiL_Simulator/src/main.js, C:/Users/agall/projects/DiL_Simulator/src/states/MenuState.js, C:/Users/agall/projects/DiL_Simulator/src/states/MenuState.js but also statically imported by C:/Users/agall/projects/DiL_Simulator/src/ui/DialogBox.js, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin vite:reporter] 
+(!) C:/Users/agall/projects/DiL_Simulator/src/combat/MeshyCast.js is dynamically imported by C:/Users/agall/projects/DiL_Simulator/src/states/ExplorationState.js but also statically imported by C:/Users/agall/projects/DiL_Simulator/src/combat/CombatScene.js, C:/Users/agall/projects/DiL_Simulator/src/combat/MeshyClips.js, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin vite:reporter] 
+(!) C:/Users/agall/projects/DiL_Simulator/src/combat/CombatScene.js is dynamically imported by C:/Users/agall/projects/DiL_Simulator/src/main.js but also statically imported by C:/Users/agall/projects/DiL_Simulator/src/states/CombatState.js, dynamic import will not move module into another chunk.
+[39m
+[33m[plugin vite:reporter] 
+(!) C:/Users/agall/projects/DiL_Simulator/src/ui/DevPanel.js is dynamically imported by C:/Users/agall/projects/DiL_Simulator/src/main.js but also statically imported by C:/Users/agall/projects/DiL_Simulator/src/states/ExplorationState.js, dynamic import will not move module into another chunk.
+[39m
+computing gzip size...
+[2mdist/[22m[32mindex.html                                [39m[1m[2m  7.07 kB[22m[1m[22m[2m │ gzip:   2.79 kB[22m
+[2mdist/[22m[32massets/boss_meredith-C9yKaXDm.webp        [39m[1m[2m 72.17 kB[22m[1m[22m
+[2mdist/[22m[32massets/assert_dominance-Cr5C--vO.webp     [39m[1m[2m 84.13 kB[22m[1m[22m
+[2mdist/[22m[32massets/boss_director-BybB7pou.webp        [39m[1m[2m 89.83 kB[22m[1m[22m
+[2mdist/[22m[32massets/isaiah-C1j5wqTg.png                [39m[1m[2m 98.44 kB[22m[1m[22m
+[2mdist/[22m[32massets/algorithm-By1pkKeJ.png             [39m[1m[2m101.70 kB[22m[1m[22m
+[2mdist/[22m[32massets/karen_finisher-DqtobvqO.webp       [39m[1m[2m101.91 kB[22m[1m[22m
+[2mdist/[22m[32massets/boss_karen-6UH9abSA.webp           [39m[1m[2m102.23 kB[22m[1m[22m
+[2mdist/[22m[32massets/compliance-DOc0RP8Z.png            [39m[1m[2m106.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/boss_algorithm-BybNZon-.webp       [39m[1m[2m109.31 kB[22m[1m[22m
+[2mdist/[22m[32massets/meredith_smug-Csbv5262.png         [39m[1m[2m109.87 kB[22m[1m[22m
+[2mdist/[22m[32massets/meredith-B-QxbuMo.png              [39m[1m[2m112.42 kB[22m[1m[22m
+[2mdist/[22m[32massets/rachel-DVH4cYX8.png                [39m[1m[2m113.06 kB[22m[1m[22m
+[2mdist/[22m[32massets/all_in-BAUSfP3x.webp               [39m[1m[2m115.74 kB[22m[1m[22m
+[2mdist/[22m[32massets/meredith_angry-BXPvGGDZ.png        [39m[1m[2m116.99 kB[22m[1m[22m
+[2mdist/[22m[32massets/meredith_worried-D8Hzwbpj.png      [39m[1m[2m117.09 kB[22m[1m[22m
+[2mdist/[22m[32massets/diane-D6tYJNvO.png                 [39m[1m[2m117.83 kB[22m[1m[22m
+[2mdist/[22m[32massets/alex_it_angry-CJfy82-H.png         [39m[1m[2m119.25 kB[22m[1m[22m
+[2mdist/[22m[32massets/regional-S6ByjTm2.png              [39m[1m[2m120.18 kB[22m[1m[22m
+[2mdist/[22m[32massets/alex_it_smug-ZMYy5sl5.png          [39m[1m[2m121.66 kB[22m[1m[22m
+[2mdist/[22m[32massets/skip-BUaYj7UJ.png                  [39m[1m[2m122.22 kB[22m[1m[22m
+[2mdist/[22m[32massets/janet-Dr7-XSHe.png                 [39m[1m[2m124.01 kB[22m[1m[22m
+[2mdist/[22m[32massets/intern-ujIRBs6L.png                [39m[1m[2m124.99 kB[22m[1m[22m
+[2mdist/[22m[32massets/janitor_angry-DBM0mJBd.png         [39m[1m[2m125.31 kB[22m[1m[22m
+[2mdist/[22m[32massets/andrew-CvwBqf9O.png                [39m[1m[2m125.38 kB[22m[1m[22m
+[2mdist/[22m[32massets/alex_it_worried-C7V085Hy.png       [39m[1m[2m126.01 kB[22m[1m[22m
+[2mdist/[22m[32massets/janitor_smug-DS8y0-jt.png          [39m[1m[2m126.02 kB[22m[1m[22m
+[2mdist/[22m[32massets/janitor-pcmVfgGN.png               [39m[1m[2m127.15 kB[22m[1m[22m
+[2mdist/[22m[32massets/alex_it-2CKt1pvN.png               [39m[1m[2m128.05 kB[22m[1m[22m
+[2mdist/[22m[32massets/janitor_worried-Bi4y02oW.png       [39m[1m[2m128.59 kB[22m[1m[22m
+[2mdist/[22m[32massets/skip_worried-BnUGsLRj.png          [39m[1m[2m129.84 kB[22m[1m[22m
+[2mdist/[22m[32massets/chad-CCIAdah6.png                  [39m[1m[2m130.50 kB[22m[1m[22m
+[2mdist/[22m[32massets/delia_smug-BqyDXmS6.png            [39m[1m[2m130.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/janet_angry-Dd93XUUB.png           [39m[1m[2m130.74 kB[22m[1m[22m
+[2mdist/[22m[32massets/delia_worried-BXsWf4xo.png         [39m[1m[2m131.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/janet_smug-UUTIwds1.png            [39m[1m[2m132.07 kB[22m[1m[22m
+[2mdist/[22m[32massets/boss_chad-DZGn5cwf.webp            [39m[1m[2m134.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/skip_smug-DjcDWQi1.png             [39m[1m[2m135.07 kB[22m[1m[22m
+[2mdist/[22m[32massets/grandma-B0mlKdEc.png               [39m[1m[2m135.39 kB[22m[1m[22m
+[2mdist/[22m[32massets/delia_angry-DFQN9u7O.png           [39m[1m[2m135.98 kB[22m[1m[22m
+[2mdist/[22m[32massets/skip_angry-D522ow2l.png            [39m[1m[2m136.13 kB[22m[1m[22m
+[2mdist/[22m[32massets/janet_worried-DXsVVlvs.png         [39m[1m[2m136.70 kB[22m[1m[22m
+[2mdist/[22m[32massets/karen_smug-DFUQZ9-b.png            [39m[1m[2m136.75 kB[22m[1m[22m
+[2mdist/[22m[32massets/karen_worried-DJvwa49S.png         [39m[1m[2m140.46 kB[22m[1m[22m
+[2mdist/[22m[32massets/karen-DQttHXo8.png                 [39m[1m[2m140.71 kB[22m[1m[22m
+[2mdist/[22m[32massets/karen_angry-YY5ezi9W.png           [39m[1m[2m147.17 kB[22m[1m[22m
+[2mdist/[22m[32massets/delia-DR8WHW5Q.png                 [39m[1m[2m164.44 kB[22m[1m[22m
+[2mdist/[22m[32massets/boss_grandma-C0bCboEY.webp         [39m[1m[2m200.10 kB[22m[1m[22m
+[2mdist/[22m[32massets/boss_kill-B5c2aQ6G.webp            [39m[1m[2m224.51 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_daemon_gone-BBYNDTLm.png  [39m[1m[2m342.80 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_janitor-CXMv8w-P.png      [39m[1m[2m344.54 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_intern-Bu5hWJyY.png       [39m[1m[2m360.90 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_building-Cm7cvsma.png     [39m[1m[2m361.25 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_daemon_kept-De8wU59p.png  [39m[1m[2m369.04 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_voice-6lUd7zA4.png        [39m[1m[2m374.77 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_charter-NhNHeqrn.png      [39m[1m[2m383.24 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_board-wKwjGsd4.png        [39m[1m[2m383.60 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_marlene-D1Mvt-YA.png      [39m[1m[2m395.03 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_team-wpUfEwVx.png         [39m[1m[2m406.15 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_delia-Dk_GTe9H.png        [39m[1m[2m406.37 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_skip-vzdUPZfY.png         [39m[1m[2m413.41 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_reyes-CRh01QU1.png        [39m[1m[2m449.67 kB[22m[1m[22m
+[2mdist/[22m[32massets/epilogue_grandma-Dv8Km5ov.png      [39m[1m[2m454.90 kB[22m[1m[22m
+[2mdist/[22m[35massets/index-D7Al_mFT.css                 [39m[1m[2m 62.22 kB[22m[1m[22m[2m │ gzip:  12.36 kB[22m
+[2mdist/[22m[36massets/RetroPass-DewSoGwo.js              [39m[1m[2m  1.74 kB[22m[1m[22m[2m │ gzip:   0.92 kB[22m[2m │ map:     3.38 kB[22m
+[2mdist/[22m[36massets/BuildingShell-DlxWB424.js          [39m[1m[2m  3.54 kB[22m[1m[22m[2m │ gzip:   1.58 kB[22m[2m │ map:    18.93 kB[22m
+[2mdist/[22m[36massets/EpilogueState-DEDUdo12.js          [39m[1m[2m 10.61 kB[22m[1m[22m[2m │ gzip:   4.83 kB[22m[2m │ map:    22.93 kB[22m
+[2mdist/[22m[36massets/MeshyClips-Cpbj3uXo.js             [39m[1m[2m 15.02 kB[22m[1m[22m[2m │ gzip:   6.46 kB[22m[2m │ map:    93.09 kB[22m
+[2mdist/[22m[36massets/CityBackdrop-CMKNwInf.js           [39m[1m[2m 17.59 kB[22m[1m[22m[2m │ gzip:   5.82 kB[22m[2m │ map:    78.68 kB[22m
+[2mdist/[22m[36massets/ArcadeState-CO8MtOkh.js            [39m[1m[2m 53.24 kB[22m[1m[22m[2m │ gzip:  17.89 kB[22m[2m │ map:   190.81 kB[22m
+[2mdist/[22m[36massets/meshy-loader-BxGx0Cu5.js           [39m[1m[2m 81.99 kB[22m[1m[22m[2m │ gzip:  23.52 kB[22m[2m │ map:   285.98 kB[22m
+[2mdist/[22m[36massets/game-data-CUSScuxM.js              [39m[1m[2m284.64 kB[22m[1m[22m[2m │ gzip:  80.64 kB[22m[2m │ map:   845.26 kB[22m
+[2mdist/[22m[36massets/game-dialogs-D2473evW.js           [39m[1m[2m417.38 kB[22m[1m[22m[2m │ gzip: 118.23 kB[22m[2m │ map:   816.94 kB[22m
+[2mdist/[22m[36massets/vendor-three-DEugfGV3.js           [39m[1m[2m621.42 kB[22m[1m[22m[2m │ gzip: 158.10 kB[22m[2m │ map: 2,975.85 kB[22m
+[2mdist/[22m[36massets/index-Q_HXhn2P.js                  [39m[1m[33m965.95 kB[39m[22m[2m │ gzip: 317.40 kB[22m[2m │ map: 3,453.30 kB[22m
+[33m
+(!) Some chunks are larger than 650 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 21.43s[39m
