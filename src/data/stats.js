@@ -1254,7 +1254,7 @@ export const ENEMY_ABILITIES = {
   call_the_other_advisor: { name: 'Call My Other Advisor', power: 20, type: 'attack', messages: [
     'The client threatens to take their business to Merrill Clinch!',
     '"Gorman Stately would NEVER treat me this way!"',
-    '"I\'m calling Schwalb. They appreciate their clients!"',
+    '"I\'m calling Vainguard. They appreciate their clients!"',
     '"My golf buddy says his advisor at J.P. Morgue is MUCH better."',
   ]},
   client_bro_down: { name: 'Bro, Trust Me', power: 16, type: 'attack', messages: [
