@@ -78,6 +78,25 @@ export class MeshyAnimator {
   }
 
   _toIdle() {
+    // THE STUCK-LAYER BUG (H2 re-judge, 2026-08-20). `clampWhenFinished` keeps
+    // a finished one-shot in the mixer's ACTIVE list — paused on its final
+    // frame, still accumulating at FULL WEIGHT every frame (verified against
+    // three's AnimationAction._update: a paused, enabled action evaluates
+    // `_updateWeight` and accumulates). This return-to-stance used to fade the
+    // idle IN without fading the finished action OUT, and play()'s own
+    // `prev.fadeOut` never reaches it either (by then `_current` is 'idle'),
+    // so every role that had EVER played kept blending its clamped last frame
+    // into every subsequent frame of the fight. Measured on karen after one
+    // exchange: attack (a214) paused at t=0.867 w=1.00 and cast (a318) paused
+    // at t=1.033 w=1.00 under the running idle — the rendered "stance" was
+    // avg(idle, shove-final, scheme-final), which is the arms-out pseudo
+    // A-pose, the floating hips ("Karen hovering"), and the weak flinches
+    // (a new reaction fades to 1.0 against N stuck layers, so it reads at
+    // 1/(N+1) amplitude) the producer's note named. One fadeOut retires the
+    // layer; the weight fade runs on mixer time, which a paused action still
+    // honors.
+    const finished = this._oneShot
+      || (this._current && this._current !== 'idle' ? this.actions[this._current] : null);
     this._oneShot = null;
     if (this._down) return;      // a body on the floor does not go back to breathing
     this._releaseHold();
@@ -85,6 +104,11 @@ export class MeshyAnimator {
     if (!idle) return;
     idle.reset().setEffectiveTimeScale(this._idleScale).setEffectiveWeight(1)
       .setLoop(THREE.LoopRepeat, Infinity).fadeIn(FADE_BACK).play();
+    // `globalThis.__stuckLayerLegacy` reproduces the pre-fix blend so the gate
+    // (tools/_h2-stuck-layers.mjs --legacy) can be SHOWN to fail on the defect
+    // it exists to catch. Same shape as __floorSitOff: one read, no cost,
+    // never set by the game.
+    if (finished && finished !== idle && !globalThis.__stuckLayerLegacy) finished.fadeOut(FADE_BACK);
     this._current = 'idle';
     this._groundTarget = this._groundOffsets.idle ?? 0;
   }
