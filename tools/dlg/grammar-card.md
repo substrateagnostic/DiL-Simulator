@@ -53,6 +53,24 @@ Arm modifiers are order-insensitive: `sets f` writes `flag` only; `sets f=true` 
 writes `flagValue`; `requires f` and `unless f` gate visibility. Use spaces around `=`
 if desired. An arm can combine modifiers.
 
+`check trait_x` makes a **working-style check arm**: one arm, one `_chose_` save key,
+two renderings. A holder of the trait flag reads the arm's own prose (prefixed
+`[WORKING STYLE — …]` by DialogState) and takes its target; everyone else reads the
+fail prose (prefixed `[WORKING STYLE CHECK — FAILED]`, still selectable) and takes the
+fail label. The fail variant is the line **directly below** the arm — required, exactly
+one, no modifiers:
+
+```text
+  ask The Janitor: Which one first?
+    -> brew_pass check trait_percolator: Let me at that machine.
+    fail -> brew_fail: I can also make coffee. Legally speaking.
+```
+
+`check` only accepts a `trait_*` flag from `src/data/traits.js`, may combine with
+`requires`/`unless` (they gate the whole arm for everyone), and may NOT combine with
+`sets` — an arm-level set would fire on both variants; write pass-only flags as `set`
+nodes in the pass branch.
+
 A scheduled `stage` or `stage concurrent` owns lines indented more deeply. A beat is
 `[@beatLabel] actor verb [arg] ...`; one beat may contain many verbs. Coordinates are
 `x,y`. `after beatLabel` resolves within that stage. Verbs are:

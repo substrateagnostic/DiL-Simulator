@@ -242,6 +242,17 @@ function harvestDialog(scene, nodes) {
         if (choice.requires) armPath = addLiteral(armPath, choice.requires, true);
         if (choice.requiresNot) armPath = addLiteral(armPath, choice.requiresNot, false);
         if (!armPath) continue;
+        // A working-style check arm is one arm with two exits: holders of the
+        // trait flag take `next`, everyone else takes `failNext`. Both branches
+        // are walked under the branch's own trait literal, so a pass-only
+        // grant correctly carries the trait in its `when`. A check arm cannot
+        // carry `flag` (compiler rule), so the flag-grant path below never
+        // applies to one.
+        if (choice.check) {
+          push(choice.next !== undefined ? choice.next : index + 1, addLiteral(armPath, choice.check, true), index);
+          push(choice.failNext !== undefined ? choice.failNext : index + 1, addLiteral(armPath, choice.check, false), index);
+          continue;
+        }
         if (choice.flag && choice.flagValue !== false) {
           grants.push({
             id: `dialog-choice:${scene}:${index}:${choiceIndex}`,
@@ -373,6 +384,8 @@ function makeModel(overrides = {}) {
       for (const choice of node.choices || []) {
         if (choice.requires) addRead(choice.requires, src);
         if (choice.requiresNot) addRead(choice.requiresNot, src);
+        // A working-style check arm reads its trait flag to pick a rendering.
+        if (choice.check) addRead(choice.check, src);
       }
     }
   }

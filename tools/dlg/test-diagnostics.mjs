@@ -31,7 +31,7 @@ const cases = [
   ['bad stage modifier', 'scene bad_stage_form\n  stage parallel\n    player stand\n  end\n', 'must say stage or stage concurrent'],
   ['bad ask with arms', 'scene bad_ask_form\n  ask lowercase: Pick.\n    -> done: Continue.\n  @done\n  end\n', 'speaker name beginning with a capital letter'],
   ['bad if form', 'scene bad_if\n  if ready then yes\n  end\n', 'optional -> <label> and else -> <label>'],
-  ['bad arm modifier', 'scene bad_arm_mod\n  ask: Pick.\n    -> done when ready: Yes.\n  @done\n  end\n', 'only sets, requires, or unless'],
+  ['bad arm modifier', 'scene bad_arm_mod\n  ask: Pick.\n    -> done when ready: Yes.\n  @done\n  end\n', 'only sets, requires, unless, or check'],
   ['exit without argument', 'scene exit_no_arg\n  stage\n    player exit\n  end\n', 'exit beat verb needs a mark name or x,y coordinate pair'],
   ['beat without verb', 'scene beat_no_verb\n  stage\n    player\n  end\n', 'needs at least one beat verb'],
   ['duplicate beat label', 'scene duplicate_beat\n  stage\n    @same player stand\n    @same regional stand\n  end\n', 'beat label @same is already used'],

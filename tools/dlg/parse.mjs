@@ -78,9 +78,9 @@ function parseArmHead(head) {
 
   while (rest.trim() !== '') {
     rest = rest.trimStart();
-    const modMatch = rest.match(/^(sets|requires|unless)(?=\s|$)/);
+    const modMatch = rest.match(/^(sets|requires|unless|check)(?=\s|$)/);
     if (!modMatch) {
-      return { error: 'A choice arm expects only sets, requires, or unless modifiers before its colon.' };
+      return { error: 'A choice arm expects only sets, requires, unless, or check modifiers before its colon.' };
     }
     const mod = modMatch[1];
     rest = rest.slice(modMatch[0].length).trimStart();
@@ -109,9 +109,18 @@ function parseArmHead(head) {
       }
     } else if (mod === 'requires') {
       arm.requires = flag.value;
+    } else if (mod === 'check') {
+      arm.check = flag.value;
     } else {
       arm.requiresNot = flag.value;
     }
+  }
+  // THE SAVE-KEY LAW (SKILL-CHECK-SEED): the pass and fail variants of a check
+  // arm share ONE choice index, so an arm-level `sets` would fire on BOTH.
+  // Which of the two the author meant is unknowable; the set belongs in the
+  // branch the variant routes to, where it is unambiguous.
+  if (arm.check && Object.hasOwn(arm, 'flag')) {
+    return { error: 'A check arm may not carry a sets modifier — it would fire on both the pass and the fail variant. Write the set as an action node in the branch instead.' };
   }
   return { arm };
 }
@@ -324,7 +333,7 @@ export function parseDlg(text, filename = '<input>') {
       continue;
     }
 
-    if (line.kind !== 'arm') currentAsk = null;
+    if (line.kind !== 'arm' && line.kind !== 'fail') currentAsk = null;
     if (line.kind !== 'beat') currentStage = null;
 
     if (line.kind === 'scene') {
@@ -412,7 +421,7 @@ export function parseDlg(text, filename = '<input>') {
         continue;
       }
       const arm = { text: parts.prose, next: parsed.arm.next, line: line.n, comments: [] };
-      for (const key of ['flag', 'flagValue', 'requires', 'requiresNot']) {
+      for (const key of ['flag', 'flagValue', 'requires', 'requiresNot', 'check']) {
         if (key in parsed.arm) arm[key] = parsed.arm[key];
       }
       defineHidden(arm, '_nearestLabel', lastLabel);
@@ -422,7 +431,43 @@ export function parseDlg(text, filename = '<input>') {
         continue;
       }
       currentAsk.arms.push(arm);
+      currentAsk._lastArm = arm;
       attachComments('arm', arm, currentAsk);
+      lastWasGoto = false;
+      continue;
+    }
+
+    // WORKING-STYLE CHECK, the fail variant. `fail -> label: prose` binds to
+    // the check arm on the line above: same choice index, so the persisted
+    // `_chose_<dialogId>_<node>_<choice>` key is identical for holders and
+    // non-holders — the save-key law the seed file spells out. Holders route
+    // to the arm's own target; everyone else sees the fail prose and routes
+    // to the fail label.
+    if (line.kind === 'fail') {
+      if (!requireScene(line)) continue;
+      const owner = currentAsk && !currentAsk._recovery ? currentAsk._lastArm : null;
+      if (!owner || !owner.check) {
+        addDiagnostic(line, 'A fail line must immediately follow a choice arm that carries a check modifier.');
+        continue;
+      }
+      if (Object.hasOwn(owner, 'failText')) {
+        addDiagnostic(line, 'This check arm already has a fail line; a check arm carries exactly one.');
+        continue;
+      }
+      const parts = proseParts(line);
+      if (!parts) {
+        addDiagnostic(line, 'A fail line needs a colon followed by its prose.');
+        continue;
+      }
+      const match = parts.head.match(new RegExp(`^fail\\s+->\\s+(${ID})$`));
+      if (!match) {
+        addDiagnostic(line, 'A fail line is written as fail -> <label>: <prose> and takes no other modifiers.');
+        continue;
+      }
+      owner.failText = parts.prose;
+      owner.failNext = match[1];
+      defineHidden(owner, '_failLine', line.n);
+      attachComments('fail', owner, currentAsk);
       lastWasGoto = false;
       continue;
     }
@@ -534,6 +579,7 @@ export function parseDlg(text, filename = '<input>') {
       const stmt = { kind: 'choice', prompt: parts.prose, arms: [] };
       if (speaker !== undefined) stmt.speaker = speaker;
       defineHidden(stmt, '_sawArmLine', false);
+      defineHidden(stmt, '_lastArm', null);
       addStatement(stmt, line);
       currentAsk = stmt;
       continue;
@@ -621,6 +667,19 @@ export function parseDlg(text, filename = '<input>') {
           stmt._nearestLabel,
         );
       }
+      if (stmt.kind === 'choice') {
+        for (const arm of stmt.arms) {
+          if (arm.check && !Object.hasOwn(arm, 'failText')) {
+            addDiagnostic(
+              { n: arm.line },
+              `The check arm ${JSON.stringify(arm.text)} needs a fail line on the line below it: fail -> <label>: <prose the non-holder reads>.`,
+              [],
+              current,
+              arm._nearestLabel,
+            );
+          }
+        }
+      }
       if (stmt.kind === 'stage' && !stmt._sawBeatLine) {
         addDiagnostic(
           stmt._source,
@@ -660,6 +719,9 @@ export function parseDlg(text, filename = '<input>') {
       if (stmt.kind === 'choice') {
         for (const arm of stmt.arms) {
           if (!current._labels.has(arm.next)) refs.push({ target: arm.next, kind: 'arm', line: arm.line, arm });
+          if (arm.failNext !== undefined && !current._labels.has(arm.failNext)) {
+            refs.push({ target: arm.failNext, kind: 'arm', line: arm._failLine ?? arm.line, arm });
+          }
         }
       }
       const byLine = new Map();
@@ -707,7 +769,10 @@ export function parseDlg(text, filename = '<input>') {
         }
         const fallthrough = index + 1;
         if (stmt.kind === 'choice') {
-          for (const arm of stmt.arms) pending.push(labelIndex.get(arm.next));
+          for (const arm of stmt.arms) {
+            pending.push(labelIndex.get(arm.next));
+            if (arm.failNext !== undefined) pending.push(labelIndex.get(arm.failNext));
+          }
           if (stmt.next) pending.push(labelIndex.get(stmt.next));
         } else if (stmt.kind === 'condition') {
           pending.push(stmt.ifTrue ? labelIndex.get(stmt.ifTrue) : fallthrough);

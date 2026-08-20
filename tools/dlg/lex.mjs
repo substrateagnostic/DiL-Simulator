@@ -16,7 +16,7 @@ function proseColon(body) {
   const colon = body.indexOf(':');
   if (colon < 0) return -1;
   const head = body.slice(0, colon);
-  return /^(?:ask(?:\s|$)|->(?:\s|$)|[A-Z])/.test(head) ? colon : -1;
+  return /^(?:ask(?:\s|$)|->(?:\s|$)|fail(?:\s|$)|[A-Z])/.test(head) ? colon : -1;
 }
 
 function classify(body) {
@@ -25,6 +25,9 @@ function classify(body) {
   if (/^@/.test(body)) return 'label';
   if (/^ask(?=:|\s|$)/.test(body)) return 'ask';
   if (/^->(?:\s|$)/.test(body)) return 'arm';
+  // The working-style check's fail variant: `fail -> label: prose`, legal only
+  // immediately after a choice arm carrying a `check` modifier (parse.mjs).
+  if (/^fail(?:\s|$)/.test(body)) return 'fail';
   if (/^if(?:\s|$)/.test(body)) return 'if';
   if (/^goto(?:\s|$)/.test(body)) return 'goto';
   if (/^end(?:\s|$)/.test(body)) return 'end';

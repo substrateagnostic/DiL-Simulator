@@ -3,6 +3,7 @@ import { EventBus } from '../core/EventBus.js';
 import { AudioManager } from '../core/AudioManager.js';
 import { DialogBox } from '../ui/DialogBox.js';
 import { ITEMS } from '../data/items.js';
+import { TRAITS } from '../data/traits.js';
 import { getDialogQuestGate, getQuestStage, isStageInRange } from '../utils/dialogGating.js';
 import { DEV_MODE } from '../utils/constants.js';
 
@@ -49,6 +50,29 @@ const KNOWLEDGE_GATE_DIALOGS = new Set([
 const EVERGREEN_HUB_DIALOGS = new Set([
   'team_chat_hub',
 ]);
+
+// ── THE WORKING-STYLE CHECK ─────────────────────────────────────────────────
+// A choice arm may carry `check: 'trait_*'` plus `failText`/`failNext`
+// (authored in .dlg as `check trait_x` + a `fail ->` line). ONE arm, ONE
+// persisted `_chose_` index, TWO renderings:
+//   holder      [WORKING STYLE — PERCOLATOR] <pass text>       -> choice.next
+//   non-holder  [WORKING STYLE CHECK — FAILED] <fail text>     -> choice.failNext
+// The fail variant is SELECTABLE — a failed check is content, not a wall
+// (Disco Elysium precedent, SKILL-CHECK-SEED director shape 2), and the fail
+// prefix itself is the S2 tease: it names a system without explaining it.
+// The pass/fail variants MUST share one choice index or the save key
+// `_chose_<dialogId>_<node>_<choice>` forks on trait — the compiler enforces
+// the shape; this file only renders and routes it.
+const CHECK_FAIL_PREFIX = '[WORKING STYLE CHECK — FAILED]';
+const TRAIT_LABEL_BY_FLAG = {};
+for (const t of Object.values(TRAITS)) {
+  // 'The Advance Reader' -> 'ADVANCE READER': the bracket is a chip, and the
+  // game's chip register is caps without articles (COMPOSURE — SOCIAL ONLY).
+  TRAIT_LABEL_BY_FLAG[t.flag] = t.name.replace(/^The\s+/, '').toUpperCase();
+}
+function checkPassPrefix(flag) {
+  return `[WORKING STYLE — ${TRAIT_LABEL_BY_FLAG[flag] || 'UNKNOWN'}]`;
+}
 
 export class DialogState {
   /**
@@ -264,12 +288,27 @@ export class DialogState {
     // starts on the first unread one — EXCEPT exit-style choices (those
     // whose target node is an `end`), which stay fresh forever.
     const isQuiz = KNOWLEDGE_GATE_DIALOGS.has(this.dialogId);
+    // Where this arm actually goes for THIS save: a check arm routes a
+    // non-holder to its fail branch, everything else takes `next`.
+    const effectiveNext = (choice) => {
+      if (choice.check && !this.player.getFlag(choice.check)) {
+        return choice.failNext !== undefined ? choice.failNext : this.currentIndex + 1;
+      }
+      return choice.next !== undefined ? choice.next : this.currentIndex + 1;
+    };
     const boxChoices = filteredChoices.map(({ choice, originalIndex }, displayIdx) => {
-      const targetIdx = choice.next !== undefined ? choice.next : this.currentIndex + 1;
+      const targetIdx = effectiveNext(choice);
       const isExit = this.dialogTree[targetIdx]?.type === 'end';
+      // ONE `_chose_` key for both renderings of a check arm — the save-key law.
       const seen = !isQuiz && !isExit && this.dialogId
         && !!this.player.getFlag(`_chose_${this.dialogId}_${this.currentIndex}_${originalIndex}`);
-      return { text: choice.text, id: displayIdx, seen };
+      let text = choice.text;
+      if (choice.check) {
+        text = this.player.getFlag(choice.check)
+          ? `${checkPassPrefix(choice.check)} ${choice.text}`
+          : `${CHECK_FAIL_PREFIX} ${choice.failText !== undefined ? choice.failText : choice.text}`;
+      }
+      return { text, id: displayIdx, seen };
     });
     // Evergreen hub, every non-exit topic spent: drop the greying wholesale so
     // the panel reads OPEN instead of CLOSED. The flags are untouched — this
@@ -278,8 +317,7 @@ export class DialogState {
     // the ones already heard.
     if (EVERGREEN_HUB_DIALOGS.has(this.dialogId)) {
       const topics = boxChoices.filter((c, i) => {
-        const t = filteredChoices[i].choice.next;
-        const idx = t !== undefined ? t : this.currentIndex + 1;
+        const idx = effectiveNext(filteredChoices[i].choice);
         return this.dialogTree[idx]?.type !== 'end';
       });
       if (topics.length && topics.every(c => c.seen)) {
@@ -315,12 +353,11 @@ export class DialogState {
         this.player.setFlag(chosen.flag, chosen.flagValue !== undefined ? chosen.flagValue : true);
       }
 
-      // Jump to the next index specified by the choice
-      if (chosen.next !== undefined) {
-        this.currentIndex = chosen.next;
-      } else {
-        this.currentIndex++;
-      }
+      // Jump to the next index specified by the choice. A check arm routes on
+      // the trait: pass -> next, fail -> failNext. The compiler forbids a
+      // check arm from also carrying `flag`, so the branch above cannot fire
+      // ambiguously — pass-only flags live in the pass branch as `set` nodes.
+      this.currentIndex = effectiveNext(chosen);
 
       this.waitingForInput = false;
       this._processNode();
@@ -381,6 +418,9 @@ export class DialogState {
           // A choice that writes a flag is a decision, not a line.
           if (c.flag) { safe = false; break; }
           stack.push(c.next !== undefined ? c.next : i + 1);
+          // A check arm's fail branch is reachable too; if either branch can
+          // reach an action, the conversation is not losslessly leavable.
+          if (c.failNext !== undefined) stack.push(c.failNext);
         }
         if (!safe) break;
         if (n.fallback !== undefined) stack.push(n.fallback);

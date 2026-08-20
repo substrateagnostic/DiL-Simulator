@@ -124,8 +124,13 @@ export function printScenes(scenes, comments = []) {
           }
           if (Object.hasOwn(arm, 'requires')) mods.push(`requires ${arm.requires}`);
           if (Object.hasOwn(arm, 'requiresNot')) mods.push(`unless ${arm.requiresNot}`);
+          if (Object.hasOwn(arm, 'check')) mods.push(`check ${arm.check}`);
           const suffix = mods.length ? ` ${mods.join(' ')}` : '';
           lines.push(`    -> ${arm.next}${suffix}: ${arm.text}`);
+          if (Object.hasOwn(arm, 'failText')) {
+            lines.push(...commentsFor(comments, emittedComments, 'fail', arm));
+            lines.push(`    fail -> ${arm.failNext}: ${arm.failText}`);
+          }
         }
       } else if (stmt.kind === 'condition') {
         lines.push(`  ${printCondition(stmt)}`);

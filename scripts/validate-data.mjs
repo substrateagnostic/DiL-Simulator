@@ -82,6 +82,19 @@ function validateDialogs() {
             assert(Number.isInteger(choice.next), `dialog ${id} node ${index} choice ${choiceIndex} next is not an integer`);
             assert(choice.next >= 0 && choice.next < nodes.length, `dialog ${id} node ${index} choice ${choiceIndex} next out of range: ${choice.next}`);
           }
+          // A working-style check arm must carry both halves of its fail
+          // variant, and the fail edge must land in the tree — same contract
+          // as `next`. (The compiler enforces this at build time; this guards
+          // the committed artifact directly.)
+          if (choice.check !== undefined || choice.failNext !== undefined || choice.failText !== undefined) {
+            assert(typeof choice.check === 'string' && choice.check.length > 0, `dialog ${id} node ${index} choice ${choiceIndex} has a fail variant but no check flag`);
+            assert(typeof choice.failText === 'string', `dialog ${id} node ${index} choice ${choiceIndex} check arm has no failText`);
+            assert(Number.isInteger(choice.failNext), `dialog ${id} node ${index} choice ${choiceIndex} check arm failNext is not an integer`);
+            if (Number.isInteger(choice.failNext)) {
+              assert(choice.failNext >= 0 && choice.failNext < nodes.length, `dialog ${id} node ${index} choice ${choiceIndex} failNext out of range: ${choice.failNext}`);
+            }
+            assert(choice.flag === undefined, `dialog ${id} node ${index} choice ${choiceIndex} check arm carries a flag — pass-only flags belong in the pass branch`);
+          }
         });
       }
 
@@ -152,7 +165,11 @@ function dialogSuccessors(nodes, i) {
   if (!n) return [];
   if (n.type === 'end') return [];
   if (n.type === 'choice') {
-    return (n.choices || []).map((c, ci) => (c.next !== undefined ? c.next : i + 1));
+    const out = (n.choices || []).map((c, ci) => (c.next !== undefined ? c.next : i + 1));
+    for (const c of n.choices || []) {
+      if (c.failNext !== undefined) out.push(c.failNext);
+    }
+    return out;
   }
   if (n.type === 'condition') {
     return [

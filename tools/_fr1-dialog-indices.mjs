@@ -33,8 +33,16 @@ for (const k of keysHead) {
     if (ta !== tb && !(k === 'poster_cf_5' && ta === 'Andrew' && tb === 'text')) {
       console.log(`TYPE CHANGED ${k}[${i}]: ${ta} -> ${tb}`); bad++;
     }
-    const ja = JSON.stringify({ n: a[i]?.next, t: a[i]?.ifTrue, f: a[i]?.ifFalse, fb: a[i]?.fallback, c: (a[i]?.choices || []).map(c => c.next) });
-    const jb = JSON.stringify({ n: b[i]?.next, t: b[i]?.ifTrue, f: b[i]?.ifFalse, fb: b[i]?.fallback, c: (b[i]?.choices || []).map(c => c.next) });
+    // An arm APPENDED at the end of an existing ask is the append-only law
+    // obeyed, same as a node appended at a tree's tail: choice indices 0..N-1
+    // (the persisted `_chose_` keys) are untouched. It is only a violation if
+    // an EXISTING arm's edges moved (next / failNext), or an arm was removed.
+    const ca = (a[i]?.choices || []).map(c => ({ n: c.next, f: c.failNext }));
+    const cb = (b[i]?.choices || []).map(c => ({ n: c.next, f: c.failNext }));
+    if (cb.length < ca.length) { console.log(`ARM REMOVED ${k}[${i}]: ${ca.length} -> ${cb.length} arms`); bad++; }
+    else if (cb.length > ca.length) console.log(`arm appended (legal): ${k}[${i}] ${ca.length} -> ${cb.length} arms`);
+    const ja = JSON.stringify({ n: a[i]?.next, t: a[i]?.ifTrue, f: a[i]?.ifFalse, fb: a[i]?.fallback, c: ca });
+    const jb = JSON.stringify({ n: b[i]?.next, t: b[i]?.ifTrue, f: b[i]?.ifFalse, fb: b[i]?.fallback, c: cb.slice(0, ca.length) });
     if (ja !== jb) { console.log(`EDGE CHANGED ${k}[${i}]: ${ja} -> ${jb}`); bad++; }
   }
 }

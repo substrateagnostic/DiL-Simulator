@@ -55,6 +55,14 @@ export function emitNodes(scene, indexOf, length, pads = []) {
         for (const field of ['flag', 'flagValue', 'requires', 'requiresNot']) {
           if (Object.hasOwn(arm, field)) choice[field] = arm[field];
         }
+        // The working-style check: one arm, two renderings, ONE choice index.
+        // `check` is the trait flag; holders read `text` and take `next`,
+        // everyone else reads `failText` and takes `failNext` (DialogState).
+        if (Object.hasOwn(arm, 'check')) {
+          choice.check = arm.check;
+          choice.failText = arm.failText;
+          choice.failNext = resolve(labels, arm.failNext, `Fail branch of choice ${JSON.stringify(arm.text)}`);
+        }
         return choice;
       });
     } else if (stmt.kind === 'condition') {

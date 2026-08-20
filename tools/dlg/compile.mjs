@@ -24,6 +24,7 @@ const ITEMS_FILE = path.join(REPO_DIR, 'src/data/items.js');
 const STATS_FILE = path.join(REPO_DIR, 'src/data/stats.js');
 const ROOMS_FILE = path.join(REPO_DIR, 'src/data/rooms/index.js');
 const CHARACTERS_FILE = path.join(REPO_DIR, 'src/data/characters.js');
+const TRAITS_FILE = path.join(REPO_DIR, 'src/data/traits.js');
 const NODE_TYPES = new Set(['text', 'choice', 'condition', 'action', 'stage', 'end']);
 
 function importFresh(filePath, tag) {
@@ -67,7 +68,10 @@ function statementReferenceCount(scene) {
       if (stmt.ifTrue) count += 1;
       if (stmt.ifFalse) count += 1;
     }
-    if (stmt.kind === 'choice') count += stmt.arms.length;
+    if (stmt.kind === 'choice') {
+      count += stmt.arms.length;
+      count += stmt.arms.filter((arm) => arm.failNext !== undefined).length;
+    }
     if (stmt.kind === 'stage') {
       for (const beat of stmt.beats) count += beat.ops.filter(({ verb }) => verb === 'after').length;
     }
@@ -81,6 +85,9 @@ function nodeEdges(tree, index) {
   if (node.type === 'condition') return [node.ifTrue ?? index + 1, node.ifFalse ?? index + 1];
   if (node.type === 'choice') {
     const edges = (node.choices ?? []).map((choice) => choice.next ?? index + 1);
+    for (const choice of node.choices ?? []) {
+      if (choice.failNext !== undefined) edges.push(choice.failNext);
+    }
     if (node.fallback !== undefined) edges.push(node.fallback);
     return edges;
   }
@@ -167,7 +174,7 @@ export function classifyLockDelta(before, after) {
 export async function compileCorpus() {
   const filenames = (await readdir(DIALOG_DIR)).filter((name) => name.endsWith('.dlg')).sort();
   if (!filenames.length) throw new Error('No src/data/dialogs/*.dlg files were found.');
-  const [lock, dialogStateSource, encountersModule, itemsModule, statsModule, roomsModule, charactersModule] = await Promise.all([
+  const [lock, dialogStateSource, encountersModule, itemsModule, statsModule, roomsModule, charactersModule, traitsModule] = await Promise.all([
     loadLock(LOCK_FILE),
     readFile(DIALOG_STATE_FILE, 'utf8'),
     importFresh(ENCOUNTERS_FILE, 'encounters'),
@@ -175,6 +182,7 @@ export async function compileCorpus() {
     importFresh(STATS_FILE, 'stats'),
     importFresh(ROOMS_FILE, 'rooms'),
     importFresh(CHARACTERS_FILE, 'characters'),
+    importFresh(TRAITS_FILE, 'traits'),
   ]);
   const stateAst = parseAst(dialogStateSource);
   const quizExpected = findStringSet(stateAst, 'KNOWLEDGE_GATE_DIALOGS');
@@ -269,6 +277,27 @@ export async function compileCorpus() {
     }
   }
 
+  // WORKING-STYLE CHECKS key directly on the trait flags — "the trait IS the
+  // stat" (SKILL-CHECK-SEED, director shape 1). A check against anything else
+  // has no working-style name for DialogState to print in the pass prefix, so
+  // it is a build error, the same way an unknown fight id is.
+  const traitFlags = new Set(Object.values(traitsModule.TRAITS).map((trait) => trait.flag));
+  const checkIssues = [];
+  let checkArms = 0;
+  for (const [sceneId, tree] of Object.entries(dialogs)) {
+    for (let index = 0; index < tree.length; index += 1) {
+      const node = tree[index];
+      if (node.type !== 'choice') continue;
+      (node.choices ?? []).forEach((choice, choiceIndex) => {
+        if (!Object.hasOwn(choice, 'check')) return;
+        checkArms += 1;
+        if (!traitFlags.has(choice.check)) {
+          checkIssues.push(`${sceneId}[${index}] arm ${choiceIndex}: ${choice.check} is not a trait flag (known: ${[...traitFlags].join(', ')}).`);
+        }
+      });
+    }
+  }
+
   const modes = modeIssues(sceneRecords, quizExpected, evergreenExpected);
   const encounterIssues = [];
   const itemIssues = [];
@@ -349,6 +378,7 @@ export async function compileCorpus() {
     { name: 'give item resolution', count: itemIssues.length, checked: `${gives} give statements`, details: itemIssues },
     { name: 'stat id resolution', count: statIssues.length, checked: `${stats} stat statements`, details: statIssues },
     { name: 'stage actor and mark resolution', count: stageIssues.length, checked: `${actorChecks} actors + ${markChecks} marks`, details: stageIssues },
+    { name: 'working-style check trait resolution', count: checkIssues.length, checked: `${checkArms} check arms`, details: checkIssues },
   ];
   const infrastructure = [
     ...byKind.grammar.map((item) => formatDiagnostic(item)),
