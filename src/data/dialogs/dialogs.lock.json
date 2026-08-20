@@ -1032,9 +1032,11 @@
         "n107": 107,
         "n110": 110,
         "n113": 113,
-        "n116": 116
+        "n116": 116,
+        "ws_freshpot_pass": 120,
+        "ws_freshpot_fail": 127
       },
-      "length": 120
+      "length": 132
     },
     "restructuring_combat": {
       "labels": {},
@@ -1454,9 +1456,13 @@
         "n191": 191,
         "n192": 192,
         "n193": 193,
-        "n194": 194
+        "n194": 194,
+        "ws_absorb_pass": 195,
+        "ws_absorb_fail": 202,
+        "ws_bylaws_pass": 205,
+        "ws_bylaws_fail": 211
       },
-      "length": 195
+      "length": 214
     },
     "board_meeting_janet": {
       "labels": {},

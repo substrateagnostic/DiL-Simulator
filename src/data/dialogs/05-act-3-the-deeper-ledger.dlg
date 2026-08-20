@@ -824,6 +824,13 @@ scene team_chat_hub
     -> n116 requires voice_apprentice_high unless diane_apprentice_noticed: [Diane noticed you being easy on yourself today]
     -> n17: Just check in with the team. Nothing specific.
     -> n19: Get back to work.
+    # WORKING-STYLE CHECK (Percolator). APPENDED arm — arm order is the
+    # `_chose_` choice index, so the new row can only go last, below the exit
+    # row. One arm, two renderings, both selectable; spent by
+    # check_freshpot_done on either branch. The pass is the origin story of
+    # the Unchipped Mug cosmetic (unlock: check_freshpot_passed).
+    -> ws_freshpot_pass unless check_freshpot_done check trait_percolator: Make coffee. The machine has terms. You know every one of them.
+    fail -> ws_freshpot_fail: Fight the break room coffee machine. Odds are roughly even.
 
   @n1
   Janet: Andrew. You doing okay?
@@ -1113,6 +1120,30 @@ scene team_chat_hub
   set diane_apprentice_noticed
   goto n0
   end
+  # ── WORKING-STYLE CHECK — THE PERCOLATOR (appended; routed from the hub
+  # ask's last arm). Prose Opus 4.6 wired verbatim (wsc-prose brief,
+  # 2026-08-20). The pass narration is the Unchipped Mug's origin — the
+  # cosmetic itself unlocks off check_freshpot_passed in cosmetics.js, no
+  # give_item needed. Janet is safe to speak here: the hub only serves once
+  # the party exists, and Janet is the first recruit (act5_trigger).
+
+  @ws_freshpot_pass
+  set check_freshpot_done
+  set check_freshpot_passed
+  Narrator: The break room coffee machine is a 2009 Bunn VPR Series with a grudge and a record of seven confirmed casualties. Andrew approaches it the way certain monks approach silence — not with force, but with conditions.
+  Narrator: He runs water through the empty basket first. He waits ninety seconds. He uses the third shelf's filters, not the ones by the sink. He does not press the button twice.
+  Janet: How long have you known how to do that?
+  Andrew: It just needs time. Everything does, really.
+  Narrator: The team drinks actual coffee for the first time since the machine was installed. The mug no one has ever claimed, the white one without a single chip, is in Andrew's hands now. Nobody offered it. Nobody needed to.
+  goto n0
+
+  @ws_freshpot_fail
+  set check_freshpot_done
+  Narrator: Andrew presses the button twice. The machine — a 2009 Bunn VPR Series that has outlasted seven employees and two department reorganizations — produces a liquid that possesses two of coffee's four essential qualities. It is hot, and it is brown.
+  Andrew: That's — I think that's coffee.
+  Janet: Generous.
+  Narrator: The team drinks it anyway, which is, somehow, worse than if they had refused.
+  goto n0
 
 scene restructuring_combat
   Restructuring Analyst: Ah. Andrew, is it? I've heard about you. The 'disruptive element.'

@@ -234,6 +234,20 @@ export const COSMETICS = {
     visual: { type: 'tumbler', color: 0x9aa3ad },
     unlock: { flag: 'rp_svp_tumbler' },
   },
+
+  // ── Working-style check exclusive (SKILL-CHECK-SEED pilot) ────────────
+  // Only a Percolator save can pass the team_chat_hub freshpot check, so
+  // this is the game's first trait-exclusive item — a one-of-a-kind reward
+  // for a check only a third of saves can cash (the seed's "Percolator-only
+  // mug", named by the content). The pass narration is its origin story.
+  unchipped_mug: {
+    name: 'The Unchipped Mug',
+    description: 'White ceramic with no logo and no documented history of interdepartmental disputes. +5 MP',
+    slot: 'accessory',
+    stats: { maxMP: 5 },
+    visual: { type: 'mug', color: 0xf5f2ec },
+    unlock: { flag: 'check_freshpot_passed' },
+  },
 };
 
 /**

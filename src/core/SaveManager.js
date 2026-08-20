@@ -113,6 +113,13 @@ const FLAGS_OF_RECORD = [
   // save, by the quiz's result page; a later chapter reads it as who Andrew
   // already was on the morning he arrived.
   'trait_advance_reader', 'trait_shock_absorber', 'trait_percolator',
+  // ADDITIVE (rule 1): the WORKING-STYLE CHECK pilot (SKILL-CHECK-SEED
+  // director shape 3 — "a passed check may carry as ONE additive whitelisted
+  // flag"). At most one of these is ever set per save, because each check
+  // passes only for its own trait's holder: absorb = Shock Absorber (board
+  // meeting Block C), bylaws = Advance Reader (board meeting floor),
+  // freshpot = Percolator (team huddle; also unlocks the Unchipped Mug).
+  'check_absorb_passed', 'check_bylaws_passed', 'check_freshpot_passed',
 ];
 
 class SaveManagerClass {

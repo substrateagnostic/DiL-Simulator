@@ -4131,6 +4131,23 @@ function _addCosmeticVisual(group, cosmeticId, rig) {
       clip.position.set(d.bodyW / 2 + 0.028, rig.legLength + 0.09, 0.03);
       group.add(clip);
     },
+    // ── Working-style check exclusive ──
+    unchipped_mug: () => {
+      // The white one without a single chip, in the off hand — the held-prop
+      // slot fountain_pen / the tumbler / the citation already share. Body +
+      // torus handle + coffee follow the NPC coffee_mug accessory's build.
+      const color = COSMETICS.unchipped_mug?.visual?.color ?? 0xf5f2ec;
+      const body = new THREE.Mesh(new THREE.CylinderGeometry(0.028, 0.025, 0.056, 10), Materials.custom(color));
+      body.position.set(-handX, rig.legLength + rig.torsoH * 0.36, handZ + 0.02);
+      group.add(body);
+      const handle = new THREE.Mesh(new THREE.TorusGeometry(0.017, 0.005, 6, 8, Math.PI), Materials.custom(color));
+      handle.position.set(-handX - 0.028, rig.legLength + rig.torsoH * 0.36, handZ + 0.02);
+      handle.rotation.z = Math.PI / 2;
+      group.add(handle);
+      const coffee = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.01, 10), Materials.coffee());
+      coffee.position.set(-handX, rig.legLength + rig.torsoH * 0.36 + 0.026, handZ + 0.02);
+      group.add(coffee);
+    },
   };
   const fn = COSMETIC_VISUALS[cosmeticId];
   if (fn) fn();

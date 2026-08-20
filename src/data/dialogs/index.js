@@ -9072,6 +9072,14 @@ export const DIALOGS = {
         {
           "text": "Get back to work.",
           "next": 19
+        },
+        {
+          "text": "Make coffee. The machine has terms. You know every one of them.",
+          "next": 120,
+          "requiresNot": "check_freshpot_done",
+          "check": "trait_percolator",
+          "failText": "Fight the break room coffee machine. Odds are roughly even.",
+          "failNext": 127
         }
       ]
     },
@@ -9717,6 +9725,71 @@ export const DIALOGS = {
     },
     {
       "type": "end"
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "check_freshpot_done",
+      "value": true
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "check_freshpot_passed",
+      "value": true
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "The break room coffee machine is a 2009 Bunn VPR Series with a grudge and a record of seven confirmed casualties. Andrew approaches it the way certain monks approach silence — not with force, but with conditions."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "He runs water through the empty basket first. He waits ninety seconds. He uses the third shelf's filters, not the ones by the sink. He does not press the button twice."
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "How long have you known how to do that?"
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "It just needs time. Everything does, really."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "The team drinks actual coffee for the first time since the machine was installed. The mug no one has ever claimed, the white one without a single chip, is in Andrew's hands now. Nobody offered it. Nobody needed to.",
+      "next": 0
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "check_freshpot_done",
+      "value": true
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "Andrew presses the button twice. The machine — a 2009 Bunn VPR Series that has outlasted seven employees and two department reorganizations — produces a liquid that possesses two of coffee's four essential qualities. It is hot, and it is brown."
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "That's — I think that's coffee."
+    },
+    {
+      "type": "text",
+      "speaker": "Janet",
+      "text": "Generous."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "The team drinks it anyway, which is, somehow, worse than if they had refused.",
+      "next": 0
     }
   ],
   "restructuring_combat": [
@@ -13088,6 +13161,13 @@ export const DIALOGS = {
         {
           "text": "\"Just breathe. You're doing fine.\"",
           "next": 42
+        },
+        {
+          "text": "Stand up. Put yourself between Skip and the room. Take the hit.",
+          "next": 195,
+          "check": "trait_shock_absorber",
+          "failText": "Stand up. Walk toward the problem. Hope the rest writes itself.",
+          "failNext": 202
         }
       ]
     },
@@ -13231,6 +13311,14 @@ export const DIALOGS = {
         {
           "text": "That's everything. Let Skip finish.",
           "next": 98
+        },
+        {
+          "text": "Recite the board's governance bylaws. You read all 340 pages last night.",
+          "next": 205,
+          "requiresNot": "bm_bylaws_done",
+          "check": "trait_advance_reader",
+          "failText": "Cite the governance bylaws. You got as far as page twenty-six.",
+          "failNext": 211
         }
       ]
     },
@@ -14216,6 +14304,110 @@ export const DIALOGS = {
         }
       ],
       "next": 167
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "check_absorb_passed",
+      "value": true
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "bm_true_push",
+      "value": true
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "Andrew stands, crosses six feet of the third-worst carpet in the building, and holds out his hand. The grey suit, confused, gives him the memo. Andrew reads it in front of eleven board members the way a trust officer reads anything — start to finish, including the footnotes."
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "The restructuring targets in this memo were written for us, not by us. Eleven quarters of missing benchmarks we didn't set."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "It is not a rebuttal. It is a man standing where the blast was aimed and not moving. Behind him, Skip Hartley opens the restructuring proposal to page fourteen."
+    },
+    {
+      "type": "text",
+      "speaker": "Skip Hartley",
+      "text": "Meredith Sterling's signature. Page fourteen. Her targets. We met every benchmark we actually set for ourselves."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "The grey suit reaches for the memo. Andrew hands it back with the politeness of someone returning a library book he did not enjoy. The board chair turns the page on her agenda and announces the public comment period.",
+      "next": 48
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "Andrew stands up. His chair — a model the manufacturer discontinued in 2014 for reasons now obvious — rolls backward into the water pitcher. The pitcher wobbles for six seconds. Eleven board members watch it instead of Skip, which is, by accident, the most productive six seconds of the hearing so far."
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "Sorry. I'm fine. That — the chair does that. I was going to say something."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "He does not say something. Skip, unassisted, delivers a rebuttal that covers four of his seven prepared points. The board chair, who has chaired worse, announces the public comment period.",
+      "next": 48
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "bm_bylaws_done",
+      "value": true
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "check_bylaws_passed",
+      "value": true
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "I'm sorry — Article Nine, Section Four. Page three hundred and twelve. A dissolution vote requires an independent financial review by a non-affiliated party, and a two-thirds supermajority of the full board. Not the members present. The full board."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "This is the sound of eleven people discovering they own a three-hundred-and-forty-page governance document. Several of them turn to page three hundred and twelve. The page exists."
+    },
+    {
+      "type": "text",
+      "speaker": "Skip Hartley",
+      "text": "And how many members are on the full board?"
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "Fifteen. There are eleven in the room. Someone counts the empty chairs. The board chair, who to her credit recovers before anyone else, asks whether there are additional items for the public comment period.",
+      "next": 48
+    },
+    {
+      "type": "action",
+      "action": "set_flag",
+      "flag": "bm_bylaws_done",
+      "value": true
+    },
+    {
+      "type": "text",
+      "speaker": "Andrew",
+      "text": "I read twenty-six pages of the governance bylaws last night. The definitions section. I can tell you that \"quorum\" is defined three times, each with a slightly different number, which seems like something someone should look into."
+    },
+    {
+      "type": "text",
+      "speaker": "Narrator",
+      "text": "In a room where nobody else has opened the bylaws since they were ratified in 1987, twenty-six pages constitutes a commanding lead. The board chair, not unkindly, asks whether there are additional items for the public comment period.",
+      "next": 48
     }
   ],
   "board_meeting_janet": [

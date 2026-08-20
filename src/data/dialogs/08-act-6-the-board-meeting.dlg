@@ -86,6 +86,13 @@ scene board_meeting
     -> n33: "'Fiduciarily untenable.' That word means something. Ask him what a fiduciary IS."
     -> n38: "Cite the restructuring proposal. Meredith inflated her numbers. We have the documents."
     -> n42: "Just breathe. You're doing fine."
+    # WORKING-STYLE CHECK (Shock Absorber). APPENDED arm — arm order is the
+    # `_chose_` choice index, so a new arm may only go LAST. One arm, two
+    # renderings: holders see the pass text, everyone else the fail text, and
+    # BOTH are selectable (a failed check is content, not a wall). Branches at
+    # the scene tail; prose Opus 4.6 verbatim (wsc-prose brief, 2026-08-20).
+    -> ws_absorb_pass check trait_shock_absorber: Stand up. Put yourself between Skip and the room. Take the hit.
+    fail -> ws_absorb_fail: Stand up. Walk toward the problem. Hope the rest writes itself.
   # C-TRUE
 
   @n33
@@ -128,6 +135,12 @@ scene board_meeting
     -> n87 requires grandma_ally unless bm_grandma_done: Grandma Henderson has a letter.
     -> n93 requires has_charter unless bm_charter_done: Read from the charter.
     -> n98: That's everything. Let Skip finish.
+    # WORKING-STYLE CHECK (Advance Reader). APPENDED, so it renders below the
+    # "That's everything" row — the price of the save-key law (arm indices are
+    # persisted; only LAST is safe). Universal like the charter rows: no
+    # requires, spent by bm_bylaws_done on either branch.
+    -> ws_bylaws_pass unless bm_bylaws_done check trait_advance_reader: Recite the board's governance bylaws. You read all 340 pages last night.
+    fail -> ws_bylaws_fail: Cite the governance bylaws. You got as far as page twenty-six.
   # D-JANET
 
   @n49
@@ -531,6 +544,52 @@ scene board_meeting
     skip walkTo skip_after face player speed 1.5 after b0 hold 0.3 nowait
     player face skip hold 0.2
   goto n167
+  # ══ WORKING-STYLE CHECK BRANCHES (appended; routed from the Block C and
+  #    Block D asks) ═══════════════════════════════════════════════════════
+  # THE PILOT (SKILL-CHECK-SEED): the check keys on the trait flag directly —
+  # no hidden stat — and the fail is selectable content. Prose is Opus 4.6
+  # wired verbatim. EDGE NOTE: both Shock Absorber branches route to n48, not
+  # n46, because their closing lines already land the chair announcing public
+  # comment — n46's own announcement would play the same beat twice.
+  # PASS COUNTS AS A TRUE THING: the pass sets bm_true_push, same as n33 —
+  # Block C is scoring whether the department holds under the memo, and the
+  # room watching Andrew hold IS that. A holder gets a second road to the
+  # tier, not a higher tier ceiling. Producer flag in the pilot packet.
+
+  @ws_absorb_pass
+  set check_absorb_passed
+  set bm_true_push
+  Narrator: Andrew stands, crosses six feet of the third-worst carpet in the building, and holds out his hand. The grey suit, confused, gives him the memo. Andrew reads it in front of eleven board members the way a trust officer reads anything — start to finish, including the footnotes.
+  Andrew: The restructuring targets in this memo were written for us, not by us. Eleven quarters of missing benchmarks we didn't set.
+  Narrator: It is not a rebuttal. It is a man standing where the blast was aimed and not moving. Behind him, Skip Hartley opens the restructuring proposal to page fourteen.
+  Skip Hartley: Meredith Sterling's signature. Page fourteen. Her targets. We met every benchmark we actually set for ourselves.
+  Narrator: The grey suit reaches for the memo. Andrew hands it back with the politeness of someone returning a library book he did not enjoy. The board chair turns the page on her agenda and announces the public comment period.
+  goto n48
+
+  @ws_absorb_fail
+  Narrator: Andrew stands up. His chair — a model the manufacturer discontinued in 2014 for reasons now obvious — rolls backward into the water pitcher. The pitcher wobbles for six seconds. Eleven board members watch it instead of Skip, which is, by accident, the most productive six seconds of the hearing so far.
+  Andrew: Sorry. I'm fine. That — the chair does that. I was going to say something.
+  Narrator: He does not say something. Skip, unassisted, delivers a rebuttal that covers four of his seven prepared points. The board chair, who has chaired worse, announces the public comment period.
+  goto n48
+  # Advance Reader — the floor item. Spent by bm_bylaws_done on EITHER branch
+  # (a fail is an answer too; the row re-offering the same joke forever would
+  # read as a retry path, and checks do not retry). Only the pass writes
+  # check_bylaws_passed.
+
+  @ws_bylaws_pass
+  set bm_bylaws_done
+  set check_bylaws_passed
+  Andrew: I'm sorry — Article Nine, Section Four. Page three hundred and twelve. A dissolution vote requires an independent financial review by a non-affiliated party, and a two-thirds supermajority of the full board. Not the members present. The full board.
+  Narrator: This is the sound of eleven people discovering they own a three-hundred-and-forty-page governance document. Several of them turn to page three hundred and twelve. The page exists.
+  Skip Hartley: And how many members are on the full board?
+  Narrator: Fifteen. There are eleven in the room. Someone counts the empty chairs. The board chair, who to her credit recovers before anyone else, asks whether there are additional items for the public comment period.
+  goto n48
+
+  @ws_bylaws_fail
+  set bm_bylaws_done
+  Andrew: I read twenty-six pages of the governance bylaws last night. The definitions section. I can tell you that "quorum" is defined three times, each with a slightly different number, which seems like something someone should look into.
+  Narrator: In a room where nobody else has opened the bylaws since they were ratified in 1987, twenty-six pages constitutes a commanding lead. The board chair, not unkindly, asks whether there are additional items for the public comment period.
+  goto n48
 
 # ── BLOCK W — waiting-room lines. Allies staged in the Board Room before
 # Andrew convenes. Repeatable, no state changes.
