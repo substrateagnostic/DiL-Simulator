@@ -561,7 +561,14 @@ scene board_meeting
   set bm_true_push
   Narrator: Andrew stands, crosses six feet of the third-worst carpet in the building, and holds out his hand. The grey suit, confused, gives him the memo. Andrew reads it in front of eleven board members the way a trust officer reads anything — start to finish, including the footnotes.
   Andrew: The restructuring targets in this memo were written for us, not by us. Eleven quarters of missing benchmarks we didn't set.
-  Narrator: It is not a rebuttal. It is a man standing where the blast was aimed and not moving. Behind him, Skip Hartley opens the restructuring proposal to page fourteen.
+  # Judge redline (fix round): the first draft's "It is not a rebuttal. It is
+  # a man standing where the blast was aimed and not moving." was played-
+  # straight heroic metaphor from a field-guide Narrator, plus the banned
+  # not-X-but-Y frame. Replacement re-commissioned from Opus 4.6 (three
+  # rounds — the first two contradicted canon: "forty-year history" against
+  # the 1947 charter, then a surname the Narrator never uses) and wired
+  # verbatim.
+  Narrator: Andrew reads the entire memo aloud to the room in forty-one seconds. It is, by a comfortable margin, the least welcome recitation the building has hosted in seventy-nine years of continuous operation. Behind him, Skip Hartley opens the restructuring proposal to page fourteen.
   Skip Hartley: Meredith Sterling's signature. Page fourteen. Her targets. We met every benchmark we actually set for ourselves.
   Narrator: The grey suit reaches for the memo. Andrew hands it back with the politeness of someone returning a library book he did not enjoy. The board chair turns the page on her agenda and announces the public comment period.
   goto n48

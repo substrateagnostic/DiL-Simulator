@@ -133,6 +133,63 @@ test('duplicate index on different statements errors', () => {
   }
 });
 
+// ── THE ARM LEDGER ── arm order inside an ask is the `_chose_` choice index,
+// so the lock pins it the same way it pins node indices: append-only, by
+// identity (target label, plus fail target for a check arm).
+const ask = (label, ...arms) => ({
+  kind: 'choice',
+  labels: label ? [label] : [],
+  arms: arms.map((a) => (typeof a === 'string' ? { next: a, text: a } : a)),
+});
+
+test('arm ledger records asks by node index', () => {
+  const result = allocate('armrec', [ask('q', 'a', 'b'), stmt('a'), stmt('b')], emptyLock());
+  return equal(result.lockAfter.scenes.armrec.arms, { 0: ['a', 'b'] });
+});
+
+test('arm appended at tail is legal', () => {
+  const first = allocate('armgrow', [ask('q', 'a', 'b'), stmt('a'), stmt('b')], emptyLock());
+  const second = allocate('armgrow', [ask('q', 'a', 'b', 'c'), stmt('a'), stmt('b'), stmt('c')], first.lockAfter);
+  return equal(second.lockAfter.scenes.armgrow.arms, { 0: ['a', 'b', 'c'] });
+});
+
+test('arm inserted mid-list errors', () => {
+  const first = allocate('armins', [ask('q', 'a', 'b'), stmt('a'), stmt('b')], emptyLock());
+  try {
+    allocate('armins', [ask('q', 'a', 'wedge', 'b'), stmt('a'), stmt('b'), stmt('wedge')], first.lockAfter);
+    return false;
+  } catch (error) {
+    return error.message.includes('_chose_armins_0_') && error.message.includes('APPENDED');
+  }
+});
+
+test('arm removal errors', () => {
+  const first = allocate('armdel', [ask('q', 'a', 'b'), stmt('a'), stmt('b')], emptyLock());
+  try {
+    allocate('armdel', [ask('q', 'a'), stmt('a'), stmt('b')], first.lockAfter);
+    return false;
+  } catch (error) {
+    return error.message.includes('_chose_armdel_0_') && error.message.includes('never removed');
+  }
+});
+
+test('check-arm fail target is part of the arm identity', () => {
+  const checked = (fail) => [ask('q', { next: 'a', failNext: fail, text: 'x' }), stmt('a'), stmt('f'), stmt('g')];
+  const first = allocate('armfail', checked('f'), emptyLock());
+  try {
+    allocate('armfail', checked('g'), first.lockAfter);
+    return false;
+  } catch (error) {
+    return error.message.includes('a|f is now -> a|g');
+  }
+});
+
+test('rewording an arm is a free edit', () => {
+  const first = allocate('armword', [ask('q', { next: 'a', text: 'old prose' }), stmt('a')], emptyLock());
+  const second = allocate('armword', [ask('q', { next: 'a', text: 'new prose' }), stmt('a')], first.lockAfter);
+  return equal(second.lockAfter.scenes.armword.arms, { 0: ['a'] });
+});
+
 test('save order is deterministic', async () => {
   const file = path.join(import.meta.dirname, 'fixtures', '.ordered-lock.json');
   const lock = {

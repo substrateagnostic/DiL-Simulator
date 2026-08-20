@@ -10,6 +10,11 @@ function cloneLock(lock) {
       labels: { ...(scene.labels ?? {}) },
       length: scene.length ?? 0,
     };
+    if (scene.arms) {
+      result.scenes[sceneId].arms = Object.fromEntries(
+        Object.entries(scene.arms).map(([index, sigs]) => [index, [...sigs]]),
+      );
+    }
   }
   return result;
 }
@@ -20,8 +25,25 @@ function orderedLock(lock) {
     const labels = Object.entries(scene.labels ?? {})
       .sort(([aName, aIndex], [bName, bIndex]) => aIndex - bIndex || aName.localeCompare(bName));
     result.scenes[sceneId] = { labels: Object.fromEntries(labels), length: scene.length };
+    if (scene.arms && Object.keys(scene.arms).length) {
+      const arms = Object.entries(scene.arms).sort(([a], [b]) => Number(a) - Number(b));
+      result.scenes[sceneId].arms = Object.fromEntries(arms);
+    }
   }
   return result;
+}
+
+// THE ARM LEDGER. `_chose_<sceneId>_<nodeIndex>_<choiceIndex>` is a persisted
+// save key and the CHOICE index is positional — the label lock pins the node
+// index, but until this ledger nothing pinned the arm ORDER inside an ask, so
+// an arm inserted mid-list silently remapped the recorded choices of every
+// player who had answered that ask (judge finding 1 on the working-style
+// check pilot; the hazard predates the feature). An arm's ledger identity is
+// its TARGET LABEL (plus `|failLabel` for a check arm) — stable across prose
+// rewording, which stays a free edit, while an insertion, removal, reorder or
+// retarget at a locked position is a hard compile error.
+function armSig(arm) {
+  return arm.failNext !== undefined ? `${arm.next}|${arm.failNext}` : String(arm.next);
 }
 
 export async function loadLock(filePath) {
@@ -116,7 +138,37 @@ export function allocate(sceneId, stmts, lock = { version: 1, scenes: {} }, opts
       if (!Object.hasOwn(labelsAfter, label)) labelsAfter[label] = indexOf.get(stmt);
     }
   }
+
+  // The arm ledger (see armSig above). `armGuard: false` (a scene that already
+  // has parse diagnostics) keeps the prior ledger untouched rather than
+  // cascading a grammar error into an allocation error — the build is red
+  // either way, and diagnostics must stay non-cascading.
+  const lockedArms = opts.reseed ? {} : { ...(existing?.arms ?? {}) };
+  const armsAfter = { ...lockedArms };
+  if (opts.armGuard !== false) {
+    for (const stmt of stmts) {
+      if (stmt.kind !== 'choice') continue;
+      const index = indexOf.get(stmt);
+      const current = (stmt.arms ?? []).map(armSig);
+      const prior = lockedArms[String(index)] ?? [];
+      if (current.length < prior.length) {
+        throw new Error(
+          `In scene ${sceneId}, the ask at index ${index} lost arm(s) ${current.length}..${prior.length - 1}. Arm order is the _chose_${sceneId}_${index}_<arm> save key: an arm may be appended, never removed — its position stays reserved for every player who has picked it.`,
+        );
+      }
+      for (let position = 0; position < prior.length; position += 1) {
+        if (current[position] !== prior[position]) {
+          throw new Error(
+            `In scene ${sceneId}, the ask at index ${index}: arm ${position} changed identity (-> ${prior[position]} is now -> ${current[position]}). Arm order is the _chose_${sceneId}_${index}_<arm> save key — a new arm must be APPENDED after the existing ones, and moving or retargeting an existing arm changes the recorded choices of every player who has answered this ask.`,
+          );
+        }
+      }
+      if (current.length) armsAfter[String(index)] = current;
+    }
+  }
+
   lockAfter.scenes[sceneId] = { labels: labelsAfter, length };
+  if (Object.keys(armsAfter).length) lockAfter.scenes[sceneId].arms = armsAfter;
   if (opts.reseed) reseededLocks.add(lockAfter);
   return { indexOf, length, pads, lockAfter };
 }

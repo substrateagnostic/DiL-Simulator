@@ -14330,7 +14330,7 @@ export const DIALOGS = {
     {
       "type": "text",
       "speaker": "Narrator",
-      "text": "It is not a rebuttal. It is a man standing where the blast was aimed and not moving. Behind him, Skip Hartley opens the restructuring proposal to page fourteen."
+      "text": "Andrew reads the entire memo aloud to the room in forty-one seconds. It is, by a comfortable margin, the least welcome recitation the building has hosted in seventy-nine years of continuous operation. Behind him, Skip Hartley opens the restructuring proposal to page fourteen."
     },
     {
       "type": "text",

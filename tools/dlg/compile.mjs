@@ -159,6 +159,25 @@ export function classifyLockDelta(before, after) {
     if ((next.length ?? 0) < (scene.length ?? 0)) {
       violations.push(`dialogs.lock.json: scene ${sceneId} would shrink ${scene.length} -> ${next.length}.`);
     }
+    // The arm ledger: same additive-only rule as labels, per ask. `allocate()`
+    // already throws on the dangerous shapes; this catches a lock that changed
+    // some other way (hand edit).
+    for (const [index, sigs] of Object.entries(scene.arms ?? {})) {
+      const nextSigs = next.arms?.[index];
+      if (!nextSigs) {
+        violations.push(`dialogs.lock.json: the arm ledger for ${sceneId}[${index}] would be dropped.`);
+        continue;
+      }
+      if (nextSigs.length < sigs.length) {
+        violations.push(`dialogs.lock.json: ${sceneId}[${index}] would lose arm(s) ${nextSigs.length}..${sigs.length - 1}, which changes _chose_ save keys.`);
+        continue;
+      }
+      for (let position = 0; position < sigs.length; position += 1) {
+        if (nextSigs[position] !== sigs[position]) {
+          violations.push(`dialogs.lock.json: ${sceneId}[${index}] arm ${position} would change ${sigs[position]} -> ${nextSigs[position]}, which changes _chose_ save keys.`);
+        }
+      }
+    }
   }
   for (const [sceneId, scene] of Object.entries(after.scenes ?? {})) {
     const prev = before.scenes?.[sceneId];
@@ -167,6 +186,11 @@ export function classifyLockDelta(before, after) {
       if (!Object.hasOwn(prev.labels ?? {}, label)) additions.push(`+ @${label} = ${index} in ${sceneId}`);
     }
     if ((scene.length ?? 0) > (prev.length ?? 0)) additions.push(`~ ${sceneId} length ${prev.length} -> ${scene.length}`);
+    for (const [index, sigs] of Object.entries(scene.arms ?? {})) {
+      const prevSigs = prev.arms?.[index];
+      if (!prevSigs) additions.push(`+ arm ledger ${sceneId}[${index}] (${sigs.length} arms)`);
+      else if (sigs.length > prevSigs.length) additions.push(`~ ${sceneId}[${index}] arms ${prevSigs.length} -> ${sigs.length}`);
+    }
   }
   return { violations, additions, dirty: !deepEqual(before, after) };
 }
@@ -218,7 +242,10 @@ export async function compileCorpus() {
   const allocationIssues = [];
   for (const { scene, file } of uniqueRecords) {
     try {
-      const allocated = allocate(scene.id, scene.stmts, lockAfter);
+      // A scene that already has parse diagnostics skips the arm-ledger guard:
+      // the build is red either way, and a half-parsed ask must not cascade a
+      // grammar error into an allocation error (the non-cascading property).
+      const allocated = allocate(scene.id, scene.stmts, lockAfter, { armGuard: scene._errorCount === 0 });
       lockAfter = allocated.lockAfter;
       dialogs[scene.id] = emitNodes(scene, allocated.indexOf, allocated.length, allocated.pads);
     } catch (error) {
