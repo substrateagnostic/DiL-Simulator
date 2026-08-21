@@ -1,3 +1,35 @@
+## [RESUME HERE — 08-20, THE FRESH-CAP FIVE-LANE DAY, all landed]
+
+Five Fable lanes on the reset caps, all judged, merged to main together. Decisions
+pile for Alex is at the bottom of this block. Vainguard shipped first (261b611;
+ticker DECLINED deliberately — "minor moment, fictional world"). NEW MEMORY FACT:
+Alex works at Wells Fargo; Vaults Fargo rename ruled ON (weak joke + shareability).
+- **Rename commission** (d9d6b39, report-only): `.claude/plans/clearance-sweep/RENAME-PACKET.md`.
+  Prose-only rename (23 live edits, 11 comments, og.png regen; zero ids/keys). Top 3:
+  UNDERHILL TRUST (rec; "Where trust is kept."; arcade ANNUAL REVIEW), WHITMORE
+  (invisible), EARNSHAW (literary). TRUST TRUST doc-form trap documented. TESS on
+  winner before the sweep lane.
+- **Skill-check pilot** (9ac3455/90a1273/226e4c3/18cecbc): check-arm grammar LIVE —
+  one arm one `_chose_` key two renderings, fail selectable, `[WORKING STYLE CHECK —
+  FAILED]` is the S2 tease. 3 sites acts 5–6, Unchipped Mug reward, ARM LEDGER now
+  machine-enforces arm order (closes the conventional half of the save-key law).
+- **Attack-feel H2** (ebf996f/8f4f2f8): THE STUCK-LAYER BUG — clampWhenFinished
+  actions never faded out in `_toIdle`, every body rendered as stance+stuck-frames
+  average = the A-posing/hovering/muted-attacks trio of complaints, ONE fadeOut line
+  fixed it. New permanent gate `_h2-stuck-layers.mjs`. Judge PASS. Packet P1–P7
+  priced (P1 re-cast zero-credit; P6 turn-back cut-in = producer art slate).
+- **NG+ re-tune** (086eb93/99e2e9a/b790298, DARK): diagnosis = NG+ buys difficulty
+  with maxHP (the knob modes ruled out). Gameplay.md staircase regression on record
+  (82.6/48.2/29.8 documented vs 97.8/92.2/86.0 live). PROPOSAL.md 3-box signing
+  line; `_ng-apply.mjs --on/--off` byte-exact.
+- **Lighting extended** (71ef1e7/5b24b78): 23/28 rooms clear; fixed transit_bus,
+  bathroom (dead tube finally real), both penthouses (`fx.gloss` key). Stairwell
+  fx block is DEAD DATA (applyRoomFX early-returns on floorZones) — small Engine
+  lane filed. Cubicle-farm dark options HELD pending Andrew re-read.
+DECISIONS AWAITING ALEX: rename pick; NG+ signing (3-box); Shock Absorber
+`bm_true_push` counts-as-true default (one-line delete if flavor-only); attack
+packet P1–P7; seed-3 Hard/Audit playtest.
+
 ## [THE 8%-EVENING SECOND WAVE — 08-18, all landed and merged]
 
 Four more lanes after the harvest, all judged/self-evidenced, merged together:
